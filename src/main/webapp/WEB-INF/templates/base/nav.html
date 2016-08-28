@@ -15,6 +15,9 @@
 				<li><a th:href="${urls.currentUrl}+'/article/list'">文章列表</a></li>
 				<li th:if="${user != null}"><a th:href="${urls.url}+'/mgr/article/index'">管理台</a></li>
 			</ul>
+			<ul class="nav navbar-nav navbar-right">
+              <li><a th:href="${urls.url}">网站主页</a></li>
+            </ul>
 		</div>
 	</div>
 </nav>
