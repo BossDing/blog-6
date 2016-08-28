@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.UserPageDao">
+	<resultMap type="UserPage" id="UserPageDetail">
+		<id column="id" property="id" />
+		<result column="page_tpl" property="tpl"/>
+		<result column="page_name" property="name"/>
+		<result column="page_description" property="description"/>
+		<result column="page_create_date" property="createDate"/>
+		<association property="space" javaType="Space">
+			<result column="space_id" property="id"/>
+			<result column="space_name" property="name"/>
+			<result column="space_alias" property="alias"/>
+		</association>
+	</resultMap>
+	
+	<insert id="insert" keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO blog_page_user(space_id,page_tpl,page_name,page_description,page_create_date)
+		VALUES(#{space.id},#{tpl},#{name},#{description},#{createDate})
+	</insert>
+	
+	<update id="update">
+		UPDATE blog_page_user
+		SET
+			page_name = #{name},
+			page_description = #{description},
+			space_id = #{space.id},
+			page_tpl = #{tpl}
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_page_user WHERE id = #{id}
+	</delete>
+
+	<select id="selectById" resultMap="UserPageDetail">
+		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.id = #{id}
+	</select>
+	
+	<select id="selectPage" resultMap="UserPageDetail">
+		SELECT
+			bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias
+		FROM
+			blog_page_user bpu
+		LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id
+		<where>
+			<if test="name != null and name != ''">
+				page_name LIKE CONCAT('%', #{name},'%')
+			</if>
+		</where>
+		ORDER BY bpu.id DESC
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT 
+			COUNT(id) 
+		FROM 
+			blog_page_user
+		<where>
+			<if test="name != null and name != ''">
+				page_name LIKE CONCAT('%', #{name},'%')
+			</if>
+		</where>
+	</select>
+</mapper>

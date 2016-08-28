@@ -1,0 +1,15 @@
+<script type="text/javascript"
+	th:src="@{/static/jquery/jquery-1.12.3.min.js}"></script>
+<script type="text/javascript"
+	th:src="@{/static/bootstrap/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{/static/js/base.js}"></script>
+<script type="text/javascript" th:src="@{/static/js/bootbox.min.js}"></script>
+<input type="hidden" id="basePath" th:value="@{/}"/>
+<script type="text/javascript" >
+var basePath = $("#basePath").val();
+if(basePath == '/'){
+	basePath = '';
+}else{
+	basePath = basePath.substring(0,basePath.length-1);
+}
+</script>

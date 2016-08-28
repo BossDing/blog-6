@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.SpaceDao">
+	<resultMap type="Space" id="SpaceDetail">
+		<id column="id" property="id" />
+		<result column="space_alias" property="alias" />
+		<result column="space_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
+		<result column="is_default" property="isDefault" />
+		<result column="createDate" property="createDate" />
+		<result column="space_name" property="name"/>
+		<result column="space_lock" property="lockId"/>
+	</resultMap>
+
+	<select id="selectByAlias" resultMap="SpaceDetail">
+		SELECT
+			id,
+			space_alias,
+			space_status,
+			is_default,
+			createDate,
+			space_name,
+			space_lock
+		FROM
+			blog_space
+		WHERE
+			space_alias = #{alias}
+	</select>
+	
+	<select id="selectById" resultMap="SpaceDetail">
+		SELECT
+			id,
+			space_alias,
+			space_status,
+			is_default,
+			createDate,
+			space_name,
+			space_lock
+		FROM
+			blog_space
+		WHERE
+			id = #{id}
+	</select>
+
+	<update id="resetDefault">
+		UPDATE blog_space SET is_default = false
+	</update>
+	
+	<insert id="insert">
+		INSERT INTO blog_space(space_name,space_alias,space_status,is_default,createDate,space_lock)
+		VALUES(#{name},#{alias},#{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler},#{isDefault},#{createDate},#{lockId})
+	</insert>
+
+	<update id="update">
+		UPDATE blog_space
+		<set>
+			<if test="alias != null">
+				space_alias = #{alias},
+			</if>
+			<if test="name != null">
+				space_name = #{name},
+			</if>
+			<if test="status != null">
+				space_status =
+				#{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler},
+			</if>
+			<if test="isDefault != null">
+				is_default = #{isDefault},
+			</if>
+			space_lock = #{lockId}
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<select id="selectByParam" resultMap="SpaceDetail">
+		SELECT
+			id,
+			space_alias,
+			space_status,
+			is_default,
+			createDate,
+			space_name,
+			space_lock
+		FROM
+			blog_space
+		<where>
+			<if test="name != null and name != ''">
+				space_name LIKE CONCAT('%', #{name},'%')
+			</if>
+			<if test="alias != null and alias != ''">
+				AND space_alias LIKE CONCAT('%', #{alias},'%')
+			</if>
+			<if test="status ">
+				AND space_status = #{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+		</where>
+		ORDER BY id DESC
+	</select>
+</mapper>

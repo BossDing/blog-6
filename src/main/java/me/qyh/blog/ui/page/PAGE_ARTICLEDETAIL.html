@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<link rel="stylesheet"
+	th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
+<link rel="stylesheet"
+	th:href="@{/static/editor/markdown/css/editormd.preview.min.css}"
+	th:if="${article.editor.name() == 'MD'}" />
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+	  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+	  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+<title>文章详情</title>
+</head>
+<body>
+	<nav th:replace="base/nav"></nav>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8 col-md-8  col-sm-8 text">
+				<widget name="文章详情"></widget>
+			</div>
+			<div class="col-lg-4 col-md-4 col-sm-4 text">
+				<widget name="文章日期归档"></widget>
+				<widget name="文章空间归档"></widget>
+			</div>
+		</div>
+	</div>
+	<input type="hidden" id="articleId" th:value="${article.id}"/>
+	<div th:replace="base/foot">&nbsp;</div>
+	<div th:replace="base/foot_source">&nbsp;</div>
+	<div th:if="${article.editor.name() == 'MD'}" th:remove="tag">
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/prettify.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/raphael.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/underscore.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/sequence-diagram.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/flowchart.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/jquery.flowchart.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/lib/marked.min.js}"></script>
+		<script type="text/javascript"
+			th:src="@{/static/editor/markdown/editormd.min.js}"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				editormd.katexURL  = {
+			        css : basePath+"/static/editor/markdown/lib/katex.min",
+			        js  : basePath+"/static/editor/markdown/lib/katex.min"
+			    };
+				editormd.markdownToHTML("markdown-rendered", {
+                    emoji           : true,
+                    taskList        : true,
+                    tex             : true,  // 默认不解析
+                    flowChart       : true,  // 默认不解析
+                    sequenceDiagram : true,  // 默认不解析
+                    tocm : true
+                });
+				if(window.sessionStorage){
+					var articleId = "article-"+$("#articleId").val();
+					var item = window.sessionStorage.getItem(articleId);
+					if(!item || item == null){
+						$.post(basePath+"/article/hit/"+$("#articleId").val(),{},function(data){
+							if(data.success){
+								window.sessionStorage.setItem(articleId,"1");
+							}
+						})
+					}
+				}
+			});
+		</script>
+	</div>
+</body>
+</html>

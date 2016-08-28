@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+	<bean id="templateResolver" class="me.qyh.blog.ui.TplResolver">
+		<property name="prefix" value="/WEB-INF/templates/" />
+		<property name="suffix" value=".html" />
+		<property name="templateMode" value="HTML" />
+		<property name="cacheable" value="false" />
+	</bean>
+
+	<bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">
+		<property name="templateResolver" ref="templateResolver" />
+	</bean>
+
+	<bean class="me.qyh.blog.ui.widget.SysWidgetServer">
+		<property name="sysWidgetHandlers">
+			<list>
+				<bean class="me.qyh.blog.ui.widget.ArticleWidgetHandler">
+					<constructor-arg index="0" value="1" />
+					<constructor-arg index="1" value="文章详情" />
+					<constructor-arg index="2" value="article" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/article.html" />
+				</bean>
+				<bean class="me.qyh.blog.ui.widget.ArticleDateFilesWidgetHandler">
+					<constructor-arg index="0" value="2" />
+					<constructor-arg index="1" value="文章日期归档" />
+					<constructor-arg index="2" value="articleDateFiles" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/articleDateFiles.html" />
+				</bean>
+				<bean class="me.qyh.blog.ui.widget.ArticleSpaceFilesWidgetHandler">
+					<constructor-arg index="0" value="3" />
+					<constructor-arg index="1" value="文章空间归档" />
+					<constructor-arg index="2" value="articleSpaceFiles" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/articleSpaceFiles.html" />
+				</bean>
+				<bean class="me.qyh.blog.ui.widget.ArticlesWidgetHandler">
+					<constructor-arg index="0" value="4" />
+					<constructor-arg index="1" value="文章列表" />
+					<constructor-arg index="2" value="articlePage" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/articles.html" />
+				</bean>
+			</list>
+		</property>
+	</bean>
+
+	<bean class="me.qyh.blog.ui.DefaultTemplateParser" />
+	<bean class="me.qyh.blog.service.impl.UIServiceImpl">
+		<property name="sysPageDefaultTpls">
+			<map>
+				<entry key="INDEX">
+					<value>classpath:me/qyh/blog/ui/page/PAGE_INDEX.html</value>
+				</entry>
+				<entry key="ARTICLE_DETAIL">
+					<value>classpath:me/qyh/blog/ui/page/PAGE_ARTICLEDETAIL.html
+					</value>
+				</entry>
+				<entry key="ARTICLE_LIST">
+					<value>classpath:me/qyh/blog/ui/page/PAGE_ARTICLELIST.html</value>
+				</entry>
+			</map>
+		</property>
+		<property name="errorPageDefaultTpls">
+			<map>
+				<entry key="ERROR_200">
+					<value>classpath:me/qyh/blog/ui/page/error_200.html</value>
+				</entry>
+				<entry key="ERROR_400">
+					<value>classpath:me/qyh/blog/ui/page/error_400.html</value>
+				</entry>
+				<entry key="ERROR_403">
+					<value>classpath:me/qyh/blog/ui/page/error_403.html</value>
+				</entry>
+				<entry key="ERROR_404">
+					<value>classpath:me/qyh/blog/ui/page/error_404.html</value>
+				</entry>
+				<entry key="ERROR_405">
+					<value>classpath:me/qyh/blog/ui/page/error_405.html</value>
+				</entry>
+				<entry key="ERROR_500">
+					<value>classpath:me/qyh/blog/ui/page/error_500.html</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- 用来处理页面渲染错误 -->
+	<bean class="me.qyh.blog.ui.DefaultTplRenderExceptionHandler" />
+
+	<!-- 用来增加拓展页面 -->
+	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />
+</beans>      

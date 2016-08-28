@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.PageSizeConfigDao">
+	
+	<resultMap type="PageSizeConfig" id="PageSizeConfigDetail">
+		<id column="id"/>
+		<result column="pagesize_blog_file"  property="filePageSize"/>
+		<result column="pagesize_widget_user"  property="userWidgetPageSize"/>
+		<result column="pagesize_page_user" property="userPagePageSize"/>
+		<result column="pagesize_article" property="articlePageSize"/>
+		<result column="pagesize_tag" property="tagPageSize"/>
+	</resultMap>
+
+	<select id="select" resultMap="PageSizeConfigDetail">
+		SELECT pagesize_blog_file,pagesize_widget_user,pagesize_page_user,pagesize_article,pagesize_tag FROM blog_config_pagesize
+	</select>
+	
+	<update id="update">
+		UPDATE 
+			blog_config_pagesize
+		SET 
+			pagesize_blog_file = #{filePageSize},
+			pagesize_widget_user = #{userWidgetPageSize},
+			pagesize_page_user = #{userPagePageSize},
+			pagesize_article = #{articlePageSize},
+			pagesize_tag = #{tagPageSize}
+	</update>
+</mapper>

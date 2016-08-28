@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.ArticleDao">
+
+	<resultMap type="Article" id="ArticleDetail">
+		<id column="art_id" property="id" />
+		<result column="content" property="content" />
+		<result column="pubDate" property="pubDate" />
+		<result column="lastModifyDate" property="lastModifyDate" />
+		<result column="title" property="title" />
+		<result column="isPrivate" property="isPrivate" />
+		<result column="hits" property="hits" />
+		<result column="comments" property="comments" />
+		<result column="summary" property="summary" />
+		<result column="allowComment" property="allowComment" />
+		<result property="level" column="art_level" />
+		<result column="art_lock" property="lockId"/>
+		<result property="tags" column="tags" typeHandler="TagsTypeHandler"/>
+		<result property="status" column="art_status" typeHandler="EnumOrdinalTypeHandler" />
+		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
+		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
+		<association property="space" javaType="Space">
+			<result column="space_id" property="id" />
+			<result column="space_alias" property="alias"/>
+		</association>
+	</resultMap>
+	
+	<resultMap type="ArticleDateFile" id="ArticleDateFileDetail">
+		<id column="id"/>
+		<result column="pubDate" property="begin"/>
+		<result column="pubDate" property="end"/>
+		<result column="art_count" property="count"/>
+	</resultMap>
+	
+	<resultMap type="ArticleSpaceFile" id="ArticleSpaceFileDetail">
+		<id column="art_id"/>
+		<result column="art_count" property="count"/>
+		<association property="space" javaType="Space">
+			<result column="space_id" property="id" />
+			<result column="space_alias" property="alias"/>
+			<result column="space_name" property="name"/>
+		</association>
+	</resultMap>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment)
+		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{allowComment})
+	</insert>
+	
+	<update id="update">
+		UPDATE 
+			blog_article
+		<set>
+			<if test="content != null">
+				content = #{content},
+			</if>
+			<if test="title != null">
+				title = #{title},
+			</if>
+			<if test="isPrivate != null">
+				isPrivate = #{isPrivate},
+			</if>
+			pubDate = #{pubDate},
+			<if test="summary != null">
+				summary = #{summary},
+			</if>
+			art_level = #{level},
+			<if test="lockId != null">
+				art_lock  = #{lockId},
+			</if>
+			<if test="status != null">
+				art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},
+			</if>
+			<if test="from != null">
+				art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
+			</if>
+			<if test="space != null">
+				space_id = #{space.id},
+			</if>
+			<if test="allowComment != null">
+				allowComment = #{allowComment},
+			</if>
+			lastModifyDate = #{lastModifyDate}
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<select id="selectById" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.content,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.allowComment,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.editor,
+			art.space_id,
+			art.art_lock,
+			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		WHERE 
+			art.id = #{id}
+		GROUP BY art.id
+	</select>
+
+	<select id="selectByRandom" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.content,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.allowComment,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.editor,
+			art.space_id
+		FROM
+			blog_article art
+		WHERE art_lock IS NULL
+			<if test="space != null">
+				AND art.space_id = #{space.name}
+			</if>
+			<if test="begin != null and end != null">
+				AND pubDate BETWEEN #{begin} AND #{end}
+			</if>
+			<if test="status != null">
+				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+		ORDER BY RAND()
+		LIMIT 1
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT 
+			COUNT(art.id) 
+		FROM 
+			blog_article art
+		<where>
+			<if test="space != null">
+				art.space_id = #{space.id}
+			</if>
+			<if test="!queryPrivate">
+				AND art.isPrivate = false
+			</if>
+			<if test="begin != null and end != null">
+				AND art.pubDate BETWEEN #{begin} AND #{end}
+			</if>
+			<if test="status != null">
+				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="from != null">
+				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="tag != null">
+				AND art.id IN (SELECT article_id FROM blog_article_tag bat LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id WHERE bt.tag_name = #{tag})
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectPage" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.art_level,
+			art.art_status,
+			art.editor,
+			art.art_from,
+			art.space_id,
+			art.art_lock,
+			sp.space_alias,
+			GROUP_CONCAT(bt.tag_name) AS tags
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		<where>
+			<if test="space != null">
+				art.space_id = #{space.id}
+			</if>
+			<if test="!queryPrivate">
+				AND art.isPrivate = false
+			</if>
+			<if test="begin != null and end != null">
+				AND art.pubDate BETWEEN #{begin} AND #{end}
+			</if>
+			<if test="status != null">
+				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="from != null">
+				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="tag != null">
+				AND bt.tag_name = #{tag}
+			</if>
+		</where>
+		GROUP BY art.id
+		<choose>
+			<when test="!ignoreLevel">
+				ORDER BY art.art_level DESC,art.id DESC
+			</when>
+			<otherwise>
+				ORDER BY art.id DESC
+			</otherwise>
+		</choose>
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<select id="selectByIds" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.space_id,
+			art.art_lock,
+			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		WHERE art.id IN <foreach collection="list" item="id" open="(" close=")" separator=",">#{id}</foreach>
+		GROUP BY art.id
+		ORDER BY FIELD(art.id,
+		<foreach collection="list" item="id" separator=",">#{id}</foreach>
+		)
+	</select>
+	
+	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
+		SELECT pubDate,COUNT(id) AS art_count,id 
+		FROM blog_article art
+		WHERE art_status = 0<!-- PUBLISHED -->
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+		</if>
+		<if test="space != null">
+			AND space_id = #{space.id}
+		</if>
+		<choose>
+			<when test='mode.name() == "Y"'>
+				GROUP BY YEAR(pubDate)
+			</when>
+			<when test='mode.name() == "YM"'>
+				GROUP BY YEAR(pubDate),MONTH(pubDate)
+			</when>
+			<otherwise>
+				GROUP BY YEAR(pubDate),MONTH(pubDate),DATE(pubDate)
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="selectSpaceFiles" resultMap="ArticleSpaceFileDetail">
+		SELECT space_id,space_alias,space_name,COUNT(art.id) AS art_count,art.id AS art_id 
+		FROM blog_article art
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
+		WHERE art_status = 0<!-- PUBLISHED -->
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+		</if>
+		GROUP BY space_id
+	</select>
+	
+	<select id="selectScheduled" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.content,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.allowComment,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.editor,
+			art.space_id,
+			art.art_lock
+		FROM
+			blog_article art
+		WHERE
+			art.art_status = 1<!-- SCHEDULED -->
+		AND 
+			art.pubDate <![CDATA[ <= ]]> #{date}
+	</select>
+	
+	
+	<select id="selectPublished" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.content,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.allowComment,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.editor,
+			art.space_id,
+			art.art_lock,
+			GROUP_CONCAT(bt.tag_name) AS tags
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		WHERE art.art_status = 0
+		GROUP BY art.id
+	</select>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_article WHERE id = #{id}
+	</delete>
+	
+	<update id="updateHits">
+		UPDATE blog_article SET hits = hits +1 WHERE id = #{id}
+	</update>
+</mapper>

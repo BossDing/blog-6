@@ -1,0 +1,38 @@
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">文章日期归档</h3>
+	</div>
+	<div th:if="${#lists.isEmpty(articleDateFiles.files)}" th:remove="tag">
+		<div class="panel-body">
+			<div class="alert alert-info">没有任何文章日期归档</div>
+		</div>
+	</div>
+	<div th:unless="${#lists.isEmpty(articleDateFiles.files)}"
+		th:remove="tag">
+		<div class="table-responsive">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>日期</th>
+						<th>文章数</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="articleDateFile : ${articleDateFiles.files}">
+						<td th:switch="${articleDateFiles.mode.name()}"><a
+							th:href="${urls.getArticlesUrl(articleDateFile.begin,articleDateFile.end)}">
+								<span th:case="YM"
+								th:text="${#dates.format(articleDateFile.begin, 'yyyy年MM月')}">&nbsp;</span>
+								<span th:case="Y"
+								th:text="${#dates.format(articleDateFile.begin, 'yyyy年')}">&nbsp;</span>
+								<span th:case="YMD"
+								th:text="${#dates.format(articleDateFile.begin, 'yyyy年MM月dd日')}">&nbsp;</span>
+						</a></td>
+						<td th:text="${articleDateFile.count}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

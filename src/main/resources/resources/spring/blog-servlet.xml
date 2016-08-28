@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+	 http://www.springframework.org/schema/beans
+	 http://www.springframework.org/schema/beans/spring-beans.xsd
+	 http://www.springframework.org/schema/mvc
+	 http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	 http://www.springframework.org/schema/context
+	 http://www.springframework.org/schema/context/spring-context.xsd
+	 http://www.springframework.org/schema/aop 
+	 http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="50000000" />
+		<property name="maxInMemorySize" value="1024" />
+	</bean>
+
+	<mvc:resources location="/static/" mapping="/static/**"
+		cache-period="31556926" />
+
+	<!-- 包扫描 -->
+	<context:component-scan base-package="me.qyh.blog.web.controller" />
+
+	<bean class="me.qyh.blog.ui.TplRender" />
+
+	<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
+		<property name="contentType" value="text/html" />
+		<property name="characterEncoding" value="utf-8" />
+		<property name="templateEngine" ref="templateEngine" />
+	</bean>
+
+	<mvc:annotation-driven>
+		<mvc:message-converters register-defaults="true">
+			<bean
+				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="objectMapper" value="#{T(me.qyh.util.Jsons).getMapper()}" />
+			</bean>
+		</mvc:message-converters>
+		<mvc:argument-resolvers>
+			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
+		</mvc:argument-resolvers>
+		<mvc:return-value-handlers>
+			<bean
+				class="me.qyh.blog.web.controller.TemplateReturnMethodReturnValueHandler" />
+		</mvc:return-value-handlers>
+	</mvc:annotation-driven>
+
+	<bean class="me.qyh.blog.file.local.LocalResourceSimpleUrlHandlerMapping" />
+
+	<bean id="annotationHandlerMapping"
+		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+		<property name="order" value="1" />
+		<property name="alwaysUseFullPath" value="true" />
+	</bean>
+
+	<!-- csrf token store stragey -->
+	<bean class="me.qyh.blog.security.csrf.HttpSessionCsrfTokenRepository" />
+
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<bean class="me.qyh.blog.web.interceptor.AppInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<!-- 保护资源解锁 -->
+	<bean class="me.qyh.blog.lock.support.UnlockController" />
+	<!-- 锁解析 -->
+	<bean class="me.qyh.blog.lock.support.DefaultLockParser">
+		<property name="validators">
+			<array>
+				<bean class="me.qyh.blog.lock.support.DefaultLockValidator" />
+			</array>
+		</property>
+	</bean>
+
+	<!-- 页面拓展 -->
+	<bean class="me.qyh.blog.ui.page.ExpanedPageHandlerMapping" />
+	<bean class="me.qyh.blog.ui.page.ExpandedPageRequestController" />
+
+</beans>

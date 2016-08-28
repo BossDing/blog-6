@@ -1,0 +1,316 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/base/head :: head('文件管理')"></head>
+<body>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('files')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row" th:if="${error != null}">
+					<div class="col-md-12">
+						<div class="alert alert-danger" th:if="${error != null}"
+							th:text="${messages.getMessage(error)}"></div>
+					</div>
+				</div>
+				<div id="main" th:if="${result != null}">
+					<div class="row" style="margin-bottom: 10px">
+						<div class="col-md-12">
+							<button class="btn btn-primary" data-toggle="modal"
+								data-target="#uploadModal">上传文件</button>
+							<button class="btn btn-primary" data-toggle="modal"
+								data-target="#createFolderModal">新建文件夹</button>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<div th:remove="tag">
+								<ol class="breadcrumb"
+									th:unless="${#lists.isEmpty(result.paths)}">
+									<li><a th:href="@{/mgr/file/index}">根目录</a></li>
+									<li th:each="path : ${result.paths}"><a
+										th:href="@{/mgr/file/index?parent=}+${path.id}"
+										th:title="${path.name}" data-toggle="tooltip"
+										th:text="${#strings.length(path.name) > 5  ? #strings.substring(path.name,0,5)+'...' : path.name}"></a>
+									</li>
+								</ol>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<form style="display: none" th:action="@{/mgr/file/index}"
+								id="pageForm">
+								<input type="hidden" th:if="${param.parent != null}"
+									th:value="${param.parent}" name="parent" /> <input
+									type="hidden" th:value="${result.page.currentPage}"
+									name="currentPage" />
+							</form>
+							<div class="alert alert-info"
+								th:if="${#lists.isEmpty(result.page.datas)}">当前没有任何文件</div>
+							<div th:remove="tag"
+								th:unless="${#lists.isEmpty(result.page.datas)}">
+								<div class="row">
+									<div class="col-xs-6 col-md-2"
+										th:each="file : ${result.page.datas}">
+										<div th:switch="${file.type.name()}" th:remove="tag">
+											<div th:case="DIRECTORY" class="thumbnail text-center">
+												<a th:href="@{/mgr/file/index?parent=}+${file.id}"><img
+													th:src="@{/static/fileicon/folder.png}"
+													class="img-responsive" /></a>
+												<div class="caption">
+													<a th:title="${file.name}" data-toggle="tooltip"
+														th:text="${#strings.length(file.name) > 5  ? #strings.substring(file.name,0,5)+'...' : file.name}"></a>
+												</div>
+												<div class="caption"
+													th:text="${#dates.format(file.lastModifyDate, 'yyyy-MM-dd HH:mm')}"></div>
+												<div class="caption" style="height: 45px">
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="删除" data-action="delete"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="移动" data-action="move"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-move" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="更新" data-action="update"
+														th:data-id="${file.id}" th:data-name="${file.name}"><span
+														class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="属性" data-action="property"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-cog" aria-hidden="true"></span></a>
+												</div>
+											</div>
+											<div th:case="FILE" class="thumbnail text-center">
+												<img th:src="${file.cf.previewUrl}"
+													th:if="${file.cf.previewUrl != null}"
+													class="img-responsive" style="max-height: 80px" /> <img
+													th:src="@{/static/fileicon/file.png}"
+													class="img-responsive"
+													th:if="${file.cf.previewUrl == null}" />
+												<div class="caption">
+													<a th:title="${file.name}" data-toggle="tooltip"
+														th:text="${#strings.length(file.name) > 5  ? #strings.substring(file.name,0,5)+'...' : file.name}"></a>
+												</div>
+												<div class="caption"
+													th:text="${#dates.format(file.lastModifyDate, 'yyyy-MM-dd HH:mm')}"></div>
+												<div class="caption" style="height: 45px">
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="删除" data-action="delete"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="移动" data-action="move"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-move" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" href="###"
+														data-toggle="tooltip" title="更新" data-action="update"
+														th:data-id="${file.id}" th:data-name="${file.name}"><span
+														class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" th:href="${file.cf.url}"
+														target="_blank" data-toggle="tooltip"
+														title="查看文件，这跟文件和浏览器有关系，通常情况下，只能查看js,css,txt和图片等文件，其他文件会被当作文件下载。(如果储存在受保护的存储器中，则不会执行预览请求，而是直接下载文件)"><span
+														class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>
+													<a style="margin-right: 5px" target="_blank"
+														th:href="${file.cf.downloadUrl}" data-toggle="tooltip"
+														title="下载"><span
+														class="glyphicon glyphicon-download-alt"
+														aria-hidden="true"></span></a> <a href="###"
+														data-toggle="tooltip" title="属性" data-action="property"
+														th:data-id="${file.id}"><span
+														class="glyphicon glyphicon-cog" aria-hidden="true"></span></a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div th:if="${result.page.totalPage > 1}">
+								<ul class="pagination">
+									<li
+										th:each="i : ${#numbers.sequence(result.page.listbegin, result.page.listend-1)}">
+										<a th:text="${i}" th:data-page="${i}" href="###"></a>
+									</li>
+								</ul>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog"
+		aria-labelledby="uploadModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="uploadModalLabel">文件上传</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<div class="row" style="padding: 5px">
+							<form id="fileupload" class="form-horizontal" autocomplete="off"
+								th:action="@{/mgr/file/upload}" method="POST"
+								enctype="multipart/form-data">
+								<div class="col-md-12" style="margin-bottom: 20px">
+									<label class="control-label">存储服务：</label> <select
+										class="form-control" name="server">
+										<option th:each="server : ${servers}"
+											th:value="${server.id()}" th:text="${server.name()}"></option>
+									</select> <span th:remove="tag" th:if="${param.parent != null}"><input
+										type="hidden" th:value="${param.parent}" name="parent"></span>
+								</div>
+								<div class="fileupload-buttonbar">
+									<div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
+										<span class="btn btn-success fileinput-button"> <i
+											class="glyphicon glyphicon-plus"></i> <span>添加文件</span> <input
+											type="file" name="files" multiple="">
+										</span>
+										<button type="submit" class="btn btn-primary start">
+											<i class="glyphicon glyphicon-upload"></i> <span>文件上传</span>
+										</button>
+										<button type="reset" class="btn btn-warning cancel">
+											<i class="glyphicon glyphicon-ban-circle"></i> <span>取消</span>
+										</button>
+										<span class="fileupload-process"></span>
+									</div>
+								</div>
+								<div style="margin-top: 10px">
+									<div
+										class="fileupload-progress fade col-lg-12 col-sm-12 col-md-12 col-xs-12">
+										<!-- The global progress bar -->
+										<div class="progress progress-striped active"
+											role="progressbar" aria-valuemin="0" aria-valuemax="100">
+											<div class="progress-bar progress-bar-success"
+												style="width: 0%;"></div>
+										</div>
+									</div>
+								</div>
+								<div class="col-lg-12 col-sm-12 col-md-12 col-xs-12">
+									<div class="table-responsive">
+										<table role="presentation" class="table table-striped"
+											style="text-align: center">
+											<tbody class="files"></tbody>
+										</table>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="createFolderModal" tabindex="-1"
+		role="dialog" aria-labelledby="createFolderModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="createFolderModalLabel">新文件夹</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<span th:remove="tag" th:if="${param.parent != null}"><input
+							type="hidden" th:value="${param.parent}" name="parent"></span>
+						<div class="form-group">
+							<label for="name" class="control-label">名称(1~20个字符):</label> <input
+								type="text" class="form-control" name="name">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="createFolder">创建</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="updateModal" tabindex="-1" role="dialog"
+		aria-labelledby="updateFolderModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="updateModalLabel">更新文件</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<input type="hidden" class="form-control" name="id">
+						<div class="form-group">
+							<label for="name" class="control-label">名称(1~20个字符):</label> <input
+								type="text" class="form-control" name="name">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="update">更新</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="directorySelectModal" tabindex="-1"
+		role="dialog" aria-labelledby="directorySelectModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="directorySelectModalLabel">文件夹选择</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid" id="directorySelectMain"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/canvas-to-blob.min.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
+	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/mgr/file.js}"></script>
+</body>
+</html>

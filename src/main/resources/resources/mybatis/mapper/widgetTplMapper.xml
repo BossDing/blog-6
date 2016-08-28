@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.WidgetTplDao">
+	<resultMap type="WidgetTpl" id="WidgetTplDetail">
+		<id column="id" property="id"/>
+		<result column="tpl" property="tpl"/>
+		<association property="widget" javaType="Widget">
+			<result column="widget_id" property="id"/>
+			<result column="widget_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
+		</association>
+		<association property="page" javaType="Page">
+			<result column="page_id" property="id" />
+			<result column="widget_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
+		</association>
+	</resultMap>
+	
+	<select id="selectByWidget" resultMap="WidgetTplDetail">
+		SELECT
+			id,
+			widget_id,widget_type,
+			page_id,page_type
+		FROM 
+			blog_widget_tpl
+		WHERE widget_id = #{id}
+		AND widget_type = #{type,javaType=WidgetType,typeHandler=EnumOrdinalTypeHandler}
+	</select>
+	
+	<select id="selectByPage" resultMap="WidgetTplDetail">
+		SELECT
+			id,
+			widget_id,widget_type,
+			page_id,page_type
+		FROM 
+			blog_widget_tpl
+		WHERE page_id = #{id}
+		AND page_type = #{type,javaType=PageType,typeHandler=EnumOrdinalTypeHandler}
+	</select>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		INSERT blog_widget_tpl(tpl,widget_id,widget_type,page_id,page_type)
+		VALUES(#{tpl},#{widget.id},#{widget.type,javaType=WidgetType,typeHandler=EnumOrdinalTypeHandler},#{page.id},#{page.type,javaType=PageType,typeHandler=EnumOrdinalTypeHandler})
+	</insert>
+
+	<update id="update">
+		UPDATE
+			blog_widget_tpl
+		<set>
+			<if test="tpl != null">
+				tpl = #{tpl}
+			</if>
+		</set>
+		WHERE 
+			id = #{id}
+	</update>
+	
+
+	<select id="selectByPageAndWidget" resultMap="WidgetTplDetail">
+		SELECT
+			id,
+			tpl,
+			widget_id,widget_type,
+			page_id,page_type
+		FROM 
+			blog_widget_tpl
+		WHERE
+			page_id = #{page.id}
+			AND page_type = #{page.type,javaType=PageType,typeHandler=EnumOrdinalTypeHandler}
+			AND widget_id = #{widget.id}
+			AND widget_type = #{widget.type,javaType=WidgetType,typeHandler=EnumOrdinalTypeHandler}
+	</select>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_widget_tpl WHERE id = #{id}
+	</delete>
+</mapper>

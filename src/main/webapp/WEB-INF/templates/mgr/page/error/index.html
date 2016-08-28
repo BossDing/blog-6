@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/base/head :: head('错误页面模板管理')"></head>
+<body>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-md-12">
+						<div th:unless="${#lists.isEmpty(spaces)}">
+							<div class="table-responsive">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>空间</th>
+											<th th:each="errorCode : ${errorCodes}"
+												th:text="${messages.getMessage(errorCode.getMessage())}">
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>无</td>
+											<td th:each="errorCode : ${errorCodes}"><a data-action="revert" th:data-errorCode="${errorCode.name()}" href="###" style="margin-right:10px;"><span class="glyphicon glyphicon-repeat" title="还原" aria-hidden="true"></span></a><a
+												th:href="@{/mgr/page/error/build?errorCode=}+${errorCode.name()}"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+											</td>
+										</tr>
+										<tr th:each="space : ${spaces}">
+											<td><a th:href="${urls.getUrl(space)}"
+												th:title="${space.name}" data-toggle="tooltip"
+												th:text="${#strings.length(space.name) > 5  ? #strings.substring(space.name,0,5)+'...' : space.name}"></a></td>
+											<td th:each="errorCode : ${errorCodes}"><a href="###" data-action="revert" th:data-space-id="${space.id}" th:data-errorCode="${errorCode.name()}" style="margin-right:10px;"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a><a
+												th:href="@{/mgr/page/error/build?errorCode=}+${errorCode.name()}+'&spaceId='+${space.id}"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$("a[data-action='revert']").click(function(){
+			var me = $(this);
+			bootbox.confirm("确定要还原吗？这将删除现有的模板",function(result){
+				if(!result){
+					return ;
+				}
+				var errorCode = me.attr("data-errorCode");
+				var spaceId = me.attr("data-space-id");
+				var url = basePath+"/mgr/page/error/delete?errorCode="+errorCode;
+				if(spaceId){
+					url += "&spaceId="+spaceId;
+				}
+				$.ajax({
+					type : "post",
+					 async: false,
+					url : url,
+					data : {},
+					success : function(data){
+						bootbox.alert(data.message);
+					},
+					complete:function(){
+					}
+				});
+			})
+		})
+	})
+	</script>
+</body>
+</html>

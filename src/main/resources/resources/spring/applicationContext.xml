@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+						     http://www.springframework.org/schema/context 
+						     http://www.springframework.org/schema/context/spring-context-4.0.xsd
+						     http://www.springframework.org/schema/aop 
+						     http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+						     http://www.springframework.org/schema/tx 
+						     http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+						      http://www.springframework.org/schema/cache 
+						     http://www.springframework.org/schema/cache/spring-cache-4.0.xsd 
+						     http://www.springframework.org/schema/task
+		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
+
+
+	<context:property-placeholder
+		location="classpath:resources/mybatis/db.properties,classpath:resources/app.properties" />
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${jdbc.driverClass}" />
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}" />
+		<property name="user" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="minPoolSize" value="${jdbc.miniPoolSize}" />
+		<property name="maxPoolSize" value="${jdbc.maxPoolSize}" />
+		<property name="initialPoolSize" value="${jdbc.initialPoolSize}" />
+		<property name="maxIdleTime" value="${jdbc.maxIdleTime}" />
+		<property name="checkoutTimeout" value="${jdbc.checkoutTimeout}" />
+		<property name="automaticTestTable" value="${jdbc.automaticTestTable}" />
+		<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}" />
+	</bean>
+	<!-- 配置SqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
+		p:dataSource-ref="dataSource" />
+	<import resource="ui.xml" />
+
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+		p:dataSource-ref="dataSource" />
+	<tx:annotation-driven transaction-manager="txManager" />
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="me.qyh.blog.dao,me.qyh.blog.lock.support" />
+	</bean>
+
+	<import resource="file.xml" />
+	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config" />
+
+	<aop:aspectj-autoproxy />
+	<!-- 验证码服务 -->
+	<bean class="com.google.code.kaptcha.impl.DefaultKaptcha">
+		<property name="config">
+			<bean class="com.google.code.kaptcha.util.Config">
+				<constructor-arg type="java.util.Properties">
+					<props>
+						<prop key="kaptcha.image.width">300</prop>
+						<prop key="kaptcha.image.height">50</prop>
+						<prop key="kaptcha.textproducer.char.length">5</prop>
+					</props>
+				</constructor-arg>
+			</bean>
+		</property>
+	</bean>
+
+	<cache:annotation-driven />
+	<!-- 缓存配置 -->
+	<bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+		<property name="caches">
+			<set>
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="userCache" />
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="configCache" />
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="articleCache" />
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="articleFilesCache" />
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="uiCache" />
+				<bean
+					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
+					p:name="lockCache" />
+			</set>
+		</property>
+	</bean>
+
+	<!-- 锁 -->
+	<bean class="me.qyh.blog.lock.support.DefaultLockManager" />
+	<bean class="me.qyh.blog.lock.LockAspect" />
+
+	<!-- 登录验证 -->
+	<bean class="me.qyh.blog.security.EnsureLoginAspect" />
+	<!-- 自动登录 -->
+	<bean class="me.qyh.blog.security.CookieRememberMe" />
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames" value="classpath:resources/messages/message" />
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+
+	<bean class="me.qyh.blog.message.Messages">
+		<property name="locale" value="zh_CN" />
+	</bean>
+
+	<!-- 查询是否存在待发表的计划中博客，如果存在则发表该博客 -->
+	<bean id="pushScheduledArticleJob" class="me.qyh.blog.service.impl.PushScheduledArticleJob" />
+	<!-- 重建文章索引，之所以需要定时更新文章索引，是因为在用户插入、修改标签之后，此时老的索引并没有更新，并且无法精确更新索引，所以只能每隔一段时间全部重建索引 -->
+	<bean id="articleIndexRebuildJob" class="me.qyh.blog.service.impl.ArticleIndexRebuildJob" />
+	<task:scheduled-tasks scheduler="articleSchedule">
+		<!-- 默认5秒查询一次 -->
+		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
+			cron="0/5 * * * * ?" />
+		<!-- 0 0/5 * * * ? -->
+		<task:scheduled ref="articleIndexRebuildJob" method="doJob"
+			cron="0 0/5 * * * ?" />
+	</task:scheduled-tasks>
+	<task:scheduler id="articleSchedule" pool-size="2" />
+
+	<bean class="me.qyh.blog.service.impl.NrtArticleIndexer">
+		<constructor-arg index="0" value="c:/blog_index" />
+		<constructor-arg index="1" value="SEARCH" />
+		<!-- 索引commit间隔，由于commit操作相对比较笨重，所以这里定时处理提高性能 -->
+		<constructor-arg index="2" value="0" />
+	</bean>
+</beans>      

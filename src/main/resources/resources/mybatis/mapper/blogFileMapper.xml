@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.BlogFileDao">
+
+	<resultMap type="BlogFile" id="BlogFileDetail">
+		<id column="id" property="id"/>
+		<result column="file_name" property="name"/>
+		<result column="file_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
+		<result column="file_createDate" property="createDate"/>
+		<result column="file_lft" property="lft"/>
+		<result column="file_rgt" property="rgt"/>
+		<result column="file_lastmodifydate" property="lastModifyDate"/>
+		<association property="parent" javaType="BlogFile">
+			<result column="file_parent" property="id"/>
+		</association>
+		<association property="cf" javaType="CommonFile" resultMap="me.qyh.blog.dao.CommonFileDao.CommonFileDetail"/>
+	</resultMap>
+	
+	<resultMap type="BlogFileCount" id="BlogFileCountDetail">
+		<id column="file_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
+		<result column="file_count" property="count"/>
+	</resultMap>
+
+	<insert id="insert">
+		INSERT INTO blog_file(file_name,file_parent,file_type,file_createDate,common_file,file_lft,file_rgt)
+		VALUES(#{name},#{parent.id},#{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler},#{createDate},#{cf.id},#{lft},#{rgt})
+	</insert>
+
+	<update id="updateWhenAddChild">
+		UPDATE blog_file SET file_rgt = file_rgt + 2 WHERE file_rgt > #{lft};
+		UPDATE blog_file SET file_lft = file_lft + 2 WHERE file_lft > #{lft};
+	</update>
+	
+	<select id="selectById" resultMap="BlogFileDetail">
+		SELECT 
+			bf.id,
+			file_name,
+			file_type,
+			file_createDate,
+			file_lft,
+			file_rgt,
+			file_parent ,
+			bcf.id AS cf_id,
+			file_key,
+			file_extension,
+			file_size,
+			file_store,
+			file_server,
+			file_originalname,
+			file_width,
+			file_height,
+			file_lastmodifydate
+		FROM 
+			blog_file  bf
+		LEFT OUTER JOIN 
+			blog_common_file bcf
+		ON
+			bcf.id = bf.common_file
+		WHERE 
+			bf.id = #{id}
+	</select>
+	
+	<select id="selectPath" resultMap="BlogFileDetail">
+		SELECT 
+			parent.id,
+			parent.file_name,
+			parent.file_type,
+			parent.file_createDate,
+			parent.file_lft,
+			parent.file_rgt,
+			parent.file_parent,
+			file_lastmodifydate
+		FROM 
+			blog_file AS parent
+		WHERE 
+			file_lft <![CDATA[ <= ]]> #{lft}
+			AND file_rgt >= #{rgt}
+	</select>
+	
+	<select id="selectSubBlogFileCount" resultMap="BlogFileCountDetail">
+		SELECT 
+			file_type,
+			COUNT(id) AS file_count
+		FROM 
+			blog_file 
+		WHERE 
+			file_lft > #{lft} AND file_rgt <![CDATA[ < ]]> #{rgt}
+		GROUP BY 
+			file_type 
+	</select>
+	
+	<select id="selectSubBlogFileSize" resultType="long">
+		SELECT 
+			COALESCE(SUM(file_size),0) 
+		FROM 
+			blog_file bf 
+		LEFT OUTER JOIN 
+			blog_common_file bcf 
+		ON 
+			bf.`common_file` = bcf.`id`
+		WHERE 
+			file_lft > #{lft} AND file_rgt <![CDATA[ < ]]> #{rgt}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT COUNT(id) FROM blog_file 
+		WHERE
+			file_parent = #{parent}
+			<if test="type != null">
+				AND file_type = #{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+	</select>
+	
+	<select id="selectPage" resultMap="BlogFileDetail">
+		SELECT 
+			bf.id,
+			file_name,
+			file_type,
+			file_createDate,
+			file_lft,
+			file_rgt,
+			file_parent ,
+			bcf.id AS cf_id,
+			file_key,
+			file_extension,
+			file_size,
+			file_store,
+			file_server,
+			file_originalname,
+			file_width,
+			file_height
+		FROM 
+			blog_file  bf
+		LEFT OUTER JOIN 
+			blog_common_file bcf
+		ON
+			bcf.id = bf.common_file
+		WHERE
+			file_parent = #{parent}
+			<if test="type != null">
+				AND file_type = #{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+		ORDER BY bf.id DESC
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<select id="selectRoot" resultMap="BlogFileDetail">
+		SELECT 
+			bf.id,
+			file_lft,
+			file_rgt
+		FROM 
+			blog_file  bf
+		WHERE 
+			file_parent IS NULL
+	</select>
+	
+	<update id="update">
+		UPDATE blog_file 
+		<set>
+			<if test="lastModifyDate != null">
+				file_lastmodifydate = #{lastModifyDate},
+			</if>
+			<if test="name != null">
+				file_name = #{name}
+			</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteCommonFile">
+		UPDATE blog_common_file bcf 
+		SET file_status = 1 
+		WHERE id IN
+		(SELECT common_file FROM blog_file bf WHERE file_lft >= #{lft} AND file_rgt <![CDATA[ <= ]]> #{rgt})
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM blog_file WHERE file_lft BETWEEN #{lft} AND #{rgt}
+	</delete>
+	
+	<update id="updateWhenDelete">
+		UPDATE blog_file SET file_rgt = file_rgt - #{width} WHERE file_rgt > #{rgt};
+	 	UPDATE blog_file SET file_lft = file_lft - #{width} WHERE file_lft > #{rgt};
+	</update>
+	
+	<update id="updateWhenMove">
+		UPDATE 
+			blog_file
+		SET 
+			file_lft = 0-file_lft, file_rgt = 0-file_rgt
+		WHERE 
+			file_lft >= #{src.lft} AND file_rgt <![CDATA[ <= ]]> #{src.rgt};
+
+		UPDATE 
+			blog_file
+		SET 
+			file_lft = file_lft - #{src.width}
+		WHERE 
+			file_lft > #{src.rgt};
+		
+		UPDATE 
+			blog_file
+		SET 
+			file_rgt = file_rgt - #{src.width}
+		WHERE 
+			file_rgt > #{src.rgt};
+
+		UPDATE 
+			blog_file
+		SET 
+			file_lft = file_lft + #{src.width}
+		WHERE 
+			file_lft >= IF(#{parent.rgt} > #{src.rgt}, #{parent.rgt} - #{src.width}, #{parent.rgt});
+		
+		UPDATE 
+			blog_file
+		SET 
+			file_rgt = file_rgt + #{src.width}
+		WHERE 
+			file_rgt >= IF(#{parent.rgt} > #{src.rgt}, #{parent.rgt} - #{src.width}, #{parent.rgt});
+
+		UPDATE 
+			blog_file
+		SET
+    		file_lft = 0-file_lft+IF(#{parent.rgt} > #{src.rgt}, #{parent.rgt} - #{src.rgt} - 1, #{parent.rgt} - #{src.rgt} - 1 + #{src.width}),
+   			file_rgt = 0-file_rgt+IF(#{parent.rgt} > #{src.rgt}, #{parent.rgt} - #{src.rgt} - 1, #{parent.rgt} - #{src.rgt} - 1 + #{src.width})
+		WHERE 
+			file_lft <![CDATA[ <= ]]> 0-#{src.lft} AND file_rgt >= 0-#{src.rgt};
+		
+		UPDATE 
+			blog_file
+		SET 
+			file_parent = #{parent.id}
+		WHERE 
+			id = #{src.id};
+	</update>
+
+</mapper>

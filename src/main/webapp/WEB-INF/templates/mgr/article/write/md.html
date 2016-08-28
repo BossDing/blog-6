@@ -1,0 +1,170 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+	th:href="@{/static/bootstrap-timepicker/css/bootstrap-datetimepicker.min.css}" />
+<link th:href="@{/static/bootstrap/css/bootstrap.min.css}"
+	rel="stylesheet">
+<link rel="stylesheet"
+	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css}">
+<link rel="stylesheet"
+	th:href="@{/static/font-awesome/css/font-awesome.min.css}">
+<link rel="stylesheet" th:href="@{/static/css/sb-admin.css}">
+<link rel="stylesheet"
+	th:href="@{/static/editor/markdown/css/editormd.css}" />
+<!--[if lt IE 9]>
+  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<style type="text/css">
+.table-borderless tbody tr td, .table-borderless tbody tr th,
+	.table-borderless thead tr th {
+	border: none;
+}
+</style>
+<title>博客撰写</title>
+</head>
+<body>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('article')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row" style="margin-top: 10px">
+					<div class="col-md-12">
+						<div class="form-group">
+							<label>博客标题</label><input type="text" class="form-control"
+								placeholder="博客标题(1-50个字符)" maxlength="50" id="title"
+								th:value="${article.title}" />
+						</div>
+						<div class="form-group">
+							<label>博客编辑器</label>
+							<div id="editormd">
+								<textarea style="display: none;" th:text="${article.content}"></textarea>
+							</div>
+						</div>
+						<div class="form-group">
+							<label>摘要 (<a href="###" onclick="getSummary()">提取</a>)
+							</label>
+							<textarea class="form-control" cols="8" rows="8"
+								placeholder="(0~500字符)" id="summary"
+								th:text="${article.summary}"></textarea>
+						</div>
+						<div class="form-group">
+							<label>标签(<a href="###" onclick="getTags()">提取</a>)
+							</label> <input type="text" id="tags-input" class="form-control"
+								placeholder="标签(1-20个字符)，按空格键确认" maxlength="20" />
+							<div id="tags-container" class="well" style="margin-top: 5px"></div>
+						</div>
+						<div class="form-group">
+							<label>空间</label> <select class="form-control" id="space">
+								<option th:each="space : ${spaces}" th:text="${space.name}"
+									th:value="${space.id}"></option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>来源</label> <select class="form-control" id="from">
+								<option th:if="${article.from != null}"
+									th:value="${article.from.name()}" selected="selected"
+									th:text="'当前:'+${messages.getMessage(article.from.getMessage())}"></option>
+								<option value="ORIGINAL">原创</option>
+								<option value="COPIED">转载</option>
+							</select>
+						</div>
+						<div id="lock_container"></div>
+						<div class="form-group">
+							<label>状态</label> <select class="form-control" id="status">
+								<option th:if="${article.status != null}"
+									th:value="${article.status.name()}"
+									th:text="${messages.getMessage(article.status.getMessage())}"></option>
+								<option value="DRAFT">草稿</option>
+								<option value="PUBLISHED">发布</option>
+								<option value="SCHEDULED">计划</option>
+							</select>
+							<div class="checkbox">
+								<label
+									th:if="${article.isPrivate == null || !article.isPrivate}">
+									<input type="checkbox" id="private" />私人博客
+								</label> <label
+									th:if="${article.isPrivate != null && article.isPrivate}"><input
+									type="checkbox" id="private" checked="checked" />私人博客 </label>
+							</div>
+						</div>
+						<div class="form-group"
+							th:style="${article.isSchedule() ? '' : 'display: none'}"
+							id="scheduleContainer">
+							<label>计划发表日期</label>
+							<div class="input-group date form_datetime col-md-12"
+								data-date-format="yyyy-mm-dd hh:ii:ss"
+								data-link-field="scheduleDate">
+								<input class="form-control" size="16" type="text"
+									th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"
+									readonly> <span class="input-group-addon"><span
+									class="glyphicon glyphicon-remove"></span></span> <span
+									class="input-group-addon"><span
+									class="glyphicon glyphicon-th"></span></span>
+							</div>
+							<input type="hidden" id="scheduleDate"
+								th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"><br>
+						</div>
+						<div class="form-group">
+							<label>博客优先级(优先级越高排名越靠前)</label> <input type="text"
+								class="form-control" placeholder="1~100" maxlength="3"
+								id="level" th:value="${article.level}" />
+						</div>
+						<div class="form-group" style="text-align: center">
+							<button class="btn btn-primary" type="button" id="submit-art">提交</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<input type="hidden" th:value="${article.status}" id="oldStatus" />
+	<input type="hidden" th:value="${article.tagStr}" id="oldTags"
+		style="display: none" />
+	<input type="hidden" th:value="${article.lockId}" id="oldLock"
+		style="display: none" />
+	<input type="hidden" th:value="${article.id}" id="id"
+		style="display: none" />
+	<input type="hidden"
+		th:value="${article.space == null ? '' : article.space.id}"
+		id="oldSpace" style="display: none" />
+	<div th:replace="base/foot_source"></div>
+	<script th:src="@{/static/editor/markdown/editormd.min.js}"></script>
+	<script
+		th:src="@{/static/editor/markdown/plugins/blog-file/file-dialog.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/mgr/md.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/bootstrap-timepicker/js/bootstrap-datetimepicker.js}"
+		charset="UTF-8"></script>
+	<script type="text/javascript"
+		th:src="@{/static/bootstrap-timepicker/js/locales/bootstrap-datetimepicker.zh-CN.js}"
+		charset="UTF-8"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/canvas-to-blob.min.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
+	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/mgr/file.js}"></script>
+</body>
+</html>
