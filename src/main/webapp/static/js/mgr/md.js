@@ -171,7 +171,7 @@ var publishing = false;
 			if ($.trim(html) == "") {
 				showTagError('<div id="tag-tip" class="alert alert-danger">请完善文章内容</div>')
 			} else {
-				var url = basePath + 'mgr/article/getTags';
+				var url = basePath + '/mgr/article/getTags';
 				$.post(url, {
 					"content" : html
 				}, function callBack(data) {
@@ -223,7 +223,7 @@ var publishing = false;
 		function getSummary() {
 			var html = editor.getMarkdown();
 			if ($.trim(html) != "") {
-				var url = basePath + 'mgr/article/getSummary';
+				var url = basePath + '/mgr/article/getSummary';
 				$.post(url, {
 					"content" : html
 				}, function callBack(data) {
