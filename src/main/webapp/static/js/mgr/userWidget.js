@@ -93,8 +93,7 @@ $(document).ready(
 	$("#updateUserWidget").click(
 			function() {
 				$("#updateUserWidget").prop("disabled", true);
-				var data = $("#updateUserWidgetModal").find(
-						"form").serializeObject();
+				var data = $("#updateUserWidgetModal").find("form").serializeObject();
 				data.defaultTpl = upeditor.getValue();
 				$.ajax({
 					type : "post",
@@ -122,8 +121,7 @@ $(document).ready(
 	$("#createUserWidget").click(
 			function() {
 				$("#createUserWidget").prop("disabled", true);
-				var data = $("#createUserWidgetModal").find(
-						"form").serializeObject();
+				var data = $("#createUserWidgetModal").find("form").serializeObject();
 				data.defaultTpl = editor.getValue();
 				$.ajax({
 					type : "post",
