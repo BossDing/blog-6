@@ -68,31 +68,28 @@ public class UrlConfig implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (enableSpaceDomain) {
-			if (Validators.isEmptyOrNull(domain, true)) {
-				throw new SystemException("开了博客分类域名后必须提供一个访问域名");
-			}
-			domain = domain.toLowerCase();
-			if (domain.indexOf(".") == -1) {
-				throw new SystemException("错误的域名:" + domain);
-			}
-			String[] splitResult = domain.split("\\.");
-			String last = splitResult[splitResult.length - 1];
-			if (!StringUtils.isAlpha(last)) {
-				throw new SystemException("错误的域名:" + domain);
-			}
+		if (Validators.isEmptyOrNull(domain, true)) {
+			throw new SystemException("开了博客分类域名后必须提供一个访问域名");
+		}
+		domain = domain.toLowerCase();
+		if (domain.indexOf(".") == -1) {
+			throw new SystemException("错误的域名:" + domain);
+		}
+		String[] splitResult = domain.split("\\.");
+		String last = splitResult[splitResult.length - 1];
+		if (!StringUtils.isAlpha(last)) {
+			throw new SystemException("错误的域名:" + domain);
+		}
 
-			// www.abc.com
-			// abc.com
-			if (domain.startsWith("www.") && splitResult.length == 3) {
-				rootDomain = splitResult[1] + "." + splitResult[2];
-			}
+		// www.abc.com
+		// abc.com
+		if (domain.startsWith("www.") && splitResult.length == 3) {
+			rootDomain = splitResult[1] + "." + splitResult[2];
+		}
+		contextPath = contextPath.trim();
 
-			contextPath = contextPath.trim();
-
-			if (!contextPath.isEmpty() && !contextPath.startsWith("/")) {
-				contextPath = "/" + contextPath;
-			}
+		if (!contextPath.isEmpty() && !contextPath.startsWith("/")) {
+			contextPath = "/" + contextPath;
 		}
 	}
 
