@@ -58,6 +58,17 @@
 				<div class="row">
 					<div style="margin-top: 10px">
 						<div class="col-md-2">
+							<label>页面别名(1~30个字符,只能包含英文和数字以及-和_，不能为纯数字)：</label>
+						</div>
+						<div class="col-md-10">
+							<input type="text" class="form-control" th:value="${page.alias}"
+								id="alias"> <input type="text" style="display: none">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div style="margin-top: 10px">
+						<div class="col-md-2">
 							<label>所属空间：</label>
 						</div>
 						<div class="col-md-10">

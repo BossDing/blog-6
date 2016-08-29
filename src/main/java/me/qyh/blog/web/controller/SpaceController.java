@@ -82,8 +82,8 @@ public class SpaceController extends BaseController {
 				new Params().add(ArticlesWidgetHandler.PARAMETER_KEY, articleQueryParam));
 	}
 
-	@RequestMapping("page/{id}")
-	public Template userPage(@PathVariable("id") Integer id) throws LogicException {
-		return uiService.renderUserPage(id);
+	@RequestMapping("page/{idOrAlias}")
+	public Template userPage(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
+		return uiService.renderUserPage(idOrAlias);
 	}
 }

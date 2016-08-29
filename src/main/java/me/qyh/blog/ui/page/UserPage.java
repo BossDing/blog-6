@@ -12,6 +12,7 @@ public class UserPage extends Page {
 	private String name;
 	private String description;
 	private Date createDate;
+	private String alias;
 
 	public String getName() {
 		return name;
@@ -35,6 +36,14 @@ public class UserPage extends Page {
 
 	public void setCreateDate(Date createDate) {
 		this.createDate = createDate;
+	}
+
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
 	}
 
 	@Override

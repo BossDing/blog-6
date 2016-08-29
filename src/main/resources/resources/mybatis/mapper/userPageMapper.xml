@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id column="id" property="id" />
 		<result column="page_tpl" property="tpl"/>
 		<result column="page_name" property="name"/>
+		<result column="page_alias" property="alias"/>
 		<result column="page_description" property="description"/>
 		<result column="page_create_date" property="createDate"/>
 		<association property="space" javaType="Space">
@@ -17,8 +18,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" keyProperty="id" useGeneratedKeys="true">
-		INSERT INTO blog_page_user(space_id,page_tpl,page_name,page_description,page_create_date)
-		VALUES(#{space.id},#{tpl},#{name},#{description},#{createDate})
+		INSERT INTO blog_page_user(space_id,page_tpl,page_name,page_description,page_create_date,page_alias)
+		VALUES(#{space.id},#{tpl},#{name},#{description},#{createDate},#{alias})
 	</insert>
 	
 	<update id="update">
@@ -27,7 +28,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			page_name = #{name},
 			page_description = #{description},
 			space_id = #{space.id},
-			page_tpl = #{tpl}
+			page_tpl = #{tpl},
+			page_alias = #{alias}
 		WHERE id = #{id}
 	</update>
 	
@@ -36,12 +38,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</delete>
 
 	<select id="selectById" resultMap="UserPageDetail">
-		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.id = #{id}
+		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.id = #{id}
+	</select>
+	
+	<select id="selectByAlias" resultMap="UserPageDetail">
+		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.page_alias = #{alias}
 	</select>
 	
 	<select id="selectPage" resultMap="UserPageDetail">
 		SELECT
-			bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias
+			bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias
 		FROM
 			blog_page_user bpu
 		LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id

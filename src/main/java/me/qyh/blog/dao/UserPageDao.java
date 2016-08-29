@@ -19,4 +19,6 @@ public interface UserPageDao {
 
 	void deleteById(Integer id);
 
+	UserPage selectByAlias(String alias);
+
 }

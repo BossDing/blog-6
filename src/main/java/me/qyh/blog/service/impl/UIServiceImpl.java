@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -163,6 +164,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
+	public UserPage queryUserPage(String alias) {
+		return userPageDao.selectByAlias(alias);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public PageResult<UserPage> queryUserPage(UserPageQueryParam param) {
 		int count = userPageDao.selectCount(param);
 		List<UserPage> datas = userPageDao.selectPage(param);
@@ -262,8 +269,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
-	public UserPage renderUserPage(Integer id) throws LogicException {
-		UserPage db = userPageDao.selectById(id);
+	public UserPage renderUserPage(String idOrAlias) throws LogicException {
+		UserPage db;
+		try {
+			Integer id = Integer.parseInt(idOrAlias);
+			db = userPageDao.selectById(id);
+		} catch (Exception e) {
+			db = userPageDao.selectByAlias(idOrAlias);
+		}
 		if (db == null) {
 			throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
 		}
@@ -272,6 +285,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
 		}
 		return uiCacheRender.render(db, new Params());
+	}
+
+	public static void main(String[] args) {
+		System.out.println(StringUtils.isNumeric("58.8"));
 	}
 
 	@Override
@@ -293,6 +310,13 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void buildTpl(UserPage userPage) throws LogicException {
 		checkSpace(userPage);
+		String alias = userPage.getAlias();
+		if (alias != null) {
+			UserPage aliasPage = userPageDao.selectByAlias(alias);
+			if (aliasPage != null && !aliasPage.equals(userPage)) {
+				throw new LogicException(new Message("page.user.aliasExists", "别名" + alias + "已经存在", alias));
+			}
+		}
 		boolean update = userPage.hasId();
 		if (update) {
 			UserPage db = userPageDao.selectById(userPage.getId());

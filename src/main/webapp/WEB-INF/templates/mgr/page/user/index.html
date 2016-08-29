@@ -29,6 +29,7 @@
 									<thead>
 										<tr>
 											<th>页面名</th>
+											<th>别名</th>
 											<th>描述</th>
 											<th>空间</th>
 											<th>创建日期</th>
@@ -40,6 +41,9 @@
 											<td><a href="###" th:title="${page.name}"
 												data-toggle="tooltip"
 												th:text="${#strings.length(page.name) > 10  ? #strings.substring(page.name,0,10)+'...' : page.name}"></a></td>
+											<td><a href="###" th:if="${page.alias != null}" th:title="${page.alias}"
+												data-toggle="tooltip"
+												th:text="${#strings.length(page.alias) > 10  ? #strings.substring(page.alias,0,10)+'...' : page.alias}"></a></td>
 											<td><a href="###" th:title="${page.description}"
 												data-toggle="tooltip"
 												th:text="${#strings.length(page.description) > 10  ? #strings.substring(page.description,0,10)+'...' : page.description}"></a></td>

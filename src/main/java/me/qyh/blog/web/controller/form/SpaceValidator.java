@@ -27,7 +27,7 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 		if (name.length() > MAX_NAME_LENGTH) {
-			errors.reject("space.name.toolong",new Object[]{MAX_NAME_LENGTH}, "空间名不能超过" + MAX_NAME_LENGTH + "个字符");
+			errors.reject("space.name.toolong", new Object[] { MAX_NAME_LENGTH }, "空间名不能超过" + MAX_NAME_LENGTH + "个字符");
 			return;
 		}
 
@@ -37,7 +37,7 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 		if (alias.length() > MAX_ALIAS_LENGTH) {
-			errors.reject("space.alias.toolong",new Object[]{MAX_ALIAS_LENGTH}, "别名不能超过" + MAX_NAME_LENGTH + "个字符");
+			errors.reject("space.alias.toolong", new Object[] { MAX_ALIAS_LENGTH }, "别名不能超过" + MAX_NAME_LENGTH + "个字符");
 			return;
 		}
 		char[] chars = alias.toCharArray();
@@ -57,7 +57,8 @@ public class SpaceValidator implements Validator {
 	 * @see Character#isLetterOrDigit(char)
 	 */
 	private boolean isAllowLetter(char ch) {
-		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch);
+		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch)
+				|| ('_' == ch);
 	}
 
 }

@@ -8,6 +8,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.ui.page.ErrorPage;
+import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -24,6 +25,8 @@ public class PageValidator implements Validator {
 
 	private static final int PAGE_NAME_MAX_LENGTH = 20;
 	private static final int PAGE_DESCRIPTION_MAX_LENGTH = 500;
+
+	private static final int PAGE_ALIAS_MAX_LENGTH = 30;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -86,7 +89,8 @@ public class PageValidator implements Validator {
 				return;
 			}
 			if (name.length() > PAGE_NAME_MAX_LENGTH) {
-				errors.reject("page.name.toolong", "页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
+				errors.reject("page.name.toolong", new Object[] { PAGE_NAME_MAX_LENGTH },
+						"页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
 				return;
 			}
 			String description = userPage.getDescription();
@@ -95,8 +99,21 @@ public class PageValidator implements Validator {
 				return;
 			}
 			if (description.length() > PAGE_DESCRIPTION_MAX_LENGTH) {
-				errors.reject("page.description.toolong", "页面描述不能超过" + PAGE_DESCRIPTION_MAX_LENGTH + "个字符");
+				errors.reject("page.description.toolong", new Object[] { PAGE_DESCRIPTION_MAX_LENGTH },
+						"页面描述不能超过" + PAGE_DESCRIPTION_MAX_LENGTH + "个字符");
 				return;
+			}
+			String alias = userPage.getAlias();
+			if (alias != null) {
+				if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
+					errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
+							"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
+					return;
+				}
+				if (!validateUserPageAlias(alias)) {
+					errors.reject("page.alias.invalid", "页面别名不被允许");
+					return;
+				}
 			}
 		}
 
@@ -112,14 +129,39 @@ public class PageValidator implements Validator {
 				return;
 			}
 			if (name.length() > PAGE_NAME_MAX_LENGTH) {
-				errors.reject("page.name.toolong", "页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
+				errors.reject("page.name.toolong", new Object[] { PAGE_NAME_MAX_LENGTH },
+						"页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
 				return;
 			}
 		}
-		
-		if(page instanceof ErrorPage){
-			
+
+		if (page instanceof ErrorPage) {
+			ErrorPage errorPage = (ErrorPage) page;
+			ErrorCode errorCode = errorPage.getErrorCode();
+			if (errorCode == null) {
+				errors.reject("page.errorcode.null", "页面错误码不能为空");
+				return;
+			}
 		}
 	}
 
+	protected boolean validateUserPageAlias(String alias) {
+		for (char ch : alias.toCharArray()) {
+			if (!allowChar(ch)) {
+				return false;
+			}
+		}
+		// 不能为纯数字，防止和id混淆
+		try {
+			Integer.parseInt(alias);
+			return false;
+		} catch (Exception e) {
+		}
+		return true;
+	}
+
+	private boolean allowChar(char ch) {
+		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch)
+				|| ('_' == ch);
+	}
 }

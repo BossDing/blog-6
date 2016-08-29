@@ -70,6 +70,14 @@ public interface UIService {
 	UserPage queryUserPage(Integer id);
 
 	/**
+	 * 根据alias查询用户页面
+	 * 
+	 * @param id
+	 * @return
+	 */
+	UserPage queryUserPage(String alias);
+
+	/**
 	 * 查询系统页面模板
 	 * 
 	 * @param space
@@ -165,7 +173,7 @@ public interface UIService {
 	 * @throws LogicException
 	 *             如果页面不存在，数据渲染异常等
 	 */
-	UserPage renderUserPage(Integer id) throws LogicException;
+	UserPage renderUserPage(String idOrAlias) throws LogicException;
 
 	/**
 	 * 删除挂件模板

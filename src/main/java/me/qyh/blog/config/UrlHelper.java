@@ -118,7 +118,12 @@ public class UrlHelper implements InitializingBean {
 		}
 
 		public String getUrl(UserPage userPage) {
-			return getUrl(userPage.getSpace()) + "/page/" + userPage.getId();
+			String alias = userPage.getAlias();
+			if (alias != null) {
+				return getUrl(userPage.getSpace()) + "/page/" + userPage.getId();
+			} else {
+				return getUrl(userPage.getSpace()) + "/page/" + alias;
+			}
 		}
 	}
 
@@ -195,8 +200,10 @@ public class UrlHelper implements InitializingBean {
 			// 空间域名
 			this.env = new Env();
 			// 如果开启了空间域名
-			String space = getSpaceIfSpaceDomainRequest(request);
-			if (space == null) {
+			String space = null;
+			if (urlConfig.isEnableSpaceDomain()) {
+				space = getSpaceIfSpaceDomainRequest(request);
+			} else {
 				// env.space = hosts[0];
 				String requestUri = request.getRequestURI();
 				if (requestUri.startsWith(request.getContextPath() + "/space/")) {

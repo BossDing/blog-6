@@ -238,6 +238,9 @@ var _tpls = [];
 		if(id != null && $.trim(id) != ''){
 			page.id = id;
 		}
+		if($.trim($("#alias").val()) != ''){
+			page.alias = $.trim($("#alias").val());
+		}
 		page.name=$("#name").val();
 		page.description=$("#description").val();
 		$.ajax({
