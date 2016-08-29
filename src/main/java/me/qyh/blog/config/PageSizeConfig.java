@@ -33,6 +33,11 @@ public class PageSizeConfig {
 	 */
 	private int tagPageSize;
 
+	/**
+	 * oauth用户分页数量
+	 */
+	private int oauthUserPageSize;
+
 	public int getFilePageSize() {
 		return filePageSize;
 	}
@@ -71,6 +76,14 @@ public class PageSizeConfig {
 
 	public void setTagPageSize(int tagPageSize) {
 		this.tagPageSize = tagPageSize;
+	}
+
+	public int getOauthUserPageSize() {
+		return oauthUserPageSize;
+	}
+
+	public void setOauthUserPageSize(int oauthUserPageSize) {
+		this.oauthUserPageSize = oauthUserPageSize;
 	}
 
 }

@@ -1,7 +1,5 @@
 package me.qyh.blog.web.controller;
 
-import java.util.Date;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,7 +56,6 @@ public class SpaceMgrController extends BaseMgrController {
 	@RequestMapping(value = "add", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult add(@RequestBody @Validated Space space) throws LogicException {
-		space.setCreateDate(new Date());
 		space.setStatus(SpaceStatus.NORMAL);
 		if (Validators.isEmptyOrNull(space.getLockId(), true)) {
 			space.setLockId(null);

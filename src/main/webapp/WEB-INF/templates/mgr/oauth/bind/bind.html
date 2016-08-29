@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/base/head :: head('账号绑定')"></head>
+<body>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('oauth')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2" style="text-align: center">
+						<div class="alert alert-danger" th:unless="${error == null}"
+							th:text="${error}"></div>
+						<div th:if="${oauth != null}">
+							<img th:src="${oauth.avatar}" class="img-responsive center-block" />
+							<p class="text text-info" th:text="${oauth.nickname}"></p>
+							<button class="btn btn-primary" onclick="bind()">绑定</button>
+						</div>
+						<div th:if="${oauth == null}" class="alert alert-info">
+							<strong>没有任何需要绑定的社交账号<br>请先登录需要绑定的社交账号后再尝试
+							</strong>
+						</div>
+					</div>
+				</div>
+				<div class="row" style="margin-top:10px">
+					<div class="col-md-12" style="text-align:center">
+						<a th:href="@{/oauth2/qq/login}"  title="qq登录"><img th:src="@{/static/img/qq.png}" style="width:50px"/></a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript">
+		function bind() {
+			$.post(basePath + "/mgr/oauth/bind/toBind", {}, function(data) {
+				if (data.success) {
+					bootbox.alert(data.message);
+					setTimeout(function() {
+						window.location.href = basePath
+								+ '/mgr/oauth/bind/index';
+					}, 500)
+				} else {
+					bootbox.alert(data.message);
+				}
+			});
+		}
+	</script>
+</body>
+</html>

@@ -6,6 +6,6 @@ public interface ConfigService {
 
 	PageSizeConfig getPageSizeConfig();
 
-	void updatePageSizeConfig(PageSizeConfig pageSizeConfig);
+	PageSizeConfig updatePageSizeConfig(PageSizeConfig pageSizeConfig);
 
 }

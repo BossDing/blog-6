@@ -1,5 +1,6 @@
 package me.qyh.blog.service.impl;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,7 @@ public class SpaceServiceImpl implements SpaceService {
 		if (space.getIsDefault()) {
 			spaceDao.resetDefault();
 		}
+		space.setCreateDate(new Date());
 		spaceDao.insert(space);
 	}
 

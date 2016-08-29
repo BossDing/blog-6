@@ -4,8 +4,6 @@ import java.util.Map;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.thymeleaf.IEngineConfiguration;
-import org.thymeleaf.cache.ICacheEntryValidity;
-import org.thymeleaf.cache.NonCacheableCacheEntryValidity;
 import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.spring4.templateresource.SpringResourceTemplateResource;
 import org.thymeleaf.templateresource.ITemplateResource;
@@ -43,14 +41,6 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		}
 		return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding,
 				templateResolutionAttributes);
-	}
-
-	// TODO cache
-	@Override
-	protected ICacheEntryValidity computeValidity(IEngineConfiguration configuration, String ownerTemplate,
-			String template, Map<String, Object> templateResolutionAttributes) {
-		// return AlwaysValidCacheEntryValidity.INSTANCE;
-		return NonCacheableCacheEntryValidity.INSTANCE;
 	}
 
 }

@@ -15,6 +15,8 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.RememberMe;
+import me.qyh.blog.security.csrf.CsrfToken;
+import me.qyh.blog.security.csrf.CsrfTokenRepository;
 import me.qyh.blog.service.UserService;
 import me.qyh.blog.web.controller.form.LoginBean;
 
@@ -25,6 +27,8 @@ public class LoginController extends BaseController {
 	private UserService userService;
 	@Autowired
 	private RememberMe rememberMe;
+	@Autowired
+	private CsrfTokenRepository csrfTokenRepository;
 
 	@RequestMapping(value = "login", method = RequestMethod.GET)
 	public String login(Model ma) {
@@ -45,6 +49,16 @@ public class LoginController extends BaseController {
 			}
 			authenticated.setPassword(null);
 			session.setAttribute(Constants.USER_SESSION_KEY, authenticated);
+
+			// 更改 csrf
+			boolean containsToken = csrfTokenRepository.loadToken(request) != null;
+			if (containsToken) {
+				this.csrfTokenRepository.saveToken(null, request, response);
+
+				CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
+				this.csrfTokenRepository.saveToken(newToken, request, response);
+			}
+
 			String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 			String redirectUrl = "/";
 			if (lastAuthencationFailUrl != null) {

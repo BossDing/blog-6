@@ -1,7 +1,5 @@
 package me.qyh.blog.web.controller;
 
-import java.util.Date;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -87,7 +85,6 @@ public class UserPageMgrController extends BaseMgrController {
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		copy.setCreateDate(new Date());
 		uiService.buildTpl(copy);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}

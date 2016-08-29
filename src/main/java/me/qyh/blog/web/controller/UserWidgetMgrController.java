@@ -1,7 +1,5 @@
 package me.qyh.blog.web.controller;
 
-import java.util.Date;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -63,7 +61,6 @@ public class UserWidgetMgrController extends BaseMgrController {
 	@RequestMapping(value = "create", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult create(@RequestBody @Validated final UserWidget userWidget) throws LogicException {
-		userWidget.setCreateDate(new Date());
 		uiService.insertUserWidget(userWidget);
 		return new JsonResult(true, new Message("widget.user.create.success", "创建成功"));
 	}

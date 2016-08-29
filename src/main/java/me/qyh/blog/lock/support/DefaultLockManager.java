@@ -1,5 +1,6 @@
 package me.qyh.blog.lock.support;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ public class DefaultLockManager implements LockManager<DefaultLock> {
 	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
 	public void addLock(DefaultLock lock) throws LogicException {
 		lock.setId(UUIDs.uuid());
+		lock.setCreateDate(new Date());
 		encryptPasswordLock(lock);
 		defaultLockDao.insert(lock);
 	}

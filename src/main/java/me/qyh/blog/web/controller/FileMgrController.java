@@ -1,7 +1,6 @@
 package me.qyh.blog.web.controller;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +134,6 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult createFolder(@RequestBody @Validated BlogFile blogFile) throws LogicException {
 		blogFile.setCf(null);
-		blogFile.setCreateDate(new Date());
 		blogFile.setType(BlogFileType.DIRECTORY);
 		fileService.createFolder(blogFile);
 		return new JsonResult(true, new Message("file.create.success", "创建成功"));

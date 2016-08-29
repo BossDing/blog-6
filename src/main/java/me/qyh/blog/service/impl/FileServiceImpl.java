@@ -116,6 +116,7 @@ public class FileServiceImpl implements FileService {
 		toCreate.setLft(parent.getLft() + 1);
 		toCreate.setRgt(parent.getLft() + 2);
 		toCreate.setParent(parent);
+		toCreate.setCreateDate(new Date());
 
 		blogFileDao.updateWhenAddChild(parent);
 		blogFileDao.insert(toCreate);

@@ -3,6 +3,7 @@ package me.qyh.blog.service.impl;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +112,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			throw new LogicException(new Message("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
 					userWidget.getName()));
 		}
+		userWidget.setCreateDate(new Date());
 		userWidgetDao.insert(userWidget);
 	}
 
@@ -317,6 +319,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				throw new LogicException(new Message("page.user.aliasExists", "别名" + alias + "已经存在", alias));
 			}
 		}
+		userPage.setCreateDate(new Date());
 		boolean update = userPage.hasId();
 		if (update) {
 			UserPage db = userPageDao.selectById(userPage.getId());

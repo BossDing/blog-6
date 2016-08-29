@@ -39,6 +39,7 @@ import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.MissLockException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.oauth2.InvalidStateException;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.util.UrlUtils;
@@ -130,9 +131,9 @@ public class GlobalControllerExceptionHandler {
 	 * @throws IOException
 	 */
 	@ExceptionHandler(SpaceNotFoundException.class)
-	public void handleSpaceNotFoundException(HttpServletResponse resp, SpaceNotFoundException ex) throws IOException {
+	public String handleSpaceNotFoundException(HttpServletResponse resp, SpaceNotFoundException ex) throws IOException {
 		logger.debug("空间" + ex.getAlias() + "不存在，返回主页");
-		resp.sendRedirect(urlHelper.getUrl());
+		return "redirect:" + urlHelper.getUrl();
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -159,6 +160,12 @@ public class GlobalControllerExceptionHandler {
 			return new JsonResult(false, new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
 		}
 		throw new SystemException("抛出了MethodArgumentNotValidException，但没有发现任何错误");
+	}
+
+	@ExceptionHandler(InvalidStateException.class)
+	public String handleInvalidStateException(InvalidStateException ex) {
+		logger.debug(ex.getMessage());
+		return "redirect:" + urlHelper.getUrl();
 	}
 
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)

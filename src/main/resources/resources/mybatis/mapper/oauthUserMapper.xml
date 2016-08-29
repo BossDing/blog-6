@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.OauthUserDao">
+	<resultMap type="OauthUser" id="OauthUserDetail">
+		<id column="id" property="id"/>
+		<result column="oauth_id" property="oauthid" />
+		<result column="avatar" property="avatar" />
+		<result column="nick_name" property="nickname" />
+		<result column="register_date" property="registerDate"/>
+		<result column="oauth_type" property="type" typeHandler="EnumOrdinalTypeHandler" />
+		<result column="oauth_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
+	</resultMap>
+	
+	<select id="selectByOauthIdAndOauthType" resultMap="OauthUserDetail">
+		SELECT id,oauth_id,avatar,nick_name,oauth_type,oauth_status,register_date FROM blog_oauth_user 
+		WHERE 
+				oauth_id = #{oauthid} 
+			AND 
+				oauth_type = #{oauthType,javaType=OauthType,typeHandler=EnumOrdinalTypeHandler}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT COUNT(id) FROM blog_oauth_user
+		<where>
+			<if test="nickname != null and nickname != ''">
+				nickname LIKE CONCAT('%', #{nickname},'%')
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectPage" resultMap="OauthUserDetail">
+		SELECT id,oauth_id,avatar,nick_name,oauth_type,oauth_status,register_date FROM blog_oauth_user 
+		<where>
+			<if test="nickname != null and nickname != ''">
+				nickname LIKE CONCAT('%', #{nickname},'%')
+			</if>
+		</where>
+		ORDER BY id DESC
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO blog_oauth_user(oauth_id,oauth_type,avatar,nick_name,oauth_status,register_date)
+		VALUES(#{oauthid},#{type,javaType=OauthType,typeHandler=EnumOrdinalTypeHandler},#{avatar},#{nickname},#{status,javaType=OauthUserStatus,typeHandler=EnumOrdinalTypeHandler},#{registerDate})
+	</insert>
+	
+	<update id="update">
+		UPDATE blog_oauth_user
+		SET 
+			avatar = #{avatar},
+			nick_name = #{nickname},
+			<if test="status != null">
+				oauth_status = #{status,javaType=OauthUserStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+		WHERE
+				oauth_id = #{oauthid} 
+			AND 
+				oauth_type = #{type,javaType=OauthType,typeHandler=EnumOrdinalTypeHandler}
+	</update>
+
+	<select id="selectById" resultMap="OauthUserDetail">
+		SELECT id,oauth_id,avatar,nick_name,oauth_type,oauth_status,register_date FROM blog_oauth_user 
+		WHERE id = #{id}
+	</select>
+</mapper>

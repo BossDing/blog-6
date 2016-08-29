@@ -51,6 +51,14 @@
 					<li><a th:href="@{/mgr/page/expanded/index}">扩展页面管理</a></li>
 					<li><a th:href="@{/mgr/widget/user/index}">自定义挂件管理</a></li>
 				</ul></li>
+			<li th:class="${tag == 'oauth'}? active:''"><a href="javascript:;" data-toggle="collapse"
+				data-target="#oauthMgr"><i class="fa fa-fw fa-arrows-v"></i> 社交账号管理
+					<i class="fa fa-fw fa-caret-down"></i></a>
+				<ul id="oauthMgr" class="collapse in">
+					<li><a th:href="@{/mgr/oauth/bind/index}">绑定管理</a></li>
+					<li><a th:href="@{/mgr/oauth/bind/toBind}">账号绑定</a></li>
+					<li><a th:href="@{/mgr/oauth/index}">账号管理</a></li>
+				</ul></li>
 			<li th:class="${tag == 'tag'}? active:''"><a
 				th:href="@{/mgr/tag/index}"><i class="fa fa-fw fa-dashboard"></i>
 					标签管理</a></li>

@@ -1,7 +1,5 @@
 package me.qyh.blog.web.controller;
 
-import java.util.Date;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,7 +39,6 @@ public class LockMgrController<T extends Lock> extends BaseMgrController {
 	@RequestMapping(value = "add", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult addLock(@RequestLock T lock, BindingResult br) throws LogicException {
-		lock.setCreateDate(new Date());
 		lockManager.addLock(lock);
 		return new JsonResult(true, new Message("lock.add.success", "添加成功"));
 	}

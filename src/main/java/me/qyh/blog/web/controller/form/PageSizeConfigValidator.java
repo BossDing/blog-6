@@ -14,6 +14,7 @@ public class PageSizeConfigValidator implements Validator {
 	private static final int[] USER_PAGE_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] ARTICLE_PAGE_SIZE_RANGE = { 5, 20 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
+	private static final int[] OAUTH_USER_PAGE_SIZE_RANGE = { 1, 50 };
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -84,6 +85,19 @@ public class PageSizeConfigValidator implements Validator {
 		if (tagPageSize > TAG_PAGE_SIZE_RANGE[1]) {
 			errors.reject("pagesize.tag.toobig", new Object[] { TAG_PAGE_SIZE_RANGE[1] },
 					"标签每页数量不能大于" + TAG_PAGE_SIZE_RANGE[1]);
+			return;
+		}
+		
+		int oauthUserPageSize = config.getOauthUserPageSize();
+		if (oauthUserPageSize < OAUTH_USER_PAGE_SIZE_RANGE[0]) {
+			errors.reject("pagesize.oauthuser.toosmall", new Object[] { OAUTH_USER_PAGE_SIZE_RANGE[0] },
+					"Oauth用户每页数量不能小于" + OAUTH_USER_PAGE_SIZE_RANGE[0]);
+			return;
+		}
+
+		if (oauthUserPageSize > OAUTH_USER_PAGE_SIZE_RANGE[1]) {
+			errors.reject("pagesize.oauthuser.toobig", new Object[] { OAUTH_USER_PAGE_SIZE_RANGE[1] },
+					"Oauth用户每页数量不能大于" + OAUTH_USER_PAGE_SIZE_RANGE[1]);
 			return;
 		}
 	}
