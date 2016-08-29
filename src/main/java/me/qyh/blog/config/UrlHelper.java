@@ -119,7 +119,7 @@ public class UrlHelper implements InitializingBean {
 
 		public String getUrl(UserPage userPage) {
 			String alias = userPage.getAlias();
-			if (alias != null) {
+			if (alias == null) {
 				return getUrl(userPage.getSpace()) + "/page/" + userPage.getId();
 			} else {
 				return getUrl(userPage.getSpace()) + "/page/" + alias;
