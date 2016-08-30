@@ -197,7 +197,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}
-
 		String actualToken = request.getHeader(csrfToken.getHeaderName());
 		if (actualToken == null) {
 			actualToken = request.getParameter(csrfToken.getParameterName());
@@ -309,5 +308,4 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			return !allowedMethods.matcher(request.getMethod()).matches();
 		}
 	}
-
 }

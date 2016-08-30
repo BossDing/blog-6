@@ -358,6 +358,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</delete>
 	
 	<update id="updateHits">
-		UPDATE blog_article SET hits = hits +1 WHERE id = #{id}
+		UPDATE blog_article SET hits = hits + #{hits} WHERE id = #{id}
+	</update>
+	
+	<update id="updateComments">
+		UPDATE blog_article SET comments = comments + #{comments} WHERE id = #{id}
 	</update>
 </mapper>

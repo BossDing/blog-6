@@ -65,8 +65,8 @@ public class UrlHelper implements InitializingBean {
 		if (urlConfig.isEnableSpaceDomain()) {
 			String host = request.getServerName();
 			if (!host.endsWith(urlConfig.getRootDomain())) {
-				throw new SystemException("域名配置错误，访问serverName为：" + host + ",配置域名为:" + urlConfig.getRootDomain()
-						+ "，如果为本地环境，请更改hosts文件后测试");
+				logger.debug("访问域名为" + host + ",所需域名为" + urlConfig.getRootDomain());
+				return null;
 			}
 			int hostPCount = StringUtils.countOccurrencesOf(host, ".");
 			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
@@ -197,18 +197,18 @@ public class UrlHelper implements InitializingBean {
 		}
 
 		private void setEnv() {
+
 			// 空间域名
 			this.env = new Env();
 			// 如果开启了空间域名
 			String space = null;
 			if (urlConfig.isEnableSpaceDomain()) {
 				space = getSpaceIfSpaceDomainRequest(request);
-			} else {
-				// env.space = hosts[0];
+			}
+			if (space == null) {
 				String requestUri = request.getRequestURI();
 				if (requestUri.startsWith(request.getContextPath() + "/space/")) {
-					String spaceStart = requestUri.substring(7 + request.getContextPath().length(),
-							requestUri.length());
+					String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
 					if (spaceStart.trim().isEmpty()) {
 						//
 						logger.debug("不完整的路径：" + request.getRequestURL().toString());

@@ -36,6 +36,7 @@ public class Article extends BaseLockResource {
 	private Integer level; // 博客级别，级别越高显示越靠前
 
 	private AtomicInteger _hits;
+	private AtomicInteger _comments;
 
 	public enum ArticleFrom {
 		// 原创
@@ -144,12 +145,24 @@ public class Article extends BaseLockResource {
 		return _hits.incrementAndGet();
 	}
 
+	public int addComments() {
+		return _comments.incrementAndGet();
+	}
+
+	public int decrementComment(int count) {
+		if (count == 1) {
+			return _comments.decrementAndGet();
+		}
+		return _comments.updateAndGet(i -> i > count ? i - count : 0);
+	}
+
 	public int getComments() {
-		return comments;
+		return _comments != null ? _comments.get() : comments;
 	}
 
 	public void setComments(int comments) {
 		this.comments = comments;
+		this._comments = new AtomicInteger(comments);
 	}
 
 	public ArticleFrom getFrom() {
@@ -244,5 +257,4 @@ public class Article extends BaseLockResource {
 	public void setContent(String content) {
 		this.content = content;
 	}
-
 }

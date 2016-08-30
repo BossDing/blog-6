@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.CommentDao">
+	
+	<resultMap type="Comment" id="CommentDetail">
+		<id property="id" column="id"/>
+		<result column="parent_path" property="parentPath"/>
+		<result column="content" property="content"/>
+		<association property="user_id"></association>
+	</resultMap>
+	
+		private Comment parent;// 如果为null,则为评论，否则为回复
+	private String parentPath;// 路径，最多支持255个字符(索引原因)
+	private String content;
+	private OauthUser user;
+	private Article article;// 文章
+
+	<insert id="insert">
+		INSERT INTO blog_comment(parent_id,path,content,user_id,article_id)
+		VALUES(#{parent.id},#{path},#{content},#{user.id},#{article.id})
+	</insert>
+	
+	<select id="selectPathCount" resultType="int">
+		SELECT COUNT(id) FROM blog_comment WHERE  path LIKE CONCAT('', #{path},'%')
+	</select>
+	
+	<delete id="deleteByPath">
+		DELETE FROM blog_comment  WHERE  path LIKE CONCAT('', #{path},'%')
+	</delete>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_comment WHERE id = #{id}
+	</delete>
+</mapper>

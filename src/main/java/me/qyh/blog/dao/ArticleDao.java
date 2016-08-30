@@ -40,4 +40,6 @@ public interface ArticleDao {
 	void deleteById(Integer id);
 
 	void updateHits(@Param("id") Integer id, @Param("hits") int increase);
+
+	void updateComments(@Param("id") Integer id, @Param("comments") int increase);
 }

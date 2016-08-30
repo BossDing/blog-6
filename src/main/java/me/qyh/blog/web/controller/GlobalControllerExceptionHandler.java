@@ -150,6 +150,7 @@ public class GlobalControllerExceptionHandler {
 		}
 	}
 
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseBody
 	public JsonResult handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
@@ -168,6 +169,7 @@ public class GlobalControllerExceptionHandler {
 		return "redirect:" + urlHelper.getUrl();
 	}
 
+	@ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	public String handleHttpRequestMethodNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
 			HttpRequestMethodNotSupportedException ex) throws IOException {
@@ -179,6 +181,7 @@ public class GlobalControllerExceptionHandler {
 		}
 	}
 
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public String handleMaxUploadSizeExceededException(HttpServletRequest req, HttpServletResponse resp,
 			MaxUploadSizeExceededException e) throws IOException {
@@ -191,6 +194,7 @@ public class GlobalControllerExceptionHandler {
 		}
 	}
 
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
 		logger.error(e.getMessage(), e);
@@ -202,6 +206,7 @@ public class GlobalControllerExceptionHandler {
 		}
 	}
 
+	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@ExceptionHandler(value = NoHandlerFoundException.class)
 	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp,
 			NoHandlerFoundException ex) throws IOException {
