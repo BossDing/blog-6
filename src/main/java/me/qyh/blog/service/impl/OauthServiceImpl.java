@@ -16,6 +16,7 @@ import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.entity.OauthUser.OauthUserStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.oauth2.Oauth2Provider;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.OauthService;
@@ -28,10 +29,12 @@ public class OauthServiceImpl implements OauthService {
 	private OauthUserDao oauthUserDao;
 	@Autowired
 	private OauthBindDao oauthBindDao;
+	@Autowired
+	private Oauth2Provider oauth2Provider;
 
 	@Override
 	public void insertOrUpdate(OauthUser user) {
-		OauthUser db = oauthUserDao.selectByOauthIdAndOauthType(user.getOauthid(), user.getType());
+		OauthUser db = oauthUserDao.selectByOauthIdAndServerId(user.getOauthid(), user.getServerId());
 		if (db == null) {
 			// 插入
 			user.setRegisterDate(new Date());
@@ -50,13 +53,20 @@ public class OauthServiceImpl implements OauthService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<OauthBind> queryAllBind() {
+		List<OauthBind> binds = oauthBindDao.selectAll();
+		if (!binds.isEmpty()) {
+			for (OauthBind bind : binds) {
+				OauthUser user = bind.getUser();
+				user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+			}
+		}
 		return oauthBindDao.selectAll();
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public OauthBind queryBind(OauthUser user) throws LogicException {
-		OauthUser db = oauthUserDao.selectByOauthIdAndOauthType(user.getOauthid(), user.getType());
+		OauthUser db = oauthUserDao.selectByOauthIdAndServerId(user.getOauthid(), user.getServerId());
 		if (db != null) {
 			return oauthBindDao.selectByOauthUser(db);
 		}
@@ -64,8 +74,8 @@ public class OauthServiceImpl implements OauthService {
 	}
 
 	@Override
-	public void bind(OauthUser oauthUser) throws LogicException {
-		OauthUser db = oauthUserDao.selectByOauthIdAndOauthType(oauthUser.getOauthid(), oauthUser.getType());
+	public void bind(OauthUser user) throws LogicException {
+		OauthUser db = oauthUserDao.selectByOauthIdAndServerId(user.getOauthid(), user.getServerId());
 		if (db == null) {
 			throw new LogicException(new Message("oauthUser.notExists", "社交账户不存在"));
 		}
@@ -112,6 +122,11 @@ public class OauthServiceImpl implements OauthService {
 	public PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param) {
 		int count = oauthUserDao.selectCount(param);
 		List<OauthUser> datas = oauthUserDao.selectPage(param);
+		if (!datas.isEmpty()) {
+			for (OauthUser user : datas) {
+				user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+			}
+		}
 		return new PageResult<OauthUser>(param, count, datas);
 	}
 

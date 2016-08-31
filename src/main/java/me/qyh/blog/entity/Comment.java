@@ -1,5 +1,9 @@
 package me.qyh.blog.entity;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Comment extends Id {
 
 	/**
@@ -12,6 +16,8 @@ public class Comment extends Id {
 	private String content;
 	private OauthUser user;
 	private Article article;// 文章
+	private List<Integer> parents = new ArrayList<Integer>();
+	private Timestamp commentDate;
 
 	public String getSubPath() {
 		return "/" + getId() + "/";
@@ -30,6 +36,14 @@ public class Comment extends Id {
 	}
 
 	public void setParentPath(String parentPath) {
+		if (!parentPath.equals("/")) {
+			String[] _parents = parentPath.split("/");
+			for (String _parent : _parents) {
+				if (!_parent.isEmpty()) {
+					parents.add(Integer.parseInt(_parent));
+				}
+			}
+		}
 		this.parentPath = parentPath;
 	}
 
@@ -55,6 +69,22 @@ public class Comment extends Id {
 
 	public void setArticle(Article article) {
 		this.article = article;
+	}
+
+	public boolean isRoot() {
+		return parent == null;
+	}
+
+	public List<Integer> getParents() {
+		return parents;
+	}
+
+	public Timestamp getCommentDate() {
+		return commentDate;
+	}
+
+	public void setCommentDate(Timestamp commentDate) {
+		this.commentDate = commentDate;
 	}
 
 }

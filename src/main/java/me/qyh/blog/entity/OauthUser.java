@@ -22,11 +22,12 @@ public class OauthUser extends Id {
 	private static final long serialVersionUID = 1L;
 
 	private String oauthid;
-	private OauthType type;
 	private String nickname;
 	private String avatar;
 	private OauthUserStatus status;
 	private Date registerDate;// 注册日期
+	private String serverId;
+	private String serverName;
 
 	private boolean admin;
 
@@ -48,39 +49,12 @@ public class OauthUser extends Id {
 		}
 	}
 
-	public enum OauthType {
-		QQ(new Message("oauth.qq", "QQ")), // qq
-		SINA_WEIBO(new Message("oauth.sinaweibo", "新浪微博"));// 新浪微博
-
-		private Message message;
-
-		private OauthType(Message message) {
-			this.message = message;
-		}
-
-		private OauthType() {
-
-		}
-
-		public Message getMessage() {
-			return message;
-		}
-	}
-
 	public String getOauthid() {
 		return oauthid;
 	}
 
 	public void setOauthid(String oauthid) {
 		this.oauthid = oauthid;
-	}
-
-	public OauthType getType() {
-		return type;
-	}
-
-	public void setType(OauthType type) {
-		this.type = type;
 	}
 
 	public String getNickname() {
@@ -105,6 +79,14 @@ public class OauthUser extends Id {
 
 	public void setAdmin(boolean admin) {
 		this.admin = admin;
+	}
+
+	public String getServerId() {
+		return serverId;
+	}
+
+	public void setServerId(String serverId) {
+		this.serverId = serverId;
 	}
 
 	public OauthUser() {
@@ -135,6 +117,14 @@ public class OauthUser extends Id {
 
 	public void setRegisterDate(Date registerDate) {
 		this.registerDate = registerDate;
+	}
+
+	public String getServerName() {
+		return serverName;
+	}
+
+	public void setServerName(String serverName) {
+		this.serverName = serverName;
 	}
 
 }

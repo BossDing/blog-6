@@ -5,12 +5,11 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.entity.OauthUser;
-import me.qyh.blog.entity.OauthUser.OauthType;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 
 public interface OauthUserDao {
 
-	OauthUser selectByOauthIdAndOauthType(@Param("oauthid") String oauthid, @Param("oauthType") OauthType type);
+	OauthUser selectByOauthIdAndServerId(@Param("oauthid") String oauthid, @Param("serverId") String serverId);
 
 	void insert(OauthUser user);
 
@@ -19,7 +18,7 @@ public interface OauthUserDao {
 	int selectCount(OauthUserQueryParam param);
 
 	List<OauthUser> selectPage(OauthUserQueryParam param);
-	
+
 	OauthUser selectById(Integer id);
 
 }

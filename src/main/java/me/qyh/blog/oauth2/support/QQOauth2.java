@@ -12,14 +12,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 
-import me.qyh.blog.entity.OauthUser.OauthType;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.oauth2.Oauth2;
 import me.qyh.blog.oauth2.UserInfo;
 import me.qyh.util.Jsons;
 import me.qyh.util.UrlUtils;
 
-public class QQOauth2 implements Oauth2 {
+public class QQOauth2 extends AbstractOauth2 {
 
 	private static final String AUTHORIZE_URL = "https://graph.qq.com/oauth2.0/authorize?response_type=code";
 
@@ -48,7 +46,8 @@ public class QQOauth2 implements Oauth2 {
 	 */
 	private String redirectUri;
 
-	public QQOauth2(String appId, String appKey, String redirectUri) {
+	public QQOauth2(String id, String name, String appId, String appKey, String redirectUri) {
+		super(id, name);
 		this.appId = appId;
 		this.appKey = appKey;
 		this.redirectUri = redirectUri;
@@ -66,24 +65,6 @@ public class QQOauth2 implements Oauth2 {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(AUTHORIZE_URL);
 		builder.queryParam("client_id", appId).queryParam("redirect_uri", redirectUri).queryParam("state", state);
 		return builder.build().toUriString();
-	}
-
-	public void setAppId(String appId) {
-		this.appId = appId;
-	}
-
-	public void setAppKey(String appKey) {
-		this.appKey = appKey;
-	}
-
-	@Override
-	public final OauthType getType() {
-		return OauthType.QQ;
-	}
-
-	@Override
-	public String callBackUrl() {
-		return redirectUri;
 	}
 
 	@Override
@@ -197,8 +178,8 @@ public class QQOauth2 implements Oauth2 {
 	 * </p>
 	 * 错误时候返回
 	 * <p>
-	 * callback( {"error":100016,"error_description":
-	 * "access token check failed"} );
+	 * callback( {"error":100016,"error_description": "access token check
+	 * failed"} );
 	 * </p>
 	 */
 	@Override

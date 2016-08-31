@@ -2,8 +2,6 @@ package me.qyh.blog.oauth2;
 
 import javax.servlet.http.HttpServletRequest;
 
-import me.qyh.blog.entity.OauthUser.OauthType;
-
 public interface Oauth2 {
 
 	/**
@@ -27,15 +25,17 @@ public interface Oauth2 {
 	String getStateFromRequest(HttpServletRequest request);
 
 	/**
-	 * 服务类别
-	 */
-	OauthType getType();
-
-	/**
-	 * 用户授权后的回调路径
+	 * 服务id
 	 * 
 	 * @return
 	 */
-	String callBackUrl();
+	String getId();
+
+	/**
+	 * 服务名称
+	 * 
+	 * @return
+	 */
+	String getName();
 
 }
