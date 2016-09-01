@@ -35,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT
 		id,lock_type,lock_password,lock_name,createDate,lock_question,lock_answers
 		FROM blog_lock
-		ORDER BY id DESC
+		ORDER BY createDate DESC,id DESC
 	</select>
 
 	<insert id="insert">

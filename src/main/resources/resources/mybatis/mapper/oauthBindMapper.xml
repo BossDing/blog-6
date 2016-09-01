@@ -11,7 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="oauth_id" property="oauthid" />
 			<result column="avatar" property="avatar" />
 			<result column="nick_name" property="nickname" />
-			<result column="oauth_type" property="type" typeHandler="EnumOrdinalTypeHandler" />
+			<result column="server_id" property="serverId" />
 		</association>
 	</resultMap>
 
@@ -23,7 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			user.oauth_id,
 			user.avatar,
 			user.nick_name,
-			user.oauth_type
+			user.server_id
 		FROM 
 			blog_oauth_bind bind
 		LEFT OUTER JOIN 
@@ -40,7 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			user.oauth_id,
 			user.avatar,
 			user.nick_name,
-			user.oauth_type
+			user.server_id
 		FROM 
 			blog_oauth_bind bind
 		LEFT OUTER JOIN 
@@ -66,7 +66,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			user.oauth_id,
 			user.avatar,
 			user.nick_name,
-			user.oauth_type
+			user.server_id
 		FROM 
 			blog_oauth_bind bind
 		LEFT OUTER JOIN 

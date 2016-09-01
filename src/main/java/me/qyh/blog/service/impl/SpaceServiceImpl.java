@@ -1,6 +1,7 @@
 package me.qyh.blog.service.impl;
 
-import java.util.Date;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class SpaceServiceImpl implements SpaceService {
 		if (space.getIsDefault()) {
 			spaceDao.resetDefault();
 		}
-		space.setCreateDate(new Date());
+		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		spaceDao.insert(space);
 	}
 
@@ -50,7 +51,7 @@ public class SpaceServiceImpl implements SpaceService {
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
-			throw new LogicException(new Message("space.notExists", "空间不存在"));
+			throw new LogicException("space.notExists", "空间不存在");
 		}
 		Space aliasDb = spaceDao.selectByAlias(space.getAlias());
 		if (aliasDb != null && !aliasDb.equals(db)) {
@@ -64,7 +65,7 @@ public class SpaceServiceImpl implements SpaceService {
 			// 如果空间被禁用，不能设置为默认
 			if (space.getStatus() == null && db.getStatus().equals(SpaceStatus.DISABLE)
 					|| space.getStatus().equals(SpaceStatus.DISABLE)) {
-				throw new LogicException(new Message("space.disabled.noDefault", "被禁用的空间不能被设置为默认空间"));
+				throw new LogicException("space.disabled.noDefault", "被禁用的空间不能被设置为默认空间");
 			}
 			spaceDao.resetDefault();
 		}
@@ -98,7 +99,7 @@ public class SpaceServiceImpl implements SpaceService {
 		if (id != null) {
 			Lock lock = lockManager.findLock(id);
 			if (lock == null) {
-				throw new LogicException(new Message("lock.notexists", "锁不存在"));
+				throw new LogicException("lock.notexists", "锁不存在");
 			}
 		}
 	}

@@ -57,11 +57,13 @@
 			alias="ArticleDateFile" />
 		<typeAlias type="me.qyh.blog.ui.widget.ArticleSpaceFile"
 			alias="ArticleSpaceFile" />
-			
-		<typeAlias type="me.qyh.blog.entity.OauthUser" alias="OauthUser"/>
-		<typeAlias type="me.qyh.blog.entity.OauthUser$OauthType" alias="OauthType"/>
-		<typeAlias type="me.qyh.blog.entity.OauthUser$OauthUserStatus" alias="OauthUserStatus"/>
-		<typeAlias type="me.qyh.blog.entity.OauthBind" alias="OauthBind"/>
+
+		<typeAlias type="me.qyh.blog.entity.OauthUser" alias="OauthUser" />
+		<typeAlias type="me.qyh.blog.entity.OauthUser$OauthUserStatus"
+			alias="OauthUserStatus" />
+		<typeAlias type="me.qyh.blog.entity.OauthBind" alias="OauthBind" />
+
+		<typeAlias type="me.qyh.blog.entity.Comment" alias="Comment" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.mybatis.handler.TagsTypeHandler" />
@@ -85,8 +87,10 @@
 		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/expandedPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/widgetTplMapper.xml" />
-		
+
 		<mapper resource="resources/mybatis/mapper/oauthUserMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/oauthBindMapper.xml" />
+
+		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
 	</mappers>
 </configuration>

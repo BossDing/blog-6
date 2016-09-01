@@ -1,5 +1,7 @@
 package me.qyh.blog.lock.support;
 
+import java.sql.Timestamp;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -17,6 +19,7 @@ public class DefaultLock extends Lock {
 	 */
 	private static final long serialVersionUID = 1L;
 	private LockType type;
+	private Timestamp createDate;
 
 	public DefaultLock() {
 
@@ -54,6 +57,14 @@ public class DefaultLock extends Lock {
 	@Override
 	public String keyInputUrl() {
 		throw new SystemException("不支持的操作");
+	}
+
+	public Timestamp getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Timestamp createDate) {
+		this.createDate = createDate;
 	}
 
 }

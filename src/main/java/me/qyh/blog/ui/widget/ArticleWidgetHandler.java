@@ -1,6 +1,7 @@
 package me.qyh.blog.ui.widget;
 
-import java.util.Date;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +15,6 @@ import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.Params;
 
@@ -36,7 +36,7 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 		if (article == null ||
 		// 文章不存在或者不在目标空间下
 				(!space.getAlias().equals(article.getSpace().getAlias()))) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		params.add("article", article);
 		return article;
@@ -62,8 +62,8 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 		article.setHits(10);
 		article.setId(1);
 		article.setIsPrivate(false);
-		article.setLastModifyDate(new Date());
-		article.setPubDate(new Date());
+		article.setLastModifyDate(Timestamp.valueOf(LocalDateTime.now()));
+		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 
 		Space space = new Space();
 		space.setId(1);

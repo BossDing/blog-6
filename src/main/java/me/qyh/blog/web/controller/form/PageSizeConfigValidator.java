@@ -15,6 +15,7 @@ public class PageSizeConfigValidator implements Validator {
 	private static final int[] ARTICLE_PAGE_SIZE_RANGE = { 5, 20 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] OAUTH_USER_PAGE_SIZE_RANGE = { 1, 50 };
+	private static final int[] COMMENT_PAGE_SIZE_RANGE = { 1, 50 };
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -98,6 +99,19 @@ public class PageSizeConfigValidator implements Validator {
 		if (oauthUserPageSize > OAUTH_USER_PAGE_SIZE_RANGE[1]) {
 			errors.reject("pagesize.oauthuser.toobig", new Object[] { OAUTH_USER_PAGE_SIZE_RANGE[1] },
 					"Oauth用户每页数量不能大于" + OAUTH_USER_PAGE_SIZE_RANGE[1]);
+			return;
+		}
+		
+		int commentPageSize = config.getCommentPageSize();
+		if (commentPageSize < OAUTH_USER_PAGE_SIZE_RANGE[0]) {
+			errors.reject("pagesize.comment.toosmall", new Object[] { COMMENT_PAGE_SIZE_RANGE[0] },
+					"评论每页数量不能小于" + OAUTH_USER_PAGE_SIZE_RANGE[0]);
+			return;
+		}
+
+		if (commentPageSize > COMMENT_PAGE_SIZE_RANGE[1]) {
+			errors.reject("pagesize.comment.toobig", new Object[] { COMMENT_PAGE_SIZE_RANGE[1] },
+					"评论每页数量不能大于" + COMMENT_PAGE_SIZE_RANGE[1]);
 			return;
 		}
 	}

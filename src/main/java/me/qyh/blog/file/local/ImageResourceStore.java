@@ -23,7 +23,6 @@ import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
-import me.qyh.blog.message.Message;
 import me.qyh.util.Webs;
 
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
@@ -57,7 +56,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				logger.warn("无法删除文件:" + file);
 				file.deleteOnExit();
 			}
-			throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
+			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
 		}
 	}
 

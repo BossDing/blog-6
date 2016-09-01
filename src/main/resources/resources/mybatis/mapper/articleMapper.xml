@@ -224,10 +224,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP BY art.id
 		<choose>
 			<when test="!ignoreLevel">
-				ORDER BY art.art_level DESC,art.id DESC
+				ORDER BY art_level DESC,art.pubDate DESC,art.id DESC
 			</when>
 			<otherwise>
-				ORDER BY art.id DESC
+				ORDER BY art.pubDate DESC,art.id DESC
 			</otherwise>
 		</choose>
 		LIMIT #{offset},#{pageSize}

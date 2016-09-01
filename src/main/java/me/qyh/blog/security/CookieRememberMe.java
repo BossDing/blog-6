@@ -5,7 +5,9 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -73,7 +75,9 @@ public class CookieRememberMe implements RememberMe {
 					}
 
 					if (isTokenExpired(tokenExpiryTime)) {
-						logger.info("token已经过期，过期时间为:" + new Date(tokenExpiryTime) + "，当前时间为" + new Date());
+						logger.info("token已经过期，过期时间为:"
+								+ Instant.ofEpochMilli(tokenExpiryTime).atZone(ZoneId.systemDefault()) + "，当前时间为"
+								+ LocalDateTime.now());
 						remove(request, response);
 						return null;
 					}
@@ -224,6 +228,5 @@ public class CookieRememberMe implements RememberMe {
 		public InvalidCookieException(String message) {
 			super(message);
 		}
-
 	}
 }

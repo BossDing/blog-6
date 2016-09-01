@@ -1,6 +1,6 @@
 package me.qyh.blog.ui.widget;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class UserWidget extends Widget {
 
@@ -9,7 +9,7 @@ public class UserWidget extends Widget {
 	 */
 	private static final long serialVersionUID = 1L;
 	private String description;
-	private Date createDate;
+	private Timestamp createDate;
 
 	@Override
 	public final WidgetType getType() {
@@ -24,11 +24,11 @@ public class UserWidget extends Widget {
 		this.description = description;
 	}
 
-	public Date getCreateDate() {
+	public Timestamp getCreateDate() {
 		return createDate;
 	}
 
-	public void setCreateDate(Date createDate) {
+	public void setCreateDate(Timestamp createDate) {
 		this.createDate = createDate;
 	}
 

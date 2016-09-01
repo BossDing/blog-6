@@ -95,6 +95,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND space_status = #{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
 		</where>
-		ORDER BY id DESC
+		ORDER BY createDate DESC,id DESC
 	</select>
 </mapper>

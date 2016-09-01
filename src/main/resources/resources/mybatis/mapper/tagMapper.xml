@@ -35,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				LOWER(tag_name) LIKE CONCAT('%', #{tag},'%')
 			</if>
 		</where>
-		ORDER BY id DESC
+		ORDER BY create_date DESC,id DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
 	

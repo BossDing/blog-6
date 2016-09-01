@@ -38,6 +38,11 @@ public class PageSizeConfig {
 	 */
 	private int oauthUserPageSize;
 
+	/**
+	 * 评论分页数量
+	 */
+	private int commentPageSize;
+
 	public int getFilePageSize() {
 		return filePageSize;
 	}
@@ -84,6 +89,14 @@ public class PageSizeConfig {
 
 	public void setOauthUserPageSize(int oauthUserPageSize) {
 		this.oauthUserPageSize = oauthUserPageSize;
+	}
+
+	public int getCommentPageSize() {
+		return commentPageSize;
+	}
+
+	public void setCommentPageSize(int commentPageSize) {
+		this.commentPageSize = commentPageSize;
 	}
 
 }

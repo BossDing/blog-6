@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import me.qyh.blog.message.Message;
 
@@ -17,7 +17,7 @@ public class Space extends BaseLockResource {
 	private String alias;
 	private Boolean isDefault;// 是否是默认空间
 	private SpaceStatus status;// 空间状态;
-	private Date createDate;// 创建时间
+	private Timestamp createDate;// 创建时间
 
 	/**
 	 * 空间状态，如果是禁用，那么无法无法访问该空间，如果空间是默认空间，无法设置为禁用
@@ -54,11 +54,11 @@ public class Space extends BaseLockResource {
 		this.isDefault = isDefault;
 	}
 
-	public Date getCreateDate() {
+	public Timestamp getCreateDate() {
 		return createDate;
 	}
 
-	public void setCreateDate(Date createDate) {
+	public void setCreateDate(Timestamp createDate) {
 		this.createDate = createDate;
 	}
 
@@ -85,6 +85,6 @@ public class Space extends BaseLockResource {
 
 	@Override
 	public Message getLockTip() {
-		return new Message("lock.space.tip","该空间访问受密码保护，请解锁后访问");
+		return new Message("lock.space.tip", "该空间访问受密码保护，请解锁后访问");
 	}
 }

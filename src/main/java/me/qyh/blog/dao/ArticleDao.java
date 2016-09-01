@@ -1,6 +1,6 @@
 package me.qyh.blog.dao;
 
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -23,7 +23,7 @@ public interface ArticleDao {
 
 	List<ArticleSpaceFile> selectSpaceFiles(@Param("queryPrivate") boolean queryPrivate);
 
-	List<Article> selectScheduled(Date date);
+	List<Article> selectScheduled(Timestamp date);
 
 	void update(Article article);
 

@@ -31,7 +31,7 @@
 									</thead>
 									<tbody>
 										<tr th:each="user : ${page.datas}">
-											<td th:text="${messages.getMessage(user.type.getMessage())}"></td>
+											<td th:text="${user.serverName}"></td>
 											<td th:text="${user.nickname}"></td>
 											<td><img th:src="${user.avatar}"
 												th:if="${user.avatar != null}" /></td>

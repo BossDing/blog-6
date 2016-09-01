@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class Tag extends Id {
 
@@ -9,7 +9,7 @@ public class Tag extends Id {
 	 */
 	private static final long serialVersionUID = 1L;
 	private String name;
-	private Date create;
+	private Timestamp create;
 
 	public String getName() {
 		return name;
@@ -19,11 +19,11 @@ public class Tag extends Id {
 		this.name = name;
 	}
 
-	public Date getCreate() {
+	public Timestamp getCreate() {
 		return create;
 	}
 
-	public void setCreate(Date create) {
+	public void setCreate(Timestamp create) {
 		this.create = create;
 	}
 

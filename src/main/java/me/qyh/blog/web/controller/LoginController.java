@@ -38,39 +38,41 @@ public class LoginController extends BaseController {
 
 	@RequestMapping(value = "login", method = RequestMethod.POST)
 	public String login(LoginBean loginBean, Model model, HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession(false);
+		if (!Webs.matchValidateCode(loginBean.getValidateCode(), session)) {
+			model.addAttribute(ERROR, new Message("validateCode.error", "验证码错误"));
+			return "login";
+		}
+		User authenticated = null;
 		try {
-			HttpSession session = request.getSession(false);
-			if (!Webs.matchValidateCode(loginBean.getValidateCode(), session)) {
-				throw new LogicException(new Message("validateCode.error", "验证码错误"));
-			}
-			User authenticated = userService.login(loginBean);
-			if (loginBean.isRememberMe()) {
-				rememberMe.save(authenticated, request, response);
-			}
-			authenticated.setPassword(null);
-			session.setAttribute(Constants.USER_SESSION_KEY, authenticated);
-
-			// 更改 csrf
-			boolean containsToken = csrfTokenRepository.loadToken(request) != null;
-			if (containsToken) {
-				this.csrfTokenRepository.saveToken(null, request, response);
-
-				CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
-				this.csrfTokenRepository.saveToken(newToken, request, response);
-			}
-
-			String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-			String redirectUrl = "/";
-			if (lastAuthencationFailUrl != null) {
-				redirectUrl = lastAuthencationFailUrl;
-				session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-			}
-			return "redirect:" + redirectUrl;
+			authenticated = userService.login(loginBean);
 		} catch (LogicException e) {
 			rememberMe.remove(request, response);
 			model.addAttribute(ERROR, e.getLogicMessage());
 			return "login";
 		}
+		if (loginBean.isRememberMe()) {
+			rememberMe.save(authenticated, request, response);
+		}
+		authenticated.setPassword(null);
+		session.setAttribute(Constants.USER_SESSION_KEY, authenticated);
+
+		// 更改 csrf
+		boolean containsToken = csrfTokenRepository.loadToken(request) != null;
+		if (containsToken) {
+			this.csrfTokenRepository.saveToken(null, request, response);
+
+			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
+			this.csrfTokenRepository.saveToken(newToken, request, response);
+		}
+
+		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+		String redirectUrl = "/";
+		if (lastAuthencationFailUrl != null) {
+			redirectUrl = lastAuthencationFailUrl;
+			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+		}
+		return "redirect:" + redirectUrl;
 	}
 
 }

@@ -56,7 +56,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				page_name LIKE CONCAT('%', #{name},'%')
 			</if>
 		</where>
-		ORDER BY bpu.id DESC
+		ORDER BY page_create_date DESC,bpu.id DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
 	

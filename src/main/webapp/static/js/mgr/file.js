@@ -134,23 +134,25 @@ $(document).ready(function(){
 			case "delete":
 				var me = $(this);
 				bootbox.confirm("确定要删除吗？",function(result){
-					$.ajax({
-						type : "post",
-						url : basePath+"/mgr/file/delete",
-						data : {"id":id},
-						success : function(data){
-							if(data.success){
-								success(data.message);
-								setTimeout(function(){
-									window.location.reload();
-								},500)
-							} else {
-								error(data.message);
+					if(result){
+						$.ajax({
+							type : "post",
+							url : basePath+"/mgr/file/delete",
+							data : {"id":id},
+							success : function(data){
+								if(data.success){
+									success(data.message);
+									setTimeout(function(){
+										window.location.reload();
+									},500)
+								} else {
+									error(data.message);
+								}
+							},
+							complete:function(){
 							}
-						},
-						complete:function(){
-						}
-					});
+						});
+					}
 				})
 				break;
 			case "update":

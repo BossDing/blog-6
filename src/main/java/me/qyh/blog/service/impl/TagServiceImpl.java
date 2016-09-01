@@ -14,7 +14,6 @@ import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
 import me.qyh.blog.service.TagService;
@@ -42,7 +41,7 @@ public class TagServiceImpl implements TagService, InitializingBean {
 	public void updateTag(Tag tag, boolean merge) throws LogicException {
 		Tag db = tagDao.selectById(tag.getId());
 		if (db == null) {
-			throw new LogicException(new Message("tag.notExists", "标签不存在"));
+			throw new LogicException("tag.notExists", "标签不存在");
 		}
 		if (db.getName().equals(tag.getName())) {
 			return;
@@ -50,7 +49,7 @@ public class TagServiceImpl implements TagService, InitializingBean {
 		Tag newTag = tagDao.selectByName(tag.getName());
 		if (newTag != null) {
 			if (!merge) {
-				throw new LogicException(new Message("tag.exists", "标签已经存在"));
+				throw new LogicException("tag.exists", "标签已经存在");
 			} else {
 				articleTagDao.merge(db, newTag);
 				tagDao.deleteById(db.getId());
@@ -65,7 +64,7 @@ public class TagServiceImpl implements TagService, InitializingBean {
 	public void deleteTag(Integer id) throws LogicException {
 		Tag db = tagDao.selectById(id);
 		if (db == null) {
-			throw new LogicException(new Message("tag.notExists", "标签不存在"));
+			throw new LogicException("tag.notExists", "标签不存在");
 		}
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);

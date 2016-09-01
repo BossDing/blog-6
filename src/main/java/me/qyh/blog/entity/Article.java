@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,8 +23,8 @@ public class Article extends BaseLockResource {
 	private String content;// 博客原始内容
 	private Set<Tag> tags = new LinkedHashSet<Tag>();// 博客标签
 	@JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
-	private Date pubDate;// 撰写日期
-	private Date lastModifyDate;// 最后修改日期
+	private Timestamp pubDate;// 撰写日期
+	private Timestamp lastModifyDate;// 最后修改日期
 	private Boolean isPrivate;// 是否是私人博客
 	private int hits;// 点击数量
 	private int comments;// 评论数量
@@ -84,6 +84,14 @@ public class Article extends BaseLockResource {
 		}
 	}
 
+	public Article() {
+		super();
+	}
+
+	public Article(Integer id) {
+		super(id);
+	}
+
 	public Space getSpace() {
 		return space;
 	}
@@ -108,19 +116,19 @@ public class Article extends BaseLockResource {
 		this.tags = tags;
 	}
 
-	public Date getPubDate() {
+	public Timestamp getPubDate() {
 		return pubDate;
 	}
 
-	public void setPubDate(Date pubDate) {
+	public void setPubDate(Timestamp pubDate) {
 		this.pubDate = pubDate;
 	}
 
-	public Date getLastModifyDate() {
+	public Timestamp getLastModifyDate() {
 		return lastModifyDate;
 	}
 
-	public void setLastModifyDate(Date lastModifyDate) {
+	public void setLastModifyDate(Timestamp lastModifyDate) {
 		this.lastModifyDate = lastModifyDate;
 	}
 

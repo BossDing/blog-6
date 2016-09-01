@@ -1,5 +1,7 @@
 package me.qyh.blog.lock;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import me.qyh.blog.message.Message;
 
 public interface LockResource {
@@ -9,18 +11,21 @@ public interface LockResource {
 	 * 
 	 * @return
 	 */
+	@JsonIgnore
 	String getResourceId();
 	
 	/**
 	 * 获取锁ID
 	 * @return
 	 */
+	@JsonIgnore
 	String getLockId();
 	
 	/**
 	 * 获取提示信息
 	 * @return
 	 */
+	@JsonIgnore
 	Message getLockTip();
 
 }

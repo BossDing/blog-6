@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import me.qyh.blog.message.Message;
 import me.qyh.blog.oauth2.UserInfo;
@@ -25,7 +25,7 @@ public class OauthUser extends Id {
 	private String nickname;
 	private String avatar;
 	private OauthUserStatus status;
-	private Date registerDate;// 注册日期
+	private Timestamp registerDate;// 注册日期
 	private String serverId;
 	private String serverName;
 
@@ -111,11 +111,11 @@ public class OauthUser extends Id {
 		return OauthUserStatus.DISABLED.equals(status);
 	}
 
-	public Date getRegisterDate() {
+	public Timestamp getRegisterDate() {
 		return registerDate;
 	}
 
-	public void setRegisterDate(Date registerDate) {
+	public void setRegisterDate(Timestamp registerDate) {
 		this.registerDate = registerDate;
 	}
 

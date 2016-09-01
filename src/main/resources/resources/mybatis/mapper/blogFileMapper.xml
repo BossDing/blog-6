@@ -142,7 +142,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="type != null">
 				AND file_type = #{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler}
 			</if>
-		ORDER BY bf.id DESC
+		ORDER BY file_createDate DESC,id DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
 	

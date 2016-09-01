@@ -1,7 +1,6 @@
 package me.qyh.blog.lock;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,7 +23,6 @@ public abstract class Lock implements Serializable {
 	private String id;
 	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String name;
-	private Date createDate;
 	private LockResource lockResource;
 
 	/**
@@ -73,13 +71,4 @@ public abstract class Lock implements Serializable {
 	public void setLockResource(LockResource lockResource) {
 		this.lockResource = lockResource;
 	}
-
-	public Date getCreateDate() {
-		return createDate;
-	}
-
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
-
 }

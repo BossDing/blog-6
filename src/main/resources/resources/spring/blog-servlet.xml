@@ -42,6 +42,7 @@
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
 			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
+			<bean class="me.qyh.blog.oauth2.OauthUserArgumentResolver"/>
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
 			<bean

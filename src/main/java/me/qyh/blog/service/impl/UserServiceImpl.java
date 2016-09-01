@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.dao.UserDao;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.security.BCrypts;
 import me.qyh.blog.service.UserService;
 import me.qyh.blog.web.controller.form.LoginBean;
@@ -38,7 +37,7 @@ public class UserServiceImpl implements UserService {
 				return user;
 			}
 		}
-		throw new LogicException(new Message("user.loginFail", "登录失败"));
+		throw new LogicException("user.loginFail", "登录失败");
 	}
 
 	@Override

@@ -17,7 +17,7 @@
 						</div>
 						<div th:unless="${#lists.isEmpty(binds)}">
 							<div class="table-responsive">
-								<div class="alert alert-warning">刷新社交账号信息(昵称,头像)需要再次登陆该社交账号</div>
+								<div class="alert alert-warning">更新社交账号信息(昵称,头像)需要再次登陆该社交账号</div>
 								<table class="table">
 									<thead>
 										<tr>
@@ -31,14 +31,14 @@
 									<tbody>
 										<tr th:each="bind : ${binds}">
 											<td
-												th:text="${messages.getMessage(bind.user.type.getMessage())}"></td>
+												th:text="${bind.user.serverName}"></td>
 											<td th:text="${bind.user.nickname}"></td>
 											<td><img th:src="${bind.user.avatar}"
 												th:if="${bind.user.avatar != null}" /></td>
 											<td
 												th:text="${#dates.format(bind.bindDate, 'yyyy-MM-dd HH:mm')}"></td>
 											<td><a
-												th:href="@{'/oauth2/'+${bind.user.type.name()}+'/login'}"
+												th:href="@{'/oauth2/'+${bind.user.serverName}+'/login'}"
 												style="margin-right: 10px" th:data-id="${bind.id}"
 												title="刷新"><span class="glyphicon glyphicon-refresh"
 													aria-hidden="true"></span></a> <a href="###"

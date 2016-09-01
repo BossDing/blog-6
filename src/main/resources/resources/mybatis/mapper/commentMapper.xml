@@ -8,29 +8,71 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id property="id" column="id"/>
 		<result column="parent_path" property="parentPath"/>
 		<result column="content" property="content"/>
-		<association property="user_id"></association>
+		<result column="comment_date" property="commentDate"/>
+		<association property="user" javaType="OauthUser">
+			<result column="user_id" property="id"/>
+			<result column="nick_name" property="nickname"/>
+			<result column="avatar" property="avatar"/>
+		</association>
+		<association property="article" javaType="Article">
+			<result column="article_id" property="id"/>
+		</association>
+		<association property="parent" javaType="Comment">
+			<result column="parent_id" property="id"/>
+			<association property="user" javaType="OauthUser">
+				<result column="p_user_id" property="id"/>
+				<result column="p_nick_name" property="nickname"/>
+				<result column="p_avatar" property="avatar"/>
+			</association>
+		</association>
 	</resultMap>
-	
-		private Comment parent;// 如果为null,则为评论，否则为回复
-	private String parentPath;// 路径，最多支持255个字符(索引原因)
-	private String content;
-	private OauthUser user;
-	private Article article;// 文章
 
 	<insert id="insert">
-		INSERT INTO blog_comment(parent_id,path,content,user_id,article_id)
-		VALUES(#{parent.id},#{path},#{content},#{user.id},#{article.id})
+		INSERT INTO blog_comment(parent_id,parent_path,content,user_id,article_id,comment_date)
+		VALUES(#{parent.id},#{parentPath},#{content},#{user.id},#{article.id},#{commentDate})
 	</insert>
 	
-	<select id="selectPathCount" resultType="int">
-		SELECT COUNT(id) FROM blog_comment WHERE  path LIKE CONCAT('', #{path},'%')
+	<select id="selectCountByPath" resultType="int">
+		SELECT COUNT(id) FROM blog_comment WHERE  parent_path LIKE CONCAT('', #{path},'%')
+	</select>
+	
+	<select id="selectCountByUserAndDatePeriod" resultType="int">
+		SELECT COUNT(id) FROM blog_comment WHERE user_id = #{user.id} AND comment_date BETWEEN #{begin} AND #{end} 
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id}
+	</select>
+	
+	<select id="selectPage" resultMap="CommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date
+		FROM 
+		  blog_comment a JOIN 
+		  (SELECT id, parent_path 
+		    FROM blog_comment 
+		    WHERE parent_path = '/'
+		    AND article_id = #{article.id}
+		  ORDER BY comment_date DESC,id DESC
+		  LIMIT #{offset},#{pageSize}) roots
+		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
+		LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id;
 	</select>
 	
 	<delete id="deleteByPath">
-		DELETE FROM blog_comment  WHERE  path LIKE CONCAT('', #{path},'%')
+		DELETE FROM blog_comment  WHERE parent_path LIKE CONCAT('', #{path},'%')
 	</delete>
 	
 	<delete id="deleteById">
 		DELETE FROM blog_comment WHERE id = #{id}
 	</delete>
+	
+	<select id="selectById" resultMap="CommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date
+		 FROM blog_comment a 
+		 LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id
+		 WHERE a.id = #{id}
+	
+	</select>
 </mapper>

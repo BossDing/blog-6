@@ -1,7 +1,8 @@
 package me.qyh.blog.ui.widget;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +59,7 @@ public class ArticlesWidgetHandler extends SysWidgetHandler {
 		article.setHits(10);
 		article.setId(1);
 		article.setIsPrivate(false);
-		article.setPubDate(new Date());
+		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		Space space = new Space();
 		space.setId(1);
 		space.setAlias("test");

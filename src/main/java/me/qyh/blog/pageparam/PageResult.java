@@ -117,5 +117,5 @@ public class PageResult<T> {
 	public void setParam(PageQueryParam param) {
 		this.param = param;
 	}
-
+	
 }

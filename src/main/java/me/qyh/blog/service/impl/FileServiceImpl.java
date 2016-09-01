@@ -1,8 +1,9 @@
 package me.qyh.blog.service.impl;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
@@ -27,7 +28,6 @@ import me.qyh.blog.file.CommonFile.CommonFileStatus;
 import me.qyh.blog.file.FileManager;
 import me.qyh.blog.file.FileServer;
 import me.qyh.blog.file.FileStore;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.FileService;
@@ -56,14 +56,14 @@ public class FileServiceImpl implements FileService {
 		if (upload.getParent() != null) {
 			parent = blogFileDao.selectById(upload.getParent());
 			if (parent == null) {
-				throw new LogicException(new Message("file.parent.notexists", "父目录不存在"));
+				throw new LogicException("file.parent.notexists", "父目录不存在");
 			}
 		} else {
 			parent = blogFileDao.selectRoot();
 		}
 		FileServer fs = fileManager.getFileServer(upload.getServer());
 		if (fs == null) {
-			throw new LogicException(new Message("file.store.notexists", "文件存储器不存在"));
+			throw new LogicException("file.store.notexists", "文件存储器不存在");
 		}
 		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
 		for (MultipartFile file : upload.getFiles()) {
@@ -81,7 +81,7 @@ public class FileServiceImpl implements FileService {
 				commonFileDao.insert(cf);
 				BlogFile blogFile = new BlogFile();
 				blogFile.setCf(cf);
-				blogFile.setCreateDate(new Date());
+				blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 				blogFile.setLft(parent.getLft() + 1);
 				blogFile.setRgt(parent.getLft() + 2);
 				blogFile.setName(cf.getOriginalFilename());
@@ -103,10 +103,10 @@ public class FileServiceImpl implements FileService {
 		if (parent != null) {
 			parent = blogFileDao.selectById(parent.getId());
 			if (parent == null) {
-				throw new LogicException(new Message("file.parent.notexists", "父目录不存在"));
+				throw new LogicException("file.parent.notexists", "父目录不存在");
 			}
 			if (!parent.isDir()) {
-				throw new LogicException(new Message("file.parent.mustDir", "父目录必须是一个文件夹"));
+				throw new LogicException("file.parent.mustDir", "父目录必须是一个文件夹");
 			}
 		} else {
 			// 查询根节点
@@ -116,7 +116,7 @@ public class FileServiceImpl implements FileService {
 		toCreate.setLft(parent.getLft() + 1);
 		toCreate.setRgt(parent.getLft() + 2);
 		toCreate.setParent(parent);
-		toCreate.setCreateDate(new Date());
+		toCreate.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 
 		blogFileDao.updateWhenAddChild(parent);
 		blogFileDao.insert(toCreate);
@@ -129,10 +129,10 @@ public class FileServiceImpl implements FileService {
 		if (param.getParent() != null) {
 			BlogFile parent = blogFileDao.selectById(param.getParent());
 			if (parent == null) {
-				throw new LogicException(new Message("file.parent.notexists", "父目录不存在"));
+				throw new LogicException("file.parent.notexists", "父目录不存在");
 			}
 			if (!parent.isDir()) {
-				throw new LogicException(new Message("file.parent.mustDir", "父目录必须是一个文件夹"));
+				throw new LogicException("file.parent.mustDir", "父目录必须是一个文件夹");
 			}
 			paths = blogFileDao.selectPath(parent);
 		} else {
@@ -159,7 +159,7 @@ public class FileServiceImpl implements FileService {
 	public BlogFileProperty getBlogFileProperty(Integer id) throws LogicException {
 		BlogFile file = blogFileDao.selectById(id);
 		if (file == null) {
-			throw new LogicException(new Message("file.notexists", "文件不存在"));
+			throw new LogicException("file.notexists", "文件不存在");
 		}
 		BlogFileProperty property = new BlogFileProperty();
 		if (file.isDir()) {
@@ -188,9 +188,9 @@ public class FileServiceImpl implements FileService {
 	public void update(BlogFile toUpdate) throws LogicException {
 		BlogFile db = blogFileDao.selectById(toUpdate.getId());
 		if (db == null) {
-			throw new LogicException(new Message("file.notexists", "文件不存在"));
+			throw new LogicException("file.notexists", "文件不存在");
 		}
-		toUpdate.setLastModifyDate(new Date());
+		toUpdate.setLastModifyDate(Timestamp.valueOf(LocalDateTime.now()));
 		blogFileDao.update(toUpdate);
 	}
 
@@ -198,10 +198,10 @@ public class FileServiceImpl implements FileService {
 	public void delete(Integer id) throws LogicException {
 		BlogFile db = blogFileDao.selectById(id);
 		if (db == null) {
-			throw new LogicException(new Message("file.notexists", "文件不存在"));
+			throw new LogicException("file.notexists", "文件不存在");
 		}
 		if (db.getParent() == null) {
-			throw new LogicException(new Message("file.root.canNotDelete", "根节点不能删除"));
+			throw new LogicException("file.root.canNotDelete", "根节点不能删除");
 		}
 		// 首先将关联的CommonFile置为待删除状态
 		// 因为CommonFile跟实际文件关联
@@ -236,28 +236,28 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public void move(Integer srcId, Integer parentId) throws LogicException {
 		if (srcId != null && srcId.equals(parentId)) {
-			throw new LogicException(new Message("file.src.noEqualDest", "源节点和目标节点不能相同"));
+			throw new LogicException("file.src.noEqualDest", "源节点和目标节点不能相同");
 		}
 		BlogFile src = blogFileDao.selectById(srcId);
 		if (src == null) {
-			throw new LogicException(new Message("file.src.notexists", "源文件节点不存在"));
+			throw new LogicException("file.src.notexists", "源文件节点不存在");
 		}
 		if (src.isRoot()) {
-			throw new LogicException(new Message("file.root.noMove", "根节点不能被移动"));
+			throw new LogicException("file.root.noMove", "根节点不能被移动");
 		}
 		BlogFile parent = null;
 		if (parentId != null) {
 			parent = blogFileDao.selectById(parentId);
 			if (parent == null) {
-				throw new LogicException(new Message("file.dest.notexists", "目标文件节点不存在"));
+				throw new LogicException("file.dest.notexists", "目标文件节点不存在");
 			}
 			if (!parent.isDir()) {
-				throw new LogicException(new Message("file.dest.mustDir", "目标文件节点必须是一个文件夹"));
+				throw new LogicException("file.dest.mustDir", "目标文件节点必须是一个文件夹");
 			}
 			// 查看目标节点是不是当前结点的子节点
 			List<BlogFile> paths = blogFileDao.selectPath(parent);
 			if (!paths.isEmpty() && paths.contains(src)) {
-				throw new LogicException(new Message("file.dest.notSrcChild", "目标文件节点不能是待移动节点的子节点"));
+				throw new LogicException("file.dest.notSrcChild", "目标文件节点不能是待移动节点的子节点");
 			}
 		} else {
 			parent = blogFileDao.selectRoot();

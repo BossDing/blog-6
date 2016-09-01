@@ -1,6 +1,6 @@
 package me.qyh.blog.bean;
 
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.List;
 
 import me.qyh.blog.entity.BlogFile.BlogFileType;
@@ -8,7 +8,7 @@ import me.qyh.blog.entity.BlogFile.BlogFileType;
 public class BlogFileProperty {
 
 	private long totalSize;// 总大小
-	private Date lastModifyDate;// 最后修改日期
+	private Timestamp lastModifyDate;// 最后修改日期
 	private List<BlogFileCount> counts;
 	private BlogFileType type;
 	private String downloadUrl;
@@ -22,11 +22,11 @@ public class BlogFileProperty {
 		this.totalSize = totalSize;
 	}
 
-	public Date getLastModifyDate() {
+	public Timestamp getLastModifyDate() {
 		return lastModifyDate;
 	}
 
-	public void setLastModifyDate(Date lastModifyDate) {
+	public void setLastModifyDate(Timestamp lastModifyDate) {
 		this.lastModifyDate = lastModifyDate;
 	}
 

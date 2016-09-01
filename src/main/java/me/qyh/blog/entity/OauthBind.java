@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class OauthBind extends Id {
 
@@ -9,7 +9,7 @@ public class OauthBind extends Id {
 	 */
 	private static final long serialVersionUID = 1L;
 	private OauthUser user;
-	private Date bindDate;
+	private Timestamp bindDate;
 
 	public OauthUser getUser() {
 		return user;
@@ -19,11 +19,11 @@ public class OauthBind extends Id {
 		this.user = user;
 	}
 
-	public Date getBindDate() {
+	public Timestamp getBindDate() {
 		return bindDate;
 	}
 
-	public void setBindDate(Date bindDate) {
+	public void setBindDate(Timestamp bindDate) {
 		this.bindDate = bindDate;
 	}
 

@@ -1,6 +1,6 @@
 package me.qyh.blog.ui.page;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class UserPage extends Page {
 
@@ -11,7 +11,7 @@ public class UserPage extends Page {
 
 	private String name;
 	private String description;
-	private Date createDate;
+	private Timestamp createDate;
 	private String alias;
 
 	public String getName() {
@@ -30,11 +30,11 @@ public class UserPage extends Page {
 		this.description = description;
 	}
 
-	public Date getCreateDate() {
+	public Timestamp getCreateDate() {
 		return createDate;
 	}
 
-	public void setCreateDate(Date createDate) {
+	public void setCreateDate(Timestamp createDate) {
 		this.createDate = createDate;
 	}
 

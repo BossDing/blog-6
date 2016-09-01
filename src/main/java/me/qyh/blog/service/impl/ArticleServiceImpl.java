@@ -1,8 +1,9 @@
 package me.qyh.blog.service.impl;
 
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +30,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
@@ -84,7 +84,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public Article getArticleForEdit(Integer id) throws LogicException {
 		Article article = articleCache.getArticle(id);
 		if (article == null || article.isDeleted()) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		return article;
 	}
@@ -112,22 +112,23 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public Article writeArticle(Article article) throws LogicException {
 		checkSpace(article.getSpace().getId());
 		checkLock(article.getLockId());
+		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (article.hasId()) {
 			Article articleDb = articleDao.selectById(article.getId());
 			if (articleDb == null) {
-				throw new LogicException(new Message("article.notExists", "文章不存在"));
+				throw new LogicException("article.notExists", "文章不存在");
 			}
 			if (articleDb.isDeleted()) {
-				throw new LogicException(new Message("article.deleted", "文章已经被删除"));
+				throw new LogicException("article.deleted", "文章已经被删除");
 			}
 			if (!article.isSchedule()) {
 				if (article.isDraft()) {
 					article.setPubDate(null);
 				} else {
-					article.setPubDate(articleDb.isPublished() ? articleDb.getPubDate() : new Date());
+					article.setPubDate(articleDb.isPublished() ? articleDb.getPubDate() : now);
 				}
 			}
-			article.setLastModifyDate(new Date());
+			article.setLastModifyDate(now);
 			articleTagDao.deleteByArticle(articleDb);
 			articleDao.update(article);
 			insertTags(article);
@@ -141,7 +142,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 				if (article.isDraft()) {
 					article.setPubDate(null);
 				} else {
-					article.setPubDate(new Date());
+					article.setPubDate(now);
 				}
 			}
 			articleDao.insert(article);
@@ -160,12 +161,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public void publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		if (!article.isDraft()) {
-			throw new LogicException(new Message("article.notDraft", "文章已经被删除"));
+			throw new LogicException("article.notDraft", "文章已经被删除");
 		}
-		article.setPubDate(new Date());
+		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
 		articleIndexer.addDocument(article);
@@ -180,7 +181,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 				articleTag.setArticle(article);
 				if (tagDb == null) {
 					// 插入标签
-					tag.setCreate(new Date());
+					tag.setCreate(Timestamp.valueOf(LocalDateTime.now()));
 					tag.setName(tag.getName().trim());
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
@@ -237,10 +238,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public void logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		if (article.isDeleted()) {
-			throw new LogicException(new Message("article.deleted", "文章已经被删除"));
+			throw new LogicException("article.deleted", "文章已经被删除");
 		}
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
@@ -253,13 +254,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public void recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		if (!article.isDeleted()) {
-			throw new LogicException(new Message("article.undeleted", "文章未删除"));
+			throw new LogicException("article.undeleted", "文章未删除");
 		}
 		ArticleStatus status = ArticleStatus.PUBLISHED;
-		if (article.getPubDate().after(new Date())) {
+		if (article.getPubDate().after(Timestamp.valueOf(LocalDateTime.now()))) {
 			status = ArticleStatus.SCHEDULED;
 		}
 		article.setStatus(status);
@@ -272,10 +273,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException(new Message("article.notExists", "文章不存在"));
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		if (!article.isDraft() && !article.isDeleted()) {
-			throw new LogicException(new Message("article.undeleted", "文章未删除"));
+			throw new LogicException("article.undeleted", "文章未删除");
 		}
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
@@ -297,7 +298,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@CacheEvict(value = "articleFilesCache", allEntries = true)
 	public void pushScheduled() {
 		// 查询将要发表的文章
-		List<Article> articles = articleDao.selectScheduled(new Date());
+		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
 		if (!articles.isEmpty()) {
 			for (Article article : articles) {
 				article.setStatus(ArticleStatus.PUBLISHED);
@@ -310,8 +311,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Transactional(readOnly = true)
 	public synchronized void rebuildIndex() {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		logger.debug("开始重新建立博客索引" + sdf.format(new Date()));
+		logger.debug("开始重新建立博客索引" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 		long begin = System.currentTimeMillis();
 		articleIndexer.deleteAll();
 		List<Article> articles = articleDao.selectPublished();
@@ -352,7 +352,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	private void checkSpace(Integer id) throws LogicException {
 		Space space = spaceDao.selectById(id);
 		if (space == null) {
-			throw new LogicException(new Message("space.notExists", "空间不存在"));
+			throw new LogicException("space.notExists", "空间不存在");
 		}
 	}
 
@@ -360,7 +360,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		if (lockId != null) {
 			Lock lock = lockManager.findLock(lockId);
 			if (lock == null) {
-				throw new LogicException(new Message("lock.notexists", "锁不存在"));
+				throw new LogicException("lock.notexists", "锁不存在");
 			}
 		}
 	}

@@ -15,6 +15,10 @@ public class LogicException extends Exception {
 		this.logicMessage = message;
 	}
 
+	public LogicException(String code, String defaultMessage, Object... args) {
+		this(new Message(code, defaultMessage, args));
+	}
+
 	public Message getLogicMessage() {
 		return logicMessage;
 	}

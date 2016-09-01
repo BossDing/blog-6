@@ -1,6 +1,6 @@
 package me.qyh.blog.entity;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import me.qyh.blog.file.CommonFile;
 
@@ -11,8 +11,8 @@ public class BlogFile extends Id {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Date createDate;
-	private Date lastModifyDate;
+	private Timestamp createDate;
+	private Timestamp lastModifyDate;
 
 	public enum BlogFileType {
 		DIRECTORY, // 文件夹
@@ -26,14 +26,6 @@ public class BlogFile extends Id {
 	private Integer rgt;
 	private BlogFile parent; // 父节点
 	private String name; // 名称
-
-	public Date getCreateDate() {
-		return createDate;
-	}
-
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
 
 	public CommonFile getCf() {
 		return cf;
@@ -91,12 +83,20 @@ public class BlogFile extends Id {
 		return (parent == null);
 	}
 
-	public Date getLastModifyDate() {
+	public Timestamp getLastModifyDate() {
 		return lastModifyDate == null ? createDate : lastModifyDate;
 	}
 
-	public void setLastModifyDate(Date lastModifyDate) {
+	public void setLastModifyDate(Timestamp lastModifyDate) {
 		this.lastModifyDate = lastModifyDate;
+	}
+
+	public Timestamp getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Timestamp createDate) {
+		this.createDate = createDate;
 	}
 
 	public int getWidth() {

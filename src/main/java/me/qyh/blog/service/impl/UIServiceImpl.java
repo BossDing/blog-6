@@ -1,9 +1,10 @@
 package me.qyh.blog.service.impl;
 
 import java.io.InputStream;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,6 @@ import me.qyh.blog.dao.WidgetTplDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.pageparam.UserWidgetQueryParam;
@@ -109,10 +109,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			nameExists = systemWidgetServer.getHandler(userWidget.getName()) != null;
 		}
 		if (nameExists) {
-			throw new LogicException(new Message("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
-					userWidget.getName()));
+			throw new LogicException("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
+					userWidget.getName());
 		}
-		userWidget.setCreateDate(new Date());
+		userWidget.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		userWidgetDao.insert(userWidget);
 	}
 
@@ -120,7 +120,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void deleteUserWidget(Integer id) throws LogicException {
 		UserWidget userWidget = userWidgetDao.selectById(id);
 		if (userWidget == null) {
-			throw new LogicException(new Message("widget.user.notExists", "挂件不存在"));
+			throw new LogicException("widget.user.notExists", "挂件不存在");
 		}
 		List<WidgetTpl> tpls = widgetTplDao.selectByWidget(userWidget);
 		deleteWidgetTpls(tpls);
@@ -130,7 +130,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void updateUserWidget(UserWidget userWidget) throws LogicException {
 		if (userWidgetDao.selectById(userWidget.getId()) == null) {
-			throw new LogicException(new Message("widget.user.notExists", "挂件不存在"));
+			throw new LogicException("widget.user.notExists", "挂件不存在");
 		}
 		UserWidget db = userWidgetDao.selectByName(userWidget.getName());
 		boolean nameExists = db != null && !db.equals(userWidget);
@@ -138,8 +138,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			nameExists = systemWidgetServer.getHandler(userWidget.getName()) != null;
 		}
 		if (nameExists) {
-			throw new LogicException(new Message("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
-					userWidget.getName()));
+			throw new LogicException("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
+					userWidget.getName());
 		}
 		userWidgetDao.update(userWidget);
 	}
@@ -182,7 +182,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void deleteUserPage(Integer id) throws LogicException {
 		UserPage db = userPageDao.selectById(id);
 		if (db == null) {
-			throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
+			throw new LogicException("page.user.notExists", "自定义页面不存在");
 		}
 		deletePageWidgetTpl(db);
 		userPageDao.deleteById(id);
@@ -280,11 +280,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			db = userPageDao.selectByAlias(idOrAlias);
 		}
 		if (db == null) {
-			throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
+			throw new LogicException("page.user.notExists", "自定义页面不存在");
 		}
 		Space space = SpaceContext.get();
 		if ((space == null && db.getSpace() != null) || (space != null && !space.equals(db.getSpace()))) {
-			throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
+			throw new LogicException("page.user.notExists", "自定义页面不存在");
 		}
 		return uiCacheRender.render(db, new Params());
 	}
@@ -316,15 +316,15 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (alias != null) {
 			UserPage aliasPage = userPageDao.selectByAlias(alias);
 			if (aliasPage != null && !aliasPage.equals(userPage)) {
-				throw new LogicException(new Message("page.user.aliasExists", "别名" + alias + "已经存在", alias));
+				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 		}
-		userPage.setCreateDate(new Date());
+		userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		boolean update = userPage.hasId();
 		if (update) {
 			UserPage db = userPageDao.selectById(userPage.getId());
 			if (db == null) {
-				throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
+				throw new LogicException("page.user.notExists", "自定义页面不存在");
 			}
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
@@ -402,7 +402,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			page = new ExpandedPage();
 			ExpandedPageHandler handler = expandedPageServer.get(id);
 			if (handler == null) {
-				throw new LogicException(new Message("page.expanded.notExists", "拓展页面不存在"));
+				throw new LogicException("page.expanded.notExists", "拓展页面不存在");
 			}
 			page.setId(id);
 			page.setName(handler.name());
@@ -414,7 +414,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void buildTpl(ExpandedPage page) throws LogicException {
 		if (!expandedPageServer.hasHandler(page.getId())) {
-			throw new LogicException(new Message("page.expanded.notExists", "拓展页面不存在"));
+			throw new LogicException("page.expanded.notExists", "拓展页面不存在");
 		}
 		ExpandedPage db = expandedPageDao.selectById(page.getId());
 		boolean update = (db != null);
@@ -667,7 +667,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private void checkSpace(Page page) throws LogicException {
 		Space space = page.getSpace();
 		if (space != null && spaceDao.selectById(space.getId()) == null) {
-			throw new LogicException(new Message("space.notExists", "空间不存在"));
+			throw new LogicException("space.notExists", "空间不存在");
 		}
 	}
 
