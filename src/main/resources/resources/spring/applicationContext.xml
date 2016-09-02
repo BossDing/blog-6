@@ -136,4 +136,12 @@
 		<!-- 索引commit间隔，由于commit操作相对比较笨重，所以这里定时处理提高性能 -->
 		<constructor-arg index="2" value="0" />
 	</bean>
+	
+	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
+		<!-- 如果10秒内增加了2次非法评论，加入暂屏蔽名单，屏蔽时间为300秒，同时每隔600秒清理过期点击数和过期的非法用户 -->
+		<property name="invalidLimitCount" value="5"/>
+		<property name="invalidLimitSecond" value="20"/>
+		<property name="invalidSecond" value="300"/>
+		<property name="invalidClearSecond" value="600"/>
+	</bean>
 </beans>      

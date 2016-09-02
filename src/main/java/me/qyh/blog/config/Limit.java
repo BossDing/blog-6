@@ -38,30 +38,4 @@ public class Limit {
 		this.unit = unit;
 	}
 
-	public TimePeriod getPeriod() {
-		long end = System.currentTimeMillis();
-		long start = System.currentTimeMillis() - unit.toMillis(time);
-		return new TimePeriod(start, end);
-	}
-
-	public final class TimePeriod {
-		private long start;
-		private long end;
-
-		public long getStart() {
-			return start;
-		}
-
-		public long getEnd() {
-			return end;
-		}
-
-		private TimePeriod(long start, long end) {
-			super();
-			this.start = start;
-			this.end = end;
-		}
-
-	}
-
 }

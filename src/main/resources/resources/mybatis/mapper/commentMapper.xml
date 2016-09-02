@@ -40,13 +40,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT COUNT(id) FROM blog_comment WHERE user_id = #{user.id} AND comment_date BETWEEN #{begin} AND #{end} 
 	</select>
 	
-	<select id="selectCount" resultType="int">
+	<select id="selectCountWithTree" resultType="int">
 		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id} AND parent_path = '/'
 	</select>
 	
-	<select id="selectPage" resultMap="CommentDetail">
+	<select id="selectCountWithList" resultType="int">
+		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id}
+	</select>
+	
+	<select id="selectPageWithTree" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name
 		FROM 
 		  blog_comment a JOIN 
 		  (SELECT id, parent_path 
@@ -55,7 +59,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		    AND article_id = #{article.id}
 		    <choose>
 		    	<when test="asc">
-		    		 ORDER BY comment_date ASC,id ASC
+		    		 ORDER BY comment_date ,id
 		    	</when>
 		    	<otherwise>
 		    		 ORDER BY comment_date DESC,id DESC
@@ -64,6 +68,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		  LIMIT #{offset},#{pageSize}) roots
 		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
 		LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id;
+	</select>
+	
+	<select id="selectPageWithList" resultMap="CommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar
+		FROM 
+		  blog_comment a 
+		LEFT OUTER JOIN blog_oauth_user au ON a.user_id = au.id
+		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
+		LEFT OUTER JOIN blog_oauth_user pu ON p.user_id = pu.id
+		WHERE a.article_id = #{article.id}
+		 <choose>
+	    	<when test="asc">
+	    		 ORDER BY a.comment_date ,id
+	    	</when>
+	    	<otherwise>
+	    		 ORDER BY a.comment_date DESC,id DESC
+	    	</otherwise>
+	    </choose>
+		LIMIT #{offset},#{pageSize}
 	</select>
 	
 	<delete id="deleteByPath">
@@ -80,6 +104,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		 FROM blog_comment a 
 		 LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id
 		 WHERE a.id = #{id}
+	</select>
 	
+	<select id="selectLast" resultMap="CommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content
+		 FROM blog_comment a 
+		 WHERE a.article_id = #{article.id}
+		 AND a.user_id = #{user.id}
+		 <choose>
+		 	<when test="parent == null">
+		 		AND parent_path = '/'
+		 	</when>
+		 	<otherwise>
+		 		AND parent_id = #{parent.id}
+		 	</otherwise>
+		 </choose>
+		 ORDER BY a.comment_date DESC,id DESC
+		 LIMIT 0,1
 	</select>
 </mapper>

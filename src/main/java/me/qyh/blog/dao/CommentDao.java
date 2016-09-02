@@ -24,8 +24,14 @@ public interface CommentDao {
 	int selectCountByUserAndDatePeriod(@Param("begin") Timestamp begin, @Param("end") Timestamp end,
 			@Param("user") OauthUser user);
 
-	int selectCount(CommentQueryParam param);
+	int selectCountWithTree(CommentQueryParam param);
 
-	List<Comment> selectPage(CommentQueryParam param);
+	int selectCountWithList(CommentQueryParam param);
+
+	List<Comment> selectPageWithTree(CommentQueryParam param);
+
+	List<Comment> selectPageWithList(CommentQueryParam param);
+
+	Comment selectLast(Comment current);
 
 }

@@ -21,6 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="status" column="art_status" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
+		<result property="commentMode" column="comment_mode" typeHandler="EnumOrdinalTypeHandler"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
@@ -45,8 +46,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment)
-		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{allowComment})
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode)
+		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
+			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{allowComment},#{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler})
 	</insert>
 	
 	<update id="update">
@@ -82,6 +85,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="allowComment != null">
 				allowComment = #{allowComment},
 			</if>
+			<if test="commentMode != null">
+				comment_mode = #{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},
+			</if>
 			lastModifyDate = #{lastModifyDate}
 		</set>
 		WHERE id = #{id}
@@ -105,6 +111,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.editor,
 			art.space_id,
 			art.art_lock,
+			art.comment_mode,
 			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -133,9 +140,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_status,
 			art.art_from,
 			art.editor,
-			art.space_id
+			art.space_id,
+			art.art_lock,
+			art.comment_mode,
+			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 		WHERE art_lock IS NULL
 			<if test="space != null">
 				AND art.space_id = #{space.name}
@@ -146,6 +160,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="status != null">
 				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
+		GROUP BY art.id
 		ORDER BY RAND()
 		LIMIT 1
 	</select>

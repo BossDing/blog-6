@@ -34,6 +34,7 @@ public class Article extends BaseLockResource {
 	private String summary;// 博客摘要
 	private Boolean allowComment;// 是否允许评论
 	private Integer level; // 博客级别，级别越高显示越靠前
+	public CommentMode commentMode;
 
 	private AtomicInteger _hits;
 	private AtomicInteger _comments;
@@ -76,6 +77,24 @@ public class Article extends BaseLockResource {
 		}
 
 		private ArticleStatus() {
+
+		}
+
+		public Message getMessage() {
+			return message;
+		}
+	}
+
+	public enum CommentMode {
+		LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
+
+		private Message message;
+
+		private CommentMode(Message message) {
+			this.message = message;
+		}
+
+		private CommentMode() {
 
 		}
 
@@ -241,18 +260,6 @@ public class Article extends BaseLockResource {
 		return ArticleStatus.DRAFT.equals(status);
 	}
 
-	public String getTagStr() {
-		if (CollectionUtils.isEmpty(tags)) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder();
-		for (Tag tag : tags) {
-			sb.append(tag.getName()).append(",");
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		return sb.toString();
-	}
-
 	@Override
 	public Message getLockTip() {
 		return new Message("lock.article.tip", "该文章访问受密码保护，请解锁后访问");
@@ -264,5 +271,25 @@ public class Article extends BaseLockResource {
 
 	public void setContent(String content) {
 		this.content = content;
+	}
+
+	public CommentMode getCommentMode() {
+		return commentMode;
+	}
+
+	public void setCommentMode(CommentMode commentMode) {
+		this.commentMode = commentMode;
+	}
+
+	public String getTagStr() {
+		if (CollectionUtils.isEmpty(tags)) {
+			return "";
+		}
+		StringBuilder sb = new StringBuilder();
+		for (Tag tag : tags) {
+			sb.append(tag.getName()).append(",");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
 	}
 }

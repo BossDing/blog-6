@@ -59,7 +59,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		CommentConfig config = new CommentConfig();
 		config.setAsc(getBoolean(COMMENT_SORT, true));
 		Limit limit = new Limit();
-		limit.setLimit(getInt(COMMENT_LIMIT, 5));
+		limit.setLimit(getInt(COMMENT_LIMIT, 3));
 		limit.setTime(getLong(COMMENT_LIMIT_SECOND, 10));
 		limit.setUnit(TimeUnit.SECONDS);
 		config.setLimit(limit);

@@ -11,6 +11,7 @@ import org.springframework.core.io.Resource;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
+import me.qyh.blog.entity.Article.CommentMode;
 import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
@@ -64,6 +65,7 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 		article.setIsPrivate(false);
 		article.setLastModifyDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
+		article.setCommentMode(CommentMode.LIST);
 
 		Space space = new Space();
 		space.setId(1);
