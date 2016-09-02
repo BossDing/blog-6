@@ -2,7 +2,7 @@ package me.qyh.blog.config;
 
 public class CommentConfig {
 
-	private boolean asc;
+	private boolean asc = true;
 	private Limit limit;
 
 	public boolean isAsc() {

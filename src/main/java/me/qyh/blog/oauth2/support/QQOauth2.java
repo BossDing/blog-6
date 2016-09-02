@@ -36,8 +36,8 @@ public class QQOauth2 extends AbstractOauth2 {
 	 */
 	private static final String USER_INFO_URL = "https://graph.qq.com/user/get_user_info?format=json";
 
-	private static final String[] AVATAR_URL_NODES = { "figureurl_qq_2", "figureurl_qq_1", "figureurl_2",
-			"figureurl_1" };
+	private static final String[] AVATAR_URL_NODES = { "figureurl_2", "figureurl_1", "figureurl_qq_2",
+			"figureurl_qq_1" };
 
 	private String appId;
 	private String appKey;

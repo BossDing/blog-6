@@ -7,7 +7,7 @@ import me.qyh.blog.pageparam.PageResult;
 
 public interface CommentService {
 
-	void insertComment(Comment comment) throws LogicException;
+	Comment insertComment(Comment comment) throws LogicException;
 
 	void deleteComment(Integer id) throws LogicException;
 

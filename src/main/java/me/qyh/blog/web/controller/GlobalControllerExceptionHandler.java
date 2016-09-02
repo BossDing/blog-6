@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -62,7 +63,6 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(AuthencationException.class)
 	public String handleNoAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(403);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("noAuthencation", "权限不足")));
 			return null;
 		} else {
@@ -78,7 +78,6 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(CsrfException.class)
 	public void handleCsrfAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(403);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("csrfAuthencation", "认证信息失效，请刷新页面后重试")));
 		} else {
 			resp.sendError(403);
@@ -145,7 +144,6 @@ public class GlobalControllerExceptionHandler {
 			throws IOException {
 		logger.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(400);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidParameter", "数据格式异常")));
 			return null;
 		} else {
@@ -154,6 +152,18 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+	public String handlerHttpMediaTypeNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
+			HttpMediaTypeNotSupportedException ex) throws IOException {
+		logger.debug(ex.getMessage(), ex);
+		if (Webs.isAjaxRequest(request)) {
+			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "数据格式异常")));
+			return null;
+		} else {
+			return getErrorForward(request, 400);
+		}
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseBody
 	public JsonResult handleMethodArgumentNotValidException(MethodArgumentNotValidException ex,
@@ -177,7 +187,6 @@ public class GlobalControllerExceptionHandler {
 	public String handleHttpRequestMethodNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
 			HttpRequestMethodNotSupportedException ex) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(405);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.405", "405")));
 			return null;
 		} else {
@@ -190,7 +199,6 @@ public class GlobalControllerExceptionHandler {
 	public String handleMaxUploadSizeExceededException(HttpServletRequest req, HttpServletResponse resp,
 			MaxUploadSizeExceededException e) throws IOException {
 		if (Webs.isAjaxRequest(req)) {
-			resp.setStatus(400);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("upload.overlimitsize",
 					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize())));
 			return null;
@@ -204,7 +212,6 @@ public class GlobalControllerExceptionHandler {
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
 		logger.error(e.getMessage(), e);
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(500);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
 			return null;
 		} else {
@@ -217,7 +224,6 @@ public class GlobalControllerExceptionHandler {
 	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp,
 			NoHandlerFoundException ex) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			resp.setStatus(404);
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.404", "404")));
 			return null;
 		}

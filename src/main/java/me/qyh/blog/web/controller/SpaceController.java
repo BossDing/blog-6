@@ -21,7 +21,6 @@ import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.oauth2.RequestOauthUser;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.CommentQueryParam;
@@ -110,8 +109,6 @@ public class SpaceController extends BaseController {
 		if (result.hasErrors()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
-		if (param.getCurrentPage() < 1)
-			param.setCurrentPage(1);
 		param.setPageSize(configService.getPageSizeConfig().getCommentPageSize());
 		param.setArticle(new Article(articleId));
 		return commentService.queryComment(param);
@@ -123,8 +120,7 @@ public class SpaceController extends BaseController {
 			@PathVariable("id") Integer articleId) throws LogicException {
 		comment.setArticle(new Article(articleId));
 		comment.setUser(user);
-		commentService.insertComment(comment);
-		return new JsonResult(true,new Message("comment.add.success","评论成功"));
+		return new JsonResult(true,commentService.insertComment(comment));
 	}
 
 	@RequestMapping("page/{idOrAlias}")

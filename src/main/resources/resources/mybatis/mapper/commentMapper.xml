@@ -27,7 +27,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 
-	<insert id="insert">
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_comment(parent_id,parent_path,content,user_id,article_id,comment_date)
 		VALUES(#{parent.id},#{parentPath},#{content},#{user.id},#{article.id},#{commentDate})
 	</insert>
@@ -41,7 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectCount" resultType="int">
-		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id}
+		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id} AND parent_path = '/'
 	</select>
 	
 	<select id="selectPage" resultMap="CommentDetail">
@@ -53,7 +53,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		    FROM blog_comment 
 		    WHERE parent_path = '/'
 		    AND article_id = #{article.id}
-		  ORDER BY comment_date DESC,id DESC
+		    <choose>
+		    	<when test="asc">
+		    		 ORDER BY comment_date ASC,id ASC
+		    	</when>
+		    	<otherwise>
+		    		 ORDER BY comment_date DESC,id DESC
+		    	</otherwise>
+		    </choose>
 		  LIMIT #{offset},#{pageSize}) roots
 		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
 		LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id;

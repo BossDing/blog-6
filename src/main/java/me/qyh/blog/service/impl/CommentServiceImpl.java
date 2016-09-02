@@ -11,7 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +29,7 @@ import me.qyh.blog.dao.OauthUserDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.OauthUser;
+import me.qyh.blog.entity.OauthUser.OauthUserStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -37,7 +41,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Service
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public class CommentServiceImpl implements CommentService {
+public class CommentServiceImpl implements CommentService, InitializingBean {
 
 	@Autowired
 	private ArticleCache articleCache;
@@ -51,8 +55,9 @@ public class CommentServiceImpl implements CommentService {
 	@Autowired
 	private ConfigService configService;
 
-	private final CommentComparator ascCommentComparator = new CommentComparator();
+	private CommentContentChecker commentContentChecker;
 
+	private final CommentComparator ascCommentComparator = new CommentComparator();
 	private final Comparator<Comment> descCommentComparator = new Comparator<Comment>() {
 
 		@Override
@@ -60,6 +65,8 @@ public class CommentServiceImpl implements CommentService {
 			return -ascCommentComparator.compare(o1, o2);
 		}
 	};
+
+	private ConcurrentHashMap<OauthUser, InvalidCount> invalidCountMap = new ConcurrentHashMap<>();
 
 	/**
 	 * 为了保证一个树结构，这里采用 path来纪录层次结构
@@ -82,19 +89,45 @@ public class CommentServiceImpl implements CommentService {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
 		int count = commentDao.selectCount(param);
+		// 查询最后一页
+		if (param.getCurrentPage() <= 0) {
+			int pageSize = configService.getPageSizeConfig().getCommentPageSize();
+			param.setCurrentPage(count % pageSize == 0 ? count / pageSize : count / pageSize + 1);
+		}
+		param.setAsc(configService.getCommentConfig().isAsc());
 		List<Comment> datas = commentDao.selectPage(param);
 		datas = handle(datas);
 		return new PageResult<Comment>(param, count, datas);
 	}
 
 	@Override
-	public void insertComment(Comment comment) throws LogicException {
+	public Comment insertComment(Comment comment) throws LogicException {
+		commentContentChecker.doCheck(comment.getContent());
 		OauthUser user = oauthUserDao.selectById(comment.getUser().getId());
 		if (user == null) {
 			throw new LogicException("comment.user.notExists", "账户不存在");
 		}
 		if (user.isDisabled()) {
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
+		}
+		if (UserContext.get() == null) {
+			// 检查频率
+			Limit limit = configService.getCommentConfig().getLimit();
+			TimePeriod period = limit.getPeriod();
+			int count = commentDao.selectCountByUserAndDatePeriod(new Timestamp(period.getStart()),
+					new Timestamp(period.getEnd()), user);
+			if (count > limit.getLimit()) {
+				invalidCountMap.computeIfAbsent(user, value -> new InvalidCount()).increase();
+				InvalidCount invalidCount = invalidCountMap.get(user);
+				if ((System.currentTimeMillis() - invalidCount.start) / 1000 <= 10 && invalidCount.count.get() >= 3) {
+					user.setStatus(OauthUserStatus.DISABLED);
+					oauthUserDao.update(user);
+					invalidCountMap.remove(user);
+				} else if ((System.currentTimeMillis() - invalidCount.start) / 1000 > 10) {
+					invalidCountMap.remove(user);
+				}
+				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
+			}
 		}
 		Article article = articleCache.getArticle(comment.getArticle().getId());
 		// 博客不存在
@@ -107,16 +140,6 @@ public class CommentServiceImpl implements CommentService {
 		// 如果私人文章并且没有登录
 		if (article.getIsPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
-		}
-		if (UserContext.get() == null) {
-			// 检查频率
-			Limit limit = configService.getCommentConfig().getLimit();
-			TimePeriod period = limit.getPeriod();
-			int count = commentDao.selectCountByUserAndDatePeriod(new Timestamp(period.getStart()),
-					new Timestamp(period.getEnd()), user);
-			if (count > limit.getLimit()) {
-				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
-			}
 		}
 		String parentPath = "/";
 		// 判断是否存在父评论
@@ -133,12 +156,16 @@ public class CommentServiceImpl implements CommentService {
 		}
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
+		comment.setParent(parent);
+
 		commentDao.insert(comment);
 		// 是不是每个回复都算评论数？
 		if (article.isCacheable()) {
 			article.addComments();
 		}
 		articleDao.updateComments(article.getId(), 1);
+
+		return comment;
 	}
 
 	@Override
@@ -228,5 +255,35 @@ public class CommentServiceImpl implements CommentService {
 			build(child, comments);
 		}
 		root.setChildren(children);
+	}
+
+	private final class DefaultCommentContentChecker implements CommentContentChecker {
+
+		@Override
+		public void doCheck(String content) throws LogicException {
+
+		}
+
+	}
+
+	private final class InvalidCount {
+		private long start;
+		private AtomicInteger count;
+
+		public int increase() {
+			return count.incrementAndGet();
+		}
+
+		public InvalidCount() {
+			this.start = System.currentTimeMillis();
+			this.count = new AtomicInteger();
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (commentContentChecker == null) {
+			commentContentChecker = new DefaultCommentContentChecker();
+		}
 	}
 }
