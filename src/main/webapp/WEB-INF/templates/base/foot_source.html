@@ -6,8 +6,10 @@
 <script type="text/javascript" th:src="@{/static/js/bootbox.min.js}"></script>
 <input type="hidden" id="basePath" th:value="@{/}"/>
 <input type="hidden" id="actPath" th:value="${urls.currentUrl}"/>
+<input type="hidden" id="rootPath" th:value="${urls.url}"/>
 <script type="text/javascript" >
 var basePath = $("#basePath").val();
+var rootPath = $("#rootPath").val();
 var actPath = $("#actPath").val();
 if(basePath == '/'){
 	basePath = '';

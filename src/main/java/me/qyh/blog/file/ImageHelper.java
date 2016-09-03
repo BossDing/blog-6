@@ -55,4 +55,13 @@ public abstract class ImageHelper {
 		}
 	}
 
+	public static boolean isImage(String extension) {
+		for (String imgExtension : IMG_EXTENSIONS) {
+			if (extension.equalsIgnoreCase(imgExtension)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

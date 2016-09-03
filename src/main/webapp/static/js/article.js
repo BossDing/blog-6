@@ -1,4 +1,4 @@
-var max = 4;
+var max = 3;
 var login = $("#login").val() == 'true';
 			var flag = false;
 			var oauthLogin = $("#oauthLogin").val() == "true";
@@ -233,9 +233,13 @@ var login = $("#login").val() == 'true';
 						if(result){
 							$.ajax({
 			    				type : "post",
-			    				url : basePath+"/mgr/comment/delete?id="+id,
+			    				url : rootPath+"/mgr/comment/delete?id="+id,
 			    	            contentType:"application/json",
 			    				data : {},
+			    				xhrFields: {
+			    	                withCredentials: true
+			    	            },
+			    	            crossDomain: true,
 			    				success : function(data){
 			    					if(data.success){
 				    					$("#comment-"+id).remove();
@@ -261,26 +265,46 @@ var login = $("#login").val() == 'true';
 			 function disable(id){
 				 bootbox.confirm("确定要禁用吗？", function(result) {
 						if (result) {
-							$.post(basePath + "/mgr/oauth/disable", {
-								id : id
-							}, function(data) {
-								if(data.success){
-									 bootbox.confirm("是否要删除该用户这篇文章下的所有评论？", function(result) {
-											if(result){
-												$.post(basePath + "/mgr/comment/delete", {
-													userId : id,articleId:$("#articleId").val()
-												}, function(data) {
-													bootbox.alert(data.message);
-													queryComments(0);
-												});
-											}else{
-												window.location.reload();
-											}
-									 });
-								}else{
-									bootbox.alert(data.message);
-								}
-							});
+							$.ajax({
+			    				type : "post",
+			    				url : rootPath + "/mgr/oauth/disable",
+			    				data : {id : id},
+			    				xhrFields: {
+			    	                withCredentials: true
+			    	            },
+			    	            crossDomain: true,
+			    				success : function(data){
+			    					if(data.success){
+										 bootbox.confirm("是否要删除该用户这篇文章下的所有评论？", function(result) {
+												if(result){
+													$.ajax({
+									    				type : "post",
+									    				url : rootPath + "/mgr/comment/delete",
+									    				data : {userId : id,articleId:$("#articleId").val()},
+									    				xhrFields: {
+									    	                withCredentials: true
+									    	            },
+									    	            crossDomain: true,
+									    				success : function(data){
+									    					bootbox.alert(data.message);
+									    					if(data.success){
+																queryComments(0);
+															}
+									    				},
+									    				complete:function(){
+									    				}
+									    			});
+												}else{
+													window.location.reload();
+												}
+										 });
+									}else{
+										bootbox.alert(data.message);
+									}
+			    				},
+			    				complete:function(){
+			    				}
+			    			});
 						}
 					});
 			 }
@@ -288,16 +312,25 @@ var login = $("#login").val() == 'true';
 			 function enable(id){
 				 bootbox.confirm("确定要解禁吗？", function(result) {
 						if (result) {
-							$.post(basePath + "/mgr/oauth/enable", {
-								id : id
-							}, function(data) {
-								bootbox.alert(data.message);
-								if(data.success){
-									setTimeout(function(){
-										window.location.reload();
-									},500)
-								}
-							});
+							$.ajax({
+			    				type : "post",
+			    				url : rootPath + "/mgr/oauth/enable",
+			    				data : {id : id},
+			    				xhrFields: {
+			    	                withCredentials: true
+			    	            },
+			    	            crossDomain: true,
+			    				success : function(data){
+			    					bootbox.alert(data.message);
+									if(data.success){
+										setTimeout(function(){
+											window.location.reload();
+										},500)
+									}
+			    				},
+			    				complete:function(){
+			    				}
+			    			});
 						}
 					});
 			 }

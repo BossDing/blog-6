@@ -51,9 +51,10 @@
 					<li><a th:href="@{/mgr/page/expanded/index}">扩展页面管理</a></li>
 					<li><a th:href="@{/mgr/widget/user/index}">自定义挂件管理</a></li>
 				</ul></li>
-			<li th:class="${tag == 'oauth'}? active:''"><a href="javascript:;" data-toggle="collapse"
-				data-target="#oauthMgr"><i class="fa fa-fw fa-arrows-v"></i> 社交账号管理
-					<i class="fa fa-fw fa-caret-down"></i></a>
+			<li th:class="${tag == 'oauth'}? active:''"><a
+				href="javascript:;" data-toggle="collapse" data-target="#oauthMgr"><i
+					class="fa fa-fw fa-arrows-v"></i> 社交账号管理 <i
+					class="fa fa-fw fa-caret-down"></i></a>
 				<ul id="oauthMgr" class="collapse in">
 					<li><a th:href="@{/mgr/oauth/bind/index}">绑定管理</a></li>
 					<li><a th:href="@{/mgr/oauth/bind/toBind}">账号绑定</a></li>
@@ -62,9 +63,14 @@
 			<li th:class="${tag == 'tag'}? active:''"><a
 				th:href="@{/mgr/tag/index}"><i class="fa fa-fw fa-dashboard"></i>
 					标签管理</a></li>
-			<li th:class="${tag == 'pagesize'}? active:''"><a
-				th:href="@{/mgr/config/pagesize/index}"><i
-					class="fa fa-fw fa-dashboard"></i> 分页数目管理</a></li>
+			<li th:class="${tag == 'config'}? active:''"><a
+				href="javascript:;" data-toggle="collapse" data-target="#config"><i
+					class="fa fa-fw fa-arrows-v"></i> 配置管理 <i
+					class="fa fa-fw fa-caret-down"></i></a>
+				<ul id="config" class="collapse in">
+					<li><a th:href="@{/mgr/config/pagesize/index}">分页数目配置</a></li>
+					<li><a th:href="@{/mgr/config/comment/index}">评论配置</a></li>
+				</ul></li>
 		</ul>
 	</div>
 	<!-- /.navbar-collapse -->

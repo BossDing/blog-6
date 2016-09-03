@@ -208,7 +208,8 @@ public class UrlHelper implements InitializingBean {
 			if (space == null) {
 				String requestUri = request.getRequestURI();
 				if (requestUri.startsWith(request.getContextPath() + "/space/")) {
-					String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
+					String spaceStart = requestUri.substring(7 + request.getContextPath().length(),
+							requestUri.length());
 					if (spaceStart.trim().isEmpty()) {
 						//
 						logger.debug("不完整的路径：" + request.getRequestURL().toString());
@@ -298,6 +299,10 @@ public class UrlHelper implements InitializingBean {
 
 	private String getSpaceUrl(String space) {
 		return new UriBuilder(urlConfig).setServerName(space + "." + urlConfig.getRootDomain()).toUrl();
+	}
+
+	public UrlConfig getUrlConfig() {
+		return urlConfig;
 	}
 
 	@Override

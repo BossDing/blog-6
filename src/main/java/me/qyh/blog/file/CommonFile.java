@@ -1,7 +1,6 @@
 package me.qyh.blog.file;
 
 import me.qyh.blog.entity.Id;
-import me.qyh.util.Webs;
 
 public class CommonFile extends Id {
 
@@ -77,7 +76,7 @@ public class CommonFile extends Id {
 	}
 
 	public boolean isImage() {
-		return Webs.isImage(extension);
+		return ImageHelper.isImage(extension);
 	}
 
 	public int getStore() {

@@ -23,7 +23,6 @@ import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
-import me.qyh.util.Webs;
 
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
@@ -126,7 +125,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		return Webs.isImage(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
+		return ImageHelper.isImage(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
 	}
 
 	@Override

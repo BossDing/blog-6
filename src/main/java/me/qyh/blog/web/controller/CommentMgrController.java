@@ -1,5 +1,7 @@
 package me.qyh.blog.web.controller;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -22,7 +24,7 @@ public class CommentMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "id" })
 	@ResponseBody
-	public JsonResult remove(@RequestParam("id") Integer id) throws LogicException {
+	public JsonResult remove(@RequestParam("id") Integer id, HttpServletResponse response) throws LogicException {
 		commentService.deleteComment(id);
 		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
 	}

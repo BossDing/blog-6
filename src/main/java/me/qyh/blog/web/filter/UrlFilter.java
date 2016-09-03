@@ -7,13 +7,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.web.controller.Webs;
 import me.qyh.util.UrlUtils;
 
 /**
@@ -31,8 +31,8 @@ public class UrlFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain fc)
 			throws ServletException, IOException {
-		if (isAction(req)) {
-			String space = getUrlHelper().getSpaceIfSpaceDomainRequest(req);
+		if (Webs.isAction(req)) {
+			String space = urlHelper.getSpaceIfSpaceDomainRequest(req);
 			if (space != null) {
 				logger.debug("从空间域名请求中获取空间名:" + space);
 				String requestUrl = buildForwardUrl(req, space);
@@ -44,21 +44,14 @@ public class UrlFilter extends OncePerRequestFilter {
 		fc.doFilter(req, resp);
 	}
 
-	private UrlHelper getUrlHelper() {
-		if (urlHelper == null) {
-			urlHelper = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext())
-					.getBean(UrlHelper.class);
-		}
-		return urlHelper;
+	@Override
+	protected void initFilterBean() throws ServletException {
+		urlHelper = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext())
+				.getBean(UrlHelper.class);
 	}
 
 	private String buildForwardUrl(HttpServletRequest request, String space) {
 		return "/space/" + space + request.getRequestURI().substring(request.getContextPath().length());
-	}
-
-	protected boolean isAction(HttpServletRequest request) {
-		String extension = FilenameUtils.getExtension(request.getRequestURL().toString());
-		return extension.trim().isEmpty();
 	}
 
 }

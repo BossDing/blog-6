@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.MediaType;
 
 import me.qyh.blog.bean.JsonResult;
@@ -39,6 +40,11 @@ public class Webs {
 		// objectWriter.getFactory().createGenerator(response.getOutputStream(),
 		// JsonEncoding.UTF8);
 		Jsons.write(response.getOutputStream(), result);
+	}
+
+	public static boolean isAction(HttpServletRequest request) {
+		String extension = FilenameUtils.getExtension(request.getRequestURL().toString());
+		return extension.trim().isEmpty();
 	}
 
 }
