@@ -10,11 +10,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="nick_name" property="nickname" />
 		<result column="register_date" property="registerDate"/>
 		<result column="server_id" property="serverId"/>
+		<result column="is_admin" property="admin"/>
 		<result column="oauth_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
 	</resultMap>
 	
 	<select id="selectByOauthIdAndServerId" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date FROM blog_oauth_user 
+		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
 		WHERE 
 				oauth_id = #{oauthid} 
 			AND 
@@ -31,7 +32,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectPage" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date FROM blog_oauth_user 
+		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
 		<where>
 			<if test="nickname != null and nickname != ''">
 				nickname LIKE CONCAT('%', #{nickname},'%')
@@ -51,6 +52,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SET 
 			avatar = #{avatar},
 			nick_name = #{nickname},
+			<if test="admin != null">
+				is_admin = #{admin},
+			</if>
 			<if test="status != null">
 				oauth_status = #{status,javaType=OauthUserStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
@@ -59,7 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</update>
 
 	<select id="selectById" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date FROM blog_oauth_user 
+		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
 		WHERE id = #{id}
 	</select>
 </mapper>

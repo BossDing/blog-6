@@ -105,6 +105,8 @@ var publishing = false;
     				article.level = $("#level").val();
     			}
     			article.isPrivate = $("#private").prop("checked");
+    			article.allowComment = $("#allowComment").prop("checked");
+    			article.commentMode = $("#commentMode").val();
     			article.tags = tags;
     			article.summary = $("#summary").val();
     			article.space = {"id":$("#space").val()};
@@ -290,6 +292,8 @@ var publishing = false;
 			if($("#level").val() != ''){
 				article.level = $("#level").val();
 			}
+			article.allowComment = $("#allowComment").prop("checked");
+			article.commentMode = $("#commentMode").val();
 			article.isPrivate = $("#private").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();

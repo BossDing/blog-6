@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.OauthBindDao;
 import me.qyh.blog.dao.OauthUserDao;
-import me.qyh.blog.entity.OauthBind;
-import me.qyh.blog.entity.OauthUser;
-import me.qyh.blog.entity.OauthUser.OauthUserStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.oauth2.Oauth2Provider;
+import me.qyh.blog.oauth2.OauthBind;
+import me.qyh.blog.oauth2.OauthUser;
+import me.qyh.blog.oauth2.OauthUser.OauthUserStatus;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.OauthService;
@@ -83,6 +83,8 @@ public class OauthServiceImpl implements OauthService {
 		if (db.isDisabled()) {
 			throw new LogicException("oauthUser.disabled", "社交账号已经被禁用");
 		}
+		db.setAdmin(true);
+		oauthUserDao.update(db);
 		OauthBind bind = oauthBindDao.selectByOauthUser(db);
 		if (bind != null) {
 			throw new LogicException("oauth.bind.exists", "该账号已经绑定");
@@ -99,22 +101,39 @@ public class OauthServiceImpl implements OauthService {
 		if (bind == null) {
 			throw new LogicException("oauthBind.notExists", "社交账户未绑定");
 		}
+		OauthUser user = oauthUserDao.selectById(bind.getUser().getId());
+		user.setAdmin(false);
+		oauthUserDao.update(user);
 		oauthBindDao.deleteById(id);
 	}
 
 	@Override
-	public void toggleOauthUserStatus(Integer id) throws LogicException {
+	public void disableUser(Integer id) throws LogicException {
+		OauthUser db = oauthUserDao.selectById(id);
+		if (db == null) {
+			throw new LogicException("oauthUser.notExists", "社交账户不存在");
+		}
+		if (db.isDisabled()) {
+			return;
+		}
+		OauthBind bind = oauthBindDao.selectByOauthUser(db);
+		if (bind != null) {
+			throw new LogicException("oauth.bind.exists", "该账号已经绑定");
+		}
+		db.setStatus(OauthUserStatus.DISABLED);
+		oauthUserDao.update(db);
+	}
+
+	@Override
+	public void enableUser(Integer id) throws LogicException {
 		OauthUser db = oauthUserDao.selectById(id);
 		if (db == null) {
 			throw new LogicException("oauthUser.notExists", "社交账户不存在");
 		}
 		if (!db.isDisabled()) {
-			OauthBind bind = oauthBindDao.selectByOauthUser(db);
-			if (bind != null) {
-				throw new LogicException("oauth.bind.exists", "该账号已经绑定");
-			}
+			return;
 		}
-		db.setStatus(db.isDisabled() ? OauthUserStatus.NORMAL : OauthUserStatus.DISABLED);
+		db.setStatus(OauthUserStatus.NORMAL);
 		oauthUserDao.update(db);
 	}
 

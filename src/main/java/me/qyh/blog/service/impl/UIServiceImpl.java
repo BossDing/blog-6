@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -287,10 +286,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			throw new LogicException("page.user.notExists", "自定义页面不存在");
 		}
 		return uiCacheRender.render(db, new Params());
-	}
-
-	public static void main(String[] args) {
-		System.out.println(StringUtils.isNumeric("58.8"));
 	}
 
 	@Override

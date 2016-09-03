@@ -30,8 +30,8 @@ import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
-import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
@@ -163,7 +163,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		if (!article.getAllowComment()) {
+		if (!article.getAllowComment() && (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin()))) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		// 如果私人文章并且没有登录
@@ -181,14 +181,14 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			parentPath = parent.getParentPath() + parent.getId() + "/";
 		}
 		if (parentPath.length() > PATH_MAX_LENGTH) {
-			throw new LogicException("comment.path.toolong", "该回复不能再被回复了");
+			throw new LogicException("comment.path.toolong", "该评论不能再被回复了");
 		}
 		Comment last = commentDao.selectLast(comment);
 		if (last != null && last.getContent().equals(comment.getContent())) {
 			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
 		}
 		comment.setParentPath(parentPath);
-		if (UserContext.get() == null) {
+		if (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin())) {
 			// 检查频率
 			Limit limit = configService.getCommentConfig().getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
@@ -209,7 +209,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			}
 		}
 		comment.setCommentDate(new Timestamp(now));
-		comment.setParent(parent);
 
 		commentDao.insert(comment);
 		// 是不是每个回复都算评论数？
@@ -218,6 +217,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 		articleDao.updateComments(article.getId(), 1);
 
+		comment.setParent(parent);
+		comment.setUser(user);
 		return comment;
 	}
 
@@ -225,7 +226,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	public void deleteComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
 		if (comment == null) {
-			throw new LogicException("comment.notExists", "父评论不存在");
+			throw new LogicException("comment.notExists", "评论不存在");
 		}
 		// 查询自评论数目
 		int count = commentDao.selectCountByPath(comment.getSubPath());
@@ -236,10 +237,31 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		commentDao.deleteById(id);
 		// 更新文章评论数量
 		Article article = articleCache.getArticle(comment.getArticle().getId());
+		articleDao.updateComments(article.getId(), -totalCount);
 		if (article.isCacheable()) {
 			article.decrementComment(totalCount);
 		}
-		articleDao.updateComments(article.getId(), -totalCount);
+	}
+
+	@Override
+	public void deleteComment(Integer userId, Integer articleId) throws LogicException {
+		OauthUser user = oauthUserDao.selectById(userId);
+		if (user == null) {
+			throw new LogicException("comment.user.notExists", "账户不存在");
+		}
+		Article article = articleCache.getArticle(articleId);
+		if (article == null) {
+			throw new LogicException("article.notExists", "文章不存在");
+		}
+
+		int count = commentDao.selectCountByUserAndArticle(user, article);
+		if (count > 0) {
+			commentDao.deleteByUserAndArticle(user, article);
+			articleDao.updateComments(article.getId(), -count);
+			if (article.isCacheable()) {
+				article.decrementComment(count);
+			}
+		}
 	}
 
 	protected List<Comment> handlerTree(List<Comment> comments) {
@@ -399,7 +421,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 
 	private boolean isInvalidUser(OauthUser user) {
 		if (UserContext.get() != null) {
-			return true;
+			return false;
 		}
 		Long start = invalidUserMap.get(user);
 		if (start != null && (System.currentTimeMillis() - start) / 1000 <= invalidSecond) {
@@ -530,4 +552,5 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	public void setInvalidClearSecond(int invalidClearSecond) {
 		this.invalidClearSecond = invalidClearSecond;
 	}
+
 }

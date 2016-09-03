@@ -74,6 +74,21 @@
 								<option value="COPIED">转载</option>
 							</select>
 						</div>
+						<div class="checkbox">
+							<label th:if="${article.allowComment == null || !article.allowComment}">
+								<input type="checkbox" id="allowComment" />允许评论
+							</label> <label th:if="${article.allowComment != null && article.allowComment}"><input
+								type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
+						</div>
+						<div class="form-group">
+							<label>评论展现方式</label> <select class="form-control" id="commentMode">
+								<option th:if="${article.commentMode != null}"
+									th:value="${article.commentMode.name()}" selected="selected"
+									th:text="'当前:'+${messages.getMessage(article.commentMode.getMessage())}"></option>
+								<option value="LIST">平铺</option>
+								<option value="TREE">嵌套</option>
+							</select>
+						</div>
 						<div id="lock_container"></div>
 						<div class="form-group">
 							<label>状态</label> <select class="form-control" id="status">
@@ -84,15 +99,14 @@
 								<option value="PUBLISHED">发布</option>
 								<option value="SCHEDULED">计划</option>
 							</select>
-							<div class="checkbox">
-								<label
-									th:if="${article.isPrivate == null || !article.isPrivate}">
-									<input type="checkbox" id="private" />私人博客
-								</label> <label
-									th:if="${article.isPrivate != null && article.isPrivate}"><input
-									type="checkbox" id="private" checked="checked" />私人博客 </label>
-							</div>
 						</div>
+						<div class="checkbox">
+							<label th:if="${article.isPrivate == null || !article.isPrivate}">
+								<input type="checkbox" id="private" />私人博客
+							</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
+								type="checkbox" id="private" checked="checked" />私人博客 </label>
+						</div>
+
 						<div class="form-group"
 							th:style="${article.isSchedule() ? '' : 'display: none'}"
 							id="scheduleContainer">

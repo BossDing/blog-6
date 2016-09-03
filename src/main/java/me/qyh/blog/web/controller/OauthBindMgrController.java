@@ -13,10 +13,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.OauthBind;
-import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.oauth2.OauthBind;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.service.OauthService;
 
 @Controller

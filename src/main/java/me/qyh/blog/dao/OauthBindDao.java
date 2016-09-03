@@ -2,8 +2,8 @@ package me.qyh.blog.dao;
 
 import java.util.List;
 
-import me.qyh.blog.entity.OauthBind;
-import me.qyh.blog.entity.OauthUser;
+import me.qyh.blog.oauth2.OauthBind;
+import me.qyh.blog.oauth2.OauthUser;
 
 public interface OauthBindDao {
 

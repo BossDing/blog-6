@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.entity.OauthUser;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 
 public interface OauthUserDao {

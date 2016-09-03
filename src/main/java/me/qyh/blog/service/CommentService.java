@@ -11,6 +11,8 @@ public interface CommentService {
 
 	void deleteComment(Integer id) throws LogicException;
 
+	void deleteComment(Integer userId, Integer articleId) throws LogicException;
+
 	/**
 	 * 分页查询评论
 	 * 

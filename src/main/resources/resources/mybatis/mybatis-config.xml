@@ -60,10 +60,10 @@
 		<typeAlias type="me.qyh.blog.ui.widget.ArticleSpaceFile"
 			alias="ArticleSpaceFile" />
 
-		<typeAlias type="me.qyh.blog.entity.OauthUser" alias="OauthUser" />
-		<typeAlias type="me.qyh.blog.entity.OauthUser$OauthUserStatus"
+		<typeAlias type="me.qyh.blog.oauth2.OauthUser" alias="OauthUser" />
+		<typeAlias type="me.qyh.blog.oauth2.OauthUser$OauthUserStatus"
 			alias="OauthUserStatus" />
-		<typeAlias type="me.qyh.blog.entity.OauthBind" alias="OauthBind" />
+		<typeAlias type="me.qyh.blog.oauth2.OauthBind" alias="OauthBind" />
 
 		<typeAlias type="me.qyh.blog.entity.Comment" alias="Comment" />
 	</typeAliases>

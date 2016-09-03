@@ -49,11 +49,18 @@ public class OauthMgrController extends BaseMgrController {
 		return "mgr/oauth/index";
 	}
 
-	@RequestMapping(value = "toggleStatus", method = RequestMethod.POST)
+	@RequestMapping(value = "disable", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult index(@RequestParam("id") Integer id) throws LogicException {
-		oauthService.toggleOauthUserStatus(id);
-		return new JsonResult(true, new Message("oauth.toggleStatus.success", "更改状态成功"));
+	public JsonResult diable(@RequestParam("id") Integer id) throws LogicException {
+		oauthService.disableUser(id);
+		return new JsonResult(true, new Message("oauth.disable.success", "禁用成功"));
+	}
+	
+	@RequestMapping(value = "enable", method = RequestMethod.POST)
+	@ResponseBody
+	public JsonResult enable(@RequestParam("id") Integer id) throws LogicException {
+		oauthService.enableUser(id);
+		return new JsonResult(true, new Message("oauth.enable.success", "解禁成功"));
 	}
 
 }

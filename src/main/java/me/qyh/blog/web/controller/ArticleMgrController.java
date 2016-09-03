@@ -120,7 +120,6 @@ public class ArticleMgrController extends BaseMgrController {
 	@RequestMapping(value = "write", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult write(@RequestBody @Validated Article article) throws LogicException {
-		article.setAllowComment(true);
 		return new JsonResult(true, articleService.writeArticle(article));
 	}
 

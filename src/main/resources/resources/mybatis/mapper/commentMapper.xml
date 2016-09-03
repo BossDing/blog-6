@@ -13,6 +13,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="user_id" property="id"/>
 			<result column="nick_name" property="nickname"/>
 			<result column="avatar" property="avatar"/>
+			<result column="is_admin" property="admin"/>
+			<result column="oauth_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
 		</association>
 		<association property="article" javaType="Article">
 			<result column="article_id" property="id"/>
@@ -23,6 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				<result column="p_user_id" property="id"/>
 				<result column="p_nick_name" property="nickname"/>
 				<result column="p_avatar" property="avatar"/>
+				<result column="p_is_admin" property="admin"/>
 			</association>
 		</association>
 	</resultMap>
@@ -50,7 +53,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectPageWithTree" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,bou.is_admin,bou.oauth_status
 		FROM 
 		  blog_comment a JOIN 
 		  (SELECT id, parent_path 
@@ -72,7 +75,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectPageWithList" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.is_admin,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar,pu.is_admin AS p_is_admin,au.oauth_status
 		FROM 
 		  blog_comment a 
 		LEFT OUTER JOIN blog_oauth_user au ON a.user_id = au.id
@@ -100,7 +103,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectById" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date,bou.is_admin
 		 FROM blog_comment a 
 		 LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id
 		 WHERE a.id = #{id}
@@ -123,4 +126,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		 ORDER BY a.comment_date DESC,id DESC
 		 LIMIT 0,1
 	</select>
+	
+	
+	<select id="selectCountByUserAndArticle" resultType="int">
+		SELECT COUNT(a.id) FROM blog_comment a
+		WHERE a.article_id = #{article.id} AND (a.user_id = #{user.id} OR a.parent_path LIKE CONCAT('/',a.id,'/%'))
+	</select>
+	
+	<delete id="deleteByUserAndArticle">
+		DELETE FROM blog_comment
+		WHERE article_id = #{article.id} AND (user_id = #{user.id} OR parent_path LIKE CONCAT('/',id,'/%'))
+	</delete>
 </mapper>

@@ -96,10 +96,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
 					? article.getIsPrivate() ? UserContext.get() != null : true : false;
 			if (hit) {
-				if (article.isCacheable()) {
-					article.addHits();
-				}
 				articleDao.updateHits(id, 1);
+				article.addHits();
+				articleIndexer.addDocument(article);
 				return article;
 			}
 		}

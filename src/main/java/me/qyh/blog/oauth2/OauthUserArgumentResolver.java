@@ -8,7 +8,6 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.security.AuthencationException;
 
 public class OauthUserArgumentResolver implements HandlerMethodArgumentResolver {

@@ -80,7 +80,7 @@
 					var id = $(this).attr("data-id");
 					bootbox.confirm("确定要禁用吗？", function(result) {
 						if (result) {
-							$.post(basePath + "/mgr/oauth/toggleStatus", {
+							$.post(basePath + "/mgr/oauth/disable", {
 								id : id
 							}, function(data) {
 								bootbox.alert(data.message);
@@ -97,7 +97,7 @@
 					var id = $(this).attr("data-id");
 					bootbox.confirm("确定要解禁吗？", function(result) {
 						if (result) {
-							$.post(basePath + "/mgr/oauth/toggleStatus", {
+							$.post(basePath + "/mgr/oauth/enable", {
 								id : id
 							}, function(data) {
 								bootbox.alert(data.message);

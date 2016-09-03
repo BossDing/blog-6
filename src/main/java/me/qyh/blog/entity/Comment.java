@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import me.qyh.blog.input.JsonHtmlXssSerializer;
+import me.qyh.blog.oauth2.OauthUser;
 
 public class Comment extends Id {
 

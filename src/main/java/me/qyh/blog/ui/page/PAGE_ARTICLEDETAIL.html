@@ -28,14 +28,30 @@
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<widget name="文章详情"></widget>
-				<div>
-					<textarea class="form-control" id="comment-box"></textarea>
-					<button class="btn btn-primary" style="margin-top:10px" id="add-comment-btn" th:if="${session.oauth != null}">
-						提交
-					</button>
+				<div th:if="${article.allowComment}">
+					<div class="media">
+						<a class="media-left" href="#"> <img class="media-object"
+							th:src="${session.oauth == null ? urls.url+'/static/img/guest.png' : session.oauth.avatar}"
+							style="width: 64px; height: 64px;">
+						</a>
+						<div class="media-body">
+							<textarea class="form-control" style="height: 150px"
+								id="comment-box"></textarea>
+						</div>
+					</div>
+					<div>
+						<a th:href="${urls.url}+'/oauth2/qq/login'"><img
+							th:src="@{/static/img/qq.png}"
+							style="width: 32px; height: 32px; margin-top: 5px" title="QQ登录"
+							alt="QQ登录" /></a>
+					</div>
+					<button class="btn btn-primary" style="margin-top: 10px"
+						id="add-comment-btn"
+						th:attr="disabled=${session.oauth != null ? null : 'disabled'}"
+						th:text="${session.oauth != null ? '提交' : '请登录后再评论'}"></button>
 				</div>
-				<div id="comments-container" style="margin-top:10px">
-				</div>
+				<div id="comments-container" style="margin-top: 10px"></div>
+				<div id="page-bar" style="margin-top: 10px"></div>
 			</div>
 			<div class="col-lg-4 col-md-4 col-sm-4 text">
 				<widget name="文章日期归档"></widget>
@@ -43,8 +59,13 @@
 			</div>
 		</div>
 	</div>
-	<input type="hidden" id="articleId" th:value="${article.id}"/>
-	<input type="hidden" id="urlPrefix" th:value="${urls.currentUrl}"/>
+	<input type="hidden" id="articleId" th:value="${article.id}" />
+	<input type="hidden" id="login" th:value="${user != null}" />
+	<input type="hidden" id="urlPrefix" th:value="${urls.currentUrl}" />
+	<input type="hidden" id="oauthLogin"
+		th:value="${session.oauth != null}" />
+	<input type="hidden" id="commentMode"
+		th:value="${article.commentMode.name()}" />
 	<div th:replace="base/foot">&nbsp;</div>
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<div th:if="${article.editor.name() == 'MD'}" th:remove="tag">
@@ -64,116 +85,7 @@
 			th:src="@{/static/editor/markdown/lib/marked.min.js}"></script>
 		<script type="text/javascript"
 			th:src="@{/static/editor/markdown/editormd.min.js}"></script>
-		<script type="text/javascript">
-			var max = 4;
-			$(document).ready(function(){
-				editormd.katexURL  = {
-			        css : basePath+"/static/editor/markdown/lib/katex.min",
-			        js  : basePath+"/static/editor/markdown/lib/katex.min"
-			    };
-				editormd.markdownToHTML("markdown-rendered", {
-                    emoji           : true,
-                    taskList        : true,
-                    tex             : true,  // 默认不解析
-                    flowChart       : true,  // 默认不解析
-                    sequenceDiagram : true,  // 默认不解析
-                    tocm : true
-                });
-				$.get($("#urlPrefix").val()+'/article/'+$("#articleId").val()+'/comment/list',function(data){
-	    		var html = '';
-	    		for(var i=0;i<data.datas.length;i++){
-	    			var c = data.datas[i];
-	    			html += buildHtml(null,c);
-	    		}
-	    		$("#comments-container").html(html);
-	    	});
-				if(window.sessionStorage){
-					var articleId = "article-"+$("#articleId").val();
-					var item = window.sessionStorage.getItem(articleId);
-					if(!item || item == null){
-						$.post($("#urlPrefix").val()+"/article/hit/"+$("#articleId").val(),{},function(data){
-							if(data.success){
-								window.sessionStorage.setItem(articleId,"1");
-							}
-						})
-					}
-				};
-				$("#add-comment-btn").click(function(){
-					var me = $(this);
-					me.prop("disabled",true);
-					$.ajax({
-						type : "post",
-						url : $("#urlPrefix").val()+"/article/"+$("#articleId").val()+"/addComment",
-						data : JSON.stringify({content:$('#comment-box').val()}),
-						dataType : "json",
-						contentType : 'application/json',
-						success : function(data){
-							console.log(data)
-						},
-						complete:function(){
-							me.prop("disabled",false);
-						}
-					});
-				})
-			});
-			function toReply(parent){
-				bootbox.dialog({
-					title : '回复一个评论',
-					message : '<textarea class="form-control" id="reply-box" placeholder="对TA说点什么"></textarea>',
-					buttons : {
-						success : {
-							label : "确定",
-							className : "btn-success",
-							callback:function(e){
-								var data = {};
-								data.parent = {"id":parent};
-								data.content = $('#reply-box').val();
-								$.ajax({
-									type : "post",
-									url : $("#urlPrefix").val()+"/article/"+$("#articleId").val()+"/addComment",
-									data : JSON.stringify(data),
-									dataType : "json",
-									contentType : 'application/json',
-									success : function(data){
-										console.log(data)
-									},
-									complete:function(){
-										
-									}
-								});
-								return false;
-							}
-						}
-					}
-				});
-			}
-			 function buildHtml(p,c){
-				 var html = '';
-				 html += '<div class="media">';
-				 html += '<a class="pull-left">';
-				 html += '<img class="media-object"  src="'+c.user.avatar+'" data-holder-rendered="true" style="width: 64px; height: 64px;">';
-				html += '</a>';
-				html += '<div class="media-body">';
-				var user = '<strong>'+c.user.nickname+'</strong>';
-				var reply = (p == null)?"":'<span class="glyphicon glyphicon-share-alt" aria-hidden="true"></span>&nbsp;&nbsp;'+p.user.nickname;
-				html += '<h5 class="media-heading">'+user+'&nbsp;&nbsp;&nbsp;'+reply+'</h5>';
-				html += c.content;
-				html += '<h5>'+new Date(c.commentDate).format('yyyy-mm-dd HH:mm:ss')+'&nbsp;&nbsp;&nbsp;<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a></h5>';
-				if(c.parents.length < max && c.children.length > 0){
-					for(var i=0;i<c.children.length;i++){
-						html += buildHtml(c,c.children[i]);
-					}
-				}
-				html += '</div>';
-				html += '</div>';
-				if(c.parents.length >= max && c.children.length > 0){
-					for(var i=0;i<c.children.length;i++){
-						html += buildHtml(c,c.children[i]);
-					}
-				}
-				return html;
-			 }	
-		</script>
+		<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 	</div>
 </body>
 </html>

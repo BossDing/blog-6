@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.oauth2.InvalidStateException;
 import me.qyh.blog.oauth2.Oauth2;
 import me.qyh.blog.oauth2.Oauth2Provider;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.oauth2.UserInfo;
 import me.qyh.blog.service.OauthService;
 import me.qyh.util.UUIDs;

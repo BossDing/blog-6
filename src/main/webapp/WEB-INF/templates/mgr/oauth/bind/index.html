@@ -38,7 +38,7 @@
 											<td
 												th:text="${#dates.format(bind.bindDate, 'yyyy-MM-dd HH:mm')}"></td>
 											<td><a
-												th:href="@{'/oauth2/'+${bind.user.serverName}+'/login'}"
+												th:href="@{'/oauth2/'+${bind.user.serverId}+'/login'}"
 												style="margin-right: 10px" th:data-id="${bind.id}"
 												title="刷新"><span class="glyphicon glyphicon-refresh"
 													aria-hidden="true"></span></a> <a href="###"

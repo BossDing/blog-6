@@ -2,9 +2,9 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
-import me.qyh.blog.entity.OauthBind;
-import me.qyh.blog.entity.OauthUser;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.oauth2.OauthBind;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
@@ -58,11 +58,19 @@ public interface OauthService {
 	PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param);
 
 	/**
-	 * 更改用户状态
+	 * 禁用用户
 	 * 
 	 * @param id
-	 * @throws LogicException 
+	 * @throws LogicException
 	 */
-	void toggleOauthUserStatus(Integer id) throws LogicException;
+	void disableUser(Integer id) throws LogicException;
+
+	/**
+	 * 解除禁用
+	 * 
+	 * @param id
+	 * @throws LogicException
+	 */
+	void enableUser(Integer id) throws LogicException;
 
 }

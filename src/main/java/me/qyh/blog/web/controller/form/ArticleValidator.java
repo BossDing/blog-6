@@ -11,6 +11,7 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
+import me.qyh.blog.entity.Article.CommentMode;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.util.Validators;
@@ -119,6 +120,15 @@ public class ArticleValidator implements Validator {
 		if (content.length() > MAX_CONTENT_LENGTH) {
 			errors.reject("article.content.toolong", new Object[] { MAX_CONTENT_LENGTH },
 					"文章内容不能超过" + MAX_CONTENT_LENGTH + "个字符");
+			return;
+		}
+		if (article.getAllowComment() == null) {
+			errors.reject("article.allowComment.blank", "是否允许评论不能为空");
+			return;
+		}
+		CommentMode mode = article.getCommentMode();
+		if (mode == null) {
+			errors.reject("article.commentMode.blank", "评论展现形式不能为空");
 			return;
 		}
 	}

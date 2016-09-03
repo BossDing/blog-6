@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
-import me.qyh.blog.entity.OauthUser;
+import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 
 public interface CommentDao {
@@ -33,5 +34,8 @@ public interface CommentDao {
 	List<Comment> selectPageWithList(CommentQueryParam param);
 
 	Comment selectLast(Comment current);
-
+	
+	int selectCountByUserAndArticle(@Param("user") OauthUser user,@Param("article") Article article);
+	
+	void deleteByUserAndArticle(@Param("user") OauthUser user,@Param("article") Article article);
 }
