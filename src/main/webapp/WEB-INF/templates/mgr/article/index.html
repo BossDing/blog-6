@@ -47,7 +47,7 @@
 							<div class="tab-content">
 								<div role="tabpanel" class="tab-pane active"
 									id="articleContainer" style="margin-top: 10px">
-									<div class="input-group">
+									<div class="input-group" th:if="${page.param.status.name() == 'PUBLISHED'}">
 										<input type="text" id="search-input" class="form-control"
 											placeholder="查询" aria-describedby="basic-addon2"
 											th:value="${page.param.query}"> <span

@@ -76,9 +76,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				summary = #{summary},
 			</if>
 			art_level = #{level},
-			<if test="lockId != null">
-				art_lock  = #{lockId},
-			</if>
+			art_lock  = #{lockId},
 			<if test="status != null">
 				art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},
 			</if>
@@ -214,6 +212,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
+			<if test="hasLock != null">
+				<choose>
+					<when test="hasLock">
+						AND art.art_lock IS NOT NULL
+					</when>
+					<otherwise>
+						AND art.art_lock IS NULL
+					</otherwise>
+				</choose>
+			</if>
 			<if test="tag != null">
 				AND art.id IN (SELECT article_id FROM blog_article_tag bat LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id WHERE bt.tag_name = #{tag})
 			</if>
@@ -259,6 +267,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="hasLock != null">
+				<choose>
+					<when test="hasLock">
+						AND art.art_lock IS NOT NULL
+					</when>
+					<otherwise>
+						AND art.art_lock IS NULL
+					</otherwise>
+				</choose>
 			</if>
 			<if test="tag != null">
 				AND bt.tag_name = #{tag}
@@ -392,6 +410,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 		WHERE art.art_status = 0
+		AND art.art_lock IS NULL
 		GROUP BY art.id
 	</select>
 	

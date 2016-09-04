@@ -4,6 +4,7 @@ import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.View;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Article;
@@ -51,6 +53,9 @@ public class SpaceController extends BaseController {
 	private ArticleService articleService;
 	@Autowired
 	private CommentService commentService;
+
+	@Autowired
+	private RssView rssView;
 
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
@@ -120,11 +125,27 @@ public class SpaceController extends BaseController {
 			@PathVariable("id") Integer articleId) throws LogicException {
 		comment.setArticle(new Article(articleId));
 		comment.setUser(user);
-		return new JsonResult(true,commentService.insertComment(comment));
+		return new JsonResult(true, commentService.insertComment(comment));
 	}
 
 	@RequestMapping("page/{idOrAlias}")
 	public Template userPage(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
 		return uiService.renderUserPage(idOrAlias);
+	}
+
+	@RequestMapping("rss")
+	public View rss(ModelMap model) {
+		ArticleQueryParam param = new ArticleQueryParam();
+		param.setCurrentPage(1);
+		Space space = SpaceContext.get();
+		param.setStatus(ArticleStatus.PUBLISHED);
+		param.setSpace(space);
+		param.setIgnoreLevel(true);
+		param.setHasLock(false);
+		param.setQueryPrivate(false);
+		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
+		PageResult<Article> page = articleService.queryArticle(param);
+		model.addAttribute("page", page);
+		return rssView;
 	}
 }

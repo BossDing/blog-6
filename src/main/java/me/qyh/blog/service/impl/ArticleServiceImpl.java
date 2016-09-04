@@ -98,7 +98,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				article.addHits();
-				articleIndexer.addDocument(article);
+				if(indexable(article))
+					articleIndexer.addDocument(article);
 				return article;
 			}
 		}
@@ -132,7 +133,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			articleDao.update(article);
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
-			if (article.isPublished()) {
+			if (indexable(article)) {
 				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addDocument(updated);
 			}
@@ -146,7 +147,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			}
 			articleDao.insert(article);
 			insertTags(article);
-			if (article.isPublished()) {
+			if (indexable(article)) {
 				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addDocument(updated);
 			}
@@ -168,7 +169,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
-		articleIndexer.addDocument(article);
+		if (indexable(article))
+			articleIndexer.addDocument(article);
 	}
 
 	private void insertTags(Article article) {
@@ -244,7 +246,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		}
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
-		articleIndexer.addDocument(article);
+		articleIndexer.deleteDocument(id);
 	}
 
 	@Override
@@ -265,7 +267,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setStatus(status);
 
 		articleDao.update(article);
-		articleIndexer.addDocument(article);
+		if (indexable(article))
+			articleIndexer.addDocument(article);
 	}
 
 	@Override
@@ -302,8 +305,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			for (Article article : articles) {
 				article.setStatus(ArticleStatus.PUBLISHED);
 				articleDao.update(article);
-
-				articleIndexer.addDocument(article);
+				if (indexable(article))
+					articleIndexer.addDocument(article);
 			}
 		}
 	}
@@ -362,5 +365,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 				throw new LogicException("lock.notexists", "锁不存在");
 			}
 		}
+	}
+
+	protected boolean indexable(Article article) {
+		return article.isPublished() && !article.hasLock();
 	}
 }

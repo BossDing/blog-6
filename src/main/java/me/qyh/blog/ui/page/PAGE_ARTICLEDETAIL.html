@@ -40,15 +40,15 @@
 						</div>
 					</div>
 					<div>
-						社交账号登录:<a th:href="${urls.url}+'/oauth2/qq/login'"><img
+						<label>社交账号登录</label>:<a th:href="${urls.url}+'/oauth2/qq/login'"><img
 							th:src="@{/static/img/qq.png}"
-							style="width: 32px; height: 32px; margin-top: 5px" title="QQ登录"
+							style="width: 32px; height: 32px; margin-top: 10px" title="QQ登录"
 							alt="QQ登录" /></a>
+						<button class="btn btn-primary pull-right"
+							style="margin-top: 10px" id="add-comment-btn"
+							th:attr="disabled=${session.oauth != null ? null : 'disabled'}"
+							th:text="${session.oauth != null ? '提交' : '请登录后再评论'}"></button>
 					</div>
-					<button class="btn btn-primary" style="margin-top: 10px"
-						id="add-comment-btn"
-						th:attr="disabled=${session.oauth != null ? null : 'disabled'}"
-						th:text="${session.oauth != null ? '提交' : '请登录后再评论'}"></button>
 				</div>
 				<div id="comments-container" style="margin-top: 10px"></div>
 				<div id="page-bar" style="margin-top: 10px"></div>
@@ -85,7 +85,7 @@
 			th:src="@{/static/editor/markdown/lib/marked.min.js}"></script>
 		<script type="text/javascript"
 			th:src="@{/static/editor/markdown/editormd.min.js}"></script>
-		<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 	</div>
+	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 </body>
 </html>

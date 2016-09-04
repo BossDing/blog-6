@@ -43,6 +43,7 @@ import me.qyh.blog.service.CommentService;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.web.controller.form.CommentValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
+import me.qyh.util.Validators;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class CommentServiceImpl implements CommentService, InitializingBean {
@@ -173,8 +174,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		if (!article.getCommentConfig().getAllowComment()
-				&& (UserContext.get() == null || user.getAdmin())) {
+		if (!article.getCommentConfig().getAllowComment() && (UserContext.get() == null || user.getAdmin())) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		// 如果私人文章并且没有登录
@@ -182,26 +182,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			throw new AuthencationException();
 		}
 		CommentConfig config = article.getCommentConfig();
-		setContent(comment, config);
-		commentContentChecker.doCheck(comment.getContent(), config.getAllowHtml());
-		String parentPath = "/";
-		// 判断是否存在父评论
-		Comment parent = comment.getParent();
-		if (parent != null) {
-			parent = commentDao.selectById(parent.getId());// 查询父评论
-			if (parent == null) {
-				throw new LogicException("comment.parent.notExists", "父评论不存在");
-			}
-			parentPath = parent.getParentPath() + parent.getId() + "/";
-		}
-		if (parentPath.length() > PATH_MAX_LENGTH) {
-			throw new LogicException("comment.path.toolong", "该评论不能再被回复了");
-		}
-		Comment last = commentDao.selectLast(comment);
-		if (last != null && last.getContent().equals(comment.getContent())) {
-			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
-		}
-		comment.setParentPath(parentPath);
 		if (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin())) {
 			// 检查频率
 			Limit limit = config.getLimit();
@@ -222,6 +202,28 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}
 		}
+
+		setContent(comment, config);
+		commentContentChecker.doCheck(comment.getContent(), config.getAllowHtml());
+
+		String parentPath = "/";
+		// 判断是否存在父评论
+		Comment parent = comment.getParent();
+		if (parent != null) {
+			parent = commentDao.selectById(parent.getId());// 查询父评论
+			if (parent == null) {
+				throw new LogicException("comment.parent.notExists", "父评论不存在");
+			}
+			parentPath = parent.getParentPath() + parent.getId() + "/";
+		}
+		if (parentPath.length() > PATH_MAX_LENGTH) {
+			throw new LogicException("comment.path.toolong", "该评论不能再被回复了");
+		}
+		Comment last = commentDao.selectLast(comment);
+		if (last != null && last.getContent().equals(comment.getContent())) {
+			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
+		}
+		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
 
 		commentDao.insert(comment);
@@ -321,6 +323,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			content = htmlClean.clean(content);
 		} else {
 			content = HtmlUtils.htmlEscape(content);
+		}
+		if (Validators.isEmptyOrNull(content, true)) {
+			throw new LogicException("comment.content.blank");
 		}
 		// 再次检查content的长度
 		if (content.length() > MAX_COMMENT_LENGTH) {

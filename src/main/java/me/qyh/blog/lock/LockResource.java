@@ -18,7 +18,6 @@ public interface LockResource {
 	 * 获取锁ID
 	 * @return
 	 */
-	@JsonIgnore
 	String getLockId();
 	
 	/**

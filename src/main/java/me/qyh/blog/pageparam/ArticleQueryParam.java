@@ -26,6 +26,7 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean ignoreLevel;// 忽略置顶
 	private boolean queryPrivate;// 查询私人博客
 	private String tag;
+	private Boolean hasLock;
 
 	public Space getSpace() {
 		return space;
@@ -97,6 +98,14 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setQueryPrivate(boolean queryPrivate) {
 		this.queryPrivate = queryPrivate;
+	}
+
+	public Boolean getHasLock() {
+		return hasLock;
+	}
+
+	public void setHasLock(Boolean hasLock) {
+		this.hasLock = hasLock;
 	}
 
 }
