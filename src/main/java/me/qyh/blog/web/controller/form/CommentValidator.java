@@ -10,7 +10,7 @@ import me.qyh.util.Validators;
 @Component
 public class CommentValidator implements Validator {
 
-	private static final int MAX_COMMENT_LENGTH = 500;
+	public static final int MAX_COMMENT_LENGTH = 500;
 
 	@Override
 	public boolean supports(Class<?> clazz) {

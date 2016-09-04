@@ -143,5 +143,9 @@
 		<property name="invalidLimitSecond" value="20"/>
 		<property name="invalidSecond" value="300"/>
 		<property name="invalidClearSecond" value="600"/>
+		<!-- html内容清理器 -->
+		<property name="htmlClean">
+			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
+		</property>
 	</bean>
 </beans>      

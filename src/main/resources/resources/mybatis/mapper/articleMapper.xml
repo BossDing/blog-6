@@ -14,17 +14,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="hits" property="hits" />
 		<result column="comments" property="comments" />
 		<result column="summary" property="summary" />
-		<result column="allowComment" property="allowComment" />
 		<result property="level" column="art_level" />
 		<result column="art_lock" property="lockId"/>
 		<result property="tags" column="tags" typeHandler="TagsTypeHandler"/>
 		<result property="status" column="art_status" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
-		<result property="commentMode" column="comment_mode" typeHandler="EnumOrdinalTypeHandler"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
+		</association>
+		<association property="commentConfig" javaType="CommentConfig">
+			<result column="allowComment" property="allowComment"/>
+			<result property="commentMode" column="comment_mode" typeHandler="EnumOrdinalTypeHandler"/>
+			<result column="comment_asc" property="asc"/>
+			<result column="comment_allowHtml" property="allowHtml"/>
+			<result column="comment_limitCount" property="limitCount"/>
+			<result column="comment_limitSec" property="limitSec"/>
 		</association>
 	</resultMap>
 	
@@ -46,10 +52,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{allowComment},#{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec})
 	</insert>
 	
 	<update id="update">
@@ -82,11 +88,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="space != null">
 				space_id = #{space.id},
 			</if>
-			<if test="allowComment != null">
-				allowComment = #{allowComment},
-			</if>
-			<if test="commentMode != null">
-				comment_mode = #{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},
+			<if test="commentConfig != null">
+				<if test="commentConfig.allowComment != null">
+					allowComment = #{commentConfig.allowComment},
+				</if>
+				<if test="commentConfig.commentMode != null">
+					comment_mode = #{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},
+				</if>
+				<if test="commentConfig.asc != null">
+					comment_asc = #{commentConfig.asc},
+				</if>
+				<if test="commentConfig.allowHtml != null">
+					comment_allowHtml = #{commentConfig.allowHtml},
+				</if>
+				<if test="commentConfig.limitCount != null">
+					comment_limitCount = #{commentConfig.limitCount},
+				</if>
+				<if test="commentConfig.limitSec != null">
+					comment_limitSec = #{commentConfig.limitSec},
+				</if>
 			</if>
 			lastModifyDate = #{lastModifyDate}
 		</set>
@@ -104,14 +124,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.hits,
 			art.comments,
 			art.summary,
-			art.allowComment,
 			art.art_level,
 			art.art_status,
 			art.art_from,
 			art.editor,
 			art.space_id,
 			art.art_lock,
+			art.allowComment,
 			art.comment_mode,
+			art.comment_asc,
+			art.comment_allowHtml,
+			art.comment_limitCount,
+			art.comment_limitSec,
 			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -135,14 +159,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.hits,
 			art.comments,
 			art.summary,
-			art.allowComment,
 			art.art_level,
 			art.art_status,
 			art.art_from,
 			art.editor,
 			art.space_id,
 			art.art_lock,
+			art.allowComment,
 			art.comment_mode,
+			art.comment_asc,
+			art.comment_allowHtml,
+			art.comment_limitCount,
+			art.comment_limitSec,
 			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -350,7 +378,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.hits,
 			art.comments,
 			art.summary,
-			art.allowComment,
 			art.art_level,
 			art.art_status,
 			art.art_from,

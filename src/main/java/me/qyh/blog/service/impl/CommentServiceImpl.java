@@ -22,15 +22,18 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.HtmlUtils;
 
-import me.qyh.blog.config.CommentConfig;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.entity.Article.CommentConfig;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.input.HtmlClean;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -38,6 +41,7 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.CommentService;
 import me.qyh.blog.service.ConfigService;
+import me.qyh.blog.web.controller.form.CommentValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -95,6 +99,12 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	 * 同时为了走索引，只能限制它为255个字符，由于id为数字的原因，实际上一般情况下很难达到255的长度(即便id很大)，所以这里完全够用
 	 */
 	private static final int PATH_MAX_LENGTH = 255;
+	public static final int MAX_COMMENT_LENGTH = CommentValidator.MAX_COMMENT_LENGTH;
+
+	/**
+	 * 用来过滤Html标签
+	 */
+	private HtmlClean htmlClean;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -110,7 +120,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
 		int count = 0;
-		switch (article.getCommentMode()) {
+		CommentConfig config = article.getCommentConfig();
+		switch (config.getCommentMode()) {
 		case TREE:
 			count = commentDao.selectCountWithTree(param);
 			break;
@@ -121,7 +132,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (count == 0) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
-		boolean asc = configService.getCommentConfig().isAsc();
+		boolean asc = config.getAsc();
 		if (param.getCurrentPage() <= 0) {
 			if (asc) {
 				// 查询最后一页
@@ -133,9 +144,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 		param.setAsc(asc);
 		List<Comment> datas = null;
-		switch (article.getCommentMode()) {
+		switch (config.getCommentMode()) {
 		case TREE:
-			datas = handlerTree(commentDao.selectPageWithTree(param));
+			datas = handlerTree(commentDao.selectPageWithTree(param), config);
 			break;
 		default:
 			datas = commentDao.selectPageWithList(param);
@@ -150,7 +161,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (isInvalidUser(comment.getUser())) {
 			throw new LogicException("comment.user.invalid", "该账户暂时被禁止评论");
 		}
-		commentContentChecker.doCheck(comment.getContent());
 		OauthUser user = oauthUserDao.selectById(comment.getUser().getId());
 		if (user == null) {
 			throw new LogicException("comment.user.notExists", "账户不存在");
@@ -163,13 +173,17 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		if (!article.getAllowComment() && (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin()))) {
+		if (!article.getCommentConfig().getAllowComment()
+				&& (UserContext.get() == null || user.getAdmin())) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		// 如果私人文章并且没有登录
 		if (article.getIsPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
 		}
+		CommentConfig config = article.getCommentConfig();
+		setContent(comment, config);
+		commentContentChecker.doCheck(comment.getContent(), config.getAllowHtml());
 		String parentPath = "/";
 		// 判断是否存在父评论
 		Comment parent = comment.getParent();
@@ -190,7 +204,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		comment.setParentPath(parentPath);
 		if (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin())) {
 			// 检查频率
-			Limit limit = configService.getCommentConfig().getLimit();
+			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
 			int count = commentDao.selectCountByUserAndDatePeriod(new Timestamp(start), new Timestamp(now), user) + 1;
 			if (count > limit.getLimit()) {
@@ -264,7 +278,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 	}
 
-	protected List<Comment> handlerTree(List<Comment> comments) {
+	protected List<Comment> handlerTree(List<Comment> comments, CommentConfig config) {
 		if (comments.isEmpty()) {
 			return comments;
 		}
@@ -289,9 +303,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 				}
 			}
 		}
-		CommentConfig commentConfig = configService.getCommentConfig();
-		SortedSet<Comment> keys = new TreeSet<Comment>(
-				commentConfig.isAsc() ? ascCommentComparator : descCommentComparator);
+		SortedSet<Comment> keys = new TreeSet<Comment>(config.getAsc() ? ascCommentComparator : descCommentComparator);
 		keys.addAll(treeMap.keySet());
 		List<Comment> sorted = new ArrayList<Comment>();
 		for (Comment root : keys) {
@@ -301,6 +313,21 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		treeMap.clear();
 		keys.clear();
 		return sorted;
+	}
+
+	private void setContent(Comment comment, CommentConfig commentConfig) throws LogicException {
+		String content = comment.getContent();
+		if (commentConfig.getAllowHtml()) {
+			content = htmlClean.clean(content);
+		} else {
+			content = HtmlUtils.htmlEscape(content);
+		}
+		// 再次检查content的长度
+		if (content.length() > MAX_COMMENT_LENGTH) {
+			throw new LogicException("comment.content.toolong", "回复的内容不能超过" + MAX_COMMENT_LENGTH + "个字符",
+					MAX_COMMENT_LENGTH);
+		}
+		comment.setContent(content);
 	}
 
 	private List<Comment> findChildren(Comment root, List<Comment> comments) {
@@ -338,7 +365,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private final class DefaultCommentContentChecker implements CommentContentChecker {
 
 		@Override
-		public void doCheck(String content) throws LogicException {
+		public void doCheck(String content, boolean html) throws LogicException {
 
 		}
 
@@ -398,6 +425,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		if (htmlClean == null) {
+			throw new SystemException("必须要提供一个html内容的清理器");
+		}
 		if (commentContentChecker == null) {
 			commentContentChecker = new DefaultCommentContentChecker();
 		}
@@ -553,4 +583,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		this.invalidClearSecond = invalidClearSecond;
 	}
 
+	public void setHtmlClean(HtmlClean htmlClean) {
+		this.htmlClean = htmlClean;
+	}
 }

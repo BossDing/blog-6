@@ -38,4 +38,14 @@ public class Limit {
 		this.unit = unit;
 	}
 
+	public Limit() {
+
+	}
+
+	public Limit(int limit, long time, TimeUnit unit) {
+		this.limit = limit;
+		this.time = time;
+		this.unit = unit;
+	}
+
 }

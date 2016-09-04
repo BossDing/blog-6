@@ -28,7 +28,7 @@
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<widget name="文章详情"></widget>
-				<div th:if="${article.allowComment}">
+				<div th:if="${article.commentConfig.allowComment}">
 					<div class="media">
 						<a class="media-left" href="#"> <img class="media-object"
 							th:src="${session.oauth == null ? urls.url+'/static/img/guest.png' : session.oauth.avatar}"
@@ -65,7 +65,7 @@
 	<input type="hidden" id="oauthLogin"
 		th:value="${session.oauth != null}" />
 	<input type="hidden" id="commentMode"
-		th:value="${article.commentMode.name()}" />
+		th:value="${article.commentConfig.commentMode.name()}" />
 	<div th:replace="base/foot">&nbsp;</div>
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<div th:if="${article.editor.name() == 'MD'}" th:remove="tag">

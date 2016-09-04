@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.oauth2.OauthUser;
 
 public class Comment extends Id {
@@ -20,7 +18,6 @@ public class Comment extends Id {
 	private Comment parent;// 如果为null,则为评论，否则为回复
 	@JsonIgnore
 	private String parentPath;// 路径，最多支持255个字符(索引原因)
-	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String content;
 	private OauthUser user;
 	@JsonIgnore

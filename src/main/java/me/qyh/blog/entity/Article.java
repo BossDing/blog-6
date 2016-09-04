@@ -3,12 +3,14 @@ package me.qyh.blog.entity;
 import java.sql.Timestamp;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
 
 public class Article extends BaseLockResource {
@@ -32,9 +34,8 @@ public class Article extends BaseLockResource {
 	private ArticleStatus status;// 博客状态
 	private Editor editor;// 编辑器
 	private String summary;// 博客摘要
-	private Boolean allowComment;// 是否允许评论
 	private Integer level; // 博客级别，级别越高显示越靠前
-	public CommentMode commentMode;
+	private CommentConfig commentConfig;
 
 	private AtomicInteger _hits;
 	private AtomicInteger _comments;
@@ -77,24 +78,6 @@ public class Article extends BaseLockResource {
 		}
 
 		private ArticleStatus() {
-
-		}
-
-		public Message getMessage() {
-			return message;
-		}
-	}
-
-	public enum CommentMode {
-		LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
-
-		private Message message;
-
-		private CommentMode(Message message) {
-			this.message = message;
-		}
-
-		private CommentMode() {
 
 		}
 
@@ -224,14 +207,6 @@ public class Article extends BaseLockResource {
 		this.summary = summary;
 	}
 
-	public Boolean getAllowComment() {
-		return allowComment;
-	}
-
-	public void setAllowComment(Boolean allowComment) {
-		this.allowComment = allowComment;
-	}
-
 	public Integer getLevel() {
 		return level;
 	}
@@ -273,12 +248,12 @@ public class Article extends BaseLockResource {
 		this.content = content;
 	}
 
-	public CommentMode getCommentMode() {
-		return commentMode;
+	public CommentConfig getCommentConfig() {
+		return commentConfig;
 	}
 
-	public void setCommentMode(CommentMode commentMode) {
-		this.commentMode = commentMode;
+	public void setCommentConfig(CommentConfig commentConfig) {
+		this.commentConfig = commentConfig;
 	}
 
 	public String getTagStr() {
@@ -291,5 +266,85 @@ public class Article extends BaseLockResource {
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
+	}
+
+	public static class CommentConfig {
+		private Boolean allowHtml;
+		private Boolean allowComment;
+		private Boolean asc;
+		private CommentMode commentMode;
+		private Integer limitCount;
+		private Integer limitSec;
+
+		public enum CommentMode {
+			LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
+
+			private Message message;
+
+			private CommentMode(Message message) {
+				this.message = message;
+			}
+
+			private CommentMode() {
+
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+		}
+
+		public Boolean getAllowHtml() {
+			return allowHtml;
+		}
+
+		public void setAllowHtml(Boolean allowHtml) {
+			this.allowHtml = allowHtml;
+		}
+
+		public Boolean getAllowComment() {
+			return allowComment;
+		}
+
+		public void setAllowComment(Boolean allowComment) {
+			this.allowComment = allowComment;
+		}
+
+		public Boolean getAsc() {
+			return asc;
+		}
+
+		public void setAsc(Boolean asc) {
+			this.asc = asc;
+		}
+
+		public CommentMode getCommentMode() {
+			return commentMode;
+		}
+
+		public void setCommentMode(CommentMode commentMode) {
+			this.commentMode = commentMode;
+		}
+
+		public Integer getLimitSec() {
+			return limitSec;
+		}
+
+		public void setLimitSec(Integer limitSec) {
+			this.limitSec = limitSec;
+		}
+
+		public Integer getLimitCount() {
+			return limitCount;
+		}
+
+		public void setLimitCount(Integer limitCount) {
+			this.limitCount = limitCount;
+		}
+
+		public Limit getLimit() {
+			return new Limit(limitCount, limitSec, TimeUnit.SECONDS);
+		}
+
 	}
 }

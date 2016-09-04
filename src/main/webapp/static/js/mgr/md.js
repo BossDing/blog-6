@@ -41,7 +41,7 @@ var publishing = false;
 				saveHTMLToTextarea : true,
 				path : basePath + '/static/editor/markdown/lib/'
 			});
-			
+			$(".integer").on('keydown', function(e){-1!==$.inArray(e.keyCode,[46,8,9,27,13,110])||/65|67|86|88/.test(e.keyCode)&&(!0===e.ctrlKey||!0===e.metaKey)||35<=e.keyCode&&40>=e.keyCode||(e.shiftKey||48>e.keyCode||57<e.keyCode)&&(96>e.keyCode||105<e.keyCode)&&e.preventDefault()});
 			$('.form_datetime').datetimepicker({
 		        language:  'zh-CN',
 		        weekStart: 1,
@@ -105,8 +105,6 @@ var publishing = false;
     				article.level = $("#level").val();
     			}
     			article.isPrivate = $("#private").prop("checked");
-    			article.allowComment = $("#allowComment").prop("checked");
-    			article.commentMode = $("#commentMode").val();
     			article.tags = tags;
     			article.summary = $("#summary").val();
     			article.space = {"id":$("#space").val()};
@@ -114,6 +112,14 @@ var publishing = false;
     			if($("#lockId").val() != ""){
     				article.lockId = $("#lockId").val();
     			}
+    			var commentConfig = {};
+    			commentConfig.allowComment = $("#allowComment").prop("checked");
+    			commentConfig.commentMode = $("#commentMode").val();
+    			commentConfig.asc = $("#commentSort").val();
+    			commentConfig.allowHtml = $("#allowHtml").prop("checked");
+    			commentConfig.limitSec = $("#limitSec").val();
+    			commentConfig.limitCount = $("#limitCount").val();
+    			article.commentConfig = commentConfig;
     			me.prop("disabled",true);
     			var url = basePath+"/mgr/article/write";
     			if($("#id").val() != ""){
@@ -288,12 +294,12 @@ var publishing = false;
 						article.status = 'DRAFT';
 					}
 				};
+			}else{
+				article.status = 'DRAFT';
 			}
 			if($("#level").val() != ''){
 				article.level = $("#level").val();
 			}
-			article.allowComment = $("#allowComment").prop("checked");
-			article.commentMode = $("#commentMode").val();
 			article.isPrivate = $("#private").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
@@ -302,6 +308,22 @@ var publishing = false;
 			if($("#lockId").val() != ""){
 				article.lockId = $("#lockId").val();
 			}
+			
+			var commentConfig = {};
+			commentConfig.allowComment = $("#allowComment").prop("checked");
+			commentConfig.commentMode = $("#commentMode").val();
+			commentConfig.asc = $("#commentSort").val();
+			commentConfig.allowHtml = $("#allowHtml").prop("checked");
+			commentConfig.limitSec = $("#limitSec").val();
+			commentConfig.limitCount = $("#limitCount").val();
+			if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
+				commentConfig.limitSec = 60;
+			}
+			if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
+				commentConfig.limitCount = 10;
+			}
+			article.commentConfig = commentConfig;
+			
 			var url = basePath+"/mgr/article/write";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();

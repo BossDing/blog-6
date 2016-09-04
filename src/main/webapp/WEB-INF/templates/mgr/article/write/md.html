@@ -74,21 +74,6 @@
 								<option value="COPIED">转载</option>
 							</select>
 						</div>
-						<div class="checkbox">
-							<label th:if="${article.allowComment == null || !article.allowComment}">
-								<input type="checkbox" id="allowComment" />允许评论
-							</label> <label th:if="${article.allowComment != null && article.allowComment}"><input
-								type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
-						</div>
-						<div class="form-group">
-							<label>评论展现方式</label> <select class="form-control" id="commentMode">
-								<option th:if="${article.commentMode != null}"
-									th:value="${article.commentMode.name()}" selected="selected"
-									th:text="'当前:'+${messages.getMessage(article.commentMode.getMessage())}"></option>
-								<option value="LIST">平铺</option>
-								<option value="TREE">嵌套</option>
-							</select>
-						</div>
 						<div id="lock_container"></div>
 						<div class="form-group">
 							<label>状态</label> <select class="form-control" id="status">
@@ -128,6 +113,100 @@
 							<label>博客优先级(优先级越高排名越靠前)</label> <input type="text"
 								class="form-control" placeholder="1~100" maxlength="3"
 								id="level" th:value="${article.level}" />
+						</div>
+						<hr />
+						<label>评论配置</label>
+						<div th:if="${article.commentConfig != null}" th:remove="tag">
+							<div class="checkbox">
+								<label
+									th:if="${article.commentConfig.allowComment == null || !article.commentConfig.allowComment}">
+									<input type="checkbox" id="allowComment" />允许评论
+								</label> <label
+									th:if="${article.commentConfig.allowComment != null && article.commentConfig.allowComment}"><input
+									type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
+							</div>
+							<div class="form-group">
+								<label>评论展现排序(按评论时间)</label> <select class="form-control"
+									id="commentSort">
+									<option th:if="${article.commentConfig.asc != null}"
+										selected="selected" th:value="${article.commentConfig.asc}"
+										th:text="'当前:'+${article.commentConfig.asc ? '正序' : '倒序'}"></option>
+									<option value="true">正序</option>
+									<option value="false">倒序</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>评论展现方式</label> <select class="form-control"
+									id="commentMode">
+									<option th:if="${article.commentConfig.commentMode != null}"
+										th:value="${article.commentConfig.commentMode.name()}"
+										selected="selected"
+										th:text="'当前:'+${messages.getMessage(article.commentConfig.commentMode.getMessage())}"></option>
+									<option value="LIST">平铺</option>
+									<option value="TREE">嵌套</option>
+								</select>
+							</div>
+							<div class="checkbox">
+								<label
+									th:if="${article.commentConfig.allowHtml == null || !article.commentConfig.allowHtml}">
+									<input type="checkbox" id="allowHtml" />允许html
+								</label> <label
+									th:if="${article.commentConfig.allowHtml != null && article.commentConfig.allowHtml}"><input
+									type="checkbox" id="allowHtml" checked="checked" />允许html </label>
+							</div>
+							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
+							<div class="form-group">
+								<label for="">时间(秒)</label> <input class="form-control integer"
+									placeholder="时间"
+									th:if="${article.commentConfig.limitSec != null}"
+									th:value="${article.commentConfig.limitSec}" id="limitSec">
+								<input class="form-control integer" placeholder="时间"
+									th:if="${article.commentConfig.limitSec == null}" value="60"
+									id="limitSec">
+							</div>
+							<div class="form-group">
+								<label for="">允许发表评论数</label> <input
+									class="form-control integer" placeholder="允许评论数"
+									th:if="${article.commentConfig.limitCount != null}"
+									th:value="${article.commentConfig.limitCount}" id="limitCount">
+								<input class="form-control integer" placeholder="时间"
+									th:if="${article.commentConfig.limitCount == null}" value="10"
+									id="limitCount">
+							</div>
+						</div>
+						<div th:if="${article.commentConfig == null}" th:remove="tag">
+							<div class="checkbox">
+								<label><input type="checkbox" id="allowComment" />允许评论
+								</label>
+							</div>
+							<div class="form-group">
+								<label>评论展现排序(按评论时间)</label> <select class="form-control"
+									id="commentSort">
+									<option value="true">正序</option>
+									<option value="false">倒序</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>评论展现方式</label> <select class="form-control"
+									id="commentMode">
+									<option value="LIST">平铺</option>
+									<option value="TREE">嵌套</option>
+								</select>
+							</div>
+							<div class="checkbox">
+								<label><input type="checkbox" id="allowHtml" />允许html </label>
+							</div>
+							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
+							<div class="form-group">
+								<label for="">时间(秒)(1~300)</label> <input
+									class="form-control integer" placeholder="时间" value="60"
+									id="limitSec">
+							</div>
+							<div class="form-group">
+								<label for="">允许发表评论数(1~100)</label> <input
+									class="form-control integer" placeholder="时间" value="10"
+									id="limitCount">
+							</div>
 						</div>
 						<div class="form-group" style="text-align: center">
 							<button class="btn btn-primary" type="button" id="submit-art">提交</button>
