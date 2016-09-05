@@ -1,0 +1,26 @@
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">最近评论</h3>
+	</div>
+	<div th:if="${#lists.isEmpty(comments)}" th:remove="tag">
+		<div class="panel-body">
+			<div class="alert alert-info">最近还没有评论</div>
+		</div>
+	</div>
+	<div th:unless="${#lists.isEmpty(comments)}" th:remove="tag">
+		<div class="panel-body">
+			<div class="media" th:each="comment : ${comments}">
+				<a class="media-left" th:href="${urls.getUrl(comment.article)}"> <img
+					th:src="${comment.user.avatar}"
+					style="width: 64px; height: 64px" alt="...">
+				</a>
+				<div class="media-body">
+					<h4 class="media-heading" th:text="${comment.user.nickname}"></h4>
+					<span th:text="${#strings.length(comment.content) > 50  ? #strings.substring(comment.content,0,50)+'...' : comment.content}"></span>
+					<h5 th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm:ss')}"></h5>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

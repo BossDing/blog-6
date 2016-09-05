@@ -116,8 +116,7 @@ public class OauthServiceImpl implements OauthService {
 		if (db.isDisabled()) {
 			return;
 		}
-		OauthBind bind = oauthBindDao.selectByOauthUser(db);
-		if (bind != null) {
+		if (db.getAdmin()) {
 			throw new LogicException("oauth.bind.exists", "该账号已经绑定");
 		}
 		db.setStatus(OauthUserStatus.DISABLED);

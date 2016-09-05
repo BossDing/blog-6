@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 
@@ -34,8 +35,10 @@ public interface CommentDao {
 	List<Comment> selectPageWithList(CommentQueryParam param);
 
 	Comment selectLast(Comment current);
-	
-	int selectCountByUserAndArticle(@Param("user") OauthUser user,@Param("article") Article article);
-	
-	void deleteByUserAndArticle(@Param("user") OauthUser user,@Param("article") Article article);
+
+	int selectCountByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
+
+	void deleteByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
+
+	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit);
 }

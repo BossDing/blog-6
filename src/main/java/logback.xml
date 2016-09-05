@@ -9,10 +9,30 @@
 		</filter>
 	</appender>
 
+	<appender name="errorDailyRollingFileAppender"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/web/logs/blog/error.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>/web/logs/blog/error.%d{yyyy-MM-dd}.log</FileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n
+			</Pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
+
 	<!-- 关闭这个类的日志 -->
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
 
-	<root level="DEBUG">
+	<root level="ERROR">
 		<appender-ref ref="consoleAppender" />
+		<appender-ref ref="errorDailyRollingFileAppender" />
 	</root>
 </configuration>

@@ -2,7 +2,10 @@ package me.qyh.blog.oauth2;
 
 import java.sql.Timestamp;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import me.qyh.blog.entity.Id;
+import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.message.Message;
 
 /**
@@ -22,6 +25,7 @@ public class OauthUser extends Id {
 	private static final long serialVersionUID = 1L;
 
 	private String oauthid;
+	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String nickname;
 	private String avatar;
 	private OauthUserStatus status;

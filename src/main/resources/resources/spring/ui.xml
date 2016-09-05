@@ -46,6 +46,13 @@
 					<constructor-arg index="3"
 						value="classpath:me/qyh/blog/ui/widget/articles.html" />
 				</bean>
+				<bean class="me.qyh.blog.ui.widget.LastCommentsWidgetHandler">
+					<constructor-arg index="0" value="5" />
+					<constructor-arg index="1" value="最近评论" />
+					<constructor-arg index="2" value="comments" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/comments.html" />
+				</bean>
 			</list>
 		</property>
 	</bean>

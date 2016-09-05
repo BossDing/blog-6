@@ -166,7 +166,7 @@ var login = $("#login").val() == 'true';
 							html += '<a href="###" onclick="disable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span></a>';
 						if(!c.user.admin && c.user.status == 'DISABLED')
 							html += '<a href="###" onclick="enable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span></a>';
-						html += '<a href="###" onclick="remove(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+						html += '<a href="###" onclick="removeComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
 					 }
 					 if(oauthLogin)
 						html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
@@ -202,7 +202,7 @@ var login = $("#login").val() == 'true';
 							html += '<a href="###" onclick="disable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span></a>';
 						if(!c.user.admin && c.user.status == 'DISABLED')
 							html += '<a href="###" onclick="enable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span></a>';
-						html += '<a href="###" onclick="remove(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+						html += '<a href="###" onclick="removeComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
 					 }
 					 if(oauthLogin)
 							html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
@@ -228,7 +228,7 @@ var login = $("#login").val() == 'true';
 				 return username;
 			 }
 			 
-			 function remove(id){
+			 function removeComment(id){
 				 bootbox.confirm("确定要删除吗？",function(result){
 						if(result){
 							$.ajax({
