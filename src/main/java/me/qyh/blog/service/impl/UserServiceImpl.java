@@ -29,24 +29,23 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public User login(LoginBean loginBean) throws LogicException {
-		User user = userDao.selectByName(loginBean.getUsername());
+		User user = userDao.select();
 		if (user != null) {
-			String encrptPwd = user.getPassword();
-			if (BCrypts.matches(loginBean.getPassword(), encrptPwd)) {
-				return user;
+			if (user.getName().equals(loginBean.getUsername())) {
+				String encrptPwd = user.getPassword();
+				if (BCrypts.matches(loginBean.getPassword(), encrptPwd)) {
+					return user;
+				}
 			}
 		}
 		throw new LogicException("user.loginFail", "登录失败");
 	}
 
 	@Override
-	public User selectUserByName(String username) {
-		return userDao.selectByName(username);
-	}
-
-	@Override
-	public User selectUserById(Integer id) {
-		return userDao.selectById(id);
+	@Transactional(readOnly = true)
+	public User select() {
+		return userDao.select();
 	}
 }

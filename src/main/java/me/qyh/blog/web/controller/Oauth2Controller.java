@@ -17,6 +17,7 @@ import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.oauth2.UserInfo;
 import me.qyh.blog.service.OauthService;
 import me.qyh.util.UUIDs;
+import me.qyh.util.Validators;
 
 @RequestMapping("oauth2/{id}")
 @Controller
@@ -49,8 +50,14 @@ public class Oauth2Controller extends BaseController {
 	public String success(@PathVariable("id") String id, HttpServletRequest request) {
 		Oauth2 oauth2 = provider.getOauth2(id);
 		if (oauth2 != null) {
-			validState(request, oauth2);
-			UserInfo user = oauth2.getUserInfo(request);
+			if (!validState(request, oauth2)) {
+				return "redirect:/";
+			}
+			String code = request.getParameter("code");
+			if (Validators.isEmptyOrNull(code, true)) {
+				return "redirect:/";
+			}
+			UserInfo user = oauth2.getUserInfo(code);
 			if (user != null) {
 				OauthUser oauthUser = new OauthUser(user);
 				oauthUser.setServerId(id);
@@ -66,20 +73,21 @@ public class Oauth2Controller extends BaseController {
 		return "redirect:/";
 	}
 
-	private void validState(HttpServletRequest request, Oauth2 oauth2) {
+	private boolean validState(HttpServletRequest request, Oauth2 oauth2) {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			throw new InvalidStateException("请求不在一个回话中，无法从会话中获取state以比对，可能session过期导致");
+			return false;
 		}
 		String state = (String) session.getAttribute(STATE);
 		if (state == null) {
-			throw new InvalidStateException("session中不存在state");
+			return false;
 		}
-		String requestState = oauth2.getStateFromRequest(request);
+		String requestState = request.getParameter(STATE);
 		if (!state.equals(requestState)) {
-			throw new InvalidStateException("state不匹配");
+			return false;
 		}
 		session.removeAttribute(STATE);
+		return true;
 	}
 
 }

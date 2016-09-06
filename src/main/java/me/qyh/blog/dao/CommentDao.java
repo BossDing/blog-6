@@ -36,9 +36,10 @@ public interface CommentDao {
 
 	Comment selectLast(Comment current);
 
+	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit);
+
 	int selectCountByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
 
 	void deleteByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
 
-	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit);
 }

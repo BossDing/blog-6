@@ -10,11 +10,22 @@ import me.qyh.blog.pageparam.PageResult;
 
 public interface CommentService {
 
+	/**
+	 * 插入评论
+	 * 
+	 * @param comment
+	 * @return
+	 * @throws LogicException
+	 */
 	Comment insertComment(Comment comment) throws LogicException;
 
+	/**
+	 * 删除某条评论和该评论的所有回复
+	 * 
+	 * @param id
+	 * @throws LogicException
+	 */
 	void deleteComment(Integer id) throws LogicException;
-
-	void deleteComment(Integer userId, Integer articleId) throws LogicException;
 
 	/**
 	 * 分页查询评论
@@ -34,5 +45,14 @@ public interface CommentService {
 	 * @return
 	 */
 	List<Comment> queryLastComments(Space space, int limit);
+
+	/**
+	 * 删除某个用户在某篇文章下的所有评论以及评论的回复
+	 * 
+	 * @param userId
+	 * @param articleId
+	 * @throws LogicException
+	 */
+	void deleteComment(Integer userId, Integer articleId) throws LogicException;
 
 }

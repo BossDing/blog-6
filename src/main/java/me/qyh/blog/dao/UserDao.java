@@ -4,10 +4,8 @@ import me.qyh.blog.entity.User;
 
 public interface UserDao {
 
-	public User selectByName(String name);
+	public User select();
 
 	public void update(User current);
-
-	public User selectById(Integer id);
 
 }

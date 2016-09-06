@@ -10,11 +10,18 @@
 		<property name="oauth2s">
 			<list>
 				<bean class="me.qyh.blog.oauth2.support.QQOauth2">
-					<constructor-arg index="0" value="******" />
-					<constructor-arg index="1"
-						value="******" />
-					<constructor-arg index="2"
+					<constructor-arg index="0" value="qq" />
+					<constructor-arg index="1" value="QQ" />
+					<constructor-arg index="3"
+					<constructor-arg index="4"
 						value="http://www.qyh.me/oauth2/qq/success" />
+				</bean>
+				<bean class="me.qyh.blog.oauth2.support.SinaOauth2">
+					<constructor-arg index="0" value="sina" />
+					<constructor-arg index="1" value="新浪微博" />
+					<constructor-arg index="3"
+					<constructor-arg index="4"
+						value="http://www.qyh.me/oauth2/sina/success" />
 				</bean>
 			</list>
 		</property>

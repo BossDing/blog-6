@@ -44,6 +44,10 @@
 							th:src="@{/static/img/qq.png}"
 							style="width: 32px; height: 32px; margin-top: 10px" title="QQ登录"
 							alt="QQ登录" /></a>
+							<a th:href="${urls.url}+'/oauth2/sina/login'"><img
+							th:src="@{/static/img/sina.png}"
+							style="width: 32px; height: 32px; margin-top: 10px" title="新浪登录"
+							alt="新浪登录" /></a>
 						<button class="btn btn-primary pull-right"
 							style="margin-top: 10px" id="add-comment-btn"
 							th:attr="disabled=${session.oauth != null ? null : 'disabled'}"

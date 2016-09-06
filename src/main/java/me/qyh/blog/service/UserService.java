@@ -28,22 +28,6 @@ public interface UserService {
 	 */
 	User login(LoginBean loginBean) throws LogicException;
 
-	/**
-	 * 根据用户名查找用户
-	 * 
-	 * @param username
-	 * @return
-	 * @throws LogicException
-	 */
-	User selectUserByName(String username);
-
-	/**
-	 * 根据ID查找用户
-	 * 
-	 * @param username
-	 * @return
-	 * @throws LogicException
-	 */
-	User selectUserById(Integer id);
+	User select();
 
 }

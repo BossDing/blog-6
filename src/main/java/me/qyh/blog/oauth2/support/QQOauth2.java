@@ -3,8 +3,6 @@ package me.qyh.blog.oauth2.support;
 import java.io.IOException;
 import java.net.URL;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -65,11 +63,6 @@ public class QQOauth2 extends AbstractOauth2 {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(AUTHORIZE_URL);
 		builder.queryParam("client_id", appId).queryParam("redirect_uri", redirectUri).queryParam("state", state);
 		return builder.build().toUriString();
-	}
-
-	@Override
-	public String getStateFromRequest(HttpServletRequest request) {
-		return request.getParameter("state");
 	}
 
 	/**
@@ -183,14 +176,10 @@ public class QQOauth2 extends AbstractOauth2 {
 	 * </p>
 	 */
 	@Override
-	public UserInfo getUserInfo(HttpServletRequest request) {
-		String code = request.getParameter("code");
-		if (code != null) {
-			String token = getAccessToken(code);
-			String openid = getOpenid(token);
-			return getUser(token, openid);
-		}
-		return null;
+	public UserInfo getUserInfo(String code) {
+		String token = getAccessToken(code);
+		String openid = getOpenid(token);
+		return getUser(token, openid);
 	}
 
 }

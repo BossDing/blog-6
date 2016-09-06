@@ -10,16 +10,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="user_email" property="email" />
 	</resultMap>
 
-	<select id="selectByName" resultMap="UserDetail">
+	<select id="select" resultMap="UserDetail">
 		SELECT
-		id,user_name,user_password,user_email FROM blog_user WHERE user_name =
-		#{name}
-	</select>
-
-	<select id="selectById" resultMap="UserDetail">
-		SELECT
-		id,user_name,user_password,user_email FROM blog_user WHERE id=
-		#{id}
+		id,user_name,user_password,user_email FROM blog_user
 	</select>
 
 	<update id="update">

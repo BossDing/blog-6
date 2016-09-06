@@ -81,15 +81,18 @@ public class CookieRememberMe implements RememberMe {
 						remove(request, response);
 						return null;
 					}
-					User user = userService.selectUserByName(cookieTokens[0]);
+					User user = userService.select();
 					if (user != null) {
+						if (!user.getName().equals(cookieTokens[0])) {
+							throw new InvalidCookieException("自动登录失败，用户名被修改");
+						}
 						String expectedTokenSignature = makeTokenSignature(tokenExpiryTime, user);
 						if (!equals(expectedTokenSignature, cookieTokens[2])) {
 							throw new InvalidCookieException("自动登录失败，密码被修改");
 						}
 						return user;
 					}
-					throw new InvalidCookieException("自动登录失败，用户名被修改");
+					throw new InvalidCookieException("自动登录失败");
 				}
 			} catch (InvalidCookieException e) {
 				logger.warn(e.getMessage());

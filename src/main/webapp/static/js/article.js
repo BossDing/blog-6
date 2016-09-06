@@ -262,6 +262,7 @@ var login = $("#login").val() == 'true';
 					});
 			 }
 			 
+
 			 function disable(id){
 				 bootbox.confirm("确定要禁用吗？", function(result) {
 						if (result) {

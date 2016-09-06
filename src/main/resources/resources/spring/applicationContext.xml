@@ -19,7 +19,7 @@
 
 
 	<context:property-placeholder
-		location="classpath:resources/mybatis/db.properties,classpath:resources/app.properties" />
+		location="classpath:resources/mybatis/db.properties,classpath:resources/app.properties,classpath:resources/mail.properties" />
 
 	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
 		destroy-method="close">
@@ -139,16 +139,38 @@
 		<!-- 索引commit间隔，由于commit操作相对比较笨重，所以这里定时处理提高性能 -->
 		<constructor-arg index="2" value="0" />
 	</bean>
-	
+
 	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
 		<!-- 如果10秒内增加了2次非法评论，加入暂屏蔽名单，屏蔽时间为300秒，同时每隔600秒清理过期点击数和过期的非法用户 -->
-		<property name="invalidLimitCount" value="5"/>
-		<property name="invalidLimitSecond" value="20"/>
-		<property name="invalidSecond" value="300"/>
-		<property name="invalidClearSecond" value="600"/>
+		<property name="invalidLimitCount" value="5" />
+		<property name="invalidLimitSecond" value="20" />
+		<property name="invalidSecond" value="300" />
+		<property name="invalidClearSecond" value="600" />
 		<!-- html内容清理器 -->
 		<property name="htmlClean">
 			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
+		</property>
+		<!-- 如果不需要邮件通知这个属性请不要设置 -->
+		<property name="messageProcessor">
+			<bean class="me.qyh.blog.service.impl.CommentServiceImpl$MessageProcessor"
+				destroy-method="shutdown">
+				<property name="mailSubject" value="您有新的评论" />
+			</bean>
+		</property>
+	</bean>
+
+	<!-- 如果不需要邮件通知这个服务请不要设置 -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="protocol" value="${mail.protocol}" />
+		<property name="host" value="${mail.host}" />
+		<property name="port" value="${mail.port}" />
+		<property name="username" value="${mail.username}" />
+		<property name="password" value="${mail.password}" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+				<prop key="mail.from">${mail.from}</prop>
+			</props>
 		</property>
 	</bean>
 </beans>      
