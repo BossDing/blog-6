@@ -1,10 +1,19 @@
 package me.qyh.blog.web.controller;
 
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FilenameUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -112,4 +121,61 @@ public class SysPageMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("page.sys.delete.success", "还原成功"));
 	}
 
+	/**
+	 * 获取预览页面中的css链接和style标签内容，主要撰写博客的时候使用
+	 * <p>
+	 * <strong>如果某些css是动态变化的，比如根据时间和用户展现不同的css，那么指挥获取符合这一时刻的预览css(如果css的路径跟widget中的对象有关，那么只会也只能采用系统的预览widget)</strong>
+	 * </p>
+	 * 
+	 * @param target
+	 * @param spaceId
+	 * @return
+	 * @throws LogicException
+	 */
+	@RequestMapping(value = "getStyles", method = RequestMethod.GET)
+	@ResponseBody
+	public JsonResult getStyles(Space space, HttpServletRequest request, HttpServletResponse response)
+			throws LogicException {
+		SysPage page = uiService.renderPreviewPage(space, PageTarget.ARTICLE_DETAIL);
+		try {
+			String rendered = tplRender.tryRender(page, request, response);
+			Document doc = Jsoup.parse(rendered);
+			String style = null;
+			Elements eles = doc.select("style");
+			if (!eles.isEmpty()) {
+				style = eles.first().data();
+			}
+			Set<String> csses = new LinkedHashSet<String>();
+			Elements imports = doc.select("link[href]");
+			for (Element ele : imports) {
+				String link = ele.attr("href");
+				if (isCss(link)) {
+					csses.add(link);
+				}
+			}
+			Map<String, Object> resultMap = new HashMap<String, Object>();
+			resultMap.put("csses", csses);
+			if (style != null)
+				resultMap.put("style", style.trim());
+			return new JsonResult(true, resultMap);
+		} catch (TplRenderException e) {
+			return new JsonResult(false);
+		}
+	}
+
+	private static boolean isCss(String link) {
+		String ext = FilenameUtils.getExtension(link);
+		if (ext.equalsIgnoreCase("css")) {
+			return true;
+		} else {
+			int idx = ext.indexOf('?');
+			if (idx != -1) {
+				ext = ext.substring(0, idx);
+				if (ext.equalsIgnoreCase("css")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

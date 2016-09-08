@@ -33,65 +33,61 @@
 <title>自定义挂件管理</title>
 </head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
-		<div id="page-wrapper">
-			<div class="container-fluid">
-				<div class="row" style="margin-bottom: 10px">
-					<div class="col-md-12">
-						<button class="btn btn-primary" id="show-create">新建挂件</button>
-					</div>
+	<nav th:replace="mgr/base/nav :: active('tpl-widget')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row" style="margin-bottom: 10px">
+				<div class="col-md-12">
+					<button class="btn btn-primary" id="show-create">新建挂件</button>
 				</div>
-				<div class="row">
-					<div class="col-md-12">
-						<form style="display: none" th:action="@{/mgr/widget/user/index}"
-							id="pageForm">
-							<input type="hidden" th:value="${page.currentPage}"
-								name="currentPage" />
-						</form>
-						<div class="alert alert-info"
-							th:if="${#lists.isEmpty(page.datas)}">当前没有任何自定义挂件</div>
-						<div th:unless="${#lists.isEmpty(page.datas)}">
-							<div class="table-responsive">
-								<table class="table">
-									<thead>
-										<tr>
-											<th>挂件名</th>
-											<th>描述</th>
-											<th>创建日期</th>
-											<th>操作</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr th:each="widget : ${page.datas}">
-											<td><a href="###" th:title="${widget.name}"
-												data-toggle="tooltip"
-												th:text="${#strings.length(widget.name) > 5  ? #strings.substring(widget.name,0,5)+'...' : widget.name}"></a></td>
-											<td><a href="###" th:title="${widget.description}"
-												data-toggle="tooltip"
-												th:text="${#strings.length(widget.description) > 10  ? #strings.substring(widget.description,0,10)+'...' : widget.description}"></a></td>
-											<td
-												th:text="${#dates.format(widget.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-											<td><a href="###" style="margin-right: 10px"
-												data-action="remove" th:data-id="${widget.id}"><span
-													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-												<a href="###" data-action="edit" th:data-id="${widget.id}"><span
-													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<form style="display: none" th:action="@{/mgr/widget/user/index}"
+						id="pageForm">
+						<input type="hidden" th:value="${page.currentPage}"
+							name="currentPage" />
+					</form>
+					<div class="alert alert-info" th:if="${#lists.isEmpty(page.datas)}">当前没有任何自定义挂件</div>
+					<div th:unless="${#lists.isEmpty(page.datas)}">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>挂件名</th>
+										<th>描述</th>
+										<th>创建日期</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="widget : ${page.datas}">
+										<td><a href="###" th:title="${widget.name}"
+											data-toggle="tooltip"
+											th:text="${#strings.length(widget.name) > 5  ? #strings.substring(widget.name,0,5)+'...' : widget.name}"></a></td>
+										<td><a href="###" th:title="${widget.description}"
+											data-toggle="tooltip"
+											th:text="${#strings.length(widget.description) > 10  ? #strings.substring(widget.description,0,10)+'...' : widget.description}"></a></td>
+										<td
+											th:text="${#dates.format(widget.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+										<td><a href="###" style="margin-right: 10px"
+											data-action="remove" th:data-id="${widget.id}"><span
+												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+											<a href="###" data-action="edit" th:data-id="${widget.id}"><span
+												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+										</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
-						<div th:if="${page.totalPage > 1}">
-							<ul class="pagination">
-								<li
-									th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
-									<a th:text="${i}" th:data-page="${i}" href="###"></a>
-								</li>
-							</ul>
-						</div>
-
+					</div>
+					<div th:if="${page.totalPage > 1}">
+						<ul class="pagination">
+							<li
+								th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
+								<a th:text="${i}" th:data-page="${i}" href="###"></a>
+							</li>
+						</ul>
 					</div>
 				</div>
 			</div>
@@ -125,7 +121,9 @@
 						</div>
 						<div class="form-group">
 							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<div id="editor"><textarea rows="8" cols="8" class="form-control" ></textarea></div>
+							<div id="editor">
+								<textarea rows="8" cols="8" class="form-control"></textarea>
+							</div>
 						</div>
 					</form>
 				</div>
@@ -165,7 +163,9 @@
 						</div>
 						<div class="form-group">
 							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<div id="upeditor"><textarea rows="8" cols="8" class="form-control" ></textarea></div>
+							<div id="upeditor">
+								<textarea rows="8" cols="8" class="form-control"></textarea>
+							</div>
 						</div>
 					</form>
 				</div>

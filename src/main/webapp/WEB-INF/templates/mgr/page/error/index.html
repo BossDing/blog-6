@@ -2,9 +2,8 @@
 <html>
 <head th:replace="mgr/base/head :: head('错误页面模板管理')"></head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
-		<div id="page-wrapper">
+		<nav th:replace="mgr/base/nav :: active('tpl-error')"></nav>
+		<div id="page-wrapper" style="padding: 10px">
 			<div class="container-fluid">
 				<div class="row">
 					<div class="col-md-12">
@@ -42,7 +41,6 @@
 				</div>
 			</div>
 		</div>
-	</div>
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript">
 	$(document).ready(function(){

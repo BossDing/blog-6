@@ -5,18 +5,6 @@ var login = $("#login").val() == 'true';
 			var asc = false;
 			var tree = $("#commentMode").val() == 'TREE';
 			$(document).ready(function(){
-				editormd.katexURL  = {
-			        css : basePath+"/static/editor/markdown/lib/katex.min",
-			        js  : basePath+"/static/editor/markdown/lib/katex.min"
-			    };
-				editormd.markdownToHTML("markdown-rendered", {
-                    emoji           : true,
-                    taskList        : true,
-                    tex             : true,  // 默认不解析
-                    flowChart       : true,  // 默认不解析
-                    sequenceDiagram : true,  // 默认不解析
-                    tocm : true
-                });
 				queryComments(0);
 				if(window.sessionStorage){
 					var articleId = "article-"+$("#articleId").val();

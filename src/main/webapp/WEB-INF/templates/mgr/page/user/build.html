@@ -33,78 +33,75 @@
 <title>自定义页面模板编辑</title>
 </head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
-		<div id="page-wrapper">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-md-12">
-						<div id="editor">
-							<textarea style="display: none;" th:text="${page.tpl}"></textarea>
-						</div>
+	<nav th:replace="mgr/base/nav :: active('tpl-user')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-12">
+					<div id="editor">
+						<textarea style="display: none;" th:text="${page.tpl}"></textarea>
 					</div>
 				</div>
-				<div class="row">
-					<div style="margin-top: 10px">
-						<div class="col-md-2">
-							<label>页面名称(1~20个字符)：</label>
-						</div>
-						<div class="col-md-10">
-							<input type="text" class="form-control" th:value="${page.name}"
-								id="name"> <input type="text" style="display: none">
-						</div>
+			</div>
+			<div class="row">
+				<div style="margin-top: 10px">
+					<div class="col-md-2">
+						<label>页面名称(1~20个字符)：</label>
+					</div>
+					<div class="col-md-10">
+						<input type="text" class="form-control" th:value="${page.name}"
+							id="name"> <input type="text" style="display: none">
 					</div>
 				</div>
-				<div class="row">
-					<div style="margin-top: 10px">
-						<div class="col-md-2">
-							<label>页面别名(1~30个字符,只能包含英文和数字以及-和_，不能为纯数字)：</label>
-						</div>
-						<div class="col-md-10">
-							<input type="text" class="form-control" th:value="${page.alias}"
-								id="alias"> <input type="text" style="display: none">
-						</div>
+			</div>
+			<div class="row">
+				<div style="margin-top: 10px">
+					<div class="col-md-2">
+						<label>页面别名(1~30个字符,只能包含英文和数字以及-和_，不能为纯数字)：</label>
+					</div>
+					<div class="col-md-10">
+						<input type="text" class="form-control" th:value="${page.alias}"
+							id="alias"> <input type="text" style="display: none">
 					</div>
 				</div>
-				<div class="row">
-					<div style="margin-top: 10px">
-						<div class="col-md-2">
-							<label>所属空间：</label>
-						</div>
-						<div class="col-md-10">
-							<select class="form-control" id="spaceSelect">
-								<option th:if="${page.space != null}"
-									th:value="${page.space.id}" th:text="${page.space.name}"></option>
-								<option value="">无</option>
-								<option th:each="space : ${spaces}" th:value="${space.id}"
-									th:text="${space.name}"></option>
-							</select>
-						</div>
+			</div>
+			<div class="row">
+				<div style="margin-top: 10px">
+					<div class="col-md-2">
+						<label>所属空间：</label>
+					</div>
+					<div class="col-md-10">
+						<select class="form-control" id="spaceSelect">
+							<option th:if="${page.space != null}" th:value="${page.space.id}"
+								th:text="${page.space.name}"></option>
+							<option value="">无</option>
+							<option th:each="space : ${spaces}" th:value="${space.id}"
+								th:text="${space.name}"></option>
+						</select>
 					</div>
 				</div>
-				<div class="row">
-					<div style="margin-top: 10px">
-						<div class="col-md-2">
-							<label>描述(0~500个字符)：</label>
-						</div>
-						<div class="col-md-10">
-							<textarea rows="8" cols="8" class="form-control" id="description"></textarea>
-						</div>
+			</div>
+			<div class="row">
+				<div style="margin-top: 10px">
+					<div class="col-md-2">
+						<label>描述(0~500个字符)：</label>
+					</div>
+					<div class="col-md-10">
+						<textarea rows="8" cols="8" class="form-control" id="description"></textarea>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col-md-12 "
-						style="margin-top: 10px; text-align: center">
-						<form style="display: none" id="tplForm">
-							<input type="hidden"
-								th:value="${page.space == null ? '' : page.space.id}" id="space">
-							<input type="hidden" th:value="${page.id}" id="pageId">
-						</form>
-						<button class="btn btn-primary" type="button" data-toggle="modal"
-							data-target="#widgetsModal">挂件</button>
-						<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
-						<button class="btn btn-primary" type="button" onclick="save()">提交</button>
-					</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12 " style="margin-top: 10px; text-align: center">
+					<form style="display: none" id="tplForm">
+						<input type="hidden"
+							th:value="${page.space == null ? '' : page.space.id}" id="space">
+						<input type="hidden" th:value="${page.id}" id="pageId">
+					</form>
+					<button class="btn btn-primary" type="button" data-toggle="modal"
+						data-target="#widgetsModal">挂件</button>
+					<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
+					<button class="btn btn-primary" type="button" onclick="save()">提交</button>
 				</div>
 			</div>
 		</div>

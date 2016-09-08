@@ -2,67 +2,64 @@
 <html>
 <head th:replace="mgr/base/head :: head('标签管理')"></head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('tag')"></nav>
-		<div id="page-wrapper">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-md-12">
-						<div class="alert alert-danger" th:unless="${error == null}"
-							th:text="${messages.getMessage(error)}"></div>
-						<form th:action="@{/mgr/tag/index}" id="pageForm">
-							<div class="input-group">
-								<input type="text" id="search-input" class="form-control"
-									placeholder="查询" aria-describedby="basic-addon2"
-									th:value="${page.param.tag}" name="tag"> <span
-									class="input-group-addon" id="basic-addon2"><a
-									href="###" id="search-btn"><span
-										class="glyphicon glyphicon-search" aria-hidden="true"></span></a></span>
-							</div>
-							<input type="hidden" th:value="${page.currentPage}"
-								name="currentPage" />
-						</form>
-						<div class="alert alert-info" style="margin-top: 10px"
-							th:if="${#lists.isEmpty(page.datas)}">当前没有任何标签</div>
-						<div th:unless="${#lists.isEmpty(page.datas)}">
-							<div class="table-responsive">
-								<table class="table">
-									<thead>
-										<tr>
-											<th>标签名</th>
-											<th>创建日期</th>
-											<th>操作</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr th:each="tag : ${page.datas}">
-											<td><a href="###" th:title="${tag.name}"
-												data-toggle="tooltip"
-												th:text="${#strings.length(tag.name) > 10  ? #strings.substring(tag.name,0,10)+'...' : tag.name}"></a></td>
-											<td
-												th:text="${#dates.format(tag.create, 'yyyy-MM-dd HH:mm')}"></td>
-											<td><a href="###" style="margin-right: 10px"
-												data-action="remove" th:data-id="${tag.id}"><span
-													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-												<a href="###" style="margin-right: 10px" data-action="edit"
-												th:data-id="${tag.id}" th:data-tag="${tag.name}"><span
-													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+	<nav th:replace="mgr/base/nav :: active('tag')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="alert alert-danger" th:unless="${error == null}"
+						th:text="${messages.getMessage(error)}"></div>
+					<form th:action="@{/mgr/tag/index}" id="pageForm">
+						<div class="input-group">
+							<input type="text" id="search-input" class="form-control"
+								placeholder="查询" aria-describedby="basic-addon2"
+								th:value="${page.param.tag}" name="tag"> <span
+								class="input-group-addon" id="basic-addon2"><a href="###"
+								id="search-btn"><span class="glyphicon glyphicon-search"
+									aria-hidden="true"></span></a></span>
 						</div>
-						<div th:if="${page.totalPage > 1}">
-							<ul class="pagination">
-								<li
-									th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
-									<a th:text="${i}" th:data-page="${i}" href="###"></a>
-								</li>
-							</ul>
+						<input type="hidden" th:value="${page.currentPage}"
+							name="currentPage" />
+					</form>
+					<div class="alert alert-info" style="margin-top: 10px"
+						th:if="${#lists.isEmpty(page.datas)}">当前没有任何标签</div>
+					<div th:unless="${#lists.isEmpty(page.datas)}">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>标签名</th>
+										<th>创建日期</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="tag : ${page.datas}">
+										<td><a href="###" th:title="${tag.name}"
+											data-toggle="tooltip"
+											th:text="${#strings.length(tag.name) > 10  ? #strings.substring(tag.name,0,10)+'...' : tag.name}"></a></td>
+										<td th:text="${#dates.format(tag.create, 'yyyy-MM-dd HH:mm')}"></td>
+										<td><a href="###" style="margin-right: 10px"
+											data-action="remove" th:data-id="${tag.id}"><span
+												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+											<a href="###" style="margin-right: 10px" data-action="edit"
+											th:data-id="${tag.id}" th:data-tag="${tag.name}"><span
+												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+										</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
-
 					</div>
+					<div th:if="${page.totalPage > 1}">
+						<ul class="pagination">
+							<li
+								th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
+								<a th:text="${i}" th:data-page="${i}" href="###"></a>
+							</li>
+						</ul>
+					</div>
+
 				</div>
 			</div>
 		</div>

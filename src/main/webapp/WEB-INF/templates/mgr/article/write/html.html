@@ -1,0 +1,282 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+	th:href="@{/static/bootstrap-timepicker/css/bootstrap-datetimepicker.min.css}" />
+<link th:href="@{/static/bootstrap/css/bootstrap.min.css}"
+	rel="stylesheet">
+<link rel="stylesheet"
+	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css}">
+<link rel="stylesheet"
+	th:href="@{/static/font-awesome/css/font-awesome.min.css}">
+<link rel="stylesheet" th:href="@{/static/css/sb-admin.css}">
+<!--[if lt IE 9]>
+  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<title>博客撰写</title>
+</head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('article')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row" style="margin-top: 10px">
+				<div class="col-md-12">
+					<div class="form-group">
+						<label>博客标题</label><input type="text" class="form-control"
+							placeholder="博客标题(1-50个字符)" maxlength="50" id="title"
+							th:value="${article.title}" />
+					</div>
+					<div class="form-group">
+						<label>博客编辑器(<a href="###" onclick="showStyleBox()">改变样式</a>)
+						</label>
+						<textarea style="display: none;" th:text="${article.content}"
+							id="editor"></textarea>
+					</div>
+					<div class="form-group">
+						<label>摘要 (<a href="###" onclick="getSummary()">提取</a>)
+						</label>
+						<textarea class="form-control" cols="8" rows="8"
+							placeholder="(0~500字符)" id="summary" th:text="${article.summary}"></textarea>
+					</div>
+					<div class="form-group">
+						<label>标签(<a href="###" onclick="getTags()">提取</a>)
+						</label> <input type="text" id="tags-input" class="form-control"
+							placeholder="标签(1-20个字符)，按空格键确认" maxlength="20" />
+						<div id="tags-container" class="well" style="margin-top: 5px"></div>
+					</div>
+					<div class="form-group">
+						<label>空间</label> <select class="form-control" id="space">
+							<option th:each="space : ${spaces}" th:text="${space.name}"
+								th:value="${space.id}"></option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label>来源</label> <select class="form-control" id="from">
+							<option th:if="${article.from != null}"
+								th:value="${article.from.name()}" selected="selected"
+								th:text="'当前:'+${messages.getMessage(article.from.getMessage())}"></option>
+							<option value="ORIGINAL">原创</option>
+							<option value="COPIED">转载</option>
+						</select>
+					</div>
+					<div id="lock_container"></div>
+					<div class="form-group">
+						<label>状态</label> <select class="form-control" id="status">
+							<option th:if="${article.status != null}"
+								th:value="${article.status.name()}"
+								th:text="${messages.getMessage(article.status.getMessage())}"></option>
+							<option value="DRAFT">草稿</option>
+							<option value="PUBLISHED">发布</option>
+							<option value="SCHEDULED">计划</option>
+						</select>
+					</div>
+					<div class="checkbox">
+						<label th:if="${article.isPrivate == null || !article.isPrivate}">
+							<input type="checkbox" id="private" />私人博客
+						</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
+							type="checkbox" id="private" checked="checked" />私人博客 </label>
+					</div>
+
+					<div class="form-group"
+						th:style="${article.isSchedule() ? '' : 'display: none'}"
+						id="scheduleContainer">
+						<label>计划发表日期</label>
+						<div class="input-group date form_datetime col-md-12"
+							data-date-format="yyyy-mm-dd hh:ii:ss"
+							data-link-field="scheduleDate">
+							<input class="form-control" size="16" type="text"
+								th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"
+								readonly> <span class="input-group-addon"><span
+								class="glyphicon glyphicon-remove"></span></span> <span
+								class="input-group-addon"><span
+								class="glyphicon glyphicon-th"></span></span>
+						</div>
+						<input type="hidden" id="scheduleDate"
+							th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"><br>
+					</div>
+					<div class="form-group">
+						<label>博客优先级(优先级越高排名越靠前)</label> <input type="text"
+							class="form-control" placeholder="1~100" maxlength="3" id="level"
+							th:value="${article.level}" />
+					</div>
+					<hr />
+					<label>评论配置</label>
+					<div th:if="${article.commentConfig != null}" th:remove="tag">
+						<div class="checkbox">
+							<label
+								th:if="${article.commentConfig.allowComment == null || !article.commentConfig.allowComment}">
+								<input type="checkbox" id="allowComment" />允许评论
+							</label> <label
+								th:if="${article.commentConfig.allowComment != null && article.commentConfig.allowComment}"><input
+								type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
+						</div>
+						<div class="form-group">
+							<label>评论展现排序(按评论时间)</label> <select class="form-control"
+								id="commentSort">
+								<option th:if="${article.commentConfig.asc != null}"
+									selected="selected" th:value="${article.commentConfig.asc}"
+									th:text="'当前:'+${article.commentConfig.asc ? '正序' : '倒序'}"></option>
+								<option value="true">正序</option>
+								<option value="false">倒序</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>评论展现方式</label> <select class="form-control"
+								id="commentMode">
+								<option th:if="${article.commentConfig.commentMode != null}"
+									th:value="${article.commentConfig.commentMode.name()}"
+									selected="selected"
+									th:text="'当前:'+${messages.getMessage(article.commentConfig.commentMode.getMessage())}"></option>
+								<option value="LIST">平铺</option>
+								<option value="TREE">嵌套</option>
+							</select>
+						</div>
+						<div class="checkbox">
+							<label
+								th:if="${article.commentConfig.allowHtml == null || !article.commentConfig.allowHtml}">
+								<input type="checkbox" id="allowHtml" />允许html
+							</label> <label
+								th:if="${article.commentConfig.allowHtml != null && article.commentConfig.allowHtml}"><input
+								type="checkbox" id="allowHtml" checked="checked" />允许html </label>
+						</div>
+						<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
+						<div class="form-group">
+							<label for="">时间(秒)</label> <input class="form-control integer"
+								placeholder="时间"
+								th:if="${article.commentConfig.limitSec != null}"
+								th:value="${article.commentConfig.limitSec}" id="limitSec">
+							<input class="form-control integer" placeholder="时间"
+								th:if="${article.commentConfig.limitSec == null}" value="60"
+								id="limitSec">
+						</div>
+						<div class="form-group">
+							<label for="">允许发表评论数</label> <input class="form-control integer"
+								placeholder="允许评论数"
+								th:if="${article.commentConfig.limitCount != null}"
+								th:value="${article.commentConfig.limitCount}" id="limitCount">
+							<input class="form-control integer" placeholder="时间"
+								th:if="${article.commentConfig.limitCount == null}" value="10"
+								id="limitCount">
+						</div>
+					</div>
+					<div th:if="${article.commentConfig == null}" th:remove="tag">
+						<div class="checkbox">
+							<label><input type="checkbox" id="allowComment" />允许评论 </label>
+						</div>
+						<div class="form-group">
+							<label>评论展现排序(按评论时间)</label> <select class="form-control"
+								id="commentSort">
+								<option value="true">正序</option>
+								<option value="false">倒序</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>评论展现方式</label> <select class="form-control"
+								id="commentMode">
+								<option value="LIST">平铺</option>
+								<option value="TREE">嵌套</option>
+							</select>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" id="allowHtml" />允许html </label>
+						</div>
+						<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
+						<div class="form-group">
+							<label for="">时间(秒)(1~300)</label> <input
+								class="form-control integer" placeholder="时间" value="60"
+								id="limitSec">
+						</div>
+						<div class="form-group">
+							<label for="">允许发表评论数(1~100)</label> <input
+								class="form-control integer" placeholder="时间" value="10"
+								id="limitCount">
+						</div>
+					</div>
+					<div class="form-group" style="text-align: center">
+						<button class="btn btn-primary" type="button" id="submit-art">提交</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<input type="hidden" th:value="${article.status}" id="oldStatus" />
+	<input type="hidden" th:value="${article.tagStr}" id="oldTags"
+		style="display: none" />
+	<input type="hidden" th:value="${article.lockId}" id="oldLock"
+		style="display: none" />
+	<input type="hidden" th:value="${article.id}" id="id"
+		style="display: none" />
+	<input type="hidden"
+		th:value="${article.space == null ? '' : article.space.id}"
+		id="oldSpace" style="display: none" />
+
+	<div class="modal fade" id="styleModal" tabindex="-1" role="dialog"
+		aria-labelledby="styleModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="styleModalLabel">编辑器css样式</h4>
+				</div>
+				<div class="modal-body">
+					<form autocomplete="off">
+						<div class="form-group">
+							<label>css文件路径(多个用回车换行)</label>
+							<textarea class="form-control" style="height: 100px" id="csses"></textarea>
+						</div>
+						<div class="form-group">
+							<label>style样式</label>
+							<textarea class="form-control" style="height: 100px" id="styles"></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" onclick="addStyles()">创建</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div th:replace="base/foot_source"></div>
+	<script th:src="@{/static/editor/ckeditor/ckeditor.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/mgr/html.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/bootstrap-timepicker/js/bootstrap-datetimepicker.js}"
+		charset="UTF-8"></script>
+	<script type="text/javascript"
+		th:src="@{/static/bootstrap-timepicker/js/locales/bootstrap-datetimepicker.zh-CN.js}"
+		charset="UTF-8"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/canvas-to-blob.min.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
+	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/ckeditor/plugins/file/file.js}"></script>
+</body>
+</html>

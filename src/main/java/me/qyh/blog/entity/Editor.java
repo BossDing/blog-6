@@ -2,6 +2,6 @@ package me.qyh.blog.entity;
 
 public enum Editor {
 
-	MD,// MARKDOWN
-
+	MD, // MARKDOWN
+	HTML// RICHTEXT
 }

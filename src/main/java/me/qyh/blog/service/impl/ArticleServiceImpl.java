@@ -98,7 +98,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				article.addHits();
-				if(indexable(article))
+				if (indexable(article))
 					articleIndexer.addDocument(article);
 				return article;
 			}
@@ -301,13 +301,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	public void pushScheduled() {
 		// 查询将要发表的文章
 		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
-		if (!articles.isEmpty()) {
-			for (Article article : articles) {
-				article.setStatus(ArticleStatus.PUBLISHED);
-				articleDao.update(article);
-				if (indexable(article))
-					articleIndexer.addDocument(article);
-			}
+		for (Article article : articles) {
+			article.setStatus(ArticleStatus.PUBLISHED);
+			articleDao.update(article);
+			if (indexable(article))
+				articleIndexer.addDocument(article);
 		}
 	}
 
