@@ -55,9 +55,11 @@ public class OauthServiceImpl implements OauthService {
 	@Transactional(readOnly = true)
 	public List<OauthBind> queryAllBind() {
 		List<OauthBind> binds = oauthBindDao.selectAll();
-		for (OauthBind bind : binds) {
-			OauthUser user = bind.getUser();
-			user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+		if (!binds.isEmpty()) {
+			for (OauthBind bind : binds) {
+				OauthUser user = bind.getUser();
+				user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+			}
 		}
 		return oauthBindDao.selectAll();
 	}
@@ -139,9 +141,12 @@ public class OauthServiceImpl implements OauthService {
 	public PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param) {
 		int count = oauthUserDao.selectCount(param);
 		List<OauthUser> datas = oauthUserDao.selectPage(param);
-		for (OauthUser user : datas) {
-			user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+		if (!datas.isEmpty()) {
+			for (OauthUser user : datas) {
+				user.setServerName(oauth2Provider.getOauth2(user.getServerId()).getName());
+			}
 		}
 		return new PageResult<OauthUser>(param, count, datas);
 	}
+
 }

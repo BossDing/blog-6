@@ -2,8 +2,9 @@
 <html>
 <head th:replace="mgr/base/head :: head('用户自定义页面管理')"></head>
 <body>
-		<nav th:replace="mgr/base/nav :: active('tpl-user')"></nav>
-		<div id="page-wrapper" style="padding: 10px">
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
+		<div id="page-wrapper">
 			<div class="container-fluid">
 				<div class="row" style="margin-bottom: 10px">
 					<div class="col-md-12">
@@ -72,6 +73,8 @@
 								</li>
 							</ul>
 						</div>
+
+					</div>
 				</div>
 			</div>
 		</div>

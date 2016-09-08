@@ -2,50 +2,54 @@
 <html>
 <head th:replace="mgr/base/head :: head('绑定账号管理')"></head>
 <body>
-	<nav th:replace="mgr/base/nav :: active('oauth-bind-index')"></nav>
-	<div id="page-wrapper" style="padding: 10px">
-		<div class="container-fluid">
-			<div class="row" style="padding: 5px">
-				<div class="col-md-8 col-md-offset-2">
-					<div class="alert alert-danger" th:unless="${error == null}"
-						th:text="${error}"></div>
-					<div th:if="${#lists.isEmpty(binds)}">
-						<div class="alert alert-info">
-							<strong>当前没有绑定任何账号</strong>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('oauth')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row" style="padding: 5px">
+					<div class="col-md-8 col-md-offset-2">
+						<div class="alert alert-danger" th:unless="${error == null}"
+							th:text="${error}"></div>
+						<div th:if="${#lists.isEmpty(binds)}">
+							<div class="alert alert-info">
+								<strong>当前没有绑定任何账号</strong>
+							</div>
 						</div>
-					</div>
-					<div th:unless="${#lists.isEmpty(binds)}">
-						<div class="table-responsive">
-							<div class="alert alert-warning">更新社交账号信息(昵称,头像)需要再次登陆该社交账号</div>
-							<table class="table">
-								<thead>
-									<tr>
-										<th>账号类型</th>
-										<th>昵称</th>
-										<th>头像</th>
-										<th>绑定日期</th>
-										<th>&nbsp;</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr th:each="bind : ${binds}">
-										<td th:text="${bind.user.serverName}"></td>
-										<td th:text="${bind.user.nickname}"></td>
-										<td><img th:src="${bind.user.avatar}"
-											th:if="${bind.user.avatar != null}" /></td>
-										<td
-											th:text="${#dates.format(bind.bindDate, 'yyyy-MM-dd HH:mm')}"></td>
-										<td><a
-											th:href="@{'/oauth2/'+${bind.user.serverId}+'/login'}"
-											style="margin-right: 10px" th:data-id="${bind.id}" title="刷新"><span
-												class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a>
-											<a href="###" style="margin-right: 10px" data-action="remove"
-											th:data-id="${bind.id}" title="解除绑定"><span
-												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-										</td>
-									</tr>
-								</tbody>
-							</table>
+						<div th:unless="${#lists.isEmpty(binds)}">
+							<div class="table-responsive">
+								<div class="alert alert-warning">更新社交账号信息(昵称,头像)需要再次登陆该社交账号</div>
+								<table class="table">
+									<thead>
+										<tr>
+											<th>账号类型</th>
+											<th>昵称</th>
+											<th>头像</th>
+											<th>绑定日期</th>
+											<th>&nbsp;</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr th:each="bind : ${binds}">
+											<td
+												th:text="${bind.user.serverName}"></td>
+											<td th:text="${bind.user.nickname}"></td>
+											<td><img th:src="${bind.user.avatar}"
+												th:if="${bind.user.avatar != null}" /></td>
+											<td
+												th:text="${#dates.format(bind.bindDate, 'yyyy-MM-dd HH:mm')}"></td>
+											<td><a
+												th:href="@{'/oauth2/'+${bind.user.serverId}+'/login'}"
+												style="margin-right: 10px" th:data-id="${bind.id}"
+												title="刷新"><span class="glyphicon glyphicon-refresh"
+													aria-hidden="true"></span></a> <a href="###"
+												style="margin-right: 10px" data-action="remove"
+												th:data-id="${bind.id}" title="解除绑定"><span
+													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -12,7 +12,6 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -140,7 +139,7 @@ public class GlobalControllerExceptionHandler {
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler({ MissingServletRequestParameterException.class, TypeMismatchException.class,
-			HttpMessageNotReadableException.class, BindException.class })
+			HttpMessageNotReadableException.class })
 	public String handlerBadRequest(HttpServletRequest request, HttpServletResponse resp, Exception ex)
 			throws IOException {
 		logger.debug(ex.getMessage(), ex);
@@ -158,7 +157,7 @@ public class GlobalControllerExceptionHandler {
 			HttpMediaTypeNotSupportedException ex) throws IOException {
 		logger.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
+			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "数据格式异常")));
 			return null;
 		} else {
 			return getErrorForward(request, 400);

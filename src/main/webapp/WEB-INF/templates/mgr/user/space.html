@@ -2,61 +2,64 @@
 <html>
 <head th:replace="mgr/base/head :: head('空间管理')"></head>
 <body>
-	<nav th:replace="mgr/base/nav :: active('space')"></nav>
-	<div id="page-wrapper" style="padding: 10px">
-		<div class="container-fluid">
-			<div class="row" style="padding: 5px">
-				<div class="col-md-8 col-md-offset-2">
-					<div class="alert alert-danger" th:unless="${error == null}"
-						th:text="${error}"></div>
-					<div style="margin-bottom: 5px">
-						<button class="btn btn-default" data-toggle="modal"
-							data-target="#spaceModal">创建一个新的空间</button>
-						<button class="btn btn-default" data-toggle="modal"
-							data-target="#queryModal">查询</button>
-					</div>
-					<div th:if="${#lists.isEmpty(spaces)}">
-						<div class="alert alert-info">
-							<strong>当前没有任何空间</strong>
+	<div id="wrapper">
+		<nav th:replace="mgr/base/nav :: active('space')"></nav>
+		<div id="page-wrapper">
+			<div class="container-fluid">
+				<div class="row" style="padding: 5px">
+					<div class="col-md-8 col-md-offset-2">
+						<div class="alert alert-danger" th:unless="${error == null}"
+							th:text="${error}"></div>
+						<div style="margin-bottom: 5px">
+							<button class="btn btn-default" data-toggle="modal"
+								data-target="#spaceModal">创建一个新的空间</button>
+							<button class="btn btn-default" data-toggle="modal"
+								data-target="#queryModal">查询</button>
 						</div>
-					</div>
-					<div th:unless="${#lists.isEmpty(spaces)}">
-						<div class="table-responsive">
-							<table class="table">
-								<thead>
-									<tr>
-										<th>空间名</th>
-										<th>别名</th>
-										<th>创建日期</th>
-										<th>状态</th>
-										<th>是否默认空间</th>
-										<th>锁保护</th>
-										<th>&nbsp;</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr th:each="space : ${spaces}">
-										<td><a th:href="${urls.getUrl(space)}"
-											th:title="${space.name}" data-toggle="tooltip"
-											th:text="${#strings.length(space.name) > 5  ? #strings.substring(space.name,0,5)+'...' : space.name}"></a></td>
-										<td><a th:title="${space.alias}" data-toggle="tooltip"
-											th:text="${#strings.length(space.alias) > 5  ? #strings.substring(space.alias,0,5)+'...' : space.alias}"
-											href="###"></a></td>
-										<td
-											th:text="${#dates.format(space.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-										<td><span th:switch="${space.status.name()}"
-											th:remove="tag"> <span th:case="NORMAL" th:text="'正常'"></span>
-												<span th:case="DISABLE" th:text="'禁用'"></span>
-										</span></td>
-										<td th:text="${space.isDefault ? '是' : '否'}"></td>
-										<td th:data-lockId="${space.lockId}"
-											th:text="${space.lockId != null ? '是' : '否'}"></td>
-										<td><a href="###" data-toggle="modal"
-											data-target="#editSpaceModal" th:data-id="${space.id}"><span
-												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
-									</tr>
-								</tbody>
-							</table>
+						<div th:if="${#lists.isEmpty(spaces)}">
+							<div class="alert alert-info">
+								<strong>当前没有任何空间</strong>
+							</div>
+						</div>
+						<div th:unless="${#lists.isEmpty(spaces)}">
+							<div class="table-responsive">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>空间名</th>
+											<th>别名</th>
+											<th>创建日期</th>
+											<th>状态</th>
+											<th>是否默认空间</th>
+											<th>锁保护</th>
+											<th>&nbsp;</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr th:each="space : ${spaces}">
+											<td><a th:href="${urls.getUrl(space)}"
+												th:title="${space.name}" data-toggle="tooltip"
+												th:text="${#strings.length(space.name) > 5  ? #strings.substring(space.name,0,5)+'...' : space.name}"></a></td>
+											<td><a th:title="${space.alias}" data-toggle="tooltip"
+												th:text="${#strings.length(space.alias) > 5  ? #strings.substring(space.alias,0,5)+'...' : space.alias}"
+												href="###"></a></td>
+											<td
+												th:text="${#dates.format(space.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+											<td><span th:switch="${space.status.name()}"
+												th:remove="tag"> <span th:case="NORMAL"
+													th:text="'正常'"></span> <span th:case="DISABLE"
+													th:text="'禁用'"></span>
+											</span></td>
+											<td th:text="${space.isDefault ? '是' : '否'}"></td>
+											<td th:data-lockId="${space.lockId}"
+												th:text="${space.lockId != null ? '是' : '否'}"></td>
+											<td><a href="###" data-toggle="modal"
+												data-target="#editSpaceModal" th:data-id="${space.id}"><span
+													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 				</div>

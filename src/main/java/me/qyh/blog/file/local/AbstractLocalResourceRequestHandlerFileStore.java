@@ -25,7 +25,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.util.UrlUtils;
-import me.qyh.util.Validators;
 
 /**
  * 将资源存储和资源访问结合起来
@@ -46,9 +45,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	private File absFolder;
 	private boolean enableDownloadHandler = true;// 是否启用下载处理器
 	private RequestMatcher requestMatcher;// 防盗链处理
-	private String handlerPrefix;
-
-	private String urlPatternPrefix;
 
 	@Autowired
 	protected UrlHelper urlHelper;
@@ -101,7 +97,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			if (!path.startsWith("/")) {
 				path = "/" + path;
 			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
+			return StringUtils.cleanPath(urlPrefix + "/download/" + path);
 		} else {
 			return getUrl(cf);
 		}
@@ -148,16 +144,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			urlPrefix = urlHelper.getUrl() + (urlPrefix.startsWith("/") ? urlPrefix : "/" + urlPrefix);
 		}
 
-		// 另外一个域名
-		if (!urlPrefix.startsWith(urlHelper.getUrlConfig().getDomain())
-				&& !urlPrefix.startsWith(urlHelper.getUrlConfig().getRootDomain())) {
-			if (Validators.isEmptyOrNull(handlerPrefix, true)) {
-				throw new SystemException("处理器路径不能为空");
-			}
-			urlPatternPrefix = handlerPrefix.startsWith("/") ? handlerPrefix : "/" + handlerPrefix;
-		} else {
-			urlPatternPrefix = urlPrefix.substring(urlPrefix.lastIndexOf('/'), urlPrefix.length());
-		}
+		String urlPatternPrefix = urlPrefix.substring(urlPrefix.lastIndexOf('/'), urlPrefix.length());
 
 		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler) {
@@ -289,7 +276,4 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		this.enableDownloadHandler = enableDownloadHandler;
 	}
 
-	public void setHandlerPrefix(String handlerPrefix) {
-		this.handlerPrefix = handlerPrefix;
-	}
 }

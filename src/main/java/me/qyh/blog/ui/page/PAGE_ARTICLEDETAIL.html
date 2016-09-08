@@ -43,7 +43,8 @@
 						<label>社交账号登录</label>:<a th:href="${urls.url}+'/oauth2/qq/login'"><img
 							th:src="@{/static/img/qq.png}"
 							style="width: 32px; height: 32px; margin-top: 10px" title="QQ登录"
-							alt="QQ登录" /></a> <a th:href="${urls.url}+'/oauth2/sina/login'"><img
+							alt="QQ登录" /></a>
+							<a th:href="${urls.url}+'/oauth2/sina/login'"><img
 							th:src="@{/static/img/sina.png}"
 							style="width: 32px; height: 32px; margin-top: 10px" title="新浪登录"
 							alt="新浪登录" /></a>
@@ -88,26 +89,6 @@
 			th:src="@{/static/editor/markdown/lib/marked.min.js}"></script>
 		<script type="text/javascript"
 			th:src="@{/static/editor/markdown/editormd.min.js}"></script>
-		<script type="text/javascript">
-			$(document).ready(function() {
-				editormd.katexURL = {
-					css : basePath + "/static/editor/markdown/lib/katex.min",
-					js : basePath + "/static/editor/markdown/lib/katex.min"
-				};
-				editormd.markdownToHTML("markdown-rendered", {
-					emoji : true,
-					taskList : true,
-					tex : true, // 默认不解析
-					flowChart : true, // 默认不解析
-					sequenceDiagram : true, // 默认不解析
-					tocm : true
-				});
-			})
-		</script>
-	</div>
-	<div th:if="${article.editor.name() == 'HTML'}" th:remove="tag">
-		<script type="text/javascript"
-			th:src="@{/static/google-code-prettify/prettify.js}"></script>
 	</div>
 	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 </body>

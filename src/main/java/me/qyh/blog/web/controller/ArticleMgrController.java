@@ -98,7 +98,7 @@ public class ArticleMgrController extends BaseMgrController {
 	}
 
 	@RequestMapping(value = "write", method = RequestMethod.GET)
-	public String write(@RequestParam(value = "editor", required = false, defaultValue = "HTML") Editor editor,
+	public String write(@RequestParam(value = "editor", required = false, defaultValue = "MD") Editor editor,
 			RedirectAttributes ra, Model model) {
 		SpaceQueryParam param = new SpaceQueryParam();
 		List<Space> spaces = spaceService.querySpace(param);
@@ -113,7 +113,7 @@ public class ArticleMgrController extends BaseMgrController {
 		case MD:
 			return "mgr/article/write/md";
 		default:
-			return "mgr/article/write/html";
+			return "index";
 		}
 	}
 
@@ -141,7 +141,7 @@ public class ArticleMgrController extends BaseMgrController {
 		}
 		model.addAttribute("article", article);
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
-		return "mgr/article/write/" + article.getEditor().name().toLowerCase();
+		return "mgr/article/write/md";
 	}
 
 	@RequestMapping(value = "getSummary", method = RequestMethod.POST)
