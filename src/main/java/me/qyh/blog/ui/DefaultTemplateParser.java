@@ -2,7 +2,9 @@ package me.qyh.blog.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,6 +34,7 @@ public class DefaultTemplateParser implements TemplateParser {
 		clean(doc);
 		Elements eles = doc.getElementsByTag("widget");
 		Map<String, WidgetTpl> widgets = new HashMap<String, WidgetTpl>();
+		Set<String> unknowWidgets = new HashSet<>();
 		if (!eles.isEmpty()) {
 			for (Element ele : eles) {
 				String name = ele.attr("name");
@@ -44,6 +47,7 @@ public class DefaultTemplateParser implements TemplateParser {
 					}
 				} else {
 					// 挂件不存在
+					unknowWidgets.add(name);
 					Elements noWidgets = ele.select("nowidget");
 					if (!noWidgets.isEmpty()) {
 						ele.after(noWidgets.get(0).html());
@@ -54,7 +58,7 @@ public class DefaultTemplateParser implements TemplateParser {
 		}
 		String parsed = doc.html();
 		logger.debug("模板解析完毕，解析之后的模板为:" + parsed);
-		return new ParseResult(parsed, new ArrayList<WidgetTpl>(widgets.values()));
+		return new ParseResult(parsed, new ArrayList<WidgetTpl>(widgets.values()), unknowWidgets);
 	}
 
 	protected void clean(Document doc) {

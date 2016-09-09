@@ -116,4 +116,8 @@ public class Page extends Id implements Template {
 	public Page(Space space) {
 		this.space = space;
 	}
+
+	public static boolean isTpl(String templateName) {
+		return templateName.startsWith(PREFIX);
+	}
 }

@@ -33,30 +33,27 @@
 <title>系统页面模板编辑</title>
 </head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('tpl')"></nav>
-		<div id="page-wrapper">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-md-12">
-						<div id="editor">
-							<textarea rows="" cols="" class="form-control"
-								style="display: none" th:text="${page.tpl}"></textarea>
-						</div>
+	<nav th:replace="mgr/base/nav :: active('tpl-sys')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-12">
+					<div id="editor">
+						<textarea rows="" cols="" class="form-control"
+							style="display: none" th:text="${page.tpl}"></textarea>
 					</div>
-					<div class="col-md-12 "
-						style="margin-top: 10px; text-align: center">
-						<form style="display: none" id="tplForm">
-							<input type="hidden"
-								th:value="${page.space == null ? '' : page.space.id}" id="space">
-							<input type="hidden" th:value="${page.target}" id="target">
-							<input type="hidden" th:value="${page.id}" id="pageId">
-						</form>
-						<button class="btn btn-primary" type="button" data-toggle="modal"
-							data-target="#widgetsModal">挂件</button>
-						<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
-						<button class="btn btn-primary" type="button" onclick="save()">提交</button>
-					</div>
+				</div>
+				<div class="col-md-12 " style="margin-top: 10px; text-align: center">
+					<form style="display: none" id="tplForm">
+						<input type="hidden"
+							th:value="${page.space == null ? '' : page.space.id}" id="space">
+						<input type="hidden" th:value="${page.target}" id="target">
+						<input type="hidden" th:value="${page.id}" id="pageId">
+					</form>
+					<button class="btn btn-primary" type="button" data-toggle="modal"
+						data-target="#widgetsModal">挂件</button>
+					<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
+					<button class="btn btn-primary" type="button" onclick="save()">提交</button>
 				</div>
 			</div>
 		</div>

@@ -4,17 +4,6 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
 		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
-	<bean id="templateResolver" class="me.qyh.blog.ui.TplResolver">
-		<property name="prefix" value="/WEB-INF/templates/" />
-		<property name="suffix" value=".html" />
-		<property name="templateMode" value="HTML" />
-		<property name="cacheable" value="false" />
-	</bean>
-
-	<bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">
-		<property name="templateResolver" ref="templateResolver" />
-	</bean>
-
 	<bean class="me.qyh.blog.ui.widget.SysWidgetServer">
 		<property name="sysWidgetHandlers">
 			<list>

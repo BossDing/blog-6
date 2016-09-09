@@ -70,4 +70,19 @@ public class WidgetTpl extends Id implements Template {
 	public Map<String, Object> getTemplateDatas() {
 		return widget.getTemplateDatas();
 	}
+	
+	public WidgetTpl(){
+		
+	}
+	
+	public WidgetTpl(WidgetTpl tpl){
+		setId(tpl.getId());
+		this.tpl = tpl.tpl;
+		this.page = tpl.page;
+		this.widget = tpl.widget;
+	}
+
+	public static boolean isTpl(String templateName){
+		return templateName.startsWith(PREFIX);
+	}
 }

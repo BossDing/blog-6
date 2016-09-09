@@ -215,12 +215,10 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public void clearDeletedCommonFile() {
 		List<CommonFile> toDeletes = commonFileDao.selectDeleted();
-		if (!toDeletes.isEmpty()) {
-			for (CommonFile cf : toDeletes) {
-				FileStore fs = getFileStore(cf);
-				if (fs.delete(cf)) {
-					commonFileDao.deleteById(cf.getId());
-				}
+		for (CommonFile cf : toDeletes) {
+			FileStore fs = getFileStore(cf);
+			if (fs.delete(cf)) {
+				commonFileDao.deleteById(cf.getId());
 			}
 		}
 	}

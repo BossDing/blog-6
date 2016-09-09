@@ -37,7 +37,7 @@ public class PageValidator implements Validator {
 	public void validate(Object target, Errors errors) {
 		Page page = (Page) target;
 		String pageTpl = page.getTpl();
-		if (pageTpl == null) {
+		if (Validators.isEmptyOrNull(pageTpl, true)) {
 			errors.reject("page.tpl.null", "页面模板不能为空");
 			return;
 		}

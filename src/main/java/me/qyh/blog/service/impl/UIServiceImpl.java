@@ -8,18 +8,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.engine.TemplateManager;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
@@ -57,6 +54,7 @@ import me.qyh.blog.ui.widget.WidgetTag;
 import me.qyh.blog.ui.widget.WidgetTpl;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
+import me.qyh.util.Validators;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class UIServiceImpl implements UIService, InitializingBean {
@@ -83,14 +81,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private ExpandedPageServer expandedPageServer;
 
-	@Autowired
-	private TemplateEngine templateEngine;
-
-	private static final String DEFAULT_UI_CACHE_NAME = "uiCache";
-	private String uiCacheName = DEFAULT_UI_CACHE_NAME;
-
-	@Autowired
-	private CacheManager cacheManager;
 	private UICacheRender uiCacheRender;
 
 	private Map<PageTarget, Resource> sysPageDefaultTpls = new HashMap<PageTarget, Resource>();
@@ -113,6 +103,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userWidget.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		userWidgetDao.insert(userWidget);
+
+		uiCacheRender.evit(userWidget);
 	}
 
 	@Override
@@ -124,11 +116,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		List<WidgetTpl> tpls = widgetTplDao.selectByWidget(userWidget);
 		deleteWidgetTpls(tpls);
 		userWidgetDao.deleteById(id);
+
+		uiCacheRender.evit(userWidget);
 	}
 
 	@Override
 	public void updateUserWidget(UserWidget userWidget) throws LogicException {
-		if (userWidgetDao.selectById(userWidget.getId()) == null) {
+		UserWidget old = userWidgetDao.selectById(userWidget.getId());
+		if (old == null) {
 			throw new LogicException("widget.user.notExists", "挂件不存在");
 		}
 		UserWidget db = userWidgetDao.selectByName(userWidget.getName());
@@ -141,6 +136,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					userWidget.getName());
 		}
 		userWidgetDao.update(userWidget);
+
+		uiCacheRender.evit(old, userWidget);
 	}
 
 	@Override
@@ -220,15 +217,23 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public void renderPreviewPage(SysPage page) throws LogicException {
-		checkSpace(page);
+		checkSpace(page.getSpace());
 		SysPage db = sysPageDao.selectBySpaceAndPageTarget(page.getSpace(), page.getTarget());
 		_renderPreviewPage(page, db == null ? page : db);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
+	public SysPage renderPreviewPage(Space space, PageTarget target) throws LogicException {
+		checkSpace(space);
+		SysPage page = querySysPage(space, target);
+		return uiCacheRender.renderPreview(page);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public void renderPreviewPage(UserPage page) throws LogicException {
-		checkSpace(page);
+		checkSpace(page.getSpace());
 		UserPage db = userPageDao.selectById(page.getId());
 		_renderPreviewPage(page, db == null ? page : db);
 	}
@@ -252,12 +257,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private void deleteWidgetTpls(List<WidgetTpl> tpls) {
 		if (!tpls.isEmpty()) {
-			TemplateManager templateManager = templateEngine.getConfiguration().getTemplateManager();
 			for (WidgetTpl tpl : tpls) {
 				if (tpl.hasId()) {
 					widgetTplDao.deleteById(tpl.getId());
 				}
-				templateManager.clearCachesFor(tpl.getTemplateName());
 			}
 		}
 	}
@@ -275,7 +278,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		try {
 			Integer id = Integer.parseInt(idOrAlias);
 			db = userPageDao.selectById(id);
-		} catch (Exception e) {
+		} catch (NumberFormatException e) {
 			db = userPageDao.selectByAlias(idOrAlias);
 		}
 		if (db == null) {
@@ -290,13 +293,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	public void buildTpl(SysPage sysPage) throws LogicException {
-		checkSpace(sysPage);
+		checkSpace(sysPage.getSpace());
 		SysPage db = sysPageDao.selectBySpaceAndPageTarget(sysPage.getSpace(), sysPage.getTarget());
 		boolean update = db != null;
 		if (update) {
 			sysPage.setId(db.getId());
 			sysPageDao.update(sysPage);
-			clearPageCache(db);
 		} else {
 			sysPageDao.insert(sysPage);
 		}
@@ -306,7 +308,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	public void buildTpl(UserPage userPage) throws LogicException {
-		checkSpace(userPage);
+		checkSpace(userPage.getSpace());
 		String alias = userPage.getAlias();
 		if (alias != null) {
 			UserPage aliasPage = userPageDao.selectByAlias(alias);
@@ -323,7 +325,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
-			clearPageCache(db);
 		} else {
 			userPageDao.insert(userPage);
 		}
@@ -416,7 +417,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (update) {
 			page.setId(db.getId());
 			expandedPageDao.update(page);
-			clearPageCache(page);
 		} else {
 			expandedPageDao.insert(page);
 		}
@@ -441,13 +441,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	public void buildTpl(ErrorPage errorPage) throws LogicException {
-		checkSpace(errorPage);
+		checkSpace(errorPage.getSpace());
 		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(errorPage.getSpace(), errorPage.getErrorCode());
 		boolean update = db != null;
 		if (update) {
 			errorPage.setId(db.getId());
 			errorPageDao.update(errorPage);
-			clearPageCache(db);
 		} else {
 			errorPageDao.insert(errorPage);
 		}
@@ -498,10 +497,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		return uiCacheRender.render(db, new Params());
 	}
 
-	public void setSysPageDefaultTpls(Map<PageTarget, Resource> sysPageDefaultTpls) {
-		this.sysPageDefaultTpls = sysPageDefaultTpls;
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (CollectionUtils.isEmpty(sysPageDefaultTpls)) {
@@ -518,6 +513,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				String tpl = IOUtils.toString(is, Constants.CHARSET);
 				if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 					throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
+				}
+				if (Validators.isEmptyOrNull(tpl, true)) {
+					throw new SystemException("系统页面：" + target + "模板不能为空");
 				}
 				_sysPageDefaultTpls.put(target, tpl);
 			} catch (Exception e) {
@@ -538,6 +536,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 					throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 				}
+				if (Validators.isEmptyOrNull(tpl, true)) {
+					throw new SystemException("错误页面：" + code + "模板不能为空");
+				}
 				_errorPageDefaultTpls.put(code, tpl);
 			} catch (Exception e) {
 				throw new SystemException(e.getMessage(), e);
@@ -545,30 +546,17 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				IOUtils.closeQuietly(is);
 			}
 		}
-		if (uiCacheName == null) {
-			uiCacheName = DEFAULT_UI_CACHE_NAME;
-		}
-		Cache cache = cacheManager.getCache(uiCacheName);
-		if (uiCacheName == null) {
-			throw new SystemException("无法找到名为" + uiCacheName + "的UI缓存");
-		}
-		this.uiCacheRender = new UICacheRender(cache);
+		this.uiCacheRender = new UICacheRender();
 	}
 
 	private final class WidgetQueryImpl implements WidgetQuery {
 
 		private Page page;
-		private Params params;
 		private boolean test;
 
 		public WidgetQueryImpl(Page page, boolean test) {
 			this.page = page;
 			this.test = test;
-		}
-
-		public WidgetQueryImpl(Page page, Params params) {
-			this.page = page;
-			this.params = params;
 		}
 
 		@Override
@@ -580,13 +568,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				if (test) {
 					widget = sysWidgetHandler.getTestWidget();
 				} else {
-					if (params == null) {
-						widget = sysWidgetHandler.getWidget();
-					}
-					Space space = page.getSpace();
-					if (params != null && sysWidgetHandler.canProcess(space, params)) {
-						widget = sysWidgetHandler.getWidget(space, params);
-					}
+					widget = sysWidgetHandler.getWidget();
 				}
 			} else {
 				widget = userWidgetDao.selectByName(name);
@@ -610,20 +592,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		deleteWidgetTpls(templateParser.parse(page.getTpl(), new WidgetQueryImpl(page, false)).getTpls());
 		// 删除页面历史挂件模板
 		deleteWidgetTpls(widgetTplDao.selectByPage(page));
-		// 清除页面模板缓存
-		templateEngine.getConfiguration().getTemplateManager().clearCachesFor(page.getTemplateName());
-	}
-
-	private void clearPageCache(Page page) throws LogicException {
-		// 清除旧页面模板缓存
-		List<WidgetTpl> tpls = templateParser.parse(page.getTpl(), new WidgetQueryImpl(page, false)).getTpls();
-		TemplateManager templateManager = templateEngine.getConfiguration().getTemplateManager();
-		if (!CollectionUtils.isEmpty(tpls)) {
-			for (WidgetTpl widgetTpl : tpls) {
-				templateManager.clearCachesFor(widgetTpl.getTemplateName());
-			}
-		}
-		templateManager.clearCachesFor(page.getTemplateName());
 	}
 
 	private void updateWidget(Page page) throws LogicException {
@@ -634,7 +602,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (!CollectionUtils.isEmpty(widgetTpls)) {
 			List<WidgetTpl> _widgetTpls = page.getTpls();
 			if (!CollectionUtils.isEmpty(_widgetTpls)) {
-				TemplateManager templateManager = templateEngine.getConfiguration().getTemplateManager();
 				for (WidgetTpl widgetTpl : widgetTpls) {
 					for (WidgetTpl _widgetTpl : _widgetTpls) {
 						Widget widget = widgetTpl.getWidget();
@@ -650,7 +617,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 							} else {
 								tpl.setTpl(_widgetTpl.getTpl());
 								widgetTplDao.update(tpl);
-								templateManager.clearCachesFor(tpl.getTemplateName());
 							}
 						}
 					}
@@ -659,8 +625,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
-	private void checkSpace(Page page) throws LogicException {
-		Space space = page.getSpace();
+	private void checkSpace(Space space) throws LogicException {
 		if (space != null && spaceDao.selectById(space.getId()) == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
@@ -670,92 +635,122 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		this.errorPageDefaultTpls = errorPageDefaultTpls;
 	}
 
-	public void setUiCacheName(String uiCacheName) {
-		this.uiCacheName = uiCacheName;
+	public void setSysPageDefaultTpls(Map<PageTarget, Resource> sysPageDefaultTpls) {
+		this.sysPageDefaultTpls = sysPageDefaultTpls;
 	}
 
 	private final class UICacheRender {
 
-		private Cache cache;
+		private final ConcurrentHashMap<String, ParseResult> cache;
 
-		public UICacheRender(Cache cache) {
-			this.cache = cache;
+		public UICacheRender() {
+			this.cache = new ConcurrentHashMap<>();
 		}
 
-		public <T extends Page> T render(T page, Params params) throws LogicException {
-			SimpleTemplate cached = cache.get(page.getTemplateName(), SimpleTemplate.class);
+		private ParseResult get(Page page) throws LogicException {
+			ParseResult cached = cache.get(page.getTemplateName());
 			if (cached == null) {
-				ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(page, params));
-				SimpleTemplate st = new SimpleTemplate();
-				st.tpl = result.getPageTpl();
-				if (!CollectionUtils.isEmpty(result.getTpls())) {
-					List<SimpleWidgetTemplate> swts = new ArrayList<>();
-					for (WidgetTpl tpl : result.getTpls()) {
-						swts.add(new SimpleWidgetTemplate(tpl));
-					}
-					st.widgetTpls = swts;
-				}
-				cache.put(page.getTemplateName(), st);
-				page.setTpl(result.getPageTpl());
-				page.setTpls(result.getTpls());
-			} else {
-				List<WidgetTpl> tpls = new ArrayList<WidgetTpl>();
-				if (!CollectionUtils.isEmpty(cached.widgetTpls)) {
-					for (SimpleWidgetTemplate tpl : cached.widgetTpls) {
+				cached = templateParser.parse(page.getTpl(), new WidgetQuery() {
+
+					@Override
+					public WidgetTpl query(WidgetTag widgetTag) throws LogicException {
+						SysWidgetHandler handler = systemWidgetServer.getHandler(widgetTag.getName());
 						Widget widget = null;
-						SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(tpl.name);
-						if (sysWidgetHandler != null) {
-							Space space = page.getSpace();
-							widget = sysWidgetHandler.getWidget(space, params);
+						if (handler != null) {
+							widget = handler.getWidget();
 						} else {
-							widget = userWidgetDao.selectByName(tpl.name);
+							widget = userWidgetDao.selectByName(widgetTag.getName());
 						}
-						if (widget == null) {
-							// 通常是因为用户删除了挂件
-							// 由于挂件所在页面的不确定性，当挂件发生变更后需要清空所有ui的缓存
-							// 为了不这么做，这里只有在缓存解析过程中发生变更后才清空这个页面的缓存,虽然这可能会导致最多查询两次
-							cache.evict(page.getTemplateName());
-							return render(page, params);
+						if (widget != null) {
+							WidgetTpl tpl = widgetTplDao.selectByPageAndWidget(page, widget);
+							if (tpl == null) {
+								tpl = new WidgetTpl();
+								tpl.setTpl(widget.getDefaultTpl());
+							}
+							tpl.setPage(page);
+							tpl.setWidget(widget);
+							return tpl;
 						}
-						WidgetTpl widgetTpl = new WidgetTpl();
-						widgetTpl.setId(tpl.id);
-						// 判断是否覆盖了挂件模板，如果没有覆盖，那么需要从原始模板中覆盖，因为期间原始模板(用户挂件模板)可能会发生变动
-						if (!widgetTpl.hasId()) {
-							widgetTpl.setTpl(widget.getDefaultTpl());
-						} else {
-							widgetTpl.setTpl(tpl.tpl);
-						}
-						widgetTpl.setWidget(widget);
-						widgetTpl.setPage(page);
-						tpls.add(widgetTpl);
+						return null;
 					}
-				}
-				page.setTpl(cached.tpl);
-				page.setTpls(tpls);
+				});
+				cache.put(page.getTemplateName(), cached);
 			}
+			return cached;
+		}
+
+		public <T extends Page> T renderPreview(T page) throws LogicException {
+			ParseResult cached = get(page);
+			List<WidgetTpl> tpls = new ArrayList<WidgetTpl>();
+			for (WidgetTpl tpl : cached.getTpls()) {
+				switch (tpl.getWidget().getType()) {
+				case SYSTEM:
+					SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(tpl.getWidget().getName());
+					WidgetTpl _tpl = new WidgetTpl(tpl);
+					_tpl.setWidget(sysWidgetHandler.getTestWidget());
+					tpls.add(_tpl);
+					break;
+				case USER:
+					tpls.add(tpl);
+					break;
+				}
+			}
+			page.setTpl(cached.getPageTpl());
+			page.setTpls(tpls);
 			return page;
 		}
 
-		private class SimpleTemplate {
-			private String tpl;
-			private List<SimpleWidgetTemplate> widgetTpls = new ArrayList<SimpleWidgetTemplate>();
-		}
-
-		private class SimpleWidgetTemplate {
-			private Integer id;
-			private String name;
-			private String tpl;
-
-			public SimpleWidgetTemplate(WidgetTpl tpl) {
-				this.id = tpl.getId();
-				this.name = tpl.getWidget().getName();
-				this.tpl = tpl.getTpl();
+		public <T extends Page> T render(T page, Params params) throws LogicException {
+			ParseResult cached = get(page);
+			List<WidgetTpl> tpls = new ArrayList<WidgetTpl>();
+			for (WidgetTpl tpl : cached.getTpls()) {
+				switch (tpl.getWidget().getType()) {
+				case SYSTEM:
+					SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(tpl.getWidget().getName());
+					Space space = page.getSpace();
+					if (params != null && sysWidgetHandler.canProcess(space, params)) {
+						WidgetTpl _tpl = new WidgetTpl(tpl);
+						// 从系统挂件中获取数据
+						_tpl.setWidget(sysWidgetHandler.getWidget(space, params));
+						tpls.add(_tpl);
+					}
+					// 如果挂件不存在，那么交给TplResolver处理
+					break;
+				case USER:
+					// 用户自定义挂件直接添加，它本身即是模板也是数据
+					tpls.add(tpl);
+					break;
+				}
 			}
+			page.setTpl(cached.getPageTpl());
+			page.setTpls(tpls);
+			return page;
 		}
 
 		public void evit(Page page) {
-			cache.evict(page.getTemplateName());
+			cache.remove(page.getTemplateName());
+		}
+
+		public void evit(Widget... widgets) {
+			for (Map.Entry<String, ParseResult> it : cache.entrySet()) {
+				ParseResult st = it.getValue();
+				labe1: for (WidgetTpl tpl : st.getTpls()) {
+					for (Widget widget : widgets) {
+						if (widget.equals(tpl.getWidget())) {
+							cache.remove(it.getKey());
+							break labe1;
+						}
+					}
+				}
+				label2: for (String name : st.getUnkownWidgets()) {
+					for (Widget widget : widgets) {
+						if (name.equals(widget.getName())) {
+							cache.remove(it.getKey());
+							break label2;
+						}
+					}
+				}
+			}
 		}
 	}
-
 }

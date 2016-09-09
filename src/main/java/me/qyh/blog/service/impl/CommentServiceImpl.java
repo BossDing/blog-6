@@ -127,7 +127,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private Cache commentCache;
 
 	private static final String COMMENT_CACHE_NAME = "commentCache";
-	private String commentCacheName = COMMENT_CACHE_NAME;
 
 	/**
 	 * 用来过滤Html标签
@@ -513,10 +512,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			}
 		}, invalidClearSecond, invalidClearSecond, TimeUnit.SECONDS);
 
-		commentCache = cacheManager.getCache(commentCacheName);
-		if (commentCache == null) {
-			throw new SystemException("无法找到缓存名为" + commentCacheName + "的缓存");
-		}
+		commentCache = cacheManager.getCache(COMMENT_CACHE_NAME);
 	}
 
 	private boolean isInvalidUser(OauthUser user) {
@@ -664,10 +660,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 
 	public void setHtmlClean(HtmlClean htmlClean) {
 		this.htmlClean = htmlClean;
-	}
-
-	public void setCommentCacheName(String commentCacheName) {
-		this.commentCacheName = commentCacheName;
 	}
 
 	public void setMessageProcessor(MessageProcessor messageProcessor) {

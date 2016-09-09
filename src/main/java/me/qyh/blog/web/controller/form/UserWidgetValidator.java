@@ -43,7 +43,7 @@ public class UserWidgetValidator implements Validator {
 			return;
 		}
 		String tpl = userWidget.getDefaultTpl();
-		if (tpl == null) {
+		if (Validators.isEmptyOrNull(tpl, true)) {
 			errors.reject("widget.user.tpl.null", "挂件模板不能为空");
 			return;
 		}

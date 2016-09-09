@@ -35,10 +35,11 @@
 					<property name="stores">
 						<list>
 							<bean class="me.qyh.blog.file.local.ImageResourceStore">
-								<property name="absPath" value="C:/blog_file/image" />
+								<property name="absPath" value="/web/nginx/html/blog_file/image" />
 								<property name="id" value="1" />
-								<property name="urlPrefix" value="image" />
-								<property name="thumbAbsPath" value="C:/blog_file/image/thumb" />
+								<property name="urlPrefix" value="http://img.static.qyh.me" />
+								<property name="thumbAbsPath" value="/web/nginx/html/blog_file/image/thumb" />
+								<property name="handlerPrefix" value="image" />
 								<property name="cacheSeconds" value="31556926" />
 								<property name="defaultResize">
 									<bean class="me.qyh.blog.file.Resize">
@@ -47,9 +48,10 @@
 								</property>
 							</bean>
 							<bean class="me.qyh.blog.file.local.CommonResourceStore">
-								<property name="absPath" value="C:/blog_file/file" />
+								<property name="handlerPrefix" value="file" />
+								<property name="absPath" value="/web/nginx/html/blog_file/file" />
 								<property name="id" value="2" />
-								<property name="urlPrefix" value="file" />
+								<property name="urlPrefix" value="http://file.static.qyh.me" />
 								<property name="cacheSeconds" value="31556926" />
 							</bean>
 						</list>

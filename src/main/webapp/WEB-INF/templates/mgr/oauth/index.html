@@ -2,9 +2,8 @@
 <html>
 <head th:replace="mgr/base/head :: head('账号管理')"></head>
 <body>
-	<div id="wrapper">
-		<nav th:replace="mgr/base/nav :: active('oauth')"></nav>
-		<div id="page-wrapper">
+		<nav th:replace="mgr/base/nav :: active('oauth-index')"></nav>
+		<div id="page-wrapper" style="padding: 10px">
 			<div class="container-fluid">
 				<div class="row">
 					<div class="col-md-12">
@@ -64,7 +63,6 @@
 				</div>
 			</div>
 		</div>
-	</div>
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript">
 		$(document).ready(function() {

@@ -132,6 +132,16 @@ public interface UIService {
 	/**
 	 * 渲染预览页面
 	 * 
+	 * @param space
+	 * @param target
+	 * @return
+	 * @throws LogicException
+	 */
+	SysPage renderPreviewPage(Space space, PageTarget target) throws LogicException;
+
+	/**
+	 * 渲染预览页面
+	 * 
 	 * @param userPage
 	 * @return
 	 * @throws LogicException

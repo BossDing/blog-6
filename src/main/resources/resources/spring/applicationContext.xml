@@ -72,33 +72,7 @@
 
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
-		<property name="caches">
-			<set>
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="userCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="configCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="articleCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="articleFilesCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="uiCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="lockCache" />
-				<bean
-					class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean"
-					p:name="commentCache" />
-			</set>
-		</property>
-	</bean>
+	<bean id="cacheManager" class="org.springframework.cache.concurrent.ConcurrentMapCacheManager"/>
 
 	<!-- 锁 -->
 	<bean class="me.qyh.blog.lock.support.DefaultLockManager" />
@@ -134,7 +108,7 @@
 	<task:scheduler id="articleSchedule" pool-size="2" />
 
 	<bean class="me.qyh.blog.service.impl.NrtArticleIndexer">
-		<constructor-arg index="0" value="c:/blog_index" />
+		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
 		<!-- 索引commit间隔，由于commit操作相对比较笨重，所以这里定时处理提高性能 -->
 		<constructor-arg index="2" value="0" />
