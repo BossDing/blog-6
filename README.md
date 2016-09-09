@@ -4,5 +4,5 @@
 ## 采用 spring4&mybaits&thymeleaf开发
 
 # www.qyh.me
-# doc.qyh.me
+# doc: <a href="http://doc.qyh.me">doc.qyh.me</a>
 
