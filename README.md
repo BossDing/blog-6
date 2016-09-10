@@ -1,6 +1,8 @@
 # blog5
 钱宇豪的个人博客
 
-# www.qyh.me
+## 采用 spring4&mybaits&thymeleaf开发
 
-# doc:http://blog5.mshare.org.cn/
+# www.qyh.me
+# doc: <a href="http://doc.qyh.me">doc.qyh.me</a>
+
