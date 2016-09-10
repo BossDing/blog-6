@@ -30,18 +30,18 @@ public class SpaceRssController {
 
 	@RequestMapping("rss")
 	public View rss(ModelMap model) {
+		ArticleQueryParam param = new ArticleQueryParam();
+		param.setCurrentPage(1);
+		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		Space space = SpaceContext.get();
 		if (space.hasLock()) {
-			model.addAttribute("page", new PageResult<Article>(new ArticleQueryParam(), 0, Collections.emptyList()));
+			model.addAttribute("page", new PageResult<Article>(param, 0, Collections.emptyList()));
 		} else {
-			ArticleQueryParam param = new ArticleQueryParam();
-			param.setCurrentPage(1);
 			param.setStatus(ArticleStatus.PUBLISHED);
 			param.setSpace(space);
 			param.setIgnoreLevel(true);
 			param.setHasLock(false);
 			param.setQueryPrivate(false);
-			param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 			PageResult<Article> page = articleService.queryArticle(param);
 			model.addAttribute("page", page);
 		}

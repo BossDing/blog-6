@@ -215,6 +215,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 	private static final String HITS = "hits";
 	private static final String PUB_DATE = "pubDate";
 	private static final String TAG = "tag";
+	private static final String LOCKED = "locked";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
@@ -225,6 +226,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		doc.add(new StringField(PRIVATE, article.getIsPrivate().toString(), Field.Store.NO));
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(FROM, article.getFrom().name().toLowerCase(), Field.Store.NO));
+		doc.add(new StringField(LOCKED, article.hasLock() ? "true" : "false", Field.Store.NO));
 		Integer level = article.getLevel();
 		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
@@ -244,7 +246,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 	}
 
 	@Override
-	public void addDocument(Article article) {
+	public void addOrUpdateDocument(Article article) {
 		try {
 			if (article.hasId()) {
 				deleteDocument(article.getId());
@@ -322,6 +324,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		}
 		if (!param.isQueryPrivate()) {
 			builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
+			builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
 		}
 		ArticleFrom from = param.getFrom();
 		if (from != null) {

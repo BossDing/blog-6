@@ -33,7 +33,7 @@ public interface ArticleDao {
 
 	void insert(Article article);
 
-	List<Article> selectPublished();
+	List<Article> selectPublished(@Param("space") Space space);
 
 	List<Article> selectByIds(List<Integer> ids);
 

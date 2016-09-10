@@ -44,7 +44,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	private String absPath;
 	protected String urlPrefix;
 	private File absFolder;
-	private boolean enableDownloadHandler = true;// 是否启用下载处理器
 	private RequestMatcher requestMatcher;// 防盗链处理
 	private String handlerPrefix;
 
@@ -96,15 +95,11 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public String getDownloadUrl(CommonFile cf) {
-		if (enableDownloadHandler) {
-			String path = cf.getKey();
-			if (!path.startsWith("/")) {
-				path = "/" + path;
-			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
-		} else {
-			return getUrl(cf);
+		String path = cf.getKey();
+		if (!path.startsWith("/")) {
+			path = "/" + path;
 		}
+		return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
 	}
 
 	@Override
@@ -160,9 +155,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		}
 
 		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/**", this);
-		if (enableDownloadHandler) {
-			LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
-		}
+		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
 	}
 
 	@Override
@@ -283,10 +276,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	public void setRequestMatcher(RequestMatcher requestMatcher) {
 		this.requestMatcher = requestMatcher;
-	}
-
-	protected void setEnableDownloadHandler(boolean enableDownloadHandler) {
-		this.enableDownloadHandler = enableDownloadHandler;
 	}
 
 	public void setHandlerPrefix(String handlerPrefix) {

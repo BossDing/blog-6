@@ -9,11 +9,6 @@ public interface SpaceDao {
 
 	Space selectByAlias(String alias);
 
-	/**
-	 * 将所有空间置位非默认状态
-	 */
-	void resetDefault();
-
 	void update(Space space);
 
 	List<Space> selectByParam(SpaceQueryParam param);

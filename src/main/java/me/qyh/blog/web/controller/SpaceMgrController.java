@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.Space.SpaceStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
@@ -56,7 +55,6 @@ public class SpaceMgrController extends BaseMgrController {
 	@RequestMapping(value = "add", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult add(@RequestBody @Validated Space space) throws LogicException {
-		space.setStatus(SpaceStatus.NORMAL);
 		if (Validators.isEmptyOrNull(space.getLockId(), true)) {
 			space.setLockId(null);
 		}

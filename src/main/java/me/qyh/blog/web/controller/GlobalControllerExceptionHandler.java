@@ -41,7 +41,6 @@ import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.MissLockException;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.oauth2.InvalidStateException;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.util.UrlUtils;
@@ -175,12 +174,6 @@ public class GlobalControllerExceptionHandler {
 			return new JsonResult(false, new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
 		}
 		throw new SystemException("抛出了MethodArgumentNotValidException，但没有发现任何错误");
-	}
-
-	@ExceptionHandler(InvalidStateException.class)
-	public String handleInvalidStateException(InvalidStateException ex) {
-		logger.debug(ex.getMessage());
-		return "redirect:" + urlHelper.getUrl();
 	}
 
 	@ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)

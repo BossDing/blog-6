@@ -10,23 +10,6 @@
 	<bean class="me.qyh.blog.file.GraphicsMagickImageHelper">
 		<property name="magickPath" value="e:/GraphicsMagick-1.3.23-Q8" />
 	</bean>
-	<!-- 缩放处理 -->
-	<bean id="defaultResizeUrlParser" class="me.qyh.blog.file.local.DefaultResizeUrlParser">
-		<property name="resizeValidator">
-			<bean class="me.qyh.blog.file.DefaultResizeValidator">
-				<property name="allowSizes">
-					<array>
-						<value>64</value>
-						<value>100</value>
-						<value>160</value>
-						<value>200</value>
-						<value>400</value>
-						<value>600</value>
-					</array>
-				</property>
-			</bean>
-		</property>
-	</bean>
 	<!-- 文件服务 -->
 	<bean class="me.qyh.blog.file.DefaultFileManager">
 		<property name="servers">
@@ -44,6 +27,25 @@
 								<property name="defaultResize">
 									<bean class="me.qyh.blog.file.Resize">
 										<constructor-arg value="200" />
+									</bean>
+								</property>
+								<property name="resizeUrlParser">
+									<!-- 缩放处理 -->
+									<bean class="me.qyh.blog.file.local.DefaultResizeUrlParser">
+										<property name="resizeValidator">
+											<bean class="me.qyh.blog.file.DefaultResizeValidator">
+												<property name="allowSizes">
+													<array>
+														<value>64</value>
+														<value>100</value>
+														<value>160</value>
+														<value>200</value>
+														<value>400</value>
+														<value>600</value>
+													</array>
+												</property>
+											</bean>
+										</property>
 									</bean>
 								</property>
 							</bean>

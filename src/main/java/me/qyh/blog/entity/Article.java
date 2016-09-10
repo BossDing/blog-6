@@ -135,6 +135,12 @@ public class Article extends BaseLockResource {
 	}
 
 	public Boolean getIsPrivate() {
+		if(isPrivate == null){
+			return false;
+		}
+		if (!isPrivate) {
+			return space != null && space.getIsPrivate();
+		}
 		return isPrivate;
 	}
 
@@ -266,6 +272,15 @@ public class Article extends BaseLockResource {
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
+	}
+
+	@Override
+	public boolean hasLock() {
+		boolean hasLock = super.hasLock();
+		if (!hasLock) {
+			hasLock = (space != null && space.hasLock());
+		}
+		return hasLock;
 	}
 
 	public static class CommentConfig {

@@ -2,8 +2,8 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -28,11 +28,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	private static final Logger logger = LoggerFactory.getLogger(ImageResourceStore.class);
 
-	private static final Set<String> errorThumbPaths = new HashSet<String>();// 当缩略图制作失败时存放路径，防止下次再次读取
+	private static final Set<String> errorThumbPaths = new CopyOnWriteArraySet<String>();// 当缩略图制作失败时存放路径，防止下次再次读取
 
 	@Autowired
 	private ImageHelper imageHelper;
-	@Autowired(required = false)
 	private ResizeUrlParser resizeUrlParser;
 	private boolean enableResize;
 
@@ -203,4 +202,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	public void setDefaultResize(Resize defaultResize) {
 		this.defaultResize = defaultResize;
 	}
+
+	public void setResizeUrlParser(ResizeUrlParser resizeUrlParser) {
+		this.resizeUrlParser = resizeUrlParser;
+	}
+
 }

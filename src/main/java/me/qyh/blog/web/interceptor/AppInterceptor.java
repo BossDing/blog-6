@@ -25,6 +25,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.SpaceNotFoundException;
 import me.qyh.blog.file.local.RequestMatcher;
+import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.lock.LockKeyContext;
@@ -33,6 +34,7 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.EnsureLogin;
 import me.qyh.blog.security.RememberMe;
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.blog.security.csrf.CsrfToken;
 import me.qyh.blog.security.csrf.CsrfTokenRepository;
 import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
@@ -63,35 +65,52 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+		String spaceAlias = urlHelper.getUrls(request).getSpace();
 		if (handler instanceof HandlerMethod) {
-
-			csrfCheck(request, response);
-
-			HttpSession session = request.getSession(false);
-			User user = null;
-			if (session != null) {
-				user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
-			}
-			if (user == null) {
-				// auto login
-				try {
+			try {
+				HttpSession session = request.getSession(false);
+				User user = null;
+				if (session != null) {
+					user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
+				}
+				if (user == null) {
+					// auto login
 					user = autoLogin(request, response);
-				} catch (Throwable e) {
-					logger.error(e.getMessage(), e);
 				}
-			}
 
-			enableLogin(handler, user);
-			setLockKeys(request);
-			UserContext.set(user);
+				enableLogin(handler, user);
+				UserContext.set(user);
 
-			String spaceAlias = urlHelper.getUrls(request).getSpace();
-			if (spaceAlias != null) {
-				Space space = spaceService.selectSpaceByAlias(spaceAlias);
-				if (space == null) {
-					throw new SpaceNotFoundException(spaceAlias);
+				setLockKeys(request);
+
+				if (spaceAlias != null) {
+					Space space = spaceService.selectSpaceByAlias(spaceAlias);
+					if (space == null) {
+						throw new SpaceNotFoundException(spaceAlias);
+					}
+					SpaceContext.set(space);
 				}
-				SpaceContext.set(space);
+
+				csrfCheck(request, response);
+
+			} catch (AuthencationException e) {
+				// 防止死循环
+				if (spaceAlias != null && SpaceContext.get() == null) {
+					response.setStatus(403);
+					response.sendRedirect(urlHelper.getUrl() + "/login");
+					return false;
+				}
+				throw e;
+			} catch (SpaceNotFoundException | LockException | CsrfException e) {
+				removeContext();
+				throw e;
+			} catch (Throwable e) {
+				removeContext();
+				// 防止死循环
+				logger.error(e.getMessage(), e);
+				response.setStatus(500);
+				response.sendRedirect(urlHelper.getUrl() + "/error");
+				return false;
 			}
 		}
 		return true;
@@ -174,14 +193,18 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
 		if (handler instanceof HandlerMethod) {
-			UIContext.remove();
-			UserContext.remove();
-			LockKeyContext.remove();
-			SpaceContext.remove();
+			removeContext();
 		}
 		if (ex != null && (ex instanceof TemplateProcessingException)) {
 			logger.error(ex.getMessage(), ex);
 		}
+	}
+
+	private void removeContext() {
+		UIContext.remove();
+		UserContext.remove();
+		LockKeyContext.remove();
+		SpaceContext.remove();
 	}
 
 	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {

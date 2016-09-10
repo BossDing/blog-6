@@ -98,8 +98,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				article.addHits();
-				if (indexable(article))
-					articleIndexer.addDocument(article);
+				if (article.isPublished())
+					articleIndexer.addOrUpdateDocument(article);
 				return article;
 			}
 		}
@@ -110,7 +110,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "articleCache", key = "'article-'+#article.id") })
 	public Article writeArticle(Article article) throws LogicException {
-		checkSpace(article.getSpace().getId());
+		Space space = spaceDao.selectById(article.getSpace().getId());
+		if (space == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
+		article.setSpace(space);
 		checkLock(article.getLockId());
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (article.hasId()) {
@@ -133,9 +137,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			articleDao.update(article);
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
-			if (indexable(article)) {
+			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addDocument(updated);
+				articleIndexer.addOrUpdateDocument(updated);
 			}
 		} else {
 			if (!article.isSchedule()) {
@@ -147,9 +151,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			}
 			articleDao.insert(article);
 			insertTags(article);
-			if (indexable(article)) {
+			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addDocument(updated);
+				articleIndexer.addOrUpdateDocument(updated);
 			}
 		}
 		return article;
@@ -169,8 +173,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
-		if (indexable(article))
-			articleIndexer.addDocument(article);
+		if (article.isPublished())
+			articleIndexer.addOrUpdateDocument(article);
 	}
 
 	private void insertTags(Article article) {
@@ -267,8 +271,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setStatus(status);
 
 		articleDao.update(article);
-		if (indexable(article))
-			articleIndexer.addDocument(article);
+		if (article.isPublished())
+			articleIndexer.addOrUpdateDocument(article);
 	}
 
 	@Override
@@ -297,16 +301,17 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	@CacheEvict(value = "articleFilesCache", allEntries = true)
-	public void pushScheduled() {
+	@CacheEvict(value = "articleFilesCache", allEntries = true , condition = "#result > 0")
+	public int pushScheduled() {
 		// 查询将要发表的文章
 		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
 		for (Article article : articles) {
 			article.setStatus(ArticleStatus.PUBLISHED);
 			articleDao.update(article);
-			if (indexable(article))
-				articleIndexer.addDocument(article);
+			if (article.isPublished())
+				articleIndexer.addOrUpdateDocument(article);
 		}
+		return articles.size();
 	}
 
 	@Transactional(readOnly = true)
@@ -314,10 +319,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		logger.debug("开始重新建立博客索引" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 		long begin = System.currentTimeMillis();
 		articleIndexer.deleteAll();
-		List<Article> articles = articleDao.selectPublished();
+		List<Article> articles = articleDao.selectPublished(null);
 		if (!CollectionUtils.isEmpty(articles)) {
 			for (Article article : articles) {
-				articleIndexer.addDocument(article);
+				articleIndexer.addOrUpdateDocument(article);
 			}
 		}
 		long end = System.currentTimeMillis();
@@ -349,13 +354,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		this.rebuildIndex = rebuildIndex;
 	}
 
-	private void checkSpace(Integer id) throws LogicException {
-		Space space = spaceDao.selectById(id);
-		if (space == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
-	}
-
 	private void checkLock(String lockId) throws LogicException {
 		if (lockId != null) {
 			Lock lock = lockManager.findLock(lockId);
@@ -363,9 +361,5 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 				throw new LogicException("lock.notexists", "锁不存在");
 			}
 		}
-	}
-
-	protected boolean indexable(Article article) {
-		return article.isPublished() && !article.hasLock();
 	}
 }

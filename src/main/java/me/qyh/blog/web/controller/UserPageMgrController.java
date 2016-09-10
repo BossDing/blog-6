@@ -20,7 +20,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.Space.SpaceStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
@@ -93,7 +92,6 @@ public class UserPageMgrController extends BaseMgrController {
 	public String build(Model model) {
 		model.addAttribute("page", new UserPage());
 		SpaceQueryParam param = new SpaceQueryParam();
-		param.setStatus(SpaceStatus.NORMAL);
 		model.addAttribute("spaces", spaceService.querySpace(param));
 		return "mgr/page/user/build";
 	}

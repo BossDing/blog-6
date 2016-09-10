@@ -11,14 +11,12 @@ $(document).ready(function() {
 		var modal = $(this)
 		modal.find('.modal-body input[name="name"]').val($(tr.find('td')[0]).find('a').attr("data-original-title"));
 		modal.find('.modal-body input[name="alias"]').val($(tr.find('td')[1]).find('a').attr("data-original-title"));
-		var status = $(tr.find('td')[3]).text();
-		modal.find('.modal-body select[name="status"]').val($.trim(status) == '正常' ? 'NORMAL' : 'DISABLE');
-		var isDefault = $(tr.find('td')[4]).text();
-		modal.find('.modal-body input[name="isDefault"]').prop("checked",$.trim(isDefault) == "是");
+		var isPrivate = $(tr.find('td')[3]).text();
+		modal.find('.modal-body input[name="isPrivate"]').prop("checked",$.trim(isPrivate) == "是");
 		modal.find('.modal-body input[name="id"]').val(a.attr("data-id"));
-		var hasLock = $(tr.find('td')[5]).text();
+		var hasLock = $(tr.find('td')[4]).text();
 		if($.trim(hasLock) == "是"){
-			var lockId = $(tr.find('td')[5]).attr("data-lockId");
+			var lockId = $(tr.find('td')[4]).attr("data-lockId");
 			modal.find('.modal-body select[name="lockId"]').val(lockId)
 		} else {
 			modal.find('.modal-body select[name="lockId"]').val('');
@@ -53,7 +51,7 @@ $(document).ready(function() {
 		clearTip();
 		$("#create").prop("disabled",true);
 		var data = $("#spaceModal").find("form").serializeObject();
-		data.isDefault = $("#spaceModal").find('input[name="isDefault"]').is(":checked");
+		data.isPrivate = $("#spaceModal").find('input[name="isPrivate"]').is(":checked");
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/add",
@@ -80,7 +78,7 @@ $(document).ready(function() {
 		clearTip();
 		$("#update").prop("disabled",true);
 		var data = $("#editSpaceModal").find("form").serializeObject();
-		data.isDefault = $("#editSpaceModal").find('input[name="isDefault"]').is(":checked");
+		data.isPrivate = $("#editSpaceModal").find('input[name="isPrivate"]').is(":checked");
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/update",

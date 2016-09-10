@@ -15,20 +15,8 @@ public class Space extends BaseLockResource {
 	 */
 	private String name;// 空间名
 	private String alias;
-	private Boolean isDefault;// 是否是默认空间
-	private SpaceStatus status;// 空间状态;
 	private Timestamp createDate;// 创建时间
-
-	/**
-	 * 空间状态，如果是禁用，那么无法无法访问该空间，如果空间是默认空间，无法设置为禁用
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public enum SpaceStatus {
-		NORMAL, // 正常
-		DISABLE;// 禁用
-	}
+	private Boolean isPrivate;
 
 	public String getAlias() {
 		return alias;
@@ -36,22 +24,6 @@ public class Space extends BaseLockResource {
 
 	public void setAlias(String alias) {
 		this.alias = alias;
-	}
-
-	public SpaceStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(SpaceStatus status) {
-		this.status = status;
-	}
-
-	public Boolean getIsDefault() {
-		return isDefault;
-	}
-
-	public void setIsDefault(Boolean isDefault) {
-		this.isDefault = isDefault;
 	}
 
 	public Timestamp getCreateDate() {
@@ -86,5 +58,13 @@ public class Space extends BaseLockResource {
 	@Override
 	public Message getLockTip() {
 		return new Message("lock.space.tip", "该空间访问受密码保护，请解锁后访问");
+	}
+
+	public Boolean getIsPrivate() {
+		return isPrivate;
+	}
+
+	public void setIsPrivate(Boolean isPrivate) {
+		this.isPrivate = isPrivate;
 	}
 }

@@ -5,7 +5,9 @@
 <div th:unless="${#lists.isEmpty(articlePage.datas)}">
 	<div class="well" th:each="article : ${articlePage.datas}">
 		<h4>
-			<span th:if="${article.level != null}">【置顶】</span> <a
+			<span th:if="${article.hasLock()}" class="glyphicon glyphicon-lock"
+				style="margin-right: 5px"></span><span
+				th:if="${article.level != null}">【置顶】</span> <a
 				th:href="${urls.getUrl(article)}" th:text="${article.title}"> </a>
 		</h4>
 		<div style="margin-top: 5px; margin-bottom: 10px"
@@ -25,10 +27,9 @@
 				aria-hidden="true"></span>&nbsp;<span th:text="${article.comments}"> </span>
 		</div>
 
-		<div th:text="${article.summary}" th:unless="${article.hasLock()}"></div>
-		<div th:if="${article.hasLock()}">
-			<span class="glyphicon glyphicon-lock" aria-hidden="true"></span>&nbsp;<strong
-				th:text="${messages.getMessage('article.locked','文章受锁保护')}"></strong>
+		<div th:text="${article.summary}" th:unless="${article.hasLock() && user == null}"></div>
+		<div th:if="${article.hasLock() && user == null}">
+			<strong th:text="${messages.getMessage('article.locked','文章受锁保护')}"></strong>
 		</div>
 	</div>
 </div>

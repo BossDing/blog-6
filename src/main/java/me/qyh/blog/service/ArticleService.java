@@ -86,8 +86,10 @@ public interface ArticleService {
 	/**
 	 * 发表要发表的计划博客
 	 * 
+	 * @return 成功发表的数量
+	 * 
 	 */
-	void pushScheduled();
+	int pushScheduled();
 
 	/**
 	 * 插入|更新 文章

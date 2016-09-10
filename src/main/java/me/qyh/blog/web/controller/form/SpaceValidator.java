@@ -47,6 +47,11 @@ public class SpaceValidator implements Validator {
 				return;
 			}
 		}
+
+		if (space.getIsPrivate() == null) {
+			errors.reject("space.private.blank", "空间私有性不能为空");
+			return;
+		}
 	}
 
 	/**

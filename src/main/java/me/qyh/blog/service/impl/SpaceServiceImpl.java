@@ -7,19 +7,23 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.SpaceDao;
+import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.Space.SpaceStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
+import me.qyh.blog.security.AuthencationException;
+import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.SpaceService;
 
 @Service
@@ -28,6 +32,10 @@ public class SpaceServiceImpl implements SpaceService {
 
 	@Autowired
 	private SpaceDao spaceDao;
+	@Autowired
+	private ArticleDao articleDao;
+	@Autowired
+	private ArticleIndexer articleIndexer;
 	@Autowired
 	private LockManager<?> lockManager;
 
@@ -39,15 +47,13 @@ public class SpaceServiceImpl implements SpaceService {
 			throw new LogicException(
 					new Message("space.alias.exists", "别名为" + space.getAlias() + "的空间已经存在了", space.getAlias()));
 		}
-		if (space.getIsDefault()) {
-			spaceDao.resetDefault();
-		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		spaceDao.insert(space);
 	}
 
 	@Override
-	@CacheEvict(value = "userCache", key = "'space-'+#space.alias")
+	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#space.alias"),
+			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
@@ -61,32 +67,29 @@ public class SpaceServiceImpl implements SpaceService {
 
 		checkLock(space.getLockId());
 
-		if (space.getIsDefault()) {
-			// 如果空间被禁用，不能设置为默认
-			if (space.getStatus() == null && db.getStatus().equals(SpaceStatus.DISABLE)
-					|| space.getStatus().equals(SpaceStatus.DISABLE)) {
-				throw new LogicException("space.disabled.noDefault", "被禁用的空间不能被设置为默认空间");
-			}
-			spaceDao.resetDefault();
-		}
 		spaceDao.update(space);
+
+		// 如果空间改变克私有性或者增加删除了锁，那么需要重建该空间下所有文章的索引
+		if (!db.getIsPrivate().equals(space.getIsPrivate())
+				|| ((db.hasLock() && !space.hasLock()) || (!db.hasLock() && space.hasLock()))) {
+			for (Article article : articleDao.selectPublished(db)) {
+				articleIndexer.addOrUpdateDocument(article);
+			}
+		}
 	}
 
 	@Override
-	@Cacheable(value = "userCache", key = "'space-'+#alias")
+	@Cacheable(value = "userCache", key = "'space-'+#alias", unless = "#result == null || #result.isPrivate")
 	@LockProtected
 	@Transactional(readOnly = true)
 	public Space selectSpaceByAlias(String alias) {
 		Space space = spaceDao.selectByAlias(alias);
 		if (space != null) {
-			switch (space.getStatus()) {
-			case DISABLE:
-				return null;
-			default:
-				return space;
+			if (space.getIsPrivate() && UserContext.get() == null) {
+				throw new AuthencationException();
 			}
 		}
-		return null;
+		return space;
 	}
 
 	@Override

@@ -23,6 +23,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
+			<result column="space_is_private" property="isPrivate"/>
+			<result column="space_lock" property="lockId"/>
 		</association>
 		<association property="commentConfig" javaType="CommentConfig">
 			<result column="allowComment" property="allowComment"/>
@@ -134,7 +136,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_allowHtml,
 			art.comment_limitCount,
 			art.comment_limitSec,
-			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
+			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
+			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
 		LEFT OUTER JOIN blog_space sp
@@ -169,7 +174,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_allowHtml,
 			art.comment_limitCount,
 			art.comment_limitSec,
-			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
+			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
+			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
 		LEFT OUTER JOIN blog_space sp
@@ -196,12 +204,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			COUNT(art.id) 
 		FROM 
 			blog_article art
+		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
 			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
+				AND sp.is_private = false
 			</if>
 			<if test="begin != null and end != null">
 				AND art.pubDate BETWEEN #{begin} AND #{end}
@@ -215,10 +225,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="hasLock != null">
 				<choose>
 					<when test="hasLock">
-						AND art.art_lock IS NOT NULL
+						AND (art.art_lock IS NOT NULL OR sp.space_lock IS NOT NULL)
 					</when>
 					<otherwise>
-						AND art.art_lock IS NULL
+						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
 					</otherwise>
 				</choose>
 			</if>
@@ -245,6 +255,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.space_id,
 			art.art_lock,
 			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -258,6 +270,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
+				AND sp.is_private = false
 			</if>
 			<if test="begin != null and end != null">
 				AND art.pubDate BETWEEN #{begin} AND #{end}
@@ -271,10 +284,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="hasLock != null">
 				<choose>
 					<when test="hasLock">
-						AND art.art_lock IS NOT NULL
+						AND (art.art_lock IS NOT NULL OR sp.space_lock IS NOT NULL)
 					</when>
 					<otherwise>
-						AND art.art_lock IS NULL
+						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
 					</otherwise>
 				</choose>
 			</if>
@@ -309,7 +322,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_from,
 			art.space_id,
 			art.art_lock,
-			sp.space_alias,GROUP_CONCAT(bt.tag_name) AS tags
+			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
+			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
 		LEFT OUTER JOIN blog_space sp
@@ -324,11 +340,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
-		SELECT pubDate,COUNT(id) AS art_count,id 
+		SELECT pubDate,COUNT(art.id) AS art_count,art.id 
 		FROM blog_article art
+		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
+			AND sp.is_private = false
 		</if>
 		<if test="space != null">
 			AND space_id = #{space.id}
@@ -354,6 +372,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE art_status = 0<!-- PUBLISHED -->
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
+			AND sp.is_private = false
 		</if>
 		GROUP BY space_id
 	</select>
@@ -369,19 +388,33 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.hits,
 			art.comments,
 			art.summary,
-			art.allowComment,
 			art.art_level,
 			art.art_status,
 			art.art_from,
 			art.editor,
 			art.space_id,
-			art.art_lock
+			art.art_lock,
+			art.allowComment,
+			art.comment_mode,
+			art.comment_asc,
+			art.comment_allowHtml,
+			art.comment_limitCount,
+			art.comment_limitSec,
+			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
+			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 		WHERE
 			art.art_status = 1<!-- SCHEDULED -->
 		AND 
 			art.pubDate <![CDATA[ <= ]]> #{date}
+		GROUP BY art.id
 	</select>
 	
 	
@@ -402,6 +435,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.editor,
 			art.space_id,
 			art.art_lock,
+			art.allowComment,
+			art.comment_mode,
+			art.comment_asc,
+			art.comment_allowHtml,
+			art.comment_limitCount,
+			art.comment_limitSec,
+			sp.space_alias,
+			space_lock,
+			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -410,7 +452,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 		WHERE art.art_status = 0
-		AND art.art_lock IS NULL
+		<if test="space != null">
+			AND art.space_id = #{space.id}
+		</if>
 		GROUP BY art.id
 	</select>
 	

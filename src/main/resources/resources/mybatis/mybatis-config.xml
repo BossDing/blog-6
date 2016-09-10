@@ -22,8 +22,6 @@
 		<typeAlias type="me.qyh.blog.entity.Tag" alias="Tag" />
 
 		<typeAlias type="me.qyh.blog.entity.Space" alias="Space" />
-		<typeAlias type="me.qyh.blog.entity.Space$SpaceStatus"
-			alias="SpaceStatus" />
 
 		<typeAlias type="me.qyh.blog.entity.BlogFile" alias="BlogFile" />
 		<typeAlias type="me.qyh.blog.entity.BlogFile$BlogFileType"

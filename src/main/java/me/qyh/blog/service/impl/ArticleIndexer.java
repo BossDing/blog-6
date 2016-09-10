@@ -13,7 +13,7 @@ public interface ArticleIndexer {
 	 * 
 	 * @param article
 	 */
-	void addDocument(Article article);
+	void addOrUpdateDocument(Article article);
 
 	/**
 	 * 删除博客索引

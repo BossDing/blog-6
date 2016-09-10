@@ -28,8 +28,7 @@
 										<th>空间名</th>
 										<th>别名</th>
 										<th>创建日期</th>
-										<th>状态</th>
-										<th>是否默认空间</th>
+										<th>私有</th>
 										<th>锁保护</th>
 										<th>&nbsp;</th>
 									</tr>
@@ -44,11 +43,7 @@
 											href="###"></a></td>
 										<td
 											th:text="${#dates.format(space.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-										<td><span th:switch="${space.status.name()}"
-											th:remove="tag"> <span th:case="NORMAL" th:text="'正常'"></span>
-												<span th:case="DISABLE" th:text="'禁用'"></span>
-										</span></td>
-										<td th:text="${space.isDefault ? '是' : '否'}"></td>
+										<td th:text="${space.isPrivate ? '是' : '否'}"></td>
 										<td th:data-lockId="${space.lockId}"
 											th:text="${space.lockId != null ? '是' : '否'}"></td>
 										<td><a href="###" data-toggle="modal"
@@ -86,11 +81,10 @@
 							<label for="alias" class="control-label">别名(1~20个字母):</label> <input
 								type="text" class="form-control" name="alias">
 						</div>
-						<div class="lock_container"></div>
 						<div class="checkbox">
-							<label><input type="checkbox" name="isDefault" />设置为默认空间
-							</label>
+							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
+						<div class="lock_container"></div>
 					</form>
 				</div>
 				<div class="modal-footer">
@@ -157,18 +151,10 @@
 							<label for="alias" class="control-label">别名(1~20个字母):</label> <input
 								type="text" class="form-control" name="alias">
 						</div>
-						<div class="form-group">
-							<label for="status" class="control-label">状态:</label> <select
-								class="form-control" name="status">
-								<option value="NORMAL">正常</option>
-								<option value="DISABLE">禁用</option>
-							</select>
+						<div class="checkbox">
+							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
 						<div class="lock_container"></div>
-						<div class="checkbox">
-							<label><input type="checkbox" name="isDefault" />设置为默认空间
-							</label>
-						</div>
 					</form>
 				</div>
 				<div class="modal-footer">

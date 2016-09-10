@@ -6,8 +6,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<resultMap type="Space" id="SpaceDetail">
 		<id column="id" property="id" />
 		<result column="space_alias" property="alias" />
-		<result column="space_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
-		<result column="is_default" property="isDefault" />
+		<result column="is_private" property="isPrivate" />
 		<result column="createDate" property="createDate" />
 		<result column="space_name" property="name"/>
 		<result column="space_lock" property="lockId"/>
@@ -17,8 +16,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT
 			id,
 			space_alias,
-			space_status,
-			is_default,
+			is_private,
 			createDate,
 			space_name,
 			space_lock
@@ -32,8 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT
 			id,
 			space_alias,
-			space_status,
-			is_default,
+			is_private,
 			createDate,
 			space_name,
 			space_lock
@@ -43,13 +40,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			id = #{id}
 	</select>
 
-	<update id="resetDefault">
-		UPDATE blog_space SET is_default = false
-	</update>
-	
 	<insert id="insert">
-		INSERT INTO blog_space(space_name,space_alias,space_status,is_default,createDate,space_lock)
-		VALUES(#{name},#{alias},#{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler},#{isDefault},#{createDate},#{lockId})
+		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock)
+		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId})
 	</insert>
 
 	<update id="update">
@@ -61,12 +54,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="name != null">
 				space_name = #{name},
 			</if>
-			<if test="status != null">
-				space_status =
-				#{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler},
-			</if>
-			<if test="isDefault != null">
-				is_default = #{isDefault},
+			<if test="isPrivate != null">
+				is_private = #{isPrivate},
 			</if>
 			space_lock = #{lockId}
 		</set>
@@ -77,8 +66,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT
 			id,
 			space_alias,
-			space_status,
-			is_default,
+			is_private,
 			createDate,
 			space_name,
 			space_lock
@@ -91,8 +79,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="alias != null and alias != ''">
 				AND space_alias LIKE CONCAT('%', #{alias},'%')
 			</if>
-			<if test="status ">
-				AND space_status = #{status,javaType=SpaceStatus,typeHandler=EnumOrdinalTypeHandler}
+			<if test="isPrivate != null ">
+				AND is_private = #{isPrivate}
 			</if>
 		</where>
 		ORDER BY createDate DESC,id DESC

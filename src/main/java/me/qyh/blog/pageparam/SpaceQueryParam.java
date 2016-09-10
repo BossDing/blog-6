@@ -1,12 +1,10 @@
 package me.qyh.blog.pageparam;
 
-import me.qyh.blog.entity.Space.SpaceStatus;
-
 public class SpaceQueryParam {
 
 	private String alias;
 	private String name;
-	private SpaceStatus status;
+	private Boolean isPrivate;
 
 	public String getAlias() {
 		return alias;
@@ -16,12 +14,12 @@ public class SpaceQueryParam {
 		this.alias = alias;
 	}
 
-	public SpaceStatus getStatus() {
-		return status;
+	public Boolean getIsPrivate() {
+		return isPrivate;
 	}
 
-	public void setStatus(SpaceStatus status) {
-		this.status = status;
+	public void setIsPrivate(Boolean isPrivate) {
+		this.isPrivate = isPrivate;
 	}
 
 	public String getName() {

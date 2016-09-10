@@ -675,7 +675,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	 * @author Administrator
 	 *
 	 */
-	public static final class MessageProcessor implements InitializingBean {
+	public static class MessageProcessor implements InitializingBean {
 		private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
 		private List<Comment> toSend = Collections.synchronizedList(new ArrayList<Comment>());
 		private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
@@ -756,9 +756,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 
 		@Override
 		public void afterPropertiesSet() throws Exception {
-			if (mailTemplateEngine == null) {
-				throw new SystemException("邮件模板不能为空");
-			}
 			if (mailSubject == null) {
 				throw new SystemException("邮件标题不能为空");
 			}
