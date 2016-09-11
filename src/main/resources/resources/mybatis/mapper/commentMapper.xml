@@ -161,6 +161,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="space != null">
 			AND bs.id = #{space.id} 
 		</if>
+		<if test="!queryPrivate">
+			AND ba.isPrivate = FALSE 
+			AND bs.is_private = FALSE
+			AND ba.art_lock IS NULL
+			AND bs.space_lock IS NULL
+		</if>
 		AND a.parent_path = '/' AND au.is_admin = FALSE
 		OR (pu.is_admin = TRUE AND au.is_admin = FALSE)
 		ORDER BY a.comment_date DESC ,a.id DESC

@@ -25,9 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.Cache.ValueWrapper;
-import org.springframework.cache.CacheManager;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -78,8 +75,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private CommentDao commentDao;
 	@Autowired
 	private ArticleDao articleDao;
-	@Autowired
-	private CacheManager cacheManager;
 
 	@Autowired
 	private ConfigService configService;
@@ -123,10 +118,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	 */
 	private static final int PATH_MAX_LENGTH = 255;
 	public static final int MAX_COMMENT_LENGTH = CommentValidator.MAX_COMMENT_LENGTH;
-
-	private Cache commentCache;
-
-	private static final String COMMENT_CACHE_NAME = "commentCache";
 
 	/**
 	 * 用来过滤Html标签
@@ -264,16 +255,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		comment.setParent(parent);
 		comment.setUser(user);
 
-		/**
-		 * 如果用户不是admin且评论了文章，那么需要更新缓存<br>
-		 * 如果用户不是admin且回复了评论且被回复者是admin同样需要更新<br>
-		 */
-		boolean needEvictCache = (!user.getAdmin() && parent == null)
-				|| (!user.getAdmin() && (parent.getUser().getAdmin()));
-		if (needEvictCache) {
-			evict(article.getSpace());
-		}
-		if (needEvictCache && messageProcessor != null && UserContext.get() == null) {
+		if ((!user.getAdmin() && parent == null) || (!user.getAdmin() && (parent.getUser().getAdmin()))
+				&& messageProcessor != null && UserContext.get() == null) {
 			comment.setArticle(article);// 用来获取文章链接
 			messageProcessor.add(comment);
 		}
@@ -300,7 +283,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (article.isCacheable()) {
 			article.decrementComment(totalCount);
 		}
-		evict(article.getSpace());
 	}
 
 	@Override
@@ -321,22 +303,13 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			if (article.isCacheable()) {
 				article.decrementComment(count);
 			}
-			evict(article.getSpace());
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit) {
-		String key = buildLastCommentsCacheKey(space);
-		ValueWrapper vw = commentCache.get(key);
-		if (vw != null) {
-			return (List<Comment>) vw.get();
-		}
-		List<Comment> comments = commentDao.selectLastComments(space, limit);
-		commentCache.put(key, comments);
-		return comments;
+		return commentDao.selectLastComments(space, limit, UserContext.get() != null);
 	}
 
 	protected List<Comment> handlerTree(List<Comment> comments, CommentConfig config) {
@@ -512,7 +485,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			}
 		}, invalidClearSecond, invalidClearSecond, TimeUnit.SECONDS);
 
-		commentCache = cacheManager.getCache(COMMENT_CACHE_NAME);
 	}
 
 	private boolean isInvalidUser(OauthUser user) {
@@ -631,11 +603,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 				}
 			}
 		}
-	}
-
-	private void evict(Space space) {
-		commentCache.evict(buildLastCommentsCacheKey(null));
-		commentCache.evict(buildLastCommentsCacheKey(space));
 	}
 
 	protected String buildLastCommentsCacheKey(Space space) {
@@ -829,4 +796,5 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			this.messageTipCount = messageTipCount;
 		}
 	}
+
 }
