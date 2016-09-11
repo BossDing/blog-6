@@ -42,4 +42,6 @@ public interface CommentDao {
 
 	void deleteByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
 
+	void deleteByArticle(Article article);
+
 }

@@ -20,6 +20,7 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
+import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
@@ -48,6 +49,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
+	private CommentDao commentDao;
+	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
 	private ArticleTagDao articleTagDao;
@@ -70,7 +73,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		Article article = articleCache.getArticle(id);
 		if (article != null) {
 			if (article.isPublished()) {
-				if (article.getIsPrivate() && UserContext.get() == null) {
+				if (article.isPrivate() && UserContext.get() == null) {
 					throw new AuthencationException();
 				}
 				return article;
@@ -94,7 +97,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		Article article = articleCache.getArticle(id);
 		if (article != null) {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
-					? article.getIsPrivate() ? UserContext.get() != null : true : false;
+					? article.isPrivate() ? UserContext.get() != null : true : false;
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				article.addHits();
@@ -286,6 +289,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		}
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
+		//删除博客所有的评论
+		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
 		articleIndexer.deleteDocument(id);
 	}

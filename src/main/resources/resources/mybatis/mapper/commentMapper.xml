@@ -142,6 +142,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE article_id = #{article.id} AND (user_id = #{user.id} OR parent_path LIKE CONCAT('/',id,'/%'))
 	</delete>
 	
+	<delete id="deleteByArticle">
+		DELETE FROM blog_comment
+		WHERE article_id = #{id}
+	</delete>
+	
 	
 	<select id="selectLastComments" resultMap="CommentDetail">
 		SELECT 
@@ -152,11 +157,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_oauth_user pu ON b.user_id = pu.id
 		LEFT OUTER JOIN blog_article ba ON a.article_id = ba.id
 		LEFT OUTER JOIN blog_space bs ON ba.space_id  = bs.id
-		WHERE 
+		WHERE ba.art_status = 0<!-- PUBLISHED -->
 		<if test="space != null">
-			bs.id = #{space.id} AND 
+			AND bs.id = #{space.id} 
 		</if>
-		a.parent_path = '/' AND au.is_admin = FALSE
+		AND a.parent_path = '/' AND au.is_admin = FALSE
 		OR (pu.is_admin = TRUE AND au.is_admin = FALSE)
 		ORDER BY a.comment_date DESC ,a.id DESC
 		LIMIT 0,#{limit}

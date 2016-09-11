@@ -223,7 +223,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.NO));
 		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.NO));
 		doc.add(new StringField(SPACE_ID, article.getSpace().getId().toString(), Field.Store.NO));
-		doc.add(new StringField(PRIVATE, article.getIsPrivate().toString(), Field.Store.NO));
+		doc.add(new StringField(PRIVATE, article.isPrivate().toString(), Field.Store.NO));
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(FROM, article.getFrom().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(LOCKED, article.hasLock() ? "true" : "false", Field.Store.NO));

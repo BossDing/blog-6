@@ -134,13 +134,19 @@ public class Article extends BaseLockResource {
 		this.lastModifyDate = lastModifyDate;
 	}
 
-	public Boolean getIsPrivate() {
-		if(isPrivate == null){
+	public Boolean isPrivate() {
+		if (isPrivate == null) {
 			return false;
 		}
 		if (!isPrivate) {
-			return space != null && space.getIsPrivate();
+			if (space != null && space.getIsPrivate() != null) {
+				return space.getIsPrivate();
+			}
 		}
+		return isPrivate;
+	}
+
+	public Boolean getIsPrivate() {
 		return isPrivate;
 	}
 

@@ -142,7 +142,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
-		if (article.getIsPrivate() && UserContext.get() == null) {
+		if (article.isPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
 		}
 		if (!article.getSpace().equals(SpaceContext.get())) {
@@ -206,7 +206,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		// 如果私人文章并且没有登录
-		if (article.getIsPrivate() && UserContext.get() == null) {
+		if (article.isPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
 		}
 		CommentConfig config = article.getCommentConfig();

@@ -1,14 +1,8 @@
-
-<div class="panel panel-default">
+<div class="panel panel-default" th:unless="${#lists.isEmpty(comments)}">
 	<div class="panel-heading">
 		<h3 class="panel-title">最近评论</h3>
 	</div>
-	<div th:if="${#lists.isEmpty(comments)}" th:remove="tag">
-		<div class="panel-body">
-			<div class="alert alert-info">最近还没有评论</div>
-		</div>
-	</div>
-	<div th:unless="${#lists.isEmpty(comments)}" th:remove="tag">
+	<div  th:remove="tag">
 		<div class="panel-body">
 			<div class="media" th:each="comment : ${comments}">
 				<a class="media-left" th:href="${urls.getUrl(comment.article)}"> <img
