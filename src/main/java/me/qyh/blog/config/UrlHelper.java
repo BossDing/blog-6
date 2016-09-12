@@ -17,6 +17,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
+import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.util.Validators;
 
@@ -164,6 +165,18 @@ public class UrlHelper implements InitializingBean {
 			return getArticlesUrl(param, 1);
 		}
 
+		public String getArticlesUrl(String sortStr) {
+			Sort sort = null;
+			try {
+				sort = Sort.valueOf(sortStr);
+			} catch (Exception e) {
+			}
+			ArticleQueryParam param = new ArticleQueryParam();
+			param.setCurrentPage(1);
+			param.setSort(sort);
+			return getArticlesUrl(param, 1);
+		}
+
 		public String getArticlesUrl(ArticleQueryParam param, int page) {
 			StringBuilder sb = new StringBuilder(env.url);
 			sb.append("/article/list?currentPage=").append(page);
@@ -184,6 +197,9 @@ public class UrlHelper implements InitializingBean {
 			}
 			if (param.getTag() != null) {
 				sb.append("&tag=").append(param.getTag());
+			}
+			if (param.getSort() != null) {
+				sb.append("&sort=").append(param.getSort().name());
 			}
 			return sb.toString();
 		}

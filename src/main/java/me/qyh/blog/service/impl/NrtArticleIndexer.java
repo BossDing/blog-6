@@ -213,6 +213,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 	private static final String FROM = "from";
 	private static final String LEVEL = "level";
 	private static final String HITS = "hits";
+	private static final String COMMENTS = "comments";
 	private static final String PUB_DATE = "pubDate";
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
@@ -230,8 +231,10 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		Integer level = article.getLevel();
 		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
+		doc.add(new NumericDocValuesField(COMMENTS, article.getComments()));
 		BytesRef pubDate = new BytesRef(timeToString(article.getPubDate()));
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
+		doc.add(new SortedDocValuesField(ID, new BytesRef(article.getId().toString())));
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
 			for (Tag tag : tags) {
@@ -277,7 +280,19 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 			if (!param.isIgnoreLevel()) {
 				fields.add(new SortField(LEVEL, Type.INT, true));
 			}
+			if (param.getSort() != null) {
+				switch (param.getSort()) {
+				case COMMENTS:
+					fields.add(new SortField(COMMENTS, Type.INT, true));
+					break;
+				case HITS:
+					fields.add(new SortField(HITS, Type.INT, true));
+					break;
+				}
+			}
 			fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
+			fields.add(new SortField(ID, SortField.Type.STRING, true));
+			logger.debug(fields.toString());
 			Sort sort = new Sort(fields.toArray(new SortField[] {}));
 			Query query = parseBlogPageParam(param);
 			logger.debug(query.toString());

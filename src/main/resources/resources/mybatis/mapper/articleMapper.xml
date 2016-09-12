@@ -296,14 +296,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 		</where>
 		GROUP BY art.id
-		<choose>
-			<when test="!ignoreLevel">
-				ORDER BY art_level DESC,art.pubDate DESC,art.id DESC
-			</when>
-			<otherwise>
-				ORDER BY art.pubDate DESC,art.id DESC
-			</otherwise>
-		</choose>
+		ORDER BY 
+		<if test="!ignoreLevel">
+			art_level DESC,
+		</if>
+		<if test="sort != null">
+			<choose>
+				<when test='sort.name() == "HITS"'>
+					art.hits DESC,
+				</when>
+				<when test='sort.name() == "COMMENTS"'>
+					art.comments DESC,
+				</when>
+			</choose>
+		</if>
+		art.pubDate DESC,art.id DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
 	

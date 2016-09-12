@@ -36,6 +36,7 @@ public class RssController {
 		param.setIgnoreLevel(true);
 		param.setHasLock(false);
 		param.setQueryPrivate(false);
+		param.setSort(null);
 		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		PageResult<Article> page = articleService.queryArticle(param);
 		model.addAttribute("page", page);

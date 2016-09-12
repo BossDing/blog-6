@@ -55,8 +55,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	@Override
 	protected ICacheEntryValidity computeValidity(IEngineConfiguration configuration, String ownerTemplate,
 			String template, Map<String, Object> templateResolutionAttributes) {
-		Template tpl = UIContext.get();
-		if (tpl != null && tpl.find(template) != null) {
+		if (isTpl(template)) {
 			/**
 			 * 系统模板不必缓存
 			 */

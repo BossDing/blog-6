@@ -1,7 +1,17 @@
+<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px" th:if="${attributes.getBoolean('data-sort-lab',true)}">
+	<li role="presentation"
+		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
+		th:href="${urls.currentUrl+'/article/list'}">时间顺序</a></li>
+	<li role="presentation"
+		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
+		th:href="${urls.getArticlesUrl('HITS')}">点击量</a></li>
+	<li role="presentation"
+		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'COMMENTS') ? 'active' : null}"><a
+		th:href="${urls.getArticlesUrl('COMMENTS')}">评论数</a></li>
+</ul>
 <div th:if="${#lists.isEmpty(articlePage.datas)}">
 	<div class="alert alert-info">当前没有任何文章</div>
 </div>
-
 <div th:unless="${#lists.isEmpty(articlePage.datas)}">
 	<div class="well" th:each="article : ${articlePage.datas}">
 		<h4>
@@ -27,7 +37,8 @@
 				aria-hidden="true"></span>&nbsp;<span th:text="${article.comments}"> </span>
 		</div>
 
-		<div th:text="${article.summary}" th:unless="${article.hasLock() && user == null}"></div>
+		<div th:text="${article.summary}"
+			th:unless="${article.hasLock() && user == null}"></div>
 		<div th:if="${article.hasLock() && user == null}">
 			<strong th:text="${messages.getMessage('article.locked','文章受锁保护')}"></strong>
 		</div>

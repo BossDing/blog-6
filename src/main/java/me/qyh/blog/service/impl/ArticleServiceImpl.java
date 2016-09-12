@@ -101,8 +101,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				article.addHits();
-				if (article.isPublished())
-					articleIndexer.addOrUpdateDocument(article);
+				articleIndexer.addOrUpdateDocument(article);
 				return article;
 			}
 		}
@@ -289,7 +288,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		}
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
-		//删除博客所有的评论
+		// 删除博客所有的评论
 		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
 		articleIndexer.deleteDocument(id);
@@ -306,7 +305,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	@CacheEvict(value = "articleFilesCache", allEntries = true , condition = "#result > 0")
+	@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0")
 	public int pushScheduled() {
 		// 查询将要发表的文章
 		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));

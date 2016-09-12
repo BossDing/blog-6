@@ -27,6 +27,13 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean queryPrivate;// 查询私人博客
 	private String tag;
 	private Boolean hasLock;
+	private Sort sort;
+	
+	public enum Sort{
+		HITS,
+		COMMENTS
+	}
+	
 
 	public Space getSpace() {
 		return space;
@@ -106,6 +113,14 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setHasLock(Boolean hasLock) {
 		this.hasLock = hasLock;
+	}
+
+	public Sort getSort() {
+		return sort;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 
 }

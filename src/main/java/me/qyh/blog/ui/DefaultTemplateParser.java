@@ -26,7 +26,6 @@ import me.qyh.blog.ui.widget.WidgetTpl;
 public class DefaultTemplateParser implements TemplateParser {
 
 	private static final Logger logger = LoggerFactory.getLogger(DefaultTemplateParser.class);
-	private static final String PARSE_ATTR = "parse";
 
 	@Override
 	public ParseResult parse(String tpl, WidgetQuery query) throws LogicException {
@@ -39,12 +38,9 @@ public class DefaultTemplateParser implements TemplateParser {
 			for (Element ele : eles) {
 				String name = ele.attr("name");
 				WidgetTpl widget = !widgets.containsKey(name) ? query.query(new WidgetTag(name)) : widgets.get(name);
-				boolean parse = !"false".equalsIgnoreCase(ele.attr(PARSE_ATTR));
 				if (widget != null) {
 					widgets.put(name, widget);
-					if (parse) {
-						ele.after("<div th:replace=\"" + widget.getTemplateName() + "\"></div>");
-					}
+					ele.attr(WidgetTagProcessor.TEMPLATE_NAME, widget.getTemplateName());
 				} else {
 					// 挂件不存在
 					unknowWidgets.add(name);
@@ -52,8 +48,8 @@ public class DefaultTemplateParser implements TemplateParser {
 					if (!noWidgets.isEmpty()) {
 						ele.after(noWidgets.get(0).html());
 					}
+					removeElement(ele);
 				}
-				removeElement(ele);
 			}
 		}
 		String parsed = doc.html();

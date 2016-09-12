@@ -92,7 +92,7 @@
 		<property name="templateMode" value="HTML" />
 	</bean>
 
-	<bean id="templateEngine" class="org.thymeleaf.spring4.SpringTemplateEngine">
+	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
 

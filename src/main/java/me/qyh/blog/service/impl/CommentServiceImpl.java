@@ -75,6 +75,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private CommentDao commentDao;
 	@Autowired
 	private ArticleDao articleDao;
+	@Autowired
+	private ArticleIndexer articleIndexer;
 
 	@Autowired
 	private ConfigService configService;
@@ -247,10 +249,10 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 
 		commentDao.insert(comment);
 		// 是不是每个回复都算评论数？
-		if (article.isCacheable()) {
-			article.addComments();
-		}
+		article.addComments();
+
 		articleDao.updateComments(article.getId(), 1);
+		articleIndexer.addOrUpdateDocument(article);
 
 		comment.setParent(parent);
 		comment.setUser(user);
