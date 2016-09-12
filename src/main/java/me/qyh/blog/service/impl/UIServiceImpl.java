@@ -36,6 +36,7 @@ import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.ParseResult;
 import me.qyh.blog.ui.TemplateParser;
+import me.qyh.blog.ui.WidgetTag;
 import me.qyh.blog.ui.TemplateParser.WidgetQuery;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
@@ -50,7 +51,7 @@ import me.qyh.blog.ui.widget.SysWidgetHandler;
 import me.qyh.blog.ui.widget.SysWidgetServer;
 import me.qyh.blog.ui.widget.UserWidget;
 import me.qyh.blog.ui.widget.Widget;
-import me.qyh.blog.ui.widget.WidgetTag;
+import me.qyh.blog.ui.widget.Widget.WidgetType;
 import me.qyh.blog.ui.widget.WidgetTpl;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
@@ -669,7 +670,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 							}
 							tpl.setPage(page);
 							tpl.setWidget(widget);
-							return tpl;
+							return WidgetType.SYSTEM.equals(widget.getType())
+									? new CachedWidgetTpl(tpl, widgetTag.getAttrs()) : tpl;
 						}
 						return null;
 					}
@@ -677,6 +679,20 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				cache.put(page.getTemplateName(), cached);
 			}
 			return cached;
+		}
+
+		private final class CachedWidgetTpl extends WidgetTpl {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			private Map<String, String> attrs = new HashMap<String, String>();
+
+			public CachedWidgetTpl(WidgetTpl tpl, Map<String, String> attrs) {
+				super(tpl);
+				this.attrs = attrs;
+			}
+
 		}
 
 		public <T extends Page> T renderPreview(T page) throws LogicException {
@@ -711,7 +727,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					if (params != null && sysWidgetHandler.canProcess(space, params)) {
 						WidgetTpl _tpl = new WidgetTpl(tpl);
 						// 从系统挂件中获取数据
-						_tpl.setWidget(sysWidgetHandler.getWidget(space, params));
+						_tpl.setWidget(sysWidgetHandler.getWidget(space, params, ((CachedWidgetTpl) tpl).attrs));
 						tpls.add(_tpl);
 					}
 					// 如果挂件不存在，那么交给TplResolver处理

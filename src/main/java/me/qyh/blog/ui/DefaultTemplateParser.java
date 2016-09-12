@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.widget.WidgetTag;
 import me.qyh.blog.ui.widget.WidgetTpl;
 
 /**
@@ -37,9 +38,17 @@ public class DefaultTemplateParser implements TemplateParser {
 		if (!eles.isEmpty()) {
 			for (Element ele : eles) {
 				String name = ele.attr("name");
-				WidgetTpl widget = !widgets.containsKey(name) ? query.query(new WidgetTag(name)) : widgets.get(name);
+				WidgetTag tag = new WidgetTag(name);
+				Attributes attributes = ele.attributes();
+				if (attributes != null) {
+					for (Attribute attribute : attributes) {
+						tag.put(attribute.getKey(), attribute.getValue());
+					}
+				}
+				WidgetTpl widget = !widgets.containsKey(name) ? query.query(tag) : widgets.get(name);
 				if (widget != null) {
 					widgets.put(name, widget);
+					ele.removeAttr(name);
 					ele.attr(WidgetTagProcessor.TEMPLATE_NAME, widget.getTemplateName());
 				} else {
 					// 挂件不存在

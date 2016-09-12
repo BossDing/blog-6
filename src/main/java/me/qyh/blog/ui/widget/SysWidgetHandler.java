@@ -1,6 +1,7 @@
 package me.qyh.blog.ui.widget;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -75,21 +76,27 @@ public abstract class SysWidgetHandler {
 	 * @throws LogicException
 	 * @throws MissParamException
 	 */
-	public Widget getWidget(Space space, Params params) throws LogicException {
+	public Widget getWidget(Space space, Params params, Map<String, String> attrs) throws LogicException {
 		SysWidget sw = getWidget();
 		sw.setDataName(dataName);
-		sw.setData(getWidgetData(space, params));
+		sw.setData(getWidgetData(space, params, attrs));
 		return sw;
 	}
 
 	/**
-	 * 根据挂件名和请求参数获取挂件数据
+	 * 查询挂件数据
 	 * 
-	 * @param name
+	 * @param space
+	 *            当前空间
+	 * @param params
+	 *            请求参数
+	 * @param attrs
+	 *            挂件标签属性
 	 * @return
 	 * @throws LogicException
 	 */
-	protected abstract Object getWidgetData(Space space, Params params) throws LogicException;
+	protected abstract Object getWidgetData(Space space, Params params, Map<String, String> attrs)
+			throws LogicException;
 
 	/**
 	 * 获取用户测试或者预览的数据

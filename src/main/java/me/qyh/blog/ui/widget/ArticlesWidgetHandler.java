@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
+import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
@@ -37,14 +39,24 @@ public class ArticlesWidgetHandler extends SysWidgetHandler {
 	}
 
 	@Override
-	protected Object getWidgetData(Space space, Params params) throws LogicException {
+	protected Object getWidgetData(Space space, Params params, Map<String, String> attrs) throws LogicException {
 		ArticleQueryParam param = params.get(PARAMETER_KEY, ArticleQueryParam.class);
 		if (param == null) {
 			param = new ArticleQueryParam();
 			param.setCurrentPage(1);
 			param.setSpace(space);
 		}
+		Sort sort = null;
+		String sortAttr = attrs.get("sort");
+		if (sortAttr != null) {
+			try {
+				sort = Sort.valueOf(sortAttr.toUpperCase());
+			} catch (Exception e) {
+				// ignore;
+			}
+		}
 		param.setStatus(ArticleStatus.PUBLISHED);
+		param.setSort(sort);
 		param.setQueryPrivate(UserContext.get() != null);
 		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		return articleService.queryArticle(param);

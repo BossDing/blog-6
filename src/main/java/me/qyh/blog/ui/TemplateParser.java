@@ -1,7 +1,6 @@
 package me.qyh.blog.ui;
 
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.widget.WidgetTag;
 import me.qyh.blog.ui.widget.WidgetTpl;
 
 /**

@@ -2,6 +2,7 @@ package me.qyh.blog.ui.widget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -27,7 +28,7 @@ public class ArticleSpaceFilesWidgetHandler extends SysWidgetHandler {
 	private ArticleService articleQueryService;
 
 	@Override
-	public Object getWidgetData(Space space, Params params) {
+	public Object getWidgetData(Space space, Params params, Map<String, String> attrs) {
 		return articleQueryService.queryArticleSpaceFiles(UserContext.get() != null);
 	}
 

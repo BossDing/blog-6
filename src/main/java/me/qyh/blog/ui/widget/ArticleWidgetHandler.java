@@ -3,6 +3,7 @@ package me.qyh.blog.ui.widget;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 	private ArticleService articleService;
 
 	@Override
-	public Object getWidgetData(Space space, Params params) throws LogicException {
+	public Object getWidgetData(Space space, Params params, Map<String, String> attrs) throws LogicException {
 		Integer id = params.get(PARAMETER_KEY, Integer.class);
 		Article article = articleService.getArticleForView(id);
 		if (article == null ||

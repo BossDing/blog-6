@@ -1,6 +1,7 @@
 package me.qyh.blog.ui.widget;
 
 import java.util.Calendar;
+import java.util.Map;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class ArticleDateFilesWidgetHandler extends SysWidgetHandler implements I
 	private ArticleService articleQueryService;
 
 	@Override
-	public Object getWidgetData(Space space, Params params) {
+	public Object getWidgetData(Space space, Params params, Map<String, String> attrs) {
 		return articleQueryService.queryArticleDateFiles(space, mode, UserContext.get() != null);
 	}
 

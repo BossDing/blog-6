@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class LastCommentsWidgetHandler extends SysWidgetHandler implements Initi
 	private CommentService commentService;
 
 	@Override
-	public Object getWidgetData(Space space, Params params) {
+	public Object getWidgetData(Space space, Params params, Map<String, String> attrs) {
 		return commentService.queryLastComments(space, limit);
 	}
 
