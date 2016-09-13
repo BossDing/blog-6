@@ -18,7 +18,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
@@ -46,17 +45,7 @@ public class ArticlesWidgetHandler extends SysWidgetHandler {
 			param.setCurrentPage(1);
 			param.setSpace(space);
 		}
-		Sort sort = null;
-		String sortAttr = attrs.get("sort");
-		if (sortAttr != null) {
-			try {
-				sort = Sort.valueOf(sortAttr.toUpperCase());
-			} catch (Exception e) {
-				// ignore;
-			}
-		}
 		param.setStatus(ArticleStatus.PUBLISHED);
-		param.setSort(sort);
 		param.setQueryPrivate(UserContext.get() != null);
 		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		return articleService.queryArticle(param);

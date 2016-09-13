@@ -37,9 +37,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	/**
 	 * <p>
 	 * 用来指定缩放后的文件信息,如果指定了纵横比但同时指定了缩略图宽度和高度，将会以宽度或者长度为准(具体图片不同),如果只希望将长度(或宽度进行缩放)
-	 * ， 那么只要将另一个长度置位
-	 * <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/> <strong>缩略图将只会返回jpg格式的图片
-	 * </strong><br/>
+	 * ， 那么只要将另一个长度置位 <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/>
+	 * <strong>缩略图将只会返回jpg格式的图片 </strong><br/>
 	 * <strong>默认情况下总是缩放(即比原图小)</strong>
 	 * </p>
 	 * 
@@ -158,7 +157,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 						throw new SystemException(e1.getMessage(), e1);
 					}
 				} finally {
-					png.delete();
+					if (png != null)
+						png.delete();
 				}
 
 			} finally {

@@ -40,14 +40,14 @@ import me.qyh.util.Validators;
 abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		implements LocalFileStore {
 
-	private int id;
-	private String absPath;
+	protected int id;
+	protected String absPath;
 	protected String urlPrefix;
 	private File absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
 	private String handlerPrefix;
-
 	private String urlPatternPrefix;
+	private boolean enableDownloadHandler = true;
 
 	@Autowired
 	protected UrlHelper urlHelper;
@@ -95,11 +95,15 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public String getDownloadUrl(CommonFile cf) {
-		String path = cf.getKey();
-		if (!path.startsWith("/")) {
-			path = "/" + path;
+		if (enableDownloadHandler) {
+			String path = cf.getKey();
+			if (!path.startsWith("/")) {
+				path = "/" + path;
+			}
+			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
+		} else {
+			return getUrl(cf);
 		}
-		return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
 	}
 
 	@Override
@@ -144,8 +148,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		}
 
 		// 另外一个域名
-		if (!urlPrefix.startsWith(urlHelper.getUrlConfig().getDomain())
-				&& !urlPrefix.startsWith(urlHelper.getUrlConfig().getRootDomain())) {
+		if (!urlPrefix.startsWith(urlHelper.getUrl())) {
 			if (Validators.isEmptyOrNull(handlerPrefix, true)) {
 				throw new SystemException("处理器路径不能为空");
 			}
@@ -155,7 +158,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		}
 
 		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/**", this);
-		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
+		if (enableDownloadHandler)
+			LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
 	}
 
 	@Override
@@ -280,5 +284,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	public void setHandlerPrefix(String handlerPrefix) {
 		this.handlerPrefix = handlerPrefix;
+	}
+
+	public void setEnableDownloadHandler(boolean enableDownloadHandler) {
+		this.enableDownloadHandler = enableDownloadHandler;
 	}
 }

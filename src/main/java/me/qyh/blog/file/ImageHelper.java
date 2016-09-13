@@ -64,4 +64,20 @@ public abstract class ImageHelper {
 		return false;
 	}
 
+	public static boolean isJPEG(String extension) {
+		return JPEG.equalsIgnoreCase(extension) || JPG.equalsIgnoreCase(extension);
+	}
+
+	public static boolean isWEBP(String extension) {
+		return WEBP.equalsIgnoreCase(extension);
+	}
+
+	public static boolean isPNG(String extension) {
+		return PNG.equalsIgnoreCase(extension);
+	}
+
+	public static boolean isGIF(String extension) {
+		return GIF.equalsIgnoreCase(extension);
+	}
+
 }

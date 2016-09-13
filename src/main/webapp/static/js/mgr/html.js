@@ -3,6 +3,7 @@ var publishing = false;
 var tags = [];
 var init = false;
 $(document).ready(function(){
+	CKEDITOR.plugins.addExternal( 'codemirror', basePath+'/static/editor/ckeditor/plugins/codemirror/' );
 	editor = CKEDITOR.replace('editor', {
 		extraPlugins : 'codemirror'
 	});

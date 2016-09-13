@@ -24,27 +24,24 @@
 								<property name="thumbAbsPath" value="/web/nginx/html/blog_file/image/thumb" />
 								<property name="handlerPrefix" value="image" />
 								<property name="cacheSeconds" value="31556926" />
+								<property name="sourceProtected" value="true" />
 								<property name="defaultResize">
 									<bean class="me.qyh.blog.file.Resize">
 										<constructor-arg value="200" />
 									</bean>
 								</property>
-								<property name="resizeUrlParser">
-									<!-- 缩放处理 -->
-									<bean class="me.qyh.blog.file.local.DefaultResizeUrlParser">
-										<property name="resizeValidator">
-											<bean class="me.qyh.blog.file.DefaultResizeValidator">
-												<property name="allowSizes">
-													<array>
-														<value>64</value>
-														<value>100</value>
-														<value>160</value>
-														<value>200</value>
-														<value>400</value>
-														<value>600</value>
-													</array>
-												</property>
-											</bean>
+								<property name="resizeValidator">
+									<bean class="me.qyh.blog.file.DefaultResizeValidator">
+										<property name="allowSizes">
+											<array>
+												<value>64</value>
+												<value>100</value>
+												<value>160</value>
+												<value>200</value>
+												<value>400</value>
+												<value>600</value>
+												<value>900</value>
+											</array>
 										</property>
 									</bean>
 								</property>

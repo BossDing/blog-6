@@ -154,6 +154,7 @@ public class FileServiceImpl implements FileService {
 		return result;
 	}
 
+	// TODO
 	@Override
 	@Transactional(readOnly = true)
 	public BlogFileProperty getBlogFileProperty(Integer id) throws LogicException {

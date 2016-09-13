@@ -31,7 +31,7 @@
 	<!-- 关闭这个类的日志 -->
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
 
-	<root level="ERROR">
+	<root level="DEBUG">
 		<appender-ref ref="consoleAppender" />
 		<appender-ref ref="errorDailyRollingFileAppender" />
 	</root>

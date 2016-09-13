@@ -38,23 +38,17 @@
 			<div class="sidebar-nav navbar-collapse">
 				<ul class="nav" id="side-menu">
 					<li><a th:href="@{/mgr/user/index}"
-						th:class="${tag == 'userinfo'}? active:''"><i
-							class="fa fa-fw fa-dashboard"></i> 个人信息管理</a></li>
+						th:class="${tag == 'userinfo'}? active:''"> 个人信息管理</a></li>
 					<li th:class="${tag == 'space'}? active:''"><a
-						th:href="@{/mgr/space/index}"><i class="fa fa-fw fa-dashboard"></i>
-							空间管理</a></li>
+						th:href="@{/mgr/space/index}"> 空间管理</a></li>
 					<li th:class="${tag == 'lock'}? active:''"><a
-						th:href="@{/mgr/lock/index}"><i class="fa fa-fw fa-dashboard"></i>
-							锁管理</a></li>
+						th:href="@{/mgr/lock/index}"> 锁管理</a></li>
 					<li th:class="${tag == 'files'}? active:''"><a
-						th:href="@{/mgr/file/index}"><i class="fa fa-fw fa-dashboard"></i>
-							文件管理</a></li>
+						th:href="@{/mgr/file/index}"> 文件管理</a></li>
 					<li><a th:href="@{/mgr/article/index}"
-						th:class="${tag == 'article'}? active:''"><i
-							class="fa fa-fw fa-dashboard"></i> 博客管理</a></li>
+						th:class="${tag == 'article'}? active:''"> 博客管理</a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
-						data-target="#oauthMgr"><i class="fa fa-bar-chart-o fa-fw"></i>
-							社交账号管理<span class="fa arrow"></span></a>
+						data-target="#oauthMgr"> 社交账号管理</a>
 						<ul id="oauthMgr" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'oauth-bind-index'}? active:''"
 								th:href="@{/mgr/oauth/bind/index}">绑定管理</a></li>
@@ -64,8 +58,7 @@
 								th:href="@{/mgr/oauth/index}">账号管理</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 					<li><a href="javascript:;" data-toggle="collapse"
-						data-target="#tplMgr"><i class="fa fa-bar-chart-o fa-fw"></i>
-							模板管理<span class="fa arrow"></span></a>
+						data-target="#tplMgr"> 模板管理</a>
 						<ul id="tplMgr" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'tpl-user'}? active:''"
 								th:href="@{/mgr/page/user/index}">自定义页面管理</a></li>
@@ -79,11 +72,9 @@
 								th:href="@{/mgr/widget/user/index}">自定义挂件管理</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 					<li><a th:href="@{/mgr/tag/index}"
-						th:class="${tag == 'tag'}? active:''"><i
-							class="fa fa-fw fa-dashboard"></i> 标签管理</a></li>
+						th:class="${tag == 'tag'}? active:''"> 标签管理</a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
-						data-target="#config"><i class="fa fa-bar-chart-o fa-fw"></i>
-							配置管理<span class="fa arrow"></span></a>
+						data-target="#config"> 配置管理</a>
 						<ul id="config" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'config-pagesize'}? active:''"
 								th:href="@{/mgr/config/pagesize/index}">分页数目配置</a></li>
