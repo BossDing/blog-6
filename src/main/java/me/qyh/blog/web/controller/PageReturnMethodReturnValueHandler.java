@@ -5,22 +5,22 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import me.qyh.blog.ui.Template;
 import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.ui.page.Page;
 
-public class TemplateReturnMethodReturnValueHandler implements HandlerMethodReturnValueHandler {
+public class PageReturnMethodReturnValueHandler implements HandlerMethodReturnValueHandler {
 
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
-		return Template.class.isAssignableFrom(returnType.getParameterType());
+		return Page.class.isAssignableFrom(returnType.getParameterType());
 	}
 
 	@Override
 	public void handleReturnValue(Object returnValue, MethodParameter returnType, ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest) throws Exception {
-		Template template = (Template) returnValue;
-		UIContext.set(template);
-		mavContainer.setView(template.getTemplateName());
+		Page page = (Page) returnValue;
+		UIContext.set(page);
+		mavContainer.setView(page.getTemplateName());
 	}
 
 }

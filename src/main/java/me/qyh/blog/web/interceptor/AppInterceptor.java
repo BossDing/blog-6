@@ -40,8 +40,8 @@ import me.qyh.blog.security.csrf.CsrfTokenRepository;
 import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
 import me.qyh.blog.security.csrf.MissingCsrfTokenException;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.ui.Template;
 import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
 import me.qyh.util.UrlUtils;
 
@@ -170,10 +170,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		// static res request
 		// then mv is null
 		if (modelAndView != null) {
-			Template tpl = UIContext.get();
-			if (tpl != null) {
+			Page page = UIContext.get();
+			if (page != null) {
 				logger.debug("将模板数据放入model中");
-				modelAndView.addAllObjects(tpl.getTemplateDatas());
+				modelAndView.addAllObjects(page.getTemplateDatas());
 			}
 			logger.debug("将用户和路径处理器放入model中");
 			modelAndView.addObject("urls", urlHelper.getUrls(request));

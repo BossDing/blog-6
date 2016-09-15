@@ -16,7 +16,7 @@ import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.Template;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.widget.ArticleWidgetHandler;
 import me.qyh.blog.ui.widget.ArticlesWidgetHandler;
@@ -41,13 +41,13 @@ public class ArticleController {
 	}
 
 	@RequestMapping("/article/{id}")
-	public Template article(@PathVariable("id") Integer id) throws LogicException {
+	public Page article(@PathVariable("id") Integer id) throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
 				new Params().add(ArticleWidgetHandler.PARAMETER_KEY, id));
 	}
 
 	@RequestMapping(value = "list")
-	public Template list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
+	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);

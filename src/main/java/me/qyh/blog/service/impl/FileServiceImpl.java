@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.bean.BlogFilePageResult;
-import me.qyh.blog.bean.BlogFileProperty;
 import me.qyh.blog.bean.ExpandedCommonFile;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.dao.BlogFileDao;
@@ -154,30 +155,35 @@ public class FileServiceImpl implements FileService {
 		return result;
 	}
 
-	// TODO
 	@Override
 	@Transactional(readOnly = true)
-	public BlogFileProperty getBlogFileProperty(Integer id) throws LogicException {
+	public Map<String, Object> getBlogFileProperty(Integer id) throws LogicException {
 		BlogFile file = blogFileDao.selectById(id);
 		if (file == null) {
 			throw new LogicException("file.notexists", "文件不存在");
 		}
-		BlogFileProperty property = new BlogFileProperty();
+		Map<String, Object> proMap = new HashMap<String, Object>();
 		if (file.isDir()) {
-			property.setCounts(blogFileDao.selectSubBlogFileCount(file));
-			property.setTotalSize(blogFileDao.selectSubBlogFileSize(file));
+			proMap.put("counts", blogFileDao.selectSubBlogFileCount(file));
+			proMap.put("totalSize", blogFileDao.selectSubBlogFileSize(file));
 		} else {
 			CommonFile cf = file.getCf();
 			if (cf != null) {
 				FileStore fs = getFileStore(cf);
-				property.setUrl(fs.getUrl(cf));
-				property.setDownloadUrl(fs.getDownloadUrl(cf));
-				property.setTotalSize(cf.getSize());
+				proMap.put("url", fs.getUrl(cf));
+				proMap.put("downloadUrl", fs.getDownloadUrl(cf));
+				proMap.put("totalSize", cf.getSize());
+				if (cf.getWidth() != null) {
+					proMap.put("width", cf.getWidth());
+				}
+				if (cf.getHeight() != null) {
+					proMap.put("height", cf.getHeight());
+				}
 			}
 		}
-		property.setType(file.getType());
-		property.setLastModifyDate(file.getLastModifyDate());
-		return property;
+		proMap.put("type", file.getType());
+		proMap.put("lastModifyDate", file.getLastModifyDate());
+		return proMap;
 	}
 
 	@Override

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.Template;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 
 @Controller
@@ -17,7 +17,7 @@ public class IndexController {
 	private UIService uiService;
 
 	@RequestMapping(value = { "/", "" })
-	public Template index() throws LogicException {
+	public Page index() throws LogicException {
 		return uiService.renderSysPage(null, PageTarget.INDEX, new Params());
 	}
 

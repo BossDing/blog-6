@@ -47,6 +47,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 */
 	private boolean sourceProtected;
 
+	private boolean enableWebp = true;
+
 	private String thumbAbsPath;
 	private File thumbAbsFolder;
 
@@ -104,8 +106,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	protected Resource getResource(String path, HttpServletRequest request) {
-		Resource finalResource = null;
-		boolean supportWebp = supportWebp(request);
 		// 从链接中获取缩放信息
 		Resize resize = getResizeFromPath(path);
 		if (sourceProtected && resize == null) {
@@ -115,6 +115,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				return null;
 			}
 		}
+		Resource finalResource = null;
+		boolean supportWebp = enableWebp && supportWebp(request);
 		if (resize != null) {
 			String thumbPath = supportWebp ? path + WEBP_EXT : path + JPEG_EXT;
 			if (errorThumbPaths.contains(thumbPath)) {
@@ -404,6 +406,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	public void setResizeValidator(ResizeValidator resizeValidator) {
 		this.resizeValidator = resizeValidator;
+	}
+
+	public void setEnableWebp(boolean enableWebp) {
+		this.enableWebp = enableWebp;
 	}
 
 }

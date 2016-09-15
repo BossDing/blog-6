@@ -1,13 +1,13 @@
 <ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px" th:if="${attributes.getBoolean('data-sort-lab',true)}">
 	<li role="presentation"
 		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
-		th:href="${urls.currentUrl+'/article/list'}">时间顺序</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,null)}">时间顺序</a></li>
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl('HITS')}">点击量</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,'HITS')}">点击量</a></li>
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'COMMENTS') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl('COMMENTS')}">评论数</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,'COMMENTS')}">评论数</a></li>
 </ul>
 <div th:if="${#lists.isEmpty(articlePage.datas)}">
 	<div class="alert alert-info">当前没有任何文章</div>

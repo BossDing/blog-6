@@ -1,18 +1,20 @@
 package me.qyh.blog.ui;
 
+import me.qyh.blog.ui.page.Page;
+
 public class UIContext {
 
-	private static ThreadLocal<Template> templateLocal = new ThreadLocal<Template>();
+	private static ThreadLocal<Page> pageLocal = new ThreadLocal<Page>();
 
-	public static void set(Template template) {
-		templateLocal.set(template);
+	public static void set(Page page) {
+		pageLocal.set(page);
 	}
 
-	public static Template get() {
-		return templateLocal.get();
+	public static Page get() {
+		return pageLocal.get();
 	}
 
 	public static void remove() {
-		templateLocal.remove();
+		pageLocal.remove();
 	}
 }

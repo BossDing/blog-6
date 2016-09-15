@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.Template;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
@@ -20,12 +20,12 @@ public class SpaceController extends BaseController {
 	private UIService uiService;
 
 	@RequestMapping(value = { "/", "" })
-	public Template index() throws LogicException {
+	public Page index() throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.INDEX, new Params());
 	}
 
 	@RequestMapping("page/{idOrAlias}")
-	public Template userPage(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
+	public Page userPage(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
 		return uiService.renderUserPage(idOrAlias);
 	}
 

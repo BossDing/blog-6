@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -17,6 +18,7 @@ import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
+import me.qyh.blog.ui.page.Page;
 
 /**
  * 用来校验用户的自定义模板<br/>
@@ -31,14 +33,14 @@ public class TplRender {
 	@Autowired
 	private Messages messages;
 	@Autowired
-	private TplRenderExceptionHandler tplRenderExceptionHandler;
+	private TplRenderErrorDescriptionHandler tplRenderErrorDescriptionHandler;
 	@Autowired
 	private ThymeleafViewResolver resolver;
 
-	public String tryRender(Template template, HttpServletRequest request, HttpServletResponse response)
+	public String tryRender(Page page, HttpServletRequest request, HttpServletResponse response)
 			throws TplRenderException {
-		UIContext.set(template);
-		return doRender(template.getTemplateName(), request, response, template.getTemplateDatas());
+		UIContext.set(page);
+		return doRender(page.getTemplateName(), request, response, page.getTemplateDatas());
 	}
 
 	/**
@@ -62,7 +64,7 @@ public class TplRender {
 			templateManager.clearCachesFor(viewTemplateName);
 			return wrapper.output();
 		} catch (Throwable e) {
-			throw tplRenderExceptionHandler.convertThrowable(e);
+			throw new TplRenderException(tplRenderErrorDescriptionHandler.convert(e, request.getServletContext()));
 		}
 	}
 
@@ -89,12 +91,12 @@ public class TplRender {
 	 * @author Administrator
 	 *
 	 */
-	public interface TplRenderExceptionHandler {
-		TplRenderException convertThrowable(Throwable throwable);
+	public interface TplRenderErrorDescriptionHandler {
+		TplRenderErrorDescription convert(Throwable throwable, ServletContext sc);
 	}
 
-	public void setTplRenderExceptionHandler(TplRenderExceptionHandler tplRenderExceptionHandler) {
-		this.tplRenderExceptionHandler = tplRenderExceptionHandler;
+	public void setTplRenderErrorDescriptionHandler(TplRenderErrorDescriptionHandler tplRenderErrorDescriptionHandler) {
+		this.tplRenderErrorDescriptionHandler = tplRenderErrorDescriptionHandler;
 	}
 
 }

@@ -6,18 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.util.CollectionUtils;
-import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import me.qyh.blog.entity.Id;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.ui.Template;
 import me.qyh.blog.ui.widget.WidgetTpl;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Page extends Id implements Template {
+public class Page extends Id {
 
 	/**
 	 * 
@@ -67,42 +65,8 @@ public class Page extends Id implements Template {
 		this.type = type;
 	}
 
-	@Override
 	public String getTemplateName() {
 		return PREFIX + getId() + "-" + getType();
-	}
-
-	@Override
-	public Template find(String templateName) throws TemplateProcessingException {
-		if (templateName.startsWith(PREFIX)) {
-			if (templateName.equals(getTemplateName())) {
-				return this;
-			}
-			throw new TemplateProcessingException("页面" + templateName + "不存在，无法被渲染");
-		}
-		if (!CollectionUtils.isEmpty(tpls)) {
-			for (WidgetTpl widgetTpl : tpls) {
-				if (widgetTpl.getTemplateName().equals(templateName)) {
-					return widgetTpl;
-				}
-			}
-		}
-		return null;
-	}
-
-	@Override
-	@JsonIgnore
-	public Map<String, Object> getTemplateDatas() {
-		Map<String, Object> datas = new HashMap<String, Object>();
-		if (!CollectionUtils.isEmpty(tpls)) {
-			for (WidgetTpl widget : tpls) {
-				Map<String, Object> _datas = widget.getTemplateDatas();
-				if (!CollectionUtils.isEmpty(_datas)) {
-					datas.putAll(_datas);
-				}
-			}
-		}
-		return datas;
 	}
 
 	public Page() {
@@ -119,5 +83,26 @@ public class Page extends Id implements Template {
 
 	public static boolean isTpl(String templateName) {
 		return templateName.startsWith(PREFIX);
+	}
+
+	public WidgetTpl getWidgetTpl(String name) {
+		for (WidgetTpl widgetTpl : tpls) {
+			if (name.equals(widgetTpl.getWidget().getName())) {
+				return widgetTpl;
+			}
+		}
+		return null;
+	}
+
+	@JsonIgnore
+	public Map<String, Object> getTemplateDatas() {
+		Map<String, Object> datas = new HashMap<String, Object>();
+		for (WidgetTpl widget : tpls) {
+			Map<String, Object> _datas = widget.getTemplateDatas();
+			if (!CollectionUtils.isEmpty(_datas)) {
+				datas.putAll(_datas);
+			}
+		}
+		return datas;
 	}
 }

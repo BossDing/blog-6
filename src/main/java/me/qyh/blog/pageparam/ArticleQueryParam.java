@@ -123,4 +123,11 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.sort = sort;
 	}
 
+	@Override
+	public String toString() {
+		return "ArticleQueryParam [space=" + space + ", begin=" + begin + ", end=" + end + ", query=" + query
+				+ ", status=" + status + ", from=" + from + ", ignoreLevel=" + ignoreLevel + ", queryPrivate="
+				+ queryPrivate + ", tag=" + tag + ", hasLock=" + hasLock + ", sort=" + sort + "]";
+	}
+
 }

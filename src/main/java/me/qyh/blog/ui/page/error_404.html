@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet"
 	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -26,8 +27,7 @@
 				<form th:action="${urls.currentUrl}+'/article/list'" method="get"
 					style="margin-bottom: 10px" id="queryForm">
 					<div class="input-group">
-						<input type="text" class="form-control" name="query"
-							placeholder="" aria-describedby="basic-addon2"
+						<input type="text" class="form-control" name="query" aria-describedby="basic-addon2"
 							placeholder="你能找到的都在这"> <span class="input-group-addon"
 							id="basic-addon2"><a id="query-btn" href="###"> <span
 								class="glyphicon glyphicon-search" aria-hidden="true"></span>

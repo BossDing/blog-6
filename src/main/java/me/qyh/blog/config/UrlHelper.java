@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,16 +166,15 @@ public class UrlHelper implements InitializingBean {
 			return getArticlesUrl(param, 1);
 		}
 
-		public String getArticlesUrl(String sortStr) {
+		public String getArticlesUrl(ArticleQueryParam param, String sortStr) {
+			ArticleQueryParam cloned = SerializationUtils.clone(param);
 			Sort sort = null;
 			try {
 				sort = Sort.valueOf(sortStr);
 			} catch (Exception e) {
 			}
-			ArticleQueryParam param = new ArticleQueryParam();
-			param.setCurrentPage(1);
-			param.setSort(sort);
-			return getArticlesUrl(param, 1);
+			cloned.setSort(sort);
+			return getArticlesUrl(cloned, 1);
 		}
 
 		public String getArticlesUrl(ArticleQueryParam param, int page) {

@@ -1,15 +1,22 @@
 package me.qyh.blog.ui;
 
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.thymeleaf.context.IEngineContext;
 import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.engine.TemplateModel;
 import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IModel;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.util.FastStringWriter;
+
+import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.widget.WidgetTpl;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -20,9 +27,9 @@ import org.thymeleaf.templatemode.TemplateMode;
 public class WidgetTagProcessor extends AbstractElementTagProcessor {
 
 	private static final String TAG_NAME = "widget";
-	public static final String TEMPLATE_NAME = "templatename";
 	private static final String ATTRIBUTES = "attributes";
 	private static final int PRECEDENCE = 1000;
+	private static final String NAME = "name";
 
 	public WidgetTagProcessor(String dialectPrefix) {
 		super(TemplateMode.HTML, // This processor will apply only to HTML mode
@@ -37,27 +44,66 @@ public class WidgetTagProcessor extends AbstractElementTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		Template tpl = UIContext.get();
-		if (tpl != null) {
-			String templateName = tag.getAttributeValue(TEMPLATE_NAME);
-			Template finded = tpl.find(templateName);
-			if (finded != null) {
-				Attributes attributes = handleAttributes(tag);
-				if (attributes == null) {
-					attributes = new Attributes();
+		Page page = UIContext.get();
+		if (page != null) {
+			IAttribute nameAtt = tag.getAttribute(NAME);
+			if (nameAtt != null) {
+				String name = nameAtt.getValue();
+				WidgetTpl tpl = page.getWidgetTpl(name);
+				if (tpl != null) {
+					Attributes attributes = handleAttributes(tag);
+					if (attributes == null) {
+						attributes = new Attributes();
+					}
+					IEngineContext _context = (IEngineContext) context;
+					_context.setVariable(ATTRIBUTES, attributes);
+					try {
+						IModel model = context.getModelFactory().parse(context.getTemplateData(), tpl.getTpl());
+						Writer writer = new FastStringWriter(200);
+						context.getConfiguration().getTemplateManager().process((TemplateModel) model, _context,
+								writer);
+						structureHandler.replaceWith(writer.toString(), false);
+					} catch (Throwable e) {
+						throw new WidgetTagParseException(e, name);
+					} finally {
+						_context.removeVariable(ATTRIBUTES);
+					}
+					return;
 				}
-				structureHandler.setLocalVariable(ATTRIBUTES, attributes);
-				IModel model = context.getModelFactory().parse(context.getTemplateData(), finded.getTpl());
-				structureHandler.replaceWith(model, true);
 			}
 		}
+		structureHandler.removeElement();
+	}
+
+	public static final class WidgetTagParseException extends RuntimeException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private Throwable originalThrowable;
+		private String widget;
+
+		public WidgetTagParseException(Throwable originalThrowable, String widget) {
+			this.originalThrowable = originalThrowable;
+			this.widget = widget;
+		}
+
+		public Throwable getOriginalThrowable() {
+			return originalThrowable;
+		}
+
+		public String getWidget() {
+			return widget;
+		}
+
 	}
 
 	protected Attributes handleAttributes(IProcessableElementTag tag) {
 		Attributes attributes = new Attributes();
 		IAttribute[] attributArray = tag.getAllAttributes();
 		for (IAttribute attribute : attributArray) {
-			String v = attribute.getAttributeCompleteName();
+			String v = attribute.getValue();
 			if (v != null) {
 				attributes.put(attribute.getAttributeCompleteName(), v);
 			}
@@ -111,5 +157,4 @@ public class WidgetTagProcessor extends AbstractElementTagProcessor {
 			attributes.put(key, v);
 		}
 	}
-
 }

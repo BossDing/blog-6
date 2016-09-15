@@ -1,9 +1,9 @@
 package me.qyh.blog.service;
 
 import java.util.List;
+import java.util.Map;
 
 import me.qyh.blog.bean.BlogFilePageResult;
-import me.qyh.blog.bean.BlogFileProperty;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.exception.LogicException;
@@ -20,7 +20,7 @@ public interface FileService {
 
 	BlogFilePageResult queryBlogFiles(BlogFileQueryParam param) throws LogicException;
 
-	BlogFileProperty getBlogFileProperty(Integer id) throws LogicException;
+	Map<String, Object> getBlogFileProperty(Integer id) throws LogicException;
 
 	List<FileServer> allServers();
 
@@ -48,7 +48,7 @@ public interface FileService {
 	 * 
 	 * @param srcId
 	 * @param parentId
-	 * @throws LogicException 
+	 * @throws LogicException
 	 */
 	void move(Integer srcId, Integer parentId) throws LogicException;
 

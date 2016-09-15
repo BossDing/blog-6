@@ -1,5 +1,10 @@
 package me.qyh.blog.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.util.CollectionUtils;
+
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import me.qyh.blog.message.Message;
@@ -9,17 +14,20 @@ public class TplRenderErrorDescription {
 
 	private Integer line;// 行号
 	private Integer col;// 列号
-	private String templateName;// 模板名
+	private List<String> templateNames = new ArrayList<String>();// 模板名
 	private String expression;// 表达式
 	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;// 错误信息
-	private Template template;// 模板
 
 	public TplRenderErrorDescription() {
 	}
 
-	public String getTemplateName() {
-		return templateName;
+	public void addTemplateName(String templateName) {
+		templateNames.add(templateName);
+	}
+
+	public List<String> getTemplateNames() {
+		return templateNames;
 	}
 
 	public String getExpression() {
@@ -28,10 +36,6 @@ public class TplRenderErrorDescription {
 
 	public void setLine(int line) {
 		this.line = line;
-	}
-
-	public void setTemplateName(String templateName) {
-		this.templateName = templateName;
 	}
 
 	public void setExpression(String expression) {
@@ -62,12 +66,16 @@ public class TplRenderErrorDescription {
 		this.message = message;
 	}
 
-	public Template getTemplate() {
-		return template;
-	}
-
-	public void setTemplate(Template template) {
-		this.template = template;
+	public String getTemplateName() {
+		if (!CollectionUtils.isEmpty(templateNames)) {
+			StringBuilder sb = new StringBuilder();
+			for (String templateName : templateNames) {
+				sb.append(templateName).append("->");
+			}
+			sb.delete(sb.length() - 2, sb.length());
+			return sb.toString();
+		}
+		return null;
 	}
 
 }

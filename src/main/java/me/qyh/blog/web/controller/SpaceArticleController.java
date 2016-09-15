@@ -29,7 +29,7 @@ import me.qyh.blog.service.CommentService;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.Template;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.widget.ArticleWidgetHandler;
 import me.qyh.blog.ui.widget.ArticlesWidgetHandler;
@@ -67,9 +67,15 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping("{id}")
-	public Template article(@PathVariable("id") Integer id) throws LogicException {
+	public Page article(@PathVariable("id") Integer id) throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
 				new Params().add(ArticleWidgetHandler.PARAMETER_KEY, id));
+	}
+
+	@RequestMapping(value = "{id}", headers = "x-requested-with=XMLHttpRequest")
+	@ResponseBody
+	public Article articleJson(@PathVariable("id") Integer id) throws LogicException {
+		return articleService.getArticleForView(id);
 	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
@@ -80,19 +86,35 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping(value = "list")
-	public Template list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
+	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);
 		}
+		setParam(articleQueryParam);
+		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_LIST,
+				new Params().add(ArticlesWidgetHandler.PARAMETER_KEY, articleQueryParam));
+	}
+
+	@RequestMapping(value = "list", headers = "x-requested-with=XMLHttpRequest")
+	@ResponseBody
+	public PageResult<Article> listJson(@Validated ArticleQueryParam articleQueryParam, BindingResult result)
+			throws LogicException {
+		if (result.hasErrors()) {
+			articleQueryParam = new ArticleQueryParam();
+			articleQueryParam.setCurrentPage(1);
+		}
+		setParam(articleQueryParam);
+		return articleService.queryArticle(articleQueryParam);
+	}
+
+	private void setParam(ArticleQueryParam articleQueryParam) {
 		Space space = SpaceContext.get();
 		articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
 		articleQueryParam.setSpace(space);
 		articleQueryParam.setIgnoreLevel(false);
 		articleQueryParam.setQueryPrivate(UserContext.get() != null);
 		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
-		return uiService.renderSysPage(space, PageTarget.ARTICLE_LIST,
-				new Params().add(ArticlesWidgetHandler.PARAMETER_KEY, articleQueryParam));
 	}
 
 	@RequestMapping(value = "{id}/comment/list")

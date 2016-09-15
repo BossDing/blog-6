@@ -2,22 +2,17 @@ package me.qyh.blog.ui.widget;
 
 import java.util.Map;
 
-import org.thymeleaf.exceptions.TemplateProcessingException;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import me.qyh.blog.entity.Id;
-import me.qyh.blog.ui.Template;
 import me.qyh.blog.ui.page.Page;
 
-public class WidgetTpl extends Id implements Template {
+public class WidgetTpl extends Id {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
-	protected static final String PREFIX = "Widget:";
 
 	@JsonIgnore
 	private Page page;
@@ -48,41 +43,19 @@ public class WidgetTpl extends Id implements Template {
 		this.widget = widget;
 	}
 
-	@Override
-	public String getTemplateName() {
-		if (widget.hasId()) {
-			return PREFIX + widget.getId() + "-" + widget.getType() + "-" + page.getTemplateName();
-		} else {
-			return PREFIX + widget.getName() + "-" + page.getTemplateName();
-		}
-	}
-
-	@Override
-	public Template find(String templateName) throws TemplateProcessingException {
-		if (templateName.equals(getTemplateName())) {
-			return this;
-		}
-		throw new TemplateProcessingException("挂件" + templateName + "不存在，无法被渲染");
-	}
-
-	@Override
 	@JsonIgnore
 	public Map<String, Object> getTemplateDatas() {
 		return widget.getTemplateDatas();
 	}
-	
-	public WidgetTpl(){
-		
+
+	public WidgetTpl() {
+
 	}
-	
-	public WidgetTpl(WidgetTpl tpl){
+
+	public WidgetTpl(WidgetTpl tpl) {
 		setId(tpl.getId());
 		this.tpl = tpl.tpl;
 		this.page = tpl.page;
 		this.widget = tpl.widget;
-	}
-
-	public static boolean isTpl(String templateName){
-		return templateName.startsWith(PREFIX);
 	}
 }
