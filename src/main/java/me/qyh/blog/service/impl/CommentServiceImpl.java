@@ -131,7 +131,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryComment(CommentQueryParam param) {
-		Article article = articleQuery.getArticle(param.getArticle().getId());
+		Article article = articleQuery.getArticleWithLockCheck(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
@@ -190,7 +190,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user.isDisabled()) {
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
 		}
-		Article article = articleQuery.getArticle(comment.getArticle().getId());
+		Article article = articleQuery.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");

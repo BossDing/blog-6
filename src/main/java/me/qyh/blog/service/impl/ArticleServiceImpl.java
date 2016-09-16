@@ -40,7 +40,7 @@ import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.ui.widget.ArticleSpaceFile;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-@Transactional(propagation = Propagation.REQUIRED,rollbackFor=Exception.class)
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Autowired
@@ -67,7 +67,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForView(Integer id) {
-		Article article = articleQuery.getArticle(id);
+		Article article = articleQuery.getArticleWithLockCheck(id);
 		if (article != null) {
 			if (article.isPublished()) {
 				if (article.isPrivate() && UserContext.get() == null) {

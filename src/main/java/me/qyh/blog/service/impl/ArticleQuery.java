@@ -18,6 +18,7 @@ import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.ui.widget.ArticleDateFile;
@@ -40,28 +41,6 @@ public class ArticleQuery implements InitializingBean {
 	private ArticleIndexer articleIndexer;
 
 	private Map<Integer, Article> store = new ConcurrentHashMap<Integer, Article>();
-	public static final Comparator<Article> defaultComparator = new ArticleCommparator() {
-
-		@Override
-		int _compare(Article o1, Article o2) {
-			return 0;
-		}
-	};
-	public static final Comparator<Article> commentsComparator = new ArticleCommparator() {
-
-		@Override
-		int _compare(Article o1, Article o2) {
-			return o1.getComments() > o2.getComments() ? -1 : ((o1.getComments() < o2.getComments()) ? 1 : 0);
-		}
-	};
-
-	public static final Comparator<Article> hitsComparator = new ArticleCommparator() {
-
-		@Override
-		int _compare(Article o1, Article o2) {
-			return o1.getHits() > o2.getHits() ? -1 : ((o1.getHits() < o2.getHits()) ? 1 : 0);
-		}
-	};
 
 	public static final Comparator<ArticleSpaceFile> articleSpaceFileComparator = new ArticleSpaceFileComparator();
 	public static final Comparator<ArticleDateFile> articleDateFileComparator = new ArticleDateFileComparator();
@@ -85,6 +64,11 @@ public class ArticleQuery implements InitializingBean {
 			}
 		}
 		return article;
+	}
+
+	@LockProtected
+	public Article getArticleWithLockCheck(Integer id) {
+		return getArticle(id);
 	}
 
 	public List<Article> selectPublished(Space space) {
@@ -122,14 +106,22 @@ public class ArticleQuery implements InitializingBean {
 			} else {
 				List<Article> results = new ArrayList<Article>();
 				for (Article article : store.values()) {
+					if (article.isPrivate() && !param.isQueryPrivate()) {
+						continue;
+					}
 					if (param.getBegin() != null && param.getEnd() != null) {
 						Date pubDate = article.getPubDate();
 						if (pubDate == null || pubDate.before(param.getBegin()) || pubDate.after(param.getEnd())) {
 							continue;
 						}
 					}
-					if (param.getHasLock() != null && !article.hasLock()) {
-						continue;
+					if (param.getHasLock() != null) {
+						if (param.getHasLock() && !article.hasLock()) {
+							continue;
+						}
+						if (!param.getHasLock() && article.hasLock()) {
+							continue;
+						}
 					}
 					if (param.getFrom() != null && !article.getFrom().equals(param.getFrom())) {
 						continue;
@@ -146,14 +138,15 @@ public class ArticleQuery implements InitializingBean {
 					results.add(article);
 				}
 				if (param.getSort() == null) {
-					Collections.sort(results, defaultComparator);
+					Collections.sort(results, param.isIgnoreLevel() ? defaultComparatorIgnoreLevel : defaultComparator);
 				} else {
 					switch (param.getSort()) {
 					case COMMENTS:
-						Collections.sort(results, commentsComparator);
+						Collections.sort(results,
+								param.isIgnoreLevel() ? commentsComparatorIgnoreLevel : commentsComparator);
 						break;
 					case HITS:
-						Collections.sort(results, hitsComparator);
+						Collections.sort(results, param.isIgnoreLevel() ? hitsComparatorIgnoreLevel : hitsComparator);
 						break;
 					}
 				}
@@ -314,69 +307,6 @@ public class ArticleQuery implements InitializingBean {
 		return !Validators.isEmptyOrNull(param.getQuery(), true);
 	}
 
-	private static abstract class ArticleCommparator implements Comparator<Article> {
-
-		@Override
-		public int compare(Article o1, Article o2) {
-			int compare = 0;
-			if (o1.getLevel() != null) {
-				if (o2.getLevel() != null) {
-					compare = -o1.getLevel().compareTo(o2.getLevel());
-				} else {
-					compare = -1;
-				}
-			}
-			if (o2.getLevel() != null) {
-				if (o1.getLevel() != null) {
-					compare = o2.getLevel().compareTo(o1.getLevel());
-				} else {
-					compare = 1;
-				}
-			}
-			if (compare == 0) {
-				compare = _compare(o1, o2);
-				if (compare == 0) {
-					if (o1.getPubDate() != null) {
-						if (o2.getPubDate() != null) {
-							compare = -o1.getPubDate().compareTo(o2.getPubDate());
-						} else {
-							compare = -1;
-						}
-					}
-					if (o2.getPubDate() != null) {
-						if (o1.getPubDate() != null) {
-							compare = o2.getPubDate().compareTo(o1.getPubDate());
-						} else {
-							compare = 1;
-						}
-					}
-					if (compare == 0)
-						compare = -o1.getId().compareTo(o2.getId());
-				}
-			}
-			return compare;
-		}
-
-		abstract int _compare(Article o1, Article o2);
-	}
-
-	private static final class ArticleSpaceFileComparator implements Comparator<ArticleSpaceFile> {
-
-		@Override
-		public int compare(ArticleSpaceFile o1, ArticleSpaceFile o2) {
-			return -(o1.getSpace().getId().compareTo(o2.getSpace().getId()));
-		}
-	}
-
-	private static final class ArticleDateFileComparator implements Comparator<ArticleDateFile> {
-
-		@Override
-		public int compare(ArticleDateFile o1, ArticleDateFile o2) {
-			return o1.getBegin().compareTo(o2.getBegin());
-		}
-
-	}
-
 	private final class YMKey {
 		private int y;
 		private int m;
@@ -432,4 +362,147 @@ public class ArticleQuery implements InitializingBean {
 	public void setMemoryMode(boolean memoryMode) {
 		this.memoryMode = memoryMode;
 	}
+
+	// comparator
+
+	private static abstract class ArticleCommparator implements Comparator<Article> {
+
+		@Override
+		public int compare(Article o1, Article o2) {
+			int compare = 0;
+			if (!ignoreLevel()) {
+				if (o1.getLevel() != null) {
+					if (o2.getLevel() != null) {
+						compare = -o1.getLevel().compareTo(o2.getLevel());
+					} else {
+						compare = -1;
+					}
+				}
+				if (o2.getLevel() != null) {
+					if (o1.getLevel() != null) {
+						compare = o2.getLevel().compareTo(o1.getLevel());
+					} else {
+						compare = 1;
+					}
+				}
+			}
+			if (compare == 0) {
+				compare = _compare(o1, o2);
+				if (compare == 0) {
+					if (o1.getPubDate() != null) {
+						if (o2.getPubDate() != null) {
+							compare = -o1.getPubDate().compareTo(o2.getPubDate());
+						} else {
+							compare = -1;
+						}
+					}
+					if (o2.getPubDate() != null) {
+						if (o1.getPubDate() != null) {
+							compare = o2.getPubDate().compareTo(o1.getPubDate());
+						} else {
+							compare = 1;
+						}
+					}
+					if (compare == 0)
+						compare = -o1.getId().compareTo(o2.getId());
+				}
+			}
+			return compare;
+		}
+
+		abstract int _compare(Article o1, Article o2);
+
+		abstract boolean ignoreLevel();
+	}
+
+	private static final class ArticleSpaceFileComparator implements Comparator<ArticleSpaceFile> {
+
+		@Override
+		public int compare(ArticleSpaceFile o1, ArticleSpaceFile o2) {
+			return -(o1.getSpace().getId().compareTo(o2.getSpace().getId()));
+		}
+	}
+
+	private static final class ArticleDateFileComparator implements Comparator<ArticleDateFile> {
+
+		@Override
+		public int compare(ArticleDateFile o1, ArticleDateFile o2) {
+			return o1.getBegin().compareTo(o2.getBegin());
+		}
+
+	}
+
+	public static final Comparator<Article> defaultComparator = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return 0;
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return false;
+		}
+	};
+	public static final Comparator<Article> defaultComparatorIgnoreLevel = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return 0;
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return true;
+		}
+	};
+	public static final Comparator<Article> commentsComparator = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return o1.getComments() > o2.getComments() ? -1 : ((o1.getComments() < o2.getComments()) ? 1 : 0);
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return true;
+		}
+	};
+	public static final Comparator<Article> commentsComparatorIgnoreLevel = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return o1.getComments() > o2.getComments() ? -1 : ((o1.getComments() < o2.getComments()) ? 1 : 0);
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return true;
+		}
+	};
+
+	public static final Comparator<Article> hitsComparator = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return o1.getHits() > o2.getHits() ? -1 : ((o1.getHits() < o2.getHits()) ? 1 : 0);
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return false;
+		}
+	};
+	public static final Comparator<Article> hitsComparatorIgnoreLevel = new ArticleCommparator() {
+
+		@Override
+		int _compare(Article o1, Article o2) {
+			return o1.getHits() > o2.getHits() ? -1 : ((o1.getHits() < o2.getHits()) ? 1 : 0);
+		}
+
+		@Override
+		boolean ignoreLevel() {
+			return true;
+		}
+	};
 }
