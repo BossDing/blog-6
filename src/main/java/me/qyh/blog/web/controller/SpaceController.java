@@ -24,9 +24,9 @@ public class SpaceController extends BaseController {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.INDEX, new Params());
 	}
 
-	@RequestMapping("page/{idOrAlias}")
-	public Page userPage(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
-		return uiService.renderUserPage(idOrAlias);
+	@RequestMapping("page/{alias}")
+	public Page userPage(@PathVariable("alias") String alias) throws LogicException {
+		return uiService.renderUserPage(alias);
 	}
 
 }

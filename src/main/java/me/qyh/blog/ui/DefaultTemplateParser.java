@@ -52,7 +52,7 @@ public class DefaultTemplateParser implements TemplateParser {
 				}
 			}
 		}
-		return new ParseResult(tpl, new ArrayList<WidgetTpl>(widgets.values()), unknowWidgets);
+		return new ParseResult(new ArrayList<WidgetTpl>(widgets.values()), unknowWidgets);
 	}
 
 	protected void clean(Document doc) {

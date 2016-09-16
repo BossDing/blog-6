@@ -23,6 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
+			<result column="space_name" property="name"/>
 			<result column="space_is_private" property="isPrivate"/>
 			<result column="space_lock" property="lockId"/>
 		</association>
@@ -137,6 +138,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_limitCount,
 			art.comment_limitSec,
 			sp.space_alias,
+			sp.space_name,
 			space_lock,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
@@ -149,54 +151,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE 
 			art.id = #{id}
 		GROUP BY art.id
-	</select>
-
-	<select id="selectByRandom" resultMap="ArticleDetail">
-		SELECT
-			art.id AS art_id,
-			art.content,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.comments,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.editor,
-			art.space_id,
-			art.art_lock,
-			art.allowComment,
-			art.comment_mode,
-			art.comment_asc,
-			art.comment_allowHtml,
-			art.comment_limitCount,
-			art.comment_limitSec,
-			sp.space_alias,
-			space_lock,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
-		FROM
-			blog_article art
-		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
-		WHERE art_lock IS NULL
-			<if test="space != null">
-				AND art.space_id = #{space.name}
-			</if>
-			<if test="begin != null and end != null">
-				AND pubDate BETWEEN #{begin} AND #{end}
-			</if>
-			<if test="status != null">
-				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
-			</if>
-		GROUP BY art.id
-		ORDER BY RAND()
-		LIMIT 1
 	</select>
 	
 	<select id="selectCount" resultType="int">
@@ -408,6 +362,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_limitCount,
 			art.comment_limitSec,
 			sp.space_alias,
+			sp.space_name,
 			space_lock,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
@@ -449,6 +404,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_limitCount,
 			art.comment_limitSec,
 			sp.space_alias,
+			sp.space_name,
 			space_lock,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
@@ -476,4 +432,41 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<update id="updateComments">
 		UPDATE blog_article SET comments = comments + #{comments} WHERE id = #{id}
 	</update>
+	
+	<select id="selectAll" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.content,
+			art.pubDate,
+			art.lastModifyDate,
+			art.title,
+			art.isPrivate,
+			art.hits,
+			art.comments,
+			art.summary,
+			art.art_level,
+			art.art_status,
+			art.art_from,
+			art.editor,
+			art.space_id,
+			art.art_lock,
+			art.allowComment,
+			art.comment_mode,
+			art.comment_asc,
+			art.comment_allowHtml,
+			art.comment_limitCount,
+			art.comment_limitSec,
+			sp.space_alias,
+			sp.space_name,
+			space_lock,
+			sp.is_private AS space_is_private,
+			GROUP_CONCAT(bt.tag_name) AS tags
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		GROUP BY art.id
+	</select>
 </mapper>

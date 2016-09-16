@@ -78,10 +78,13 @@ public class DefaultTplRenderExceptionHandler implements TplRenderErrorDescripti
 						if (!scr.exists()) {
 							description.setMessage(new Message("tplparse.tplNotExists",
 									"模板" + findedTemplateName + "不存在", findedTemplateName));
+						} else {
+							description.addTemplateName(findedTemplateName);
 						}
+					} else {
+						description.addTemplateName(findedTemplateName);
 					}
 
-					description.addTemplateName(findedTemplateName);
 				}
 			}
 		}

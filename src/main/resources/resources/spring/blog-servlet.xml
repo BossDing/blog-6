@@ -48,7 +48,7 @@
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
 			<bean
-				class="me.qyh.blog.web.controller.TemplateReturnMethodReturnValueHandler" />
+				class="me.qyh.blog.web.controller.PageReturnMethodReturnValueHandler" />
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 

@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class ArticleDateFiles {
 	public enum ArticleDateFileMode {
-		Y, YM, YMD
+		Y, YM
 	}
 
 	private List<ArticleDateFile> files = new ArrayList<ArticleDateFile>();
@@ -37,7 +37,6 @@ public class ArticleDateFiles {
 	public ArticleDateFiles(List<ArticleDateFile> files, ArticleDateFileMode mode) {
 		this.files = files;
 		this.mode = mode;
-		calDate();
 	}
 
 	public void calDate() {
@@ -46,7 +45,6 @@ public class ArticleDateFiles {
 			cal.setTime(file.getBegin());
 			int year = cal.get(Calendar.YEAR);
 			int month = cal.get(Calendar.MONTH);
-			int day = cal.get(Calendar.DAY_OF_MONTH);
 			cal.clear();
 			cal.set(Calendar.YEAR, year);
 			switch (mode) {
@@ -59,13 +57,6 @@ public class ArticleDateFiles {
 				cal.set(Calendar.MONTH, month);
 				file.setBegin(cal.getTime());
 				cal.add(Calendar.MONTH, 1);
-				file.setEnd(cal.getTime());
-				break;
-			case YMD:
-				cal.set(Calendar.MONTH, month);
-				cal.set(Calendar.DAY_OF_MONTH, day);
-				file.setBegin(cal.getTime());
-				cal.add(Calendar.DAY_OF_MONTH, 1);
 				file.setEnd(cal.getTime());
 				break;
 			}

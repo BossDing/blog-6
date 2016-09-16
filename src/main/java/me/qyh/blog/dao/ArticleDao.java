@@ -16,8 +16,6 @@ public interface ArticleDao {
 
 	Article selectById(int id);
 
-	Article selectByRandom(ArticleQueryParam param);
-
 	List<ArticleDateFile> selectDateFiles(@Param("space") Space space, @Param("mode") ArticleDateFileMode mode,
 			@Param("queryPrivate") boolean queryPrivate);
 
@@ -42,4 +40,6 @@ public interface ArticleDao {
 	void updateHits(@Param("id") Integer id, @Param("hits") int increase);
 
 	void updateComments(@Param("id") Integer id, @Param("comments") int increase);
+
+	List<Article> selectAll();
 }

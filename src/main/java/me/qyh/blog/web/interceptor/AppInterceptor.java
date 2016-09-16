@@ -74,7 +74,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 					user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
 				}
 				if (user == null) {
-					// auto login
 					user = autoLogin(request, response);
 				}
 

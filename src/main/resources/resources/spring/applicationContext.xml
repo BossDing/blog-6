@@ -147,4 +147,7 @@
 			</props>
 		</property>
 	</bean>
+	
+	<bean class="me.qyh.blog.service.impl.ArticleQuery"/>
+	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl"/>
 </beans>      

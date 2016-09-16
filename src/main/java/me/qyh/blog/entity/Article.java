@@ -235,10 +235,6 @@ public class Article extends BaseLockResource {
 		return ArticleStatus.DELETED.equals(status);
 	}
 
-	public boolean isCacheable() {
-		return isPublished() && !isPrivate;
-	}
-
 	public boolean isPublished() {
 		return ArticleStatus.PUBLISHED.equals(status);
 	}
@@ -366,6 +362,15 @@ public class Article extends BaseLockResource {
 		public Limit getLimit() {
 			return new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 		}
-
 	}
+
+	public boolean hasTag(String tag) {
+		for (Tag _tag : this.tags) {
+			if (tag.equals(_tag.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 }

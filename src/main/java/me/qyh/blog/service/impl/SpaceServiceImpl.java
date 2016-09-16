@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
@@ -33,7 +32,7 @@ public class SpaceServiceImpl implements SpaceService {
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
-	private ArticleDao articleDao;
+	private ArticleQuery articleQuery;
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	@Autowired
@@ -72,7 +71,7 @@ public class SpaceServiceImpl implements SpaceService {
 		// 如果空间改变克私有性或者增加删除了锁，那么需要重建该空间下所有文章的索引
 		if (!db.getIsPrivate().equals(space.getIsPrivate())
 				|| ((db.hasLock() && !space.hasLock()) || (!db.hasLock() && space.hasLock()))) {
-			for (Article article : articleDao.selectPublished(db)) {
+			for (Article article : articleQuery.selectPublished(db)) {
 				articleIndexer.addOrUpdateDocument(article);
 			}
 		}

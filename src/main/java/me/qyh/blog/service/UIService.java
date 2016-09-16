@@ -178,12 +178,13 @@ public interface UIService {
 	/**
 	 * 渲染用户自定义页面
 	 * 
-	 * @param id
+	 * @param alias
+	 *            别名
 	 * @return 不会为null
 	 * @throws LogicException
 	 *             如果页面不存在，数据渲染异常等
 	 */
-	UserPage renderUserPage(String idOrAlias) throws LogicException;
+	UserPage renderUserPage(String alias) throws LogicException;
 
 	/**
 	 * 删除挂件模板
@@ -314,6 +315,6 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	ErrorPage renderErrorPage(Space space, ErrorCode code) throws LogicException;
+	Page renderErrorPage(Space space, ErrorCode code) throws LogicException;
 
 }

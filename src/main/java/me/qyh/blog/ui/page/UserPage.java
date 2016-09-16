@@ -14,6 +14,18 @@ public class UserPage extends Page {
 	private Timestamp createDate;
 	private String alias;
 
+	public UserPage() {
+		super();
+	}
+
+	public UserPage(Integer id) {
+		super(id);
+	}
+
+	public UserPage(String alias) {
+		this.alias = alias;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -50,4 +62,10 @@ public class UserPage extends Page {
 	public final PageType getType() {
 		return PageType.USER;
 	}
+
+	@Override
+	public final String getTemplateName() {
+		return PREFIX + "UserPage:" + alias;
+	}
+
 }

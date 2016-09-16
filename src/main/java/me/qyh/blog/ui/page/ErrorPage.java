@@ -60,11 +60,8 @@ public class ErrorPage extends Page {
 
 	@Override
 	public String getTemplateName() {
-		if (!hasId()) {
-			Space space = getSpace();
-			return PREFIX + (space == null ? errorCode.name() : space.getAlias() + "-" + errorCode.name());
-		}
-		return super.getTemplateName();
+		Space space = getSpace();
+		return PREFIX + (space == null ? errorCode.name() : space.getAlias() + "-" + errorCode.name());
 	}
 
 	public ErrorPage() {

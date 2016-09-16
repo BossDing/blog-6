@@ -50,6 +50,7 @@ var _tpls = [];
 			}
 			data.name="test";
 			data.description="";
+			page.alias = "test";
 			$.ajax({
 				type : "post",
 				url : basePath+"/mgr/page/user/parseWidget",
@@ -152,6 +153,7 @@ var _tpls = [];
 		}
 		page.name="test";
 		page.description="";
+		page.alias = "test";
 		$.ajax({
 			type : "post",
 			url : basePath + '/mgr/page/user/preview',

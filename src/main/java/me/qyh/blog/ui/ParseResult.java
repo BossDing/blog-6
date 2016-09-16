@@ -8,19 +8,13 @@ import me.qyh.blog.ui.widget.WidgetTpl;
 
 public class ParseResult {
 
-	private String pageTpl;
 	private List<WidgetTpl> tpls;
 	private Set<String> unkownWidgets = new HashSet<String>();
 
-	public ParseResult(String pageTpl, List<WidgetTpl> tpls, Set<String> unkownWidgets) {
+	public ParseResult(List<WidgetTpl> tpls, Set<String> unkownWidgets) {
 		super();
-		this.pageTpl = pageTpl;
 		this.tpls = tpls;
 		this.unkownWidgets = unkownWidgets;
-	}
-
-	public String getPageTpl() {
-		return pageTpl;
 	}
 
 	public List<WidgetTpl> getTpls() {

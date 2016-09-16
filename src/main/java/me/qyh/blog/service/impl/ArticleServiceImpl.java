@@ -3,7 +3,6 @@ package me.qyh.blog.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -36,14 +35,12 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.widget.ArticleDateFile;
 import me.qyh.blog.ui.widget.ArticleDateFiles;
 import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.ui.widget.ArticleSpaceFile;
 import me.qyh.blog.web.interceptor.SpaceContext;
-import me.qyh.util.Validators;
 
-@Service
+@Transactional(propagation = Propagation.REQUIRED,rollbackFor=Exception.class)
 public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Autowired
@@ -61,7 +58,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Autowired
 	private LockManager<?> lockManager;
 	@Autowired
-	private ArticleCache articleCache;
+	private ArticleQuery articleQuery;
 
 	private boolean rebuildIndex = true;
 
@@ -70,7 +67,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForView(Integer id) {
-		Article article = articleCache.getArticle(id);
+		Article article = articleQuery.getArticle(id);
 		if (article != null) {
 			if (article.isPublished()) {
 				if (article.isPrivate() && UserContext.get() == null) {
@@ -85,7 +82,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForEdit(Integer id) throws LogicException {
-		Article article = articleCache.getArticle(id);
+		Article article = articleQuery.getArticle(id);
 		if (article == null || article.isDeleted()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -94,7 +91,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	public Article hit(Integer id) {
-		Article article = articleCache.getArticle(id);
+		Article article = articleQuery.getArticle(id);
 		if (article != null) {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
 					? article.isPrivate() ? UserContext.get() != null : true : false;
@@ -109,8 +106,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "articleCache", key = "'article-'+#article.id") })
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
@@ -139,10 +135,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			articleDao.update(article);
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
+			Article updated = articleDao.selectById(article.getId());
 			if (article.isPublished()) {
-				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
 			}
+			articleQuery.addOrUpdate(updated);
 		} else {
 			if (!article.isSchedule()) {
 				if (article.isDraft()) {
@@ -153,17 +150,17 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			}
 			articleDao.insert(article);
 			insertTags(article);
+			Article updated = articleDao.selectById(article.getId());
 			if (article.isPublished()) {
-				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
 			}
+			articleQuery.addOrUpdate(updated);
 		}
 		return article;
 	}
 
 	@Override
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "articleCache", key = "'article-'+#id") })
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -177,6 +174,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		articleDao.update(article);
 		if (article.isPublished())
 			articleIndexer.addOrUpdateDocument(article);
+		articleQuery.addOrUpdate(article);
 	}
 
 	private void insertTags(Article article) {
@@ -202,46 +200,26 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Article getRandomArticle(ArticleQueryParam param) {
-		return articleDao.selectByRandom(param);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache")
 	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode, boolean queryPrivate) {
-		if (mode == null) {
-			mode = ArticleDateFileMode.YM;
-		}
-		List<ArticleDateFile> files = articleDao.selectDateFiles(space, mode, queryPrivate);
-		return new ArticleDateFiles(files, mode);
+		return articleQuery.queryArticleDateFiles(space, mode, queryPrivate);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles(boolean queryPrivate) {
-		return articleDao.selectSpaceFiles(queryPrivate);
+		return articleQuery.queryArticleSpaceFiles(queryPrivate);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
-		if (luceneQuery(param)) {
-			PageResult<Integer> result = articleIndexer.query(param);
-			List<Article> articles = result.hasResult() ? articleDao.selectByIds(result.getDatas())
-					: new ArrayList<Article>();
-			return new PageResult<Article>(param, result.getTotalRow(), articles);
-		} else {
-			int count = articleDao.selectCount(param);
-			List<Article> datas = articleDao.selectPage(param);
-			return new PageResult<Article>(param, count, datas);
-		}
+		return articleQuery.query(param);
 	}
 
 	@Override
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "articleCache", key = "'article-'+#id") })
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -253,11 +231,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
 		articleIndexer.deleteDocument(id);
+		articleQuery.addOrUpdate(article);
 	}
 
 	@Override
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "articleCache", key = "'article-'+#id") })
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -271,10 +249,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			status = ArticleStatus.SCHEDULED;
 		}
 		article.setStatus(status);
-
 		articleDao.update(article);
 		if (article.isPublished())
 			articleIndexer.addOrUpdateDocument(article);
+		articleQuery.addOrUpdate(article);
 	}
 
 	@Override
@@ -291,7 +269,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		// 删除博客所有的评论
 		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
-		articleIndexer.deleteDocument(id);
+		articleQuery.remove(id);
 	}
 
 	@Override
@@ -308,12 +286,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0")
 	public int pushScheduled() {
 		// 查询将要发表的文章
-		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
+		List<Article> articles = articleQuery.queryScheduled(Timestamp.valueOf(LocalDateTime.now()));
 		for (Article article : articles) {
 			article.setStatus(ArticleStatus.PUBLISHED);
 			articleDao.update(article);
 			if (article.isPublished())
 				articleIndexer.addOrUpdateDocument(article);
+			articleQuery.addOrUpdate(article);
 		}
 		return articles.size();
 	}
@@ -323,11 +302,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		logger.debug("开始重新建立博客索引" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 		long begin = System.currentTimeMillis();
 		articleIndexer.deleteAll();
-		List<Article> articles = articleDao.selectPublished(null);
-		if (!CollectionUtils.isEmpty(articles)) {
-			for (Article article : articles) {
-				articleIndexer.addOrUpdateDocument(article);
-			}
+		List<Article> articles = articleQuery.selectPublished(null);
+		for (Article article : articles) {
+			articleIndexer.addOrUpdateDocument(article);
 		}
 		long end = System.currentTimeMillis();
 		logger.debug("重建博客索引成功，共耗时" + (end - begin));
@@ -340,8 +317,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		}
 	}
 
-	private boolean luceneQuery(ArticleQueryParam param) {
-		return !Validators.isEmptyOrNull(param.getQuery(), true);
+	private void checkLock(String lockId) throws LogicException {
+		if (lockId != null) {
+			Lock lock = lockManager.findLock(lockId);
+			if (lock == null) {
+				throw new LogicException("lock.notexists", "锁不存在");
+			}
+		}
 	}
 
 	/**
@@ -356,14 +338,5 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	public void setRebuildIndex(boolean rebuildIndex) {
 		this.rebuildIndex = rebuildIndex;
-	}
-
-	private void checkLock(String lockId) throws LogicException {
-		if (lockId != null) {
-			Lock lock = lockManager.findLock(lockId);
-			if (lock == null) {
-				throw new LogicException("lock.notexists", "锁不存在");
-			}
-		}
 	}
 }

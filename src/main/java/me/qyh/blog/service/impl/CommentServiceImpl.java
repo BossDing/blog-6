@@ -68,7 +68,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
 
 	@Autowired
-	private ArticleCache articleCache;
+	private ArticleQuery articleQuery;
 	@Autowired
 	private OauthUserDao oauthUserDao;
 	@Autowired
@@ -131,7 +131,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryComment(CommentQueryParam param) {
-		Article article = articleCache.getArticle(param.getArticle().getId());
+		Article article = articleQuery.getArticle(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
@@ -190,7 +190,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user.isDisabled()) {
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
 		}
-		Article article = articleCache.getArticle(comment.getArticle().getId());
+		Article article = articleQuery.getArticle(comment.getArticle().getId());
 		// 博客不存在
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -280,11 +280,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 		commentDao.deleteById(id);
 		// 更新文章评论数量
-		Article article = articleCache.getArticle(comment.getArticle().getId());
+		Article article = articleQuery.getArticle(comment.getArticle().getId());
 		articleDao.updateComments(article.getId(), -totalCount);
-		if (article.isCacheable()) {
-			article.decrementComment(totalCount);
-		}
+		article.decrementComment(totalCount);
 	}
 
 	@Override
@@ -293,7 +291,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user == null) {
 			throw new LogicException("comment.user.notExists", "账户不存在");
 		}
-		Article article = articleCache.getArticle(articleId);
+		Article article = articleQuery.getArticle(articleId);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -302,9 +300,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (count > 0) {
 			commentDao.deleteByUserAndArticle(user, article);
 			articleDao.updateComments(article.getId(), -count);
-			if (article.isCacheable()) {
-				article.decrementComment(count);
-			}
+			article.decrementComment(count);
 		}
 	}
 

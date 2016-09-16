@@ -104,16 +104,18 @@ public class PageValidator implements Validator {
 				return;
 			}
 			String alias = userPage.getAlias();
-			if (alias != null) {
-				if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
-					errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
-							"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
-					return;
-				}
-				if (!validateUserPageAlias(alias)) {
-					errors.reject("page.alias.invalid", "页面别名不被允许");
-					return;
-				}
+			if (Validators.isEmptyOrNull(alias, true)) {
+				errors.reject("page.alias.blank", "页面别名不能为空");
+				return;
+			}
+			if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
+				errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
+						"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
+				return;
+			}
+			if (!validateUserPageAlias(alias)) {
+				errors.reject("page.alias.invalid", "页面别名不被允许");
+				return;
 			}
 		}
 

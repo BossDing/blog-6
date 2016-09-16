@@ -16,9 +16,9 @@ public class UserPageController {
 	@Autowired
 	private UIService uiService;
 
-	@RequestMapping("{idOrAlias}")
-	public Page index(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
-		return uiService.renderUserPage(idOrAlias);
+	@RequestMapping("{alias}")
+	public Page index(@PathVariable("alias") String alias) throws LogicException {
+		return uiService.renderUserPage(alias);
 	}
 
 }

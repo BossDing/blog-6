@@ -15,7 +15,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.ui.widget.WidgetTpl;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Page extends Id {
+public class Page extends Id implements Cloneable {
 
 	/**
 	 * 
@@ -105,4 +105,10 @@ public class Page extends Id {
 		}
 		return datas;
 	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
+
 }

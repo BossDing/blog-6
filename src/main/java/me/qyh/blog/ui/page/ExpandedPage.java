@@ -22,4 +22,17 @@ public class ExpandedPage extends Page {
 		return PageType.EXPANDED;
 	}
 
+	@Override
+	public final String getTemplateName() {
+		return PREFIX + "ExpandedPage:" + getId();
+	}
+
+	public ExpandedPage() {
+		super();
+	}
+
+	public ExpandedPage(Integer id) {
+		super(id);
+	}
+
 }

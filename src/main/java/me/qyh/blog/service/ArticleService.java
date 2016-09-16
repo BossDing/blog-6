@@ -35,13 +35,6 @@ public interface ArticleService {
 	Article getArticleForEdit(Integer id) throws LogicException;
 
 	/**
-	 * 随机获取一篇文章
-	 * 
-	 * @return
-	 */
-	Article getRandomArticle(ArticleQueryParam param);
-
-	/**
 	 * 查询文章日期归档
 	 * 
 	 * @param space
