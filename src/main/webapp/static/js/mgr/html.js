@@ -4,8 +4,9 @@ var tags = [];
 var init = false;
 $(document).ready(function(){
 	CKEDITOR.plugins.addExternal( 'codemirror', basePath+'/static/editor/ckeditor/plugins/codemirror/' );
+	CKEDITOR.plugins.addExternal( 'prettifycode', basePath+'/static/editor/ckeditor/plugins/prettifycode/','plugin.js' );
 	editor = CKEDITOR.replace('editor', {
-		extraPlugins : 'codemirror'
+		extraPlugins : 'codemirror,prettifycode'
 	});
 	CKEDITOR.config.enterMode = CKEDITOR.ENTER_BR;
 	CKEDITOR.config.shiftEnterMode = CKEDITOR.ENTER_P;
