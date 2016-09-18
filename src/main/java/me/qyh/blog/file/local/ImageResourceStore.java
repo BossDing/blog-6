@@ -249,11 +249,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	protected File doResize(LocalCommonFile cf, Resize resize, File thumb) throws Exception {
 		File src = cf.getFile();
 		ImageInfo ii = imageHelper.read(src);
-		String ext = FilenameUtils.getExtension(thumb.getName());
 		boolean needResize = needResize(resize, ii.getWidth(), ii.getHeight());
-		// 将图片转为jpeg|webp格式，保持大小一致(获取图片封面)
-		File cover = new File(thumbAbsFolder, cf.getKey() + File.separator + FilenameUtils.getBaseName(cf.getKey())
-				+ (ImageHelper.WEBP.equalsIgnoreCase(ext) ? WEBP_EXT : JPEG_EXT));
+		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg的封面
+		File cover = new File(thumbAbsFolder,
+				cf.getKey() + File.separator + FilenameUtils.getBaseName(cf.getKey()) + JPEG_EXT);
 		if (!cover.exists()) {
 			FileUtils.forceMkdir(cover.getParentFile());
 			if (ImageHelper.isGIF(ii.getExtension())) {

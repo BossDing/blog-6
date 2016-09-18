@@ -1,10 +1,10 @@
 package me.qyh.blog.service.impl;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -50,24 +50,19 @@ import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.lionsoul.jcseg.analyzer.v5x.JcsegAnalyzer5X;
-import org.lionsoul.jcseg.extractor.SummaryExtractor;
-import org.lionsoul.jcseg.extractor.impl.TextRankKeywordsExtractor;
-import org.lionsoul.jcseg.extractor.impl.TextRankSummaryExtractor;
-import org.lionsoul.jcseg.tokenizer.SentenceSeg;
 import org.lionsoul.jcseg.tokenizer.core.ADictionary;
-import org.lionsoul.jcseg.tokenizer.core.DictionaryFactory;
 import org.lionsoul.jcseg.tokenizer.core.ILexicon;
-import org.lionsoul.jcseg.tokenizer.core.ISegment;
 import org.lionsoul.jcseg.tokenizer.core.IWord;
-import org.lionsoul.jcseg.tokenizer.core.JcsegException;
 import org.lionsoul.jcseg.tokenizer.core.JcsegTaskConfig;
-import org.lionsoul.jcseg.tokenizer.core.SegmentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
@@ -78,7 +73,10 @@ import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.util.Validators;
 
-public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<ContextClosedEvent> {
+public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, ApplicationListener<ContextClosedEvent> {
+
+	@Autowired
+	private TagDao tagDao;
 
 	private static final Logger logger = LoggerFactory.getLogger(NrtArticleIndexer.class);
 
@@ -104,12 +102,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 
 	private static final long DEFAULT_COMMIT_PERIOD = 30 * 60 * 1000;
 
-	private JcsegMode mode;
-	private static ADictionary dictionary;
-	/**
-	 * 关键词，摘要提取
-	 */
-	private static JcsegTaskConfig config;
+	private Set<String> tags = new HashSet<String>();
 
 	public enum JcsegMode {
 
@@ -126,21 +119,11 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		}
 	}
 
-	static {
-		config = new JcsegTaskConfig(true);
-		config.setClearStopwords(true); // 设置过滤停止词
-		config.setAppendCJKSyn(false); // 设置关闭同义词追加
-		config.setKeepUnregWords(false); // 设置去除不识别的词条
-		dictionary = DictionaryFactory.createSingletonDictionary(config);
-	}
-
 	public NrtArticleIndexer(String indexDir, JcsegMode mode, long commitPeriod) throws IOException {
-		this.mode = mode;
 		this.dir = FSDirectory.open(Paths.get(indexDir));
 		JcsegTaskConfig taskConfig = new JcsegTaskConfig();
 		taskConfig.setClearStopwords(true);
 		analyzer5x = new JcsegAnalyzer5X(mode.getMode(), taskConfig);
-		dictionary.add(ILexicon.CJK_WORD, "魔", IWord.T_CJK_WORD);
 		this.analyzer = new LimitTokenCountAnalyzer(analyzer5x, maxContentTermResults);
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
@@ -238,7 +221,7 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
 			for (Tag tag : tags) {
-				doc.add(new StringField(TAG, tag.getName(), Field.Store.YES));
+				doc.add(new StringField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
 			}
 		}
 		return doc;
@@ -309,7 +292,6 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 					datas.add(Integer.parseInt(doc.get(ID)));
 				}
 			}
-
 			return new PageResult<Integer>(param, Math.min(MAX_RESULTS, total), datas);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
@@ -366,39 +348,6 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 	}
 
 	@Override
-	public String getSummary(String content, int max) {
-		String cleaned = clean(content);
-		int _max = cleaned.length();
-		if (max > _max) {
-			max = _max;
-		}
-		try {
-			ISegment segmen = SegmentFactory.createJcseg(mode.getMode(), new Object[] { config, dictionary });
-			SummaryExtractor extractor = new TextRankSummaryExtractor(segmen, new SentenceSeg());
-			String summary = extractor.getSummary(new StringReader(cleaned), max);
-			if (summary.length() > max) {
-				return summary.substring(0, max);
-			}
-			return summary;
-		} catch (JcsegException | IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
-
-	@Override
-	public List<String> getTags(String content, int max) {
-		try {
-			ISegment segmen = SegmentFactory.createJcseg(mode.getMode(), new Object[] { config, dictionary });
-			TextRankKeywordsExtractor extractor = new TextRankKeywordsExtractor(segmen);
-			extractor.setKeywordsNum(max);
-			List<String> keywords = extractor.getKeywords(new StringReader(clean(content)));
-			return keywords;
-		} catch (JcsegException | IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
-
-	@Override
 	public void deleteAll() {
 		try {
 			oriWriter.deleteAll();
@@ -416,24 +365,45 @@ public class NrtArticleIndexer implements ArticleIndexer, ApplicationListener<Co
 	}
 
 	@Override
-	public synchronized void addTags(String... tags) {
-		if (tags != null && tags.length > 0) {
-			ADictionary dic = analyzer5x.getDict();
+	public synchronized void removeTag(String... tags) {
+		ADictionary dict = analyzer5x.getDict();
+		for (String tag : tags) {
+			this.tags.remove(tag);
+			dict.remove(ILexicon.CJK_WORD, tag);
+		}
+	}
+
+	@Override
+	public synchronized void reloadTags() {
+		ADictionary dict = analyzer5x.getDict();
+		for (String tag : this.tags) {
+			dict.remove(ILexicon.CJK_WORD, tag);
+		}
+		this.tags.clear();
+		// 将所有tag加载到字典中
+		List<Tag> tags = tagDao.selectAll();
+		if (!CollectionUtils.isEmpty(tags)) {
+			List<String> _tags = new ArrayList<>();
+			for (Tag tag : tags) {
+				_tags.add(tag.getName());
+			}
+			addTags(_tags.toArray(new String[] {}));
+		}
+	}
+
+	@Override
+	public void addTags(String... tags) {
+		synchronized (this) {
+			ADictionary dict = analyzer5x.getDict();
 			for (String tag : tags) {
-				dic.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);
-				dictionary.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);
+				this.tags.add(tag);
+				dict.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);
 			}
 		}
 	}
 
 	@Override
-	public synchronized void removeTag(String... tags) {
-		if (tags != null && tags.length > 0) {
-			ADictionary dic = analyzer5x.getDict();
-			for (String tag : tags) {
-				dic.remove(ILexicon.CJK_WORD, tag);
-				dictionary.remove(ILexicon.CJK_WORD, tag);
-			}
-		}
+	public void afterPropertiesSet() throws Exception {
+		reloadTags();
 	}
 }

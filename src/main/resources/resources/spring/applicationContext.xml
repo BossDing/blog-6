@@ -148,6 +148,10 @@
 		</property>
 	</bean>
 	
-	<bean class="me.qyh.blog.service.impl.ArticleQuery"/>
+	<bean class="me.qyh.blog.service.impl.ArticleQuery">
+		<property name="memoryMode" value="true"/>
+	</bean>
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl"/>
+	
+	<bean class="me.qyh.blog.service.impl.ArticleQueryReloadAspect"/>
 </beans>      

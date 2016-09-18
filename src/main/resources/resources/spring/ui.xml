@@ -90,5 +90,5 @@
 	<bean class="me.qyh.blog.ui.DefaultTplRenderExceptionHandler" />
 
 	<!-- 用来增加拓展页面 -->
-	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />
+	<bean class="me.qyh.blog.ui.page.ExpandedPageServer"/>
 </beans>      

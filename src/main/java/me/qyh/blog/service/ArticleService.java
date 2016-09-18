@@ -2,15 +2,16 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
+import me.qyh.blog.bean.ArticleDateFiles;
+import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.bean.ArticleNav;
+import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.ui.widget.ArticleDateFiles;
-import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.ui.widget.ArticleSpaceFile;
 
 public interface ArticleService {
 
@@ -59,22 +60,6 @@ public interface ArticleService {
 	 * @return
 	 */
 	PageResult<Article> queryArticle(ArticleQueryParam param);
-
-	/**
-	 * 根据内容提取文章中的标签
-	 * 
-	 * @param content
-	 * @return
-	 */
-	List<String> getTags(String content, int max);
-
-	/**
-	 * 根据内容提取摘要
-	 * 
-	 * @param content
-	 * @return
-	 */
-	String getSummary(String content, int max);
 
 	/**
 	 * 发表要发表的计划博客
@@ -137,5 +122,13 @@ public interface ArticleService {
 	 * @throws LogicException
 	 */
 	void publishDraft(Integer id) throws LogicException;
+
+	/**
+	 * 上一篇，下一篇文章
+	 * 
+	 * @param article
+	 * @return
+	 */
+	ArticleNav getArticleNav(Article article);
 
 }

@@ -5,12 +5,12 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import me.qyh.blog.bean.ArticleDateFile;
+import me.qyh.blog.bean.ArticleSpaceFile;
+import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.ui.widget.ArticleDateFile;
-import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.ui.widget.ArticleSpaceFile;
 
 public interface ArticleDao {
 
@@ -42,4 +42,9 @@ public interface ArticleDao {
 	void updateComments(@Param("id") Integer id, @Param("comments") int increase);
 
 	List<Article> selectAll();
+
+	Article getPreviousArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
+
+	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
+	
 }

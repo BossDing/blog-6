@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.bean.ArticleDateFiles;
+import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.bean.ArticleNav;
+import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.CommentDao;
@@ -35,9 +39,6 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.widget.ArticleDateFiles;
-import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.ui.widget.ArticleSpaceFile;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -90,6 +91,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	public Article hit(Integer id) {
 		Article article = articleQuery.getArticle(id);
 		if (article != null) {
@@ -97,8 +99,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 					? article.isPrivate() ? UserContext.get() != null : true : false;
 			if (hit) {
 				articleDao.updateHits(id, 1);
-				article.addHits();
 				articleIndexer.addOrUpdateDocument(article);
+				article.addHits();
 				return article;
 			}
 		}
@@ -106,6 +108,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
@@ -160,6 +163,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -190,6 +194,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 					tag.setName(tag.getName().trim());
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
+					articleIndexer.addTags(tag.getName());
 				} else {
 					articleTag.setTag(tagDb);
 				}
@@ -219,6 +224,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -235,6 +241,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -256,6 +263,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -273,19 +281,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	public List<String> getTags(String content, int max) {
-		return articleIndexer.getTags(content, max);
-	}
-
-	@Override
-	public String getSummary(String content, int max) {
-		return articleIndexer.getSummary(content, max);
-	}
-
-	@Override
+	@ArticleQueryReload
 	@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0")
 	public int pushScheduled() {
-		// 查询将要发表的文章
 		List<Article> articles = articleQuery.queryScheduled(Timestamp.valueOf(LocalDateTime.now()));
 		for (Article article : articles) {
 			article.setStatus(ArticleStatus.PUBLISHED);
@@ -308,6 +306,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		}
 		long end = System.currentTimeMillis();
 		logger.debug("重建博客索引成功，共耗时" + (end - begin));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ArticleNav getArticleNav(Article article) {
+		return articleQuery.getArticleNav(article, UserContext.get() != null);
 	}
 
 	@Override

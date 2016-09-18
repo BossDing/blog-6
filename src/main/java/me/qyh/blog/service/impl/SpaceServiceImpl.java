@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.SpaceDao;
-import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
@@ -34,8 +33,6 @@ public class SpaceServiceImpl implements SpaceService {
 	@Autowired
 	private ArticleQuery articleQuery;
 	@Autowired
-	private ArticleIndexer articleIndexer;
-	@Autowired
 	private LockManager<?> lockManager;
 
 	@Override
@@ -51,6 +48,7 @@ public class SpaceServiceImpl implements SpaceService {
 	}
 
 	@Override
+	@ArticleQueryReload
 	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#space.alias"),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void updateSpace(Space space) throws LogicException {
@@ -68,13 +66,7 @@ public class SpaceServiceImpl implements SpaceService {
 
 		spaceDao.update(space);
 
-		// 如果空间改变克私有性或者增加删除了锁，那么需要重建该空间下所有文章的索引
-		if (!db.getIsPrivate().equals(space.getIsPrivate())
-				|| ((db.hasLock() && !space.hasLock()) || (!db.hasLock() && space.hasLock()))) {
-			for (Article article : articleQuery.selectPublished(db)) {
-				articleIndexer.addOrUpdateDocument(article);
-			}
-		}
+		articleQuery.reloadStore();
 	}
 
 	@Override

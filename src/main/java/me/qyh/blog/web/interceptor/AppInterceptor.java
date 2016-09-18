@@ -41,6 +41,7 @@ import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
 import me.qyh.blog.security.csrf.MissingCsrfTokenException;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
 import me.qyh.util.UrlUtils;
@@ -66,7 +67,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		String spaceAlias = urlHelper.getUrls(request).getSpace();
-		if (handler instanceof HandlerMethod) {
+		if (executeHandler(handler)) {
 			try {
 				HttpSession session = request.getSession(false);
 				User user = null;
@@ -117,9 +118,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private void enableLogin(Object methodHandler, User user) {
 		// auth check
-		EnsureLogin ensureLogin = getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class);
-		if (ensureLogin != null && user == null) {
-			throw new AuthencationException();
+		if(methodHandler instanceof HandlerMethod){
+			EnsureLogin ensureLogin = getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class);
+			if (ensureLogin != null && user == null) {
+				throw new AuthencationException();
+			}
 		}
 	}
 
@@ -191,7 +194,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		if (handler instanceof HandlerMethod) {
+		if (executeHandler(handler)) {
 			removeContext();
 		}
 		if (ex != null && (ex instanceof TemplateProcessingException)) {
@@ -329,5 +332,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		public boolean match(HttpServletRequest request) {
 			return !allowedMethods.matcher(request.getMethod()).matches();
 		}
+	}
+
+	private boolean executeHandler(Object handler) {
+		return handler instanceof HandlerMethod
+				// 拓展页面
+				|| handler instanceof ExpandedPageRequestController;
 	}
 }

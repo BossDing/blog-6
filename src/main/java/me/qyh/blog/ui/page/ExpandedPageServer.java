@@ -27,7 +27,6 @@ public class ExpandedPageServer {
 		}
 		return null;
 	}
-
 	public boolean isEmpty() {
 		return handlers.isEmpty();
 	}

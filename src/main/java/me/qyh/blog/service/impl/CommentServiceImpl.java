@@ -178,6 +178,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	}
 
 	@Override
+	@ArticleQueryReload
 	public Comment insertComment(Comment comment) throws LogicException {
 		long now = System.currentTimeMillis();
 		if (isInvalidUser(comment.getUser())) {

@@ -246,32 +246,6 @@ function changeEditorCss(csses,style){
     }
 }
 
-function getTags() {
-			var html = editor.getData();
-			if ($.trim(html) == "") {
-				showTagError('<div id="tag-tip" class="alert alert-danger">请完善文章内容</div>')
-			} else {
-				var url = basePath + '/mgr/article/getTags';
-				$.post(url, {
-					"content" : html
-				}, function callBack(data) {
-					if (data.success) {
-						data = data.data;
-						if (data.length > 0) {
-							tags = [];
-							$("#tag-container").html('')
-							for (var i = 0; i < data.length; i++) {
-								addTag(data[i]);
-							}
-							renderTag();
-						}
-					} else {
-						showTagError(data.message);
-					}
-				})
-			}
-		}
-
 		function showTagError(error) {
 			if ($("#tag-tip").length == 0)
 				$("#tags-input").before(error);
@@ -297,22 +271,6 @@ function getTags() {
 				tags.push({
 					"name" : $.trim(tag)
 				});
-			}
-		}
-
-		function getSummary() {
-			var html = editor.getData();
-			if ($.trim(html) != "") {
-				var url = basePath + '/mgr/article/getSummary';
-				$.post(url, {
-					"content" : html
-				}, function callBack(data) {
-					if (data.success) {
-						data = data.data;
-						$("#summary").val(data);
-					} else {
-					}
-				})
 			}
 		}
 

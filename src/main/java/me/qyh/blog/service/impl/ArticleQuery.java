@@ -14,6 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import me.qyh.blog.bean.ArticleDateFile;
+import me.qyh.blog.bean.ArticleDateFiles;
+import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.bean.ArticleNav;
+import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
@@ -21,14 +26,13 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.ui.widget.ArticleDateFile;
-import me.qyh.blog.ui.widget.ArticleDateFiles;
-import me.qyh.blog.ui.widget.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.ui.widget.ArticleSpaceFile;
 import me.qyh.util.Validators;
 
 /**
  * 事实上，一般只有一个线程做写操作，真的需要考虑那么多吗。。
+ * <p>
+ * <strong>由于传递的都是内存中的引用，所以获取到的用于浏览的任何文章都不能进行任何写操作！！！</strong>
+ * </p>
  * 
  * @author mhlx
  *
@@ -39,6 +43,8 @@ public class ArticleQuery implements InitializingBean {
 	private ArticleDao articleDao;
 	@Autowired
 	private ArticleIndexer articleIndexer;
+
+	private boolean reloading;
 
 	private Map<Integer, Article> store = new ConcurrentHashMap<Integer, Article>();
 
@@ -57,13 +63,12 @@ public class ArticleQuery implements InitializingBean {
 	 * @return null如果不存在
 	 */
 	public Article getArticle(Integer id) {
-		Article article = store.get(id);
-		if (!memoryMode) {
-			if (article == null) {
-				article = articleDao.selectById(id);
-			}
+		waitWhileReloading();
+		if (memoryMode) {
+			return store.get(id);
+		} else {
+			return articleDao.selectById(id);
 		}
-		return article;
 	}
 
 	@LockProtected
@@ -72,6 +77,7 @@ public class ArticleQuery implements InitializingBean {
 	}
 
 	public List<Article> selectPublished(Space space) {
+		waitWhileReloading();
 		if (memoryMode) {
 			List<Article> articles = new ArrayList<>();
 			for (Article article : store.values()) {
@@ -88,7 +94,46 @@ public class ArticleQuery implements InitializingBean {
 		}
 	}
 
+	public ArticleNav getArticleNav(Article article, boolean queryPrivate) {
+		waitWhileReloading();
+		Article previous = null, next = null;
+		if (memoryMode) {
+			List<Article> collect = new ArrayList<>();
+			collect.add(article);
+			for (Article inStore : store.values()) {
+				if (inStore.equals(article)) {
+					continue;
+				}
+				if (!inStore.isPublished()) {
+					continue;
+				}
+				Space space = article.getSpace();
+				if (space != null && !space.equals(inStore.getSpace())) {
+					continue;
+				}
+				collect.add(inStore);
+			}
+			Collections.sort(collect, defaultComparatorIgnoreLevel);
+			int index = collect.indexOf(article);
+			if (index == 0) {
+				// no previous
+				next = collect.get(index + 1);
+			} else if (index == collect.size() - 1) {
+				// no next;
+				previous = collect.get(index - 1);
+			} else {
+				next = collect.get(index + 1);
+				previous = collect.get(index - 1);
+			}
+		} else {
+			previous = articleDao.getPreviousArticle(article, queryPrivate);
+			next = articleDao.getNextArticle(article, queryPrivate);
+		}
+		return new ArticleNav(previous, next);
+	}
+
 	public PageResult<Article> query(ArticleQueryParam param) {
+		waitWhileReloading();
 		if (memoryMode) {
 			if (luceneQuery(param)) {
 				PageResult<Integer> result = articleIndexer.query(param);
@@ -174,6 +219,7 @@ public class ArticleQuery implements InitializingBean {
 	}
 
 	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode, boolean queryPrivate) {
+		waitWhileReloading();
 		if (mode == null) {
 			mode = ArticleDateFileMode.YM;
 		}
@@ -232,6 +278,7 @@ public class ArticleQuery implements InitializingBean {
 	}
 
 	public List<ArticleSpaceFile> queryArticleSpaceFiles(boolean queryPrivate) {
+		waitWhileReloading();
 		if (memoryMode) {
 			Map<Space, Integer> countMap = new HashMap<Space, Integer>();
 			for (Article article : store.values()) {
@@ -261,6 +308,7 @@ public class ArticleQuery implements InitializingBean {
 	}
 
 	public List<Article> queryScheduled(Timestamp date) {
+		waitWhileReloading();
 		if (memoryMode) {
 			List<Article> articles = new ArrayList<>();
 			for (Article article : store.values()) {
@@ -268,17 +316,19 @@ public class ArticleQuery implements InitializingBean {
 					articles.add(article);
 				}
 			}
-			return articles;
+			return new ArrayList<>(articles);
 		} else {
 			return articleDao.selectScheduled(date);
 		}
 	}
 
 	public void remove(Integer id) {
+		waitWhileReloading();
 		store.remove(id);
 	}
 
 	public void addOrUpdate(Article article) {
+		waitWhileReloading();
 		while (true) {
 			Article inStore = store.get(article.getId());
 			if (inStore == null) {
@@ -299,6 +349,49 @@ public class ArticleQuery implements InitializingBean {
 			List<Article> articles = articleDao.selectAll();
 			for (Article article : articles) {
 				store.put(article.getId(), article);
+			}
+		}
+	}
+
+	/**
+	 * 当事务发生回滚时，这里重新读取数据
+	 */
+	public void reloadStore() {
+		reloading = true;
+		try {
+			articleIndexer.reloadTags();
+			// 重建文章索引
+			articleIndexer.deleteAll();
+			if (memoryMode) {
+				synchronized (this) {
+					List<Article> articles = articleDao.selectAll();
+					Map<Integer, Article> reloadMap = new HashMap<>();
+					for (Article article : articles) {
+						reloadMap.put(article.getId(), article);
+					}
+					store = new ConcurrentHashMap<>(reloadMap);
+					for (Article article : store.values()) {
+						if (article.isPublished()) {
+							articleIndexer.addOrUpdateDocument(article);
+						}
+					}
+				}
+			} else {
+				for (Article article : articleDao.selectPublished(null)) {
+					articleIndexer.addOrUpdateDocument(article);
+				}
+			}
+		} finally {
+			reloading = false;
+		}
+	}
+
+	public void waitWhileReloading() {
+		while (reloading) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				throw new SystemException(e.getMessage(), e);
 			}
 		}
 	}

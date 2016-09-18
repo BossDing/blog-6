@@ -115,39 +115,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</update>
 
 	<select id="selectById" resultMap="ArticleDetail">
-		SELECT
-			art.id AS art_id,
-			art.content,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.comments,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.editor,
-			art.space_id,
-			art.art_lock,
-			art.allowComment,
-			art.comment_mode,
-			art.comment_asc,
-			art.comment_allowHtml,
-			art.comment_limitCount,
-			art.comment_limitSec,
-			sp.space_alias,
-			sp.space_name,
-			space_lock,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
-		FROM
-			blog_article art
-		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		<include refid="articleDetailSql"></include>
 		WHERE 
 			art.id = #{id}
 		GROUP BY art.id
@@ -339,39 +307,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectScheduled" resultMap="ArticleDetail">
-		SELECT
-			art.id AS art_id,
-			art.content,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.comments,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.editor,
-			art.space_id,
-			art.art_lock,
-			art.allowComment,
-			art.comment_mode,
-			art.comment_asc,
-			art.comment_allowHtml,
-			art.comment_limitCount,
-			art.comment_limitSec,
-			sp.space_alias,
-			sp.space_name,
-			space_lock,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
-		FROM
-			blog_article art
-		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		<include refid="articleDetailSql"></include>
 		WHERE
 			art.art_status = 1<!-- SCHEDULED -->
 		AND 
@@ -381,39 +317,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	
 	<select id="selectPublished" resultMap="ArticleDetail">
-		SELECT
-			art.id AS art_id,
-			art.content,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.comments,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.editor,
-			art.space_id,
-			art.art_lock,
-			art.allowComment,
-			art.comment_mode,
-			art.comment_asc,
-			art.comment_allowHtml,
-			art.comment_limitCount,
-			art.comment_limitSec,
-			sp.space_alias,
-			sp.space_name,
-			space_lock,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
-		FROM
-			blog_article art
-		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		<include refid="articleDetailSql"></include>
 		WHERE art.art_status = 0
 		<if test="space != null">
 			AND art.space_id = #{space.id}
@@ -434,6 +338,59 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</update>
 	
 	<select id="selectAll" resultMap="ArticleDetail">
+		<include refid="articleDetailSql"></include>
+		GROUP BY art.id
+	</select>
+	
+	<select id="getPreviousArticle" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.title,
+			sp.space_alias,
+			sp.space_name,
+			sp.is_private AS space_is_private
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		WHERE art.art_status = 0
+		AND art.id  <![CDATA[ < ]]> #{article.id}
+		<if test="article.space != null">
+			AND art.space_id = #{article.space.id}
+		</if>
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+			AND sp.is_private = false
+		</if>
+		ORDER BY art.pubDate DESC,art.id DESC
+		LIMIT 0,1
+	</select>
+	
+	<select id="getNextArticle" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.title,
+			sp.space_alias,
+			sp.space_name,
+			sp.is_private AS space_is_private
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		WHERE art.art_status = 0
+		AND art.id  > #{article.id}
+		<if test="article.space != null">
+			AND art.space_id = #{article.space.id}
+		</if>
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+			AND sp.is_private = false
+		</if>
+		ORDER BY art.pubDate ASC,art.id ASC
+		LIMIT 0,1
+	</select>
+	
+	<sql id="articleDetailSql">
 		SELECT
 			art.id AS art_id,
 			art.content,
@@ -467,6 +424,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			ON art.space_id = sp.id
 		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
-		GROUP BY art.id
-	</select>
+	</sql>
 </mapper>
