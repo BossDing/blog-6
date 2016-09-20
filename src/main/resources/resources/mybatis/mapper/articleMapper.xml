@@ -347,8 +347,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.id AS art_id,
 			art.title,
 			sp.space_alias,
-			sp.space_name,
-			sp.is_private AS space_is_private
+			sp.space_name
 		FROM
 			blog_article art
 		LEFT OUTER JOIN blog_space sp
@@ -371,8 +370,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.id AS art_id,
 			art.title,
 			sp.space_alias,
-			sp.space_name,
-			sp.is_private AS space_is_private
+			sp.space_name
 		FROM
 			blog_article art
 		LEFT OUTER JOIN blog_space sp

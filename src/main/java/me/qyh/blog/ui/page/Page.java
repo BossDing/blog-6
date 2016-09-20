@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import me.qyh.blog.entity.Id;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.widget.WidgetTpl;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -65,6 +66,7 @@ public class Page extends Id implements Cloneable {
 		this.type = type;
 	}
 
+	@JsonIgnore
 	public String getTemplateName() {
 		return PREFIX + getId() + "-" + getType();
 	}
@@ -107,8 +109,12 @@ public class Page extends Id implements Cloneable {
 	}
 
 	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 	}
 
 }

@@ -50,7 +50,7 @@ var _tpls = [];
 			}
 			data.name="test";
 			data.description="";
-			page.alias = "test";
+			data.alias = "test";
 			$.ajax({
 				type : "post",
 				url : basePath+"/mgr/page/user/parseWidget",

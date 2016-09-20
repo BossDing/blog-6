@@ -64,6 +64,12 @@
 								th:href="@{/mgr/page/expanded/index}">扩展页面管理</a></li>
 							<li><a th:class="${tag == 'tpl-widget'}? active:''"
 								th:href="@{/mgr/widget/user/index}">自定义挂件管理</a></li>
+							<li><a th:class="${tag == 'tpl-export'}? active:''"
+								th:href="@{/mgr/tpl/export}">模板导出</a></li>
+							<li><a th:class="${tag == 'tpl-import'}? active:''"
+								th:href="@{/mgr/tpl/import}">模板导入</a></li>
+							<li><a th:class="${tag == 'tpl-clearCache'}? active:''"
+								th:href="@{/mgr/tpl/clearCache}">缓存清除</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 					<li><a th:href="@{/mgr/tag/index}"
 						th:class="${tag == 'tag'}? active:''"> 标签管理</a></li>

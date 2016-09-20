@@ -96,6 +96,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			} catch (AuthencationException e) {
 				// 防止死循环
 				if (spaceAlias != null && SpaceContext.get() == null) {
+					removeContext();
 					response.setStatus(403);
 					response.sendRedirect(urlHelper.getUrl() + "/login");
 					return false;
@@ -118,7 +119,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private void enableLogin(Object methodHandler, User user) {
 		// auth check
-		if(methodHandler instanceof HandlerMethod){
+		if (methodHandler instanceof HandlerMethod) {
 			EnsureLogin ensureLogin = getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class);
 			if (ensureLogin != null && user == null) {
 				throw new AuthencationException();
@@ -219,6 +220,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		request.setAttribute(CsrfToken.class.getName(), csrfToken);
 		request.setAttribute(csrfToken.getParameterName(), csrfToken);
 
+		if ("get".equalsIgnoreCase(request.getMethod())) {
+			// GET请求不能检查，否则死循环
+			return;
+		}
+
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}
@@ -227,9 +233,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			actualToken = request.getParameter(csrfToken.getParameterName());
 		}
 		if (!csrfToken.getToken().equals(actualToken)) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request));
-			}
+			logger.debug("Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request));
 			if (missingToken) {
 				throw new MissingCsrfTokenException(actualToken);
 			} else {

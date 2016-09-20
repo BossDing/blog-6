@@ -70,17 +70,18 @@ public class GlobalControllerExceptionHandler {
 			if ("get".equalsIgnoreCase(request.getMethod())) {
 				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
 			}
-			return getErrorForward(request, 403);
+			return getErrorRedirect(request, 403);
 		}
 	}
 
 	@ResponseStatus(HttpStatus.FORBIDDEN) // 403
 	@ExceptionHandler(CsrfException.class)
-	public void handleCsrfAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+	public String handleCsrfAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("csrfAuthencation", "认证信息失效，请刷新页面后重试")));
+			return null;
 		} else {
-			resp.sendError(403);
+			return getErrorRedirect(request, 403);
 		}
 	}
 
@@ -120,7 +121,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, ex.getLogicMessage()));
 			return null;
 		} else {
-			return new ModelAndView(getErrorForward(request, 200)).addObject(BaseMgrController.ERROR,
+			return new ModelAndView(getErrorRedirect(request, 200)).addObject(BaseMgrController.ERROR,
 					ex.getLogicMessage());
 		}
 	}
@@ -147,7 +148,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidParameter", "数据格式异常")));
 			return null;
 		} else {
-			return getErrorForward(request, 400);
+			return getErrorRedirect(request, 400);
 		}
 	}
 
@@ -160,7 +161,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
 			return null;
 		} else {
-			return getErrorForward(request, 400);
+			return getErrorRedirect(request, 400);
 		}
 	}
 
@@ -184,7 +185,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.405", "405")));
 			return null;
 		} else {
-			return getErrorForward(request, 405);
+			return getErrorRedirect(request, 405);
 		}
 	}
 
@@ -197,7 +198,7 @@ public class GlobalControllerExceptionHandler {
 					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize())));
 			return null;
 		} else {
-			return getErrorForward(req, 400);
+			return getErrorRedirect(req, 400);
 		}
 	}
 
@@ -209,7 +210,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
 			return null;
 		} else {
-			return getErrorForward(request, 500);
+			return getErrorRedirect(request, 500);
 		}
 	}
 
@@ -221,7 +222,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.404", "404")));
 			return null;
 		}
-		return getErrorForward(request, 404);
+		return getErrorRedirect(request, 404);
 	}
 
 	private String getFullUrl(HttpServletRequest request) {
@@ -259,12 +260,12 @@ public class GlobalControllerExceptionHandler {
 		return getSpaceFromRequestUrl(request.getRequestURI().substring(request.getContextPath().length()));
 	}
 
-	private String getErrorForward(HttpServletRequest request, int error) {
+	private String getErrorRedirect(HttpServletRequest request, int error) {
 		String alias = getSpaceFromRequest(request);
 		if (Validators.isEmptyOrNull(alias, true)) {
-			return "forward:/error/" + error;
+			return "redirect:/error/" + error;
 		} else {
-			return "forward:/space/" + alias + "/error/" + error;
+			return "redirect:/space/" + alias + "/error/" + error;
 		}
 	}
 }

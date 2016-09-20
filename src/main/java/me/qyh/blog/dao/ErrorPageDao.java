@@ -16,4 +16,6 @@ public interface ErrorPageDao {
 
 	void deleteById(Integer id);
 
+	ErrorPage selectById(Integer id);
+
 }

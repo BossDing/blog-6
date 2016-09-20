@@ -321,7 +321,7 @@ var _tpls = [];
 		$.ajax({
 			type : "post",
 			 async: false,
-			url : basePath+"/mgr/page/USER/"+pageId+"/widget/"+widgetType+"/"+widgetId+"/delete",
+			url : basePath+"/mgr/page/EXPANDED/"+pageId+"/widget/"+widgetType+"/"+widgetId+"/delete",
 			data : {},
 			success : function(data){
 				if(data.success){

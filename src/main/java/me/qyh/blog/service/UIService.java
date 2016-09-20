@@ -2,6 +2,8 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
+import me.qyh.blog.bean.ImportPageWrapper;
+import me.qyh.blog.bean.ImportResult;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
@@ -316,5 +318,27 @@ public interface UIService {
 	 * @throws LogicException
 	 */
 	Page renderErrorPage(Space space, ErrorCode code) throws LogicException;
+
+	/**
+	 * 导出某个空间下的所有页面模板
+	 * <p>
+	 * <strong>无法导出拓展页面的模板！</strong>
+	 * </p>
+	 * 
+	 * @param space
+	 * @return
+	 * @throws LogicException
+	 */
+	List<Page> export(Space space, boolean exportExpandedPage) throws LogicException;
+
+	/**
+	 * 导入空间下的模板
+	 * 
+	 * @param page
+	 * @param space
+	 * @return 该空间下以前所有的模板
+	 * @throws LogicException
+	 */
+	ImportResult importTemplate(List<ImportPageWrapper> pages, Space space) throws LogicException;
 
 }

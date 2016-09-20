@@ -42,6 +42,13 @@
 					<constructor-arg index="3"
 						value="classpath:me/qyh/blog/ui/widget/comments.html" />
 				</bean>
+				<bean class="me.qyh.blog.ui.widget.ArticleNavWidgetHandler">
+					<constructor-arg index="0" value="6" />
+					<constructor-arg index="1" value="上一篇下一篇" />
+					<constructor-arg index="2" value="articleNav" />
+					<constructor-arg index="3"
+						value="classpath:me/qyh/blog/ui/widget/articleNav.html" />
+				</bean>
 			</list>
 		</property>
 	</bean>
@@ -90,5 +97,5 @@
 	<bean class="me.qyh.blog.ui.DefaultTplRenderExceptionHandler" />
 
 	<!-- 用来增加拓展页面 -->
-	<bean class="me.qyh.blog.ui.page.ExpandedPageServer"/>
+	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />
 </beans>      

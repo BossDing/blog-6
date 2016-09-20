@@ -3,6 +3,7 @@ package me.qyh.blog.web.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,8 +59,17 @@ public class ExpandedPageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "build", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult build(@RequestBody @Validated ExpandedPage expandedPage) throws LogicException {
-		uiService.buildTpl(expandedPage);
+	public JsonResult build(@RequestBody @Validated ExpandedPage expandedPage, HttpServletRequest request,
+			HttpServletResponse response) throws LogicException {
+		ExpandedPage copy = new ExpandedPage();
+		BeanUtils.copyProperties(expandedPage, copy);
+		uiService.renderPreviewPage(expandedPage);
+		try {
+			tplRender.tryRender(expandedPage, request, response);
+		} catch (TplRenderException e) {
+			return new JsonResult(false, e.getRenderErrorDescription());
+		}
+		uiService.buildTpl(copy);
 		return new JsonResult(true, new Message("page.expanded.build.success", "保存成功"));
 	}
 

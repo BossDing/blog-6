@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link
+	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<!--[if lt IE 9]>
+  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<title>模板导出</title>
+</head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('tpl-export')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2">
+					<form th:action="@{/mgr/tpl/export}" method="post">
+						<div class="form-group">
+							<label>空间选择</label> <select class="form-control" name="spaceId">
+								<option value="">无</option>
+								<option th:each="space : ${spaces}" th:text="${space.name}"
+									th:value="${space.id}"></option>
+							</select>
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" id="exportExpandedPage"/>是否导出拓展页面模板
+							</label>
+						</div>
+							<input type="hidden" th:name="${_csrf.parameterName}"
+							th:value="${_csrf.token}" />
+						<input type="hidden" name="exportExpandedPage" value="false" id="exportExpandedPageHidden"/>
+						<button type="button" id="export" class="btn btn-default">导出</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$("#export").click(function(){
+				$("#exportExpandedPageHidden").val($("#exportExpandedPage").prop("checked"));
+				$('form').submit();
+			});
+		})
+	</script>
+</body>
+</html>

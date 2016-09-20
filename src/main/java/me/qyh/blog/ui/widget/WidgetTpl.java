@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import me.qyh.blog.entity.Id;
 import me.qyh.blog.ui.page.Page;
 
-public class WidgetTpl extends Id {
+public class WidgetTpl extends Id implements Comparable<WidgetTpl> {
 
 	/**
 	 * 
@@ -18,6 +18,8 @@ public class WidgetTpl extends Id {
 	private Page page;
 	private String tpl;
 	private Widget widget;
+	@JsonIgnore
+	private int order;
 
 	public Page getPage() {
 		return page;
@@ -57,5 +59,19 @@ public class WidgetTpl extends Id {
 		this.tpl = tpl.tpl;
 		this.page = tpl.page;
 		this.widget = tpl.widget;
+		this.order = tpl.order;
+	}
+
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
+	@Override
+	public int compareTo(WidgetTpl o) {
+		return order > o.order ? 1 : (order == o.order) ? 0 : -1;
 	}
 }

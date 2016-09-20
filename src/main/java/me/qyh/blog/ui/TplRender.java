@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.View;
-import org.thymeleaf.engine.TemplateManager;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
 
@@ -48,8 +47,6 @@ public class TplRender {
 	private String doRender(String viewTemplateName, HttpServletRequest request, HttpServletResponse response,
 			Map<String, Object> datas) throws TplRenderException {
 		// 清除模板缓存
-		TemplateManager templateManager = resolver.getTemplateEngine().getConfiguration().getTemplateManager();
-		templateManager.clearCachesFor(viewTemplateName);
 		try {
 			if (datas == null) {
 				datas = new HashMap<String, Object>();
@@ -61,7 +58,6 @@ public class TplRender {
 			TemplateDebugResponseWrapper wrapper = new TemplateDebugResponseWrapper(response);
 			view.render(datas, request, wrapper);
 			// 再次清除缓存
-			templateManager.clearCachesFor(viewTemplateName);
 			return wrapper.output();
 		} catch (Throwable e) {
 			throw new TplRenderException(tplRenderErrorDescriptionHandler.convert(e, request.getServletContext()));

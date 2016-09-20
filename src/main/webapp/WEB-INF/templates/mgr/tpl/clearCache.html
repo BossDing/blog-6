@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link
+	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<!--[if lt IE 9]>
+  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<title>模板缓存清除</title>
+</head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('tpl-export')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2">
+					<button class="btn btn-primary" id="clearMgrCache">清除管理台页面缓存</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$("#clearMgrCache").click(function(){
+				$.post(basePath+'/mgr/tpl/clearCache',{},function(data){
+					bootbox.alert(data.message);
+				})
+			});
+		});
+	</script>
+</body>
+</html>

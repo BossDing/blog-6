@@ -21,7 +21,7 @@ import me.qyh.util.Validators;
 public class PageValidator implements Validator {
 
 	public static final int PAGE_TPL_MAX_LENGTH = 500000;
-	private static final int WIDGET_TPL_MAX_LENGTH = 50000;
+	public static final int WIDGET_TPL_MAX_LENGTH = 50000;
 
 	private static final int PAGE_NAME_MAX_LENGTH = 20;
 	private static final int PAGE_DESCRIPTION_MAX_LENGTH = 500;

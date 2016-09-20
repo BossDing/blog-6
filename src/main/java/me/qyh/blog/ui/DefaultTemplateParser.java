@@ -32,6 +32,7 @@ public class DefaultTemplateParser implements TemplateParser {
 		Map<String, WidgetTpl> widgets = new HashMap<String, WidgetTpl>();
 		Set<String> unknowWidgets = new HashSet<>();
 		if (!eles.isEmpty()) {
+			int order = 0;
 			for (Element ele : eles) {
 				String name = ele.attr("name");
 				WidgetTag tag = new WidgetTag(name);
@@ -41,8 +42,11 @@ public class DefaultTemplateParser implements TemplateParser {
 						tag.put(attribute.getKey(), attribute.getValue());
 					}
 				}
+				order++;
 				WidgetTpl widget = !widgets.containsKey(name) ? query.query(tag) : widgets.get(name);
 				if (widget != null) {
+					int eleOrder = getOrder(ele);
+					widget.setOrder(eleOrder == -1 ? order : eleOrder);
 					widgets.put(name, widget);
 					ele.removeAttr(name);
 				} else {
@@ -70,6 +74,17 @@ public class DefaultTemplateParser implements TemplateParser {
 		} catch (Exception ex) {
 
 		}
+	}
+
+	private int getOrder(Element e) {
+		String order = e.attr("order");
+		if (order != null) {
+			try {
+				return Integer.parseInt(order);
+			} catch (Exception ex) {
+			}
+		}
+		return -1;
 	}
 
 }

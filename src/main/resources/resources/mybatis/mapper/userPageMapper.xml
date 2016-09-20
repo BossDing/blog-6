@@ -41,6 +41,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.id = #{id}
 	</select>
 	
+	<select id="selectBySpace" resultMap="UserPageDetail">
+		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id 
+		WHERE 
+		<choose>
+			<when test="space == null">
+				bpu.space_id IS NULL
+			</when>
+			<otherwise>
+				bpu.space_id = #{space.id}
+			</otherwise>
+		</choose>
+	</select>
+	
 	<select id="selectByAlias" resultMap="UserPageDetail">
 		SELECT bpu.id,space_id,page_tpl,page_name,page_description,page_create_date,space_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id WHERE bpu.page_alias = #{alias}
 	</select>

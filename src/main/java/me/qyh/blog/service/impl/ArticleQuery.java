@@ -114,16 +114,19 @@ public class ArticleQuery implements InitializingBean {
 				collect.add(inStore);
 			}
 			Collections.sort(collect, defaultComparatorIgnoreLevel);
-			int index = collect.indexOf(article);
-			if (index == 0) {
-				// no previous
-				next = collect.get(index + 1);
-			} else if (index == collect.size() - 1) {
-				// no next;
-				previous = collect.get(index - 1);
-			} else {
-				next = collect.get(index + 1);
-				previous = collect.get(index - 1);
+			int collectSize = collect.size();
+			if (collectSize > 1) {
+				int index = collect.indexOf(article);
+				if (index == 0) {
+					// no previous
+					next = collect.get(index + 1);
+				} else if (index == collectSize - 1) {
+					// no next;
+					previous = collect.get(index - 1);
+				} else {
+					next = collect.get(index + 1);
+					previous = collect.get(index - 1);
+				}
 			}
 		} else {
 			previous = articleDao.getPreviousArticle(article, queryPrivate);
@@ -558,7 +561,7 @@ public class ArticleQuery implements InitializingBean {
 
 		@Override
 		boolean ignoreLevel() {
-			return true;
+			return false;
 		}
 	};
 	public static final Comparator<Article> commentsComparatorIgnoreLevel = new ArticleCommparator() {

@@ -93,7 +93,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@ArticleQueryReload
 	public Article hit(Integer id) {
-		Article article = articleQuery.getArticle(id);
+		Article article = articleQuery.getArticleWithLockCheck(id);
 		if (article != null) {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
 					? article.isPrivate() ? UserContext.get() != null : true : false;

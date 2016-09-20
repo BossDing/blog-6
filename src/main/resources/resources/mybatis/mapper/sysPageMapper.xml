@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="page_target" property="target" typeHandler="EnumOrdinalTypeHandler"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id"/>
+			<result column="space_alias" property="alias"/>
 		</association>
 	</resultMap>
 	
@@ -18,8 +19,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</insert>
 
 	<select id="selectBySpaceAndPageTarget" resultMap="SysPageDetail">
-		SELECT id,page_tpl,page_target,space_id
-		FROM blog_page_sys
+		SELECT bps.id,page_tpl,page_target,space_id,space_alias
+		FROM blog_page_sys bps
+		LEFT OUTER JOIN blog_space bs ON space_id = bs.id
 		WHERE page_target = #{pageTarget,javaType=PageTarget,typeHandler=EnumOrdinalTypeHandler}
 		<choose>
 			<when test="space == null">
@@ -44,4 +46,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<delete id="deleteById">
 		DELETE FROM blog_page_sys WHERE id = #{id}
 	</delete>
+	
+	<select id="selectById" resultMap="SysPageDetail">
+		SELECT bps.id,page_tpl,page_target,space_id,space_alias
+		FROM blog_page_sys bps
+		LEFT OUTER JOIN blog_space bs ON space_id = bs.id
+		WHERE bps.id = #{id}
+	</select>
 </mapper>
