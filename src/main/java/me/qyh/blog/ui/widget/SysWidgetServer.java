@@ -1,6 +1,7 @@
 package me.qyh.blog.ui.widget;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +14,8 @@ import me.qyh.util.Validators;
 
 public class SysWidgetServer implements InitializingBean {
 
-	private Map<String, SysWidgetHandler> sysWidgetHandlers = new HashMap<String, SysWidgetHandler>();
-	private Map<Integer, SysWidgetHandler> _sysWidgetHandlers = new HashMap<Integer, SysWidgetHandler>();
+	private Map<String, SysWidgetHandler> sysWidgetHandlers = new LinkedHashMap<String, SysWidgetHandler>();
+	private Map<Integer, SysWidgetHandler> _sysWidgetHandlers = new LinkedHashMap<Integer, SysWidgetHandler>();
 
 	public SysWidgetHandler getHandler(String name) {
 		return sysWidgetHandlers.get(name);
@@ -73,6 +74,14 @@ public class SysWidgetServer implements InitializingBean {
 				add(handler);
 			}
 		}
+	}
+
+	public List<SysWidget> getSysWidgets() {
+		List<SysWidget> widgets = new ArrayList<SysWidget>();
+		for (SysWidgetHandler handler : sysWidgetHandlers.values()) {
+			widgets.add(handler.getWidget());
+		}
+		return widgets;
 	}
 
 	@Override

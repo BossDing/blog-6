@@ -58,6 +58,18 @@ public class UserWidgetMgrController extends BaseMgrController {
 		return "mgr/widget/user/index";
 	}
 
+	@RequestMapping("list")
+	@ResponseBody
+	public JsonResult listJson(@Validated UserWidgetQueryParam userWidgetQueryParam, BindingResult result,
+			Model model) {
+		if (result.hasErrors()) {
+			userWidgetQueryParam = new UserWidgetQueryParam();
+			userWidgetQueryParam.setCurrentPage(1);
+		}
+		userWidgetQueryParam.setPageSize(configService.getPageSizeConfig().getUserWidgetPageSize());
+		return new JsonResult(true, uiService.queryUserWidget(userWidgetQueryParam));
+	}
+
 	@RequestMapping(value = "create", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult create(@RequestBody @Validated final UserWidget userWidget) throws LogicException {

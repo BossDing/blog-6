@@ -17,6 +17,7 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.ui.widget.SysWidget;
 import me.qyh.blog.ui.widget.UserWidget;
 import me.qyh.blog.ui.widget.Widget;
 import me.qyh.blog.ui.widget.WidgetTpl;
@@ -340,5 +341,11 @@ public interface UIService {
 	 * @throws LogicException
 	 */
 	ImportResult importTemplate(List<ImportPageWrapper> pages, Space space) throws LogicException;
+
+	/**
+	 * 查询所有系统挂件
+	 * @return
+	 */
+	List<SysWidget> querySysWidgets();
 
 }

@@ -25,6 +25,8 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 
 	public static final String PARAMETER_KEY = "articleId";
 
+	private static final String ATTR_ID = "id";
+
 	public ArticleWidgetHandler(Integer id, String name, String dataName, Resource tplRes) {
 		super(id, name, dataName, tplRes);
 	}
@@ -35,11 +37,24 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 	@Override
 	public Object getWidgetData(Space space, Params params, Map<String, String> attrs) throws LogicException {
 		Integer id = params.get(PARAMETER_KEY, Integer.class);
+		if (id == null) {
+			// 尝试从属性中获取ID
+			String attId = attrs.get(ATTR_ID);
+			if (attId != null) {
+				try {
+					id = Integer.parseInt(attId);
+				} catch (Exception e) {
+					//
+				}
+			}
+		}
+		if (id == null)
+			return null;
 		Article article = articleService.getArticleForView(id);
 		if (article == null ||
 		// 文章不存在或者不在目标空间下
 				(!space.getAlias().equals(article.getSpace().getAlias()))) {
-			throw new LogicException("article.notExists", "文章不存在");
+			return null;
 		}
 		params.add("article", article);
 		return article;
@@ -50,7 +65,7 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 		if (space == null) {
 			return false;
 		}
-		return params.has(PARAMETER_KEY);
+		return true;
 	}
 
 	@Override

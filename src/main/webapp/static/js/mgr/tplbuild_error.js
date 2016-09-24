@@ -35,6 +35,22 @@ var _tpls = [];
 			$("#grab_url").val("")
 		});
 		
+		$("#allWidgetsModal").on("show.bs.modal", function() {
+			showSysWidget();
+		})
+		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+			var html = '';
+			var id = $(e.target).attr('id');
+			switch(id){
+			case "sys-tab":
+				showSysWidget();
+				break;
+			case "user-tab":
+				showUserWidget(1)
+				break;
+			}
+		})
+		
 		$("#widgetsModal").on("shown.bs.modal",function(){
 			$("#widgetsModal .modal-body").html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
 			var data = {"errorCode":$("#errorCode").val(),"tpl":editor.getValue()};
@@ -100,6 +116,68 @@ var _tpls = [];
 			
 		})
 	});
+	
+	
+	function addWidget(name){
+		editor.insertValue('<widget name="'+name+'"></widget>');
+		$("#allWidgetsModal").modal('hide')
+	}
+	
+	function showSysWidget(){
+		var html = '';
+		$.get(basePath+"/mgr/widget/sys/all",{},function(data){
+			if(!data.success){
+				bootbox.alert(data.message);
+				return ;
+			}
+			data = data.data;
+			html += '<div class=" table-responsive" style="margin-top:10px">';
+			html += '<table class="table">';
+			for(var i=0;i<data.length;i++){
+				html += '<tr>';
+				html += '<td>'+data[i].name+'</td>';
+				html += '<td><a onclick="addWidget(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '</tr>';
+			}
+			html += '</table>';
+			html += '</div>';
+			$('[aria-labelledby="sys-tab"]').html(html);
+		});
+	}
+	function showUserWidget(i){
+		var html = '';
+		$.get(basePath+"/mgr/widget/user/list",{"currentPage":i},function(data){
+			if(!data.success){
+				bootbox.alert(data.message);
+				return ;
+			}
+			var page = data.data;
+			html += '<div class=" table-responsive" style="margin-top:10px">';
+			html += '<table class="table">';
+			for(var i=0;i<page.datas.length;i++){
+				html += '<tr>';
+				html += '<td>'+page.datas[i].name+'</td>';
+				html += '<td><a onclick="addWidget(\''+page.datas[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '</tr>';
+			}
+			html += '</table>';
+			html += '</div>';
+			
+			if(page.totalPage > 1){
+				html += '<div>';
+				html += '<ul class="pagination">';
+				for(var i=page.listbegin;i<=page.listend-1;i++){
+					html += '<li>';
+					html += '<a href="###" onclick="showUserWidget(\''+i+'\')" >'+i+'</a>';
+					html += '</li>';
+				}
+				html += '</ul>';
+				html += '</div>';
+			}
+			$('[aria-labelledby="user-tab"]').html(html);
+		});
+	}
+	
 	function showWidget(o){
 		var index= o.attr("data-index");
 		var tpl = _tpls[index];

@@ -54,6 +54,7 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.ui.widget.SysWidget;
 import me.qyh.blog.ui.widget.SysWidgetHandler;
 import me.qyh.blog.ui.widget.SysWidgetServer;
 import me.qyh.blog.ui.widget.UserWidget;
@@ -96,6 +97,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<ErrorCode, Resource>();
 	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<ErrorCode, String>();
+
+	@Override
+	public List<SysWidget> querySysWidgets() {
+		return systemWidgetServer.getSysWidgets();
+	}
 
 	@Override
 	public void insertUserWidget(UserWidget userWidget) throws LogicException {

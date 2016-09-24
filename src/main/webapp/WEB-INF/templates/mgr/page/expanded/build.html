@@ -56,8 +56,10 @@
 					<form style="display: none" id="tplForm">
 						<input type="hidden" th:value="${page.id}" id="pageId">
 					</form>
+						<button class="btn btn-primary" type="button" data-toggle="modal"
+						data-target="#allWidgetsModal">挂件浏览</button>
 					<button class="btn btn-primary" type="button" data-toggle="modal"
-						data-target="#widgetsModal">挂件</button>
+						data-target="#widgetsModal">当前挂件</button>
 					<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
 					<button class="btn btn-primary" type="button" onclick="save()">提交</button>
 				</div>
@@ -74,6 +76,38 @@
 				</div>
 				<div class="modal-body">
 					<div class="tip"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="modal " id="allWidgetsModal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">所有挂件</h4>
+				</div>
+				<div class="modal-body">
+					<ul id="myTab" class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#sys"
+							id="sys-tab" role="tab" data-toggle="tab" aria-controls="home"
+							aria-expanded="true">系统挂件</a></li>
+						<li role="presentation"><a href="#user" role="tab"
+							id="user-tab" data-toggle="tab" aria-controls="profile">自定义挂件</a></li>
+					</ul>
+					<div id="myTabContent" class="tab-content">
+						<div role="tabpanel" class="tab-pane fade in active" id="sys"
+							aria-labelledby="sys-tab">
+							<img th:src="@{/static/img/loading.gif}" class="img-responsive center-block"/>
+						</div>
+						<div role="tabpanel" class="tab-pane fade" id="user"
+							aria-labelledby="user-tab">
+							<img th:src="@{/static/img/loading.gif}" class="img-responsive center-block"/>
+						</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
