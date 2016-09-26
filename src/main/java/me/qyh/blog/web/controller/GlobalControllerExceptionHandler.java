@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.servlet.FlashMap;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
@@ -44,7 +42,6 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.util.UrlUtils;
-import me.qyh.util.Validators;
 
 /**
  * 无法处理页面渲染时的异常。
@@ -107,22 +104,19 @@ public class GlobalControllerExceptionHandler {
 		}
 		String redirectUrl = getFullUrl(request);
 		LockHelper.storeLockBean(request, new LockBean(lock, redirectUrl));
-		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
-		if (flashMap != null) {
-			flashMap.put("tip", lock.getLockResource().getLockTip());
-		}
+		RequestContextUtils.getOutputFlashMap(request).put("tip", lock.getLockResource().getLockTip());
 		return "redirect:" + url;
 	}
 
 	@ExceptionHandler(LogicException.class)
-	public ModelAndView handleLogicException(HttpServletRequest request, HttpServletResponse resp, LogicException ex)
+	public String handleLogicException(HttpServletRequest request, HttpServletResponse resp, LogicException ex)
 			throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ex.getLogicMessage()));
 			return null;
 		} else {
-			return new ModelAndView(getErrorRedirect(request, 200)).addObject(BaseMgrController.ERROR,
-					ex.getLogicMessage());
+			RequestContextUtils.getOutputFlashMap(request).put(BaseMgrController.ERROR, ex.getLogicMessage());
+			return getErrorRedirect(request, 200);
 		}
 	}
 
@@ -233,39 +227,7 @@ public class GlobalControllerExceptionHandler {
 		return url;
 	}
 
-	/**
-	 * 从/space/test/**获取space test<br>
-	 * 从/test/** 获取null
-	 * 
-	 * @param url
-	 * @return
-	 */
-	private String getSpaceFromRequestUrl(String url) {
-		if (url.startsWith("/space/")) {
-			// /space/test
-			String part = url.substring(7);
-			if (!part.isEmpty()) {
-				int index = part.indexOf("/");
-				if (index != -1) {
-					return part.substring(0, index);
-				} else {
-					return part;
-				}
-			}
-		}
-		return null;
-	}
-
-	private String getSpaceFromRequest(HttpServletRequest request) {
-		return getSpaceFromRequestUrl(request.getRequestURI().substring(request.getContextPath().length()));
-	}
-
 	private String getErrorRedirect(HttpServletRequest request, int error) {
-		String alias = getSpaceFromRequest(request);
-		if (Validators.isEmptyOrNull(alias, true)) {
-			return "redirect:/error/" + error;
-		} else {
-			return "redirect:/space/" + alias + "/error/" + error;
-		}
+		return "redirect:/error/" + error;
 	}
 }

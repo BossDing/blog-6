@@ -34,6 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="comment_allowHtml" property="allowHtml"/>
 			<result column="comment_limitCount" property="limitCount"/>
 			<result column="comment_limitSec" property="limitSec"/>
+			<result column="comment_check" property="check"/>
 		</association>
 	</resultMap>
 	
@@ -55,10 +56,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec},#{commentConfig.check})
 	</insert>
 	
 	<update id="update">
@@ -107,6 +108,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				</if>
 				<if test="commentConfig.limitSec != null">
 					comment_limitSec = #{commentConfig.limitSec},
+				</if>
+				<if test="commentConfig.check != null">
+					comment_check = #{commentConfig.check},
 				</if>
 			</if>
 			lastModifyDate = #{lastModifyDate}
@@ -411,6 +415,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_allowHtml,
 			art.comment_limitCount,
 			art.comment_limitSec,
+			art.comment_check,
 			sp.space_alias,
 			sp.space_name,
 			space_lock,

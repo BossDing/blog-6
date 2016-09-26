@@ -175,7 +175,7 @@ public class Article extends BaseLockResource {
 		if (count == 1) {
 			return _comments.decrementAndGet();
 		}
-		return _comments.updateAndGet(i -> i > count ? i - count : 0);
+		return _comments.updateAndGet(i -> i - count);
 	}
 
 	public int getComments() {
@@ -292,6 +292,7 @@ public class Article extends BaseLockResource {
 		private CommentMode commentMode;
 		private Integer limitCount;
 		private Integer limitSec;
+		private Boolean check;// 审核
 
 		public enum CommentMode {
 			LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
@@ -362,6 +363,14 @@ public class Article extends BaseLockResource {
 		public Limit getLimit() {
 			return new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 		}
+
+		public Boolean getCheck() {
+			return check;
+		}
+
+		public void setCheck(Boolean check) {
+			this.check = check;
+		}
 	}
 
 	public boolean hasTag(String tag) {
@@ -372,5 +381,5 @@ public class Article extends BaseLockResource {
 		}
 		return false;
 	}
-	
+
 }

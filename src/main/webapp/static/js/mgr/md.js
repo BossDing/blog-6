@@ -119,6 +119,7 @@ var publishing = false;
     			commentConfig.allowHtml = $("#allowHtml").prop("checked");
     			commentConfig.limitSec = $("#limitSec").val();
     			commentConfig.limitCount = $("#limitCount").val();
+    			commentConfig.check = $("#check").prop("checked");
     			article.commentConfig = commentConfig;
     			me.prop("disabled",true);
     			var url = basePath+"/mgr/article/write";
@@ -280,8 +281,8 @@ var publishing = false;
 			if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
 				commentConfig.limitCount = 10;
 			}
+			commentConfig.check = $("#check").prop("checked");
 			article.commentConfig = commentConfig;
-			
 			var url = basePath+"/mgr/article/write";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();

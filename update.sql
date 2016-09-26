@@ -1,0 +1,2 @@
+ALTER TABLE blog_article ADD COLUMN comment_check BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE blog_comment ADD COLUMN comment_status INT NOT NULL DEFAULT 0;

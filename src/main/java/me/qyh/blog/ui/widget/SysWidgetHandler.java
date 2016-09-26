@@ -7,11 +7,13 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.Params;
+import me.qyh.util.Validators;
 
 /**
  * 用来处理系统挂件
@@ -30,6 +32,11 @@ public abstract class SysWidgetHandler {
 	private String name;
 	private String dataName;
 	private String defaultTpl;
+
+	/**
+	 * 增加了dataName属性，用于自定义dataName,这样可以防止多个同名挂件
+	 */
+	private static final String DATA_NAME_ATT = "dataName";
 
 	public SysWidgetHandler(Integer id, String name, String dataName, Resource tplRes) {
 		this.id = id;
@@ -79,6 +86,12 @@ public abstract class SysWidgetHandler {
 	public Widget getWidget(Space space, Params params, Map<String, String> attrs) throws LogicException {
 		SysWidget sw = getWidget();
 		sw.setDataName(dataName);
+		if (!CollectionUtils.isEmpty(attrs)) {
+			String dataName = attrs.get(DATA_NAME_ATT);
+			if (!Validators.isEmptyOrNull(dataName, true)) {
+				sw.setDataName(dataName.trim());
+			}
+		}
 		sw.setData(getWidgetData(space, params, attrs));
 		return sw;
 	}

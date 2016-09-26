@@ -29,7 +29,7 @@ public class DefaultTemplateParser implements TemplateParser {
 		Document doc = Jsoup.parse(tpl);
 		clean(doc);
 		Elements eles = doc.getElementsByTag("widget");
-		Map<String, WidgetTpl> widgets = new HashMap<String, WidgetTpl>();
+		Map<WidgetTag, WidgetTpl> widgets = new HashMap<WidgetTag, WidgetTpl>();
 		Set<String> unknowWidgets = new HashSet<>();
 		if (!eles.isEmpty()) {
 			int order = 0;
@@ -42,12 +42,11 @@ public class DefaultTemplateParser implements TemplateParser {
 						tag.put(attribute.getKey(), attribute.getValue());
 					}
 				}
-				order++;
-				WidgetTpl widget = !widgets.containsKey(name) ? query.query(tag) : widgets.get(name);
+				WidgetTpl widget = !widgets.containsKey(tag) ? query.query(tag) : widgets.get(tag);
 				if (widget != null) {
 					int eleOrder = getOrder(ele);
 					widget.setOrder(eleOrder == -1 ? order : eleOrder);
-					widgets.put(name, widget);
+					widgets.put(tag, widget);
 					ele.removeAttr(name);
 				} else {
 					// 挂件不存在

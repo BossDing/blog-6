@@ -31,12 +31,16 @@ var login = $("#login").val() == 'true';
 						success : function(data){
 							if(data.success){
 								$("#comment-box").val("");
-								bootbox.alert("评论成功");
-								var html = buildHtml(data.data.parent,data.data);
-								if(asc){
-									$("#comments-container").append(html);
+								if(data.data.status == 'CHECK'){
+									bootbox.alert("评论成功，将会在审核通过后显示");
 								}else{
-									$("#comments-container").prepend(html);
+									bootbox.alert("评论成功");
+									var html = buildHtml(data.data.parent,data.data);
+									if(asc){
+										$("#comments-container").append(html);
+									}else{
+										$("#comments-container").prepend(html);
+									}
 								}
 							}else{
 								bootbox.alert(data.message);
@@ -108,17 +112,21 @@ var login = $("#login").val() == 'true';
 									success : function(data){
 										if(data.success){
 											var c = data.data;
-											var p = c.parent;
-											var html = buildHtml(p,c);
-											if(!tree || c.parents.length > max){
-												if(tree){
-													$("#comment-"+parent).after(html);
-												}else{
-													$("#comments-container").append(html);
-												}
-											}else if(tree){
-									   			$("#comment-"+parent).find(".media-body:first").append(html);
-									   		}
+											if(c.status == 'CHECK'){
+												$("#reply-tip").html('<div class="alert alert-info">回复成功，将会在审核通过后显示</div>');
+											}else{
+												var p = c.parent;
+												var html = buildHtml(p,c);
+												if(!tree || c.parents.length > max){
+													if(tree){
+														$("#comment-"+parent).after(html);
+													}else{
+														$("#comments-container").append(html);
+													}
+												}else if(tree){
+										   			$("#comment-"+parent).find(".media-body:first").append(html);
+										   		}
+											}
 											sign = true;
 										}else{
 											$("#reply-tip").html('<div class="alert alert-danger">'+data.message+'</div>');
@@ -155,6 +163,8 @@ var login = $("#login").val() == 'true';
 						if(!c.user.admin && c.user.status == 'DISABLED')
 							html += '<a href="###" onclick="enable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span></a>';
 						html += '<a href="###" onclick="removeComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+						if(c.status == 'CHECK')
+							html += '<a href="###" onclick="checkComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
 					 }
 					 if(oauthLogin)
 						html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
@@ -191,7 +201,9 @@ var login = $("#login").val() == 'true';
 						if(!c.user.admin && c.user.status == 'DISABLED')
 							html += '<a href="###" onclick="enable(\''+c.user.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span></a>';
 						html += '<a href="###" onclick="removeComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
-					 }
+						if(c.status == 'CHECK')
+							html += '<a href="###" onclick="checkComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
+					}
 					 if(oauthLogin)
 							html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
 					
@@ -250,6 +262,30 @@ var login = $("#login").val() == 'true';
 					});
 			 }
 			 
+			 function checkComment(id){
+				 bootbox.confirm("确定要审核通过吗？", function(result) {
+						if (result) {
+							$.ajax({
+			    				type : "post",
+			    				url : rootPath + "/mgr/comment/check?id="+id,
+			    				data : {id : id},
+			    				xhrFields: {
+			    	                withCredentials: true
+			    	            },
+			    	            crossDomain: true,
+			    				success : function(data){
+			    					if(data.success){
+			    						queryComments(0);
+									}else{
+										bootbox.alert(data.message);
+									}
+			    				},
+			    				complete:function(){
+			    				}
+			    			});
+						}
+					});
+			 }
 
 			 function disable(id){
 				 bootbox.confirm("确定要禁用吗？", function(result) {

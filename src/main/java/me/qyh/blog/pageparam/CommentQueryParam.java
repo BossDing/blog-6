@@ -1,6 +1,7 @@
 package me.qyh.blog.pageparam;
 
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.entity.Comment.CommentStatus;
 
 public class CommentQueryParam extends PageQueryParam {
 
@@ -11,6 +12,7 @@ public class CommentQueryParam extends PageQueryParam {
 
 	private Article article;
 	private boolean asc;
+	private CommentStatus status;
 
 	public Article getArticle() {
 		return article;
@@ -26,6 +28,14 @@ public class CommentQueryParam extends PageQueryParam {
 
 	public void setAsc(boolean asc) {
 		this.asc = asc;
+	}
+
+	public CommentStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(CommentStatus status) {
+		this.status = status;
 	}
 
 }

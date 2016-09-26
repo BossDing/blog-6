@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.Comment.CommentStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
@@ -17,11 +18,9 @@ public interface CommentDao {
 
 	void insert(Comment comment);
 
-	int selectCountByPath(String path);
+	int deleteByPath(@Param("path") String path, @Param("status") CommentStatus status);
 
-	void deleteByPath(String path);
-
-	void deleteById(Integer id);
+	int deleteById(Integer id);
 
 	int selectCountByUserAndDatePeriod(@Param("begin") Timestamp begin, @Param("end") Timestamp end,
 			@Param("user") OauthUser user);
@@ -39,10 +38,10 @@ public interface CommentDao {
 	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit,
 			@Param("queryPrivate") boolean queryPrivate);
 
-	int selectCountByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
+	int deleteByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article,
+			@Param("status") CommentStatus status);
 
-	void deleteByUserAndArticle(@Param("user") OauthUser user, @Param("article") Article article);
+	int deleteByArticle(Article article);
 
-	void deleteByArticle(Article article);
-
+	int updateStatusToNormal(Comment comment);
 }

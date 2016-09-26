@@ -54,7 +54,7 @@ public class ArticleWidgetHandler extends SysWidgetHandler {
 		if (article == null ||
 		// 文章不存在或者不在目标空间下
 				(!space.getAlias().equals(article.getSpace().getAlias()))) {
-			return null;
+			throw new LogicException("article.notExists", "文章不存在");
 		}
 		params.add("article", article);
 		return article;

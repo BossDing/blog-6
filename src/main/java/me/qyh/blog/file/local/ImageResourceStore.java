@@ -34,6 +34,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
 	private static final String JPEG_EXT = ".jpeg";
+	private static final String PNG_EXT = ".png";
 	private static final char CONCAT_CHAR = 'X';
 	private static final char FORCE_CHAR = '!';
 
@@ -118,7 +119,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		Resource finalResource = null;
 		boolean supportWebp = enableWebp && supportWebp(request);
 		if (resize != null) {
-			String thumbPath = supportWebp ? path + WEBP_EXT : path + JPEG_EXT;
+			String ext = FilenameUtils.getExtension(getSourcePathByResizePath(path));
+			String thumbPath = supportWebp ? path + WEBP_EXT
+					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT;
 			if (errorThumbPaths.contains(thumbPath)) {
 				return null;
 			}
@@ -249,10 +252,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	protected File doResize(LocalCommonFile cf, Resize resize, File thumb) throws Exception {
 		File src = cf.getFile();
 		ImageInfo ii = imageHelper.read(src);
-		boolean needResize = needResize(resize, ii.getWidth(), ii.getHeight());
-		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg的封面
-		File cover = new File(thumbAbsFolder,
-				cf.getKey() + File.separator + FilenameUtils.getBaseName(cf.getKey()) + JPEG_EXT);
+		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
+		String ext = FilenameUtils.getExtension(src.getName());
+		File cover = new File(thumbAbsFolder, cf.getKey() + File.separator + FilenameUtils.getBaseName(cf.getKey())
+				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
 		if (!cover.exists()) {
 			FileUtils.forceMkdir(cover.getParentFile());
 			if (ImageHelper.isGIF(ii.getExtension())) {
@@ -261,14 +264,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				imageHelper.format(src, cover);
 			}
 		}
-		// 如果不需要缩放
-		if (!needResize) {
-			FileUtils.copyFile(cover, thumb);
-		} else {
-			FileUtils.forceMkdir(thumb.getParentFile());
-			// 基于封面缩放
-			imageHelper.resize(resize, cover, thumb);
-		}
+		FileUtils.forceMkdir(thumb.getParentFile());
+		// 基于封面缩放
+		imageHelper.resize(resize, cover, thumb);
 		return thumb;
 	}
 
@@ -378,14 +376,14 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 *            原图高
 	 * @return
 	 */
-	protected boolean needResize(Resize resize, int width, int height) {
-		if (resize.getSize() != null) {
-			return (width >= resize.getSize() || height >= resize.getHeight())
-					&& !(width == height && width == resize.getSize());
-		}
-		return width >= resize.getWidth() && height >= resize.getHeight()
-				&& !(width == resize.getWidth() && height == resize.getHeight());
-	}
+	// protected boolean needResize(Resize resize, int width, int height) {
+	// if (resize.getSize() != null) {
+	// return (width >= resize.getSize() || height >= resize.getHeight())
+	// && !(width == height && width == resize.getSize());
+	// }
+	// return width >= resize.getWidth() && height >= resize.getHeight()
+	// && !(width == resize.getWidth() && height == resize.getHeight());
+	// }
 
 	public void setThumbAbsPath(String thumbAbsPath) {
 		this.thumbAbsPath = thumbAbsPath;

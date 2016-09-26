@@ -47,10 +47,12 @@ import me.qyh.blog.dao.UserDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.CommentConfig;
 import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.Comment.CommentStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.input.HtmlClean;
+import me.qyh.blog.message.Messages;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -236,6 +238,11 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			if (parent == null) {
 				throw new LogicException("comment.parent.notExists", "父评论不存在");
 			}
+
+			// 如果父评论正在审核
+			if (parent.isChecking()) {
+				throw new LogicException("comment.parent.checking", "父评论正在审核");
+			}
 			parentPath = parent.getParentPath() + parent.getId() + "/";
 		}
 		if (parentPath.length() > PATH_MAX_LENGTH) {
@@ -247,14 +254,18 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
-
+		boolean check = config.getCheck() && !user.getAdmin() && (UserContext.get() == null);
+		comment.setStatus(check ? CommentStatus.CHECK : CommentStatus.NORMAL);
 		commentDao.insert(comment);
-		// 是不是每个回复都算评论数？
-		article.addComments();
 
-		articleDao.updateComments(article.getId(), 1);
-		articleIndexer.addOrUpdateDocument(article);
+		if (!check) {
+			// 如果不检查，增加评论数
+			// 是不是每个回复都算评论数？
+			article.addComments();
+			articleDao.updateComments(article.getId(), 1);
+			articleIndexer.addOrUpdateDocument(article);
 
+		}
 		comment.setParent(parent);
 		comment.setUser(user);
 
@@ -268,25 +279,43 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	}
 
 	@Override
-	public void deleteComment(Integer id) throws LogicException {
+	@ArticleQueryReload
+	public void checkComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");
 		}
-		// 查询自评论数目
-		int count = commentDao.selectCountByPath(comment.getSubPath());
-		int totalCount = count + 1;
-		if (count > 0) {
-			commentDao.deleteByPath(comment.getSubPath());
+		if (!comment.isChecking()) {
+			throw new LogicException("comment.checked", "评论审核过了");
 		}
-		commentDao.deleteById(id);
-		// 更新文章评论数量
+		commentDao.updateStatusToNormal(comment);
 		Article article = articleQuery.getArticle(comment.getArticle().getId());
-		articleDao.updateComments(article.getId(), -totalCount);
-		article.decrementComment(totalCount);
+		articleDao.updateComments(article.getId(), 1);
+		article.addComments();
+
 	}
 
 	@Override
+	@ArticleQueryReload
+	public void deleteComment(Integer id) throws LogicException {
+		Comment comment = commentDao.selectById(id);
+		if (comment == null) {
+			throw new LogicException("comment.notExists", "评论不存在");
+		}
+		int totalCount = commentDao.deleteByPath(comment.getSubPath(), CommentStatus.NORMAL)
+				+ (comment.isChecking() ? 0 : 1);
+		commentDao.deleteByPath(comment.getSubPath(), CommentStatus.CHECK);
+		commentDao.deleteById(id);
+		if (totalCount > 0) {
+			// 更新文章评论数量
+			Article article = articleQuery.getArticle(comment.getArticle().getId());
+			articleDao.updateComments(article.getId(), -totalCount);
+			article.decrementComment(totalCount);
+		}
+	}
+
+	@Override
+	@ArticleQueryReload
 	public void deleteComment(Integer userId, Integer articleId) throws LogicException {
 		OauthUser user = oauthUserDao.selectById(userId);
 		if (user == null) {
@@ -297,9 +326,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
 
-		int count = commentDao.selectCountByUserAndArticle(user, article);
+		int count = commentDao.deleteByUserAndArticle(user, article, CommentStatus.NORMAL);
+		commentDao.deleteByUserAndArticle(user, article, CommentStatus.CHECK);
 		if (count > 0) {
-			commentDao.deleteByUserAndArticle(user, article);
 			articleDao.updateComments(article.getId(), -count);
 			article.decrementComment(count);
 		}
@@ -678,6 +707,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		private UrlHelper urlHelper;
 		@Autowired
 		private UserDao userDao;
+		@Autowired
+		private Messages messages;
 
 		public void shutdown() {
 			synchronized (toSend) {
@@ -696,6 +727,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			Context context = new Context();
 			context.setVariable("urls", urlHelper.getUrls());
 			context.setVariable("comments", toSend);
+			context.setVariable("messages", messages);
 			final String mailContent = mailTemplateEngine.process(mailTemplate, context);
 			MimeMessagePreparator preparator = new MimeMessagePreparator() {
 

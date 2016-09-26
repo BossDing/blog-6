@@ -80,4 +80,8 @@ public abstract class ImageHelper {
 		return GIF.equalsIgnoreCase(extension);
 	}
 
+	public static boolean maybeTransparentBg(String extension) {
+		return isPNG(extension) || isGIF(extension) || isWEBP(extension);
+	}
+
 }

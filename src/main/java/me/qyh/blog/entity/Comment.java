@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import me.qyh.blog.message.Message;
 import me.qyh.blog.oauth2.OauthUser;
 
 public class Comment extends Id {
@@ -25,10 +26,25 @@ public class Comment extends Id {
 	private List<Integer> parents = new ArrayList<Integer>();
 	private Timestamp commentDate;
 	private List<Comment> children = new ArrayList<Comment>();
+	private CommentStatus status;
+
+	public enum CommentStatus {
+		NORMAL(new Message("comment.status.normal", "正常")), CHECK(new Message("comment.status.check", "审核"));
+
+		private Message message;
+
+		private CommentStatus(Message message) {
+			this.message = message;
+		}
+
+		public Message getMessage() {
+			return message;
+		}
+	}
 
 	@JsonIgnore
 	public String getSubPath() {
-		return "/" + getId() + "/";
+		return "/" + getId();
 	}
 
 	public Comment getParent() {
@@ -103,4 +119,15 @@ public class Comment extends Id {
 		this.children = children;
 	}
 
+	public CommentStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(CommentStatus status) {
+		this.status = status;
+	}
+
+	public boolean isChecking() {
+		return CommentStatus.CHECK.equals(status);
+	}
 }

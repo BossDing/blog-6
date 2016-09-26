@@ -12,7 +12,10 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IMOperation;
 import org.im4java.core.IdentifyCmd;
@@ -64,9 +67,13 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 				}
 			}
 		}
-		op.background("rgb(255,255,255)");
-		op.extent(0, 0);
-		op.addRawArgs("+matte");
+		String ext = FilenameUtils.getExtension(dest.getName());
+		String srcExt = FilenameUtils.getExtension(src.getName());
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
+			op.background("rgb(255,255,255)");
+			op.extent(0, 0);
+			op.addRawArgs("+matte");
+		}
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
@@ -108,16 +115,20 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	public void getGifCover(File gif, File dest) throws ImageReadException {
+		String ext = FilenameUtils.getExtension(dest.getName());
+		File png = null;
+		try {
+			png = File.createTempFile(RandomStringUtils.random(6), "." + PNG);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 		try {
 			IMOperation op = new IMOperation();
 			op.addImage();
-			op.background("rgb(255,255,255)");
-			op.extent(0, 0);
-			op.addRawArgs("+matte");
 			op.strip();
 			op.p_profile("*");
 			op.addImage();
-			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", png.getAbsolutePath());
 		} catch (Exception e) {
 			// Corrupt Image
 			GifDecoder gd = new GifDecoder();
@@ -133,37 +144,34 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 					throw new ImageReadException(gif + "文件无法获取封面");
 				}
 				BufferedImage bi = gd.getFrame(0);
-				// write png
-				File png = null;
 				try {
-					try {
-						png = Files.createTempFile("tmp", "." + PNG).toFile();
-						ImageIO.write(bi, PNG, png);
-					} catch (IOException e1) {
-						throw new SystemException(e1.getMessage(), e1);
-					}
-					// png to dest
-					IMOperation op = new IMOperation();
-					op.addImage();
-					op.background("rgb(255,255,255)");
-					op.extent(0, 0);
-					op.addRawArgs("+matte");
-					op.strip();
-					op.p_profile("*");
-					op.addImage();
-					try {
-						getConvertCmd().run(op, png.getAbsolutePath(), dest.getAbsolutePath());
-					} catch (Exception e1) {
-						throw new SystemException(e1.getMessage(), e1);
-					}
-				} finally {
-					if (png != null)
-						png.delete();
+					png = Files.createTempFile("tmp", "." + PNG).toFile();
+					ImageIO.write(bi, PNG, png);
+				} catch (IOException e1) {
+					throw new SystemException(e1.getMessage(), e1);
 				}
-
 			} finally {
 				IOUtils.closeQuietly(is);
 			}
+		}
+		// png to dest
+		IMOperation op = new IMOperation();
+		op.addImage();
+		if (!maybeTransparentBg(ext)) {
+			op.background("rgb(255,255,255)");
+			op.extent(0, 0);
+			op.addRawArgs("+matte");
+		}
+		op.strip();
+		op.p_profile("*");
+		op.addImage();
+		try {
+			getConvertCmd().run(op, png.getAbsolutePath(), dest.getAbsolutePath());
+		} catch (Exception e1) {
+			throw new SystemException(e1.getMessage(), e1);
+		} finally {
+			if (png != null && png.exists() && !FileUtils.deleteQuietly(png))
+				png.deleteOnExit();
 		}
 	}
 
@@ -171,9 +179,13 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	public void format(File src, File dest) throws Exception {
 		IMOperation op = new IMOperation();
 		op.addImage();
-		op.background("rgb(255,255,255)");
-		op.extent(0, 0);
-		op.addRawArgs("+matte");
+		String ext = FilenameUtils.getExtension(dest.getName());
+		String srcExt = FilenameUtils.getExtension(src.getName());
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
+			op.background("rgb(255,255,255)");
+			op.extent(0, 0);
+			op.addRawArgs("+matte");
+		}
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
@@ -187,5 +199,4 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 		return cmd;
 	}
-
 }

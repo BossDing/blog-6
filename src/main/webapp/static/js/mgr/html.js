@@ -12,7 +12,6 @@ $(document).ready(function(){
 	CKEDITOR.config.shiftEnterMode = CKEDITOR.ENTER_P;
 	CKEDITOR.config.allowedContent = true;
 	CKEDITOR.config.height=800;
-	
 	editor.addCommand( 'openFileDialog', {
         exec: function( editor ) {
         	fileSelectPageQuery(1,'');
@@ -113,6 +112,7 @@ $(document).ready(function(){
 		commentConfig.allowHtml = $("#allowHtml").prop("checked");
 		commentConfig.limitSec = $("#limitSec").val();
 		commentConfig.limitCount = $("#limitCount").val();
+		commentConfig.check = $("#check").prop("checked");
 		article.commentConfig = commentConfig;
 		me.prop("disabled",true);
 		var url = basePath+"/mgr/article/write";
@@ -346,6 +346,7 @@ function changeEditorCss(csses,style){
 			commentConfig.allowHtml = $("#allowHtml").prop("checked");
 			commentConfig.limitSec = $("#limitSec").val();
 			commentConfig.limitCount = $("#limitCount").val();
+			commentConfig.check = $("#check").prop("checked");
 			if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
 				commentConfig.limitSec = 60;
 			}

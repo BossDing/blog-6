@@ -66,6 +66,7 @@
 		<typeAlias type="me.qyh.blog.oauth2.OauthBind" alias="OauthBind" />
 
 		<typeAlias type="me.qyh.blog.entity.Comment" alias="Comment" />
+		<typeAlias type="me.qyh.blog.entity.Comment$CommentStatus" alias="CommentStatus" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.mybatis.handler.TagsTypeHandler" />

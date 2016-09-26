@@ -55,4 +55,15 @@ public interface CommentService {
 	 */
 	void deleteComment(Integer userId, Integer articleId) throws LogicException;
 
+	/**
+	 * 审核评论
+	 * <p>
+	 * 审核评论会将该评论的父评论也置为审核通过状态
+	 * </p>
+	 * 
+	 * @param id
+	 * @throws LogicException
+	 */
+	void checkComment(Integer id) throws LogicException;
+
 }

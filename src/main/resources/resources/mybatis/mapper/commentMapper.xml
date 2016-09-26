@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="parent_path" property="parentPath"/>
 		<result column="content" property="content"/>
 		<result column="comment_date" property="commentDate"/>
+		<result column="comment_status" property="status" typeHandler="EnumOrdinalTypeHandler"/>
 		<association property="user" javaType="OauthUser">
 			<result column="user_id" property="id"/>
 			<result column="nick_name" property="nickname"/>
@@ -35,13 +36,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_comment(parent_id,parent_path,content,user_id,article_id,comment_date)
-		VALUES(#{parent.id},#{parentPath},#{content},#{user.id},#{article.id},#{commentDate})
+		INSERT INTO blog_comment(parent_id,parent_path,content,user_id,article_id,comment_date,comment_status)
+		VALUES(#{parent.id},#{parentPath},#{content},#{user.id},#{article.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler})
 	</insert>
-	
-	<select id="selectCountByPath" resultType="int">
-		SELECT COUNT(id) FROM blog_comment WHERE  parent_path LIKE CONCAT('', #{path},'%')
-	</select>
 	
 	<select id="selectCountByUserAndDatePeriod" resultType="int">
 		SELECT COUNT(id) FROM blog_comment WHERE user_id = #{user.id} AND comment_date BETWEEN #{begin} AND #{end} 
@@ -49,21 +46,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectCountWithTree" resultType="int">
 		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id} AND parent_path = '/'
+		<if test="status != null">
+		   AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		</if>
 	</select>
 	
 	<select id="selectCountWithList" resultType="int">
 		SELECT COUNT(id) FROM blog_comment WHERE article_id = #{article.id}
+		<if test="status != null">
+		   AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		</if>
 	</select>
 	
 	<select id="selectPageWithTree" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,bou.is_admin,bou.oauth_status
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,bou.is_admin,bou.oauth_status,a.comment_status
 		FROM 
 		  blog_comment a JOIN 
 		  (SELECT id, parent_path 
 		    FROM blog_comment 
 		    WHERE parent_path = '/'
 		    AND article_id = #{article.id}
+		    <if test="status != null">
+		    AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
 		    <choose>
 		    	<when test="asc">
 		    		 ORDER BY comment_date ,id
@@ -74,18 +80,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		    </choose>
 		  LIMIT #{offset},#{pageSize}) roots
 		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
+		   <if test="status != null">
+		    WHERE a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
 		LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id;
 	</select>
 	
 	<select id="selectPageWithList" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.is_admin,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar,pu.is_admin AS p_is_admin,au.oauth_status
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.is_admin,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar,pu.is_admin AS p_is_admin,au.oauth_status,a.comment_status
 		FROM 
 		  blog_comment a 
 		LEFT OUTER JOIN blog_oauth_user au ON a.user_id = au.id
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
 		LEFT OUTER JOIN blog_oauth_user pu ON p.user_id = pu.id
 		WHERE a.article_id = #{article.id}
+		<if test="status != null">
+		  	AND a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
 		 <choose>
 	    	<when test="asc">
 	    		 ORDER BY a.comment_date ,id
@@ -98,7 +110,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<delete id="deleteByPath">
-		DELETE FROM blog_comment  WHERE parent_path LIKE CONCAT('', #{path},'%')
+		DELETE FROM blog_comment  WHERE (parent_path LIKE CONCAT('', #{path},'%'))
+		<if test="status != null">
+		  	AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
 	</delete>
 	
 	<delete id="deleteById">
@@ -107,7 +122,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectById" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date,bou.is_admin
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date,bou.is_admin,a.comment_status
 		 FROM blog_comment a 
 		 LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id
 		 WHERE a.id = #{id}
@@ -132,14 +147,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	
-	<select id="selectCountByUserAndArticle" resultType="int">
-		SELECT COUNT(a.id) FROM blog_comment a
-		WHERE a.article_id = #{article.id} AND (a.user_id = #{user.id} OR a.parent_path LIKE CONCAT('/',a.id,'/%'))
-	</select>
-	
 	<delete id="deleteByUserAndArticle">
 		DELETE FROM blog_comment
 		WHERE article_id = #{article.id} AND (user_id = #{user.id} OR parent_path LIKE CONCAT('/',id,'/%'))
+		<if test="status != null">
+		  	AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
 	</delete>
 	
 	<delete id="deleteByArticle">
@@ -150,7 +163,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectLastComments" resultMap="CommentDetail">
 		SELECT 
-		a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.is_admin,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar,pu.is_admin AS p_is_admin,au.oauth_status,ba.title AS art_title,space_alias
+		a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,au.avatar,au.is_admin,au.nick_name,pu.id AS p_user_id,pu.nick_name AS p_nick_name,pu.avatar AS p_avatar,pu.is_admin AS p_is_admin,au.oauth_status,ba.title AS art_title,space_alias,a.comment_status
 		FROM blog_comment a
 		LEFT OUTER JOIN blog_comment b ON a.parent_id = b.id
 		LEFT OUTER JOIN blog_oauth_user au ON a.user_id = au.id
@@ -158,6 +171,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_article ba ON a.article_id = ba.id
 		LEFT OUTER JOIN blog_space bs ON ba.space_id  = bs.id
 		WHERE ba.art_status = 0<!-- PUBLISHED -->
+		AND a.comment_status = 0<!-- NORMAL -->
 		<if test="space != null">
 			AND bs.id = #{space.id} 
 		</if>
@@ -167,9 +181,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND ba.art_lock IS NULL
 			AND bs.space_lock IS NULL
 		</if>
-		AND a.parent_path = '/' AND au.is_admin = FALSE
-		OR (pu.is_admin = TRUE AND au.is_admin = FALSE)
+		AND a.parent_path = '/' OR pu.is_admin = TRUE 
 		ORDER BY a.comment_date DESC ,a.id DESC
 		LIMIT 0,#{limit}
 	</select>
+	
+	<update id="updateStatusToNormal">
+		UPDATE blog_comment SET comment_status = 0 WHERE id = #{id}
+	</update>
 </mapper>

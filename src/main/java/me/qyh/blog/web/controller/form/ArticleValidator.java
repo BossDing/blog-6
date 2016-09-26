@@ -146,6 +146,10 @@ public class ArticleValidator implements Validator {
 			errors.reject("article.commentConfig.asc.blank", "评论展现排序方式不能为空");
 			return;
 		}
+		if(config.getCheck() == null){
+			errors.reject("article.commentConfig.check.blank", "评论审核不能为空");
+			return;
+		}
 		Integer limitCount = config.getLimitCount();
 		if (limitCount < LIMIT_COUNT_RANGE[0] || limitCount > LIMIT_COUNT_RANGE[1]) {
 			errors.reject("article.commentConfig.limitCount.invalid",

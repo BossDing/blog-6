@@ -16,6 +16,7 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.Comment.CommentStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.oauth2.OauthUser;
@@ -125,6 +126,7 @@ public class SpaceArticleController extends BaseController {
 			param = new CommentQueryParam();
 			param.setCurrentPage(1);
 		}
+		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
 		param.setPageSize(configService.getPageSizeConfig().getCommentPageSize());
 		param.setArticle(new Article(articleId));
 		return commentService.queryComment(param);

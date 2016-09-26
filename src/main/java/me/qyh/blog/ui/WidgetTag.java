@@ -37,6 +37,7 @@ public class WidgetTag {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((attrs == null) ? 0 : attrs.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -50,6 +51,11 @@ public class WidgetTag {
 		if (getClass() != obj.getClass())
 			return false;
 		WidgetTag other = (WidgetTag) obj;
+		if (attrs == null) {
+			if (other.attrs != null)
+				return false;
+		} else if (!attrs.equals(other.attrs))
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;

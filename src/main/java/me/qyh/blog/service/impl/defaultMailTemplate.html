@@ -76,6 +76,7 @@
 						<p th:utext="${comment.parent.content}"></p>
 					</div>
 					<span th:utext="${comment.content}"></span>
+					<p><strong>状态:</strong><span th:text="${messages.getMessage(comment.status.message)}"></span></p>
 					<h5
 						th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm:ss')}"></h5>
 				</div>

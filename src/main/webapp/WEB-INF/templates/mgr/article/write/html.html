@@ -116,6 +116,14 @@
 								th:if="${article.commentConfig.allowComment != null && article.commentConfig.allowComment}"><input
 								type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
 						</div>
+						<div class="checkbox">
+							<label
+								th:if="${article.commentConfig.check == null || !article.commentConfig.check}">
+								<input type="checkbox" id="check" />审核评论
+							</label> <label
+								th:if="${article.commentConfig.check != null && article.commentConfig.check}"><input
+								type="checkbox" id="check" checked="checked" />审核评论 </label>
+						</div>
 						<div class="form-group">
 							<label>评论展现排序(按评论时间)</label> <select class="form-control"
 								id="commentSort">
@@ -168,6 +176,9 @@
 					<div th:if="${article.commentConfig == null}" th:remove="tag">
 						<div class="checkbox">
 							<label><input type="checkbox" id="allowComment" />允许评论 </label>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" id="check" />审核评论 </label>
 						</div>
 						<div class="form-group">
 							<label>评论展现排序(按评论时间)</label> <select class="form-control"
