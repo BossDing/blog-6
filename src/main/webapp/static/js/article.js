@@ -5,6 +5,8 @@ var login = $("#login").val() == 'true';
 			var asc = false;
 			var tree = $("#commentMode").val() == 'TREE';
 			$(document).ready(function(){
+				
+				prettyPrint();
 				queryComments(0);
 				if(window.sessionStorage){
 					var articleId = "article-"+$("#articleId").val();

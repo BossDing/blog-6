@@ -20,18 +20,23 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
-				<widget name="文章列表" data-sort-lab="false"></widget>
+				<fragement name="文章列表" data-sort-lab="false" />
 			</div>
 
 			<div class="col-lg-4 col-md-4 col-sm-4 text">
-				<widget name="文章日期归档"></widget>
-				<widget name="文章空间归档"></widget>
-				<widget name="最近评论"></widget>
+				<fragement name="文章日期归档" />
+				<fragement name="文章空间归档" />
+				<fragement name="最近评论" />
 			</div>
 		</div>
 	</div>
 
 	<div th:replace="base/foot">&nbsp;</div>
 	<div th:replace="base/foot_source">&nbsp;</div>
+
+	<data name="文章列表" />
+	<data name="文章日期归档" />
+	<data name="文章空间归档" />
+	<data name="最近评论" />
 </body>
 </html>

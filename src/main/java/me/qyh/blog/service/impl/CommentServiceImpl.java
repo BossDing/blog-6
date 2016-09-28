@@ -133,7 +133,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryComment(CommentQueryParam param) {
-		Article article = articleQuery.getArticleWithLockCheck(param.getArticle().getId());
+		Article article = articleQuery.getArticleWithLockCheck(param.getArticle().getId(), true);
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
@@ -193,7 +193,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user.isDisabled()) {
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
 		}
-		Article article = articleQuery.getArticleWithLockCheck(comment.getArticle().getId());
+		Article article = articleQuery.getArticleWithLockCheck(comment.getArticle().getId(), false);
 		// 博客不存在
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -261,9 +261,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (!check) {
 			// 如果不检查，增加评论数
 			// 是不是每个回复都算评论数？
-			article.addComments();
 			articleDao.updateComments(article.getId(), 1);
 			articleIndexer.addOrUpdateDocument(article);
+			article.addComments();
 
 		}
 		comment.setParent(parent);
@@ -289,7 +289,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			throw new LogicException("comment.checked", "评论审核过了");
 		}
 		commentDao.updateStatusToNormal(comment);
-		Article article = articleQuery.getArticle(comment.getArticle().getId());
+		Article article = articleQuery.getArticle(comment.getArticle().getId(), false);
 		articleDao.updateComments(article.getId(), 1);
 		article.addComments();
 
@@ -308,7 +308,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		commentDao.deleteById(id);
 		if (totalCount > 0) {
 			// 更新文章评论数量
-			Article article = articleQuery.getArticle(comment.getArticle().getId());
+			Article article = articleQuery.getArticle(comment.getArticle().getId(), false);
 			articleDao.updateComments(article.getId(), -totalCount);
 			article.decrementComment(totalCount);
 		}
@@ -321,7 +321,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user == null) {
 			throw new LogicException("comment.user.notExists", "账户不存在");
 		}
-		Article article = articleQuery.getArticle(articleId);
+		Article article = articleQuery.getArticle(articleId, false);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}

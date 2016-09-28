@@ -21,7 +21,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	protected String computeResourceName(IEngineConfiguration configuration, String ownerTemplate, String template,
 			String prefix, String suffix, Map<String, String> templateAliases,
 			Map<String, Object> templateResolutionAttributes) {
-		Page page = UIContext.get();
+		RenderedPage page = UIContext.get();
 		if (page != null && page.getTemplateName().equals(template)) {
 			return template;
 		}
@@ -34,10 +34,11 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate,
 			String template, String resourceName, String characterEncoding,
 			Map<String, Object> templateResolutionAttributes) {
-		Page page = UIContext.get();
+		RenderedPage page = UIContext.get();
 		if (page != null && page.getTemplateName().equals(template)) {
 			return new SpringResourceTemplateResource(
-					new ByteArrayResource(page.getTpl().getBytes(), page.getTemplateName()), characterEncoding);
+					new ByteArrayResource(page.getPage().getTpl().getBytes(), page.getTemplateName()),
+					characterEncoding);
 		}
 		return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding,
 				templateResolutionAttributes);

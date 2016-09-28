@@ -20,17 +20,14 @@
 
 	<div class="container">
 		<div class="row">
-			<div class="col-md-6 col-md-offset-3 text">
-				<div class="alert alert-info" th:if="${error != null}"
-					th:text="${messages.getMessage(error)}">&nbsp;</div>
-			</div>
 			<div class="col-md-6 col-md-offset-3">
 				<form th:action="${urls.currentUrl}+'/article/list'" method="get"
 					style="margin-bottom: 10px" id="queryForm">
 					<div class="input-group">
 						<input type="text" class="form-control" name="query"
-							aria-describedby="basic-addon2" placeholder="">
-						<span class="input-group-addon" id="basic-addon2"><a
+							aria-describedby="basic-addon2"
+							placeholder="虽然不知道你到底想干嘛，但欢迎来到这里"> <span
+							class="input-group-addon" id="basic-addon2"><a
 							id="query-btn" href="###"> <span
 								class="glyphicon glyphicon-search" aria-hidden="true"></span>
 						</a></span>

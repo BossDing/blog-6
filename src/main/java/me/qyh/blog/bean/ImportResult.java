@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.ExportPage;
 
 public class ImportResult {
 
 	// 原始页面，用于恢复
-	private List<Page> oldPages = new ArrayList<Page>();
+	private List<ExportPage> oldPages = new ArrayList<ExportPage>();
 	// 导入过程中出错
 	private List<ImportError> errors = new ArrayList<ImportError>();
 	// 导入成功的页面序号
 	private List<ImportSuccess> successes = new ArrayList<ImportSuccess>();
 
-	public List<Page> getOldPages() {
+	public List<ExportPage> getOldPages() {
 		return oldPages;
 	}
 
-	public void setOldPages(List<Page> oldPages) {
+	public void setOldPages(List<ExportPage> oldPages) {
 		this.oldPages = oldPages;
 	}
 
@@ -39,7 +39,7 @@ public class ImportResult {
 		this.successes = successes;
 	}
 
-	public void addOldPage(Page old) {
+	public void addOldPage(ExportPage old) {
 		oldPages.add(old);
 	}
 

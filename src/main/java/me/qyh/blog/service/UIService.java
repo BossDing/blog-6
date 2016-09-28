@@ -2,14 +2,19 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
+import me.qyh.blog.bean.ExportReq;
 import me.qyh.blog.bean.ImportPageWrapper;
+import me.qyh.blog.bean.ImportReq;
 import me.qyh.blog.bean.ImportResult;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.pageparam.UserFragementQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
-import me.qyh.blog.pageparam.UserWidgetQueryParam;
+import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.Params;
+import me.qyh.blog.ui.RenderedPage;
+import me.qyh.blog.ui.fragement.UserFragement;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -17,20 +22,16 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.blog.ui.widget.SysWidget;
-import me.qyh.blog.ui.widget.UserWidget;
-import me.qyh.blog.ui.widget.Widget;
-import me.qyh.blog.ui.widget.WidgetTpl;
 
 public interface UIService {
 
 	/**
 	 * 插入用户自定义挂件
 	 * 
-	 * @param userWidget
+	 * @param userFragement
 	 * @throws LogicException
 	 */
-	void insertUserWidget(UserWidget userWidget) throws LogicException;
+	void insertUserFragement(UserFragement userFragement) throws LogicException;
 
 	/**
 	 * 删除用户自定义挂件
@@ -38,7 +39,7 @@ public interface UIService {
 	 * @param id
 	 * @throws LogicException
 	 */
-	void deleteUserWidget(Integer id) throws LogicException;
+	void deleteUserFragement(Integer id) throws LogicException;
 
 	/**
 	 * 分页查询用户自定义挂件
@@ -46,14 +47,14 @@ public interface UIService {
 	 * @param param
 	 * @return
 	 */
-	PageResult<UserWidget> queryUserWidget(UserWidgetQueryParam param);
+	PageResult<UserFragement> queryUserFragement(UserFragementQueryParam param);
 
 	/**
 	 * 更新自定义挂件
 	 * 
-	 * @param userWidget
+	 * @param userFragement
 	 */
-	void updateUserWidget(UserWidget userWidget) throws LogicException;
+	void updateUserFragement(UserFragement userFragement) throws LogicException;
 
 	/**
 	 * 根据ID查询用户挂件
@@ -62,7 +63,7 @@ public interface UIService {
 	 *            挂件ID
 	 * @return null如果不存在
 	 */
-	UserWidget queryUserWidget(Integer id);
+	UserFragement queryUserFragement(Integer id);
 
 	/**
 	 * 根据ID查询用户页面
@@ -106,33 +107,6 @@ public interface UIService {
 	void deleteUserPage(Integer id) throws LogicException;
 
 	/**
-	 * 从系统 页面模板中解析挂件
-	 * 
-	 * @param page
-	 * @return
-	 * @throws LogicException
-	 */
-	List<WidgetTpl> parseWidget(SysPage page) throws LogicException;
-
-	/**
-	 * 从自定义页面模板中解析挂件
-	 * 
-	 * @param page
-	 * @return
-	 * @throws LogicException
-	 */
-	List<WidgetTpl> parseWidget(UserPage page) throws LogicException;
-
-	/**
-	 * 渲染预览页面
-	 * 
-	 * @param sysPage
-	 * @return
-	 * @throws LogicException
-	 */
-	void renderPreviewPage(SysPage sysPage) throws LogicException;
-
-	/**
 	 * 渲染预览页面
 	 * 
 	 * @param space
@@ -140,16 +114,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	SysPage renderPreviewPage(Space space, PageTarget target) throws LogicException;
-
-	/**
-	 * 渲染预览页面
-	 * 
-	 * @param userPage
-	 * @return
-	 * @throws LogicException
-	 */
-	void renderPreviewPage(UserPage userPage) throws LogicException;
+	RenderedPage renderPreviewPage(Space space, PageTarget target) throws LogicException;
 
 	/**
 	 * 保存页面模板
@@ -176,7 +141,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	SysPage renderSysPage(Space space, PageTarget pageTarget, Params params) throws LogicException;
+	RenderedPage renderSysPage(Space space, PageTarget pageTarget, Params params) throws LogicException;
 
 	/**
 	 * 渲染用户自定义页面
@@ -187,16 +152,7 @@ public interface UIService {
 	 * @throws LogicException
 	 *             如果页面不存在，数据渲染异常等
 	 */
-	UserPage renderUserPage(String alias) throws LogicException;
-
-	/**
-	 * 删除挂件模板
-	 * 
-	 * @param page
-	 * @param widget
-	 * @throws LogicException
-	 */
-	void deleteWidgetTpl(Page page, Widget widget);
+	RenderedPage renderUserPage(String alias) throws LogicException;
 
 	/**
 	 * 删除系统挂件模板
@@ -215,7 +171,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	ExpandedPage renderExpandedPage(Integer id, Params params) throws LogicException;
+	RenderedPage renderExpandedPage(Integer id, Params params) throws LogicException;
 
 	/**
 	 * 查询所有的拓展页面
@@ -250,24 +206,6 @@ public interface UIService {
 	void buildTpl(ExpandedPage page) throws LogicException;
 
 	/**
-	 * 渲染预览页面
-	 * 
-	 * @param sysPage
-	 * @return
-	 * @throws LogicException
-	 */
-	void renderPreviewPage(ExpandedPage expandedPage) throws LogicException;
-
-	/**
-	 * 从自定义页面中解析挂件模板
-	 * 
-	 * @param page
-	 * @return
-	 * @throws LogicException
-	 */
-	List<WidgetTpl> parseWidget(ExpandedPage page) throws LogicException;
-
-	/**
 	 * 保存更新错误页面模板
 	 * 
 	 * @param errorPage
@@ -283,23 +221,6 @@ public interface UIService {
 	 * @throws LogicException
 	 */
 	void deleteErrorPage(Space space, ErrorCode erroCode) throws LogicException;
-
-	/**
-	 * 渲染预览错误页面
-	 * 
-	 * @param errorPage
-	 * @throws LogicException
-	 */
-	void renderPreviewPage(ErrorPage errorPage) throws LogicException;
-
-	/**
-	 * 解析错误页面中的挂件模板
-	 * 
-	 * @param page
-	 * @return
-	 * @throws LogicException
-	 */
-	List<WidgetTpl> parseWidget(ErrorPage page) throws LogicException;
 
 	/**
 	 * 查询错误页面
@@ -318,7 +239,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Page renderErrorPage(Space space, ErrorCode code) throws LogicException;
+	RenderedPage renderErrorPage(Space space, ErrorCode code) throws LogicException;
 
 	/**
 	 * 导出某个空间下的所有页面模板
@@ -330,22 +251,34 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	List<Page> export(Space space, boolean exportExpandedPage) throws LogicException;
+	List<ExportPage> export(ExportReq req) throws LogicException;
 
 	/**
 	 * 导入空间下的模板
 	 * 
 	 * @param page
-	 * @param space
+	 * @param req
 	 * @return 该空间下以前所有的模板
 	 * @throws LogicException
 	 */
-	ImportResult importTemplate(List<ImportPageWrapper> pages, Space space) throws LogicException;
+	ImportResult importTemplate(List<ImportPageWrapper> pages, ImportReq req) throws LogicException;
 
 	/**
-	 * 查询所有系统挂件
+	 * 预览页面
+	 * 
+	 * @param page
 	 * @return
+	 * @throws LogicException
 	 */
-	List<SysWidget> querySysWidgets();
+	RenderedPage renderPreviewPage(Page page) throws LogicException;
+
+	/**
+	 * 通过DATA_TAG标签查询数据
+	 * 
+	 * @param dataTagStr
+	 * @return
+	 * @throws LogicException 
+	 */
+	Object queryData(String dataTagStr) throws LogicException;
 
 }

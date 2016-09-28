@@ -68,7 +68,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForView(Integer id) {
-		Article article = articleQuery.getArticleWithLockCheck(id);
+		Article article = articleQuery.getArticleWithLockCheck(id,true);
 		if (article != null) {
 			if (article.isPublished()) {
 				if (article.isPrivate() && UserContext.get() == null) {
@@ -83,7 +83,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForEdit(Integer id) throws LogicException {
-		Article article = articleQuery.getArticle(id);
+		Article article = articleQuery.getArticle(id,true);
 		if (article == null || article.isDeleted()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -93,7 +93,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@ArticleQueryReload
 	public Article hit(Integer id) {
-		Article article = articleQuery.getArticleWithLockCheck(id);
+		Article article = articleQuery.getArticleWithLockCheck(id,false);
 		if (article != null) {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
 					? article.isPrivate() ? UserContext.get() != null : true : false;

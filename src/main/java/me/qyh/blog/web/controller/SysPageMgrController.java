@@ -14,7 +14,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,6 +35,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.SysPage;
@@ -81,22 +81,14 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated SysPage sysPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		SysPage copy = new SysPage();
-		BeanUtils.copyProperties(sysPage, copy);
-		uiService.renderPreviewPage(sysPage);
+		RenderedPage page = uiService.renderPreviewPage(sysPage);
 		try {
-			tplRender.tryRender(sysPage, request, response);
+			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		uiService.buildTpl(copy);
+		uiService.buildTpl(sysPage);
 		return new JsonResult(true, new Message("page.sys.build.success", "保存成功"));
-	}
-
-	@RequestMapping(value = "parseWidget", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult parseWidget(@RequestBody @Validated SysPage sysPage) throws LogicException {
-		return new JsonResult(true, uiService.parseWidget(sysPage));
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
@@ -104,8 +96,8 @@ public class SysPageMgrController extends BaseMgrController {
 	public JsonResult preview(@RequestBody @Validated SysPage sysPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		try {
-			uiService.renderPreviewPage(sysPage);
-			String rendered = tplRender.tryRender(sysPage, request, response);
+			RenderedPage page = uiService.renderPreviewPage(sysPage);
+			String rendered = tplRender.tryRender(page, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {
@@ -136,7 +128,7 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult getStyles(Space space, HttpServletRequest request, HttpServletResponse response)
 			throws LogicException {
-		SysPage page = uiService.renderPreviewPage(space, PageTarget.ARTICLE_DETAIL);
+		RenderedPage page = uiService.renderPreviewPage(space, PageTarget.ARTICLE_DETAIL);
 		try {
 			String rendered = tplRender.tryRender(page, request, response);
 			Document doc = Jsoup.parse(rendered);

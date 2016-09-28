@@ -5,7 +5,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +25,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.ErrorPage;
@@ -71,25 +71,17 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		ErrorPage copy = new ErrorPage();
-		BeanUtils.copyProperties(errorPage, copy);
-		uiService.renderPreviewPage(errorPage);
+		RenderedPage page = uiService.renderPreviewPage(errorPage);
 		if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
 			request.setAttribute("error", new Message("error.200", "200"));
 		}
 		try {
-			tplRender.tryRender(errorPage, request, response);
+			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		uiService.buildTpl(copy);
+		uiService.buildTpl(errorPage);
 		return new JsonResult(true, new Message("page.error.build.success", "保存成功"));
-	}
-
-	@RequestMapping(value = "parseWidget", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult parseWidget(@RequestBody @Validated ErrorPage errorPage) throws LogicException {
-		return new JsonResult(true, uiService.parseWidget(errorPage));
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
@@ -97,11 +89,11 @@ public class ErrorPageMgrController extends BaseMgrController {
 	public JsonResult preview(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		try {
-			uiService.renderPreviewPage(errorPage);
+			RenderedPage page = uiService.renderPreviewPage(errorPage);
 			if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
 				request.setAttribute("error", new Message("error.200", "200"));
 			}
-			String rendered = tplRender.tryRender(errorPage, request, response);
+			String rendered = tplRender.tryRender(page, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

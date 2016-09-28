@@ -9,6 +9,7 @@ import org.springframework.web.servlet.mvc.Controller;
 
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
 
 public class ExpandedPageRequestController implements Controller {
@@ -25,7 +26,7 @@ public class ExpandedPageRequestController implements Controller {
 		if (params == null) {
 			params = new Params();
 		}
-		Page page = uiService.renderExpandedPage(handler.id(), params);
+		RenderedPage page = uiService.renderExpandedPage(handler.id(), params);
 		UIContext.set(page);
 		return new ModelAndView(page.getTemplateName());
 	}

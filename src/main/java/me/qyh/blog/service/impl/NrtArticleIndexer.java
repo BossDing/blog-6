@@ -215,8 +215,10 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
 		doc.add(new NumericDocValuesField(COMMENTS, article.getComments()));
-		BytesRef pubDate = new BytesRef(timeToString(article.getPubDate()));
+		String pubDateStr = timeToString(article.getPubDate());
+		BytesRef pubDate = new BytesRef(pubDateStr);
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
+		doc.add(new StringField(PUB_DATE, pubDateStr, Field.Store.NO));
 		doc.add(new SortedDocValuesField(ID, new BytesRef(article.getId().toString())));
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
@@ -228,7 +230,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	}
 
 	protected String timeToString(Date date) {
-		return DateTools.timeToString(date.getTime(), Resolution.SECOND);
+		return DateTools.timeToString(date.getTime(), Resolution.MILLISECOND);
 	}
 
 	@Override
@@ -315,8 +317,8 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		Date end = param.getEnd();
 		boolean dateRangeQuery = (begin != null && end != null);
 		if (dateRangeQuery) {
-			TermRangeQuery query = new TermRangeQuery(PUB_DATE, new BytesRef(timeToString(begin)),
-					new BytesRef(timeToString(end)), true, true);
+			TermRangeQuery query = new TermRangeQuery(PUB_DATE, new Term(PUB_DATE, timeToString(begin)).bytes(),
+					new Term(PUB_DATE, timeToString(end)).bytes(), true, true);
 			builder.add(query, Occur.MUST);
 		}
 		if (!param.isQueryPrivate()) {

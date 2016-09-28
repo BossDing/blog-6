@@ -1,16 +1,14 @@
 package me.qyh.blog.ui;
 
-import me.qyh.blog.ui.page.Page;
-
 public class UIContext {
 
-	private static ThreadLocal<Page> pageLocal = new ThreadLocal<Page>();
+	private static ThreadLocal<RenderedPage> pageLocal = new ThreadLocal<RenderedPage>();
 
-	public static void set(Page page) {
+	public static void set(RenderedPage page) {
 		pageLocal.set(page);
 	}
 
-	public static Page get() {
+	public static RenderedPage get() {
 		return pageLocal.get();
 	}
 

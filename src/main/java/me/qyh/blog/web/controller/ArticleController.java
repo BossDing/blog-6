@@ -15,9 +15,9 @@ import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.RenderedPage;
+import me.qyh.blog.ui.data.ArticlesDataTagProcessor;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
-import me.qyh.blog.ui.widget.ArticlesWidgetHandler;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 @Controller
@@ -38,7 +38,8 @@ public class ArticleController {
 	}
 
 	@RequestMapping(value = "list")
-	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
+	public RenderedPage list(@Validated ArticleQueryParam articleQueryParam, BindingResult result)
+			throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);
@@ -49,7 +50,7 @@ public class ArticleController {
 		articleQueryParam.setQueryPrivate(UserContext.get() != null);
 		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		return uiService.renderSysPage(null, PageTarget.ARTICLE_LIST,
-				new Params().add(ArticlesWidgetHandler.PARAMETER_KEY, articleQueryParam));
+				new Params().add(ArticlesDataTagProcessor.PARAMETER_KEY, articleQueryParam));
 	}
 
 }

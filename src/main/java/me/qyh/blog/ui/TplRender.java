@@ -17,7 +17,6 @@ import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
-import me.qyh.blog.ui.page.Page;
 
 /**
  * 用来校验用户的自定义模板<br/>
@@ -36,10 +35,10 @@ public class TplRender {
 	@Autowired
 	private ThymeleafViewResolver resolver;
 
-	public String tryRender(Page page, HttpServletRequest request, HttpServletResponse response)
+	public String tryRender(RenderedPage page, HttpServletRequest request, HttpServletResponse response)
 			throws TplRenderException {
 		UIContext.set(page);
-		return doRender(page.getTemplateName(), request, response, page.getTemplateDatas());
+		return doRender(page.getTemplateName(), request, response, page.getDatas());
 	}
 
 	/**
@@ -60,6 +59,7 @@ public class TplRender {
 			// 再次清除缓存
 			return wrapper.output();
 		} catch (Throwable e) {
+			e.printStackTrace();
 			throw new TplRenderException(tplRenderErrorDescriptionHandler.convert(e, request.getServletContext()));
 		}
 	}

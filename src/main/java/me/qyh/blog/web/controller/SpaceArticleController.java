@@ -30,10 +30,10 @@ import me.qyh.blog.service.CommentService;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.RenderedPage;
+import me.qyh.blog.ui.data.ArticleDataTagProcessor;
+import me.qyh.blog.ui.data.ArticlesDataTagProcessor;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
-import me.qyh.blog.ui.widget.ArticleWidgetHandler;
-import me.qyh.blog.ui.widget.ArticlesWidgetHandler;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.CommentValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
@@ -68,15 +68,9 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping("{id}")
-	public Page article(@PathVariable("id") Integer id) throws LogicException {
+	public RenderedPage article(@PathVariable("id") Integer id) throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
-				new Params().add(ArticleWidgetHandler.PARAMETER_KEY, id));
-	}
-
-	@RequestMapping(value = "{id}", headers = "x-requested-with=XMLHttpRequest")
-	@ResponseBody
-	public Article articleJson(@PathVariable("id") Integer id) throws LogicException {
-		return articleService.getArticleForView(id);
+				new Params().add(ArticleDataTagProcessor.PARAMETER_KEY, id));
 	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
@@ -87,26 +81,14 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping(value = "list")
-	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
+	public RenderedPage list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);
 		}
 		setParam(articleQueryParam);
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_LIST,
-				new Params().add(ArticlesWidgetHandler.PARAMETER_KEY, articleQueryParam));
-	}
-
-	@RequestMapping(value = "list", headers = "x-requested-with=XMLHttpRequest")
-	@ResponseBody
-	public PageResult<Article> listJson(@Validated ArticleQueryParam articleQueryParam, BindingResult result)
-			throws LogicException {
-		if (result.hasErrors()) {
-			articleQueryParam = new ArticleQueryParam();
-			articleQueryParam.setCurrentPage(1);
-		}
-		setParam(articleQueryParam);
-		return articleService.queryArticle(articleQueryParam);
+				new Params().add(ArticlesDataTagProcessor.PARAMETER_KEY, articleQueryParam));
 	}
 
 	private void setParam(ArticleQueryParam articleQueryParam) {

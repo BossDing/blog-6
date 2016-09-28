@@ -6,7 +6,7 @@ public class UITemplateEngine extends SpringTemplateEngine {
 
 	public UITemplateEngine() {
 		super();
-		addDialect(new WidgetDialect());
+		addDialect(new PageDialect());
 	}
 
 }

@@ -50,11 +50,8 @@
 		<typeAlias type="me.qyh.blog.ui.page.ErrorPage$ErrorCode"
 			alias="ErrorCode" />
 		<typeAlias type="me.qyh.blog.ui.page.ExpandedPage" alias="ExpandedPage" />
-		<typeAlias type="me.qyh.blog.ui.widget.Widget" alias="Widget" />
-		<typeAlias type="me.qyh.blog.ui.widget.Widget$WidgetType"
-			alias="WidgetType" />
-		<typeAlias type="me.qyh.blog.ui.widget.UserWidget" alias="UserWidget" />
-		<typeAlias type="me.qyh.blog.ui.widget.WidgetTpl" alias="WidgetTpl" />
+		<typeAlias type="me.qyh.blog.ui.fragement.UserFragement" alias="UserFragement" />
+		
 		<typeAlias type="me.qyh.blog.bean.ArticleDateFile"
 			alias="ArticleDateFile" />
 		<typeAlias type="me.qyh.blog.bean.ArticleSpaceFile"
@@ -84,12 +81,11 @@
 
 		<mapper resource="resources/mybatis/mapper/lockMapper.xml" />
 
-		<mapper resource="resources/mybatis/mapper/userWidgetMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/userFragementMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/sysPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/errorPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/expandedPageMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/widgetTplMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/oauthUserMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/oauthBindMapper.xml" />

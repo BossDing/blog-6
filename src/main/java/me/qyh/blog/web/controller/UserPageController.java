@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.RenderedPage;
 
 @Controller
 @RequestMapping("page")
@@ -17,7 +17,7 @@ public class UserPageController {
 	private UIService uiService;
 
 	@RequestMapping("{alias}")
-	public Page index(@PathVariable("alias") String alias) throws LogicException {
+	public RenderedPage index(@PathVariable("alias") String alias) throws LogicException {
 		return uiService.renderUserPage(alias);
 	}
 

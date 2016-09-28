@@ -74,11 +74,19 @@
 						<p class="text text-warning"><b>导入操作将会耗费巨大的资源，请慎重</b></p>
 					</div>
 					<div class="form-group">
-							<label>选择要导入的空间</label> <select class="form-control" id="spaceId">
+							<label>选择要导入的空间</label> <select class="form-control" id="space.id">
 								<option value="">无</option>
 								<option th:each="space : ${spaces}" th:text="${space.name}"
 									th:value="${space.id}"></option>
 							</select>
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" id="updateExistsFragement"/>是否更新模板片段(如果存在)
+							</label>
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" id="insertNotExistsFragement"/>是否新增模板片段(如果不存在)
+							</label>
 						</div>
 					<div class="table-responsive">
 						<table class="table">
@@ -91,37 +99,37 @@
 									<th>&nbsp;</th>
 							</tr>
 							<it th:remove="tag" th:each="parse : ${parses}"
-								th:switch="${parse.page.type.name()}">
+								th:switch="${parse.page.page.type.name()}">
 							<tr th:case="SYSTEM">
 								<td th:text="${parse.index}"></td>
 								<td >系统页面</td>
-								<td th:text="${messages.getMessage(parse.page.target.message)}"></td>
+								<td th:text="${messages.getMessage(parse.page.page.target.message)}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
 									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.tpl}"></pre></td>
+								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="ERROR">
 								<td th:text="${parse.index}"></td>
 								<td>错误页面</td>
-								<td th:text="${messages.getMessage(parse.page.errorCode.message)}"></td>
+								<td th:text="${messages.getMessage(parse.page.page.errorCode.message)}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
 									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.tpl}"></pre></td>
+								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="USER">
 								<td th:text="${parse.index}"></td>
 								<td>用户页面</td>
-								<td th:text="'ID:'+${parse.page.id}">&nbsp;</td>
+								<td th:text="'ID:'+${parse.page.page.id}">&nbsp;</td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.tpl}"></pre></td>
+								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="EXPANDED">
 								<td th:text="${parse.index}"></td>
 								<td>拓展页面</td>
-								<td th:text="'ID:'+${parse.page.id}"></td>
+								<td th:text="'ID:'+${parse.page.page.id}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
 									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.tpl}"></pre></td>
+								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							</it>
 						</table>
@@ -144,8 +152,8 @@
 	<form th:action="@{/mgr/tpl/lastImportPageBackUp}" method="post" style="display:none" id="df"><input type="hidden"
 								th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /></form>
 	<div th:replace="base/foot_source"></div>
-	<div class="modal" id="tplWidgetModal" tabindex="-1" role="dialog"
-		aria-labelledby="tplWidgetModalLabel" data-backdrop="static">
+	<div class="modal" id="tplFragementModal" tabindex="-1" role="dialog"
+		aria-labelledby="tplFragementModalLabel" data-backdrop="static">
 		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -182,7 +190,7 @@
 			$("#file-label").val(label);
 		});
 		$("table").find('tr').eq(0).find("input[type=checkbox]").click(function(){
-			$('input[type=checkbox]').prop("checked",$(this).prop("checked"))
+			$('table input[type=checkbox]').prop("checked",$(this).prop("checked"))
 		})
 		$("#upload").click(function() {
 			var input = $('input[type=file]');
@@ -202,7 +210,7 @@
 		$("#import-btn").click(function(){
 			var ids = '';
 			$('input[type=checkbox]').each(function(i){
-				if(i > 0){
+				if(i > 2){
 					if($(this).prop("checked")){
 						var v=  $(this).val();
 						if(v != ''){
@@ -217,7 +225,7 @@
 				ids = ids.substring(0,ids.length-1);
 				$("#processing-box").modal('show');
 				$("#result").html("");
-				var data = {"ids":ids};
+				var data = {"ids":ids,"updateExistsFragement":$("#updateExistsFragement").prop("checked"),"insertNotExistsFragement":$("#insertNotExistsFragement").prop("checked")};
 				var spaceId = $("#spaceId").val();
 				if(spaceId != ''){
 					data.spaceId = spaceId;
@@ -289,9 +297,9 @@
 	}
 	function viewTpl(o){
 		var pre = o.parent().next().find('pre').eq(0).clone().addClass("pre-scrollable");
-		$("#tplWidgetModal").find(".modal-body").html(pre);
+		$("#tplFragementModal").find(".modal-body").html(pre);
 		pre.show();
-		$("#tplWidgetModal").modal("show");
+		$("#tplFragementModal").modal("show");
 	}
 	</script>
 </body>

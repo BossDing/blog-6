@@ -1,0 +1,208 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<link
+	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
+<link rel="stylesheet"
+	th:href="@{/static/editor/markdown/css/editormd.css}" />
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<!--[if lt IE 9]>
+  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<style type="text/css">
+.table-borderless tbody tr td, .table-borderless tbody tr th,
+	.table-borderless thead tr th {
+	border: none;
+}
+
+.cm-tab {
+	background: none !important;
+}
+</style>
+<title>自定义挂件管理</title>
+</head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('tpl-fragement')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row" style="margin-bottom: 10px">
+				<div class="col-md-12">
+					<button class="btn btn-primary" id="show-create">新建挂件</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<form style="display: none"
+						th:action="@{/mgr/fragement/user/index}" id="pageForm">
+						<input type="hidden" th:value="${page.currentPage}"
+							name="currentPage" />
+					</form>
+					<div class="alert alert-info" th:if="${#lists.isEmpty(page.datas)}">当前没有任何自定义挂件</div>
+					<div th:unless="${#lists.isEmpty(page.datas)}">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>挂件名</th>
+										<th>描述</th>
+										<th>创建日期</th>
+										<th>空间</th>
+										<th>全局</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="fragement : ${page.datas}">
+										<td><a href="###" th:title="${fragement.name}"
+											data-toggle="tooltip"
+											th:text="${#strings.length(fragement.name) > 20  ? #strings.substring(fragement.name,0,20)+'...' : fragement.name}"></a></td>
+										<td><a href="###" th:title="${fragement.description}"
+											data-toggle="tooltip"
+											th:text="${#strings.length(fragement.description) > 20  ? #strings.substring(fragement.description,0,20)+'...' : fragement.description}"></a></td>
+										<td
+											th:text="${#dates.format(fragement.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+										<td><span th:if="${fragement.space != null}"
+											th:text="${fragement.space.name}"></span></td>
+										<td th:text="${fragement.global ? '是' : '否'}"></td>
+										<td><a href="###" style="margin-right: 10px"
+											data-action="remove" th:data-id="${fragement.id}"><span
+												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+											<a href="###" data-action="edit" th:data-id="${fragement.id}"><span
+												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div th:if="${page.totalPage > 1}">
+						<ul class="pagination">
+							<li
+								th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
+								<a th:text="${i}" th:data-page="${i}" href="###"></a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+
+	<div class="modal" id="createUserFragementModal" tabindex="-1"
+		role="dialog" aria-labelledby="createUserFragementModalLabel"
+		data-backdrop="static">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="createUserFragementModalLabel">新挂件</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<div class="form-group">
+							<label for="name" class="control-label">名称(1~20个字符):</label> <input
+								type="text" class="form-control" name="name">
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">描述(0~500个字符):</label>
+							<textarea rows="8" cols="8" class="form-control"
+								name="description"></textarea>
+						</div>
+							<div class="checkbox">
+							<label><input
+								type="checkbox" name="global" value="true"/>全局 </label>
+						</div>
+						<div class="form-group">
+							<label>空间</label> <select class="form-control" name="space">
+								<option value="">无</option>
+								<option th:each="space : ${spaces}" th:text="${space.name}"
+									th:value="${space.id}"></option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">模板(0~20000个字符):</label>
+							<div id="editor">
+								<textarea rows="8" cols="8" class="form-control"></textarea>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary"
+						id="createUserFragement">创建</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="modal" id="updateUserFragementModal" tabindex="-1"
+		role="dialog" aria-labelledby="updateUserFragementModalLabel"
+		data-backdrop="static">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="updateUserFragementModalLabel">挂件更新</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<div class="form-group">
+							<input type="hidden" class="form-control" name="id"> <label
+								for="name" class="control-label">名称(1~20个字符):</label> <input
+								type="text" class="form-control" name="name">
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">描述(0~500个字符):</label>
+							<textarea rows="8" cols="8" class="form-control"
+								name="description"></textarea>
+						</div>
+						<div class="checkbox">
+							<label><input
+								type="checkbox" name="global" value="true"/>全局 </label>
+						</div>
+						<div class="form-group">
+							<label>空间</label> <select class="form-control" name="space">
+								<option value="">无</option>
+								<option th:each="space : ${spaces}" th:text="${space.name}"
+									th:value="${space.id}"></option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">模板(0~20000个字符):</label>
+							<div id="upeditor">
+								<textarea rows="8" cols="8" class="form-control"></textarea>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary"
+						id="updateUserFragement">更新</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:src="@{/static/editor/markdown/editormd.min.js}"></script>
+	<script th:src="@{/static/js/mgr/fragement.js}"></script>
+</body>
+</html>

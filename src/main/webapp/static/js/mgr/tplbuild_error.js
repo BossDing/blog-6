@@ -1,6 +1,6 @@
 var editor;
-var widgetTplEditor;
-var widgets = [];
+var fragementTplEditor;
+var fragements = [];
 var _tpls = [];
 	$(document).ready(function() {
 		editor = editormd("editor", {
@@ -14,7 +14,7 @@ var _tpls = [];
              mode             : "text/html",
              path : basePath + '/static/editor/markdown/lib/'
 		});
-		widgetTplEditor = editormd("widgetTplEditor", {
+		fragementTplEditor = editormd("fragementTplEditor", {
 			width : "100%",
 			height : 600,
 			 watch            : false,
@@ -35,97 +35,39 @@ var _tpls = [];
 			$("#grab_url").val("")
 		});
 		
-		$("#allWidgetsModal").on("show.bs.modal", function() {
-			showSysWidget();
+		$("#allFragementsModal").on("show.bs.modal", function() {
+			showSysFragement();
 		})
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			var html = '';
 			var id = $(e.target).attr('id');
 			switch(id){
 			case "sys-tab":
-				showSysWidget();
+				showSysFragement();
 				break;
 			case "user-tab":
-				showUserWidget(1)
+				showUserFragement(1)
 				break;
 			}
 		})
 		
-		$("#widgetsModal").on("shown.bs.modal",function(){
-			$("#widgetsModal .modal-body").html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-			var data = {"errorCode":$("#errorCode").val(),"tpl":editor.getValue()};
-			var id = $("#pageId").val();
-			if(id != null && $.trim(id) != ''){
-				data.id = id;
-			}
-			var space = $("#space").val();
-			if(space != null && $.trim(space) != ''){
-				data.space = {"id":space}
-			}
-			$.ajax({
-				type : "post",
-				url : basePath+"/mgr/page/error/parseWidget",
-				data : JSON.stringify(data),
-				dataType : "json",
-				contentType : 'application/json',
-				success : function(data){
-					if(data.success){
-						var tpls = data.data;
-						if(tpls.length > 0){
-							var html = '<div class="panel panel-default"> ';
-							html += ' <div class="table-responsive"> ';
-							html += '  <table class="table"> ';
-							html += '  <tbody> ';
-							_tpls = tpls;
-							for(var i=0;i<tpls.length;i++){
-								var tpl = tpls[i];
-								html += '  <tr> ';
-								html += ' <td><span>'+tpl.widget.name+'</span></td>'; 
-								var id = $("#pageId").val();
-								if(id != null && $.trim(id) != '' && tpl.widget.id && tpl.widget.id != ""){
-									html += ' <td><a href="###" onclick="revert(\''+id+'\',\''+tpl.widget.id+'\',\''+tpl.widget.type+'\')" style="margin-right:10px" title="还原"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a><a href="###" onclick="showWidget($(this))" data-index="'+i+'"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>'; 
-								} else {
-									html += ' <td><a href="###" data-index="'+i+'" onclick="showWidget($(this))"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>'; 
-								}
-								html += ' </tr> ';
-							}
-							html += '   </tbody> ';
-							html += '   </table> ';
-							html += '    </div> ';
-							html += '</div>';
-							$("#widgetsModal .modal-body").html(html);
-						} else {
-							$("#widgetsModal .modal-body").html('<div class="alert alert-info">没有挂件</div>')
-						}
-					} else {
-						$("#widgetsModal .modal-body").html('<div class="alert alert-danger">'+data.message+'</div>');
-					}
-				},
-				complete:function(){
-					$("#create").prop("disabled",false);
-				}
-			});
-		}).on("hidden.bs.modal", function() {
-			$("#widgetsModal .modal-body").html("")
-		})
-		
-		$("#widgetTplEditModal").on("shown.bs.modal",function(){
+		$("#fragementTplEditModal").on("shown.bs.modal",function(){
 			clearTip();
-			widgetTplEditor.resize();
+			fragementTplEditor.resize();
 		}).on("hidden.bs.modal",function(){
 			
 		})
 	});
 	
 	
-	function addWidget(name){
-		editor.insertValue('<widget name="'+name+'"></widget>');
-		$("#allWidgetsModal").modal('hide')
+	function addFragement(name){
+		editor.insertValue('<fragement name="'+name+'"></fragement>');
+		$("#allFragementsModal").modal('hide')
 	}
 	
-	function showSysWidget(){
+	function showSysFragement(){
 		var html = '';
-		$.get(basePath+"/mgr/widget/sys/all",{},function(data){
+		$.get(basePath+"/mgr/fragement/sys/all",{},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;
@@ -136,7 +78,7 @@ var _tpls = [];
 			for(var i=0;i<data.length;i++){
 				html += '<tr>';
 				html += '<td>'+data[i].name+'</td>';
-				html += '<td><a onclick="addWidget(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addFragement(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';
@@ -144,9 +86,9 @@ var _tpls = [];
 			$('[aria-labelledby="sys-tab"]').html(html);
 		});
 	}
-	function showUserWidget(i){
+	function showUserFragement(i){
 		var html = '';
-		$.get(basePath+"/mgr/widget/user/list",{"currentPage":i},function(data){
+		$.get(basePath+"/mgr/fragement/user/list",{"currentPage":i},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;
@@ -157,7 +99,7 @@ var _tpls = [];
 			for(var i=0;i<page.datas.length;i++){
 				html += '<tr>';
 				html += '<td>'+page.datas[i].name+'</td>';
-				html += '<td><a onclick="addWidget(\''+page.datas[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addFragement(\''+page.datas[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';
@@ -168,7 +110,7 @@ var _tpls = [];
 				html += '<ul class="pagination">';
 				for(var i=page.listbegin;i<=page.listend-1;i++){
 					html += '<li>';
-					html += '<a href="###" onclick="showUserWidget(\''+i+'\')" >'+i+'</a>';
+					html += '<a href="###" onclick="showUserFragement(\''+i+'\')" >'+i+'</a>';
 					html += '</li>';
 				}
 				html += '</ul>';
@@ -178,45 +120,9 @@ var _tpls = [];
 		});
 	}
 	
-	function showWidget(o){
-		var index= o.attr("data-index");
-		var tpl = _tpls[index];
-		var widget = tpl.widget;
-		for(var i=0;i<widgets.length;i++){
-			var _widget = widgets[i].widget;
-			if(widget.name == _widget.name){
-				tpl.tpl = widgets[i].tpl;
-			}
-		}
-		//系统挂件
-		$("#widgetsModal").modal("hide");
-		$("#widgetTplEditModal").modal("show");
-		widgetTplEditor.setValue(tpl.tpl);
-		$("#tpl-save-btn").off("click").on("click",function(){
-			var btn  = $(this);
-			var data = {tpl:widgetTplEditor.getValue()};
-			data.widget = widget;
-			var exists = false;
-			for(var i=0;i<widgets.length;i++){
-				var tpl = widgets[i];
-				if(tpl.widget.name == widget.name){
-					tpl.tpl = data.tpl;
-					exists = true;
-				}
-			}
-			if(!exists){
-				widgets.push(data);
-			}
-			success("保存成功");
-			setTimeout(function(){
-				$("#widgetTplEditModal").modal("hide");
-				$("#widgetsModal").modal("show");
-			},500)
-		});
-	}
 	function preview() {
 		var page = {"errorCode":$("#errorCode").val(),"tpl":editor.getValue()};
-		page.tpls = widgets;
+		page.tpls = fragements;
 		var space = $("#space").val();
 		if(space != null && $.trim(space) != ''){
 			page.space = {"id":space}
@@ -243,10 +149,10 @@ var _tpls = [];
 					}
 					data = data.data;
 					if (data.line) {
-						if(data.template && data.template.widget){
-							var widget = data.template.widget;
-							$("#widgetTplEditModal").modal("show");
-							widgetTplEditor.setValue(data.template.tpl);
+						if(data.template && data.template.fragement){
+							var fragement = data.template.fragement;
+							$("#fragementTplEditModal").modal("show");
+							fragementTplEditor.setValue(data.template.tpl);
 							if (data.expression) {
 								error("第" + data.line + "行,"
 										+ data.col + "列，表达式：" + data.expression
@@ -257,23 +163,23 @@ var _tpls = [];
 							}
 							$("#tpl-save-btn").off("click").on("click",function(){
 								var btn  = $(this);
-								var data = {tpl:widgetTplEditor.getValue()};
-								data.widget = widget;
+								var data = {tpl:fragementTplEditor.getValue()};
+								data.fragement = fragement;
 								var exists = false;
-								for(var i=0;i<widgets.length;i++){
-									var tpl = widgets[i];
-									if(tpl.widget.name == widget.name){
+								for(var i=0;i<fragements.length;i++){
+									var tpl = fragements[i];
+									if(tpl.fragement.name == fragement.name){
 										tpl.tpl = data.tpl;
 										exists = true;
 									}
 								}
 								if(!exists){
-									widgets.push(data);
+									fragements.push(data);
 								}
 								success("保存成功");
 								setTimeout(function(){
-									$("#widgetTplEditModal").modal("hide");
-									$("#widgetsModal").modal("show");
+									$("#fragementTplEditModal").modal("hide");
+									$("#fragementsModal").modal("show");
 								},500)
 							});
 						} else {
@@ -291,11 +197,11 @@ var _tpls = [];
 							}
 							if (data.tpl){
 								if (editor.mode == 'wysiwyg') {
-									editor.setData(widget.tpl);
+									editor.setData(fragement.tpl);
 									editor.setMode('source')
 								} else {
 									editor.setMode('wysiwyg', function() {
-										editor.setData(widget.tpl);
+										editor.setData(fragement.tpl);
 										editor.setMode('source');
 									});
 								}
@@ -310,7 +216,7 @@ var _tpls = [];
 	}
 	function save() {
 		var page = {"errorCode":$("#errorCode").val(),"tpl":editor.getValue()};
-		page.tpls = widgets;
+		page.tpls = fragements;
 		var space = $("#space").val();
 		if(space != null && $.trim(space) != ''){
 			page.space = {"id":space}
@@ -331,10 +237,10 @@ var _tpls = [];
 					}
 					data = data.data;
 					if (data.line) {
-						if(data.template && data.template.widget){
-							var widget = data.template.widget;
-							$("#widgetTplEditModal").modal("show");
-							widgetTplEditor.setValue(data.template.tpl);
+						if(data.template && data.template.fragement){
+							var fragement = data.template.fragement;
+							$("#fragementTplEditModal").modal("show");
+							fragementTplEditor.setValue(data.template.tpl);
 							if (data.expression) {
 								error("第" + data.line + "行,"
 										+ data.col + "列，表达式：" + data.expression
@@ -345,23 +251,23 @@ var _tpls = [];
 							}
 							$("#tpl-save-btn").off("click").on("click",function(){
 								var btn  = $(this);
-								var data = {tpl:widgetTplEditor.getValue()};
-								data.widget = widget;
+								var data = {tpl:fragementTplEditor.getValue()};
+								data.fragement = fragement;
 								var exists = false;
-								for(var i=0;i<widgets.length;i++){
-									var tpl = widgets[i];
-									if(tpl.widget.name == widget.name){
+								for(var i=0;i<fragements.length;i++){
+									var tpl = fragements[i];
+									if(tpl.fragement.name == fragement.name){
 										tpl.tpl = data.tpl;
 										exists = true;
 									}
 								}
 								if(!exists){
-									widgets.push(data);
+									fragements.push(data);
 								}
 								success("保存成功");
 								setTimeout(function(){
-									$("#widgetTplEditModal").modal("hide");
-									$("#widgetsModal").modal("show");
+									$("#fragementTplEditModal").modal("hide");
+									$("#fragementsModal").modal("show");
 								},500)
 							});
 						} else {
@@ -379,11 +285,11 @@ var _tpls = [];
 							}
 							if (data.tpl){
 								if (editor.mode == 'wysiwyg') {
-									editor.setData(widget.tpl);
+									editor.setData(fragement.tpl);
 									editor.setMode('source')
 								} else {
 									editor.setMode('wysiwyg', function() {
-										editor.setData(widget.tpl);
+										editor.setData(fragement.tpl);
 										editor.setMode('source');
 									});
 								}
@@ -424,18 +330,18 @@ var _tpls = [];
 			}
 		})
 	}
-	function revert(pageId,widgetId,widgetType){
-		$("#widgetsModal").modal('hide');
+	function revert(pageId,fragementId,fragementType){
+		$("#fragementsModal").modal('hide');
 		$.ajax({
 			type : "post",
 			 async: false,
-			url : basePath+"/mgr/page/ERROR/"+pageId+"/widget/"+widgetType+"/"+widgetId+"/delete",
+			url : basePath+"/mgr/page/ERROR/"+pageId+"/fragement/"+fragementType+"/"+fragementId+"/delete",
 			data : {},
 			success : function(data){
 				if(data.success){
 					success(data.message);
 					setTimeout(function(){
-						$("#widgetsModal").modal('show');
+						$("#fragementsModal").modal('show');
 					},500);
 					flag = true;
 				} else {

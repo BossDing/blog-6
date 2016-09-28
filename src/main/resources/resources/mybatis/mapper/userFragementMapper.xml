@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.UserFragementDao">
+	<resultMap type="UserFragement" id="UserFragementDetail">
+		<id column="id" property="id" />
+		<result property="name" column="fragement_name"/>
+		<result property="description" column="fragement_description"/>
+		<result property="tpl" column="fragement_tpl"/>
+		<result property="createDate" column="fragement_create_date"/>
+		<result property="global" column="is_global"/>
+		<association property="space" javaType="Space">
+			<result column="space_id" property="id" />
+			<result column="space_name" property="name"/>
+		</association>
+	</resultMap>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_fragement_user WHERE id = #{id}
+	</delete>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		INSERT blog_fragement_user(fragement_name,fragement_description,fragement_tpl,fragement_create_date,space_id,is_global)
+		VALUES(#{name},#{description},#{tpl},#{createDate},#{space.id},#{global})
+	</insert>
+	
+	<select id="selectBySpaceAndName" resultMap="UserFragementDetail">
+		SELECT
+			id,
+			fragement_name,
+			fragement_description,
+			fragement_tpl,
+			fragement_create_date,
+			space_id,
+			is_global
+		FROM
+			blog_fragement_user
+		WHERE 
+			fragement_name = #{name}
+		<choose>
+			<when test="space == null">
+				AND space_id IS NULL
+			</when>
+			<otherwise>
+				AND space_id = #{space.id}
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="selectById" resultMap="UserFragementDetail">
+		SELECT
+			id,
+			fragement_name,
+			fragement_description,
+			fragement_tpl,
+			fragement_create_date,
+			space_id,
+			is_global
+		FROM
+			blog_fragement_user
+		WHERE 
+			id = #{id}
+	</select>
+	
+	<select id="selectPage" resultMap="UserFragementDetail">
+		SELECT
+			bfu.id,
+			fragement_name,
+			fragement_description,
+			fragement_tpl,
+			fragement_create_date,
+			space_id,
+			space_name,
+			is_global
+		FROM
+			blog_fragement_user bfu
+		LEFT OUTER JOIN blog_space bs ON bfu.space_id = bs.id
+		<where>
+			<if test="name != null and name != ''">
+				fragement_name LIKE CONCAT('%', #{name},'%')
+			</if>
+		</where>
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT 
+			COUNT(id) 
+		FROM 
+			blog_fragement_user 
+		<where>
+			<if test="name != null and name != ''">
+				fragement_name LIKE CONCAT('%', #{name},'%')
+			</if>
+		</where>
+	</select>
+	
+	<update id="update">
+		UPDATE
+			blog_fragement_user 
+		<set>
+			<if test="name != null">
+				fragement_name = #{name},
+			</if>
+			<if test="description != null">
+				fragement_description = #{description},
+			</if>
+			<if test="tpl != null">
+				fragement_tpl = #{tpl},
+			</if>
+			space_id = #{space.id},
+			is_global = #{global}
+		</set>
+		WHERE 
+			id = #{id}
+	</update>
+	
+	<select id="selectGlobalByName" resultMap="UserFragementDetail">
+		SELECT
+			id,
+			fragement_name,
+			fragement_description,
+			fragement_tpl,
+			fragement_create_date,
+			space_id,
+			is_global
+		FROM
+			blog_fragement_user
+		WHERE 
+			fragement_name = #{name}
+			AND is_global = TRUE
+	</select>
+</mapper>

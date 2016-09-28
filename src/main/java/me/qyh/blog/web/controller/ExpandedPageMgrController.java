@@ -3,7 +3,6 @@ package me.qyh.blog.web.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +21,7 @@ import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -61,15 +61,13 @@ public class ExpandedPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated ExpandedPage expandedPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		ExpandedPage copy = new ExpandedPage();
-		BeanUtils.copyProperties(expandedPage, copy);
-		uiService.renderPreviewPage(expandedPage);
+		RenderedPage page = uiService.renderPreviewPage(expandedPage);
 		try {
-			tplRender.tryRender(expandedPage, request, response);
+			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		uiService.buildTpl(copy);
+		uiService.buildTpl(expandedPage);
 		return new JsonResult(true, new Message("page.expanded.build.success", "保存成功"));
 	}
 
@@ -84,19 +82,13 @@ public class ExpandedPageMgrController extends BaseMgrController {
 		}
 	}
 
-	@RequestMapping(value = "parseWidget", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult parseWidget(@RequestBody @Validated ExpandedPage page) throws LogicException {
-		return new JsonResult(true, uiService.parseWidget(page));
-	}
-
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated ExpandedPage expandedPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		try {
-			uiService.renderPreviewPage(expandedPage);
-			String rendered = tplRender.tryRender(expandedPage, request, response);
+			RenderedPage page = uiService.renderPreviewPage(expandedPage);
+			String rendered = tplRender.tryRender(page, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

@@ -8,9 +8,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
-import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
@@ -54,7 +54,7 @@ public class SpaceErrorController extends BaseController {
 
 	private String handlerError(Model model, int error) {
 		try {
-			Page page = uiService.renderErrorPage(SpaceContext.get(), ErrorCode.valueOf("ERROR_" + error));
+			RenderedPage page = uiService.renderErrorPage(SpaceContext.get(), ErrorCode.valueOf("ERROR_" + error));
 			UIContext.set(page);
 			return page.getTemplateName();
 		} catch (Throwable e) {

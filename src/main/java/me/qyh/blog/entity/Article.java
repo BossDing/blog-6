@@ -11,9 +11,10 @@ import org.springframework.util.CollectionUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import me.qyh.blog.config.Limit;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 
-public class Article extends BaseLockResource {
+public class Article extends BaseLockResource implements Cloneable {
 
 	/**
 	 * 
@@ -380,6 +381,15 @@ public class Article extends BaseLockResource {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public Article clone() {
+		try {
+			return (Article) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 	}
 
 }

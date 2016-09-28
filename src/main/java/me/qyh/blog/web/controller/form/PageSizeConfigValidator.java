@@ -10,7 +10,7 @@ import me.qyh.blog.config.PageSizeConfig;
 public class PageSizeConfigValidator implements Validator {
 
 	private static final int[] FILE_PAGE_SIZE_RANGE = { 1, 50 };
-	private static final int[] USER_WIDGET_PAGE_SIZE_RANGE = { 1, 100 };
+	private static final int[] USER_FRAGEMENT_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] USER_PAGE_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] ARTICLE_PAGE_SIZE_RANGE = { 5, 20 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
@@ -37,16 +37,16 @@ public class PageSizeConfigValidator implements Validator {
 					"文件每页数量不能大于" + FILE_PAGE_SIZE_RANGE[1]);
 			return;
 		}
-		int userWidgetPageSize = config.getUserWidgetPageSize();
-		if (userWidgetPageSize < USER_WIDGET_PAGE_SIZE_RANGE[0]) {
-			errors.reject("pagesize.userWidget.toosmall", new Object[] { USER_WIDGET_PAGE_SIZE_RANGE[0] },
-					"用户挂件每页数量不能小于" + USER_WIDGET_PAGE_SIZE_RANGE[0]);
+		int userWidgetPageSize = config.getUserFragementPageSize();
+		if (userWidgetPageSize < USER_FRAGEMENT_PAGE_SIZE_RANGE[0]) {
+			errors.reject("pagesize.userWidget.toosmall", new Object[] { USER_FRAGEMENT_PAGE_SIZE_RANGE[0] },
+					"用户挂件每页数量不能小于" + USER_FRAGEMENT_PAGE_SIZE_RANGE[0]);
 			return;
 		}
 
-		if (userWidgetPageSize > USER_WIDGET_PAGE_SIZE_RANGE[1]) {
-			errors.reject("pagesize.userWidget.toobig", new Object[] { USER_WIDGET_PAGE_SIZE_RANGE[1] },
-					"用户挂件每页数量不能大于" + USER_WIDGET_PAGE_SIZE_RANGE[1]);
+		if (userWidgetPageSize > USER_FRAGEMENT_PAGE_SIZE_RANGE[1]) {
+			errors.reject("pagesize.userWidget.toobig", new Object[] { USER_FRAGEMENT_PAGE_SIZE_RANGE[1] },
+					"用户挂件每页数量不能大于" + USER_FRAGEMENT_PAGE_SIZE_RANGE[1]);
 			return;
 		}
 

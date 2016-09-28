@@ -11,7 +11,7 @@
 				<div class="col-md-8 col-md-offset-2">
 					<form th:action="@{/mgr/tpl/export}" method="post">
 						<div class="form-group">
-							<label>空间选择</label> <select class="form-control" name="spaceId">
+							<label>空间选择</label> <select class="form-control" name="space.id">
 								<option value="">无</option>
 								<option th:each="space : ${spaces}" th:text="${space.name}"
 									th:value="${space.id}"></option>

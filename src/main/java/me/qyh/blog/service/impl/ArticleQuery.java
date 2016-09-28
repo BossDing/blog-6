@@ -30,9 +30,6 @@ import me.qyh.util.Validators;
 
 /**
  * 事实上，一般只有一个线程做写操作，真的需要考虑那么多吗。。
- * <p>
- * <strong>由于传递的都是内存中的引用，所以获取到的用于浏览的任何文章都不能进行任何写操作！！！</strong>
- * </p>
  * 
  * @author mhlx
  *
@@ -60,20 +57,25 @@ public class ArticleQuery implements InitializingBean {
 	 * 根据id查询博客
 	 * 
 	 * @param id
+	 * @param clone
+	 *            是否拷贝
 	 * @return null如果不存在
 	 */
-	public Article getArticle(Integer id) {
+	public Article getArticle(Integer id, boolean clone) {
 		waitWhileReloading();
 		if (memoryMode) {
-			return store.get(id);
+			Article article = store.get(id);
+			if (article != null)
+				return clone ? article.clone() : article;
+			return null;
 		} else {
 			return articleDao.selectById(id);
 		}
 	}
 
 	@LockProtected
-	public Article getArticleWithLockCheck(Integer id) {
-		return getArticle(id);
+	public Article getArticleWithLockCheck(Integer id, boolean clone) {
+		return getArticle(id, clone);
 	}
 
 	public List<Article> selectPublished(Space space) {
@@ -85,7 +87,7 @@ public class ArticleQuery implements InitializingBean {
 					if (space != null && !space.equals(article.getSpace())) {
 						continue;
 					}
-					articles.add(article);
+					articles.add(article.clone());
 				}
 			}
 			return articles;
@@ -128,6 +130,17 @@ public class ArticleQuery implements InitializingBean {
 					previous = collect.get(index - 1);
 				}
 			}
+			Article simplePrevious = new Article();
+			simplePrevious.setId(previous.getId());
+			simplePrevious.setTitle(previous.getTitle());
+			simplePrevious.setSpace(previous.getSpace());
+			previous = simplePrevious;
+
+			Article simpleNext = new Article();
+			simpleNext.setId(next.getId());
+			simpleNext.setTitle(next.getTitle());
+			simpleNext.setSpace(next.getSpace());
+			next = simpleNext;
 		} else {
 			previous = articleDao.getPreviousArticle(article, queryPrivate);
 			next = articleDao.getNextArticle(article, queryPrivate);
@@ -137,6 +150,7 @@ public class ArticleQuery implements InitializingBean {
 
 	public PageResult<Article> query(ArticleQueryParam param) {
 		waitWhileReloading();
+		PageResult<Article> page = null;
 		if (memoryMode) {
 			if (luceneQuery(param)) {
 				PageResult<Integer> result = articleIndexer.query(param);
@@ -148,9 +162,9 @@ public class ArticleQuery implements InitializingBean {
 						result.decrease(1);
 						continue;
 					}
-					articles.add(article);
+					articles.add(article.clone());
 				}
-				return new PageResult<Article>(param, result.getTotalRow(), articles);
+				page = new PageResult<Article>(param, result.getTotalRow(), articles);
 			} else {
 				List<Article> results = new ArrayList<Article>();
 				for (Article article : store.values()) {
@@ -183,7 +197,7 @@ public class ArticleQuery implements InitializingBean {
 					if (param.getTag() != null && !article.hasTag(param.getTag())) {
 						continue;
 					}
-					results.add(article);
+					results.add(article.clone());
 				}
 				if (param.getSort() == null) {
 					Collections.sort(results, param.isIgnoreLevel() ? defaultComparatorIgnoreLevel : defaultComparator);
@@ -200,25 +214,30 @@ public class ArticleQuery implements InitializingBean {
 				}
 				int size = results.size();
 				if (param.getOffset() >= size) {
-					return new PageResult<>(param, size, Collections.emptyList());
+					page = new PageResult<>(param, size, Collections.emptyList());
 				} else {
 					int endIndex = param.getOffset() + param.getPageSize();
 					int max = endIndex >= size ? size : endIndex;
-					return new PageResult<>(param, size, results.subList(param.getOffset(), max));
+					page = new PageResult<>(param, size, results.subList(param.getOffset(), max));
 				}
+			}
+			for (Article article : page.getDatas()) {
+				article.setCommentConfig(null);
+				article.setContent(null);
 			}
 		} else {
 			if (luceneQuery(param)) {
 				PageResult<Integer> result = articleIndexer.query(param);
 				List<Article> articles = result.hasResult() ? articleDao.selectByIds(result.getDatas())
 						: new ArrayList<Article>();
-				return new PageResult<Article>(param, result.getTotalRow(), articles);
+				page = new PageResult<Article>(param, result.getTotalRow(), articles);
 			} else {
 				int count = articleDao.selectCount(param);
 				List<Article> datas = articleDao.selectPage(param);
-				return new PageResult<Article>(param, count, datas);
+				page = new PageResult<Article>(param, count, datas);
 			}
 		}
+		return page;
 	}
 
 	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode, boolean queryPrivate) {
@@ -316,7 +335,7 @@ public class ArticleQuery implements InitializingBean {
 			List<Article> articles = new ArrayList<>();
 			for (Article article : store.values()) {
 				if (article.isSchedule() && article.getPubDate().compareTo(date) <= 0) {
-					articles.add(article);
+					articles.add(article.clone());
 				}
 			}
 			return new ArrayList<>(articles);

@@ -4,92 +4,53 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
 		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
-	<bean class="me.qyh.blog.ui.widget.SysWidgetServer">
-		<property name="sysWidgetHandlers">
+	<bean class="me.qyh.blog.service.impl.UIServiceImpl">
+		<property name="processors">
 			<list>
-				<bean class="me.qyh.blog.ui.widget.ArticleWidgetHandler">
-					<constructor-arg index="0" value="1" />
-					<constructor-arg index="1" value="文章详情" />
-					<constructor-arg index="2" value="article" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/article.html" />
+				<bean class="me.qyh.blog.ui.data.ArticleDataTagProcessor">
+					<constructor-arg index="0" value="文章详情" />
+					<constructor-arg index="1" value="article" />
 				</bean>
-				<bean class="me.qyh.blog.ui.widget.ArticleDateFilesWidgetHandler">
-					<constructor-arg index="0" value="2" />
-					<constructor-arg index="1" value="文章日期归档" />
-					<constructor-arg index="2" value="articleDateFiles" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/articleDateFiles.html" />
+				<bean class="me.qyh.blog.ui.data.ArticlesDataTagProcessor">
+					<constructor-arg index="0" value="文章列表" />
+					<constructor-arg index="1" value="articlePage" />
 				</bean>
-				<bean class="me.qyh.blog.ui.widget.ArticleSpaceFilesWidgetHandler">
-					<constructor-arg index="0" value="3" />
-					<constructor-arg index="1" value="文章空间归档" />
-					<constructor-arg index="2" value="articleSpaceFiles" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/articleSpaceFiles.html" />
+				<bean class="me.qyh.blog.ui.data.ArticleSpaceFilesDataTagProcessor">
+					<constructor-arg index="0" value="文章空间归档" />
+					<constructor-arg index="1" value="articleSpaceFiles" />
 				</bean>
-				<bean class="me.qyh.blog.ui.widget.ArticlesWidgetHandler">
-					<constructor-arg index="0" value="4" />
-					<constructor-arg index="1" value="文章列表" />
-					<constructor-arg index="2" value="articlePage" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/articles.html" />
+				<bean class="me.qyh.blog.ui.data.ArticleDateFilesDataTagProcessor">
+					<constructor-arg index="0" value="文章日期归档" />
+					<constructor-arg index="1" value="articleDateFiles" />
 				</bean>
-				<bean class="me.qyh.blog.ui.widget.LastCommentsWidgetHandler">
-					<constructor-arg index="0" value="5" />
-					<constructor-arg index="1" value="最近评论" />
-					<constructor-arg index="2" value="comments" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/comments.html" />
+				<bean class="me.qyh.blog.ui.data.ArticleNavDataTagProcessor">
+					<constructor-arg index="0" value="上一篇下一篇" />
+					<constructor-arg index="1" value="articleNav" />
 				</bean>
-				<bean class="me.qyh.blog.ui.widget.ArticleNavWidgetHandler">
-					<constructor-arg index="0" value="6" />
-					<constructor-arg index="1" value="上一篇下一篇" />
-					<constructor-arg index="2" value="articleNav" />
-					<constructor-arg index="3"
-						value="classpath:me/qyh/blog/ui/widget/articleNav.html" />
+				<bean class="me.qyh.blog.ui.data.LastCommentsDataTagProcessor">
+					<constructor-arg index="0" value="最近评论" />
+					<constructor-arg index="1" value="comments" />
 				</bean>
 			</list>
 		</property>
-	</bean>
-
-	<bean class="me.qyh.blog.ui.DefaultTemplateParser" />
-	<bean class="me.qyh.blog.service.impl.UIServiceImpl">
-		<property name="sysPageDefaultTpls">
-			<map>
-				<entry key="INDEX">
-					<value>classpath:me/qyh/blog/ui/page/PAGE_INDEX.html</value>
-				</entry>
-				<entry key="ARTICLE_DETAIL">
-					<value>classpath:me/qyh/blog/ui/page/PAGE_ARTICLEDETAIL.html
-					</value>
-				</entry>
-				<entry key="ARTICLE_LIST">
-					<value>classpath:me/qyh/blog/ui/page/PAGE_ARTICLELIST.html</value>
-				</entry>
-			</map>
-		</property>
-		<property name="errorPageDefaultTpls">
-			<map>
-				<entry key="ERROR_200">
-					<value>classpath:me/qyh/blog/ui/page/error_200.html</value>
-				</entry>
-				<entry key="ERROR_400">
-					<value>classpath:me/qyh/blog/ui/page/error_400.html</value>
-				</entry>
-				<entry key="ERROR_403">
-					<value>classpath:me/qyh/blog/ui/page/error_403.html</value>
-				</entry>
-				<entry key="ERROR_404">
-					<value>classpath:me/qyh/blog/ui/page/error_404.html</value>
-				</entry>
-				<entry key="ERROR_405">
-					<value>classpath:me/qyh/blog/ui/page/error_405.html</value>
-				</entry>
-				<entry key="ERROR_500">
-					<value>classpath:me/qyh/blog/ui/page/error_500.html</value>
-				</entry>
-			</map>
+		<property name="fragements">
+			<bean class="me.qyh.blog.ui.fragement.FragementsFactoryBean">
+				<property name="tplMap">
+					<map>
+						<entry key="文章详情" value="classpath:me/qyh/blog/ui/fragement/article.html" />
+						<entry key="文章列表"
+							value="classpath:me/qyh/blog/ui/fragement/articles.html" />
+						<entry key="文章空间归档"
+							value="classpath:me/qyh/blog/ui/fragement/articleSpaceFiles.html" />
+						<entry key="文章日期归档"
+							value="classpath:me/qyh/blog/ui/fragement/articleDateFiles.html" />
+						<entry key="上一篇下一篇"
+							value="classpath:me/qyh/blog/ui/fragement/articleNav.html" />
+						<entry key="最近评论"
+							value="classpath:me/qyh/blog/ui/fragement/comments.html" />
+					</map>
+				</property>
+			</bean>
 		</property>
 	</bean>
 

@@ -14,9 +14,9 @@ public class PageSizeConfig {
 	private int filePageSize;
 
 	/**
-	 * 用户挂件管理分页数量
+	 * 用户模板片段管理分页数量
 	 */
-	private int userWidgetPageSize;
+	private int userFragementPageSize;
 
 	/**
 	 * 用户自定义页面分页数量
@@ -51,12 +51,12 @@ public class PageSizeConfig {
 		this.filePageSize = filePageSize;
 	}
 
-	public int getUserWidgetPageSize() {
-		return userWidgetPageSize;
+	public int getUserFragementPageSize() {
+		return userFragementPageSize;
 	}
 
-	public void setUserWidgetPageSize(int userWidgetPageSize) {
-		this.userWidgetPageSize = userWidgetPageSize;
+	public void setUserFragementPageSize(int userFragementPageSize) {
+		this.userFragementPageSize = userFragementPageSize;
 	}
 
 	public int getUserPagePageSize() {

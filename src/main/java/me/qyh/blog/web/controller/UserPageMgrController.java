@@ -3,7 +3,6 @@ package me.qyh.blog.web.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,6 +26,7 @@ import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.UserPage;
@@ -76,15 +76,13 @@ public class UserPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		UserPage copy = new UserPage();
-		BeanUtils.copyProperties(userPage, copy);
-		uiService.renderPreviewPage(userPage);
+		RenderedPage page = uiService.renderPreviewPage(userPage);
 		try {
-			tplRender.tryRender(userPage, request, response);
+			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		uiService.buildTpl(copy);
+		uiService.buildTpl(userPage);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}
 
@@ -109,19 +107,13 @@ public class UserPageMgrController extends BaseMgrController {
 		return "mgr/page/user/build";
 	}
 
-	@RequestMapping(value = "parseWidget", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult parseWidget(@RequestBody @Validated UserPage userPage) throws LogicException {
-		return new JsonResult(true, uiService.parseWidget(userPage));
-	}
-
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		try {
-			uiService.renderPreviewPage(userPage);
-			String rendered = tplRender.tryRender(userPage, request, response);
+			RenderedPage page = uiService.renderPreviewPage(userPage);
+			String rendered = tplRender.tryRender(page, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

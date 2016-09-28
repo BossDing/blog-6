@@ -4,8 +4,6 @@ import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,13 +13,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.bean.ExportReq;
 import me.qyh.blog.bean.ImportError;
 import me.qyh.blog.bean.ImportPageWrapper;
+import me.qyh.blog.bean.ImportReq;
 import me.qyh.blog.bean.ImportResult;
 import me.qyh.blog.bean.ImportSuccess;
 import me.qyh.blog.config.Constants;
@@ -29,22 +30,28 @@ import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.ExpandedPageDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.SysPageDao;
+import me.qyh.blog.dao.UserFragementDao;
 import me.qyh.blog.dao.UserPageDao;
-import me.qyh.blog.dao.UserWidgetDao;
-import me.qyh.blog.dao.WidgetTplDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.pageparam.UserFragementQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
-import me.qyh.blog.pageparam.UserWidgetQueryParam;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.DataTag;
+import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.ParseResult;
+import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TemplateParser;
-import me.qyh.blog.ui.TemplateParser.WidgetQuery;
-import me.qyh.blog.ui.WidgetTag;
+import me.qyh.blog.ui.TemplateParser.DataQuery;
+import me.qyh.blog.ui.TemplateParser.FragementQuery;
+import me.qyh.blog.ui.data.DataBind;
+import me.qyh.blog.ui.data.DataTagProcessor;
+import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragement.UserFragement;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -54,13 +61,6 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.blog.ui.widget.SysWidget;
-import me.qyh.blog.ui.widget.SysWidgetHandler;
-import me.qyh.blog.ui.widget.SysWidgetServer;
-import me.qyh.blog.ui.widget.UserWidget;
-import me.qyh.blog.ui.widget.Widget;
-import me.qyh.blog.ui.widget.Widget.WidgetType;
-import me.qyh.blog.ui.widget.WidgetTpl;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 import me.qyh.util.Validators;
@@ -75,18 +75,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private ErrorPageDao errorPageDao;
 	@Autowired
-	private UserWidgetDao userWidgetDao;
-	@Autowired
-	private WidgetTplDao widgetTplDao;
+	private UserFragementDao userFragementDao;
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
 	private ExpandedPageDao expandedPageDao;
-
-	@Autowired
-	private SysWidgetServer systemWidgetServer;
-	@Autowired
-	private TemplateParser templateParser;
 	@Autowired
 	private ExpandedPageServer expandedPageServer;
 
@@ -98,74 +91,100 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<ErrorCode, Resource>();
 	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<ErrorCode, String>();
 
-	@Override
-	public List<SysWidget> querySysWidgets() {
-		return systemWidgetServer.getSysWidgets();
-	}
+	private final TemplateParser templateParser = new TemplateParser();
+
+	private List<DataTagProcessor<?>> processors = new ArrayList<DataTagProcessor<?>>();
+
+	private final DataQuery previewDataQuery = new DataQuery() {
+
+		@Override
+		public DataBind<?> query(DataTag dataTag) throws LogicException {
+			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+			if (processor != null)
+				return processor.previewData(dataTag.getAttrs());
+			return null;
+		}
+	};
+
+	/**
+	 * 系统默认片段
+	 */
+	private List<Fragement> fragements = new ArrayList<Fragement>();
 
 	@Override
-	public void insertUserWidget(UserWidget userWidget) throws LogicException {
-		UserWidget db = userWidgetDao.selectByName(userWidget.getName());
+	public void insertUserFragement(UserFragement userFragement) throws LogicException {
+		Space space = userFragement.getSpace();
+		if (space != null && spaceDao.selectById(space.getId()) == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
+		UserFragement db = null;
+		if (userFragement.isGlobal()) {
+			db = userFragementDao.selectGlobalByName(userFragement.getName());
+		} else {
+			db = userFragementDao.selectBySpaceAndName(space, userFragement.getName());
+		}
 		boolean nameExists = db != null;
-		if (!nameExists) {
-			// 检查是否和系统挂件名称重复
-			nameExists = systemWidgetServer.getHandler(userWidget.getName()) != null;
-		}
 		if (nameExists) {
-			throw new LogicException("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
-					userWidget.getName());
+			throw new LogicException("fragement.user.nameExists", "挂件名:" + userFragement.getName() + "已经存在",
+					userFragement.getName());
 		}
-		userWidget.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		userWidgetDao.insert(userWidget);
 
-		uiCacheRender.evit(userWidget);
+		userFragement.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+		userFragementDao.insert(userFragement);
+
+		uiCacheRender.evit(userFragement);
 	}
 
 	@Override
-	public void deleteUserWidget(Integer id) throws LogicException {
-		UserWidget userWidget = userWidgetDao.selectById(id);
-		if (userWidget == null) {
-			throw new LogicException("widget.user.notExists", "挂件不存在");
+	public void deleteUserFragement(Integer id) throws LogicException {
+		UserFragement userFragement = userFragementDao.selectById(id);
+		if (userFragement == null) {
+			throw new LogicException("fragement.user.notExists", "挂件不存在");
 		}
-		List<WidgetTpl> tpls = widgetTplDao.selectByWidget(userWidget);
-		deleteWidgetTpls(tpls);
-		userWidgetDao.deleteById(id);
+		userFragementDao.deleteById(id);
 
-		uiCacheRender.evit(userWidget);
+		uiCacheRender.evit(userFragement);
 	}
 
 	@Override
-	public void updateUserWidget(UserWidget userWidget) throws LogicException {
-		UserWidget old = userWidgetDao.selectById(userWidget.getId());
+	public void updateUserFragement(UserFragement userFragement) throws LogicException {
+		Space space = userFragement.getSpace();
+		if (space != null && spaceDao.selectById(space.getId()) == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
+		UserFragement old = userFragementDao.selectById(userFragement.getId());
 		if (old == null) {
-			throw new LogicException("widget.user.notExists", "挂件不存在");
+			throw new LogicException("fragement.user.notExists", "挂件不存在");
 		}
-		UserWidget db = userWidgetDao.selectByName(userWidget.getName());
-		boolean nameExists = db != null && !db.equals(userWidget);
-		if (!nameExists) {
-			nameExists = systemWidgetServer.getHandler(userWidget.getName()) != null;
+		UserFragement db = null;
+		// 查找当前数据库是否存在同名
+		if (userFragement.isGlobal()) {
+			db = userFragementDao.selectGlobalByName(userFragement.getName());
+		} else {
+			db = userFragementDao.selectBySpaceAndName(space, userFragement.getName());
 		}
+		boolean nameExists = db != null && !db.getId().equals(userFragement.getId());
 		if (nameExists) {
-			throw new LogicException("widget.user.nameExists", "挂件名:" + userWidget.getName() + "已经存在",
-					userWidget.getName());
+			throw new LogicException("fragement.user.nameExists", "挂件名:" + userFragement.getName() + "已经存在",
+					userFragement.getName());
 		}
-		userWidgetDao.update(userWidget);
+		userFragementDao.update(userFragement);
 
-		uiCacheRender.evit(old, userWidget);
+		uiCacheRender.evit(old, userFragement);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public PageResult<UserWidget> queryUserWidget(UserWidgetQueryParam param) {
-		int count = userWidgetDao.selectCount(param);
-		List<UserWidget> datas = userWidgetDao.selectPage(param);
-		return new PageResult<UserWidget>(param, count, datas);
+	public PageResult<UserFragement> queryUserFragement(UserFragementQueryParam param) {
+		int count = userFragementDao.selectCount(param);
+		List<UserFragement> datas = userFragementDao.selectPage(param);
+		return new PageResult<UserFragement>(param, count, datas);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserWidget queryUserWidget(Integer id) {
-		return userWidgetDao.selectById(id);
+	public UserFragement queryUserFragement(Integer id) {
+		return userFragementDao.selectById(id);
 	}
 
 	@Override
@@ -194,25 +213,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (db == null) {
 			throw new LogicException("page.user.notExists", "自定义页面不存在");
 		}
-		deletePageWidgetTpl(db);
 		userPageDao.deleteById(id);
 		uiCacheRender.evit(db.getTemplateName());
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<WidgetTpl> parseWidget(SysPage page) throws LogicException {
-		SysPage db = sysPageDao.selectBySpaceAndPageTarget(page.getSpace(), page.getTarget());
-		ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(db == null ? page : db, false));
-		return result.getTpls();
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<WidgetTpl> parseWidget(UserPage page) throws LogicException {
-		UserPage db = userPageDao.selectById(page.getId());
-		ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(db == null ? page : db, false));
-		return result.getTpls();
 	}
 
 	@Override
@@ -230,107 +232,32 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public void renderPreviewPage(SysPage page) throws LogicException {
-		checkSpace(page);
-		SysPage db = sysPageDao.selectBySpaceAndPageTarget(page.getSpace(), page.getTarget());
-		_renderPreviewPage(page, db == null ? page : db);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public SysPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
+	public RenderedPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		return (SysPage) uiCacheRender.renderPreview(new PageLoader() {
-
-			@Override
-			public Page loadFromDb() throws LogicException {
-				return querySysPage(db, target);
-			}
-
-			@Override
-			public String pageKey() {
-				return new SysPage(db, target).getTemplateName();
-			}
-
-		});
+		return uiCacheRender.renderPreview(new SysPageLoader(target, db));
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public void renderPreviewPage(UserPage page) throws LogicException {
-		checkSpace(page);
-		UserPage db = userPageDao.selectById(page.getId());
-		_renderPreviewPage(page, db == null ? page : db);
-	}
-
-	private void _renderPreviewPage(Page preview, Page db) throws LogicException {
-		ParseResult result = templateParser.parse(preview.getTpl(), new WidgetQueryImpl(db, true));
-		List<WidgetTpl> widgetTpls = result.getTpls();
-		List<WidgetTpl> _widgetTpls = preview.getTpls();
-		if (!CollectionUtils.isEmpty(widgetTpls) && !CollectionUtils.isEmpty(_widgetTpls)) {
-			for (WidgetTpl widgetTpl : widgetTpls) {
-				for (WidgetTpl _widgetTpl : _widgetTpls) {
-					if (widgetTpl.getWidget().equals(_widgetTpl.getWidget())) {
-						widgetTpl.setTpl(_widgetTpl.getTpl());
-					}
-				}
-			}
-		}
-		preview.setTpls(widgetTpls);
-	}
-
-	private void deleteWidgetTpls(List<WidgetTpl> tpls) {
-		if (!tpls.isEmpty()) {
-			for (WidgetTpl tpl : tpls) {
-				if (tpl.hasId()) {
-					widgetTplDao.deleteById(tpl.getId());
-				}
-			}
-		}
+	public RenderedPage renderPreviewPage(Page page) throws LogicException {
+		ParseResult result = templateParser.parse(page.getTpl(), previewDataQuery,
+				new FragementQueryImpl(page.getSpace()));
+		return new RenderedPage(page, result.getBinds(), result.getFragements());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public SysPage renderSysPage(final Space space, final PageTarget pageTarget, Params params) throws LogicException {
-		return (SysPage) uiCacheRender.render(new PageLoader() {
-
-			@Override
-			public Page loadFromDb() throws LogicException {
-				return querySysPage(space, pageTarget);
-			}
-
-			@Override
-			public String pageKey() {
-				return new SysPage(space, pageTarget).getTemplateName();
-			}
-		}, params);
+	public RenderedPage renderSysPage(final Space space, final PageTarget pageTarget, Params params)
+			throws LogicException {
+		return uiCacheRender.render(new SysPageLoader(pageTarget, space), params);
 	}
 
 	@Override
-	public UserPage renderUserPage(String alias) throws LogicException {
-		return (UserPage) uiCacheRender.render(new PageLoader() {
-
-			@Override
-			public Page loadFromDb() throws LogicException {
-				UserPage db = userPageDao.selectByAlias(alias);
-				if (db == null) {
-					throw new LogicException("page.user.notExists", "自定义页面不存在");
-				}
-				Space space = SpaceContext.get();
-				if ((space == null && db.getSpace() != null) || (space != null && !space.equals(db.getSpace()))) {
-					throw new LogicException("page.user.notExists", "自定义页面不存在");
-				}
-				return db;
-			}
-
-			@Override
-			public String pageKey() {
-				return new UserPage(alias).getTemplateName();
-			}
-		}, new Params());
+	public RenderedPage renderUserPage(String alias) throws LogicException {
+		return uiCacheRender.render(new UserPageLoader(alias), new Params());
 	}
 
 	@Override
@@ -344,7 +271,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			sysPageDao.insert(sysPage);
 		}
-		updateWidget(sysPage);
 		uiCacheRender.evit(sysPage.getTemplateName());
 	}
 
@@ -369,38 +295,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			userPageDao.insert(userPage);
 		}
-		updateWidget(userPage);
-	}
-
-	@Override
-	public void deleteWidgetTpl(Page page, Widget widget) {
-		WidgetTpl widgetTpl = widgetTplDao.selectByPageAndWidget(page, widget);
-		if (widgetTpl != null) {
-			deleteWidgetTpls(Arrays.asList(widgetTpl));
-			switch (page.getType()) {
-			case USER:
-				page = userPageDao.selectById(page.getId());
-				break;
-			case SYSTEM:
-				page = sysPageDao.selectById(page.getId());
-				break;
-			case ERROR:
-				page = errorPageDao.selectById(page.getId());
-				break;
-			case EXPANDED:
-				page = expandedPageDao.selectById(page.getId());
-				break;
-			}
-			if (page != null)
-				uiCacheRender.evit(page.getTemplateName());
-		}
 	}
 
 	@Override
 	public void deleteSysPage(Space space, PageTarget target) throws LogicException {
 		SysPage page = sysPageDao.selectBySpaceAndPageTarget(space, target);
 		if (page != null) {
-			deletePageWidgetTpl(page);
 			sysPageDao.deleteById(page.getId());
 			uiCacheRender.evit(page.getTemplateName());
 		}
@@ -408,19 +308,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ExpandedPage renderExpandedPage(final Integer id, Params params) throws LogicException {
-		return (ExpandedPage) uiCacheRender.render(new PageLoader() {
-
-			@Override
-			public Page loadFromDb() throws LogicException {
-				return queryExpandedPage(id);
-			}
-
-			@Override
-			public String pageKey() {
-				return new ExpandedPage(id).getTemplateName();
-			}
-		}, params);
+	public RenderedPage renderExpandedPage(final Integer id, Params params) throws LogicException {
+		return uiCacheRender.render(new ExpandedPageLoader(id), params);
 	}
 
 	@Override
@@ -449,7 +338,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void deleteExpandedPage(Integer id) throws LogicException {
 		ExpandedPage page = expandedPageDao.selectById(id);
 		if (page != null) {
-			deletePageWidgetTpl(page);
 			expandedPageDao.deleteById(id);
 			uiCacheRender.evit(page.getTemplateName());
 		}
@@ -485,23 +373,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			expandedPageDao.insert(page);
 		}
-		updateWidget(page);
 		uiCacheRender.evit(page.getTemplateName());
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public void renderPreviewPage(ExpandedPage expandedPage) throws LogicException {
-		ExpandedPage db = expandedPageDao.selectById(expandedPage.getId());
-		_renderPreviewPage(expandedPage, db == null ? expandedPage : db);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<WidgetTpl> parseWidget(ExpandedPage page) throws LogicException {
-		ExpandedPage db = expandedPageDao.selectById(page.getId());
-		ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(db == null ? page : db, false));
-		return result.getTpls();
 	}
 
 	@Override
@@ -515,7 +387,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			errorPageDao.insert(errorPage);
 		}
-		updateWidget(errorPage);
 		uiCacheRender.evit(errorPage.getTemplateName());
 	}
 
@@ -523,25 +394,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException {
 		ErrorPage page = errorPageDao.selectBySpaceAndErrorCode(space, errorCode);
 		if (page != null) {
-			deletePageWidgetTpl(page);
 			errorPageDao.deleteById(page.getId());
 			uiCacheRender.evit(page.getTemplateName());
 		}
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public void renderPreviewPage(ErrorPage errorPage) throws LogicException {
-		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(errorPage.getSpace(), errorPage.getErrorCode());
-		_renderPreviewPage(errorPage, db == null ? errorPage : db);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<WidgetTpl> parseWidget(ErrorPage page) throws LogicException {
-		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(page.getSpace(), page.getErrorCode());
-		ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(db == null ? page : db, false));
-		return result.getTpls();
 	}
 
 	@Override
@@ -557,67 +412,39 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ErrorPage renderErrorPage(final Space space, ErrorCode code) throws LogicException {
-		return (ErrorPage) uiCacheRender.render(new PageLoader() {
-
-			@Override
-			public String pageKey() {
-				return new ErrorPage(space, code).getTemplateName();
-			}
-
-			@Override
-			public Page loadFromDb() {
-				return queryErrorPage(space, code);
-			}
-
-		}, new Params());
+	public RenderedPage renderErrorPage(final Space space, ErrorCode code) throws LogicException {
+		return uiCacheRender.render(new ErrorPageLoader(code, space), new Params());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Page> export(Space space, boolean exportExpandedPage) throws LogicException {
+	public List<ExportPage> export(ExportReq req) throws LogicException {
+		Space space = req.getSpace();
 		final Space sp = space == null ? null : spaceDao.selectById(space.getId());
 		if (space != null && sp == null)
 			throw new LogicException("space.notExists", "空间不存在");
-
-		List<Page> pages = new ArrayList<Page>();
+		List<ExportPage> pages = new ArrayList<ExportPage>();
 		// 系统页面
 		for (PageTarget target : PageTarget.values()) {
-			Page sysPage = uiCacheRender.renderPreview(new PageLoader() {
-
-				@Override
-				public String pageKey() {
-					return new SysPage(sp, target).getTemplateName();
-				}
-
-				@Override
-				public Page loadFromDb() throws LogicException {
-					return querySysPage(sp, target);
-				}
-			});
-			pages.add(clearUnnecessaryImportInfo(sysPage));
+			RenderedPage page = uiCacheRender.renderPreview(new SysPageLoader(target, sp));
+			ExportPage ep = new ExportPage();
+			ep.setPage(new SysPage(null, target));
+			ep.getPage().setTpl(page.getPage().getTpl());
+			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			pages.add(ep);
 		}
 		// 错误页面
-		for (ErrorCode code : ErrorCode.values()) {
-			Page errorPage = uiCacheRender.renderPreview(new PageLoader() {
-
-				@Override
-				public String pageKey() {
-					return new ErrorPage(sp, code).getTemplateName();
-				}
-
-				@Override
-				public Page loadFromDb() throws LogicException {
-					return queryErrorPage(sp, code);
-				}
-			});
-			pages.add(clearUnnecessaryImportInfo(errorPage));
+		for (ErrorCode errorCode : ErrorCode.values()) {
+			RenderedPage page = uiCacheRender.renderPreview(new ErrorPageLoader(errorCode, sp));
+			ExportPage ep = new ExportPage();
+			ep.setPage(new ErrorPage(null, errorCode));
+			ep.getPage().setTpl(page.getPage().getTpl());
+			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			pages.add(ep);
 		}
-
-		// 自定义页面
-		List<UserPage> userPages = userPageDao.selectBySpace(sp);
-		for (UserPage up : userPages) {
-			Page userPage = uiCacheRender.renderPreview(new PageLoader() {
+		// 个人页面
+		for (UserPage up : userPageDao.selectBySpace(sp)) {
+			RenderedPage page = uiCacheRender.renderPreview(new PageLoader() {
 
 				@Override
 				public String pageKey() {
@@ -629,32 +456,28 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					return up;
 				}
 			});
-			pages.add(clearUnnecessaryImportInfo(userPage));
+			ExportPage ep = new ExportPage();
+			ep.setPage(new UserPage(up.getId()));
+			ep.getPage().setTpl(page.getPage().getTpl());
+			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			pages.add(ep);
 		}
-
-		if (exportExpandedPage) {
-			List<ExpandedPage> eps = expandedPageDao.selectAll();
-			for (ExpandedPage ep : eps) {
-				Page expandedPage = uiCacheRender.renderPreview(new PageLoader() {
-
-					@Override
-					public String pageKey() {
-						return ep.getTemplateName();
-					}
-
-					@Override
-					public Page loadFromDb() throws LogicException {
-						return ep;
-					}
-				});
-				pages.add(clearUnnecessaryImportInfo(expandedPage));
+		if (req.isExportExpandedPage()) {
+			for (ExpandedPage ep : expandedPageDao.selectAll()) {
+				RenderedPage page = uiCacheRender.renderPreview(new ExpandedPageLoader(ep.getId()));
+				ExportPage ep2 = new ExportPage();
+				ep2.setPage(new ExpandedPage(ep.getId()));
+				ep2.getPage().setTpl(page.getPage().getTpl());
+				ep2.setFragements(new ArrayList<>(page.getFragementMap().values()));
+				pages.add(ep2);
 			}
 		}
 		return pages;
 	}
 
 	@Override
-	public ImportResult importTemplate(List<ImportPageWrapper> wrappers, Space space) throws LogicException {
+	public ImportResult importTemplate(List<ImportPageWrapper> wrappers, ImportReq req) throws LogicException {
+		Space space = req.getSpace();
 		if (space != null) {
 			space = spaceDao.selectById(space.getId());
 			if (space == null)
@@ -662,9 +485,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		ImportResult result = new ImportResult();
 		for (ImportPageWrapper ipw : wrappers) {
-			Page page = ipw.getPage();
+			ExportPage ep = ipw.getPage();
+			Page page = ep.getPage();
+
 			Page db = null;
-			switch (page.getType()) {
+			switch (ep.getPage().getType()) {
 			case USER:
 				db = userPageDao.selectById(page.getId());
 				if (db != null) {
@@ -722,7 +547,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			ImportSuccess success = new ImportSuccess(ipw.getIndex());
 			final Page loaderPage = db;
 			// 渲染以前的页面模板用于保存
-			Page old = uiCacheRender.renderPreview(new PageLoader() {
+			RenderedPage old = uiCacheRender.renderPreview(new PageLoader() {
 
 				@Override
 				public String pageKey() {
@@ -734,9 +559,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					return loaderPage;
 				}
 			});
-			result.addOldPage(clearUnnecessaryImportInfo(old));
-			// 删除以前页面的挂件模板
-			deletePageWidgetTpl(db);
+			result.addOldPage(new ExportPage(page, new ArrayList<>(old.getFragementMap().values())));
 			// 更新页面模板
 			db.setTpl(page.getTpl());
 			switch (page.getType()) {
@@ -762,79 +585,64 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				expandedPageDao.update((ExpandedPage) db);
 				break;
 			}
-			// 插入新的页面挂件模板
-			for (WidgetTpl tpl : page.getTpls()) {
-				Widget widget = tpl.getWidget();
-				WidgetType type = widget.getType();
-				Integer id = widget.getId();
-				switch (type) {
-				case SYSTEM:
-					SysWidgetHandler handler = systemWidgetServer.getHandler(id);
-					widget = handler == null ? null : handler.getWidget();
-					break;
-				case USER:
-					widget = userWidgetDao.selectById(id);
-					break;
+
+			List<Fragement> fragements = ep.getFragements();
+			if (!CollectionUtils.isEmpty(fragements)) {
+				for (Fragement fragement : fragements) {
+					UserFragement uf = userFragementDao.selectBySpaceAndName(space, fragement.getName());
+					if (uf != null) {
+						if (req.isUpdateExistsFragement()) {
+							uf.setTpl(fragement.getTpl());
+							userFragementDao.update(uf);
+						}
+					} else {
+						// 查找全局挂件
+						for (Fragement glf : this.fragements) {
+							if (glf.equals(fragement)) {
+								if (glf.getTpl().equals(fragement.getTpl())) {
+									continue;
+								}
+							}
+						}
+						if (req.isInsertNotExistsFragement()) {
+							UserFragement newF = new UserFragement();
+							newF.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+							newF.setDescription("");
+							newF.setName(fragement.getName());
+							newF.setTpl(fragement.getTpl());
+							newF.setSpace(space);
+							userFragementDao.insert(newF);
+						}
+					}
 				}
-				if (widget == null) {
-					success.addWarning(
-							new Message("tpl.import.widgetNotExists", "挂件[" + type + "," + id + "]不存在", type, id));
-					continue;
-				}
-				tpl.setWidget(widget);
-				tpl.setPage(db);
-				widgetTplDao.insert(tpl);
 			}
+
 			result.addSuccess(success);
 		}
 		// 清空页面缓存
-		for (Page oldPage : result.getOldPages()) {
-			uiCacheRender.evit(oldPage.getTemplateName());
+		for (ExportPage oldPage : result.getOldPages()) {
+			uiCacheRender.evit(oldPage.getPage().getTemplateName());
 		}
 		return result;
 	}
 
-	private Page clearUnnecessaryImportInfo(Page page) {
-		Page _page = null;
-		switch (page.getType()) {
-		case SYSTEM:
-			SysPage sp = (SysPage) page;
-			_page = new SysPage(null, sp.getTarget());
-			break;
-		case ERROR:
-			ErrorPage ep = (ErrorPage) page;
-			_page = new ErrorPage(null, ep.getErrorCode());
-			break;
-		case USER:
-			_page = new UserPage(page.getId());
-			break;
-		case EXPANDED:
-			_page = new ExpandedPage(page.getId());
-			break;
+	@Override
+	@Transactional(readOnly = true)
+	public Object queryData(String dataTagStr) throws LogicException {
+		DataTag dataTag = templateParser.parse(dataTagStr);
+		if (dataTag != null) {
+			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
 		}
-		_page.setTpl(page.getTpl());
-		_page.setTpls(page.getTpls());
-		for (WidgetTpl tpl : _page.getTpls()) {
-			tpl.setId(null);
-			tpl.setPage(null);
-			Widget widget = new Widget();
-			widget.setId(tpl.getWidget().getId());
-			widget.setType(tpl.getWidget().getType());
-			tpl.setWidget(widget);
-		}
-		return _page;
+		return null;
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (CollectionUtils.isEmpty(sysPageDefaultTpls)) {
-			throw new SystemException("系统页面默认模板不能为空");
-		}
 		for (PageTarget target : PageTarget.values()) {
-			if (!sysPageDefaultTpls.containsKey(target)) {
-				throw new SystemException("系统页面：" + target + "没有设置默认的模板");
-			}
 			Resource resource = sysPageDefaultTpls.get(target);
+			if (resource == null)
+				resource = new ClassPathResource("me/qyh/blog/ui/page/PAGE_" + target.name() + ".html");
 			InputStream is = null;
 			try {
 				is = resource.getInputStream();
@@ -853,10 +661,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 		}
 		for (ErrorCode code : ErrorCode.values()) {
-			if (!errorPageDefaultTpls.containsKey(code)) {
-				throw new SystemException("错误页面状态：" + code + "没有设置默认的模板");
-			}
 			Resource resource = errorPageDefaultTpls.get(code);
+			if (resource == null)
+				resource = new ClassPathResource("me/qyh/blog/ui/page/" + code.name() + ".html");
 			InputStream is = null;
 			try {
 				is = resource.getInputStream();
@@ -877,81 +684,21 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		this.uiCacheRender = new UICacheRender();
 	}
 
-	private final class WidgetQueryImpl implements WidgetQuery {
-
-		private Page page;
-		private boolean test;
-
-		public WidgetQueryImpl(Page page, boolean test) {
-			this.page = page;
-			this.test = test;
-		}
-
-		@Override
-		public WidgetTpl query(WidgetTag widgetTag) throws LogicException {
-			String name = widgetTag.getName();
-			Widget widget = null;
-			SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(name);
-			if (sysWidgetHandler != null) {
-				if (test) {
-					widget = sysWidgetHandler.getTestWidget();
-				} else {
-					widget = sysWidgetHandler.getWidget();
-				}
-			} else {
-				widget = userWidgetDao.selectByName(name);
-			}
-			if (widget != null) {
-				WidgetTpl tpl = widgetTplDao.selectByPageAndWidget(page, widget);
-				if (tpl == null) {
-					tpl = new WidgetTpl();
-					tpl.setTpl(widget.getDefaultTpl());
-				}
-				tpl.setPage(page);
-				tpl.setWidget(widget);
-				return tpl;
-			}
-			return null;
-		}
+	public void setErrorPageDefaultTpls(Map<ErrorCode, Resource> errorPageDefaultTpls) {
+		this.errorPageDefaultTpls = errorPageDefaultTpls;
 	}
 
-	private void deletePageWidgetTpl(Page page) throws LogicException {
-		// 解析当前页面模板，获取当前页面包含的挂件并删除
-		// deleteWidgetTpls(templateParser.parse(page.getTpl(), new
-		// WidgetQueryImpl(page, false)).getTpls());
-		// 删除页面历史挂件模板
-		deleteWidgetTpls(widgetTplDao.selectByPage(page));
+	public void setSysPageDefaultTpls(Map<PageTarget, Resource> sysPageDefaultTpls) {
+		this.sysPageDefaultTpls = sysPageDefaultTpls;
 	}
 
-	private void updateWidget(Page page) throws LogicException {
-		// 解析当前页面模板
-		ParseResult result = templateParser.parse(page.getTpl(), new WidgetQueryImpl(page, false));
-		List<WidgetTpl> widgetTpls = result.getTpls();
-		// 如果包含挂件
-		if (!CollectionUtils.isEmpty(widgetTpls)) {
-			List<WidgetTpl> _widgetTpls = page.getTpls();
-			if (!CollectionUtils.isEmpty(_widgetTpls)) {
-				for (WidgetTpl widgetTpl : widgetTpls) {
-					for (WidgetTpl _widgetTpl : _widgetTpls) {
-						Widget widget = widgetTpl.getWidget();
-						if (widget.equals(_widgetTpl.getWidget())) {
-							// 如果页面是插入，那么所有的挂件模板也将执行插入操作
-							WidgetTpl tpl = widgetTplDao.selectByPageAndWidget(page, widget);
-							if (tpl == null) {
-								tpl = new WidgetTpl();
-								tpl.setPage(page);
-								tpl.setWidget(widget);
-								tpl.setTpl(_widgetTpl.getTpl());
-								widgetTplDao.insert(tpl);
-							} else {
-								tpl.setTpl(_widgetTpl.getTpl());
-								widgetTplDao.update(tpl);
-							}
-						}
-					}
-				}
+	private DataTagProcessor<?> geTagProcessor(String name) {
+		for (DataTagProcessor<?> processor : processors) {
+			if (processor.getName().equals(name)) {
+				return processor;
 			}
 		}
+		return null;
 	}
 
 	private void checkSpace(Page page) throws LogicException {
@@ -962,14 +709,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				throw new LogicException("space.notExists", "空间不存在");
 			page.setSpace(space);
 		}
-	}
-
-	public void setErrorPageDefaultTpls(Map<ErrorCode, Resource> errorPageDefaultTpls) {
-		this.errorPageDefaultTpls = errorPageDefaultTpls;
-	}
-
-	public void setSysPageDefaultTpls(Map<PageTarget, Resource> sysPageDefaultTpls) {
-		this.sysPageDefaultTpls = sysPageDefaultTpls;
 	}
 
 	private final class UICacheRender {
@@ -987,33 +726,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				synchronized (this) {
 					cached = cache.get(key);
 					if (cached == null) {
-						final Page db = loader.loadFromDb();
-						ParseResult parseResult = templateParser.parse(db.getTpl(), new WidgetQuery() {
 
-							@Override
-							public WidgetTpl query(WidgetTag widgetTag) throws LogicException {
-								SysWidgetHandler handler = systemWidgetServer.getHandler(widgetTag.getName());
-								Widget widget = null;
-								if (handler != null) {
-									widget = handler.getWidget();
-								} else {
-									widget = userWidgetDao.selectByName(widgetTag.getName());
-								}
-								if (widget != null) {
-									WidgetTpl tpl = widgetTplDao.selectByPageAndWidget(db, widget);
-									if (tpl == null) {
-										tpl = new WidgetTpl();
-										tpl.setTpl(widget.getDefaultTpl());
-									}
-									tpl.setPage(db);
-									tpl.setWidget(widget);
-									return WidgetType.SYSTEM.equals(widget.getType())
-											? new CachedWidgetTpl(tpl, widgetTag.getAttrs()) : tpl;
-								}
-								return null;
-							}
-						});
-						Collections.sort(parseResult.getTpls());
+						final Page db = loader.loadFromDb();
+						ParseResult parseResult = templateParser.parse(db.getTpl(), noDataQuery,
+								new FragementQueryImpl(db.getSpace()));
 						cached = new ParseResultWrapper(parseResult, db);
 						cache.put(key, cached);
 					}
@@ -1022,72 +738,53 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			return cached;
 		}
 
-		public Page renderPreview(PageLoader loader) throws LogicException {
+		public RenderedPage renderPreview(PageLoader loader) throws LogicException {
 			ParseResultWrapper cached = get(loader);
-			List<WidgetTpl> tpls = new ArrayList<WidgetTpl>();
-			for (WidgetTpl tpl : cached.parseResult.getTpls()) {
-				switch (tpl.getWidget().getType()) {
-				case SYSTEM:
-					SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(tpl.getWidget().getName());
-					WidgetTpl _tpl = new WidgetTpl(tpl);
-					_tpl.setWidget(sysWidgetHandler.getTestWidget());
-					tpls.add(_tpl);
-					break;
-				case USER:
-					tpls.add(new WidgetTpl(tpl));
-					break;
+			ParseResult result = cached.parseResult;
+			List<DataBind<?>> binds = new ArrayList<>();
+			for (DataTag unkownData : result.getUnkownDatas()) {
+				//
+				DataTagProcessor<?> processor = geTagProcessor(unkownData.getName());
+				if (processor != null) {
+					binds.add(processor.previewData(unkownData.getAttrs()));
 				}
 			}
-			Page page = (Page) cached.page.clone();
-			page.setTpls(tpls);
-			return page;
+			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragements());
 		}
 
-		public Page render(PageLoader pageLoader, Params params) throws LogicException {
-			ParseResultWrapper cached = get(pageLoader);
-			List<WidgetTpl> tpls = new ArrayList<WidgetTpl>();
-			for (WidgetTpl tpl : cached.parseResult.getTpls()) {
-				switch (tpl.getWidget().getType()) {
-				case SYSTEM:
-					SysWidgetHandler sysWidgetHandler = systemWidgetServer.getHandler(tpl.getWidget().getName());
-					Space space = cached.page.getSpace();
-					if (params != null && sysWidgetHandler.canProcess(space, params)) {
-						WidgetTpl _tpl = new WidgetTpl(tpl);
-						// 从系统挂件中获取数据
-						_tpl.setWidget(sysWidgetHandler.getWidget(space, params, ((CachedWidgetTpl) tpl).attrs));
-						tpls.add(_tpl);
-					}
-					// 如果挂件不存在，那么交给TplResolver处理
-					break;
-				case USER:
-					// 用户自定义挂件直接添加，它本身即是模板也是数据
-					tpls.add(new WidgetTpl(tpl));
-					break;
+		public RenderedPage render(PageLoader loader, Params params) throws LogicException {
+			ParseResultWrapper cached = get(loader);
+			ParseResult result = cached.parseResult;
+			List<DataBind<?>> binds = new ArrayList<>();
+			for (DataTag unkownData : result.getUnkownDatas()) {
+				//
+				DataTagProcessor<?> processor = geTagProcessor(unkownData.getName());
+				if (processor != null) {
+					binds.add(processor.getData(cached.page.getSpace(), params, unkownData.getAttrs()));
 				}
 			}
-			Page page = (Page) cached.page.clone();
-			page.setTpls(tpls);
-			return page;
+			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragements());
 		}
 
 		public void evit(String key) {
 			cache.remove(key);
 		}
 
-		public void evit(Widget... widgets) {
+		public void evit(Fragement... fragements) {
 			for (Map.Entry<String, ParseResultWrapper> it : cache.entrySet()) {
 				ParseResultWrapper st = it.getValue();
-				labe1: for (WidgetTpl tpl : st.parseResult.getTpls()) {
-					for (Widget widget : widgets) {
-						if (widget.equals(tpl.getWidget())) {
+				Map<String, Fragement> currentFMap = st.parseResult.getFragements();
+				labe1: for (Fragement currentF : currentFMap.values()) {
+					for (Fragement fragement : fragements) {
+						if (fragement.getName().equals(currentF.getName())) {
 							cache.remove(it.getKey());
 							break labe1;
 						}
 					}
 				}
-				label2: for (String name : st.parseResult.getUnkownWidgets()) {
-					for (Widget widget : widgets) {
-						if (name.equals(widget.getName())) {
+				label2: for (String name : st.parseResult.getUnkownFragements()) {
+					for (Fragement fragement : fragements) {
+						if (name.equals(fragement.getName())) {
 							cache.remove(it.getKey());
 							break label2;
 						}
@@ -1096,7 +793,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 		}
 
-		public final class ParseResultWrapper {
+		private final class ParseResultWrapper {
 			private ParseResult parseResult;
 			private Page page;
 
@@ -1104,26 +801,146 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				this.parseResult = parseResult;
 				this.page = page;
 			}
-
 		}
 
-		private final class CachedWidgetTpl extends WidgetTpl {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-			private Map<String, String> attrs = new HashMap<String, String>();
+		private final DataQuery noDataQuery = new DataQuery() {
 
-			public CachedWidgetTpl(WidgetTpl tpl, Map<String, String> attrs) {
-				super(tpl);
-				this.attrs = attrs;
+			@Override
+			public DataBind<?> query(DataTag dataTag) throws LogicException {
+				return null;
 			}
-		}
+		};
 	}
 
-	public interface PageLoader {
+	private interface PageLoader {
 		String pageKey();
 
 		Page loadFromDb() throws LogicException;
 	}
+
+	private final class SysPageLoader implements PageLoader {
+		private PageTarget target;
+		private Space space;
+
+		@Override
+		public String pageKey() {
+			return new SysPage(space, target).getTemplateName();
+		}
+
+		@Override
+		public Page loadFromDb() throws LogicException {
+			return querySysPage(space, target);
+		}
+
+		public SysPageLoader(PageTarget target, Space space) {
+			super();
+			this.target = target;
+			this.space = space;
+		}
+
+	}
+
+	private final class ErrorPageLoader implements PageLoader {
+		private ErrorCode errorCode;
+		private Space space;
+
+		@Override
+		public String pageKey() {
+			return new ErrorPage(space, errorCode).getTemplateName();
+		}
+
+		@Override
+		public Page loadFromDb() throws LogicException {
+			return queryErrorPage(space, errorCode);
+		}
+
+		public ErrorPageLoader(ErrorCode errorCode, Space space) {
+			this.errorCode = errorCode;
+			this.space = space;
+		}
+
+	}
+
+	private final class UserPageLoader implements PageLoader {
+
+		private String alias;
+
+		@Override
+		public String pageKey() {
+			return new UserPage(alias).getTemplateName();
+		}
+
+		@Override
+		public Page loadFromDb() throws LogicException {
+			UserPage db = userPageDao.selectByAlias(alias);
+			if (db == null) {
+				throw new LogicException("page.user.notExists", "自定义页面不存在");
+			}
+			Space space = SpaceContext.get();
+			if ((space == null && db.getSpace() != null) || (space != null && !space.equals(db.getSpace()))) {
+				throw new LogicException("page.user.notExists", "自定义页面不存在");
+			}
+			return db;
+		}
+
+		public UserPageLoader(String alias) {
+			this.alias = alias;
+		}
+	}
+
+	private final class ExpandedPageLoader implements PageLoader {
+
+		private Integer id;
+
+		@Override
+		public String pageKey() {
+			return new ExpandedPage(id).getTemplateName();
+		}
+
+		@Override
+		public Page loadFromDb() throws LogicException {
+			return queryExpandedPage(id);
+		}
+
+		public ExpandedPageLoader(Integer id) {
+			super();
+			this.id = id;
+		}
+	}
+
+	private final class FragementQueryImpl implements FragementQuery {
+
+		private Space space;
+
+		@Override
+		public Fragement query(String name) {
+			// 首先查找用户自定义fragement
+			UserFragement userFragement = userFragementDao.selectBySpaceAndName(space, name);
+			if (userFragement == null) {
+				// 查找全局
+				userFragement = userFragementDao.selectGlobalByName(name);
+			}
+			if (userFragement != null)
+				return userFragement;
+			for (Fragement fragement : fragements) {
+				if (fragement.getName().equals(name))
+					return fragement;
+			}
+			return null;
+		}
+
+		public FragementQueryImpl(Space space) {
+			this.space = space;
+		}
+
+	}
+
+	public void setProcessors(List<DataTagProcessor<?>> processors) {
+		this.processors = processors;
+	}
+
+	public void setFragements(List<Fragement> fragements) {
+		this.fragements = fragements;
+	}
+
 }

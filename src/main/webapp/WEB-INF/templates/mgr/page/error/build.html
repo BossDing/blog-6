@@ -47,10 +47,6 @@
 						<input type="hidden" th:value="${page.errorCode}" id="errorCode">
 						<input type="hidden" th:value="${page.id}" id="pageId">
 					</form>
-					<button class="btn btn-primary" type="button" data-toggle="modal"
-						data-target="#allWidgetsModal">挂件浏览</button>
-					<button class="btn btn-primary" type="button" data-toggle="modal"
-						data-target="#widgetsModal">当前挂件</button>
 					<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
 					<button class="btn btn-primary" type="button" onclick="save()">提交</button>
 				</div>
@@ -58,12 +54,12 @@
 		</div>
 	</div>
 	<div th:replace="base/foot_source"></div>
-	<div class="modal " id="widgetsModal" tabindex="-1" role="dialog"
-		aria-labelledby="widgetsLabel">
+	<div class="modal " id="fragementsModal" tabindex="-1" role="dialog"
+		aria-labelledby="fragementsLabel">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h4 class="modal-title" id="widgetsModalLabel">挂件</h4>
+					<h4 class="modal-title" id="fragementsModalLabel">挂件</h4>
 				</div>
 				<div class="modal-body">
 					<div class="tip"></div>
@@ -75,7 +71,7 @@
 		</div>
 	</div>
 
-	<div class="modal " id="allWidgetsModal" tabindex="-1" role="dialog">
+	<div class="modal " id="allFragementsModal" tabindex="-1" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -109,16 +105,16 @@
 		</div>
 	</div>
 
-	<div class="modal " id="widgetTplEditModal" tabindex="-1" role="dialog"
-		aria-labelledby="widgetTplEdiModalLabel">
+	<div class="modal " id="fragementTplEditModal" tabindex="-1" role="dialog"
+		aria-labelledby="fragementTplEdiModalLabel">
 		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h4 class="modal-title" id="widgetTplEdiModalLabel"></h4>
+					<h4 class="modal-title" id="fragementTplEdiModalLabel"></h4>
 				</div>
 				<div class="modal-body">
 					<div class="tip"></div>
-					<div id="widgetTplEditor">
+					<div id="fragementTplEditor">
 						<textarea style="display: none"></textarea>
 					</div>
 				</div>
