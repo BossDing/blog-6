@@ -66,4 +66,13 @@ public interface CommentService {
 	 */
 	void checkComment(Integer id) throws LogicException;
 
+	/**
+	 * 查询对话
+	 * 
+	 * @param id
+	 * @return
+	 * @throws LogicException
+	 */
+	List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException;
+
 }

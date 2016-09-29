@@ -28,14 +28,12 @@ public abstract class DataTagProcessor<T> {
 		if (attributes == null)
 			attributes = new HashMap<>();
 		T result = null;
-		if (ignoreLogicException(attributes)) {
-			try {
-				result = query(space,params, attributes);
-			} catch (LogicException e) {
-
+		try {
+			result = query(space, params, attributes);
+		} catch (LogicException e) {
+			if (!ignoreLogicException(attributes)) {
+				throw e;
 			}
-		} else {
-			result = query(space,params, attributes);
 		}
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
@@ -81,7 +79,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	protected abstract T buildPreviewData(Map<String, String> attributes);
 
-	protected abstract T query(Space space,Params params, Map<String, String> attributes) throws LogicException;
+	protected abstract T query(Space space, Params params, Map<String, String> attributes) throws LogicException;
 
 	public String getName() {
 		return name;

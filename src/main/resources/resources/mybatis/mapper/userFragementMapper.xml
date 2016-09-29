@@ -80,6 +80,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="name != null and name != ''">
 				fragement_name LIKE CONCAT('%', #{name},'%')
 			</if>
+			<if test="space != null">
+				AND space_id = #{space.id}
+			</if>
+			<if test="global != null">
+				AND is_global = #{global}
+			</if>
 		</where>
 		LIMIT #{offset},#{pageSize}
 	</select>
@@ -92,6 +98,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<where>
 			<if test="name != null and name != ''">
 				fragement_name LIKE CONCAT('%', #{name},'%')
+			</if>
+			<if test="space != null">
+				AND space_id = #{space.id}
+			</if>
+			<if test="global != null">
+				AND is_global = #{global}
 			</if>
 		</where>
 	</select>

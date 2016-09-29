@@ -104,7 +104,7 @@ public class TplMgrController extends BaseMgrController {
 	@RequestMapping(value = "export", method = RequestMethod.POST)
 	public ResponseEntity<byte[]> export(ExportReq req) throws LogicException, JsonProcessingException {
 		Space space = req.getSpace();
-		if(space != null && !space.hasId()){
+		if (space != null && !space.hasId()) {
 			req.setSpace(null);
 		}
 		List<ExportPage> pageList = uiService.export(req);
@@ -243,6 +243,18 @@ public class TplMgrController extends BaseMgrController {
 		} catch (LogicException e) {
 			return new JsonResult(false, e.getLogicMessage());
 		}
+	}
+
+	@RequestMapping("sysFragements")
+	@ResponseBody
+	public JsonResult querySysFragements() {
+		return new JsonResult(true, uiService.querySysFragements());
+	}
+
+	@RequestMapping("dataTags")
+	@ResponseBody
+	public JsonResult queryDatas() {
+		return new JsonResult(true, uiService.queryDataTags());
 	}
 
 	private Map<Integer, ImportPageWrapper> parse(ObjectReader reader, JsonNode node) {

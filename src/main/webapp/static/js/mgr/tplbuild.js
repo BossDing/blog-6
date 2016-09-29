@@ -34,8 +34,8 @@ var _tpls = [];
 		}).on("show.bs.modal", function() {
 			$("#grab_url").val("")
 		});
-		$("#allFragementsModal").on("show.bs.modal", function() {
-			showSysFragement();
+		$("#lookupModal").on("show.bs.modal", function() {
+			showDataTags();
 		})
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			var html = '';
@@ -47,26 +47,67 @@ var _tpls = [];
 			case "user-tab":
 				showUserFragement(1)
 				break;
+			case "data-tab":
+				showDataTags();
+				break;
+			case "fragement-tab":
+				$("#fragementTab").find('li').each(function(){
+					if($(this).hasClass('active')){
+						switch($(this).find('a').attr('id')){
+							case "sys-tab":
+								showSysFragement();
+								break;
+							case "user-tab":
+								showUserFragement(1)
+								break;
+						}
+					}
+				});
+				break;
 			}
-		})
-		
-		$("#fragementTplEditModal").on("shown.bs.modal",function(){
-			clearTip();
-			fragementTplEditor.resize();
-		}).on("hidden.bs.modal",function(){
-			
 		})
 	});
 	
-	
+	function addDataTag(name){
+		editor.insertValue('<data name="'+name+'"/>');
+		$("#lookupModal").modal('hide');
+	}
 	function addFragement(name){
-		editor.insertValue('<fragement name="'+name+'"></fragement>');
-		$("#allFragementsModal").modal('hide')
+		editor.insertValue('<fragement name="'+name+'"/>');
+		$("#lookupModal").modal('hide')
+	}
+	
+	function lookup(){
+		$("#lookupModal").modal('show');
+	}
+	
+	function showDataTags(){
+		var html = '';
+		$('[aria-labelledby="data-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
+		$.get(basePath+"/mgr/tpl/dataTags",{},function(data){
+			if(!data.success){
+				bootbox.alert(data.message);
+				return ;
+			}
+			data = data.data;
+			html += '<div class=" table-responsive" style="margin-top:10px">';
+			html += '<table class="table">';
+			for(var i=0;i<data.length;i++){
+				html += '<tr>';
+				html += '<td>'+data[i]+'</td>';
+				html += '<td><a onclick="addDataTag(\''+data[i]+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '</tr>';
+			}
+			html += '</table>';
+			html += '</div>';
+			$('[aria-labelledby="data-tab"]').html(html);
+		});
 	}
 	
 	function showSysFragement(){
 		var html = '';
-		$.get(basePath+"/mgr/fragement/sys/all",{},function(data){
+		$('[aria-labelledby="sys-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
+		$.get(basePath+"/mgr/tpl/sysFragements",{},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;
@@ -87,6 +128,7 @@ var _tpls = [];
 	}
 	function showUserFragement(i){
 		var html = '';
+		$('[aria-labelledby="user-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
 		$.get(basePath+"/mgr/fragement/user/list",{"currentPage":i},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);

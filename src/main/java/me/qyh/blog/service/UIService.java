@@ -14,6 +14,7 @@ import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
+import me.qyh.blog.ui.fragement.Fragement;
 import me.qyh.blog.ui.fragement.UserFragement;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
@@ -277,8 +278,22 @@ public interface UIService {
 	 * 
 	 * @param dataTagStr
 	 * @return
-	 * @throws LogicException 
+	 * @throws LogicException
 	 */
 	Object queryData(String dataTagStr) throws LogicException;
+
+	/**
+	 * 查询系统数据
+	 * 
+	 * @return
+	 */
+	List<String> queryDataTags();
+
+	/**
+	 * 查询系统模板片段
+	 * 
+	 * @return
+	 */
+	List<Fragement> querySysFragements();
 
 }

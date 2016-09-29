@@ -231,6 +231,20 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	public List<String> queryDataTags() {
+		List<String> dataTags = new ArrayList<>(processors.size());
+		for (DataTagProcessor<?> processor : processors) {
+			dataTags.add(processor.getName());
+		}
+		return dataTags;
+	}
+
+	@Override
+	public List<Fragement> querySysFragements() {
+		return fragements;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public RenderedPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());

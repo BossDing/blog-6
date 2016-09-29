@@ -23,7 +23,6 @@ import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.oauth2.RequestOauthUser;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.CommentQueryParam;
-import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.CommentService;
@@ -81,7 +80,8 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping(value = "list")
-	public RenderedPage list(@Validated ArticleQueryParam articleQueryParam, BindingResult result) throws LogicException {
+	public RenderedPage list(@Validated ArticleQueryParam articleQueryParam, BindingResult result)
+			throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);
@@ -102,7 +102,7 @@ public class SpaceArticleController extends BaseController {
 
 	@RequestMapping(value = "{id}/comment/list")
 	@ResponseBody
-	public PageResult<Comment> queryPageResult(@PathVariable("id") Integer articleId, CommentQueryParam param,
+	public JsonResult queryPageResult(@PathVariable("id") Integer articleId, CommentQueryParam param,
 			BindingResult result) {
 		if (result.hasErrors()) {
 			param = new CommentQueryParam();
@@ -111,7 +111,7 @@ public class SpaceArticleController extends BaseController {
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
 		param.setPageSize(configService.getPageSizeConfig().getCommentPageSize());
 		param.setArticle(new Article(articleId));
-		return commentService.queryComment(param);
+		return new JsonResult(true, commentService.queryComment(param));
 	}
 
 	@RequestMapping(value = "{id}/addComment", method = RequestMethod.POST)
@@ -123,4 +123,10 @@ public class SpaceArticleController extends BaseController {
 		return new JsonResult(true, commentService.insertComment(comment));
 	}
 
+	@RequestMapping(value = "{articleId}/comment/{id}/conversations")
+	@ResponseBody
+	public JsonResult queryConversations(@PathVariable("articleId") Integer articleId, @PathVariable("id") Integer id)
+			throws LogicException {
+		return new JsonResult(true, commentService.queryConversations(articleId, id));
+	}
 }

@@ -5,8 +5,6 @@ var login = $("#login").val() == 'true';
 			var asc = false;
 			var tree = $("#commentMode").val() == 'TREE';
 			$(document).ready(function(){
-				
-				prettyPrint();
 				queryComments(0);
 				if(window.sessionStorage){
 					var articleId = "article-"+$("#articleId").val();
@@ -56,6 +54,11 @@ var login = $("#login").val() == 'true';
 			});
 			function queryComments(page){
 				$.get(actPath+'/article/'+$("#articleId").val()+'/comment/list',{currentPage:page},function(data){
+					if(!data.success){
+						bootbox.alert(data.message);
+						return ;
+					}
+					data = data.data;
 					asc = data.param.asc;
 					var html = '';
 					for(var i=0;i<data.datas.length;i++){
@@ -170,7 +173,10 @@ var login = $("#login").val() == 'true';
 					 }
 					 if(oauthLogin)
 						html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
-					html += '</h5>';
+					if(c.parents.length > 0){
+						html += '<a href="###" onclick="queryConversations(\''+c.id+'\')">查看对话</a>';
+					}
+					 html += '</h5>';
 					if(c.parents.length < max && c.children.length > 0){
 						for(var i=0;i<c.children.length;i++){
 							html += buildHtml(c,c.children[i]);
@@ -208,13 +214,63 @@ var login = $("#login").val() == 'true';
 					}
 					 if(oauthLogin)
 							html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
-					
+					 if(c.parents.length > 0){
+							html += '<a href="###" onclick="queryConversations(\''+c.id+'\')">查看对话</a>';
+						}
 					html += '</h5>';
 					html += '</div>';
 					html += '</div>';
 					return html;
 				 }
-				
+			 }
+			 
+			 function queryConversations(id){
+				 $.get(actPath+'/article/'+$("#articleId").val()+'/comment/'+id+'/conversations',{},function(data){
+					 if(!data.success){
+						 bootbox.alert(data.message);
+						 return;
+					 }
+					 data = data.data;
+						var html = '';
+						for(var i=0;i<data.length;i++){
+							var c = data[i];
+							var p = i == 0 ? null : data[i-1];
+							 html += '<div class="media" id="comment-'+c.id+'" data-p="'+((!c.parent || c.parent==null)?'':c.parent.id)+'">';
+							 html += '<a class="pull-left">';
+							 html += '<img class="media-object"  src="'+c.user.avatar+'" data-holder-rendered="true" style="width: 64px; height: 64px;">';
+							html += '</a>';
+							html += '<div class="media-body">';
+							 var username = getUsername(c);
+							var user = '<strong>'+username+'</strong>';
+							var p_username= getUsername(p); 
+							var reply = (p == null || !p)?"":'<span class="glyphicon glyphicon-share-alt" aria-hidden="true"></span>&nbsp;&nbsp;'+p_username;
+							html += '<h5 class="media-heading">'+user+'&nbsp;&nbsp;&nbsp;'+reply+'</h5>';
+							html += c.content;
+							html += '<h5>'+new Date(c.commentDate).format('yyyy-mm-dd HH:MM:ss')+'&nbsp;&nbsp;&nbsp;</h5>';
+							html += '</div>';
+							html += '</div>';
+						}
+						if($('#conversationsModal').length == 0){
+							var modal = '<div class="modal " id="conversationsModal" tabindex="-1" role="dialog" >';
+							modal += '<div class="modal-dialog" role="document">';
+							modal += '<div class="modal-content">';
+							modal += '<div class="modal-header">';
+							modal += '<h4 class="modal-title">对话</h4>';
+							modal += '</div>';
+							modal += '<div class="modal-body" id="conversationsBody">';
+							modal += '<div class="tip"></div>';
+							modal += '</div>';
+							modal += '<div class="modal-footer">';
+							modal += '<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>';
+							modal += '</div>';
+							modal += '</div>';
+							modal += '</div>';
+							modal += '</div>';
+							$(modal).appendTo($('body'));
+						}
+						$('#conversationsBody').html(html);
+						$('#conversationsModal').modal('show');
+		    		});
 			 }
 			 
 			 function getUsername(c){

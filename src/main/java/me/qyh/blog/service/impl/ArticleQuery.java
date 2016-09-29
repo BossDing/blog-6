@@ -98,6 +98,8 @@ public class ArticleQuery implements InitializingBean {
 
 	public ArticleNav getArticleNav(Article article, boolean queryPrivate) {
 		waitWhileReloading();
+		if (article == null)
+			return null;
 		Article previous = null, next = null;
 		if (memoryMode) {
 			List<Article> collect = new ArrayList<>();
@@ -130,22 +132,27 @@ public class ArticleQuery implements InitializingBean {
 					previous = collect.get(index - 1);
 				}
 			}
-			Article simplePrevious = new Article();
-			simplePrevious.setId(previous.getId());
-			simplePrevious.setTitle(previous.getTitle());
-			simplePrevious.setSpace(previous.getSpace());
-			previous = simplePrevious;
+			if (previous != null) {
+				Article simplePrevious = new Article();
+				simplePrevious.setId(previous.getId());
+				simplePrevious.setTitle(previous.getTitle());
+				simplePrevious.setSpace(previous.getSpace());
+				previous = simplePrevious;
+			}
 
-			Article simpleNext = new Article();
-			simpleNext.setId(next.getId());
-			simpleNext.setTitle(next.getTitle());
-			simpleNext.setSpace(next.getSpace());
-			next = simpleNext;
+			if (next != null) {
+				Article simpleNext = new Article();
+				simpleNext.setId(next.getId());
+				simpleNext.setTitle(next.getTitle());
+				simpleNext.setSpace(next.getSpace());
+				next = simpleNext;
+			}
+
 		} else {
 			previous = articleDao.getPreviousArticle(article, queryPrivate);
 			next = articleDao.getNextArticle(article, queryPrivate);
 		}
-		return new ArticleNav(previous, next);
+		return (previous != null || next != null) ? new ArticleNav(previous, next) : null;
 	}
 
 	public PageResult<Article> query(ArticleQueryParam param) {

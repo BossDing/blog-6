@@ -3,6 +3,7 @@ package me.qyh.blog.service.impl;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -292,7 +293,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		Article article = articleQuery.getArticle(comment.getArticle().getId(), false);
 		articleDao.updateComments(article.getId(), 1);
 		article.addComments();
-
 	}
 
 	@Override
@@ -338,6 +338,39 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit) {
 		return commentDao.selectLastComments(space, limit, UserContext.get() != null);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException {
+		Article article = articleQuery.getArticleWithLockCheck(articleId, true);
+		if (article == null)
+			throw new LogicException("article.notExists", "文章不存在");
+		if (!article.isPublished()) {
+			return Collections.emptyList();
+		}
+		if (article.isPrivate() && UserContext.get() == null) {
+			throw new AuthencationException();
+		}
+		if (!article.getSpace().equals(SpaceContext.get())) {
+			return Collections.emptyList();
+		}
+		Comment comment = commentDao.selectById(id);
+		if (comment == null) {
+			throw new LogicException("comment.notExists", "评论不存在");
+		}
+		if (!article.equals(comment.getArticle())) {
+			return Collections.emptyList();
+		}
+		if (comment.getParents().isEmpty()) {
+			return Arrays.asList(comment);
+		}
+		List<Comment> comments = new ArrayList<>();
+		for (Integer pid : comment.getParents()) {
+			comments.add(commentDao.selectById(pid));
+		}
+		comments.add(comment);
+		return comments;
 	}
 
 	protected List<Comment> handlerTree(List<Comment> comments, CommentConfig config) {

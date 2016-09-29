@@ -56,6 +56,7 @@
 					<form style="display: none" id="tplForm">
 						<input type="hidden" th:value="${page.id}" id="pageId">
 					</form>
+					<button class="btn btn-primary" type="button" onclick="lookup()">查询</button>
 					<button class="btn btn-primary" type="button" onclick="preview()">预览</button>
 					<button class="btn btn-primary" type="button" onclick="save()">提交</button>
 				</div>
@@ -80,54 +81,47 @@
 		</div>
 	</div>
 	
-	<div class="modal " id="allFragementsModal" tabindex="-1" role="dialog">
+
+	<div class="modal" id="lookupModal" tabindex="-1" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h4 class="modal-title">所有挂件</h4>
+					<h4 class="modal-title">查询</h4>
 				</div>
 				<div class="modal-body">
 					<ul id="myTab" class="nav nav-tabs" role="tablist">
-						<li role="presentation" class="active"><a href="#sys"
-							id="sys-tab" role="tab" data-toggle="tab" aria-controls="home"
-							aria-expanded="true">系统挂件</a></li>
-						<li role="presentation"><a href="#user" role="tab"
-							id="user-tab" data-toggle="tab" aria-controls="profile">自定义挂件</a></li>
+						<li role="presentation" class="active"><a href="#dataTags"
+							id="data-tab" role="tab" data-toggle="tab" aria-controls="home"
+							aria-expanded="true">数据</a></li>
+						<li role="presentation"><a href="#fragement" role="tab"
+							id="fragement-tab" data-toggle="tab" aria-controls="profile">模板片段</a></li>
 					</ul>
-					<div id="myTabContent" class="tab-content">
-						<div role="tabpanel" class="tab-pane fade in active" id="sys"
-							aria-labelledby="sys-tab">
-							<img th:src="@{/static/img/loading.gif}" class="img-responsive center-block"/>
+					<div class="tab-content">
+						<div role="tabpanel" class="tab-pane fade in active" id="dataTags"
+							aria-labelledby="data-tab">
 						</div>
-						<div role="tabpanel" class="tab-pane fade" id="user"
-							aria-labelledby="user-tab">
-							<img th:src="@{/static/img/loading.gif}" class="img-responsive center-block"/>
+						<div role="tabpanel" class="tab-pane fade" id="fragement"
+							aria-labelledby="fragement-tab">
+							<ul id="fragementTab" class="nav nav-tabs" role="tablist" style="margin-top:10px">
+								<li role="presentation" class="active"><a href="#sys"
+									id="sys-tab" role="tab" data-toggle="tab" aria-controls="home"
+									aria-expanded="true">系统模板片段</a></li>
+								<li role="presentation"><a href="#user" role="tab"
+									id="user-tab" data-toggle="tab" aria-controls="profile">自定义模板片段</a></li>
+							</ul>
+							<div class="tab-content">
+							<div role="tabpanel" class="tab-pane fade in active"
+								id="sys" aria-labelledby="sys-tab">
+							</div>
+							<div role="tabpanel" class="tab-pane fade in active"
+								id="user" aria-labelledby="user-tab">
+							</div>
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div class="modal " id="fragementTplEditModal" tabindex="-1" role="dialog"
-		aria-labelledby="fragementTplEdiModalLabel">
-		<div class="modal-dialog modal-lg" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h4 class="modal-title" id="fragementTplEdiModalLabel"></h4>
-				</div>
-				<div class="modal-body">
-					<div class="tip"></div>
-					<div id="fragementTplEditor">
-						<textarea style="display: none"></textarea>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary" id="tpl-save-btn">保存</button>
 				</div>
 			</div>
 		</div>
