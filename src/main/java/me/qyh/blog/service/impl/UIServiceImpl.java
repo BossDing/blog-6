@@ -646,7 +646,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		DataTag dataTag = templateParser.parse(dataTagStr);
 		if (dataTag != null) {
 			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
+			if (processor != null)
+				return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
 		}
 		return null;
 	}

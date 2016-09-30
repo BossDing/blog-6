@@ -31,8 +31,6 @@ public class SpaceServiceImpl implements SpaceService {
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
-	private ArticleQuery articleQuery;
-	@Autowired
 	private LockManager<?> lockManager;
 
 	@Override
@@ -48,8 +46,9 @@ public class SpaceServiceImpl implements SpaceService {
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#space.alias"),
+			@CacheEvict(value = "articleCache", key = "'space-'+#space.alias"),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
@@ -65,8 +64,6 @@ public class SpaceServiceImpl implements SpaceService {
 		checkLock(space.getLockId());
 
 		spaceDao.update(space);
-
-		articleQuery.reloadStore();
 	}
 
 	@Override

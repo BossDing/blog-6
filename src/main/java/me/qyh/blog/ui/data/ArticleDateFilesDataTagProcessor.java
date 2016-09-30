@@ -1,7 +1,6 @@
 package me.qyh.blog.ui.data;
 
 import java.util.Calendar;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,7 +25,7 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles buildPreviewData(Map<String, String> attributes) {
+	protected ArticleDateFiles buildPreviewData(Attributes attributes) {
 		ArticleDateFiles files = new ArticleDateFiles();
 		files.setMode(getMode(attributes));
 		Calendar cal = Calendar.getInstance();
@@ -47,12 +46,12 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles query(Space space, Params params, Map<String, String> attributes) throws LogicException {
+	protected ArticleDateFiles query(Space space, Params params, Attributes attributes) throws LogicException {
 		ArticleDateFileMode mode = getMode(attributes);
 		return articleService.queryArticleDateFiles(space, mode, UserContext.get() != null);
 	}
 
-	private ArticleDateFileMode getMode(Map<String, String> attributes) {
+	private ArticleDateFileMode getMode(Attributes attributes) {
 		ArticleDateFileMode mode = ArticleDateFileMode.YM;
 		String v = attributes.get(MODE);
 		if (v != null)

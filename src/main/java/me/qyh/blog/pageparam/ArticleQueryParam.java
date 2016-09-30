@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
+import me.qyh.util.Validators;
 import me.qyh.blog.entity.Space;
 
 public class ArticleQueryParam extends PageQueryParam {
@@ -28,12 +29,10 @@ public class ArticleQueryParam extends PageQueryParam {
 	private String tag;
 	private Boolean hasLock;
 	private Sort sort;
-	
-	public enum Sort{
-		HITS,
-		COMMENTS
+
+	public enum Sort {
+		HITS, COMMENTS
 	}
-	
 
 	public Space getSpace() {
 		return space;
@@ -121,6 +120,10 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setSort(Sort sort) {
 		this.sort = sort;
+	}
+
+	public boolean hasQuery() {
+		return !Validators.isEmptyOrNull(query, true);
 	}
 
 	@Override

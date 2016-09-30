@@ -1,5 +1,7 @@
 package me.qyh.blog.web.controller.form;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Set;
 
@@ -9,11 +11,13 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Article.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Validators;
 
 @Component
@@ -21,10 +25,11 @@ public class ArticleValidator implements Validator {
 
 	public static final int MAX_SUMMARY_LENGTH = 500;
 	private static final int MAX_TITLE_LENGTH = 50;
+	private static final int MAX_ALIAS_LENGTH = 50;
 	public static final int MAX_CONTENT_LENGTH = 200000;
 	public static final int MAX_TAG_SIZE = 10;
 	private static final int[] LEVEL_RANGE = new int[] { 0, 100 };
-	
+
 	private static final int[] LIMIT_SECOND_RANGE = { 1, 300 };
 	private static final int[] LIMIT_COUNT_RANGE = { 1, 100 };
 
@@ -125,6 +130,34 @@ public class ArticleValidator implements Validator {
 					"文章内容不能超过" + MAX_CONTENT_LENGTH + "个字符");
 			return;
 		}
+		String alias = article.getAlias();
+		if (alias != null) {
+			alias = alias.trim().toLowerCase();
+			if (alias.isEmpty())
+				article.setAlias(null);
+			else {
+				try {
+					try {
+						Integer.parseInt(alias);
+						errors.reject("article.alias.integer", "文章别名不能为数字");
+						return;
+					} catch (Exception e) {
+					}
+					if (alias.length() > MAX_ALIAS_LENGTH) {
+						errors.reject("article.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
+								"文章别名不能超过" + MAX_ALIAS_LENGTH + "个字符");
+						return;
+					}
+					if (!alias.equals(URLEncoder.encode(alias, Constants.CHARSET.name()))) {
+						errors.reject("article.alias.invalid", "文章别名校验失败");
+						return;
+					}
+					article.setAlias(alias);
+				} catch (UnsupportedEncodingException e) {
+					throw new SystemException(e.getMessage(), e);
+				}
+			}
+		}
 		CommentConfig config = article.getCommentConfig();
 		if (config == null) {
 			errors.reject("article.commentConfig.blank", "评论配置不能为空");
@@ -146,7 +179,7 @@ public class ArticleValidator implements Validator {
 			errors.reject("article.commentConfig.asc.blank", "评论展现排序方式不能为空");
 			return;
 		}
-		if(config.getCheck() == null){
+		if (config.getCheck() == null) {
 			errors.reject("article.commentConfig.check.blank", "评论审核不能为空");
 			return;
 		}
@@ -157,7 +190,7 @@ public class ArticleValidator implements Validator {
 					"限制评论数应该在" + LIMIT_COUNT_RANGE[0] + "和" + LIMIT_COUNT_RANGE[1] + "之间");
 			return;
 		}
-		
+
 		Integer limitSec = config.getLimitSec();
 		if (limitSec < LIMIT_SECOND_RANGE[0] || limitSec > LIMIT_SECOND_RANGE[1]) {
 			errors.reject("article.commentConfig.limitSec.invalid",
@@ -165,6 +198,6 @@ public class ArticleValidator implements Validator {
 					"限制评论时间应该在" + LIMIT_SECOND_RANGE[0] + "和" + LIMIT_SECOND_RANGE[1] + "之间");
 			return;
 		}
-		
+
 	}
 }

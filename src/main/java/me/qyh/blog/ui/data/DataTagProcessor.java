@@ -29,7 +29,7 @@ public abstract class DataTagProcessor<T> {
 			attributes = new HashMap<>();
 		T result = null;
 		try {
-			result = query(space, params, attributes);
+			result = query(space, params, new Attributes(attributes));
 		} catch (LogicException e) {
 			if (!ignoreLogicException(attributes)) {
 				throw e;
@@ -65,7 +65,7 @@ public abstract class DataTagProcessor<T> {
 	public final DataBind<T> previewData(Map<String, String> attributes) {
 		if (attributes == null)
 			attributes = new HashMap<>();
-		T result = buildPreviewData(attributes);
+		T result = buildPreviewData(new Attributes(attributes));
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		bind.setDataName(dataName);
@@ -77,9 +77,9 @@ public abstract class DataTagProcessor<T> {
 	 * 
 	 * @return
 	 */
-	protected abstract T buildPreviewData(Map<String, String> attributes);
+	protected abstract T buildPreviewData(Attributes attributes);
 
-	protected abstract T query(Space space, Params params, Map<String, String> attributes) throws LogicException;
+	protected abstract T query(Space space, Params params, Attributes attributes) throws LogicException;
 
 	public String getName() {
 		return name;
@@ -87,6 +87,24 @@ public abstract class DataTagProcessor<T> {
 
 	public String getDataName() {
 		return dataName;
+	}
+
+	protected final class Attributes {
+		private Map<String, String> attMap = new HashMap<String, String>();
+
+		public String get(String key) {
+			return attMap.get(key.toLowerCase());
+		}
+
+		public Attributes(Map<String, String> attMap) {
+			this.attMap = attMap;
+		}
+
+		@Override
+		public String toString() {
+			return "Attributes [attMap=" + attMap + "]";
+		}
+
 	}
 
 }

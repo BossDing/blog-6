@@ -6,7 +6,7 @@ var login = $("#login").val() == 'true';
 			var tree = $("#commentMode").val() == 'TREE';
 			$(document).ready(function(){
 				queryComments(0);
-				if(window.sessionStorage){
+				if(window.sessionStorage && !login){
 					var articleId = "article-"+$("#articleId").val();
 					var item = window.sessionStorage.getItem(articleId);
 					if(!item || item == null){
@@ -53,7 +53,7 @@ var login = $("#login").val() == 'true';
 				})
 			});
 			function queryComments(page){
-				$.get(actPath+'/article/'+$("#articleId").val()+'/comment/list',{currentPage:page},function(data){
+				$.get(actPath+'/data/'+encodeURI('<data name="评论" currentPage="'+page+'" article="'+$("#articleId").val()+'"/>'),{},function(data){
 					if(!data.success){
 						bootbox.alert(data.message);
 						return ;
@@ -172,7 +172,7 @@ var login = $("#login").val() == 'true';
 							html += '<a href="###" onclick="checkComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
 					 }
 					 if(oauthLogin)
-						html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
+						html += '<a href="###" style="margin-right:8px" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
 					if(c.parents.length > 0){
 						html += '<a href="###" onclick="queryConversations(\''+c.id+'\')">查看对话</a>';
 					}
@@ -213,7 +213,7 @@ var login = $("#login").val() == 'true';
 							html += '<a href="###" onclick="checkComment(\''+c.id+'\')" style="margin-right:8px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
 					}
 					 if(oauthLogin)
-							html += '<a href="###" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
+							html += '<a href="###" style="margin-right:8px" onclick="toReply(\''+c.id+'\')"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
 					 if(c.parents.length > 0){
 							html += '<a href="###" onclick="queryConversations(\''+c.id+'\')">查看对话</a>';
 						}

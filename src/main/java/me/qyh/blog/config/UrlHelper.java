@@ -112,7 +112,8 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public String getUrl(Article article) {
-			return getUrl(article.getSpace()) + "/article/" + article.getId();
+			return getUrl(article.getSpace()) + "/article/"
+					+ (article.getAlias() == null ? article.getId().toString() : article.getAlias());
 		}
 
 		public String getArticlesUrl(Space space) {

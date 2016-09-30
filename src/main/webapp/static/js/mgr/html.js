@@ -105,6 +105,7 @@ $(document).ready(function(){
 		if($("#lockId").val() != ""){
 			article.lockId = $("#lockId").val();
 		}
+		article.alias = $("#alias").val();
 		var commentConfig = {};
 		commentConfig.allowComment = $("#allowComment").prop("checked");
 		commentConfig.commentMode = $("#commentMode").val();
@@ -338,6 +339,7 @@ function changeEditorCss(csses,style){
 			if($("#lockId").val() != ""){
 				article.lockId = $("#lockId").val();
 			}
+			article.alias = $("#alias").val();
 			
 			var commentConfig = {};
 			commentConfig.allowComment = $("#allowComment").prop("checked");

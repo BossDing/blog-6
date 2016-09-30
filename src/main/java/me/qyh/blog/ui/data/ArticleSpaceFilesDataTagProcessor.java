@@ -2,7 +2,6 @@ package me.qyh.blog.ui.data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,7 +22,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> buildPreviewData(Map<String, String> attributes) {
+	protected List<ArticleSpaceFile> buildPreviewData(Attributes attributes) {
 		List<ArticleSpaceFile> files = new ArrayList<ArticleSpaceFile>();
 		Space space = new Space();
 		space.setAlias("test");
@@ -39,8 +38,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> query(Space space, Params params, Map<String, String> attributes)
-			throws LogicException {
+	protected List<ArticleSpaceFile> query(Space space, Params params, Attributes attributes) throws LogicException {
 		if (space == null)
 			return articleService.queryArticleSpaceFiles(UserContext.get() != null);
 		return null;

@@ -3,12 +3,16 @@ package me.qyh.blog.service.impl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.TagDao;
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
@@ -25,8 +29,6 @@ public class TagServiceImpl implements TagService {
 	private ArticleTagDao articleTagDao;
 	@Autowired
 	private ArticleIndexer articleIndexer;
-	@Autowired
-	private ArticleQuery articleQuery;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -37,7 +39,7 @@ public class TagServiceImpl implements TagService {
 	}
 
 	@Override
-	@ArticleQueryReload
+	@CacheEvict(value = "hotTags", allEntries = true)
 	public void updateTag(Tag tag, boolean merge) throws LogicException {
 		Tag db = tagDao.selectById(tag.getId());
 		if (db == null) {
@@ -58,12 +60,10 @@ public class TagServiceImpl implements TagService {
 		} else {
 			tagDao.update(tag);
 		}
-
-		articleQuery.reloadStore();
 	}
 
 	@Override
-	@ArticleQueryReload
+	@CacheEvict(value = "hotTags", allEntries = true)
 	public void deleteTag(Integer id) throws LogicException {
 		Tag db = tagDao.selectById(id);
 		if (db == null) {
@@ -72,7 +72,12 @@ public class TagServiceImpl implements TagService {
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
 		articleIndexer.removeTag(db.getName());
+	}
 
-		articleQuery.reloadStore();
+	@Override
+	@Transactional(readOnly = true)
+	@Cacheable(value = "hotTags")
+	public List<TagCount> queryHotTags(Space space, boolean hasLock, boolean queryPrivate, int limit) {
+		return articleTagDao.selectHotTags(space, hasLock, queryPrivate, limit);
 	}
 }

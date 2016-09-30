@@ -3,6 +3,7 @@ package me.qyh.blog.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
@@ -59,7 +61,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Autowired
 	private LockManager<?> lockManager;
 	@Autowired
-	private ArticleQuery articleQuery;
+	private ArticleCache articleCache;
 
 	private boolean rebuildIndex = true;
 
@@ -67,8 +69,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Article getArticleForView(Integer id) {
-		Article article = articleQuery.getArticleWithLockCheck(id,true);
+	public Article getArticleForView(String idOrAlias) {
+		Article article = null;
+		try {
+			int id = Integer.parseInt(idOrAlias);
+			article = articleCache.getArticleWithLockCheck(id);
+		} catch (NumberFormatException e) {
+			article = articleCache.getArticleWithLockCheck(idOrAlias);
+		}
 		if (article != null) {
 			if (article.isPublished()) {
 				if (article.isPrivate() && UserContext.get() == null) {
@@ -83,7 +91,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForEdit(Integer id) throws LogicException {
-		Article article = articleQuery.getArticle(id,true);
+		Article article = articleCache.getArticle(id);
 		if (article == null || article.isDeleted()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -91,9 +99,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public Article hit(Integer id) {
-		Article article = articleQuery.getArticleWithLockCheck(id,false);
+		Article article = articleCache.getArticleWithLockCheck(id);
 		if (article != null) {
 			boolean hit = (article.isPublished() && article.getSpace().equals(SpaceContext.get()))
 					? article.isPrivate() ? UserContext.get() != null : true : false;
@@ -108,8 +116,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	}
 
 	@Override
-	@ArticleQueryReload
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
 	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
@@ -126,6 +135,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (articleDb.isDeleted()) {
 				throw new LogicException("article.deleted", "文章已经被删除");
 			}
+			if (article.getAlias() != null) {
+				Article aliasDb = articleDao.selectByAlias(article.getAlias());
+				if (aliasDb != null && !aliasDb.equals(article)) {
+					throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
+							article.getAlias());
+				}
+			}
+
 			if (!article.isSchedule()) {
 				if (article.isDraft()) {
 					article.setPubDate(null);
@@ -142,8 +159,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (article.isPublished()) {
 				articleIndexer.addOrUpdateDocument(updated);
 			}
-			articleQuery.addOrUpdate(updated);
 		} else {
+			if (article.getAlias() != null) {
+				Article aliasDb = articleDao.selectByAlias(article.getAlias());
+				if (aliasDb != null) {
+					throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
+							article.getAlias());
+				}
+			}
 			if (!article.isSchedule()) {
 				if (article.isDraft()) {
 					article.setPubDate(null);
@@ -157,14 +180,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			if (article.isPublished()) {
 				articleIndexer.addOrUpdateDocument(updated);
 			}
-			articleQuery.addOrUpdate(updated);
 		}
 		return article;
 	}
 
 	@Override
-	@ArticleQueryReload
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
 	public void publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -178,7 +201,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		articleDao.update(article);
 		if (article.isPublished())
 			articleIndexer.addOrUpdateDocument(article);
-		articleQuery.addOrUpdate(article);
 	}
 
 	private void insertTags(Article article) {
@@ -207,25 +229,41 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache")
 	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode, boolean queryPrivate) {
-		return articleQuery.queryArticleDateFiles(space, mode, queryPrivate);
+		List<ArticleDateFile> files = articleDao.selectDateFiles(space, mode, queryPrivate);
+		ArticleDateFiles _files = new ArticleDateFiles(files, mode);
+		_files.calDate();
+		return _files;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles(boolean queryPrivate) {
-		return articleQuery.queryArticleSpaceFiles(queryPrivate);
+		return articleDao.selectSpaceFiles(queryPrivate);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
+	@ArticleIndexRebuild(readOnly = true, conditionForWait = "#param.hasQuery()")
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
-		return articleQuery.query(param);
+		PageResult<Article> page = null;
+		if (param.hasQuery()) {
+			PageResult<Integer> result = articleIndexer.query(param);
+			List<Article> articles = result.hasResult() ? articleDao.selectByIds(result.getDatas())
+					: new ArrayList<Article>();
+			page = new PageResult<Article>(param, result.getTotalRow(), articles);
+		} else {
+			int count = articleDao.selectCount(param);
+			List<Article> datas = articleDao.selectPage(param);
+			page = new PageResult<Article>(param, count, datas);
+		}
+		return page;
 	}
 
 	@Override
-	@ArticleQueryReload
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
 	public void logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -237,12 +275,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
 		articleIndexer.deleteDocument(id);
-		articleQuery.addOrUpdate(article);
 	}
 
 	@Override
-	@ArticleQueryReload
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
 	public void recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -259,11 +297,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		articleDao.update(article);
 		if (article.isPublished())
 			articleIndexer.addOrUpdateDocument(article);
-		articleQuery.addOrUpdate(article);
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -277,20 +314,19 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		// 删除博客所有的评论
 		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
-		articleQuery.remove(id);
 	}
 
 	@Override
-	@ArticleQueryReload
-	@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0")
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
+			@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0") })
 	public int pushScheduled() {
-		List<Article> articles = articleQuery.queryScheduled(Timestamp.valueOf(LocalDateTime.now()));
+		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
 		for (Article article : articles) {
 			article.setStatus(ArticleStatus.PUBLISHED);
 			articleDao.update(article);
 			if (article.isPublished())
 				articleIndexer.addOrUpdateDocument(article);
-			articleQuery.addOrUpdate(article);
 		}
 		return articles.size();
 	}
@@ -300,7 +336,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		logger.debug("开始重新建立博客索引" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 		long begin = System.currentTimeMillis();
 		articleIndexer.deleteAll();
-		List<Article> articles = articleQuery.selectPublished(null);
+		List<Article> articles = articleDao.selectPublished(null);
 		for (Article article : articles) {
 			articleIndexer.addOrUpdateDocument(article);
 		}
@@ -311,7 +347,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public ArticleNav getArticleNav(Article article) {
-		return articleQuery.getArticleNav(article, UserContext.get() != null);
+		boolean queryPrivate = UserContext.get() != null;
+		Article previous = articleDao.getPreviousArticle(article, queryPrivate);
+		Article next = articleDao.getNextArticle(article, queryPrivate);
+		return (previous != null || next != null) ? new ArticleNav(previous, next) : null;
 	}
 
 	@Override

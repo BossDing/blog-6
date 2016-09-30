@@ -18,12 +18,13 @@ public interface ArticleService {
 	/**
 	 * 获取一篇可以被访问的文章
 	 * 
-	 * @param id
+	 * @param idOrAlias
+	 *            id或者文章别名
 	 * @throws AuthencationException
 	 *             如果访问了私人博客但是没有登录
 	 * @return 不存在|不可被访问 null
 	 */
-	Article getArticleForView(Integer id);
+	Article getArticleForView(String idOrAlias);
 
 	/**
 	 * 获取一篇可以被编辑的文章

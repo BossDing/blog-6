@@ -15,6 +15,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -147,9 +148,9 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-	public String handlerHttpMediaTypeNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
-			HttpMediaTypeNotSupportedException ex) throws IOException {
+	@ExceptionHandler({HttpMediaTypeNotSupportedException.class,HttpMediaTypeNotAcceptableException.class})
+	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp,
+			Exception ex) throws IOException {
 		logger.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));

@@ -14,12 +14,12 @@ public interface TagDao {
 	int selectCount(TagQueryParam param);
 
 	List<Tag> selectPage(TagQueryParam param);
-	
+
 	void update(Tag tag);
-	
+
 	List<Tag> selectAll();
 
 	Tag selectById(Integer id);
-	
+
 	void deleteById(Integer id);
 }

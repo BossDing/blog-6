@@ -62,4 +62,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<delete id="deleteById" >
 		DELETE FROM blog_tag WHERE id = #{id}
 	</delete>
+	
 </mapper>

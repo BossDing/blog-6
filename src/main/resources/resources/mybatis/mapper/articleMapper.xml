@@ -20,6 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="status" column="art_status" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
+		<result property="alias" column="art_alias" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
@@ -56,10 +57,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check,art_alias)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec},#{commentConfig.check})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec},#{commentConfig.check},#{alias})
 	</insert>
 	
 	<update id="update">
@@ -90,6 +91,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="space != null">
 				space_id = #{space.id},
 			</if>
+			
 			<if test="commentConfig != null">
 				<if test="commentConfig.allowComment != null">
 					allowComment = #{commentConfig.allowComment},
@@ -113,6 +115,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 					comment_check = #{commentConfig.check},
 				</if>
 			</if>
+			art_alias = #{alias},
 			lastModifyDate = #{lastModifyDate}
 		</set>
 		WHERE id = #{id}
@@ -122,6 +125,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<include refid="articleDetailSql"></include>
 		WHERE 
 			art.id = #{id}
+		GROUP BY art.id
+	</select>
+	
+	<select id="selectByAlias" resultMap="ArticleDetail">
+		<include refid="articleDetailSql"></include>
+		WHERE 
+			art_alias = #{alias}
 		GROUP BY art.id
 	</select>
 	
@@ -180,6 +190,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_from,
 			art.space_id,
 			art.art_lock,
+			art.art_alias,
 			sp.space_alias,
 			space_lock,
 			sp.is_private AS space_is_private,
@@ -255,6 +266,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_from,
 			art.space_id,
 			art.art_lock,
+			art.art_alias,
 			sp.space_alias,
 			space_lock,
 			sp.is_private AS space_is_private,
@@ -349,6 +361,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="getPreviousArticle" resultMap="ArticleDetail">
 		SELECT
 			art.id AS art_id,
+			art.art_alias,
 			art.title,
 			sp.space_alias,
 			sp.space_name
@@ -372,6 +385,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="getNextArticle" resultMap="ArticleDetail">
 		SELECT
 			art.id AS art_id,
+			art.art_alias,
 			art.title,
 			sp.space_alias,
 			sp.space_name
@@ -416,6 +430,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_limitCount,
 			art.comment_limitSec,
 			art.comment_check,
+			art.art_alias,
 			sp.space_alias,
 			sp.space_name,
 			space_lock,

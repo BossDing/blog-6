@@ -1,7 +1,5 @@
 package me.qyh.blog.ui.data;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.bean.ArticleNav;
@@ -21,7 +19,7 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav buildPreviewData(Map<String, String> attributes) {
+	protected ArticleNav buildPreviewData(Attributes attributes) {
 		Article previous = new Article(-1);
 		previous.setTitle("预览博客-前一篇");
 		Article next = new Article(-2);
@@ -36,16 +34,12 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav query(Space space, Params params, Map<String, String> attributes) throws LogicException {
+	protected ArticleNav query(Space space, Params params, Attributes attributes) throws LogicException {
 		Article article = params.get("article", Article.class);
 		if (article == null) {
-			String idStr = attributes.get("article");
-			if (idStr != null) {
-				try {
-					Integer id = Integer.parseInt(idStr);
-					article = articleService.getArticleForView(id);
-				} catch (Exception e) {
-				}
+			String idOrAlias = attributes.get("article");
+			if (idOrAlias != null) {
+				article = articleService.getArticleForView(idOrAlias);
 			}
 		}
 		if (article != null && space.getAlias().equals(article.getSpace().getAlias()))

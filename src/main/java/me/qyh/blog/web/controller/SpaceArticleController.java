@@ -16,13 +16,11 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Comment;
-import me.qyh.blog.entity.Comment.CommentStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.oauth2.RequestOauthUser;
 import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.CommentService;
@@ -66,10 +64,10 @@ public class SpaceArticleController extends BaseController {
 		binder.setValidator(commentValidator);
 	}
 
-	@RequestMapping("{id}")
-	public RenderedPage article(@PathVariable("id") Integer id) throws LogicException {
+	@RequestMapping("{idOrAlias}")
+	public RenderedPage article(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
-				new Params().add(ArticleDataTagProcessor.PARAMETER_KEY, id));
+				new Params().add(ArticleDataTagProcessor.PARAMETER_KEY, idOrAlias));
 	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
@@ -98,20 +96,6 @@ public class SpaceArticleController extends BaseController {
 		articleQueryParam.setIgnoreLevel(false);
 		articleQueryParam.setQueryPrivate(UserContext.get() != null);
 		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
-	}
-
-	@RequestMapping(value = "{id}/comment/list")
-	@ResponseBody
-	public JsonResult queryPageResult(@PathVariable("id") Integer articleId, CommentQueryParam param,
-			BindingResult result) {
-		if (result.hasErrors()) {
-			param = new CommentQueryParam();
-			param.setCurrentPage(1);
-		}
-		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		param.setPageSize(configService.getPageSizeConfig().getCommentPageSize());
-		param.setArticle(new Article(articleId));
-		return new JsonResult(true, commentService.queryComment(param));
 	}
 
 	@RequestMapping(value = "{id}/addComment", method = RequestMethod.POST)

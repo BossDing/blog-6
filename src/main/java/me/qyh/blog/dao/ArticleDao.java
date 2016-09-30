@@ -46,5 +46,7 @@ public interface ArticleDao {
 	Article getPreviousArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
 
 	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
+
+	Article selectByAlias(String alias);
 	
 }

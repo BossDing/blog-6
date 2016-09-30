@@ -11,6 +11,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
-public @interface ArticleQueryReload {
+public @interface ArticleIndexRebuild {
+
+	abstract boolean readOnly() default false;
+
+	abstract String conditionForWait() default "true";
 
 }

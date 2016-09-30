@@ -112,6 +112,7 @@ var publishing = false;
     			if($("#lockId").val() != ""){
     				article.lockId = $("#lockId").val();
     			}
+    			article.alias = $("#alias").val();
     			var commentConfig = {};
     			commentConfig.allowComment = $("#allowComment").prop("checked");
     			commentConfig.commentMode = $("#commentMode").val();
@@ -267,7 +268,7 @@ var publishing = false;
 			if($("#lockId").val() != ""){
 				article.lockId = $("#lockId").val();
 			}
-			
+			article.alias = $("#alias").val();
 			var commentConfig = {};
 			commentConfig.allowComment = $("#allowComment").prop("checked");
 			commentConfig.commentMode = $("#commentMode").val();

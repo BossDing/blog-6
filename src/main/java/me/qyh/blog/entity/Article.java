@@ -37,6 +37,7 @@ public class Article extends BaseLockResource implements Cloneable {
 	private String summary;// 博客摘要
 	private Integer level; // 博客级别，级别越高显示越靠前
 	private CommentConfig commentConfig;
+	private String alias;// 别名，可通过别名访问文章
 
 	private AtomicInteger _hits;
 	private AtomicInteger _comments;
@@ -381,6 +382,14 @@ public class Article extends BaseLockResource implements Cloneable {
 			}
 		}
 		return false;
+	}
+
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
 	}
 
 	@Override

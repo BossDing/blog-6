@@ -36,14 +36,16 @@ public class SpaceController extends BaseController {
 	public RenderedPage userPage(@PathVariable("alias") String alias) throws LogicException {
 		return uiService.renderUserPage(alias);
 	}
-	
-	@RequestMapping("data/**")
+
+	@RequestMapping(value = "data/**")
 	@ResponseBody
 	public JsonResult queryData(HttpServletRequest request) throws LogicException {
 		String dataTagStr = null;
 		try {
 			String fullUrl = UrlUtils.buildFullRequestUrl(request);
-			dataTagStr = URLDecoder.decode(fullUrl.substring(fullUrl.indexOf("/data/") + 6), Constants.CHARSET.name());
+			String subStr = fullUrl.substring(fullUrl.indexOf("/data/") + 6);
+			dataTagStr = URLDecoder.decode(URLDecoder.decode(subStr, Constants.CHARSET.name()),
+					Constants.CHARSET.name());
 		} catch (Exception e) {
 		}
 		if (dataTagStr != null)

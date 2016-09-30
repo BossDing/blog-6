@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -34,7 +33,7 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> buildPreviewData(Map<String, String> attributes) {
+	protected List<Comment> buildPreviewData(Attributes attributes) {
 		List<Comment> comments = new ArrayList<Comment>();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -56,11 +55,11 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(Space space, Params params, Map<String, String> attributes) throws LogicException {
+	protected List<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
 		return commentService.queryLastComments(space, getLimit(attributes));
 	}
 
-	private int getLimit(Map<String, String> attributes) {
+	private int getLimit(Attributes attributes) {
 		int limit = DEFAULT_LIMIT;
 		String v = attributes.get(LIMIT);
 		if (v != null)

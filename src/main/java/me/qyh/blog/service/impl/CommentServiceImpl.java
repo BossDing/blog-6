@@ -71,7 +71,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
 
 	@Autowired
-	private ArticleQuery articleQuery;
+	private ArticleCache articleCache;
 	@Autowired
 	private OauthUserDao oauthUserDao;
 	@Autowired
@@ -134,7 +134,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryComment(CommentQueryParam param) {
-		Article article = articleQuery.getArticleWithLockCheck(param.getArticle().getId(), true);
+		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
@@ -181,7 +181,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public Comment insertComment(Comment comment) throws LogicException {
 		long now = System.currentTimeMillis();
 		if (isInvalidUser(comment.getUser())) {
@@ -194,7 +194,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		if (user.isDisabled()) {
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
 		}
-		Article article = articleQuery.getArticleWithLockCheck(comment.getArticle().getId(), false);
+		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -280,7 +280,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public void checkComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
 		if (comment == null) {
@@ -290,13 +290,13 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			throw new LogicException("comment.checked", "评论审核过了");
 		}
 		commentDao.updateStatusToNormal(comment);
-		Article article = articleQuery.getArticle(comment.getArticle().getId(), false);
+		Article article = articleCache.getArticle(comment.getArticle().getId());
 		articleDao.updateComments(article.getId(), 1);
 		article.addComments();
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public void deleteComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);
 		if (comment == null) {
@@ -308,20 +308,20 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		commentDao.deleteById(id);
 		if (totalCount > 0) {
 			// 更新文章评论数量
-			Article article = articleQuery.getArticle(comment.getArticle().getId(), false);
+			Article article = articleCache.getArticle(comment.getArticle().getId());
 			articleDao.updateComments(article.getId(), -totalCount);
 			article.decrementComment(totalCount);
 		}
 	}
 
 	@Override
-	@ArticleQueryReload
+	@ArticleIndexRebuild
 	public void deleteComment(Integer userId, Integer articleId) throws LogicException {
 		OauthUser user = oauthUserDao.selectById(userId);
 		if (user == null) {
 			throw new LogicException("comment.user.notExists", "账户不存在");
 		}
-		Article article = articleQuery.getArticle(articleId, false);
+		Article article = articleCache.getArticle(articleId);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -343,7 +343,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException {
-		Article article = articleQuery.getArticleWithLockCheck(articleId, true);
+		Article article = articleCache.getArticleWithLockCheck(articleId);
 		if (article == null)
 			throw new LogicException("article.notExists", "文章不存在");
 		if (!article.isPublished()) {

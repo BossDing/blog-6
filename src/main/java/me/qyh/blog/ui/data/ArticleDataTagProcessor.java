@@ -3,7 +3,6 @@ package me.qyh.blog.ui.data;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,15 +30,15 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	@Autowired
 	private ArticleService articleService;
 
-	public static final String PARAMETER_KEY = "articleId";
-	private static final String ATTR_ID = "id";
+	public static final String PARAMETER_KEY = "articleIdOrAlias";
+	private static final String ID_OR_ALIAS = "idOrAlias";
 
 	public ArticleDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected Article buildPreviewData(Map<String, String> attributes) {
+	protected Article buildPreviewData(Attributes attributes) {
 		Article article = new Article();
 		article.setComments(0);
 		article.setEditor(Editor.MD);
@@ -76,23 +75,16 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article query(Space space, Params params, Map<String, String> attributes) throws LogicException {
-		Integer id = params.get(PARAMETER_KEY, Integer.class);
-		if (id == null) {
+	protected Article query(Space space, Params params, Attributes attributes) throws LogicException {
+		String idOrAlias = params.get(PARAMETER_KEY, String.class);
+		if (idOrAlias == null) {
 			// 尝试从属性中获取ID
-			String attId = attributes.get(ATTR_ID);
-			if (attId != null) {
-				try {
-					id = Integer.parseInt(attId);
-				} catch (Exception e) {
-					//
-				}
-			}
+			idOrAlias = attributes.get(ID_OR_ALIAS);
 		}
-		if (id == null){
+		if (idOrAlias == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		Article article = articleService.getArticleForView(id);
+		Article article = articleService.getArticleForView(idOrAlias);
 		if (article == null ||
 		// 文章不存在或者不在目标空间下
 				(!space.getAlias().equals(article.getSpace().getAlias()))) {

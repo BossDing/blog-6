@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.time.DateUtils;
@@ -42,7 +41,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> buildPreviewData(Map<String, String> attributes) {
+	protected PageResult<Article> buildPreviewData(Attributes attributes) {
 		List<Article> articles = new ArrayList<Article>();
 		Article article = new Article();
 		article.setComments(0);
@@ -71,8 +70,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> query(Space space, Params params, Map<String, String> attributes)
-			throws LogicException {
+	protected PageResult<Article> query(Space space, Params params, Attributes attributes) throws LogicException {
 		ArticleQueryParam param = params.get(PARAMETER_KEY, ArticleQueryParam.class);
 		if (param == null) {
 			param = parseParam(space, attributes);
@@ -83,7 +81,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		return articleService.queryArticle(param);
 	}
 
-	private ArticleQueryParam parseParam(Space space, Map<String, String> attributes) {
+	private ArticleQueryParam parseParam(Space space, Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		param.setSpace(space);

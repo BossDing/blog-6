@@ -14,4 +14,6 @@ CREATE TABLE `blog_fragement_user` (
   UNIQUE KEY `fragement_name` (`fragement_name`),
   KEY `sfk` (`space_id`),
   CONSTRAINT `sfk` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE blog_article ADD COLUMN art_alias VARCHAR(60);

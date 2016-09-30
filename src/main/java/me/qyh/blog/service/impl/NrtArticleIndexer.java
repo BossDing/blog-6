@@ -200,6 +200,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private static final String PUB_DATE = "pubDate";
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
+	private static final String ALIAS = "alias";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
@@ -211,6 +212,9 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(FROM, article.getFrom().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(LOCKED, article.hasLock() ? "true" : "false", Field.Store.NO));
+		if (article.getAlias() != null) {
+			doc.add(new TextField(ALIAS, article.getAlias(), Field.Store.NO));
+		}
 		Integer level = article.getLevel();
 		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
@@ -339,7 +343,8 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
 		}
 		if (!Validators.isEmptyOrNull(param.getQuery(), true)) {
-			MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, CONTENT }, analyzer);
+			MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, ALIAS, CONTENT },
+					analyzer);
 			try {
 				builder.add(parser.parse(param.getQuery()), Occur.MUST);
 			} catch (ParseException e) {
