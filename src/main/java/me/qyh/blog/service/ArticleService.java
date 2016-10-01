@@ -88,17 +88,19 @@ public interface ArticleService {
 	 * 将博客放入回收站
 	 * 
 	 * @param id
+	 * @return 
 	 * @throws LogicException
 	 */
-	void logicDeleteArticle(Integer id) throws LogicException;
+	Article logicDeleteArticle(Integer id) throws LogicException;
 
 	/**
 	 * 从回收站中恢复
 	 * 
 	 * @param id
+	 * @return 
 	 * @throws LogicException
 	 */
-	void recoverArticle(Integer id) throws LogicException;
+	Article recoverArticle(Integer id) throws LogicException;
 
 	/**
 	 * 删除博客

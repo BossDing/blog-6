@@ -91,7 +91,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForEdit(Integer id) throws LogicException {
-		Article article = articleCache.getArticle(id);
+		Article article = articleDao.selectById(id);
 		if (article == null || article.isDeleted()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -117,8 +117,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result.isPublished()"),
+			@CacheEvict(value = "hotTags", allEntries = true, condition = "#result.isPublished()"),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.id", condition = "#result.hasId() && #result.isPublished()"),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.alias", condition = "#result.alias != null && #result.isPublished()") })
 	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
@@ -263,8 +265,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Override
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
-	public void logicDeleteArticle(Integer id) throws LogicException {
+			@CacheEvict(value = "hotTags", allEntries = true),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.id", condition = "#result.hasId()"),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.alias", condition = "#result.alias != null") })
+	public Article logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -275,13 +279,16 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
 		articleIndexer.deleteDocument(id);
+		return article;
 	}
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
-	public void recoverArticle(Integer id) throws LogicException {
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true,condition="#result.isPublished()"),
+			@CacheEvict(value = "hotTags", allEntries = true,condition="#result.isPublished()"),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.id", condition = "#result.hasId()"),
+			@CacheEvict(value = "articleCache", key = "'article-'+#result.alias", condition = "#result.alias != null") })
+	public Article recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -297,6 +304,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		articleDao.update(article);
 		if (article.isPublished())
 			articleIndexer.addOrUpdateDocument(article);
+		return article;
 	}
 
 	@Override
