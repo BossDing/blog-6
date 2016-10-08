@@ -9,7 +9,6 @@ import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.Params;
 
@@ -48,7 +47,7 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	@Override
 	protected ArticleDateFiles query(Space space, Params params, Attributes attributes) throws LogicException {
 		ArticleDateFileMode mode = getMode(attributes);
-		return articleService.queryArticleDateFiles(space, mode, UserContext.get() != null);
+		return articleService.queryArticleDateFiles(space, mode);
 	}
 
 	private ArticleDateFileMode getMode(Attributes attributes) {

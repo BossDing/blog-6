@@ -6,6 +6,7 @@ import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
+import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
@@ -45,14 +46,14 @@ public interface ArticleService {
 	 *            归档方式
 	 * @return 不会为null
 	 */
-	ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode, boolean queryPrivate);
+	ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode);
 
 	/**
 	 * 查询文章空间归档
 	 * 
 	 * @return 不会为null
 	 */
-	List<ArticleSpaceFile> queryArticleSpaceFiles(boolean queryPrivate);
+	List<ArticleSpaceFile> queryArticleSpaceFiles();
 
 	/**
 	 * 分页查询文章
@@ -88,19 +89,17 @@ public interface ArticleService {
 	 * 将博客放入回收站
 	 * 
 	 * @param id
-	 * @return 
 	 * @throws LogicException
 	 */
-	Article logicDeleteArticle(Integer id) throws LogicException;
+	void logicDeleteArticle(Integer id) throws LogicException;
 
 	/**
 	 * 从回收站中恢复
 	 * 
 	 * @param id
-	 * @return 
 	 * @throws LogicException
 	 */
-	Article recoverArticle(Integer id) throws LogicException;
+	void recoverArticle(Integer id) throws LogicException;
 
 	/**
 	 * 删除博客
@@ -134,4 +133,13 @@ public interface ArticleService {
 	 */
 	ArticleNav getArticleNav(Article article);
 
+	/**
+	 * 查询博客统计 <br>
+	 * <strong>只会统计状态为发表的博客点击数、评论数、最近撰写日期和最后修改日期</strong>
+	 * 
+	 * @param space
+	 * @param queryPrivate
+	 * @return
+	 */
+	ArticleStatistics queryArticleStatistics(Space space);
 }

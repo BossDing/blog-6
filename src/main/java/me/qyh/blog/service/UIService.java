@@ -11,6 +11,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragementQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
+import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
@@ -280,7 +281,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Object queryData(String dataTagStr) throws LogicException;
+	Object queryData(DataTag dataTag) throws LogicException;
 
 	/**
 	 * 查询系统数据

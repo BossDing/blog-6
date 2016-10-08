@@ -28,8 +28,9 @@ public abstract class DataTagProcessor<T> {
 		if (attributes == null)
 			attributes = new HashMap<>();
 		T result = null;
+		Attributes atts = new Attributes(attributes);
 		try {
-			result = query(space, params, new Attributes(attributes));
+			result = query(space, params, atts);
 		} catch (LogicException e) {
 			if (!ignoreLogicException(attributes)) {
 				throw e;
@@ -37,7 +38,7 @@ public abstract class DataTagProcessor<T> {
 		}
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
-		String dataNameAttV = attributes.get(DATA_NAME);
+		String dataNameAttV = atts.get(DATA_NAME);
 		if (!Validators.isEmptyOrNull(dataNameAttV, true)) {
 			bind.setDataName(dataNameAttV);
 		} else {
@@ -65,10 +66,16 @@ public abstract class DataTagProcessor<T> {
 	public final DataBind<T> previewData(Map<String, String> attributes) {
 		if (attributes == null)
 			attributes = new HashMap<>();
-		T result = buildPreviewData(new Attributes(attributes));
+		Attributes atts = new Attributes(attributes);
+		T result = buildPreviewData(atts);
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
-		bind.setDataName(dataName);
+		String dataNameAttV = atts.get(DATA_NAME);
+		if (!Validators.isEmptyOrNull(dataNameAttV, true)) {
+			bind.setDataName(dataNameAttV);
+		} else {
+			bind.setDataName(dataName);
+		}
 		return bind;
 	}
 

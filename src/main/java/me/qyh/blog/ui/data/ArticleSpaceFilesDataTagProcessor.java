@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.Params;
 
@@ -40,7 +39,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	@Override
 	protected List<ArticleSpaceFile> query(Space space, Params params, Attributes attributes) throws LogicException {
 		if (space == null)
-			return articleService.queryArticleSpaceFiles(UserContext.get() != null);
+			return articleService.queryArticleSpaceFiles();
 		return null;
 	}
 

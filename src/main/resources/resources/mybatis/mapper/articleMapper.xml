@@ -56,6 +56,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 	
+	<resultMap type="ArticleStatistics" id="ArticleStatisticsDetail">
+		<id column="space_id"/>
+		<result column="lastModifyDate" property="lastModifyDate"/>
+		<result column="totalHits" property="totalHits"/>
+		<result column="totalComments" property="totalComments"/>
+	</resultMap>
+	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check,art_alias)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
@@ -404,6 +411,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		ORDER BY art.pubDate ASC,art.id ASC
 		LIMIT 0,1
+	</select>
+	
+	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
+		SELECT
+			SUM(hits) AS totalHits,
+			SUM(comments) AS totalComments,
+			MAX(lastModifyDate) AS lastModifyDate,
+			MAX(pubDate) AS lastPubDate
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		WHERE art.art_status = 0
+		<if test="space != null">
+			AND art.space_id = #{space.id}
+		</if>
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+			AND sp.is_private = false
+		</if>
 	</select>
 	
 	<sql id="articleDetailSql">

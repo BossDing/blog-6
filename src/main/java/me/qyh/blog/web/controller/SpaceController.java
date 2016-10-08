@@ -1,24 +1,26 @@
 package me.qyh.blog.web.controller;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-
-import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.interceptor.SpaceContext;
-import me.qyh.util.UrlUtils;
 
 @Controller
 @RequestMapping("space/{alias}")
@@ -37,19 +39,19 @@ public class SpaceController extends BaseController {
 		return uiService.renderUserPage(alias);
 	}
 
-	@RequestMapping(value = "data/**")
+	@RequestMapping("data/{tagName}")
 	@ResponseBody
-	public JsonResult queryData(HttpServletRequest request) throws LogicException {
-		String dataTagStr = null;
+	public JsonResult queryData(@PathVariable("tagName") String tagName,
+			@RequestParam Map<String, String> allRequestParams) throws LogicException {
+		DataTag tag;
 		try {
-			String fullUrl = UrlUtils.buildFullRequestUrl(request);
-			String subStr = fullUrl.substring(fullUrl.indexOf("/data/") + 6);
-			dataTagStr = URLDecoder.decode(URLDecoder.decode(subStr, Constants.CHARSET.name()),
-					Constants.CHARSET.name());
-		} catch (Exception e) {
+			tag = new DataTag(URLDecoder.decode(tagName, Constants.CHARSET.name()));
+		} catch (UnsupportedEncodingException e) {
+			throw new SystemException(e.getMessage(), e);
 		}
-		if (dataTagStr != null)
-			return new JsonResult(true, uiService.queryData(dataTagStr));
-		return new JsonResult(true, "");
+		for (Map.Entry<String, String> it : allRequestParams.entrySet()) {
+			tag.put(it.getKey(), it.getValue());
+		}
+		return new JsonResult(true, uiService.queryData(tag));
 	}
 }

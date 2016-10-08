@@ -39,6 +39,10 @@
 					<constructor-arg index="0" value="热门标签" />
 					<constructor-arg index="1" value="hotTags" />
 				</bean>
+				<bean class="me.qyh.blog.ui.data.ArticleStatisticsDataTagProcessor">
+					<constructor-arg index="0" value="文章统计" />
+					<constructor-arg index="1" value="articleStatistics" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragements">
@@ -56,8 +60,9 @@
 							value="classpath:me/qyh/blog/ui/fragement/articleNav.html" />
 						<entry key="最近评论"
 							value="classpath:me/qyh/blog/ui/fragement/comments.html" />
-						<entry key="热门标签"
-							value="classpath:me/qyh/blog/ui/fragement/hotTags.html" />
+						<entry key="热门标签" value="classpath:me/qyh/blog/ui/fragement/hotTags.html" />
+						<entry key="文章统计"
+							value="classpath:me/qyh/blog/ui/fragement/articleStatistics.html" />
 					</map>
 				</property>
 			</bean>

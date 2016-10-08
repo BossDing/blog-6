@@ -53,7 +53,7 @@ var login = $("#login").val() == 'true';
 				})
 			});
 			function queryComments(page){
-				$.get(actPath+'/data/'+encodeURI('<data name="评论" currentPage="'+page+'" article="'+$("#articleId").val()+'"/>'),{},function(data){
+				$.get(actPath+'/data/评论',{"currentPage":page,"article":$("#articleId").val()},function(data){
 					if(!data.success){
 						bootbox.alert(data.message);
 						return ;

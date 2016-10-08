@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleSpaceFile;
+import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
@@ -47,6 +48,8 @@ public interface ArticleDao {
 
 	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
 
+	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
+
 	Article selectByAlias(String alias);
-	
+
 }

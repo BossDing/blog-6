@@ -642,13 +642,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Object queryData(String dataTagStr) throws LogicException {
-		DataTag dataTag = templateParser.parse(dataTagStr);
-		if (dataTag != null) {
-			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-			if (processor != null)
-				return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
-		}
+	public Object queryData(DataTag dataTag) throws LogicException {
+		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+		if (processor != null)
+			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
 		return null;
 	}
 
@@ -738,17 +735,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			String key = loader.pageKey();
 			ParseResultWrapper cached = cache.get(key);
 			if (cached == null) {
-				synchronized (this) {
-					cached = cache.get(key);
-					if (cached == null) {
-
-						final Page db = loader.loadFromDb();
-						ParseResult parseResult = templateParser.parse(db.getTpl(), noDataQuery,
-								new FragementQueryImpl(db.getSpace()));
-						cached = new ParseResultWrapper(parseResult, db);
-						cache.put(key, cached);
-					}
-				}
+				final Page db = loader.loadFromDb();
+				ParseResult parseResult = templateParser.parse(db.getTpl(), noDataQuery,
+						new FragementQueryImpl(db.getSpace()));
+				cached = new ParseResultWrapper(parseResult, db);
+				cache.put(key, cached);
 			}
 			return cached;
 		}
