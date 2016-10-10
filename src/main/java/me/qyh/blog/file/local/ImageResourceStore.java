@@ -120,8 +120,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		boolean supportWebp = enableWebp && supportWebp(request);
 		if (resize != null) {
 			String ext = FilenameUtils.getExtension(getSourcePathByResizePath(path));
-			String thumbPath = supportWebp ? path + WEBP_EXT
-					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT;
+			String thumbPath = path + (supportWebp ? WEBP_EXT
+					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
 			if (errorThumbPaths.contains(thumbPath)) {
 				return null;
 			}
@@ -408,5 +408,4 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	public void setEnableWebp(boolean enableWebp) {
 		this.enableWebp = enableWebp;
 	}
-
 }
