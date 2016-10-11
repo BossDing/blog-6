@@ -7,7 +7,7 @@ import org.springframework.web.context.support.ServletContextResource;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import me.qyh.blog.message.Message;
-import me.qyh.blog.ui.FragementTagProcessor.FragementTagParseException;
+import me.qyh.blog.ui.FragmentTagProcessor.FragmentTagParseException;
 import me.qyh.blog.ui.TplRender.TplRenderErrorDescriptionHandler;
 
 public class DefaultTplRenderExceptionHandler implements TplRenderErrorDescriptionHandler {
@@ -22,9 +22,9 @@ public class DefaultTplRenderExceptionHandler implements TplRenderErrorDescripti
 	@Override
 	public TplRenderErrorDescription convert(Throwable directCause, ServletContext sc) {
 		Throwable root = getEx(directCause);
-		if (root instanceof FragementTagParseException) {
-			FragementTagParseException ex = (FragementTagParseException) root;
-			return fromThrowable(ex.getOriginalThrowable(), sc, ex.getFragement());
+		if (root instanceof FragmentTagParseException) {
+			FragmentTagParseException ex = (FragmentTagParseException) root;
+			return fromThrowable(ex.getOriginalThrowable(), sc, ex.getFragment());
 		} else {
 			return fromThrowable(directCause, sc, null);
 		}

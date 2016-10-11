@@ -15,9 +15,6 @@ import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
 
-import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.message.Messages;
-
 /**
  * 用来校验用户的自定义模板<br/>
  * 
@@ -27,9 +24,7 @@ import me.qyh.blog.message.Messages;
 public class TplRender {
 
 	@Autowired
-	private UrlHelper urlHelper;
-	@Autowired
-	private Messages messages;
+	private UIExposeHelper uiExposeHelper;
 	@Autowired
 	private TplRenderErrorDescriptionHandler tplRenderErrorDescriptionHandler;
 	@Autowired
@@ -50,8 +45,7 @@ public class TplRender {
 			if (datas == null) {
 				datas = new HashMap<String, Object>();
 			}
-			datas.put("urls", urlHelper.getUrls(request));
-			datas.put("messages", messages);
+			datas.putAll(uiExposeHelper.getHelpers(request));
 			View view = resolver.resolveViewName(viewTemplateName, request.getLocale());
 			// 调用view来渲染模板，获取response中的数据
 			TemplateDebugResponseWrapper wrapper = new TemplateDebugResponseWrapper(response);
@@ -59,7 +53,6 @@ public class TplRender {
 			// 再次清除缓存
 			return wrapper.output();
 		} catch (Throwable e) {
-			e.printStackTrace();
 			throw new TplRenderException(tplRenderErrorDescriptionHandler.convert(e, request.getServletContext()));
 		}
 	}

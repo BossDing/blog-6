@@ -16,8 +16,7 @@
 <title>405</title>
 </head>
 <body>
-	<nav th:replace="base/nav"></nav>
-
+	<fragment name="顶部导航" />
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-12">
@@ -40,7 +39,7 @@
 		</div>
 	</div>
 
-	<div th:replace="base/foot">&nbsp;</div>
+	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript">
 		$(document).ready(function() {

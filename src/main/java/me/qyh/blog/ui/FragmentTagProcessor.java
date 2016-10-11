@@ -15,7 +15,7 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
-import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragment.Fragment;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -23,14 +23,15 @@ import me.qyh.blog.ui.fragement.Fragement;
  * @author mhlx
  *
  */
-public class FragementTagProcessor extends AbstractElementTagProcessor {
+public class FragmentTagProcessor extends AbstractElementTagProcessor {
 
-	private static final String TAG_NAME = "fragement";
+	private static final String TAG_NAME = "fragment";
 	private static final String ATTRIBUTES = "attributes";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME = "name";
+	private static final String TEMPLATE_NAME = "templateName";
 
-	public FragementTagProcessor(String dialectPrefix) {
+	public FragmentTagProcessor(String dialectPrefix) {
 		super(TemplateMode.HTML, // This processor will apply only to HTML mode
 				dialectPrefix, // Prefix to be applied to name for matching
 				TAG_NAME, // Tag name: match specifically this tag
@@ -48,22 +49,23 @@ public class FragementTagProcessor extends AbstractElementTagProcessor {
 			IAttribute nameAtt = tag.getAttribute(NAME);
 			if (nameAtt != null) {
 				String name = nameAtt.getValue();
-				Fragement fragement = page.getFragementMap().get(name);
-				if (fragement != null) {
+				Fragment fragment = page.getFragmentMap().get(name);
+				if (fragment != null) {
 					Attributes attributes = handleAttributes(tag);
 					if (attributes == null) {
 						attributes = new Attributes();
 					}
 					IEngineContext _context = (IEngineContext) context;
 					_context.setVariable(ATTRIBUTES, attributes);
+					_context.setVariable(TEMPLATE_NAME, page.getTemplateName());
 					try {
-						IModel model = context.getModelFactory().parse(context.getTemplateData(), fragement.getTpl());
+						IModel model = context.getModelFactory().parse(context.getTemplateData(), fragment.getTpl());
 						Writer writer = new FastStringWriter(200);
 						context.getConfiguration().getTemplateManager().process((TemplateModel) model, _context,
 								writer);
 						structureHandler.replaceWith(writer.toString(), false);
 					} catch (Throwable e) {
-						throw new FragementTagParseException(e, name);
+						throw new FragmentTagParseException(e, name);
 					} finally {
 						_context.removeVariable(ATTRIBUTES);
 					}
@@ -74,26 +76,26 @@ public class FragementTagProcessor extends AbstractElementTagProcessor {
 		structureHandler.removeElement();
 	}
 
-	public static final class FragementTagParseException extends RuntimeException {
+	public static final class FragmentTagParseException extends RuntimeException {
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 1L;
 		private Throwable originalThrowable;
-		private String fragement;
+		private String fragment;
 
-		public FragementTagParseException(Throwable originalThrowable, String fragement) {
+		public FragmentTagParseException(Throwable originalThrowable, String fragment) {
 			this.originalThrowable = originalThrowable;
-			this.fragement = fragement;
+			this.fragment = fragment;
 		}
 
 		public Throwable getOriginalThrowable() {
 			return originalThrowable;
 		}
 
-		public String getFragement() {
-			return fragement;
+		public String getFragment() {
+			return fragment;
 		}
 
 	}
@@ -152,7 +154,7 @@ public class FragementTagProcessor extends AbstractElementTagProcessor {
 		public Attributes() {
 		}
 
-		public void put(String key, String v) {
+		private void put(String key, String v) {
 			attributes.put(key, v);
 		}
 	}

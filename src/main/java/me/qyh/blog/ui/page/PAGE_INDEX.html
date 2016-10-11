@@ -16,25 +16,25 @@
 <title th:text="${space == null ? '主页' : space.name}"></title>
 </head>
 <body>
-	<nav th:replace="base/nav"></nav>
+	<fragment name="顶部导航" />
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
-				<fragement name="文章列表" data-sort-lab="false" />
+				<fragment name="文章列表" data-sort-lab="false" />
 			</div>
 
 			<div class="col-lg-4 col-md-4 col-sm-4 text">
-				<fragement name="文章日期归档" />
-				<fragement name="文章空间归档" />
-				<fragement name="热门标签" />
-				<fragement name="最近评论" />
+				<fragment name="文章日期归档" />
+				<fragment name="文章空间归档" />
+				<fragment name="热门标签" />
+				<fragment name="最近评论" />
+				<fragment name="文章统计" />
 			</div>
 		</div>
 	</div>
 
-	<div th:replace="base/foot">&nbsp;</div>
+	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
-
 	<data name="文章列表" />
 	<data name="文章日期归档" />
 	<data name="文章空间归档" />

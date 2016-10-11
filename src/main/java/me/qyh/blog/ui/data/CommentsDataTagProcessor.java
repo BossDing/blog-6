@@ -33,9 +33,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<PageResult<Commen
 
 	@Override
 	protected PageResult<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
-		CommentQueryParam param = params.get("commentQueryParam", CommentQueryParam.class);
-		if (param == null)
-			param = parseParam(attributes);
+		CommentQueryParam param = parseParam(attributes);
 		if (param.getArticle() == null || !param.getArticle().hasId())
 			return new PageResult<>(param, 0, Collections.emptyList());
 		return commentService.queryComment(param);

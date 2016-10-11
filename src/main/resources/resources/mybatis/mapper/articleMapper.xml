@@ -377,7 +377,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 			ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.id  <![CDATA[ < ]]> #{article.id}
+		AND art.pubDate  <![CDATA[ < ]]> #{article.pubDate}
 		<if test="article.space != null">
 			AND art.space_id = #{article.space.id}
 		</if>
@@ -401,7 +401,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 			ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.id  > #{article.id}
+		AND art.pubDate  > #{article.pubDate}
 		<if test="article.space != null">
 			AND art.space_id = #{article.space.id}
 		</if>

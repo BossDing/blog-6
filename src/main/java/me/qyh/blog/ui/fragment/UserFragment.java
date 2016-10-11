@@ -1,10 +1,10 @@
-package me.qyh.blog.ui.fragement;
+package me.qyh.blog.ui.fragment;
 
 import java.sql.Timestamp;
 
 import me.qyh.blog.entity.Space;
 
-public class UserFragement extends Fragement {
+public class UserFragment extends Fragment {
 
 	/**
 	 * 

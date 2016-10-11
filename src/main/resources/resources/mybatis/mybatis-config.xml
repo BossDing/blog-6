@@ -50,8 +50,8 @@
 		<typeAlias type="me.qyh.blog.ui.page.ErrorPage$ErrorCode"
 			alias="ErrorCode" />
 		<typeAlias type="me.qyh.blog.ui.page.ExpandedPage" alias="ExpandedPage" />
-		<typeAlias type="me.qyh.blog.ui.fragement.UserFragement"
-			alias="UserFragement" />
+		<typeAlias type="me.qyh.blog.ui.fragment.UserFragment"
+			alias="UserFragment" />
 
 		<typeAlias type="me.qyh.blog.bean.ArticleDateFile" alias="ArticleDateFile" />
 		<typeAlias type="me.qyh.blog.bean.ArticleSpaceFile" alias="ArticleSpaceFile" />
@@ -82,7 +82,7 @@
 
 		<mapper resource="resources/mybatis/mapper/lockMapper.xml" />
 
-		<mapper resource="resources/mybatis/mapper/userFragementMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/userFragmentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/sysPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/errorPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />

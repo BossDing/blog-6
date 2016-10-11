@@ -9,14 +9,15 @@ import me.qyh.blog.bean.ImportResult;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.pageparam.UserFragementQueryParam;
+import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.fragement.Fragement;
-import me.qyh.blog.ui.fragement.UserFragement;
+import me.qyh.blog.ui.data.DataBind;
+import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.ui.fragment.UserFragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -30,10 +31,10 @@ public interface UIService {
 	/**
 	 * 插入用户自定义挂件
 	 * 
-	 * @param userFragement
+	 * @param userFragment
 	 * @throws LogicException
 	 */
-	void insertUserFragement(UserFragement userFragement) throws LogicException;
+	void insertUserFragment(UserFragment userFragment) throws LogicException;
 
 	/**
 	 * 删除用户自定义挂件
@@ -41,7 +42,7 @@ public interface UIService {
 	 * @param id
 	 * @throws LogicException
 	 */
-	void deleteUserFragement(Integer id) throws LogicException;
+	void deleteUserFragment(Integer id) throws LogicException;
 
 	/**
 	 * 分页查询用户自定义挂件
@@ -49,14 +50,14 @@ public interface UIService {
 	 * @param param
 	 * @return
 	 */
-	PageResult<UserFragement> queryUserFragement(UserFragementQueryParam param);
+	PageResult<UserFragment> queryUserFragment(UserFragmentQueryParam param);
 
 	/**
 	 * 更新自定义挂件
 	 * 
-	 * @param userFragement
+	 * @param userFragment
 	 */
-	void updateUserFragement(UserFragement userFragement) throws LogicException;
+	void updateUserFragment(UserFragment userFragment) throws LogicException;
 
 	/**
 	 * 根据ID查询用户挂件
@@ -65,7 +66,7 @@ public interface UIService {
 	 *            挂件ID
 	 * @return null如果不存在
 	 */
-	UserFragement queryUserFragement(Integer id);
+	UserFragment queryUserFragment(Integer id);
 
 	/**
 	 * 根据ID查询用户页面
@@ -281,7 +282,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Object queryData(DataTag dataTag) throws LogicException;
+	DataBind<?> queryData(DataTag dataTag) throws LogicException;
 
 	/**
 	 * 查询系统数据
@@ -295,6 +296,14 @@ public interface UIService {
 	 * 
 	 * @return
 	 */
-	List<Fragement> querySysFragements();
+	List<Fragment> querySysFragments();
+
+	/**
+	 * 根据name查询fragment
+	 * 
+	 * @param name
+	 * @return
+	 */
+	Fragment queryFragment(String name);
 
 }

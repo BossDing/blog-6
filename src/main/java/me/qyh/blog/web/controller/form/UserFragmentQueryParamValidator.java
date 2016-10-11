@@ -4,22 +4,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.pageparam.UserFragementQueryParam;
+import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.util.Validators;
 
 @Component
-public class UserFragementQueryParamValidator implements Validator {
+public class UserFragmentQueryParamValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 5;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return UserFragementQueryParam.class.isAssignableFrom(clazz);
+		return UserFragmentQueryParam.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		UserFragementQueryParam param = (UserFragementQueryParam) target;
+		UserFragmentQueryParam param = (UserFragmentQueryParam) target;
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}

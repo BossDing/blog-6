@@ -9,11 +9,12 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.data.DataBind;
-import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragment.Fragment;
 
 /**
  * 
@@ -23,7 +24,7 @@ import me.qyh.blog.ui.fragement.Fragement;
 public final class TemplateParser {
 
 	private static final String DATA_TAG = "data";
-	private static final String FRAGEMENT = "fragement";
+	private static final String FRAGEMENT = "fragment";
 	private static final String NAME_ATTR = "name";
 
 	public interface DataQuery {
@@ -39,9 +40,9 @@ public final class TemplateParser {
 		DataBind<?> query(DataTag dataTag) throws LogicException;
 	}
 
-	public interface FragementQuery {
+	public interface FragmentQuery {
 
-		Fragement query(String name);
+		Fragment query(String name);
 	}
 
 	public DataTag parse(String dataTagStr) {
@@ -66,7 +67,7 @@ public final class TemplateParser {
 		return null;
 	}
 
-	public ParseResult parse(String tpl, DataQuery dquery, FragementQuery fquery) throws LogicException {
+	public ParseResult parse(String tpl, DataQuery dquery, FragmentQuery fquery) throws LogicException {
 		ParseResult result = new ParseResult();
 		Document doc = Jsoup.parse(tpl);
 		clean(doc);
@@ -90,31 +91,39 @@ public final class TemplateParser {
 				removeElement(dataEle);
 			}
 		}
-		Elements fragementEles = doc.getElementsByTag(FRAGEMENT);
-		for (Element fragementEle : fragementEles) {
-			String name = fragementEle.attr(NAME_ATTR);
-			Fragement fragement = fquery.query(name);
-			if (fragement == null) {
-				result.addUnkownFragement(name);
-				removeElement(fragementEle);
+		Elements fragmentEles = doc.getElementsByTag(FRAGEMENT);
+		for (Element fragmentEle : fragmentEles) {
+			String name = fragmentEle.attr(NAME_ATTR);
+			Fragment fragment = fquery.query(name);
+			if (fragment == null) {
+				result.addUnkownFragment(name);
+				removeElement(fragmentEle);
 			} else {
-				result.putFragement(name, fragement);
+				result.putFragment(name, fragment);
 			}
 		}
 		result.setBinds(new ArrayList<>(cache.values()));
 		return result;
 	}
 
+	public static String buildFragmentTag(String name) {
+		Tag tag = Tag.valueOf(FRAGEMENT);
+		Attributes attributes = new Attributes();
+		attributes.put(NAME_ATTR, name);
+		Element ele = new Element(tag, "", attributes);
+		return ele.toString();
+	}
+
 	private void clean(Document doc) {
 		// 删除包含挂件自标签的挂件标签
 		doc.select("data:has(data)").remove();
-		doc.select("fragement:has(fragement)").remove();
+		doc.select("fragment:has(fragment)").remove();
 		// 删除没有包含name属性的标签
 		doc.select("data:not([name])").remove();
-		doc.select("fragement:not([name])").remove();
+		doc.select("fragment:not([name])").remove();
 		// 删除属性为空的标签
 		doc.select("data[name~=^$]").remove();
-		doc.select("fragement[name~=^$]").remove();
+		doc.select("fragment[name~=^$]").remove();
 	}
 
 	private void removeElement(Element e) {
@@ -123,9 +132,5 @@ public final class TemplateParser {
 		} catch (Exception ex) {
 
 		}
-	}
-
-	public static void main(String[] args) {
-		new TemplateParser().parse("<div></div>");
 	}
 }

@@ -1,6 +1,6 @@
 var editor;
-var fragementTplEditor;
-var fragements = [];
+var fragmentTplEditor;
+var fragments = [];
 var _tpls = [];
 	$(document).ready(function() {
 		editor = editormd("editor", {
@@ -14,7 +14,7 @@ var _tpls = [];
              mode             : "text/html",
              path : basePath + '/static/editor/markdown/lib/'
 		});
-		fragementTplEditor = editormd("fragementTplEditor", {
+		fragmentTplEditor = editormd("fragmentTplEditor", {
 			width : "100%",
 			height : 600,
 			 watch            : false,
@@ -44,23 +44,23 @@ var _tpls = [];
 			var id = $(e.target).attr('id');
 			switch(id){
 			case "sys-tab":
-				showSysFragement();
+				showSysFragment();
 				break;
 			case "user-tab":
-				showUserFragement(1)
+				showUserFragment(1)
 				break;
 			case "data-tab":
 				showDataTags();
 				break;
-			case "fragement-tab":
-				$("#fragementTab").find('li').each(function(){
+			case "fragment-tab":
+				$("#fragmentTab").find('li').each(function(){
 					if($(this).hasClass('active')){
 						switch($(this).find('a').attr('id')){
 							case "sys-tab":
-								showSysFragement();
+								showSysFragment();
 								break;
 							case "user-tab":
-								showUserFragement(1)
+								showUserFragment(1)
 								break;
 						}
 					}
@@ -74,8 +74,8 @@ var _tpls = [];
 		editor.insertValue('<data name="'+name+'"/>');
 		$("#lookupModal").modal('hide');
 	}
-	function addFragement(name){
-		editor.insertValue('<fragement name="'+name+'"/>');
+	function addFragment(name){
+		editor.insertValue('<fragment name="'+name+'"/>');
 		$("#lookupModal").modal('hide')
 	}
 	
@@ -106,10 +106,10 @@ var _tpls = [];
 		});
 	}
 	
-	function showSysFragement(){
+	function showSysFragment(){
 		var html = '';
 		$('[aria-labelledby="sys-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-		$.get(basePath+"/mgr/tpl/sysFragements",{},function(data){
+		$.get(basePath+"/mgr/tpl/sysFragments",{},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;
@@ -120,7 +120,7 @@ var _tpls = [];
 			for(var i=0;i<data.length;i++){
 				html += '<tr>';
 				html += '<td>'+data[i].name+'</td>';
-				html += '<td><a onclick="addFragement(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addFragment(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';
@@ -128,10 +128,10 @@ var _tpls = [];
 			$('[aria-labelledby="sys-tab"]').html(html);
 		});
 	}
-	function showUserFragement(i){
+	function showUserFragment(i){
 		var html = '';
 		$('[aria-labelledby="user-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-		$.get(basePath+"/mgr/fragement/user/list",{"currentPage":i},function(data){
+		$.get(basePath+"/mgr/fragment/user/list",{"currentPage":i},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;
@@ -142,7 +142,7 @@ var _tpls = [];
 			for(var i=0;i<page.datas.length;i++){
 				html += '<tr>';
 				html += '<td>'+page.datas[i].name+'</td>';
-				html += '<td><a onclick="addFragement(\''+page.datas[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addFragment(\''+page.datas[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';
@@ -153,7 +153,7 @@ var _tpls = [];
 				html += '<ul class="pagination">';
 				for(var i=page.listbegin;i<=page.listend-1;i++){
 					html += '<li>';
-					html += '<a href="###" onclick="showUserFragement(\''+i+'\')" >'+i+'</a>';
+					html += '<a href="###" onclick="showUserFragment(\''+i+'\')" >'+i+'</a>';
 					html += '</li>';
 				}
 				html += '</ul>';
@@ -164,7 +164,7 @@ var _tpls = [];
 	}
 	function preview() {
 		var page = {"tpl":editor.getValue()};
-		page.tpls = fragements;
+		page.tpls = fragments;
 		page.name = "test";
 		var id = $("#pageId").val();
 		page.id = id;
@@ -186,10 +186,10 @@ var _tpls = [];
 					}
 					data = data.data;
 					if (data.line) {
-						if(data.template && data.template.fragement){
-							var fragement = data.template.fragement;
-							$("#fragementTplEditModal").modal("show");
-							fragementTplEditor.setValue(data.template.tpl);
+						if(data.template && data.template.fragment){
+							var fragment = data.template.fragment;
+							$("#fragmentTplEditModal").modal("show");
+							fragmentTplEditor.setValue(data.template.tpl);
 							if (data.expression) {
 								error("第" + data.line + "行,"
 										+ data.col + "列，表达式：" + data.expression
@@ -200,23 +200,23 @@ var _tpls = [];
 							}
 							$("#tpl-save-btn").off("click").on("click",function(){
 								var btn  = $(this);
-								var data = {tpl:fragementTplEditor.getValue()};
-								data.fragement = fragement;
+								var data = {tpl:fragmentTplEditor.getValue()};
+								data.fragment = fragment;
 								var exists = false;
-								for(var i=0;i<fragements.length;i++){
-									var tpl = fragements[i];
-									if(tpl.fragement.name == fragement.name){
+								for(var i=0;i<fragments.length;i++){
+									var tpl = fragments[i];
+									if(tpl.fragment.name == fragment.name){
 										tpl.tpl = data.tpl;
 										exists = true;
 									}
 								}
 								if(!exists){
-									fragements.push(data);
+									fragments.push(data);
 								}
 								success("保存成功");
 								setTimeout(function(){
-									$("#fragementTplEditModal").modal("hide");
-									$("#fragementsModal").modal("show");
+									$("#fragmentTplEditModal").modal("hide");
+									$("#fragmentsModal").modal("show");
 								},500)
 							});
 						} else {
@@ -245,7 +245,7 @@ var _tpls = [];
 	}
 	function save() {
 		var page = {"tpl":editor.getValue()};
-		page.tpls = fragements;
+		page.tpls = fragments;
 		var id = $("#pageId").val();
 		page.id = id;
 		page.name = $("#name").val();
@@ -265,10 +265,10 @@ var _tpls = [];
 					}
 					data = data.data;
 					if (data.line) {
-						if(data.template && data.template.fragement){
-							var fragement = data.template.fragement;
-							$("#fragementTplEditModal").modal("show");
-							fragementTplEditor.setValue(data.template.tpl);
+						if(data.template && data.template.fragment){
+							var fragment = data.template.fragment;
+							$("#fragmentTplEditModal").modal("show");
+							fragmentTplEditor.setValue(data.template.tpl);
 							if (data.expression) {
 								error("第" + data.line + "行,"
 										+ data.col + "列，表达式：" + data.expression
@@ -279,23 +279,23 @@ var _tpls = [];
 							}
 							$("#tpl-save-btn").off("click").on("click",function(){
 								var btn  = $(this);
-								var data = {tpl:fragementTplEditor.getValue()};
-								data.fragement = fragement;
+								var data = {tpl:fragmentTplEditor.getValue()};
+								data.fragment = fragment;
 								var exists = false;
-								for(var i=0;i<fragements.length;i++){
-									var tpl = fragements[i];
-									if(tpl.fragement.name == fragement.name){
+								for(var i=0;i<fragments.length;i++){
+									var tpl = fragments[i];
+									if(tpl.fragment.name == fragment.name){
 										tpl.tpl = data.tpl;
 										exists = true;
 									}
 								}
 								if(!exists){
-									fragements.push(data);
+									fragments.push(data);
 								}
 								success("保存成功");
 								setTimeout(function(){
-									$("#fragementTplEditModal").modal("hide");
-									$("#fragementsModal").modal("show");
+									$("#fragmentTplEditModal").modal("hide");
+									$("#fragmentsModal").modal("show");
 								},500)
 							});
 						} else {
@@ -345,18 +345,18 @@ var _tpls = [];
 		})
 	}
 	
-	function revert(pageId,fragementId,fragementType){
-		$("#fragementsModal").modal('hide');
+	function revert(pageId,fragmentId,fragmentType){
+		$("#fragmentsModal").modal('hide');
 		$.ajax({
 			type : "post",
 			 async: false,
-			url : basePath+"/mgr/page/EXPANDED/"+pageId+"/fragement/"+fragementType+"/"+fragementId+"/delete",
+			url : basePath+"/mgr/page/EXPANDED/"+pageId+"/fragment/"+fragmentType+"/"+fragmentId+"/delete",
 			data : {},
 			success : function(data){
 				if(data.success){
 					success(data.message);
 					setTimeout(function(){
-						$("#fragementsModal").modal('show');
+						$("#fragmentsModal").modal('show');
 					},500);
 					flag = true;
 				} else {

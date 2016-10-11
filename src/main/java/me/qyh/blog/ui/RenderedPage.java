@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.Map;
 
 import me.qyh.blog.ui.data.DataBind;
-import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
 
 public class RenderedPage {
 	private Page page;
 	private List<DataBind<?>> binds = new ArrayList<>();
-	private Map<String, Fragement> fragementMap = new LinkedHashMap<>();
+	private Map<String, Fragment> fragmentMap = new LinkedHashMap<>();
 
-	public RenderedPage(Page page, List<DataBind<?>> binds, Map<String, Fragement> fragementMap) {
+	public RenderedPage(Page page, List<DataBind<?>> binds, Map<String, Fragment> fragmentMap) {
 		this.page = page;
 		this.binds = binds;
-		this.fragementMap = fragementMap;
+		this.fragmentMap = fragmentMap;
 	}
 
 	public Map<String, Object> getDatas() {
@@ -37,8 +37,8 @@ public class RenderedPage {
 		this.page = page;
 	}
 
-	public Map<String, Fragement> getFragementMap() {
-		return fragementMap;
+	public Map<String, Fragment> getFragmentMap() {
+		return fragmentMap;
 	}
 
 	public String getTemplateName() {

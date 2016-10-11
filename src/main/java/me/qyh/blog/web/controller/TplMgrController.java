@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,7 +54,7 @@ import me.qyh.blog.ui.ExportPage;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -168,10 +169,9 @@ public class TplMgrController extends BaseMgrController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "import", method = RequestMethod.POST)
 	@ResponseBody
-	public synchronized JsonResult importTemplate(ImportReq req, HttpServletRequest request,
+	public synchronized JsonResult importTemplate(@RequestBody ImportReq req, HttpServletRequest request,
 			HttpServletResponse response) {
-		int[] ids = req.getIds();
-		if (ids == null || ids.length == 0) {
+		if (CollectionUtils.isEmpty(req.getIds())) {
 			return new JsonResult(false, new Message("tpl.import.blank", "请选择至少一个需要导入的模板"));
 		}
 		HttpSession session = request.getSession(false);
@@ -186,7 +186,7 @@ public class TplMgrController extends BaseMgrController {
 		}
 		Map<Integer, ImportPageWrapper> parses = (Map<Integer, ImportPageWrapper>) session.getAttribute(PARSERS);
 		List<ImportPageWrapper> toImport = new ArrayList<ImportPageWrapper>();
-		for (int id : ids) {
+		for (int id : req.getIds()) {
 			ImportPageWrapper wrapper = parses.get(id);
 			if (wrapper == null) {
 				continue;
@@ -245,10 +245,10 @@ public class TplMgrController extends BaseMgrController {
 		}
 	}
 
-	@RequestMapping("sysFragements")
+	@RequestMapping("sysFragments")
 	@ResponseBody
-	public JsonResult querySysFragements() {
-		return new JsonResult(true, uiService.querySysFragements());
+	public JsonResult querySysFragments() {
+		return new JsonResult(true, uiService.querySysFragments());
 	}
 
 	@RequestMapping("dataTags")
@@ -269,8 +269,8 @@ public class TplMgrController extends BaseMgrController {
 			if (pageNode == null) {
 				continue;
 			}
-			JsonNode fragementsNode = epNode.get("fragements");
-			if (fragementsNode == null) {
+			JsonNode fragmentsNode = epNode.get("fragments");
+			if (fragmentsNode == null) {
 				continue;
 			}
 			JsonNode typeNode = pageNode.get("type");
@@ -361,15 +361,15 @@ public class TplMgrController extends BaseMgrController {
 				logger.debug("序号:" + i + ":页面模板内容不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 				continue;
 			}
-			Fragement[] fArray = null;
+			Fragment[] fArray = null;
 			try {
-				fArray = reader.forType(Fragement[].class).readValue(fragementsNode);
+				fArray = reader.forType(Fragment[].class).readValue(fragmentsNode);
 			} catch (Exception e) {
 				logger.debug("序号:" + i + ":模板片段解析失败：" + e.getMessage());
 				continue;
 			}
-			List<Fragement> fragements = Arrays.asList(fArray);
-			wrappers.put(i, new ImportPageWrapper(i, new ExportPage(parsed, fragements)));
+			List<Fragment> fragments = Arrays.asList(fArray);
+			wrappers.put(i, new ImportPageWrapper(i, new ExportPage(parsed, fragments)));
 		}
 		return wrappers;
 	}

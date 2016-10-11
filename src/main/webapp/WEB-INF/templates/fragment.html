@@ -1,0 +1,61 @@
+<div th:fragment="treeComment(parent,comment,max)">
+	<div th:id="'comment'+${comment.id}" class="media"
+		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
+		<a class="pull-left"> <img class="media-object"
+			th:src="${comment.user.avatar}" data-holder-rendered="true"
+			style="width: 64px; height: 64px;">
+		</a>
+		<div class="media-body">
+			<h5 class="media-heading">
+				<strong><span class="glyphicon glyphicon-user"
+					style="color: red" title="管理员" th:if="${comment.user.admin}"></span><span
+					th:text="${comment.user.nickname}"></span></strong>&nbsp;&nbsp;&nbsp;<span
+					th:if="${parent != null}" th:remove="tag"> <span
+					class="glyphicon glyphicon-share-alt" aria-hidden="true"></span>&nbsp;&nbsp;
+					<span class="glyphicon glyphicon-user" style="color: red"
+					title="管理员" th:if="${parent.user.admin}"></span><span
+					th:text="${parent.user.nickname}"></span>
+				</span>
+			</h5>
+			<p th:text="${comment.content}"></p>
+			<h5>
+				<span
+					th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm')}"></span>&nbsp;&nbsp;&nbsp;
+				<a href="###"
+					th:if="${user != null && !comment.user.admin && comment.user.status.name() == 'NORMAL'}"
+					th:onclick="'disable(\''+${comment.user.id}+'\')'"
+					style="margin-right: 8px"><span
+					class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span></a> <a
+					href="###"
+					th:if="${user != null && !comment.user.admin && comment.user.status.name() == 'DISABLED'}"
+					th:onclick="'enable(\''+${comment.user.id}+'\')'"
+					style="margin-right: 8px"><span
+					class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span></a> <a
+					href="###" th:if="${user != null}"
+					th:onclick="'removeComment(\''+${comment.id}+'\')'"
+					style="margin-right: 8px"><span
+					class="glyphicon glyphicon-remove" aria-hidden="true"></span></a> <a
+					href="###"
+					th:if="${user != null && comment.status.name() == 'CHECK'}"
+					th:onclick="'checkComment(\''+${comment.id}+'\')'"
+					style="margin-right: 8px"><span class="glyphicon glyphicon-ok"
+					aria-hidden="true"></span></a> <a href="###"
+					th:if="${session.oauth != null}" style="margin-right: 8px"
+					th:onclick="'toReply(\''+${comment.id}+'\')'"><span
+					class="glyphicon glyphicon-comment" aria-hidden="true"></span></a> <a
+					href="###" th:unless="${#lists.isEmpty(comment.parents)}"
+					th:onclick="'queryConversations(\''+${comment.id}+'\')'">查看对话</a>
+			</h5>
+			<iterator
+				th:if="${comment.parents.size() < (max-1) && comment.children.size() > 0}"
+				th:remove="tag" th:each="child : ${comment.children}">
+			<div th:replace="fragment :: treeComment(${comment},${child},${max})"></div>
+			</iterator>
+		</div>
+		<iterator
+			th:if="${comment.parents.size() >= (max-1) && comment.children.size() > 0}"
+			th:remove="tag" th:each="child : ${comment.children}">
+		<div th:replace="fragment :: treeComment(${comment},${child},${max})"></div>
+		</iterator>
+	</div>
+</div>

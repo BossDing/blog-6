@@ -18,7 +18,7 @@ public class PageDialect extends AbstractProcessorDialect {
 	public Set<IProcessor> getProcessors(final String dialectPrefix) {
 		final Set<IProcessor> processors = new HashSet<IProcessor>();
 		processors.add(new DataTagProcessor(dialectPrefix));
-		processors.add(new FragementTagProcessor(dialectPrefix));
+		processors.add(new FragmentTagProcessor(dialectPrefix));
 		return processors;
 	}
 

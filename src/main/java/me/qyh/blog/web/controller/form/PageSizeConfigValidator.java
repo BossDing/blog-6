@@ -37,7 +37,7 @@ public class PageSizeConfigValidator implements Validator {
 					"文件每页数量不能大于" + FILE_PAGE_SIZE_RANGE[1]);
 			return;
 		}
-		int userWidgetPageSize = config.getUserFragementPageSize();
+		int userWidgetPageSize = config.getUserFragmentPageSize();
 		if (userWidgetPageSize < USER_FRAGEMENT_PAGE_SIZE_RANGE[0]) {
 			errors.reject("pagesize.userWidget.toosmall", new Object[] { USER_FRAGEMENT_PAGE_SIZE_RANGE[0] },
 					"用户挂件每页数量不能小于" + USER_FRAGEMENT_PAGE_SIZE_RANGE[0]);

@@ -177,6 +177,12 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			datas = commentDao.selectPageWithList(param);
 			break;
 		}
+		
+		//为了在评论中获取配置信息
+		Article _article = new Article(article.getId());
+		_article.setCommentConfig(config);
+		param.setArticle(_article);
+		
 		return new PageResult<Comment>(param, count, datas);
 	}
 

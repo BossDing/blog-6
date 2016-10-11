@@ -162,7 +162,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			}
 			// 由于alias的存在，硬编码删除cache
 			articleCache.evit(articleDb);
-
 		} else {
 			if (article.getAlias() != null) {
 				Article aliasDb = articleDao.selectByAlias(article.getAlias());

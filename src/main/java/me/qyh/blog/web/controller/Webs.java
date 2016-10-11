@@ -1,6 +1,8 @@
 package me.qyh.blog.web.controller;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Jsons;
 
 public class Webs {
@@ -47,4 +50,11 @@ public class Webs {
 		return extension.trim().isEmpty();
 	}
 
+	public static String decode(String toDecode) {
+		try {
+			return URLDecoder.decode(toDecode, Constants.CHARSET.name());
+		} catch (UnsupportedEncodingException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
 }

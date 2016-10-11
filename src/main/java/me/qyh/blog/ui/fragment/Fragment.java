@@ -1,4 +1,4 @@
-package me.qyh.blog.ui.fragement;
+package me.qyh.blog.ui.fragment;
 
 import java.io.Serializable;
 
@@ -11,7 +11,7 @@ import me.qyh.blog.ui.data.DataTagProcessor;
  * @author Administrator
  *
  */
-public class Fragement implements Serializable {
+public class Fragment implements Serializable {
 
 	/**
 	 * 
@@ -55,7 +55,7 @@ public class Fragement implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Fragement other = (Fragement) obj;
+		Fragment other = (Fragment) obj;
 		if (name == null) {
 			if (other.name != null)
 				return false;

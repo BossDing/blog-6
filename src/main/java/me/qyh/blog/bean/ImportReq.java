@@ -1,28 +1,31 @@
 package me.qyh.blog.bean;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.qyh.blog.entity.Space;
 
 public class ImportReq {
 
-	private boolean insertNotExistsFragement;
-	private boolean updateExistsFragement;
+	private boolean insertNotExistsFragment;
+	private boolean updateExistsFragment;
 	private Space space;
-	private int[] ids;
+	private List<Integer> ids = new ArrayList<Integer>();
 
-	public boolean isInsertNotExistsFragement() {
-		return insertNotExistsFragement;
+	public boolean isInsertNotExistsFragment() {
+		return insertNotExistsFragment;
 	}
 
-	public void setInsertNotExistsFragement(boolean insertNotExistsFragement) {
-		this.insertNotExistsFragement = insertNotExistsFragement;
+	public void setInsertNotExistsFragment(boolean insertNotExistsFragment) {
+		this.insertNotExistsFragment = insertNotExistsFragment;
 	}
 
-	public boolean isUpdateExistsFragement() {
-		return updateExistsFragement;
+	public boolean isUpdateExistsFragment() {
+		return updateExistsFragment;
 	}
 
-	public void setUpdateExistsFragement(boolean updateExistsFragement) {
-		this.updateExistsFragement = updateExistsFragement;
+	public void setUpdateExistsFragment(boolean updateExistsFragment) {
+		this.updateExistsFragment = updateExistsFragment;
 	}
 
 	public Space getSpace() {
@@ -33,11 +36,11 @@ public class ImportReq {
 		this.space = space;
 	}
 
-	public int[] getIds() {
+	public List<Integer> getIds() {
 		return ids;
 	}
 
-	public void setIds(int[] ids) {
+	public void setIds(List<Integer> ids) {
 		this.ids = ids;
 	}
 

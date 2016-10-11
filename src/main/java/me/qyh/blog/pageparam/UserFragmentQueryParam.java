@@ -2,7 +2,7 @@ package me.qyh.blog.pageparam;
 
 import me.qyh.blog.entity.Space;
 
-public class UserFragementQueryParam extends PageQueryParam {
+public class UserFragmentQueryParam extends PageQueryParam {
 
 	/**
 	 * 

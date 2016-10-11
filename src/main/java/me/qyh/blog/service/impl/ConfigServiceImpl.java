@@ -30,7 +30,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setFilePageSize(getInt(PAGE_SIZE_FILE, 5));
 		config.setTagPageSize(getInt(PAGE_SIZE_TAG, 5));
 		config.setUserPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
-		config.setUserFragementPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
+		config.setUserFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
 		config.setOauthUserPageSize(getInt(PAGE_SIZE_OAUTHUSER, 5));
 		config.setCommentPageSize(getInt(PAGE_SIZE_COMMENT, 5));
 		return config;
@@ -42,7 +42,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setProperty(PAGE_SIZE_FILE, pageSizeConfig.getFilePageSize() + "");
 		config.setProperty(PAGE_SIZE_TAG, pageSizeConfig.getTagPageSize() + "");
 		config.setProperty(PAGE_SIZE_ARICLE, pageSizeConfig.getArticlePageSize() + "");
-		config.setProperty(PAGE_SIZE_USERFRAGEMENT, pageSizeConfig.getUserFragementPageSize() + "");
+		config.setProperty(PAGE_SIZE_USERFRAGEMENT, pageSizeConfig.getUserFragmentPageSize() + "");
 		config.setProperty(PAGE_SIZE_USERPAGE, pageSizeConfig.getUserPagePageSize() + "");
 		config.setProperty(PAGE_SIZE_OAUTHUSER, pageSizeConfig.getOauthUserPageSize() + "");
 		config.setProperty(PAGE_SIZE_COMMENT, pageSizeConfig.getCommentPageSize() + "");
@@ -77,7 +77,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	}
 
 	private static final String PAGE_SIZE_FILE = "pagesize.file";
-	private static final String PAGE_SIZE_USERFRAGEMENT = "pagesize.userfragement";
+	private static final String PAGE_SIZE_USERFRAGEMENT = "pagesize.userfragment";
 	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";

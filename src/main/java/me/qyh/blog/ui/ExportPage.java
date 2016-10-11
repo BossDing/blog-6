@@ -3,13 +3,13 @@ package me.qyh.blog.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.qyh.blog.ui.fragement.Fragement;
+import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
 
 public class ExportPage {
 
 	private Page page;
-	private List<Fragement> fragements = new ArrayList<Fragement>();
+	private List<Fragment> fragments = new ArrayList<Fragment>();
 
 	public Page getPage() {
 		return page;
@@ -19,22 +19,22 @@ public class ExportPage {
 		this.page = page;
 	}
 
-	public List<Fragement> getFragements() {
-		return fragements;
+	public List<Fragment> getFragments() {
+		return fragments;
 	}
 
-	public void setFragements(List<Fragement> fragements) {
-		for (Fragement fragement : fragements) {
-			Fragement _fragement = new Fragement();
-			_fragement.setName(fragement.getName());
-			_fragement.setTpl(fragement.getTpl());
-			this.fragements.add(_fragement);
+	public void setFragments(List<Fragment> fragments) {
+		for (Fragment fragment : fragments) {
+			Fragment _fragment = new Fragment();
+			_fragment.setName(fragment.getName());
+			_fragment.setTpl(fragment.getTpl());
+			this.fragments.add(_fragment);
 		}
 	}
 
-	public ExportPage(Page page, List<Fragement> fragements) {
+	public ExportPage(Page page, List<Fragment> fragments) {
 		this.page = page;
-		this.fragements = fragements;
+		this.fragments = fragments;
 	}
 
 	public ExportPage() {

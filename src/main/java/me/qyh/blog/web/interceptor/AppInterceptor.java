@@ -29,7 +29,6 @@ import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.lock.LockKeyContext;
-import me.qyh.blog.message.Messages;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.EnsureLogin;
 import me.qyh.blog.security.RememberMe;
@@ -42,6 +41,7 @@ import me.qyh.blog.security.csrf.MissingCsrfTokenException;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.ui.UIExposeHelper;
 import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
 import me.qyh.util.UrlUtils;
@@ -55,7 +55,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private RememberMe rememberMe;
 	@Autowired
-	private Messages messages;
+	private UIExposeHelper uiExposeHelper;
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
@@ -179,10 +179,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				modelAndView.addAllObjects(page.getDatas());
 			}
 			logger.debug("将用户和路径处理器放入model中");
-			modelAndView.addObject("urls", urlHelper.getUrls(request));
-			modelAndView.addObject("user", UserContext.get());
-			modelAndView.addObject("messages", messages);
-			modelAndView.addObject("space", SpaceContext.get());
+			modelAndView.addAllObjects(uiExposeHelper.getHelpers(request));
 		}
 	}
 
@@ -219,12 +216,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		}
 		request.setAttribute(CsrfToken.class.getName(), csrfToken);
 		request.setAttribute(csrfToken.getParameterName(), csrfToken);
-
 		if ("get".equalsIgnoreCase(request.getMethod())) {
 			// GET请求不能检查，否则死循环
 			return;
 		}
-
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}

@@ -45,30 +45,33 @@
 				</bean>
 			</list>
 		</property>
-		<property name="fragements">
-			<bean class="me.qyh.blog.ui.fragement.FragementsFactoryBean">
+		<property name="fragments">
+			<bean class="me.qyh.blog.ui.fragment.FragmentsFactoryBean">
 				<property name="tplMap">
 					<map>
-						<entry key="文章详情" value="classpath:me/qyh/blog/ui/fragement/article.html" />
+						<entry key="文章详情" value="classpath:me/qyh/blog/ui/fragment/article.html" />
 						<entry key="文章列表"
-							value="classpath:me/qyh/blog/ui/fragement/articles.html" />
+							value="classpath:me/qyh/blog/ui/fragment/articles.html" />
 						<entry key="文章空间归档"
-							value="classpath:me/qyh/blog/ui/fragement/articleSpaceFiles.html" />
+							value="classpath:me/qyh/blog/ui/fragment/articleSpaceFiles.html" />
 						<entry key="文章日期归档"
-							value="classpath:me/qyh/blog/ui/fragement/articleDateFiles.html" />
+							value="classpath:me/qyh/blog/ui/fragment/articleDateFiles.html" />
 						<entry key="上一篇下一篇"
-							value="classpath:me/qyh/blog/ui/fragement/articleNav.html" />
+							value="classpath:me/qyh/blog/ui/fragment/articleNav.html" />
 						<entry key="最近评论"
-							value="classpath:me/qyh/blog/ui/fragement/comments.html" />
-						<entry key="热门标签" value="classpath:me/qyh/blog/ui/fragement/hotTags.html" />
+							value="classpath:me/qyh/blog/ui/fragment/comments.html" />
+						<entry key="热门标签" value="classpath:me/qyh/blog/ui/fragment/hotTags.html" />
 						<entry key="文章统计"
-							value="classpath:me/qyh/blog/ui/fragement/articleStatistics.html" />
+							value="classpath:me/qyh/blog/ui/fragment/articleStatistics.html" />
+						<entry key="顶部导航" value="classpath:me/qyh/blog/ui/fragment/nav.html" />
+						<entry key="底部" value="classpath:me/qyh/blog/ui/fragment/foot.html" />
+						<entry key="评论" value="classpath:me/qyh/blog/ui/fragment/_comments.html" />
 					</map>
 				</property>
 			</bean>
 		</property>
 	</bean>
-
+	<bean class="me.qyh.blog.ui.UIExposeHelper"/>
 	<!-- 用来处理页面渲染错误 -->
 	<bean class="me.qyh.blog.ui.DefaultTplRenderExceptionHandler" />
 

@@ -20,13 +20,12 @@
 <title th:text="${article.title}">文章详情</title>
 </head>
 <body>
-	<nav th:replace="base/nav"></nav>
-
+	<fragment name="顶部导航" />
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
-				<fragement name="文章详情"></fragement>
-				<fragement name="上一篇下一篇"></fragement>
+				<fragment name="文章详情"></fragment>
+				<fragment name="上一篇下一篇"></fragment>
 				<div th:if="${article.commentConfig.allowComment}">
 					<div class="media">
 						<a class="media-left" href="#"> <img class="media-object"
@@ -56,8 +55,8 @@
 				<div id="page-bar" style="margin-top: 10px"></div>
 			</div>
 			<div class="col-lg-4 col-md-4 col-sm-4 text">
-				<fragement name="文章日期归档"></fragement>
-				<fragement name="文章空间归档"></fragement>
+				<fragment name="文章日期归档"></fragment>
+				<fragment name="文章空间归档"></fragment>
 			</div>
 		</div>
 	</div>
@@ -68,7 +67,8 @@
 		th:value="${session.oauth != null}" />
 	<input type="hidden" id="commentMode"
 		th:value="${article.commentConfig.commentMode.name()}" />
-	<div th:replace="base/foot">&nbsp;</div>
+	
+	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<div th:if="${article.editor.name() == 'MD'}" th:remove="tag">
 		<script type="text/javascript"

@@ -30,14 +30,14 @@ import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.ExpandedPageDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.SysPageDao;
-import me.qyh.blog.dao.UserFragementDao;
+import me.qyh.blog.dao.UserFragmentDao;
 import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.pageparam.UserFragementQueryParam;
+import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.DataTag;
@@ -47,11 +47,11 @@ import me.qyh.blog.ui.ParseResult;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TemplateParser;
 import me.qyh.blog.ui.TemplateParser.DataQuery;
-import me.qyh.blog.ui.TemplateParser.FragementQuery;
+import me.qyh.blog.ui.TemplateParser.FragmentQuery;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.data.DataTagProcessor;
-import me.qyh.blog.ui.fragement.Fragement;
-import me.qyh.blog.ui.fragement.UserFragement;
+import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.ui.fragment.UserFragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
@@ -75,7 +75,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private ErrorPageDao errorPageDao;
 	@Autowired
-	private UserFragementDao userFragementDao;
+	private UserFragmentDao userFragmentDao;
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
@@ -109,82 +109,82 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	/**
 	 * 系统默认片段
 	 */
-	private List<Fragement> fragements = new ArrayList<Fragement>();
+	private List<Fragment> fragments = new ArrayList<Fragment>();
 
 	@Override
-	public void insertUserFragement(UserFragement userFragement) throws LogicException {
-		Space space = userFragement.getSpace();
+	public void insertUserFragment(UserFragment userFragment) throws LogicException {
+		Space space = userFragment.getSpace();
 		if (space != null && spaceDao.selectById(space.getId()) == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		UserFragement db = null;
-		if (userFragement.isGlobal()) {
-			db = userFragementDao.selectGlobalByName(userFragement.getName());
+		UserFragment db = null;
+		if (userFragment.isGlobal()) {
+			db = userFragmentDao.selectGlobalByName(userFragment.getName());
 		} else {
-			db = userFragementDao.selectBySpaceAndName(space, userFragement.getName());
+			db = userFragmentDao.selectBySpaceAndName(space, userFragment.getName());
 		}
 		boolean nameExists = db != null;
 		if (nameExists) {
-			throw new LogicException("fragement.user.nameExists", "挂件名:" + userFragement.getName() + "已经存在",
-					userFragement.getName());
+			throw new LogicException("fragment.user.nameExists", "挂件名:" + userFragment.getName() + "已经存在",
+					userFragment.getName());
 		}
 
-		userFragement.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		userFragementDao.insert(userFragement);
+		userFragment.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+		userFragmentDao.insert(userFragment);
 
-		uiCacheRender.evit(userFragement);
+		uiCacheRender.evit(userFragment);
 	}
 
 	@Override
-	public void deleteUserFragement(Integer id) throws LogicException {
-		UserFragement userFragement = userFragementDao.selectById(id);
-		if (userFragement == null) {
-			throw new LogicException("fragement.user.notExists", "挂件不存在");
+	public void deleteUserFragment(Integer id) throws LogicException {
+		UserFragment userFragment = userFragmentDao.selectById(id);
+		if (userFragment == null) {
+			throw new LogicException("fragment.user.notExists", "挂件不存在");
 		}
-		userFragementDao.deleteById(id);
+		userFragmentDao.deleteById(id);
 
-		uiCacheRender.evit(userFragement);
+		uiCacheRender.evit(userFragment);
 	}
 
 	@Override
-	public void updateUserFragement(UserFragement userFragement) throws LogicException {
-		Space space = userFragement.getSpace();
+	public void updateUserFragment(UserFragment userFragment) throws LogicException {
+		Space space = userFragment.getSpace();
 		if (space != null && spaceDao.selectById(space.getId()) == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		UserFragement old = userFragementDao.selectById(userFragement.getId());
+		UserFragment old = userFragmentDao.selectById(userFragment.getId());
 		if (old == null) {
-			throw new LogicException("fragement.user.notExists", "挂件不存在");
+			throw new LogicException("fragment.user.notExists", "挂件不存在");
 		}
-		UserFragement db = null;
+		UserFragment db = null;
 		// 查找当前数据库是否存在同名
-		if (userFragement.isGlobal()) {
-			db = userFragementDao.selectGlobalByName(userFragement.getName());
+		if (userFragment.isGlobal()) {
+			db = userFragmentDao.selectGlobalByName(userFragment.getName());
 		} else {
-			db = userFragementDao.selectBySpaceAndName(space, userFragement.getName());
+			db = userFragmentDao.selectBySpaceAndName(space, userFragment.getName());
 		}
-		boolean nameExists = db != null && !db.getId().equals(userFragement.getId());
+		boolean nameExists = db != null && !db.getId().equals(userFragment.getId());
 		if (nameExists) {
-			throw new LogicException("fragement.user.nameExists", "挂件名:" + userFragement.getName() + "已经存在",
-					userFragement.getName());
+			throw new LogicException("fragment.user.nameExists", "挂件名:" + userFragment.getName() + "已经存在",
+					userFragment.getName());
 		}
-		userFragementDao.update(userFragement);
+		userFragmentDao.update(userFragment);
 
-		uiCacheRender.evit(old, userFragement);
+		uiCacheRender.evit(old, userFragment);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public PageResult<UserFragement> queryUserFragement(UserFragementQueryParam param) {
-		int count = userFragementDao.selectCount(param);
-		List<UserFragement> datas = userFragementDao.selectPage(param);
-		return new PageResult<UserFragement>(param, count, datas);
+	public PageResult<UserFragment> queryUserFragment(UserFragmentQueryParam param) {
+		int count = userFragmentDao.selectCount(param);
+		List<UserFragment> datas = userFragmentDao.selectPage(param);
+		return new PageResult<UserFragment>(param, count, datas);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserFragement queryUserFragement(Integer id) {
-		return userFragementDao.selectById(id);
+	public UserFragment queryUserFragment(Integer id) {
+		return userFragmentDao.selectById(id);
 	}
 
 	@Override
@@ -240,8 +240,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
-	public List<Fragement> querySysFragements() {
-		return fragements;
+	public List<Fragment> querySysFragments() {
+		return fragments;
 	}
 
 	@Override
@@ -258,8 +258,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Transactional(readOnly = true)
 	public RenderedPage renderPreviewPage(Page page) throws LogicException {
 		ParseResult result = templateParser.parse(page.getTpl(), previewDataQuery,
-				new FragementQueryImpl(page.getSpace()));
-		return new RenderedPage(page, result.getBinds(), result.getFragements());
+				new FragmentQueryImpl(page.getSpace()));
+		return new RenderedPage(page, result.getBinds(), result.getFragments());
 	}
 
 	@Override
@@ -444,7 +444,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			ExportPage ep = new ExportPage();
 			ep.setPage(new SysPage(null, target));
 			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 			pages.add(ep);
 		}
 		// 错误页面
@@ -453,7 +453,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			ExportPage ep = new ExportPage();
 			ep.setPage(new ErrorPage(null, errorCode));
 			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 			pages.add(ep);
 		}
 		// 个人页面
@@ -473,7 +473,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			ExportPage ep = new ExportPage();
 			ep.setPage(new UserPage(up.getId()));
 			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragements(new ArrayList<>(page.getFragementMap().values()));
+			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 			pages.add(ep);
 		}
 		if (req.isExportExpandedPage()) {
@@ -482,7 +482,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				ExportPage ep2 = new ExportPage();
 				ep2.setPage(new ExpandedPage(ep.getId()));
 				ep2.getPage().setTpl(page.getPage().getTpl());
-				ep2.setFragements(new ArrayList<>(page.getFragementMap().values()));
+				ep2.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 				pages.add(ep2);
 			}
 		}
@@ -573,7 +573,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					return loaderPage;
 				}
 			});
-			result.addOldPage(new ExportPage(page, new ArrayList<>(old.getFragementMap().values())));
+			result.addOldPage(new ExportPage(page, new ArrayList<>(old.getFragmentMap().values())));
 			// 更新页面模板
 			db.setTpl(page.getTpl());
 			switch (page.getType()) {
@@ -600,32 +600,32 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				break;
 			}
 
-			List<Fragement> fragements = ep.getFragements();
-			if (!CollectionUtils.isEmpty(fragements)) {
-				for (Fragement fragement : fragements) {
-					UserFragement uf = userFragementDao.selectBySpaceAndName(space, fragement.getName());
+			List<Fragment> fragments = ep.getFragments();
+			if (!CollectionUtils.isEmpty(fragments)) {
+				label1: for (Fragment fragment : fragments) {
+					UserFragment uf = userFragmentDao.selectBySpaceAndName(space, fragment.getName());
 					if (uf != null) {
-						if (req.isUpdateExistsFragement()) {
-							uf.setTpl(fragement.getTpl());
-							userFragementDao.update(uf);
+						if (req.isUpdateExistsFragment()) {
+							uf.setTpl(fragment.getTpl());
+							userFragmentDao.update(uf);
 						}
 					} else {
 						// 查找全局挂件
-						for (Fragement glf : this.fragements) {
-							if (glf.equals(fragement)) {
-								if (glf.getTpl().equals(fragement.getTpl())) {
-									continue;
+						for (Fragment glf : this.fragments) {
+							if (glf.equals(fragment)) {
+								if (glf.getTpl().equals(fragment.getTpl())) {
+									continue label1;
 								}
 							}
 						}
-						if (req.isInsertNotExistsFragement()) {
-							UserFragement newF = new UserFragement();
+						if (req.isInsertNotExistsFragment()) {
+							UserFragment newF = new UserFragment();
 							newF.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 							newF.setDescription("");
-							newF.setName(fragement.getName());
-							newF.setTpl(fragement.getTpl());
+							newF.setName(fragment.getName());
+							newF.setTpl(fragment.getTpl());
 							newF.setSpace(space);
-							userFragementDao.insert(newF);
+							userFragmentDao.insert(newF);
 						}
 					}
 				}
@@ -642,10 +642,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Object queryData(DataTag dataTag) throws LogicException {
+	public DataBind<?> queryData(DataTag dataTag) throws LogicException {
 		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
 		if (processor != null)
-			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs()).getData();
+			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs());
 		return null;
 	}
 
@@ -737,7 +737,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (cached == null) {
 				final Page db = loader.loadFromDb();
 				ParseResult parseResult = templateParser.parse(db.getTpl(), noDataQuery,
-						new FragementQueryImpl(db.getSpace()));
+						new FragmentQueryImpl(db.getSpace()));
 				cached = new ParseResultWrapper(parseResult, db);
 				cache.put(key, cached);
 			}
@@ -755,7 +755,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					binds.add(processor.previewData(unkownData.getAttrs()));
 				}
 			}
-			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragements());
+			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragments());
 		}
 
 		public RenderedPage render(PageLoader loader, Params params) throws LogicException {
@@ -769,28 +769,28 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					binds.add(processor.getData(cached.page.getSpace(), params, unkownData.getAttrs()));
 				}
 			}
-			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragements());
+			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragments());
 		}
 
 		public void evit(String key) {
 			cache.remove(key);
 		}
 
-		public void evit(Fragement... fragements) {
+		public void evit(Fragment... fragments) {
 			for (Map.Entry<String, ParseResultWrapper> it : cache.entrySet()) {
 				ParseResultWrapper st = it.getValue();
-				Map<String, Fragement> currentFMap = st.parseResult.getFragements();
-				labe1: for (Fragement currentF : currentFMap.values()) {
-					for (Fragement fragement : fragements) {
-						if (fragement.getName().equals(currentF.getName())) {
+				Map<String, Fragment> currentFMap = st.parseResult.getFragments();
+				labe1: for (Fragment currentF : currentFMap.values()) {
+					for (Fragment fragment : fragments) {
+						if (fragment.getName().equals(currentF.getName())) {
 							cache.remove(it.getKey());
 							break labe1;
 						}
 					}
 				}
-				label2: for (String name : st.parseResult.getUnkownFragements()) {
-					for (Fragement fragement : fragements) {
-						if (name.equals(fragement.getName())) {
+				label2: for (String name : st.parseResult.getUnkownFragments()) {
+					for (Fragment fragment : fragments) {
+						if (name.equals(fragment.getName())) {
 							cache.remove(it.getKey());
 							break label2;
 						}
@@ -914,28 +914,28 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
-	private final class FragementQueryImpl implements FragementQuery {
+	private final class FragmentQueryImpl implements FragmentQuery {
 
 		private Space space;
 
 		@Override
-		public Fragement query(String name) {
-			// 首先查找用户自定义fragement
-			UserFragement userFragement = userFragementDao.selectBySpaceAndName(space, name);
-			if (userFragement == null) {
+		public Fragment query(String name) {
+			// 首先查找用户自定义fragment
+			UserFragment userFragment = userFragmentDao.selectBySpaceAndName(space, name);
+			if (userFragment == null) {
 				// 查找全局
-				userFragement = userFragementDao.selectGlobalByName(name);
+				userFragment = userFragmentDao.selectGlobalByName(name);
 			}
-			if (userFragement != null)
-				return userFragement;
-			for (Fragement fragement : fragements) {
-				if (fragement.getName().equals(name))
-					return fragement;
+			if (userFragment != null)
+				return userFragment;
+			for (Fragment fragment : fragments) {
+				if (fragment.getName().equals(name))
+					return fragment;
 			}
 			return null;
 		}
 
-		public FragementQueryImpl(Space space) {
+		public FragmentQueryImpl(Space space) {
 			this.space = space;
 		}
 
@@ -945,8 +945,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		this.processors = processors;
 	}
 
-	public void setFragements(List<Fragement> fragements) {
-		this.fragements = fragements;
+	public void setFragments(List<Fragment> fragments) {
+		this.fragments = fragments;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Fragment queryFragment(String name) {
+		return new FragmentQueryImpl(SpaceContext.get()).query(name);
 	}
 
 }
