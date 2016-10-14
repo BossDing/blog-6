@@ -8,7 +8,6 @@ public class CommonFile extends Id {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String key;
 	private long size;// 文件大小，该大小仅仅是本服务上的文件大小，并不代表其他存储服务上的文件大小
 	private String extension;// 后缀名
 	private int store;
@@ -18,21 +17,7 @@ public class CommonFile extends Id {
 	private Integer width;// 图片等文件
 	private Integer height;// 图片等文件
 
-	public enum CommonFileStatus {
-		NORMAL, DELETED;
-	}
-
-	public CommonFileStatus status = CommonFileStatus.NORMAL;
-
 	public CommonFile() {
-	}
-
-	public String getKey() {
-		return key;
-	}
-
-	public void setKey(String key) {
-		this.key = key;
 	}
 
 	public long getSize() {
@@ -93,13 +78,5 @@ public class CommonFile extends Id {
 
 	public void setServer(int server) {
 		this.server = server;
-	}
-
-	public CommonFileStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(CommonFileStatus status) {
-		this.status = status;
 	}
 }

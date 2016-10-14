@@ -27,7 +27,7 @@ $(document).ready(function(){
 		$('#fileupload').fileupload({
 			dataType : 'json',
 			autoUpload : false,
-			singleFileUploads : false,
+			singleFileUploads : true,
 			limitConcurrentUploads : 1,
 			  uploadTemplate: function (o) {
 			        var rows = $();
@@ -162,6 +162,8 @@ $(document).ready(function(){
 			case "update":
 				$("#updateModal").modal("show");
 				$("#updateModal input[name='name']").val(me.attr("data-name"));
+				$("#updateModal input[name='path']").val(me.attr("data-path"));
+				$("#updateModal input[name='type']").val(me.attr("data-type"));
 				$("#updateModal input[name='id']").val(id);
 				break;
 			case "move":

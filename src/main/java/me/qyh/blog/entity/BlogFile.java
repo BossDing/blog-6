@@ -26,6 +26,7 @@ public class BlogFile extends Id {
 	private Integer rgt;
 	private BlogFile parent; // 父节点
 	private String name; // 名称
+	private String path;
 
 	public CommonFile getCf() {
 		return cf;
@@ -79,6 +80,10 @@ public class BlogFile extends Id {
 		return BlogFileType.DIRECTORY.equals(type);
 	}
 
+	public boolean isFile() {
+		return BlogFileType.FILE.equals(type);
+	}
+
 	public boolean isRoot() {
 		return (parent == null);
 	}
@@ -104,5 +109,13 @@ public class BlogFile extends Id {
 			return rgt - lft + 1;
 		}
 		return 0;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 }

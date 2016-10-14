@@ -68,12 +68,8 @@
 													th:data-id="${file.id}"><span
 													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
-													data-toggle="tooltip" title="移动" data-action="move"
-													th:data-id="${file.id}"><span
-													class="glyphicon glyphicon-move" aria-hidden="true"></span></a>
-												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}"><span
+													th:data-id="${file.id}" th:data-name="${file.name}" th:data-path="${file.path}" th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="属性" data-action="property"
@@ -104,7 +100,7 @@
 													class="glyphicon glyphicon-move" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}"><span
+													th:data-id="${file.id}" th:data-name="${file.name}" th:data-path="${file.path}" th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" th:href="${file.cf.url}"
 													target="_blank" data-toggle="tooltip"
@@ -153,7 +149,7 @@
 					<div class="container-fluid">
 						<div class="row" style="padding: 5px">
 							<form id="fileupload" class="form-horizontal" autocomplete="off"
-								th:action="@{/mgr/file/upload}" method="POST"
+								th:action="@{/mgr/file/upload?v=1}" method="POST"
 								enctype="multipart/form-data">
 								<div class="col-md-12" style="margin-bottom: 20px">
 									<label class="control-label">存储服务：</label> <select
@@ -227,6 +223,12 @@
 							<label for="name" class="control-label">名称(1~20个字符):</label> <input
 								type="text" class="form-control" name="name">
 						</div>
+						 <input
+								type="hidden" value="DIRECTORY" class="form-control" name="type">
+						<div class="form-group">
+							<label for="name" class="control-label">路径(1~30个字符，只能包含大小写英文字符和数字，一旦创建将无法修改！):</label>
+							<input type="text" class="form-control" name="path">
+						</div>
 					</form>
 				</div>
 				<div class="modal-footer">
@@ -255,6 +257,12 @@
 						<div class="form-group">
 							<label for="name" class="control-label">名称(1~20个字符):</label> <input
 								type="text" class="form-control" name="name">
+						</div>
+						<input
+								type="hidden" value="" class="form-control" name="type">
+						<div class="form-group">
+							<label for="name" class="control-label">路径:</label> <input
+								type="text" class="form-control" name="path" readonly="readonly">
 						</div>
 					</form>
 				</div>

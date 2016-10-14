@@ -56,7 +56,16 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize defaultResize;
 
 	@Override
-	public CommonFile store(MultipartFile mf) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile mf) throws LogicException, IOException {
+		File dest = new File(absFolder, key);
+		if (dest.exists()) {
+			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
+					dest.getAbsolutePath());
+		}
+		if (inThumbDir(dest)) {
+			throw new LogicException("file.inThumb", "文件" + dest.getAbsolutePath() + "不能被存放在缩略图文件夹下",
+					dest.getAbsolutePath());
+		}
 		// 先写入临时文件
 		File tmp = File.createTempFile(RandomStringUtils.randomNumeric(6),
 				"." + FilenameUtils.getExtension(mf.getOriginalFilename()));
@@ -76,16 +85,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				extension = ImageHelper.JPEG;
 			}
 
-			String newName = System.currentTimeMillis() + RandomStringUtils.randomNumeric(6) + "." + extension;
-			String _folder = getStoreFolder();
-			File folder = new File(new File(absPath), _folder);
-			FileUtils.forceMkdir(folder);
-			FileUtils.moveFile(finalFile, new File(folder, newName));
+			FileUtils.forceMkdir(dest.getParentFile());
+			FileUtils.moveFile(finalFile, dest);
 
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
 			cf.setSize(mf.getSize());
-			cf.setKey(StringUtils.cleanPath(_folder) + "/" + newName);
 			cf.setStore(id);
 			cf.setOriginalFilename(mf.getOriginalFilename());
 
@@ -128,19 +133,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			// 缩略图是否已经存在
 			File file = findThumbByPath(thumbPath);
 			if (!file.exists()) {
+				String sourcePath = getSourcePathByResizePath(path);
 				// 缩略图不存在，寻找原图
-				LocalCommonFile cf = findSourceByPath(path, true);
+				File local = super.findByKey(sourcePath);
 				// 如果原图存在，进行缩放
-				if (cf != null) {
-					String extension = cf.getExtension();
-					if (ImageHelper.isImage(extension)) {
-						synchronized (cf) {
+				if (local != null) {
+					if (ImageHelper.isImage(FilenameUtils.getExtension(local.getName()))) {
+						synchronized (this) {
 							File check = findThumbByPath(thumbPath);
 							if (check.exists()) {
 								return new PathResource(check.toPath());
 							}
 							try {
-								return new PathResource(doResize(cf, resize, check).toPath());
+								return new PathResource(doResize(local, resize, check, sourcePath).toPath());
 							} catch (Throwable e) {
 								logger.error(e.getMessage(), e);
 								errorThumbPaths.add(path);
@@ -155,19 +160,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 		if (finalResource == null) {
 			// 寻找源文件
-			LocalCommonFile file = findSourceByPath(path, false);
-			if (file != null) {
-				finalResource = new PathResource(file.getFile().toPath());
+			File local = super.findByKey(path);
+			if (local != null) {
+				finalResource = new PathResource(local.toPath());
 			}
 		}
 		return finalResource;
 	}
 
 	@Override
-	public boolean delete(CommonFile t) {
-		boolean flag = super.delete(t);
+	public boolean delete(String key) {
+		boolean flag = super.delete(key);
 		if (flag) {
-			File thumbDir = new File(thumbAbsFolder, t.getKey());
+			File thumbDir = new File(thumbAbsFolder, key);
 			if (thumbDir.exists()) {
 				flag = FileUtils.deleteQuietly(thumbDir);
 			}
@@ -176,37 +181,41 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	@Override
+	public boolean deleteBatch(String key) {
+		return delete(key);
+	}
+
+	@Override
 	public boolean canStore(MultipartFile multipartFile) {
 		return ImageHelper.isImage(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
 	}
 
 	@Override
-	public String getUrl(CommonFile cf) {
+	public String getUrl(String key) {
 		if (sourceProtected) {
-			if (ImageHelper.isGIF(FilenameUtils.getExtension(cf.getKey()))) {
-				return super.getUrl(cf);
+			if (ImageHelper.isGIF(FilenameUtils.getExtension(key))) {
+				return super.getUrl(key);
 			}
-			return buildResizePath(cf);
+			return buildResizePath(key);
 		} else {
-			return super.getUrl(cf);
+			return super.getUrl(key);
 		}
 	}
 
 	@Override
-	public String getPreviewUrl(CommonFile cf) {
+	public String getPreviewUrl(String key) {
 		if (defaultResize == null) {
-			return getUrl(cf);
+			return getUrl(key);
 		} else {
-			return buildResizePath(cf);
+			return buildResizePath(key);
 		}
 	}
 
-	private String buildResizePath(CommonFile cf) {
-		String path = cf.getKey();
-		if (!path.startsWith("/")) {
-			path = "/" + path;
+	private String buildResizePath(String key) {
+		if (!key.startsWith("/")) {
+			key = "/" + key;
 		}
-		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(defaultResize, path));
+		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(defaultResize, key));
 	}
 
 	@Override
@@ -241,27 +250,18 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	private LocalCommonFile findSourceByPath(String path, boolean isThumb) {
-		if (isThumb) {
-			// 如果是缩略图，获取原图path
-			path = getSourcePathByResizePath(path);
-		}
-		return findByKey(path);
-	}
-
-	protected File doResize(LocalCommonFile cf, Resize resize, File thumb) throws Exception {
-		File src = cf.getFile();
-		ImageInfo ii = imageHelper.read(src);
+	protected File doResize(File local, Resize resize, File thumb, String key) throws Exception {
+		ImageInfo ii = imageHelper.read(local);
 		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
-		String ext = FilenameUtils.getExtension(src.getName());
-		File cover = new File(thumbAbsFolder, cf.getKey() + File.separator + FilenameUtils.getBaseName(cf.getKey())
+		String ext = FilenameUtils.getExtension(local.getName());
+		File cover = new File(thumbAbsFolder, key + File.separator + FilenameUtils.getBaseName(key)
 				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
 		if (!cover.exists()) {
 			FileUtils.forceMkdir(cover.getParentFile());
 			if (ImageHelper.isGIF(ii.getExtension())) {
-				imageHelper.getGifCover(src, cover);
+				imageHelper.getGifCover(local, cover);
 			} else {
-				imageHelper.format(src, cover);
+				imageHelper.format(local, cover);
 			}
 		}
 		FileUtils.forceMkdir(thumb.getParentFile());
@@ -363,6 +363,20 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (idOf != -1)
 			return path.substring(0, path.lastIndexOf('/'));
 		return path;
+	}
+
+	/**
+	 * 要创建的文件是否在缩略图文件夹中
+	 * 
+	 * @param dest
+	 * @return
+	 */
+	private boolean inThumbDir(File dest) {
+		try {
+			return FileUtils.directoryContains(thumbAbsFolder, dest);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 	}
 
 	/**

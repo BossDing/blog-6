@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class BlogFileUploadValidator implements Validator {
 
+	private static final int MAX_FILE_NAME_LENGTH = 500;
+
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return BlogFileUpload.class.isAssignableFrom(clazz);
@@ -23,6 +25,13 @@ public class BlogFileUploadValidator implements Validator {
 		if (CollectionUtils.isEmpty(files)) {
 			errors.reject("file.uploadfiles.blank", "需要上传文件为空");
 			return;
+		}
+		for (MultipartFile file : files) {
+			if (file.getOriginalFilename().length() > MAX_FILE_NAME_LENGTH) {
+				errors.reject("file.name.toolong", new Object[] { MAX_FILE_NAME_LENGTH },
+						"文件名不能超过" + MAX_FILE_NAME_LENGTH + "个字符");
+				return;
+			}
 		}
 		if (upload.getServer() == null) {
 			errors.reject("file.uploadserver.blank", "文件上传服务为空");

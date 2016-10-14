@@ -42,14 +42,4 @@ public interface FileService {
 	 * @see FileStore#delete(me.qyh.blog.file.CommonFile)
 	 */
 	void clearDeletedCommonFile();
-
-	/**
-	 * 移动节点
-	 * 
-	 * @param srcId
-	 * @param parentId
-	 * @throws LogicException
-	 */
-	void move(Integer srcId, Integer parentId) throws LogicException;
-
 }

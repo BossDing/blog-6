@@ -2,7 +2,6 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -10,7 +9,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -43,7 +41,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	protected int id;
 	protected String absPath;
 	protected String urlPrefix;
-	private File absFolder;
+	protected File absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
 	private String handlerPrefix;
 	private String urlPatternPrefix;
@@ -58,17 +56,17 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public CommonFile store(MultipartFile mf) throws LogicException, IOException {
-		// 采用当前时间加上6为随机数
-		String newName = getFilename(mf.getOriginalFilename());
-		String _folder = getStoreFolder();
-		File folder = new File(new File(absPath), _folder);
-		FileUtils.forceMkdir(folder);
-		mf.transferTo(new File(folder, newName));
+	public CommonFile store(String key, MultipartFile mf) throws LogicException, IOException {
+		File dest = new File(absFolder, key);
+		if (dest.exists()) {
+			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
+					dest.getAbsolutePath());
+		}
+		FileUtils.forceMkdir(dest.getParentFile());
+		mf.transferTo(dest);
 		CommonFile cf = new CommonFile();
 		cf.setExtension(FilenameUtils.getExtension(mf.getOriginalFilename()));
 		cf.setSize(mf.getSize());
-		cf.setKey(StringUtils.cleanPath(_folder) + "/" + newName);
 		cf.setStore(id);
 		cf.setOriginalFilename(mf.getOriginalFilename());
 
@@ -76,8 +74,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public boolean delete(CommonFile t) {
-		File dest = new File(absFolder, t.getKey());
+	public boolean delete(String key) {
+		File dest = new File(absFolder, key);
 		if (dest.exists()) {
 			return FileUtils.deleteQuietly(dest);
 		}
@@ -85,29 +83,32 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public String getUrl(CommonFile cf) {
-		String path = cf.getKey();
-		if (!path.startsWith("/")) {
-			path = "/" + path;
-		}
-		return StringUtils.cleanPath(urlPrefix + path);
+	public boolean deleteBatch(String key) {
+		return delete(key);
 	}
 
 	@Override
-	public String getDownloadUrl(CommonFile cf) {
+	public String getUrl(String key) {
+		if (!key.startsWith("/")) {
+			key = "/" + key;
+		}
+		return StringUtils.cleanPath(urlPrefix + key);
+	}
+
+	@Override
+	public String getDownloadUrl(String key) {
 		if (enableDownloadHandler) {
-			String path = cf.getKey();
-			if (!path.startsWith("/")) {
-				path = "/" + path;
+			if (!key.startsWith("/")) {
+				key = "/" + key;
 			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
+			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + key);
 		} else {
-			return getUrl(cf);
+			return getUrl(key);
 		}
 	}
 
 	@Override
-	public String getPreviewUrl(CommonFile cf) {
+	public String getPreviewUrl(String key) {
 		return null;
 	}
 
@@ -175,28 +176,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	}
 
-	/**
-	 * 年月日构建文件夹
-	 * 
-	 * 2014/5/7
-	 * 
-	 * @return
-	 */
-	protected String getStoreFolder() {
-		Calendar cal = Calendar.getInstance();
-		StringBuilder sb = new StringBuilder();
-		sb.append(cal.get(Calendar.YEAR));
-		sb.append(File.separator);
-		sb.append((cal.get(Calendar.MONTH) + 1));
-		sb.append(File.separator);
-		sb.append(cal.get(Calendar.DAY_OF_MONTH));
-		return sb.toString();
-	}
-
 	protected String getFilename(String originalName) {
-		String extension = FilenameUtils.getExtension(originalName);
-		return System.currentTimeMillis() + RandomStringUtils.randomNumeric(6)
-				+ (extension.isEmpty() ? "" : "." + extension);
+		// 保持原名
+		return originalName;
 	}
 
 	protected File getFile(String path) {
@@ -207,19 +189,12 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return file;
 	}
 
-	protected LocalCommonFile findByKey(String key) {
+	protected File findByKey(String key) {
 		File dest = new File(absFolder, key);
 		if (dest.exists()) {
-			LocalCommonFile file = new LocalCommonFile();
-			file.setExtension(FilenameUtils.getExtension(key));
-			file.setSize(dest.length());
-			file.setKey(key);
-			file.setStore(id);
-			file.setFile(dest);
-			return file;
-		} else {
-			return null;
+			return dest;
 		}
+		return null;
 	}
 
 	protected String getPathFromRequest(HttpServletRequest request) {

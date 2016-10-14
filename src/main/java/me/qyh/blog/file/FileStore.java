@@ -16,7 +16,7 @@ public interface FileStore {
 	 * @throws LogicException
 	 *             存储异常
 	 */
-	CommonFile store(MultipartFile multipartFile) throws LogicException, IOException;
+	CommonFile store(String key, MultipartFile multipartFile) throws LogicException, IOException;
 
 	/**
 	 * 存储器ID
@@ -28,19 +28,26 @@ public interface FileStore {
 	/**
 	 * 删除物理文件
 	 * 
-	 * @param t
-	 * @return true:删除成功|文件不存在，无需删除
-	 * 		false :删除失败(可能占用中)
- 	 */
-	boolean delete(CommonFile t);
+	 * @param key
+	 * @return true:删除成功|文件不存在，无需删除 false :删除失败(可能占用中)
+	 */
+	boolean delete(String key);
+
+	/**
+	 * 删除文件夹下物理文件
+	 * 
+	 * @param key
+	 * @return true:如果文件夹不存在或者全部文件删除成功
+	 */
+	boolean deleteBatch(String key);
 
 	/**
 	 * 获取文件的访问路径
 	 * 
-	 * @param cf
+	 * @param key
 	 * @return
 	 */
-	String getUrl(CommonFile cf);
+	String getUrl(String key);
 
 	/**
 	 * 获取下载路径
@@ -48,7 +55,7 @@ public interface FileStore {
 	 * @param cf
 	 * @return
 	 */
-	String getDownloadUrl(CommonFile cf);
+	String getDownloadUrl(String key);
 
 	/**
 	 * 获取预览路径
@@ -56,6 +63,6 @@ public interface FileStore {
 	 * @param cf
 	 * @return
 	 */
-	String getPreviewUrl(CommonFile cf);
+	String getPreviewUrl(String key);
 
 }

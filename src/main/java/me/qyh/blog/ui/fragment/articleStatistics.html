@@ -7,7 +7,7 @@
 			th:text="${articleStatistics.totalHits}"></span></li>
 		<li class="list-group-item"><strong>评论量：</strong><span
 			th:text="${articleStatistics.totalComments}"></span></li>
-		<li class="list-group-item"><strong>最后发布日期：</strong><span
+		<li class="list-group-item" th:if="${articleStatistics.lastPubDate != null}"><strong>最后发布日期：</strong><span
 			th:text="${#dates.format(articleStatistics.lastPubDate, 'yyyy年MM月dd日 HH时mm分')}"></span></li>
 		<li class="list-group-item" th:if="${articleStatistics.lastModifyDate != null}"><strong>最后修改日期：</strong><span
 			th:text="${#dates.format(articleStatistics.lastModifyDate, 'yyyy年MM月dd日 HH时mm分')}"></span></li>

@@ -1,6 +1,8 @@
 package me.qyh.blog.file;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +22,8 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	private Map<Integer, T> storeMap = new HashMap<Integer, T>();
 
 	@Override
-	public CommonFile store(MultipartFile file) throws LogicException, IOException {
-		return stores.get(0).store(file);
+	public CommonFile store(String key, MultipartFile file) throws LogicException, IOException {
+		return stores.get(0).store(key, file);
 	}
 
 	@Override
@@ -51,6 +53,14 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	@Override
 	public String name() {
 		return name;
+	}
+
+	@Override
+	public List<FileStore> allStore() {
+		List<FileStore> stores = new ArrayList<>();
+		for (T t : this.stores)
+			stores.add(t);
+		return Collections.unmodifiableList(stores);
 	}
 
 	public void setId(int id) {

@@ -12,10 +12,10 @@ import me.qyh.blog.file.DefaultFileServer;
 public class LocalFileServer extends DefaultFileServer<LocalFileStore> {
 
 	@Override
-	public CommonFile store(MultipartFile file) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile file) throws LogicException, IOException {
 		for (LocalFileStore store : stores) {
 			if (store.canStore(file)) {
-				CommonFile cf = store.store(file);
+				CommonFile cf = store.store(key, file);
 				return cf;
 			}
 		}

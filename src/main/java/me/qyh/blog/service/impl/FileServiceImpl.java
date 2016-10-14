@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,12 +22,13 @@ import me.qyh.blog.bean.ExpandedCommonFile;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.dao.BlogFileDao;
 import me.qyh.blog.dao.CommonFileDao;
+import me.qyh.blog.dao.FileDeleteDao;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.entity.BlogFile.BlogFileType;
+import me.qyh.blog.entity.FileDelete;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
-import me.qyh.blog.file.CommonFile.CommonFileStatus;
 import me.qyh.blog.file.FileManager;
 import me.qyh.blog.file.FileServer;
 import me.qyh.blog.file.FileStore;
@@ -49,7 +52,13 @@ public class FileServiceImpl implements FileService {
 	@Autowired
 	private BlogFileDao blogFileDao;
 	@Autowired
+	private FileDeleteDao fileDeleteDao;
+	@Autowired
 	private CommonFileDao commonFileDao;
+
+	private static final String SPLIT_CHAR = "/";
+
+	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	@Override
 	public List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
@@ -66,22 +75,31 @@ public class FileServiceImpl implements FileService {
 		if (fs == null) {
 			throw new LogicException("file.store.notexists", "文件存储器不存在");
 		}
+		String folderKey = getFilePath(parent);
+		synchronized (this) {
+			deleteImmediatelyIfNeed(folderKey);
+		}
 		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
 		for (MultipartFile file : upload.getFiles()) {
 			try {
+				if (blogFileDao.selectByParentAndPath(parent, file.getOriginalFilename()) != null)
+					throw new LogicException("file.path.exists", "文件已经存在");
+				String key = folderKey + SPLIT_CHAR + file.getOriginalFilename();
 				CommonFile cf = null;
 				try {
-					cf = fs.store(file);
+					synchronized (fs) {
+						cf = fs.store(key, file);
+					}
 				} catch (IOException e) {
 					throw new SystemException(e.getMessage(), e);
 				}
 				cf.setServer(fs.id());
 				uploadedFiles.add(new UploadedFile(file.getOriginalFilename(), cf.getSize(),
-						fs.getFileStore(cf.getStore()).getPreviewUrl(cf)));
-				cf.setStatus(CommonFileStatus.NORMAL);
+						fs.getFileStore(cf.getStore()).getPreviewUrl(key)));
 				commonFileDao.insert(cf);
 				BlogFile blogFile = new BlogFile();
 				blogFile.setCf(cf);
+				blogFile.setPath(file.getOriginalFilename());
 				blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 				blogFile.setLft(parent.getLft() + 1);
 				blogFile.setRgt(parent.getLft() + 2);
@@ -96,6 +114,56 @@ public class FileServiceImpl implements FileService {
 			}
 		}
 		return uploadedFiles;
+	}
+
+	private void deleteImmediatelyIfNeed(String key) throws LogicException {
+		if (key.isEmpty())
+			return;
+		String rootKey = key.split(SPLIT_CHAR)[0];
+		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
+		if (children.isEmpty())
+			return;
+		for (FileDelete child : children) {
+			String ckey = child.getKey();
+			if (key.startsWith(ckey))
+				deleteFile(child);
+		}
+	}
+
+	private void deleteFile(FileDelete fd) throws LogicException {
+		// 需要删除
+		String key = fd.getKey();
+		switch (fd.getType()) {
+		case DIRECTORY:// 需要调用每个存储器，因为文件夹下的文件可能来自于不同的存储器
+			for (FileServer fs : fileManager.getAllServers()) {
+				for (FileStore store : fs.allStore()) {
+					if (!store.deleteBatch(key))
+						throw new LogicException("file.batchDelete.fail", "存储器" + store.id() + "无法删除目录" + key + "下的文件",
+								store.id(), key);
+				}
+			}
+			fileDeleteDao.deleteById(fd.getId());
+			break;
+		case FILE:
+			FileServer server = fileManager.getFileServer(fd.getServer());
+			if (server == null) {
+				logger.warn("无法找到id为" + server + "的存储服务");
+				fileDeleteDao.deleteById(fd.getId());
+				return;
+			}
+			FileStore fs = server.getFileStore(fd.getStore());
+			if (fs == null) {
+				logger.warn("无法在存储器" + fd.getServer() + "找到id为" + fd.getStore() + "的存储器");
+				fileDeleteDao.deleteById(fd.getId());
+				return;
+			}
+			if (!fs.delete(key))
+				throw new LogicException("file.delete.fail", "文件删除失败，无法删除存储器" + fs.id() + "下" + key + "对应的文件", fs.id(),
+						key);
+			fileDeleteDao.deleteById(fd.getId());
+			break;
+		}
+
 	}
 
 	@Override
@@ -113,6 +181,9 @@ public class FileServiceImpl implements FileService {
 			// 查询根节点
 			parent = blogFileDao.selectRoot();
 		}
+
+		if (blogFileDao.selectByParentAndPath(parent, toCreate.getPath()) != null)
+			throw new LogicException("folder.path.exists", "文件已经存在");
 
 		toCreate.setLft(parent.getLft() + 1);
 		toCreate.setRgt(parent.getLft() + 2);
@@ -169,9 +240,10 @@ public class FileServiceImpl implements FileService {
 		} else {
 			CommonFile cf = file.getCf();
 			if (cf != null) {
+				String key = getFilePath(file);
 				FileStore fs = getFileStore(cf);
-				proMap.put("url", fs.getUrl(cf));
-				proMap.put("downloadUrl", fs.getDownloadUrl(cf));
+				proMap.put("url", fs.getUrl(key));
+				proMap.put("downloadUrl", fs.getDownloadUrl(key));
 				proMap.put("totalSize", cf.getSize());
 				if (cf.getWidth() != null) {
 					proMap.put("width", cf.getWidth());
@@ -203,81 +275,68 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public void delete(Integer id) throws LogicException {
-		BlogFile db = blogFileDao.selectById(id);
+		final BlogFile db = blogFileDao.selectById(id);
 		if (db == null) {
 			throw new LogicException("file.notexists", "文件不存在");
 		}
 		if (db.getParent() == null) {
 			throw new LogicException("file.root.canNotDelete", "根节点不能删除");
 		}
-		// 首先将关联的CommonFile置为待删除状态
-		// 因为CommonFile跟实际文件关联
-		blogFileDao.deleteCommonFile(db);
-		// 删除节点以及子节点
+		String key = getFilePath(db);
+		// 删除文件记录
 		blogFileDao.delete(db);
+		blogFileDao.deleteCommonFile(db);
 		// 更新受影响节点的左右值
 		blogFileDao.updateWhenDelete(db);
+
+		FileServer server = null;
+		FileStore store = null;
+		if (db.isFile()) {
+			server = fileManager.getFileServer(db.getCf().getServer());
+			if (server == null) {
+				return;
+			}
+			store = server.getFileStore(db.getCf().getStore());
+			if (store == null) {
+				return;
+			}
+		} else {
+			fileDeleteDao.deleteChildren(key);
+		}
+		FileDelete fd = new FileDelete();
+		fd.setKey(key);
+		fd.setServer(db.isDir() ? null : server.id());
+		fd.setStore(db.isDir() ? null : store.id());
+		fd.setType(db.getType());
+		fileDeleteDao.insert(fd);
+
 	}
 
 	@Override
 	public void clearDeletedCommonFile() {
-		List<CommonFile> toDeletes = commonFileDao.selectDeleted();
-		for (CommonFile cf : toDeletes) {
-			FileStore fs = getFileStore(cf);
-			if (fs.delete(cf)) {
-				commonFileDao.deleteById(cf.getId());
+		List<FileDelete> all = fileDeleteDao.selectAll();
+		for (FileDelete fd : all)
+			try {
+				deleteFile(fd);
+				fileDeleteDao.deleteById(fd.getId());
+			} catch (LogicException e) {
+				// ignore;
 			}
-		}
-	}
-
-	/**
-	 * 移动节点
-	 * {@link http://stackoverflow.com/questions/889527/move-node-in-nested-set}
-	 * 
-	 * @param srcId
-	 * @param parentId
-	 * @throws LogicException
-	 */
-	@Override
-	public void move(Integer srcId, Integer parentId) throws LogicException {
-		if (srcId != null && srcId.equals(parentId)) {
-			throw new LogicException("file.src.noEqualDest", "源节点和目标节点不能相同");
-		}
-		BlogFile src = blogFileDao.selectById(srcId);
-		if (src == null) {
-			throw new LogicException("file.src.notexists", "源文件节点不存在");
-		}
-		if (src.isRoot()) {
-			throw new LogicException("file.root.noMove", "根节点不能被移动");
-		}
-		BlogFile parent = null;
-		if (parentId != null) {
-			parent = blogFileDao.selectById(parentId);
-			if (parent == null) {
-				throw new LogicException("file.dest.notexists", "目标文件节点不存在");
-			}
-			if (!parent.isDir()) {
-				throw new LogicException("file.dest.mustDir", "目标文件节点必须是一个文件夹");
-			}
-			// 查看目标节点是不是当前结点的子节点
-			List<BlogFile> paths = blogFileDao.selectPath(parent);
-			if (!paths.isEmpty() && paths.contains(src)) {
-				throw new LogicException("file.dest.notSrcChild", "目标文件节点不能是待移动节点的子节点");
-			}
-		} else {
-			parent = blogFileDao.selectRoot();
-		}
-		// 当前节点的父节点就是目标节点
-		if (src.getParent().equals(parent)) {
-			return;
-		}
-		blogFileDao.updateWhenMove(src, parent);
 	}
 
 	private void setExpandedCommonFile(BlogFile bf) {
 		CommonFile cf = bf.getCf();
 		if (cf != null) {
-			bf.setCf(convert(cf));
+			if (bf.isFile()) {
+				String key = getFilePath(bf);
+				FileStore fs = getFileStore(cf);
+				ExpandedCommonFile pcf = new ExpandedCommonFile();
+				BeanUtils.copyProperties(cf, pcf);
+				pcf.setPreviewUrl(fs.getPreviewUrl(key));
+				pcf.setDownloadUrl(fs.getDownloadUrl(key));
+				pcf.setUrl(fs.getUrl(key));
+				bf.setCf(pcf);
+			}
 		}
 	}
 
@@ -293,14 +352,17 @@ public class FileServiceImpl implements FileService {
 		return fs;
 	}
 
-	private ExpandedCommonFile convert(CommonFile cf) {
-		FileStore fs = getFileStore(cf);
-		ExpandedCommonFile pcf = new ExpandedCommonFile();
-		BeanUtils.copyProperties(cf, pcf);
-		pcf.setPreviewUrl(fs.getPreviewUrl(cf));
-		pcf.setDownloadUrl(fs.getDownloadUrl(cf));
-		pcf.setUrl(fs.getUrl(cf));
-		return pcf;
+	private String getFilePath(BlogFile bf) {
+		List<BlogFile> files = blogFileDao.selectPath(bf);
+		StringBuilder path = new StringBuilder();
+		for (BlogFile file : files) {
+			if (file.getPath().isEmpty())
+				continue;
+			path.append(file.getPath()).append(SPLIT_CHAR);
+		}
+		if (path.length() > 0)
+			path.deleteCharAt(path.length() - 1);
+		return path.toString();
 	}
 
 }

@@ -6,7 +6,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
 	<resultMap type="CommonFile" id="CommonFileDetail">
 		<id column="cf_id" property="id"/>
-		<result column="file_key" property="key"/>
 		<result column="file_extension" property="extension"/>
 		<result column="file_size" property="size"/>
 		<result column="file_store" property="store"/>
@@ -14,30 +13,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="file_originalname" property="originalFilename"/>
 		<result column="file_width" property="width"/>
 		<result column="file_height" property="height"/>
-		<result column="file_status" property="status" typeHandler="EnumOrdinalTypeHandler"/>
 	</resultMap>
 
 	<insert id="insert" keyProperty="id" useGeneratedKeys="true">
-		INSERT INTO blog_common_file(file_key,file_extension,file_size,file_store,file_server,file_originalname,file_width,file_height,file_status)
-		VALUES(#{key},#{extension},#{size},#{store},#{server},#{originalFilename},#{width},#{height},#{status,javaType=CommonFileStatus,typeHandler=EnumOrdinalTypeHandler})
+		INSERT INTO blog_common_file(file_extension,file_size,file_store,file_server,file_originalname,file_width,file_height)
+		VALUES(#{extension},#{size},#{store},#{server},#{originalFilename},#{width},#{height})
 	</insert>
-	
-	<select id="selectDeleted" resultMap="CommonFileDetail">
-		SELECT 
-			id AS cf_id,
-			file_key,
-			file_extension,
-			file_size,
-			file_store,
-			file_server,
-			file_originalname,
-			file_width,
-			file_height
-		FROM 
-			blog_common_file
-		WHERE 
-			file_status = 1 <!-- CommonFileStatus.DELETE -->
-	</select>
 	
 	<delete id="deleteById">
 		DELETE FROM blog_common_file WHERE id = #{id}

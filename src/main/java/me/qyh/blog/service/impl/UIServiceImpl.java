@@ -573,7 +573,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					return loaderPage;
 				}
 			});
-			result.addOldPage(new ExportPage(page, new ArrayList<>(old.getFragmentMap().values())));
+			result.addOldPage(new ExportPage(old.getPage(), new ArrayList<>(old.getFragmentMap().values())));
 			// 更新页面模板
 			db.setTpl(page.getTpl());
 			switch (page.getType()) {

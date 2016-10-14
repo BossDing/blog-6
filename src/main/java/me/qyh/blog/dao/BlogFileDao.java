@@ -32,10 +32,13 @@ public interface BlogFileDao {
 
 	void updateWhenDelete(BlogFile toDelete);
 
-	void deleteCommonFile(BlogFile file);
+	void updateWhenMove(@Param("src") BlogFile src, @Param("parent") BlogFile parent);
 
 	void delete(BlogFile db);
 
-	void updateWhenMove(@Param("src") BlogFile src, @Param("parent") BlogFile parent);
+	int deleteCommonFile(BlogFile db);
 
+	List<BlogFile> selectChildren(BlogFile p);
+	
+	BlogFile selectByParentAndPath(@Param("parent") BlogFile parent,@Param("path") String path);
 }

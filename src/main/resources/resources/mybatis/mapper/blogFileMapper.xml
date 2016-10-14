@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="file_createDate" property="createDate"/>
 		<result column="file_lft" property="lft"/>
 		<result column="file_rgt" property="rgt"/>
+		<result column="file_path" property="path"/>
 		<result column="file_lastmodifydate" property="lastModifyDate"/>
 		<association property="parent" javaType="BlogFile">
 			<result column="file_parent" property="id"/>
@@ -24,9 +25,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 
 	<insert id="insert">
-		INSERT INTO blog_file(file_name,file_parent,file_type,file_createDate,common_file,file_lft,file_rgt)
-		VALUES(#{name},#{parent.id},#{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler},#{createDate},#{cf.id},#{lft},#{rgt})
+		INSERT INTO blog_file(file_name,file_parent,file_type,file_createDate,common_file,file_lft,file_rgt,file_path)
+		VALUES(#{name},#{parent.id},#{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler},#{createDate},#{cf.id},#{lft},#{rgt},#{path})
 	</insert>
+	
+	<select id="selectByParentAndPath" resultMap="BlogFileDetail">
+		SELECT id FROM blog_file WHERE file_parent = #{parent.id} AND file_path = #{path}
+	</select>
 
 	<update id="updateWhenAddChild">
 		UPDATE blog_file SET file_rgt = file_rgt + 2 WHERE file_rgt > #{lft};
@@ -43,7 +48,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			file_rgt,
 			file_parent ,
 			bcf.id AS cf_id,
-			file_key,
 			file_extension,
 			file_size,
 			file_store,
@@ -51,7 +55,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			file_originalname,
 			file_width,
 			file_height,
-			file_lastmodifydate
+			file_lastmodifydate,
+			file_path
 		FROM 
 			blog_file  bf
 		LEFT OUTER JOIN 
@@ -71,6 +76,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			parent.file_lft,
 			parent.file_rgt,
 			parent.file_parent,
+			parent.file_path,
 			file_lastmodifydate
 		FROM 
 			blog_file AS parent
@@ -123,14 +129,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			file_rgt,
 			file_parent ,
 			bcf.id AS cf_id,
-			file_key,
 			file_extension,
 			file_size,
 			file_store,
 			file_server,
 			file_originalname,
 			file_width,
-			file_height
+			file_height,
+			file_path
 		FROM 
 			blog_file  bf
 		LEFT OUTER JOIN 
@@ -170,15 +176,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE id = #{id}
 	</update>
 	
-	<update id="deleteCommonFile">
-		UPDATE blog_common_file bcf 
-		SET file_status = 1 
+	<delete id="delete">
+		DELETE FROM blog_file 
+		WHERE 
+		file_lft BETWEEN #{lft} AND #{rgt}
+	</delete>
+	
+	<delete id="deleteCommonFile">
+		DELETE FROM blog_common_file
 		WHERE id IN
 		(SELECT common_file FROM blog_file bf WHERE file_lft >= #{lft} AND file_rgt <![CDATA[ <= ]]> #{rgt})
-	</update>
-	
-	<delete id="delete">
-		DELETE FROM blog_file WHERE file_lft BETWEEN #{lft} AND #{rgt}
 	</delete>
 	
 	<update id="updateWhenDelete">
@@ -237,5 +244,35 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE 
 			id = #{src.id};
 	</update>
+	
+	<select id="selectChildren" resultMap="BlogFileDetail">
+		SELECT 
+			bf.id,
+			file_name,
+			file_type,
+			file_createDate,
+			file_lft,
+			file_rgt,
+			file_parent ,
+			bcf.id AS cf_id,
+			file_extension,
+			file_size,
+			file_store,
+			file_server,
+			file_originalname,
+			file_width,
+			file_height,
+			file_lastmodifydate,
+			file_path
+		FROM 
+			blog_file  bf
+		LEFT OUTER JOIN 
+			blog_common_file bcf
+		ON
+			bcf.id = bf.common_file
+		WHERE 
+			bf.file_lft >= #{lft}
+			AND bf.file_rgt <![CDATA[ <= ]]> #{rgt}
+	</select>
 
 </mapper>

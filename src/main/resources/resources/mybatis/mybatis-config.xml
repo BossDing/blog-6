@@ -27,8 +27,7 @@
 		<typeAlias type="me.qyh.blog.entity.BlogFile$BlogFileType"
 			alias="BlogFileType" />
 		<typeAlias type="me.qyh.blog.file.CommonFile" alias="CommonFile" />
-		<typeAlias type="me.qyh.blog.file.CommonFile$CommonFileStatus"
-			alias="CommonFileStatus" />
+		<typeAlias type="me.qyh.blog.entity.FileDelete" alias="FileDelete" />
 
 		<typeAlias type="me.qyh.blog.lock.support.DefaultLock"
 			alias="DefaultLock" />
@@ -92,5 +91,6 @@
 		<mapper resource="resources/mybatis/mapper/oauthBindMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
 	</mappers>
 </configuration>

@@ -1,5 +1,6 @@
 package me.qyh.blog.file;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,6 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 
 	@Override
 	public List<FileServer> getAllServers() {
-		return servers;
+		return Collections.unmodifiableList(servers);
 	}
 }

@@ -145,12 +145,4 @@ public class FileMgrController extends BaseMgrController {
 		fileService.update(blogFile);
 		return new JsonResult(true, new Message("file.update.success", "更新成功"));
 	}
-
-	@RequestMapping(value = "move", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult move(@RequestParam("src") Integer src, @RequestParam("parent") Integer parent)
-			throws LogicException {
-		fileService.move(src, parent);
-		return new JsonResult(true, new Message("file.move.success", "移动成功"));
-	}
 }

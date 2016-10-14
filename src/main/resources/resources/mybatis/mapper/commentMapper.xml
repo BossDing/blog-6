@@ -80,10 +80,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		    </choose>
 		  LIMIT #{offset},#{pageSize}) roots
 		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
+		LEFT OUTER JOIN blog_oauth_user  bou ON a.user_id = bou.id
 		   <if test="status != null">
 		    WHERE a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
 		    </if>
-		LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id;
 	</select>
 	
 	<select id="selectPageWithList" resultMap="CommentDetail">
