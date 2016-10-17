@@ -56,8 +56,6 @@ public class FileServiceImpl implements FileService {
 	@Autowired
 	private CommonFileDao commonFileDao;
 
-	private static final String SPLIT_CHAR = "/";
-
 	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	@Override
@@ -88,6 +86,7 @@ public class FileServiceImpl implements FileService {
 				CommonFile cf = null;
 				try {
 					synchronized (fs) {
+						deleteImmediatelyIfNeed(key);
 						cf = fs.store(key, file);
 					}
 				} catch (IOException e) {
@@ -318,7 +317,6 @@ public class FileServiceImpl implements FileService {
 		for (FileDelete fd : all)
 			try {
 				deleteFile(fd);
-				fileDeleteDao.deleteById(fd.getId());
 			} catch (LogicException e) {
 				// ignore;
 			}

@@ -14,6 +14,8 @@ import me.qyh.blog.web.controller.form.BlogFileUpload;
 
 public interface FileService {
 
+	public static final String SPLIT_CHAR = "/";
+
 	List<UploadedFile> upload(BlogFileUpload upload) throws LogicException;
 
 	void createFolder(BlogFile toCreate) throws LogicException;

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
@@ -148,9 +149,9 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler({HttpMediaTypeNotSupportedException.class,HttpMediaTypeNotAcceptableException.class})
-	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp,
-			Exception ex) throws IOException {
+	@ExceptionHandler({ HttpMediaTypeNotSupportedException.class, HttpMediaTypeNotAcceptableException.class })
+	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp, Exception ex)
+			throws IOException {
 		logger.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
@@ -195,6 +196,11 @@ public class GlobalControllerExceptionHandler {
 		} else {
 			return getErrorRedirect(req, 400);
 		}
+	}
+
+	@ExceptionHandler(MultipartException.class)
+	public void handleMultipartException(MultipartException ex, HttpServletRequest req, HttpServletResponse resp) {
+
 	}
 
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
