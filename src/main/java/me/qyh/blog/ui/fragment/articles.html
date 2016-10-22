@@ -1,4 +1,5 @@
-<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px" th:if="${attributes.getBoolean('data-sort-lab',true)}">
+<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px"
+	th:if="${attributes.getBoolean('data-sort-lab',true)}">
 	<li role="presentation"
 		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
 		th:href="${urls.getArticlesUrl(articlePage.param,null)}">时间顺序</a></li>
@@ -17,7 +18,10 @@
 		<h4>
 			<span th:if="${article.hasLock()}" class="glyphicon glyphicon-lock"
 				style="margin-right: 5px"></span><span
-				th:if="${article.level != null}">【置顶】</span> <a
+				th:if="${article.level != null}">【置顶】</span> <span
+				th:if="${space == null}"><a
+				th:href="${urls.getUrl(article.space)}"
+				th:text="'【'+${article.space.name}+'】'"></a></span> <a
 				th:href="${urls.getUrl(article)}" th:text="${article.title}"> </a>
 		</h4>
 		<div style="margin-top: 5px; margin-bottom: 10px"

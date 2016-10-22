@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
@@ -16,7 +14,6 @@ import com.qiniu.storage.model.FileListing;
 import com.qiniu.util.Auth;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.service.FileService;
 import me.qyh.util.UrlUtils;
@@ -29,7 +26,7 @@ import me.qyh.util.Validators;
  * 如果提供了backupAbsPath，那么上传时同时也会将文件备份至该目录下，通过new File(backAbsPath,key)可以定位备份文件
  * </p>
  * <p>
- * 如果空间为私有空间或者开启了原图保护，请设置secret为true，这样文件的路径将会增加必要的token信息
+ * 如果空间为私有空间，请设置secret为true，这样文件的路径将会增加必要的token信息
  * </p>
  * 
  * @author Administrator
@@ -45,6 +42,17 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	private String bucket;
 	private boolean secret;// 私人空间
 	private long privateDownloadUrlExpires = PRIVATE_DOWNLOAD_URL_EXPIRES;
+	private Character styleSplitChar;// 样式分隔符
+	private boolean sourceProtected;// 原图保护
+	private String style;// 样式
+
+	/**
+	 * 所允许的样式分割符号
+	 * 
+	 * @see https://portal.qiniu.com/bucket/qyhqym/separator
+	 */
+	private static final char[] ALLOW_STYLE_SPLIT_CHARS = { '-', '_', '!', '/', '~', '`', '@', '$', '^', '&', '*', '(',
+			')', '+', '=', '{', '}', '[', ']', '|', ':', ';', '\"', '\'', '<', '>', ',', '.' };
 
 	/**
 	 * 跟七牛云设置有关
@@ -100,6 +108,8 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		if (secret) {
 			return auth.privateDownloadUrl(url);
 		}
+		if (image(key) && sourceProtected)
+			return url + styleSplitChar + style;
 		return url;
 	}
 
@@ -107,7 +117,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	@Override
 	public String getDownloadUrl(String key) {
 		String url = urlPrefix + key + "?attname=";
-		if (secret) {
+		if (secret || sourceProtected) {
 			return auth.privateDownloadUrl(url);
 		}
 		return url;
@@ -115,17 +125,62 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	@Override
 	public String getPreviewUrl(String key) {
-		if (ImageHelper.isImage(FilenameUtils.getExtension(key))) {
+		if (image(key)) {
 			String param = buildResizeParam();
 			String url = urlPrefix + key + (param == null ? "" : "?" + param);
 			if (secret) {
 				return auth.privateDownloadUrl(url);
+			} else if (sourceProtected) {
+				// 只能采用样式访问
+				return urlPrefix + key + styleSplitChar + style;
 			} else {
 				return url;
 			}
 		} else {
 			return null;
 		}
+	}
+
+	private static final int RECOMMEND_LIMIT = 100;
+
+	@Override
+	public boolean _deleteBatch(String key) {
+		try {
+			List<String> keys = new ArrayList<String>();
+			BucketManager bucketManager = new BucketManager(auth);
+			FileListing fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, null,
+					RECOMMEND_LIMIT, null);
+
+			do {
+				FileInfo[] items = fileListing.items;
+				if (items != null && items != null) {
+					for (FileInfo fileInfo : items)
+						keys.add(fileInfo.key);
+				}
+				fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, fileListing.marker,
+						RECOMMEND_LIMIT, null);
+			} while (!fileListing.isEOF());
+
+			if (keys.isEmpty())
+				return true;
+
+			Batch batch = new Batch();
+			batch.delete(bucket, keys.toArray(new String[] {}));
+			return bucketManager.batch(batch).isOK();
+		} catch (QiniuException e) {
+			// 捕获异常信息
+			Response r = e.response;
+			logger.error(r.toString());
+		}
+		return false;
+	}
+
+	private boolean allowStyleSplitChar(char schar) {
+		for (char ch : ALLOW_STYLE_SPLIT_CHARS)
+			if (ch == schar)
+				return true;
+		return false;
+
 	}
 
 	@Override
@@ -155,6 +210,21 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		if (privateDownloadUrlExpires < PRIVATE_DOWNLOAD_URL_EXPIRES) {
 			privateDownloadUrlExpires = PRIVATE_DOWNLOAD_URL_EXPIRES;
 		}
+
+		if (sourceProtected) {
+			if (style == null)
+				throw new SystemException("开启了原图保护之后请指定一个默认的样式名");
+			if (styleSplitChar == null)
+				styleSplitChar = ALLOW_STYLE_SPLIT_CHARS[0];
+			if (!allowStyleSplitChar(styleSplitChar)) {
+				StringBuilder sb = new StringBuilder();
+				for (char ch : ALLOW_STYLE_SPLIT_CHARS)
+					sb.append(ch).append(',');
+				sb.deleteCharAt(sb.length() - 1);
+				throw new SystemException("样式分隔符不被接受，样式分割符必须为以下字符:" + sb.toString());
+			}
+		}
+
 	}
 
 	/**
@@ -215,39 +285,16 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		this.privateDownloadUrlExpires = privateDownloadUrlExpires;
 	}
 
-	private static final int RECOMMEND_LIMIT = 100;
-
-	@Override
-	public boolean _deleteBatch(String key) {
-		try {
-			List<String> keys = new ArrayList<String>();
-			BucketManager bucketManager = new BucketManager(auth);
-			FileListing fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, null,
-					RECOMMEND_LIMIT, null);
-
-			do {
-				FileInfo[] items = fileListing.items;
-				if (items != null && items != null) {
-					for (FileInfo fileInfo : items)
-						keys.add(fileInfo.key);
-				}
-				fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, fileListing.marker,
-						RECOMMEND_LIMIT, null);
-			} while (!fileListing.isEOF());
-
-			if (keys.isEmpty())
-				return true;
-
-			Batch batch = new Batch();
-			batch.delete(bucket, keys.toArray(new String[] {}));
-			bucketManager.batch(batch);
-
-			return true;
-		} catch (QiniuException e) {
-			// 捕获异常信息
-			Response r = e.response;
-			logger.error(r.toString());
-		}
-		return false;
+	public void setStyleSplitChar(Character styleSplitChar) {
+		this.styleSplitChar = styleSplitChar;
 	}
+
+	public void setSourceProtected(boolean sourceProtected) {
+		this.sourceProtected = sourceProtected;
+	}
+
+	public void setStyle(String style) {
+		this.style = style;
+	}
+
 }

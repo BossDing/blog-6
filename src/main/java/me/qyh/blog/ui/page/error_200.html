@@ -23,19 +23,6 @@
 				<div class="alert alert-info" th:if="${error != null}"
 					th:text="${messages.getMessage(error)}">&nbsp;</div>
 			</div>
-			<div class="col-md-6 col-md-offset-3">
-				<form th:action="${urls.currentUrl}+'/article/list'" method="get"
-					style="margin-bottom: 10px" id="queryForm">
-					<div class="input-group">
-						<input type="text" class="form-control" name="query"
-							aria-describedby="basic-addon2" placeholder="">
-						<span class="input-group-addon" id="basic-addon2"><a
-							id="query-btn" href="###"> <span
-								class="glyphicon glyphicon-search" aria-hidden="true"></span>
-						</a></span>
-					</div>
-				</form>
-			</div>
 		</div>
 	</div>
 

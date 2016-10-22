@@ -82,10 +82,12 @@ public class FileServiceImpl implements FileService {
 			try {
 				if (blogFileDao.selectByParentAndPath(parent, file.getOriginalFilename()) != null)
 					throw new LogicException("file.path.exists", "文件已经存在");
-				String key = folderKey + SPLIT_CHAR + file.getOriginalFilename();
+				String key = folderKey.isEmpty() ? file.getOriginalFilename()
+						: (folderKey + SPLIT_CHAR + file.getOriginalFilename());
 				CommonFile cf = null;
 				try {
 					synchronized (fs) {
+						System.out.println(key+",,,,,,,,,,,,,,,,,,,,,");
 						deleteImmediatelyIfNeed(key);
 						cf = fs.store(key, file);
 					}

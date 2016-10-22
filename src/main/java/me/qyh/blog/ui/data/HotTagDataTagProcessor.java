@@ -51,7 +51,7 @@ public class HotTagDataTagProcessor extends DataTagProcessor<List<TagCount>> {
 	protected List<TagCount> query(Space space, Params params, Attributes attributes) throws LogicException {
 		boolean queryPrivate = UserContext.get() != null;
 		if (queryPrivate) {
-			String queryPrivateStr = attributes.get("queryPrivateStr");
+			String queryPrivateStr = attributes.get("queryPrivate");
 			if (queryPrivateStr != null) {
 				try {
 					queryPrivate = Boolean.parseBoolean(queryPrivateStr);

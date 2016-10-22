@@ -79,6 +79,10 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	protected abstract void upload(String key, File file) throws UploadException;
 
+	protected boolean image(String key) {
+		return ImageHelper.isImage(FilenameUtils.getExtension(key));
+	}
+
 	@Override
 	public int id() {
 		return id;

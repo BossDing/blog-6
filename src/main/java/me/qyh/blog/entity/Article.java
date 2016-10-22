@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.util.CollectionUtils;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
@@ -25,7 +23,6 @@ public class Article extends BaseLockResource implements Cloneable {
 	private String title;// 标题
 	private String content;// 博客原始内容
 	private Set<Tag> tags = new LinkedHashSet<Tag>();// 博客标签
-	@JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp pubDate;// 撰写日期
 	private Timestamp lastModifyDate;// 最后修改日期
 	private Boolean isPrivate;// 是否是私人博客
