@@ -201,6 +201,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			sp.space_alias,
 			space_lock,
 			sp.is_private AS space_is_private,
+			sp.space_name,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -276,6 +277,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_alias,
 			sp.space_alias,
 			space_lock,
+			sp.space_name,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM

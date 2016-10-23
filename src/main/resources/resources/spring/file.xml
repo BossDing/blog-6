@@ -59,25 +59,14 @@
 					<property name="name" value="本地存储"></property>
 				</bean>
 				<!-- <bean class="me.qyh.blog.file.DefaultFileServer"> <property name="stores"> 
-					<list> <bean class="me.qyh.blog.file.qiniu.QiniuFileStore"> <property name="ak" 
+					<list> <bean class="me.qyh.blog.file.oss.QiniuFileStore"> <property name="ak" 
 					value="Kk5HmAfjwjttddvVWClI7Fhlm7GFm8lAUcQ_T9gt" /> <property name="sk" value="mBUsOm-uxuNVdlirZ_R3Gdv7RfDy0sUidJZ8dkz-" 
 					/> <property name="urlPrefix" value="http://7xst8w.com1.z0.glb.clouddn.com/" 
 					/> <property name="bucket" value="qyhqym" /> <property name="secret" value="false" 
 					/> <property name="backupAbsPath" value="C:/blog_file/backup/qiniu" /> <property 
 					name="defaultResize"> <bean class="me.qyh.blog.file.Resize"> <constructor-arg 
 					value="200" /> </bean> </property> </bean> </list> </property> <property 
-					name="id" value="20" /> <property name="name" value="七牛云存储"></property> </bean> 
-					<bean class="me.qyh.blog.file.DefaultFileServer"> <property name="stores"> 
-					<list> <bean class="me.qyh.blog.file.aliyun.AliyunFileStore"> <property name="accessKeyId" 
-					value="YJC2zi8IQp9bx0Zb" /> <property name="accessKeySecret" value="9uo7oQ8jkdoQipdf7o5JeavI6OvAsI" 
-					/> <property name="urlPrefix" value="http://mhlx.oss-cn-hangzhou.aliyuncs.com/" 
-					/> <property name="bucket" value="mhlx" /> <property name="secret" value="false" 
-					/> <property name="backupAbsPath" value="C:/blog_file/backup/aliyun" /> <property 
-					name="endpoint" value="http://oss-cn-hangzhou.aliyuncs.com" /> <property 
-					name="imgDomain" value="mhlx.img-cn-hangzhou.aliyuncs.com" /> <property name="defaultResize"> 
-					<bean class="me.qyh.blog.file.Resize"> <constructor-arg index="0" value="200" 
-					/> </bean> </property> </bean> </list> </property> <property name="id" value="30" 
-					/> <property name="name" value="阿里云存储"></property> </bean> -->
+					name="id" value="20" /> <property name="name" value="七牛云存储"></property> </bean> -->
 			</list>
 		</property>
 	</bean>
@@ -85,7 +74,7 @@
 	<bean id="clearDeletedCommonFileJob" class="me.qyh.blog.service.impl.ClearDeletedCommonFileJob" />
 	<task:scheduled-tasks scheduler="clearDeletedCommonFileSchedule">
 		<task:scheduled ref="clearDeletedCommonFileJob" method="doJob"
-			cron="0 0 3 * * ?" />
+			cron="0/5 * * * * ?" />
 	</task:scheduled-tasks>
 	<task:scheduler id="clearDeletedCommonFileSchedule"
 		pool-size="1" />

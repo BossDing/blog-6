@@ -65,7 +65,7 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping("{idOrAlias}")
-	public RenderedPage article(@PathVariable("idOrAlias") String idOrAlias) throws LogicException {
+	public RenderedPage article(@PathVariable(value = "idOrAlias") String idOrAlias) throws LogicException {
 		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
 				new Params().add(ArticleDataTagProcessor.PARAMETER_KEY, idOrAlias));
 	}
