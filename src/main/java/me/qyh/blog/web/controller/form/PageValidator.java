@@ -7,6 +7,7 @@ import org.springframework.validation.Validator;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
@@ -111,6 +112,14 @@ public class PageValidator implements Validator {
 			ErrorCode errorCode = errorPage.getErrorCode();
 			if (errorCode == null) {
 				errors.reject("page.errorcode.null", "页面错误码不能为空");
+				return;
+			}
+		}
+
+		if (page instanceof LockPage) {
+			LockPage lockPage = (LockPage) page;
+			if(Validators.isEmptyOrNull(lockPage.getLockType(), true)){
+				errors.reject("page.locktype.empty", "页面锁类型不能为空");
 				return;
 			}
 		}

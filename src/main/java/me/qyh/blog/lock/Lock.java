@@ -23,7 +23,6 @@ public abstract class Lock implements Serializable {
 	private String id;
 	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String name;
-	private LockResource lockResource;
 
 	/**
 	 * 从请求中获取钥匙
@@ -41,12 +40,11 @@ public abstract class Lock implements Serializable {
 	public abstract boolean tryOpen(LockKey key);
 
 	/**
-	 * 解锁地址
+	 * 获取锁类型(用于模板)
 	 * 
 	 * @return
-	 * @throws LockException
 	 */
-	public abstract String keyInputUrl();
+	public abstract String getLockType();
 
 	public String getId() {
 		return id;
@@ -62,13 +60,5 @@ public abstract class Lock implements Serializable {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public LockResource getLockResource() {
-		return lockResource;
-	}
-
-	public void setLockResource(LockResource lockResource) {
-		this.lockResource = lockResource;
 	}
 }

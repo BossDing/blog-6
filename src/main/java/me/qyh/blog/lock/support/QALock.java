@@ -16,7 +16,7 @@ import me.qyh.blog.message.Message;
  * @author Administrator
  *
  */
-public class QALock extends DefaultLock {
+public class QALock extends SysLock {
 
 	/**
 	 * 
@@ -76,11 +76,6 @@ public class QALock extends DefaultLock {
 		return false;
 	}
 
-	@Override
-	public String keyInputUrl() {
-		return "unlock/qalock";
-	}
-
 	public String getQuestion() {
 		return question;
 	}
@@ -98,7 +93,7 @@ public class QALock extends DefaultLock {
 	}
 
 	public QALock() {
-		super(LockType.QA);
+		super(SysLockType.QA);
 	}
 
 }

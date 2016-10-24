@@ -60,7 +60,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	@Autowired
-	private LockManager<?> lockManager;
+	private LockManager lockManager;
 	@Autowired
 	private ArticleCache articleCache;
 

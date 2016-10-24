@@ -24,7 +24,7 @@ import me.qyh.blog.security.UserContext;
 public class LockAspect {
 
 	@Autowired
-	private LockManager<?> lockManager;
+	private LockManager lockManager;
 
 	private static final Logger logger = LoggerFactory.getLogger(LockAspect.class);
 
@@ -34,7 +34,6 @@ public class LockAspect {
 		if (lockResource != null && lockResource.getLockId() != null && UserContext.get() == null) {
 			Lock lock = lockManager.findLock(lockResource.getLockId());
 			if (lock != null) {
-				lock.setLockResource(lockResource);
 				LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
 				boolean open = false;
 				try {
@@ -44,7 +43,7 @@ public class LockAspect {
 					logger.error(e.getMessage(), e);
 				}
 				if (!open) {
-					throw new LockException(lock);
+					throw new LockException(lock,lockResource);
 				}
 			}
 		}

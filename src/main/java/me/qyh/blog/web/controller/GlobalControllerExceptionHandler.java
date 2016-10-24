@@ -100,14 +100,10 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(LockException.class)
 	public String handleLockException(HttpServletRequest request, LockException ex) throws IOException {
 		Lock lock = ex.getLock();
-		String url = lock.keyInputUrl();
-		if (!UrlUtils.isAbsoluteUrl(url)) {
-			url = urlHelper.getUrl() + (url.startsWith("/") ? url : "/" + url);
-		}
 		String redirectUrl = getFullUrl(request);
-		LockHelper.storeLockBean(request, new LockBean(lock, redirectUrl));
-		RequestContextUtils.getOutputFlashMap(request).put("tip", lock.getLockResource().getLockTip());
-		return "redirect:" + url;
+		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl));
+		RequestContextUtils.getOutputFlashMap(request).put("tip", ex.getLockResource().getLockTip());
+		return "redirect:/unlock";
 	}
 
 	@ExceptionHandler(LogicException.class)

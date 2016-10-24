@@ -22,7 +22,7 @@ public class Page extends Id implements Cloneable {
 	private PageType type;
 
 	public enum PageType {
-		SYSTEM, USER, EXPANDED, ERROR
+		SYSTEM, USER, EXPANDED, ERROR, LOCK
 	}
 
 	public Space getSpace() {

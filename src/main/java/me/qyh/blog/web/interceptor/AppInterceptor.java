@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -84,10 +85,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				setLockKeys(request);
 
 				if (spaceAlias != null) {
-					Space space = spaceService.selectSpaceByAlias(spaceAlias);
-					if (space == null) {
-						throw new SpaceNotFoundException(spaceAlias);
-					}
+					Space space = getSpace(request, spaceAlias);
 					SpaceContext.set(space);
 				}
 
@@ -205,6 +203,18 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		UserContext.remove();
 		LockKeyContext.remove();
 		SpaceContext.remove();
+	}
+
+	private AntPathMatcher apm = new AntPathMatcher();
+
+	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
+		boolean needLockProtected = !apm.match("/space/*/unlock", request.getRequestURI());
+		Space space = needLockProtected ? spaceService.selectSpaceByAlias(spaceAlias)
+				: spaceService.selectSpaceByAliasWithoutLockProtected(spaceAlias);
+		if (space == null) {
+			throw new SpaceNotFoundException(spaceAlias);
+		}
+		return space;
 	}
 
 	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {

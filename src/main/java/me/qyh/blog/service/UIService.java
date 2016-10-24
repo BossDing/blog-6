@@ -21,6 +21,7 @@ import me.qyh.blog.ui.fragment.UserFragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
@@ -305,5 +306,42 @@ public interface UIService {
 	 * @return
 	 */
 	Fragment queryFragment(String name);
+
+	/**
+	 * 创建解锁页面模板
+	 * 
+	 * @param lockPage
+	 * @throws LogicException
+	 */
+	void buildTpl(LockPage lockPage) throws LogicException;
+
+	/**
+	 * 删除存在的解锁页面模板
+	 * 
+	 * @param space
+	 * @param lockType
+	 * @throws LogicException
+	 */
+	void deleteLockPage(Space space, String lockType) throws LogicException;
+
+	/**
+	 * 查询解锁页面模板
+	 * 
+	 * @param space
+	 * @param lockType
+	 * @return
+	 * @throws LogicException
+	 */
+	LockPage queryLockPage(Space space, String lockType) throws LogicException;
+
+	/**
+	 * 渲染解锁页面
+	 * 
+	 * @param space
+	 * @param lockType
+	 * @return
+	 * @throws LogicException
+	 */
+	RenderedPage renderLockPage(Space space, String lockType) throws LogicException;
 
 }

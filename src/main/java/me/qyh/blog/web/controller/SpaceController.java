@@ -73,7 +73,8 @@ public class SpaceController extends BaseController {
 			page.setTpl(TemplateParser.buildFragmentTag(fr.getName()));
 			Map<String, Fragment> frMap = new HashMap<String, Fragment>();
 			frMap.put(fr.getName(), fr);
-			RenderedPage rp = new RenderedPage(page, result == null ? Collections.emptyList()  : Arrays.asList(result), frMap);
+			RenderedPage rp = new RenderedPage(page, result == null ? Collections.emptyList() : Arrays.asList(result),
+					frMap);
 			try {
 				return new JsonResult(true, render.tryRender(rp, request, response));
 			} catch (TplRenderException e) {

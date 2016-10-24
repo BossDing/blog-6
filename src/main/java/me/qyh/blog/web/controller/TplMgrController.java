@@ -58,6 +58,7 @@ import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.Page.PageType;
 import me.qyh.blog.ui.page.SysPage;
@@ -215,6 +216,9 @@ public class TplMgrController extends BaseMgrController {
 				case SYSTEM:
 					renderedPage = uiService.renderPreviewPage((SysPage) cloned);
 					break;
+				case LOCK:
+					renderedPage = uiService.renderPreviewPage((LockPage) cloned);
+					break;
 				}
 			} catch (LogicException e) {
 				errors.add(new ImportError(wrapper.getIndex(), e.getLogicMessage()));
@@ -347,6 +351,21 @@ public class TplMgrController extends BaseMgrController {
 					continue;
 				}
 				parsed = up;
+				break;
+			case LOCK:
+				LockPage lockPage = null;
+				try {
+					lockPage = reader.treeToValue(pageNode, LockPage.class);
+				} catch (Exception e) {
+					// 无法转换为对应页面
+					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为解锁页面:" + e.getMessage());
+					continue;
+				}
+				if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
+					logger.debug("序号:" + i + ":解锁页面缺少lockType参数");
+					continue;
+				}
+				parsed = lockPage;
 				break;
 			}
 			if (parsed == null) {

@@ -11,7 +11,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.security.BCrypts;
 import me.qyh.util.Validators;
 
-public class PasswordLock extends DefaultLock {
+public class PasswordLock extends SysLock {
 
 	/**
 	 * 
@@ -23,7 +23,7 @@ public class PasswordLock extends DefaultLock {
 	private String password;
 
 	public PasswordLock() {
-		super(LockType.PASSWORD);
+		super(SysLockType.PASSWORD);
 	}
 
 	@Override
@@ -55,11 +55,6 @@ public class PasswordLock extends DefaultLock {
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public String keyInputUrl() {
-		return "/unlock/plock";
 	}
 
 	@JsonIgnore

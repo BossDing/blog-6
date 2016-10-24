@@ -39,4 +39,12 @@ public interface SpaceService {
 	 */
 	List<Space> querySpace(SpaceQueryParam param);
 
+	/**
+	 * 根据空间名查询空间，不会进行锁检查
+	 * 
+	 * @param alias
+	 * @return
+	 */
+	Space selectSpaceByAliasWithoutLockProtected(String alias);
+
 }

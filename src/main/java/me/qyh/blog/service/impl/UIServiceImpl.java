@@ -28,6 +28,7 @@ import me.qyh.blog.bean.ImportSuccess;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.ExpandedPageDao;
+import me.qyh.blog.dao.LockPageDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.SysPageDao;
 import me.qyh.blog.dao.UserFragmentDao;
@@ -35,6 +36,7 @@ import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
@@ -57,6 +59,7 @@ import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.ExpandedPageHandler;
 import me.qyh.blog.ui.page.ExpandedPageServer;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
@@ -75,6 +78,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private ErrorPageDao errorPageDao;
 	@Autowired
+	private LockPageDao lockPageDao;
+	@Autowired
 	private UserFragmentDao userFragmentDao;
 	@Autowired
 	private SpaceDao spaceDao;
@@ -82,6 +87,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private ExpandedPageDao expandedPageDao;
 	@Autowired
 	private ExpandedPageServer expandedPageServer;
+	@Autowired
+	private LockManager lockManager;
 
 	private UICacheRender uiCacheRender;
 
@@ -90,6 +97,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<ErrorCode, Resource>();
 	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<ErrorCode, String>();
+
+	private Map<String, String> lockPageDefaultTpls = new HashMap<String, String>();
 
 	private final TemplateParser templateParser = new TemplateParser();
 
@@ -224,7 +233,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (sysPage == null) {
 			sysPage = new SysPage(space, target);
 			sysPage.setTpl(_sysPageDefaultTpls.get(target));
-			sysPage.setTarget(target);
 		}
 		sysPage.setSpace(space);
 		return sysPage;
@@ -391,6 +399,55 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	public void buildTpl(LockPage lockPage) throws LogicException {
+		checkLockType(lockPage.getLockType());
+		checkSpace(lockPage);
+		LockPage db = lockPageDao.selectBySpaceAndLockType(lockPage.getSpace(), lockPage.getLockType());
+		boolean update = db != null;
+		if (update) {
+			lockPage.setId(db.getId());
+			lockPageDao.update(lockPage);
+		} else {
+			lockPageDao.insert(lockPage);
+		}
+		uiCacheRender.evit(lockPage.getTemplateName());
+	}
+
+	@Override
+	public void deleteLockPage(Space space, String lockType) throws LogicException {
+		LockPage page = lockPageDao.selectBySpaceAndLockType(space, lockType);
+		if (page != null) {
+			lockPageDao.deleteById(page.getId());
+			uiCacheRender.evit(page.getTemplateName());
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public LockPage queryLockPage(Space space, String lockType) throws LogicException {
+		checkLockType(lockType);
+		LockPage lockPage = lockPageDao.selectBySpaceAndLockType(space, lockType);
+		if (lockPage == null) {
+			lockPage = new LockPage(space, lockType);
+			lockPage.setTpl(lockPageDefaultTpls.get(lockType));
+		}
+		lockPage.setSpace(space);
+		return lockPage;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public RenderedPage renderLockPage(final Space space, String lockType) throws LogicException {
+		checkLockType(lockType);
+		return uiCacheRender.render(new LockPageRender(lockType, space), new Params());
+	}
+
+	private void checkLockType(String lockType) throws LogicException {
+		if (!lockManager.checkLockTypeExists(lockType))
+			throw new LogicException("page.lock.locktype.notexists", "锁类型：" + lockType + "不存在", lockType);
+	}
+
+	@Override
 	public void buildTpl(ErrorPage errorPage) throws LogicException {
 		checkSpace(errorPage);
 		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(errorPage.getSpace(), errorPage.getErrorCode());
@@ -476,6 +533,15 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 			pages.add(ep);
 		}
+		// 解锁
+		for (String lockType : lockManager.allTypes()) {
+			RenderedPage page = uiCacheRender.renderPreview(new LockPageRender(lockType, sp));
+			ExportPage ep = new ExportPage();
+			ep.setPage(new LockPage(null, lockType));
+			ep.getPage().setTpl(page.getPage().getTpl());
+			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
+			pages.add(ep);
+		}
 		if (req.isExportExpandedPage()) {
 			for (ExpandedPage ep : expandedPageDao.selectAll()) {
 				RenderedPage page = uiCacheRender.renderPreview(new ExpandedPageLoader(ep.getId()));
@@ -538,6 +604,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					expandedPageDao.insert((ExpandedPage) db);
 				}
 				break;
+			case LOCK:
+				try {
+					db = queryLockPage(space, ((LockPage) page).getLockType());
+				} catch (LogicException e) {
+					result.addError(new ImportError(ipw.getIndex(), e.getLogicMessage()));
+					continue;
+				}
+				break;
 			}
 			// 如果以前页面不存在了，直接跳过
 			if (db == null) {
@@ -552,6 +626,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					break;
 				case ERROR:
 					param = ((ErrorPage) page).getErrorCode().name();
+					break;
+				case LOCK:
+					param = ((LockPage) page).getLockType();
 					break;
 				}
 				result.addError(new ImportError(ipw.getIndex(), new Message("tpl.import.pageNotExists",
@@ -597,6 +674,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				break;
 			case EXPANDED:
 				expandedPageDao.update((ExpandedPage) db);
+				break;
+			case LOCK:
+				// 系统模板可能从来没有被覆盖过，所以这里需要再次检查
+				if (db.hasId()) {
+					lockPageDao.update((LockPage) db);
+				} else {
+					lockPageDao.insert((LockPage) db);
+				}
 				break;
 			}
 
@@ -655,45 +740,54 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			Resource resource = sysPageDefaultTpls.get(target);
 			if (resource == null)
 				resource = new ClassPathResource("me/qyh/blog/ui/page/PAGE_" + target.name() + ".html");
-			InputStream is = null;
-			try {
-				is = resource.getInputStream();
-				String tpl = IOUtils.toString(is, Constants.CHARSET);
-				if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-					throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-				}
-				if (Validators.isEmptyOrNull(tpl, true)) {
-					throw new SystemException("系统页面：" + target + "模板不能为空");
-				}
-				_sysPageDefaultTpls.put(target, tpl);
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
-			} finally {
-				IOUtils.closeQuietly(is);
+			String tpl = fromResource(resource);
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
+			if (Validators.isEmptyOrNull(tpl, true)) {
+				throw new SystemException("系统页面：" + target + "模板不能为空");
+			}
+			_sysPageDefaultTpls.put(target, tpl);
 		}
 		for (ErrorCode code : ErrorCode.values()) {
 			Resource resource = errorPageDefaultTpls.get(code);
 			if (resource == null)
 				resource = new ClassPathResource("me/qyh/blog/ui/page/" + code.name() + ".html");
-			InputStream is = null;
-			try {
-				is = resource.getInputStream();
-				String tpl = IOUtils.toString(is, Constants.CHARSET);
-				if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-					throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-				}
-				if (Validators.isEmptyOrNull(tpl, true)) {
-					throw new SystemException("错误页面：" + code + "模板不能为空");
-				}
-				_errorPageDefaultTpls.put(code, tpl);
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
-			} finally {
-				IOUtils.closeQuietly(is);
+			String tpl = fromResource(resource);
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
+			if (Validators.isEmptyOrNull(tpl, true)) {
+				throw new SystemException("错误页面：" + code + "模板不能为空");
+			}
+			_errorPageDefaultTpls.put(code, tpl);
+		}
+		for (String lockType : lockManager.allTypes()) {
+			Resource resource = lockManager.getDefaultTemplateResource(lockType);
+			if (resource == null)
+				throw new SystemException("没有指定LockType:" + lockType + "的默认模板");
+			String tpl = fromResource(resource);
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("解锁页面：" + lockType + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
+			}
+			if (Validators.isEmptyOrNull(tpl, true)) {
+				throw new SystemException("解锁页面：" + lockType + "模板不能为空");
+			}
+			lockPageDefaultTpls.put(lockType, tpl);
 		}
 		this.uiCacheRender = new UICacheRender();
+	}
+
+	private String fromResource(Resource resource) {
+		InputStream is = null;
+		try {
+			is = resource.getInputStream();
+			return IOUtils.toString(is, Constants.CHARSET);
+		} catch (Exception e) {
+			throw new SystemException(e.getMessage(), e);
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
 	}
 
 	public void setErrorPageDefaultTpls(Map<ErrorCode, Resource> errorPageDefaultTpls) {
@@ -862,6 +956,27 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		public ErrorPageLoader(ErrorCode errorCode, Space space) {
 			this.errorCode = errorCode;
+			this.space = space;
+		}
+
+	}
+
+	private final class LockPageRender implements PageLoader {
+		private String lockType;
+		private Space space;
+
+		@Override
+		public String pageKey() {
+			return new LockPage(space, lockType).getTemplateName();
+		}
+
+		@Override
+		public Page loadFromDb() throws LogicException {
+			return queryLockPage(space, lockType);
+		}
+
+		public LockPageRender(String lockType, Space space) {
+			this.lockType = lockType;
 			this.space = space;
 		}
 

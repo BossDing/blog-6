@@ -6,45 +6,80 @@
 	<div id="page-wrapper" style="padding: 10px">
 		<div class="container-fluid">
 			<div class="row">
-				<div class="col-md-12">
-					<div th:unless="${#lists.isEmpty(spaces)}">
-						<div class="table-responsive">
-							<table class="table">
-								<thead>
-									<tr>
-										<th>空间</th>
-										<th th:each="pageTarget : ${pageTargets}"
-											th:text="${messages.getMessage(pageTarget.getMessage())}">
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td>无</td>
-										<td th:each="pageTarget : ${pageTargets}"><a
-											data-action="revert" th:data-target="${pageTarget.name()}"
-											href="###" style="margin-right: 10px;"><span
-												class="glyphicon glyphicon-repeat" title="还原"
-												aria-hidden="true"></span></a><a
-											th:href="@{/mgr/page/sys/build?target=}+${pageTarget.name()}"><span
-												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-										</td>
-									</tr>
-									<tr th:each="space : ${spaces}">
-										<td><a th:href="${urls.getUrl(space)}"
-											th:title="${space.name}" data-toggle="tooltip"
-											th:text="${#strings.length(space.name) > 5  ? #strings.substring(space.name,0,5)+'...' : space.name}"></a></td>
-										<td th:each="pageTarget : ${pageTargets}"><a href="###"
-											data-action="revert" th:data-space-id="${space.id}"
-											th:data-target="${pageTarget.name()}"
-											style="margin-right: 10px;"><span
-												class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a><a
-											th:href="@{/mgr/page/sys/build?target=}+${pageTarget.name()}+'&spaceId='+${space.id}"><span
-												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-										</td>
-									</tr>
-								</tbody>
-							</table>
+				<div class="col-md-8 col-md-offset-2">
+					<div class="form-group">
+						<select class="form-control" id="space">
+							<option value="">默认</option>
+							<option th:value="${space.id}" th:each="space : ${spaces}"
+								th:text="${space.name}"></option>
+						</select>
+					</div>
+					<ul id="pageTab" class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#mainPage"
+							id="mainPage-tab" role="tab" data-toggle="tab"
+							aria-controls="home" aria-expanded="true">主要页面</a></li>
+						<li role="presentation"><a href="#errorPage" role="tab"
+							id="errorPage-tab" data-toggle="tab" >错误页面</a></li>
+						<li role="presentation"><a href="#lockPage" role="tab"
+							id="lockPage-tab" data-toggle="tab" >解锁页面</a></li>
+					</ul>
+					<div class="tab-content" style="margin-top: 10px">
+						<div role="tabpanel" class="tab-pane fade in active" id="mainPage"
+							aria-labelledby="mainPage-tab">
+							<div class="table-responsive">
+								<table class="table">
+									<tbody>
+										<tr th:each="pageTarget : ${pageTargets}">
+											<td th:text="${messages.getMessage(pageTarget.message)}"></td>
+											<td><a href="###" data-action="revert"
+												data-type="sysPage" th:data-target="${pageTarget}"
+												style="margin-right: 10px;"><span
+													class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>
+												&nbsp;&nbsp; <a href="###" data-action="edit"
+												data-type="sysPage" th:data-target="${pageTarget}"><span
+													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane fade" id="errorPage"
+							aria-labelledby="profile-tab">
+							<div class="table-responsive">
+								<table class="table">
+									<tbody>
+										<tr th:each="errorCode : ${errorCodes}">
+											<td th:text="${messages.getMessage(errorCode.message)}"></td>
+											<td><a href="###" data-action="revert"
+												data-type="errorPage" th:data-target="${errorCode.name()}"
+												style="margin-right: 10px;"><span
+													class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>
+												&nbsp;&nbsp; <a href="###" data-action="edit"
+												data-type="errorPage" th:data-target="${errorCode.name()}"><span
+													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane fade" id="lockPage"
+							aria-labelledby="profile-tab">
+							<div class="table-responsive">
+								<table class="table">
+									<tbody>
+										<tr th:each="lockType : ${lockTypes}">
+											<td th:text="${lockType}"></td>
+											<td><a href="###" data-action="revert"
+												data-type="lockPage" th:data-target="${lockType}"
+												style="margin-right: 10px;"><span
+													class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>
+												&nbsp;&nbsp; <a href="###" data-action="edit"
+												data-type="lockPage" th:data-target="${lockType}"><span
+													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -57,10 +92,28 @@
 			$("a[data-action='revert']").click(function() {
 				var me = $(this);
 				var target = me.attr("data-target");
-				var spaceId = me.attr("data-space-id");
-				var url = basePath + "/mgr/page/sys/delete?target=" + target;
-				if (spaceId) {
-					url += "&spaceId=" + spaceId;
+				var type = me.attr("data-type");
+				var spaceId = $("#space").val();
+				var hasSpace = spaceId && spaceId != "";
+				var url = "";
+				switch(type){
+				case "sysPage":
+					url = basePath + "/mgr/page/sys/delete?target=" + target;
+					if(hasSpace)
+						url += "&spaceId=" + spaceId;
+					break;
+				case "errorPage":
+					url = basePath+"/mgr/page/error/delete?errorCode="+target;
+					if(hasSpace){
+						url += "&spaceId="+spaceId;
+					}
+					break;
+				case "lockPage":
+					url = basePath+"/mgr/page/lock/delete?lockType="+target;
+					if(hasSpace){
+						url += "&spaceId="+spaceId;
+					}
+					break;
 				}
 				bootbox.confirm("确定要还原吗？这将删除现有的模板", function(result) {
 					if (!result) {
@@ -78,6 +131,34 @@
 						}
 					});
 				})
+			});
+			$("a[data-action='edit']").click(function() {
+				var me = $(this);
+				var target = me.attr("data-target");
+				var type = me.attr("data-type");
+				var spaceId = $("#space").val();
+				var hasSpace = spaceId && spaceId != "";
+				var url = "";
+				switch(type){
+				case "sysPage":
+					url = basePath + "/mgr/page/sys/build?target=" + target;
+					if(hasSpace)
+						url += "&spaceId=" + spaceId;
+					break;
+				case "errorPage":
+					url = basePath+"/mgr/page/error/build?errorCode="+target;
+					if(hasSpace){
+						url += "&spaceId="+spaceId;
+					}
+					break;
+				case "lockPage":
+					url = basePath+"/mgr/page/lock/build?lockType="+target;
+					if(hasSpace){
+						url += "&spaceId="+spaceId;
+					}
+					break;
+				}
+				window.location.href = url;
 			})
 		})
 	</script>

@@ -31,7 +31,7 @@ public class SpaceServiceImpl implements SpaceService {
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
-	private LockManager<?> lockManager;
+	private LockManager lockManager;
 
 	@Override
 	public void addSpace(Space space) throws LogicException {
@@ -78,6 +78,13 @@ public class SpaceServiceImpl implements SpaceService {
 			}
 		}
 		return space;
+	}
+	
+	@Override
+	@Cacheable(value = "userCache", key = "'space-'+#alias", unless = "#result == null || #result.isPrivate")
+	@Transactional(readOnly = true)
+	public Space selectSpaceByAliasWithoutLockProtected(String alias) {
+		return selectSpaceByAlias(alias);
 	}
 
 	@Override

@@ -69,17 +69,6 @@
 		</mvc:interceptor>
 	</mvc:interceptors>
 
-	<!-- 保护资源解锁 -->
-	<bean class="me.qyh.blog.lock.support.UnlockController" />
-	<!-- 锁解析 -->
-	<bean class="me.qyh.blog.lock.support.DefaultLockParser">
-		<property name="validators">
-			<array>
-				<bean class="me.qyh.blog.lock.support.DefaultLockValidator" />
-			</array>
-		</property>
-	</bean>
-
 	<!-- 页面拓展 -->
 	<bean class="me.qyh.blog.ui.page.ExpanedPageHandlerMapping" />
 	<bean class="me.qyh.blog.ui.page.ExpandedPageRequestController" />

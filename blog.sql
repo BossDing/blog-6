@@ -57,7 +57,7 @@ CREATE TABLE `blog_article` (
   KEY `pubDate_idx` (`pubDate`,`art_level`),
   KEY `pubDate_idx2` (`pubDate`),
   CONSTRAINT `blog_article_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=209 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=214 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_article_tag` */
 
@@ -95,7 +95,7 @@ CREATE TABLE `blog_comment` (
   KEY `parent_id_idx` (`parent_id`),
   CONSTRAINT `blog_comment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `blog_oauth_user` (`id`),
   CONSTRAINT `blog_comment_ibfk_2` FOREIGN KEY (`article_id`) REFERENCES `blog_article` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=184 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_common_file` */
 
@@ -112,7 +112,7 @@ CREATE TABLE `blog_common_file` (
   `file_width` int(11) DEFAULT NULL,
   `file_height` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=335 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=388 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_file` */
 
@@ -133,7 +133,7 @@ CREATE TABLE `blog_file` (
   KEY `common_file` (`common_file`),
   KEY `file_createDate_idx` (`file_createDate`),
   CONSTRAINT `blog_file_ibfk_1` FOREIGN KEY (`common_file`) REFERENCES `blog_common_file` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=444 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=510 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_file_delete` */
 
@@ -146,7 +146,7 @@ CREATE TABLE `blog_file_delete` (
   `file_key` varchar(2000) COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_type` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_fragment_user` */
 
@@ -163,7 +163,7 @@ CREATE TABLE `blog_fragment_user` (
   PRIMARY KEY (`id`),
   KEY `space_id` (`space_id`),
   CONSTRAINT `blog_fragment_user_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_lock` */
 
@@ -237,6 +237,20 @@ CREATE TABLE `blog_page_expanded` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+/*Table structure for table `blog_page_lock` */
+
+DROP TABLE IF EXISTS `blog_page_lock`;
+
+CREATE TABLE `blog_page_lock` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `space_id` int(11) DEFAULT NULL,
+  `page_tpl` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `page_locktype` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `space_id` (`space_id`),
+  CONSTRAINT `blog_page_lock_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 /*Table structure for table `blog_page_sys` */
 
 DROP TABLE IF EXISTS `blog_page_sys`;
@@ -268,7 +282,7 @@ CREATE TABLE `blog_page_user` (
   KEY `space_id` (`space_id`),
   KEY `page_create_date_idx` (`page_create_date`),
   CONSTRAINT `blog_page_user_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_space` */
 
@@ -312,8 +326,6 @@ CREATE TABLE `blog_user` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-insert  into `blog_user`(`id`,`user_name`,`user_password`,`user_email`) values (2,'admin','$2a$10$ulTl80OWAFb8F.Mj3M12ueChA8Q0MykQhSQmwixgvyhekoLLnyvBO','youremail@email.com');
 /* Trigger structure for table `blog_lock` */
 
 DELIMITER $$

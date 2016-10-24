@@ -31,6 +31,7 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
@@ -39,6 +40,7 @@ import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.SysPage;
+import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.PageValidator;
 
@@ -52,6 +54,8 @@ public class SysPageMgrController extends BaseMgrController {
 	private SpaceService spaceService;
 	@Autowired
 	private TplRender tplRender;
+	@Autowired
+	private LockManager lockManager;
 
 	@Autowired
 	private PageValidator pageValidator;
@@ -66,7 +70,9 @@ public class SysPageMgrController extends BaseMgrController {
 		SpaceQueryParam param = new SpaceQueryParam();
 		List<Space> spaces = spaceService.querySpace(param);
 		model.addAttribute("spaces", spaces);
+		model.addAttribute("errorCodes", ErrorCode.values());
 		model.addAttribute("pageTargets", PageTarget.values());
+		model.addAttribute("lockTypes", lockManager.allTypes());
 		return "mgr/page/sys/index";
 	}
 

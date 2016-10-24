@@ -29,9 +29,8 @@
 		<typeAlias type="me.qyh.blog.file.CommonFile" alias="CommonFile" />
 		<typeAlias type="me.qyh.blog.entity.FileDelete" alias="FileDelete" />
 
-		<typeAlias type="me.qyh.blog.lock.support.DefaultLock"
-			alias="DefaultLock" />
-		<typeAlias type="me.qyh.blog.lock.support.DefaultLock$LockType"
+		<typeAlias type="me.qyh.blog.lock.support.SysLock" alias="SysLock" />
+		<typeAlias type="me.qyh.blog.lock.support.SysLock$SysLockType"
 			alias="LockType" />
 		<typeAlias type="me.qyh.blog.lock.support.PasswordLock"
 			alias="PasswordLock" />
@@ -49,6 +48,7 @@
 		<typeAlias type="me.qyh.blog.ui.page.ErrorPage$ErrorCode"
 			alias="ErrorCode" />
 		<typeAlias type="me.qyh.blog.ui.page.ExpandedPage" alias="ExpandedPage" />
+		<typeAlias type="me.qyh.blog.ui.page.LockPage" alias="LockPage" />
 		<typeAlias type="me.qyh.blog.ui.fragment.UserFragment"
 			alias="UserFragment" />
 
@@ -86,6 +86,7 @@
 		<mapper resource="resources/mybatis/mapper/errorPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/expandedPageMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/lockPageMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/oauthUserMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/oauthBindMapper.xml" />

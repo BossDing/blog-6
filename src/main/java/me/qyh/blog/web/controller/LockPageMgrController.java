@@ -24,13 +24,12 @@ import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.web.controller.form.PageValidator;
 
-@RequestMapping("mgr/page/error")
+@RequestMapping("mgr/page/lock")
 @Controller
-public class ErrorPageMgrController extends BaseMgrController {
+public class LockPageMgrController extends BaseMgrController {
 
 	@Autowired
 	private UIService uiService;
@@ -40,44 +39,38 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@Autowired
 	private PageValidator pageValidator;
 
-	@InitBinder(value = "errorPage")
+	@InitBinder(value = "lockPage")
 	protected void initBinder(WebDataBinder binder) {
 		binder.setValidator(pageValidator);
 	}
 
 	@RequestMapping(value = "build", method = RequestMethod.GET)
-	public String build(@RequestParam("errorCode") ErrorCode code,
-			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) {
-		model.addAttribute("page", uiService.queryErrorPage(spaceId == null ? null : new Space(spaceId), code));
-		return "mgr/page/error/build";
+	public String build(@RequestParam("lockType") String lockType,
+			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
+		model.addAttribute("page", uiService.queryLockPage(spaceId == null ? null : new Space(spaceId), lockType));
+		return "mgr/page/lock/build";
 	}
 
 	@RequestMapping(value = "build", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult build(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
+	public JsonResult build(@RequestBody @Validated LockPage lockPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(errorPage);
-		if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
-			request.setAttribute("error", new Message("error.200", "200"));
-		}
+		RenderedPage page = uiService.renderPreviewPage(lockPage);
 		try {
 			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-		uiService.buildTpl(errorPage);
-		return new JsonResult(true, new Message("page.error.build.success", "保存成功"));
+		uiService.buildTpl(lockPage);
+		return new JsonResult(true, new Message("page.lock.build.success", "保存成功"));
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult preview(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
+	public JsonResult preview(@RequestBody @Validated LockPage sysPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		try {
-			RenderedPage page = uiService.renderPreviewPage(errorPage);
-			if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
-				request.setAttribute("error", new Message("error.200", "200"));
-			}
+			RenderedPage page = uiService.renderPreviewPage(sysPage);
 			String rendered = tplRender.tryRender(page, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
@@ -88,10 +81,10 @@ public class ErrorPageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult delete(@RequestParam("errorCode") ErrorCode code,
+	public JsonResult delete(@RequestParam("lockType") String lockType,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId) throws LogicException {
-		uiService.deleteErrorPage(spaceId == null ? null : new Space(spaceId), code);
-		return new JsonResult(true, new Message("page.error.delete.success", "还原成功"));
+		uiService.deleteLockPage(spaceId == null ? null : new Space(spaceId), lockType);
+		return new JsonResult(true, new Message("page.lock.delete.success", "还原成功"));
 	}
 
 }

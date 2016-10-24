@@ -36,7 +36,7 @@
 					<li th:class="${tag == 'space'}? active:''"><a
 						th:href="@{/mgr/space/index}"> 空间管理</a></li>
 					<li th:class="${tag == 'lock'}? active:''"><a
-						th:href="@{/mgr/lock/index}"> 锁管理</a></li>
+						th:href="@{/mgr/lock/sys/index}"> 系统锁管理</a></li>
 					<li th:class="${tag == 'files'}? active:''"><a
 						th:href="@{/mgr/file/index}"> 文件管理</a></li>
 					<li><a th:href="@{/mgr/article/index}"
@@ -58,8 +58,6 @@
 								th:href="@{/mgr/page/user/index}">自定义页面管理</a></li>
 							<li><a th:class="${tag == 'tpl-sys'}? active:''"
 								th:href="@{/mgr/page/sys/index}">系统页面管理</a></li>
-							<li><a th:class="${tag == 'tpl-error'}? active:''"
-								th:href="@{/mgr/page/error/index}">错误页面管理</a></li>
 							<li><a th:class="${tag == 'tpl-expanded'}? active:''"
 								th:href="@{/mgr/page/expanded/index}">扩展页面管理</a></li>
 							<li><a th:class="${tag == 'tpl-fragment'}? active:''"

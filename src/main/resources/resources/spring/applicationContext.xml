@@ -54,7 +54,7 @@
 	<import resource="file.xml" />
 	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config" />
 
-	<aop:aspectj-autoproxy />
+	<aop:aspectj-autoproxy proxy-target-class="true" />
 	<!-- 验证码服务 -->
 	<bean class="com.google.code.kaptcha.impl.DefaultKaptcha">
 		<property name="config">
@@ -72,10 +72,37 @@
 
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager" class="org.springframework.cache.concurrent.ConcurrentMapCacheManager"/>
+	<bean id="cacheManager"
+		class="org.springframework.cache.concurrent.ConcurrentMapCacheManager" />
 
 	<!-- 锁 -->
-	<bean class="me.qyh.blog.lock.support.DefaultLockManager" />
+	<bean class="me.qyh.blog.lock.LockManager">
+		<!-- 
+		<property name="expandedLockProvider">
+			<bean class="me.qyh.blog.lock.ExpandedLockProvider">
+				<property name="expandedLocks">
+					<list>
+						<bean class="me.qyh.blog.lock.support.PictureQALock">
+							<property name="lockType" value="PictureQA" />
+							<property name="picture"
+								value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" />
+							<property name="question" value="which game ?" />
+							<property name="answers" value="WOW" />
+							<property name="id" value="expandedLock1"></property>
+							<property name="name" value="魔兽"/>
+						</bean>
+					</list>
+				</property>
+				<property name="defaultTplResource">
+					<map>
+						<entry key="PictureQA" value="classpath:me/qyh/blog/ui/page/PictureQALock.html"/>
+					</map>
+				</property>
+			</bean>
+		</property>
+		 -->
+	</bean>
+	<bean class="me.qyh.blog.lock.SysLockProvider" />
 	<bean class="me.qyh.blog.lock.LockAspect" />
 
 	<!-- 登录验证 -->
@@ -147,7 +174,7 @@
 			</props>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl"/>
-	
-	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect"/>
+	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl" />
+
+	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
 </beans>      
