@@ -119,7 +119,7 @@
 							<tr th:case="USER">
 								<td th:text="${parse.index}"></td>
 								<td>用户页面</td>
-								<td th:text="'ID:'+${parse.page.page.id}">&nbsp;</td>
+								<td th:text="'别名:'+${parse.page.page.alias}">&nbsp;</td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input type="checkbox" th:value="${parse.index}"/></td>
 								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
@@ -127,6 +127,14 @@
 								<td th:text="${parse.index}"></td>
 								<td>拓展页面</td>
 								<td th:text="'ID:'+${parse.page.page.id}"></td>
+								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
+									type="checkbox" th:value="${parse.index}"/></td>
+								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+							</tr>
+							<tr th:case="LOCK">
+								<td th:text="${parse.index}"></td>
+								<td>解锁页面</td>
+								<td th:text="'锁类型:'+${parse.page.page.lockType}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
 									type="checkbox" th:value="${parse.index}"/></td>
 								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
@@ -140,7 +148,6 @@
 			<div class="row" style="margin-top:10px" th:unless="${#lists.isEmpty(session.oldPages)}" id="lastDownloadContainer">
 				<div class="col-md-8 col-md-offset-2">
 					<div class="alert alert-info"><a href="###" onclick="downloadLast()">下载最近一次导入的备份文件</a>
-					<p class="text text-warning">PS:如果导入成功了1个页面，那么只会备份这个导入成功的页面，连续导入将会覆盖备份文件</p>
 					</div>
 				</div>
 			</div>

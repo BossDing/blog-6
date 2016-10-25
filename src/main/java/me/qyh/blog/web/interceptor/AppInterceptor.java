@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -45,6 +44,7 @@ import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.UIExposeHelper;
 import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
+import me.qyh.blog.web.controller.Webs;
 import me.qyh.util.UrlUtils;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
@@ -205,10 +205,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		SpaceContext.remove();
 	}
 
-	private AntPathMatcher apm = new AntPathMatcher();
-
 	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
-		boolean needLockProtected = !apm.match("/space/*/unlock", request.getRequestURI());
+		boolean needLockProtected = !Webs.unlockRequest(request);
 		Space space = needLockProtected ? spaceService.selectSpaceByAlias(spaceAlias)
 				: spaceService.selectSpaceByAliasWithoutLockProtected(spaceAlias);
 		if (space == null) {

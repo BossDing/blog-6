@@ -3,7 +3,7 @@ package me.qyh.blog.ui.page;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.message.Message;
 
-public class SysPage extends Page{
+public class SysPage extends Page {
 
 	/**
 	 * 
@@ -62,5 +62,13 @@ public class SysPage extends Page{
 	public SysPage(Space space, PageTarget target) {
 		super(space);
 		this.target = target;
+	}
+
+	public Page toExportPage() {
+		SysPage page = new SysPage();
+		page.setTpl(getTpl());
+		page.setType(PageType.SYSTEM);
+		page.setTarget(target);
+		return page;
 	}
 }

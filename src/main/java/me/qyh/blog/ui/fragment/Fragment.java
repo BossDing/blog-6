@@ -64,4 +64,11 @@ public class Fragment implements Serializable {
 		return true;
 	}
 
+	public final Fragment toExportFragment() {
+		Fragment f = new Fragment();
+		f.setName(name);
+		f.setTpl(tpl);
+		return f;
+	}
+
 }

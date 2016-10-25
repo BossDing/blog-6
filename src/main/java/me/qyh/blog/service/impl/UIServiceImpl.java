@@ -278,6 +278,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public RenderedPage renderUserPage(String alias) throws LogicException {
 		return uiCacheRender.render(new UserPageLoader(alias), new Params());
 	}
@@ -528,7 +529,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				}
 			});
 			ExportPage ep = new ExportPage();
-			ep.setPage(new UserPage(up.getId()));
+			ep.setPage(up);
 			ep.getPage().setTpl(page.getPage().getTpl());
 			ep.setFragments(new ArrayList<>(page.getFragmentMap().values()));
 			pages.add(ep);
@@ -571,7 +572,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			Page db = null;
 			switch (ep.getPage().getType()) {
 			case USER:
-				db = userPageDao.selectById(page.getId());
+				db = userPageDao.selectByAlias(((UserPage) page).getAlias());
 				if (db != null) {
 					// 检查空间是否一致
 					if (!Objects.equals(space, db.getSpace())) {
@@ -994,11 +995,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		@Override
 		public Page loadFromDb() throws LogicException {
 			UserPage db = userPageDao.selectByAlias(alias);
-			if (db == null) {
-				throw new LogicException("page.user.notExists", "自定义页面不存在");
-			}
-			Space space = SpaceContext.get();
-			if ((space == null && db.getSpace() != null) || (space != null && !space.equals(db.getSpace()))) {
+			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace())) {
 				throw new LogicException("page.user.notExists", "自定义页面不存在");
 			}
 			return db;

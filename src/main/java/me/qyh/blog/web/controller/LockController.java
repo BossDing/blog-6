@@ -23,13 +23,11 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
-@RequestMapping("space/{alias}")
-public class SpaceLockController extends BaseController {
-	
-	private static final Logger logger = LoggerFactory.getLogger(SpaceLockController.class);
+public class LockController extends BaseController {
+
+	private static final Logger logger = LoggerFactory.getLogger(LockController.class);
 
 	@Autowired
 	private UIService uiService;
@@ -39,7 +37,7 @@ public class SpaceLockController extends BaseController {
 		LockBean lockBean = LockHelper.getRequiredLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
 		try {
-			RenderedPage rp = uiService.renderLockPage(SpaceContext.get(), lockBean.getLock().getLockType());
+			RenderedPage rp = uiService.renderLockPage(null, lockBean.getLock().getLockType());
 			UIContext.set(rp);
 			return rp.getTemplateName();
 		} catch (Throwable e) {

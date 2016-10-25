@@ -24,4 +24,8 @@ public class Tag {
 		this.attributes = attributes;
 	}
 
+	public void addAttribute(Attribute att) {
+		this.attributes.add(att);
+	}
+
 }

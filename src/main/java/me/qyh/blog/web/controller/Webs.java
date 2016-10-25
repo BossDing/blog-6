@@ -10,6 +10,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.MediaType;
+import org.springframework.util.AntPathMatcher;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
@@ -17,6 +18,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Jsons;
 
 public class Webs {
+	private static final AntPathMatcher apm = new AntPathMatcher();
 
 	public static boolean matchValidateCode(String code, HttpSession session) {
 		if (session == null) {
@@ -56,5 +58,11 @@ public class Webs {
 		} catch (UnsupportedEncodingException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
+	}
+
+	public static boolean unlockRequest(HttpServletRequest request) {
+		String path = request.getRequestURI();
+		return request.getMethod().equalsIgnoreCase("get") && (apm.match("/unlock", path) || apm.match("/unlock/", path)
+				|| apm.match("/space/*/unlock", path) || apm.match("/space/*/unlock/", path));
 	}
 }

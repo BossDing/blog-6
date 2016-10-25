@@ -16,7 +16,7 @@ public class ExportPage {
 	}
 
 	public void setPage(Page page) {
-		this.page = page;
+		this.page = page.toExportPage();
 	}
 
 	public List<Fragment> getFragments() {
@@ -25,16 +25,13 @@ public class ExportPage {
 
 	public void setFragments(List<Fragment> fragments) {
 		for (Fragment fragment : fragments) {
-			Fragment _fragment = new Fragment();
-			_fragment.setName(fragment.getName());
-			_fragment.setTpl(fragment.getTpl());
-			this.fragments.add(_fragment);
+			this.fragments.add(fragment.toExportFragment());
 		}
 	}
 
 	public ExportPage(Page page, List<Fragment> fragments) {
-		this.page = page;
-		this.fragments = fragments;
+		setPage(page);
+		setFragments(fragments);
 	}
 
 	public ExportPage() {

@@ -125,13 +125,13 @@ public class TplMgrController extends BaseMgrController {
 		return download(oldPages);
 	}
 
-	private ResponseEntity<byte[]> download(Object obj) throws JsonProcessingException {
+	private ResponseEntity<byte[]> download(List<ExportPage> pages) throws JsonProcessingException {
 		HttpHeaders header = new HttpHeaders();
 		header.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		header.set("Content-Disposition", "attachment; filename=template-"
 				+ DateFormatUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss") + ".json");
 		return new ResponseEntity<byte[]>(
-				Jsons.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(obj), header, HttpStatus.OK);
+				Jsons.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(pages), header, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "import", method = RequestMethod.GET)
@@ -346,8 +346,8 @@ public class TplMgrController extends BaseMgrController {
 					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为个人页面:" + e.getMessage());
 					continue;
 				}
-				if (up.getId() == null) {
-					logger.debug("序号:" + i + ":个人页面缺少ID参数");
+				if (up.getAlias() == null) {
+					logger.debug("序号:" + i + ":个人页面缺少alias参数");
 					continue;
 				}
 				parsed = up;

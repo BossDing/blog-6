@@ -73,4 +73,12 @@ public class ErrorPage extends Page {
 		this.errorCode = errorCode;
 	}
 
+	public Page toExportPage() {
+		ErrorPage page = new ErrorPage();
+		page.setTpl(getTpl());
+		page.setType(PageType.ERROR);
+		page.setErrorCode(errorCode);
+		return page;
+	}
+
 }

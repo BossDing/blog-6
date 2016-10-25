@@ -70,6 +70,13 @@ public class Page extends Id implements Cloneable {
 		return templateName.startsWith(PREFIX);
 	}
 
+	public Page toExportPage() {
+		Page page = new Page();
+		page.setTpl(tpl);
+		page.setType(type);
+		return page;
+	}
+
 	@Override
 	public Object clone() {
 		try {

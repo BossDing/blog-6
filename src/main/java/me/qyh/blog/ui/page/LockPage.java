@@ -24,6 +24,11 @@ public class LockPage extends Page {
 		return PREFIX + "LockPage:" + (space == null ? lockType : space.getAlias() + "-" + lockType);
 	}
 
+	@Override
+	public final PageType getType() {
+		return PageType.LOCK;
+	}
+
 	public LockPage() {
 	}
 
@@ -34,6 +39,14 @@ public class LockPage extends Page {
 	public LockPage(Space space, String lockType) {
 		super(space);
 		this.lockType = lockType;
+	}
+	
+	public Page toExportPage() {
+		LockPage page = new LockPage();
+		page.setTpl(getTpl());
+		page.setType(PageType.LOCK);
+		page.setLockType(lockType);
+		return page;
 	}
 
 }

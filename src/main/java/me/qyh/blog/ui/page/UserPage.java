@@ -67,5 +67,13 @@ public class UserPage extends Page {
 	public final String getTemplateName() {
 		return PREFIX + "UserPage:" + alias;
 	}
+	
+	public Page toExportPage() {
+		UserPage page = new UserPage();
+		page.setTpl(getTpl());
+		page.setType(PageType.USER);
+		page.setAlias(alias);
+		return page;
+	}
 
 }

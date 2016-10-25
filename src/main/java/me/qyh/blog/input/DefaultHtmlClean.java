@@ -3,16 +3,28 @@ package me.qyh.blog.input;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.config.Constants;
+import me.qyh.blog.config.UrlHelper;
 import me.qyh.util.Jsons;
+import me.qyh.util.UrlUtils;
 import me.qyh.util.Validators;
 
 public class DefaultHtmlClean implements HtmlClean, InitializingBean {
+
+	@Autowired
+	private UrlHelper urlHelper;
 
 	/**
 	 * whitelist的json配置,请小心配置注意xss，当且仅当配置评论允许html之后才会生效;
@@ -21,12 +33,39 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	 */
 	private Resource whitelistJsonResource;
 	private Tags tags;
+	private boolean nofollow = true;// 是否在超链接上机上nofollow属性
 
-	private static final String DEFAULT_WHITE_LIST_JSON = "{\"simpleTags\":\"b,code,em,del,small,strong\"}";
+	private static final String NOFOLLOW = "external nofollow";
 
 	@Override
 	public String clean(String html) {
-		return Jsoup.clean(html, _Whitelist.configured(tags));
+		String cleand = Jsoup.clean(html, _Whitelist.configured(tags));
+		if (nofollow) {
+			Document body = Jsoup.parseBodyFragment(cleand);
+			Elements eles = body.select("a[href]");
+			for (Element ele : eles) {
+				String href = ele.attr("href");
+				// only abs url need to do
+				if (needNofollow(href)) {
+					ele.attr("rel", NOFOLLOW);
+				}
+			}
+			cleand = body.html();
+		}
+		return cleand;
+	}
+
+	private boolean needNofollow(String href) {
+		if (UrlUtils.isAbsoluteUrl(href)) {
+			if (StringUtils.startsWithIgnoreCase(href, "http://")
+					|| StringUtils.startsWithIgnoreCase(href, "https://")) {
+				UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
+				String host = uc.getHost();
+				if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain()))
+					return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -40,9 +79,17 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 				} finally {
 					IOUtils.closeQuietly(is);
 				}
-			} else {
-				tags = Jsons.readValue(Tags.class, DEFAULT_WHITE_LIST_JSON);
 			}
+		}
+		if (tags == null) {
+			tags = new Tags();
+			tags.setSimpleTags("b,code,em,del,small,strong");
+			Tag a = new Tag();
+			a.setName("a");
+			Attribute href = new Attribute();
+			href.setName("href");
+			a.addAttribute(href);
+			tags.addTag(a);
 		}
 	}
 
