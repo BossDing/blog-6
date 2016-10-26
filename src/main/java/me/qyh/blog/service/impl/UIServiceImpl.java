@@ -205,7 +205,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public UserPage queryUserPage(String alias) {
-		return userPageDao.selectByAlias(alias);
+		return userPageDao.selectBySpaceAndAlias(SpaceContext.get(), alias);
 	}
 
 	@Override
@@ -280,7 +280,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public RenderedPage renderUserPage(String alias) throws LogicException {
-		return uiCacheRender.render(new UserPageLoader(alias), new Params());
+		return uiCacheRender.render(new UserPageLoader(SpaceContext.get(), alias), new Params());
 	}
 
 	@Override
@@ -301,10 +301,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void buildTpl(UserPage userPage) throws LogicException {
 		checkSpace(userPage);
 		String alias = userPage.getAlias();
-		UserPage aliasPage = userPageDao.selectByAlias(alias);
-		if (aliasPage != null && !aliasPage.equals(userPage)) {
-			throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
-		}
 		userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		boolean update = userPage.hasId();
 		if (update) {
@@ -312,10 +308,19 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (db == null) {
 				throw new LogicException("page.user.notExists", "自定义页面不存在");
 			}
+			// 检查
+			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(db.getSpace(), alias);
+			if (aliasPage != null && !aliasPage.equals(db)) {
+				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
+			}
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
 			uiCacheRender.evit(db.getTemplateName());
 		} else {
+			// 检查
+			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
+			if (aliasPage != null)
+				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			userPageDao.insert(userPage);
 		}
 	}
@@ -572,18 +577,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			Page db = null;
 			switch (ep.getPage().getType()) {
 			case USER:
-				db = userPageDao.selectByAlias(((UserPage) page).getAlias());
-				if (db != null) {
-					// 检查空间是否一致
-					if (!Objects.equals(space, db.getSpace())) {
-						String spaceName = space == null ? "" : space.getName();
-						result.addError(new ImportError(ipw.getIndex(),
-								new Message("tpl.import.pageNotInSpace",
-										"页面[" + page.getType() + "," + page.getId() + "]不在空间" + spaceName + "中",
-										page.getType(), page.getId(), spaceName)));
-						continue;
-					}
-				}
+				db = userPageDao.selectBySpaceAndAlias(req.getSpace(), ((UserPage) page).getAlias());
 				break;
 			case SYSTEM:
 				db = querySysPage(space, ((SysPage) page).getTarget());
@@ -986,6 +980,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private final class UserPageLoader implements PageLoader {
 
 		private String alias;
+		private Space space;
 
 		@Override
 		public String pageKey() {
@@ -994,15 +989,16 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		@Override
 		public Page loadFromDb() throws LogicException {
-			UserPage db = userPageDao.selectByAlias(alias);
+			UserPage db = userPageDao.selectBySpaceAndAlias(space, alias);
 			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace())) {
 				throw new LogicException("page.user.notExists", "自定义页面不存在");
 			}
 			return db;
 		}
 
-		public UserPageLoader(String alias) {
+		public UserPageLoader(Space space, String alias) {
 			this.alias = alias;
+			this.space = space;
 		}
 	}
 

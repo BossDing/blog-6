@@ -17,7 +17,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
@@ -192,9 +191,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			throws Exception {
 		if (executeHandler(handler)) {
 			removeContext();
-		}
-		if (ex != null && (ex instanceof TemplateProcessingException)) {
-			logger.error(ex.getMessage(), ex);
 		}
 	}
 

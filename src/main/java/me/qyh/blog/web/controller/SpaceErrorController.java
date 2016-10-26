@@ -52,6 +52,11 @@ public class SpaceErrorController extends BaseController {
 		return handlerError(model, 500);
 	}
 
+	@RequestMapping("ui")
+	public String handlerUI() {
+		return "error/ui";
+	}
+
 	private String handlerError(Model model, int error) {
 		try {
 			RenderedPage page = uiService.renderErrorPage(SpaceContext.get(), ErrorCode.valueOf("ERROR_" + error));

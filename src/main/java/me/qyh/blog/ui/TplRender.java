@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -14,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
+
+import me.qyh.blog.exception.SystemException;
 
 /**
  * 用来校验用户的自定义模板<br/>
@@ -25,8 +26,6 @@ public class TplRender {
 
 	@Autowired
 	private UIExposeHelper uiExposeHelper;
-	@Autowired
-	private TplRenderErrorDescriptionHandler tplRenderErrorDescriptionHandler;
 	@Autowired
 	private ThymeleafViewResolver resolver;
 
@@ -52,8 +51,10 @@ public class TplRender {
 			view.render(datas, request, wrapper);
 			// 再次清除缓存
 			return wrapper.output();
-		} catch (Throwable e) {
-			throw new TplRenderException(tplRenderErrorDescriptionHandler.convert(e, request.getServletContext()));
+		} catch (Exception e) {
+			if (e instanceof TplRenderException)
+				throw (TplRenderException) e;
+			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
@@ -72,20 +73,6 @@ public class TplRender {
 		public String output() {
 			return writer.toString();
 		}
-	}
-
-	/**
-	 * 用来描述错误，向用户反馈
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public interface TplRenderErrorDescriptionHandler {
-		TplRenderErrorDescription convert(Throwable throwable, ServletContext sc);
-	}
-
-	public void setTplRenderErrorDescriptionHandler(TplRenderErrorDescriptionHandler tplRenderErrorDescriptionHandler) {
-		this.tplRenderErrorDescriptionHandler = tplRenderErrorDescriptionHandler;
 	}
 
 }

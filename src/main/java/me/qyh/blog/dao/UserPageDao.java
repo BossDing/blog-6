@@ -15,14 +15,14 @@ public interface UserPageDao {
 	void update(UserPage page);
 
 	void insert(UserPage page);
-	
+
 	int selectCount(UserPageQueryParam param);
-	
+
 	List<UserPage> selectPage(UserPageQueryParam param);
 
 	void deleteById(Integer id);
 
-	UserPage selectByAlias(String alias);
+	UserPage selectBySpaceAndAlias(@Param("space") Space space, @Param("alias") String alias);
 
 	List<UserPage> selectBySpace(@Param("space") Space space);
 

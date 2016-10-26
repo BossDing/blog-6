@@ -50,6 +50,11 @@ public class ErrorController {
 		return handlerError(500);
 	}
 
+	@RequestMapping("ui")
+	public String handlerUI() {
+		return "error/ui";
+	}
+
 	private String handlerError(int error) {
 		try {
 			RenderedPage page = uiService.renderErrorPage(null, ErrorCode.valueOf("ERROR_" + error));

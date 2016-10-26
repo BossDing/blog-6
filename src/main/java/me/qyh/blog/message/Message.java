@@ -1,5 +1,7 @@
 package me.qyh.blog.message;
 
+import java.io.Serializable;
+
 import org.springframework.context.MessageSourceResolvable;
 
 /**
@@ -8,8 +10,13 @@ import org.springframework.context.MessageSourceResolvable;
  * @author mhlx
  *
  */
-public class Message implements MessageSourceResolvable {
+public class Message implements MessageSourceResolvable,Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private String code;
 	private Object[] arguments;
 	private String defaultMessage;

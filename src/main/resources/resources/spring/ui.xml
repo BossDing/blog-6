@@ -72,8 +72,6 @@
 		</property>
 	</bean>
 	<bean class="me.qyh.blog.ui.UIExposeHelper"/>
-	<!-- 用来处理页面渲染错误 -->
-	<bean class="me.qyh.blog.ui.DefaultTplRenderExceptionHandler" />
 
 	<!-- 用来增加拓展页面 -->
 	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />
