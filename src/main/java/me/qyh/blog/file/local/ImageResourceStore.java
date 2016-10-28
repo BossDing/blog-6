@@ -48,7 +48,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 */
 	private boolean sourceProtected;
 
-	private boolean enableWebp = true;
+	private boolean supportWebp = true;
 
 	private String thumbAbsPath;
 	private File thumbAbsFolder;
@@ -75,6 +75,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			ImageInfo ii = imageHelper.read(tmp);
 			String extension = ii.getExtension();
 			if (ImageHelper.isWEBP(extension)) {
+				if (!supportWebp) {
+					throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
+				}
 				// 如果是webp的图片，需要转化为jpeg格式
 				finalFile = File.createTempFile(RandomStringUtils.randomNumeric(7), "." + ImageHelper.JPEG);
 				try {
@@ -122,7 +125,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			}
 		}
 		Resource finalResource = null;
-		boolean supportWebp = enableWebp && supportWebp(request);
+		boolean supportWebp = supportWebp(request);
 		if (resize != null) {
 			String ext = FilenameUtils.getExtension(getSourcePathByResizePath(path));
 			String thumbPath = path + (supportWebp ? WEBP_EXT
@@ -271,6 +274,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
+		if (!supportWebp)
+			return false;
 		String accept = request.getHeader("Accept");
 		if (accept != null && accept.indexOf(WEBP_ACCEPT) != -1) {
 			return true;
@@ -419,7 +424,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		this.resizeValidator = resizeValidator;
 	}
 
-	public void setEnableWebp(boolean enableWebp) {
-		this.enableWebp = enableWebp;
+	public void setSupportWebp(boolean supportWebp) {
+		this.supportWebp = supportWebp;
 	}
 }

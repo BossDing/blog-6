@@ -141,5 +141,5 @@ public interface ArticleService {
 	 * @param queryPrivate
 	 * @return
 	 */
-	ArticleStatistics queryArticleStatistics(Space space);
+	ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate);
 }

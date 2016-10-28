@@ -87,7 +87,6 @@ public class FileServiceImpl implements FileService {
 				CommonFile cf = null;
 				try {
 					synchronized (fs) {
-						System.out.println(key+",,,,,,,,,,,,,,,,,,,,,");
 						deleteImmediatelyIfNeed(key);
 						cf = fs.store(key, file);
 					}

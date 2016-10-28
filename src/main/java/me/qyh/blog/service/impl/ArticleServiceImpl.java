@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -83,6 +84,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 				if (article.isPrivate() && UserContext.get() == null) {
 					throw new AuthencationException();
 				}
+				// 如果文章不在目标空间下
+				if (!Objects.equals(SpaceContext.get(), article.getSpace()))
+					return null;
 				return article;
 			}
 		}
@@ -358,8 +362,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleStatistics queryArticleStatistics(Space space) {
-		return articleDao.selectStatistics(space, UserContext.get() != null);
+	public ArticleStatistics queryArticleStatistics(Space space,boolean querySpacePrivate) {
+		return articleDao.selectStatistics(space, UserContext.get() != null,querySpacePrivate);
 	}
 
 	@Override

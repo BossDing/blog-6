@@ -9,7 +9,7 @@
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-md-8 col-md-offset-2">
-					<form th:action="@{/mgr/tpl/export}" method="post">
+					<form th:action="@{/mgr/tpl/export}" method="post" id="exportForm">
 						<div class="form-group">
 							<label>空间选择</label> <select class="form-control" name="space.id">
 								<option value="">无</option>
@@ -35,7 +35,7 @@
 		$(document).ready(function(){
 			$("#export").click(function(){
 				$("#exportExpandedPageHidden").val($("#exportExpandedPage").prop("checked"));
-				$('form').submit();
+				$('#exportForm').submit();
 			});
 		})
 	</script>

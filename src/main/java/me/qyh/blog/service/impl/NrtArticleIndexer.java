@@ -201,6 +201,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
 	private static final String ALIAS = "alias";
+	private static final String SPACE_PRIVATE = "spacePrivate";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
@@ -230,6 +231,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 				doc.add(new StringField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
 			}
 		}
+		doc.add(new StringField(SPACE_PRIVATE, article.getSpacePrivate().toString(), Field.Store.NO));
 		return doc;
 	}
 
@@ -316,7 +318,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		if (space != null) {
 			Query query = new TermQuery(new Term(SPACE_ID, space.getId().toString()));
 			builder.add(query, Occur.MUST);
-		}
+		} 
 		Date begin = param.getBegin();
 		Date end = param.getEnd();
 		boolean dateRangeQuery = (begin != null && end != null);
@@ -328,6 +330,9 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		if (!param.isQueryPrivate()) {
 			builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
 			builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
+		}
+		if(!param.isQuerySpacePrivate()){
+			builder.add(new TermQuery(new Term(SPACE_PRIVATE, "false")), Occur.MUST);
 		}
 		ArticleFrom from = param.getFrom();
 		if (from != null) {

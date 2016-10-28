@@ -48,7 +48,7 @@ public interface ArticleDao {
 
 	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
 
-	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
+	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,@Param("querySpacePrivate") boolean querySpacePrivate);
 
 	Article selectByAlias(String alias);
 

@@ -21,6 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="alias" column="art_alias" />
+		<result property="spacePrivate" column="art_spacePrivate" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
@@ -64,10 +65,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check,art_alias)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check,art_alias,art_spacePrivate)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec},#{commentConfig.check},#{alias})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{commentConfig.allowComment},#{commentConfig.commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{commentConfig.asc},#{commentConfig.allowHtml},#{commentConfig.limitCount},#{commentConfig.limitSec},#{commentConfig.check},#{alias},#{spacePrivate})
 	</insert>
 	
 	<update id="update">
@@ -97,6 +98,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="space != null">
 				space_id = #{space.id},
+			</if>
+			<if test="spacePrivate != null">
+				art_spacePrivate = #{spacePrivate},
 			</if>
 			
 			<if test="commentConfig != null">
@@ -152,6 +156,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="space != null">
 				art.space_id = #{space.id}
 			</if>
+			<if test="!querySpacePrivate">
+				AND art.art_spacePrivate = false
+			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
 				AND sp.is_private = false
@@ -196,6 +203,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.editor,
 			art.art_from,
 			art.space_id,
+			art.art_spacePrivate,
 			art.art_lock,
 			art.art_alias,
 			sp.space_alias,
@@ -212,6 +220,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
+			</if>
+			<if test="!querySpacePrivate">
+				AND art.art_spacePrivate = false
 			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
@@ -275,6 +286,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.space_id,
 			art.art_lock,
 			art.art_alias,
+			art.art_spacePrivate,
 			sp.space_alias,
 			space_lock,
 			sp.space_name,
@@ -302,9 +314,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.isPrivate = false
 			AND sp.is_private = false
 		</if>
-		<if test="space != null">
-			AND space_id = #{space.id}
-		</if>
+		<choose>
+			<when test="space != null">
+				AND space_id = #{space.id}
+			</when>
+			<otherwise>
+				AND art.art_spacePrivate = false
+			</otherwise>
+			</choose>
 		<choose>
 			<when test='mode.name() == "Y"'>
 				GROUP BY YEAR(pubDate)
@@ -324,6 +341,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
+		AND art_spacePrivate = false
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
@@ -380,9 +398,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			ON art.space_id = sp.id
 		WHERE art.art_status = 0
 		AND art.pubDate  <![CDATA[ < ]]> #{article.pubDate}
-		<if test="article.space != null">
+		<choose>
+		<when test="article.space != null">
 			AND art.space_id = #{article.space.id}
-		</if>
+		</when>
+		<otherwise>
+			AND art.art_spacePrivate = false
+		</otherwise>
+		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
@@ -404,9 +427,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			ON art.space_id = sp.id
 		WHERE art.art_status = 0
 		AND art.pubDate  > #{article.pubDate}
-		<if test="article.space != null">
+		<choose>
+		<when test="article.space != null">
 			AND art.space_id = #{article.space.id}
-		</if>
+		</when>
+		<otherwise>
+			AND art.art_spacePrivate = false
+		</otherwise>
+		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
@@ -428,6 +456,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE art.art_status = 0
 		<if test="space != null">
 			AND art.space_id = #{space.id}
+		</if>
+		<if test="!querySpacePrivate">
+			AND art.art_spacePrivate = false
 		</if>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -460,6 +491,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.comment_limitSec,
 			art.comment_check,
 			art.art_alias,
+			art.art_spacePrivate,
 			sp.space_alias,
 			sp.space_name,
 			space_lock,

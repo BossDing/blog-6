@@ -98,6 +98,7 @@ $(document).ready(function(){
 			article.level = $("#level").val();
 		}
 		article.isPrivate = $("#private").prop("checked");
+		article.spacePrivate = $("#spacePrivate").prop("checked");
 		article.tags = tags;
 		article.summary = $("#summary").val();
 		article.space = {"id":$("#space").val()};
@@ -332,6 +333,7 @@ function changeEditorCss(csses,style){
 				article.level = $("#level").val();
 			}
 			article.isPrivate = $("#private").prop("checked");
+			article.spacePrivate = $("#spacePrivate").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
 			article.space = {"id":$("#space").val()};

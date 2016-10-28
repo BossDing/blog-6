@@ -91,23 +91,18 @@
 						</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
 							type="checkbox" id="private" checked="checked" />私人博客 </label>
 					</div>
-
+					<div class="checkbox">
+						<label th:if="${article.spacePrivate == null || !article.spacePrivate}">
+							<input type="checkbox" id="spacePrivate" />空间私有
+						</label> <label th:if="${article.spacePrivate != null && article.spacePrivate}"><input
+							type="checkbox" id="spacePrivate" checked="checked" />空间私有 </label>
+					</div>
 					<div class="form-group"
 						th:style="${article.isSchedule() ? '' : 'display: none'}"
 						id="scheduleContainer">
 						<label>计划发表日期</label>
-						<div class="input-group date form_datetime col-md-12"
-							data-date-format="yyyy-mm-dd hh:ii:ss"
-							data-link-field="scheduleDate">
-							<input class="form-control" size="16" type="text"
-								th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"
-								readonly> <span class="input-group-addon"><span
-								class="glyphicon glyphicon-remove"></span></span> <span
-								class="input-group-addon"><span
-								class="glyphicon glyphicon-th"></span></span>
-						</div>
-						<input type="hidden" id="scheduleDate"
-							th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm:ss') : ''}"><br>
+						<input type="text" class="form-control" id="scheduleDate"
+							th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm') : #dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"><br>
 					</div>
 					<div class="form-group">
 						<label>博客优先级(优先级越高排名越靠前)</label> <input type="text"

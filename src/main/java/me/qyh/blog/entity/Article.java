@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
@@ -23,6 +25,7 @@ public class Article extends BaseLockResource implements Cloneable {
 	private String title;// 标题
 	private String content;// 博客原始内容
 	private Set<Tag> tags = new LinkedHashSet<Tag>();// 博客标签
+	@JsonDeserialize(using=DateDeserializer.class)
 	private Timestamp pubDate;// 撰写日期
 	private Timestamp lastModifyDate;// 最后修改日期
 	private Boolean isPrivate;// 是否是私人博客
@@ -38,6 +41,14 @@ public class Article extends BaseLockResource implements Cloneable {
 
 	private AtomicInteger _hits;
 	private AtomicInteger _comments;
+
+	/**
+	 * 空间私有，当文章查询不携带空间参数时，将不会查询出空间私有的文章。除此之外不做任何权限控制。
+	 * <p>
+	 * <b>设置该属性的文章不会被非该空间统计到</b>
+	 * </p>
+	 */
+	private Boolean spacePrivate;
 
 	public enum ArticleFrom {
 		// 原创
@@ -387,6 +398,14 @@ public class Article extends BaseLockResource implements Cloneable {
 
 	public void setAlias(String alias) {
 		this.alias = alias;
+	}
+
+	public Boolean getSpacePrivate() {
+		return spacePrivate;
+	}
+
+	public void setSpacePrivate(Boolean spacePrivate) {
+		this.spacePrivate = spacePrivate;
 	}
 
 	@Override

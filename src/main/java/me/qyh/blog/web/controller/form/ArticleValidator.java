@@ -86,6 +86,10 @@ public class ArticleValidator implements Validator {
 			errors.reject("article.private.null", "文章私有性不能为空");
 			return;
 		}
+		if(article.getSpacePrivate() == null){
+			errors.reject("article.spaceprivate.null", "文章空间私有性不能为空");
+			return;
+		}
 		if (article.getEditor() == null) {
 			errors.reject("article.editor.null", "文章编辑器不能为空");
 			return;
