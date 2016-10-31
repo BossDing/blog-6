@@ -18,8 +18,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.mail.internet.MimeMessage;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
@@ -28,9 +26,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.HtmlUtils;
@@ -44,7 +39,6 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
-import me.qyh.blog.dao.UserDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.CommentConfig;
 import me.qyh.blog.entity.Comment;
@@ -53,6 +47,8 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.input.HtmlClean;
+import me.qyh.blog.mail.MailSender;
+import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
@@ -177,12 +173,12 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			datas = commentDao.selectPageWithList(param);
 			break;
 		}
-		
-		//为了在评论中获取配置信息
+
+		// 为了在评论中获取配置信息
 		Article _article = new Article(article.getId());
 		_article.setCommentConfig(config);
 		param.setArticle(_article);
-		
+
 		return new PageResult<Comment>(param, count, datas);
 	}
 
@@ -741,11 +737,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		 * 邮件发送，用来提示管理员有新的回复或者评论
 		 */
 		@Autowired
-		private JavaMailSender javaMailSender;
+		private MailSender mailSender;
 		@Autowired
 		private UrlHelper urlHelper;
-		@Autowired
-		private UserDao userDao;
 		@Autowired
 		private Messages messages;
 
@@ -767,19 +761,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 			context.setVariable("urls", urlHelper.getUrls());
 			context.setVariable("comments", toSend);
 			context.setVariable("messages", messages);
-			final String mailContent = mailTemplateEngine.process(mailTemplate, context);
-			MimeMessagePreparator preparator = new MimeMessagePreparator() {
-
-				@Override
-				public void prepare(MimeMessage mimeMessage) throws Exception {
-					MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, Constants.CHARSET.name());
-					helper.setText(mailContent, true);
-					helper.setTo(userDao.select().getEmail());
-					helper.setSubject(mailSubject);
-					mimeMessage.setFrom();
-				}
-			};
-			javaMailSender.send(preparator);
+			mailSender.send(new MessageBean(mailSubject, true, mailTemplateEngine.process(mailTemplate, context)));
 		}
 
 		private final class MailTemplateEngine extends TemplateEngine {

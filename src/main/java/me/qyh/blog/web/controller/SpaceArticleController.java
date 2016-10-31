@@ -2,15 +2,19 @@ package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Article;
@@ -48,6 +52,8 @@ public class SpaceArticleController extends BaseController {
 	@Autowired
 	private UIService uiService;
 
+	private static final AntPathMatcher apm = new AntPathMatcher();
+
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
 
@@ -72,7 +78,17 @@ public class SpaceArticleController extends BaseController {
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult hit(@PathVariable("id") Integer id) {
+	public JsonResult hit(@PathVariable("id") Integer id, @RequestHeader("referer") String referer) {
+		try {
+			UriComponents uc = UriComponentsBuilder.fromHttpUrl(referer).build();
+			if (!apm.match("/space/" + SpaceContext.get().getAlias() + "/article/*", uc.getPath())
+					&& !apm.match("/article/*", uc.getPath()))
+				return new JsonResult(false);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new JsonResult(false);
+		}
+
 		Article article = articleService.hit(id);
 		return article == null ? new JsonResult(false) : new JsonResult(true, article.getHits());
 	}

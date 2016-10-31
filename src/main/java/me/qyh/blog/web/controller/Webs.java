@@ -62,7 +62,7 @@ public class Webs {
 
 	public static boolean unlockRequest(HttpServletRequest request) {
 		String path = request.getRequestURI();
-		return request.getMethod().equalsIgnoreCase("get") && (apm.match("/unlock", path) || apm.match("/unlock/", path)
-				|| apm.match("/space/*/unlock", path) || apm.match("/space/*/unlock/", path));
+		return (apm.match("/unlock", path) || apm.match("/unlock/", path) || apm.match("/space/*/unlock", path)
+				|| apm.match("/space/*/unlock/", path));
 	}
 }

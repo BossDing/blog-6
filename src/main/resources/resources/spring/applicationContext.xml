@@ -77,30 +77,14 @@
 
 	<!-- 锁 -->
 	<bean class="me.qyh.blog.lock.LockManager">
-		<!-- 
-		<property name="expandedLockProvider">
-			<bean class="me.qyh.blog.lock.ExpandedLockProvider">
-				<property name="expandedLocks">
-					<list>
-						<bean class="me.qyh.blog.lock.support.PictureQALock">
-							<property name="lockType" value="PictureQA" />
-							<property name="picture"
-								value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" />
-							<property name="question" value="which game ?" />
-							<property name="answers" value="WOW" />
-							<property name="id" value="expandedLock1"></property>
-							<property name="name" value="魔兽"/>
-						</bean>
-					</list>
-				</property>
-				<property name="defaultTplResource">
-					<map>
-						<entry key="PictureQA" value="classpath:me/qyh/blog/ui/page/PictureQALock.html"/>
-					</map>
-				</property>
-			</bean>
-		</property>
-		 -->
+		<!-- <property name="expandedLockProvider"> <bean class="me.qyh.blog.lock.ExpandedLockProvider"> 
+			<property name="expandedLocks"> <list> <bean class="me.qyh.blog.lock.support.PictureQALock"> 
+			<property name="lockType" value="PictureQA" /> <property name="picture" value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" 
+			/> <property name="question" value="which game ?" /> <property name="answers" 
+			value="WOW" /> <property name="id" value="expandedLock1"></property> <property 
+			name="name" value="魔兽"/> </bean> </list> </property> <property name="defaultTplResource"> 
+			<map> <entry key="PictureQA" value="classpath:me/qyh/blog/ui/page/PictureQALock.html"/> 
+			</map> </property> </bean> </property> -->
 	</bean>
 	<bean class="me.qyh.blog.lock.SysLockProvider" />
 	<bean class="me.qyh.blog.lock.LockAspect" />
@@ -159,6 +143,10 @@
 			</bean>
 		</property>
 	</bean>
+
+	<!-- 如果不需要邮件通知这个服务请不要设置 -->
+	<bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean>
+	<bean class="me.qyh.blog.service.impl.ApplicationContextProvider" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">

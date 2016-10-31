@@ -9,11 +9,24 @@
 		</filter>
 	</appender>
 
+	<appender name="mailAppender" class="me.qyh.blog.mail.MailAppendar">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
+			</pattern>
+		</layout>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
+
 	<appender name="errorDailyRollingFileAppender"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>/web/logs/blog/error.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<FileNamePattern>/web/logs/blog/error.%d{yyyy-MM-dd}.log</FileNamePattern>
+			<FileNamePattern>/web/logs/blog/error.%d{yyyy-MM-dd}.log
+			</FileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
 		<encoder>
@@ -31,8 +44,15 @@
 	<!-- 关闭这个类的日志 -->
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
 
-	<root level="DEBUG">
-		<appender-ref ref="consoleAppender" />
+	<!-- 如果采用了MailAppender来纪录日志，那么必须单独配置MailSender的日志记录，防止MailAppender陷入死循环 -->
+	<logger name="me.qyh.blog.mail.MailSender" level="ERROR"
+		additivity="false">
 		<appender-ref ref="errorDailyRollingFileAppender" />
+	</logger>
+
+	<root level="ERROR">
+		<appender-ref ref="mailAppender" />
 	</root>
+
+
 </configuration>

@@ -48,4 +48,7 @@ public class Limit {
 		this.unit = unit;
 	}
 
+	public long toMill() {
+		return unit.toMillis(time);
+	}
 }

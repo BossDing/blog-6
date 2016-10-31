@@ -23,8 +23,10 @@ public class UIErrorCatchDispatchServlet extends DispatcherServlet {
 		} catch (TplRenderException e) {
 			Throwable ori = e.getOriginal();
 			logger.error(ori.getMessage(), ori);
-			request.setAttribute("description", e.getRenderErrorDescription());
-			request.getRequestDispatcher("/error/ui").forward(request, response);
+			if (!response.isCommitted()) {
+				request.setAttribute("description", e.getRenderErrorDescription());
+				request.getRequestDispatcher("/error/ui").forward(request, response);
+			}
 		}
 	}
 
