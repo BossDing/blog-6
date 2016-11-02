@@ -7,7 +7,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyInputException;
+import me.qyh.blog.lock.InvalidKeyException;
+import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.message.Message;
 
 /**
@@ -31,10 +32,10 @@ public class QALock extends SysLock {
 	private String answers;
 
 	@Override
-	public LockKey getKeyFromRequest(HttpServletRequest request) throws LockKeyInputException {
+	public LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException {
 		final String answer = request.getParameter(ANSWER_PARAMETER);
 		if (answer == null || answer.isEmpty()) {
-			throw new LockKeyInputException(new Message("lock.qa.answer.blank", "请填写问题答案"));
+			throw new InvalidKeyException(new Message("lock.qa.answer.blank", "请填写问题答案"));
 		}
 		return new LockKey() {
 
@@ -51,17 +52,17 @@ public class QALock extends SysLock {
 	}
 
 	@Override
-	public boolean tryOpen(LockKey key) {
+	public void tryOpen(LockKey key) throws ErrorKeyException {
 		if (key != null) {
 			Object data = key.getKey();
 			if (data != null) {
 				String answer = data.toString();
 				if (isCorrectAnswer(answer)) {
-					return true;
+					return;
 				}
 			}
 		}
-		return false;
+		throw new ErrorKeyException(new Message("lock.qa.unlock.fail", "答案错误"));
 	}
 
 	private boolean isCorrectAnswer(String answer) {

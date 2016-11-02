@@ -253,11 +253,6 @@ public class Article extends BaseLockResource implements Cloneable {
 		return ArticleStatus.DRAFT.equals(status);
 	}
 
-	@Override
-	public Message getLockTip() {
-		return new Message("lock.article.tip", "该文章访问受密码保护，请解锁后访问");
-	}
-
 	public String getContent() {
 		return content;
 	}

@@ -6,7 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyInputException;
+import me.qyh.blog.lock.InvalidKeyException;
+import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.BCrypts;
 import me.qyh.util.Validators;
@@ -27,10 +28,10 @@ public class PasswordLock extends SysLock {
 	}
 
 	@Override
-	public LockKey getKeyFromRequest(HttpServletRequest request) throws LockKeyInputException {
+	public LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException {
 		final String password = request.getParameter(PASSWORD_PARAMETER);
 		if (Validators.isEmptyOrNull(password, true)) {
-			throw new LockKeyInputException(new Message("lock.password.password.blank", "密码不能为空"));
+			throw new InvalidKeyException(new Message("lock.password.password.blank", "密码不能为空"));
 		}
 		return new LockKey() {
 
@@ -47,14 +48,14 @@ public class PasswordLock extends SysLock {
 	}
 
 	@Override
-	public boolean tryOpen(LockKey key) {
+	public void tryOpen(LockKey key) throws ErrorKeyException {
 		if (key != null) {
 			Object keyData = key.getKey();
 			if (keyData != null && BCrypts.matches(keyData.toString(), password)) {
-				return true;
+				return;
 			}
 		}
-		return false;
+		throw new ErrorKeyException(new Message("lock.password.unlock.fail", "密码验证失败"));
 	}
 
 	@JsonIgnore

@@ -30,14 +30,14 @@ public abstract class Lock implements Serializable {
 	 * @param request
 	 * @throws LockException
 	 */
-	public abstract LockKey getKeyFromRequest(HttpServletRequest request) throws LockKeyInputException;
+	public abstract LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException;
 
 	/**
 	 * 开锁
 	 * 
 	 * @return
 	 */
-	public abstract boolean tryOpen(LockKey key);
+	public abstract void tryOpen(LockKey key) throws ErrorKeyException;
 
 	/**
 	 * 获取锁类型(用于模板)

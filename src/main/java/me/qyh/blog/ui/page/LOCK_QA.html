@@ -5,9 +5,6 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-md-8">
-				<div class="alert alert-warning" th:if="${tip == null}">您正在访问的资源受密码保护，请输入密码</div>
-				<div class="alert alert-warning" th:if="${tip != null}"
-					th:text="${messages.getMessage(tip)}"></div>
 				<div class="alert alert-danger" th:unless="${error == null}"
 					th:text="${messages.getMessage(error)}"></div>
 				<if th:remove="tag" th:if="${lock != null}"> <pre

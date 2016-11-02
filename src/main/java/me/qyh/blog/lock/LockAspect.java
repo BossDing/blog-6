@@ -35,15 +35,14 @@ public class LockAspect {
 			Lock lock = lockManager.findLock(lockResource.getLockId());
 			if (lock != null) {
 				LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
-				boolean open = false;
+				if (key == null)
+					throw new LockException(lock, lockResource, null);
 				try {
-					open = lock.tryOpen(key);
+					lock.tryOpen(key);
+				} catch (ErrorKeyException e) {
+					throw new LockException(lock, lockResource, e.getLogicMessage());
 				} catch (Throwable e) {
-					// 防止死循环
 					logger.error(e.getMessage(), e);
-				}
-				if (!open) {
-					throw new LockException(lock,lockResource);
 				}
 			}
 		}

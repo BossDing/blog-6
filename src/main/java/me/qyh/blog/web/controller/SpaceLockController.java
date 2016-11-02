@@ -18,7 +18,7 @@ import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockBean;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyInputException;
+import me.qyh.blog.lock.InvalidKeyException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
@@ -28,7 +28,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 @Controller
 @RequestMapping("space/{alias}")
 public class SpaceLockController extends BaseController {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(SpaceLockController.class);
 
 	@Autowired
@@ -64,7 +64,7 @@ public class SpaceLockController extends BaseController {
 		LockKey key = null;
 		try {
 			key = lock.getKeyFromRequest(request);
-		} catch (LockKeyInputException e) {
+		} catch (InvalidKeyException e) {
 			ra.addFlashAttribute(ERROR, e.getMessage());
 			return "redirect:/unlock";
 		}

@@ -4,7 +4,6 @@ public class LoginBean {
 
 	private String username;
 	private String password;
-	private String validateCode;
 	private boolean rememberMe;
 
 	public String getUsername() {
@@ -21,14 +20,6 @@ public class LoginBean {
 
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	public String getValidateCode() {
-		return validateCode;
-	}
-
-	public void setValidateCode(String validateCode) {
-		this.validateCode = validateCode;
 	}
 
 	public boolean isRememberMe() {

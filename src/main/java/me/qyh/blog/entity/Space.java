@@ -2,8 +2,6 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 
-import me.qyh.blog.message.Message;
-
 public class Space extends BaseLockResource {
 
 	/**
@@ -53,11 +51,6 @@ public class Space extends BaseLockResource {
 	@Override
 	public String getResourceId() {
 		return "Space-" + alias;
-	}
-
-	@Override
-	public Message getLockTip() {
-		return new Message("lock.space.tip", "该空间访问受密码保护，请解锁后访问");
 	}
 
 	public Boolean getIsPrivate() {

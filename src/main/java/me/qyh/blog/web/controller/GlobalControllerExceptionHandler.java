@@ -102,7 +102,9 @@ public class GlobalControllerExceptionHandler {
 		Lock lock = ex.getLock();
 		String redirectUrl = getFullUrl(request);
 		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl));
-		RequestContextUtils.getOutputFlashMap(request).put("tip", ex.getLockResource().getLockTip());
+		Message error = ex.getError();
+		if (error != null)
+			RequestContextUtils.getOutputFlashMap(request).put("error", error);
 		return "redirect:/unlock";
 	}
 

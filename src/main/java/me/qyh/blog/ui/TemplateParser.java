@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
+import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.data.DataBind;
@@ -106,9 +107,12 @@ public final class TemplateParser {
 		return result;
 	}
 
-	public static String buildFragmentTag(String name) {
+	public static String buildFragmentTag(String name, Map<String, String> atts) {
 		Tag tag = Tag.valueOf(FRAGEMENT);
 		Attributes attributes = new Attributes();
+		if (!CollectionUtils.isEmpty(atts))
+			for (Map.Entry<String, String> it : atts.entrySet())
+				attributes.put(it.getKey(), it.getValue());
 		attributes.put(NAME_ATTR, name);
 		Element ele = new Element(tag, "", attributes);
 		return ele.toString();

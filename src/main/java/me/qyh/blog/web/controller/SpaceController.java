@@ -70,7 +70,7 @@ public class SpaceController extends BaseController {
 		DataBind<?> result = uiService.queryData(tag);
 		if (pjax) {
 			Page page = new Page();
-			page.setTpl(TemplateParser.buildFragmentTag(fr.getName()));
+			page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), null));
 			Map<String, Fragment> frMap = new HashMap<String, Fragment>();
 			frMap.put(fr.getName(), fr);
 			RenderedPage rp = new RenderedPage(page, result == null ? Collections.emptyList() : Arrays.asList(result),
@@ -82,6 +82,26 @@ public class SpaceController extends BaseController {
 			}
 		} else {
 			return new JsonResult(true, result != null ? result : null);
+		}
+	}
+
+	@RequestMapping("fragment/{fragment}")
+	@ResponseBody
+	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
+			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
+			HttpServletResponse response) throws LogicException {
+		Fragment fr = uiService.queryFragment(Webs.decode(fragment));
+		if (fr == null)
+			return new JsonResult(true);
+		Page page = new Page();
+		page.setTpl(TemplateParser.buildFragmentTag(fr.getName(),allRequestParams));
+		Map<String, Fragment> frMap = new HashMap<String, Fragment>();
+		frMap.put(fr.getName(), fr);
+		RenderedPage rp = new RenderedPage(page, Collections.emptyList(), frMap);
+		try {
+			return new JsonResult(true, render.tryRender(rp, request, response));
+		} catch (TplRenderException e) {
+			return new JsonResult(false, e.getRenderErrorDescription());
 		}
 	}
 }

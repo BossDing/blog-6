@@ -7,9 +7,10 @@ import javax.servlet.http.HttpServletRequest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyInputException;
+import me.qyh.blog.lock.InvalidKeyException;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SysLock extends Lock {
@@ -45,12 +46,12 @@ public class SysLock extends Lock {
 	}
 
 	@Override
-	public LockKey getKeyFromRequest(HttpServletRequest request) throws LockKeyInputException {
+	public LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException {
 		throw new SystemException("不支持的操作");
 	}
 
 	@Override
-	public boolean tryOpen(LockKey key) {
+	public void tryOpen(LockKey key) throws ErrorKeyException {
 		throw new SystemException("不支持的操作");
 	}
 

@@ -12,8 +12,8 @@ import me.qyh.util.Validators;
 @Component
 public class UserValidator implements Validator {
 
-	private static final int MAX_NAME_LENGTH = 10;// 用户名最大长度为10位
-	private static final int MAX_PWD_LENGTH = 16; // 密码最大长度为16位
+	public static final int MAX_NAME_LENGTH = 10;// 用户名最大长度为10位
+	public static final int MAX_PWD_LENGTH = 16; // 密码最大长度为16位
 	private static final int MAX_EMAIL_LENGTH = 100;// 邮箱最大长度为100位
 	private static final Pattern EMAIL_PATTERN = Pattern.compile(
 			"^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$");
