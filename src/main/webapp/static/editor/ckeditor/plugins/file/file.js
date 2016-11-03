@@ -44,6 +44,9 @@
 	imageModal += '<div class="form-group">';
 	imageModal += '<label >图片链接</label> <input class="form-control" placeholder="图片链接" >';
 	imageModal += '</div>';
+	imageModal += '<div class="form-group">';
+	imageModal += '<label >图片样式</label> <input  class="form-control" placeholder="图片样式" >';
+	imageModal += '</div>';
 	imageModal += '</div>';
 	imageModal += '<div class="modal-footer">';
 	imageModal += '<button type="button" class="btn btn-default" id="image-confirm-btn">确定</button>';
@@ -372,12 +375,16 @@
 				  var url  = $("#imageModal").find("input").eq(0).val();
                   var alt  = $("#imageModal").find("input").eq(1).val();
                   var link = $("#imageModal").find("input").eq(2).val();
+                  var classes = $("#imageModal").find("input").eq(3).val();
                   if(url == ""){
                 	  $("#imageModal").modal("hide");
                 	  return ;
                   }else{
                 	  var html = '';
                 	  html = '<img src="'+url+'" ';
+                	  if(classes != ''){
+                		  html += 'class="'+classes+'" ';
+                	  }
                 	  if(alt != ''){
                 		  html += 'alt="'+alt+'"/>';
                 	  }else{

@@ -1,6 +1,5 @@
 package me.qyh.blog.service.impl;
 
-import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,43 +12,34 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.HtmlUtils;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.templateresolver.StringTemplateResolver;
 
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
-import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Article.CommentConfig;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.Comment.CommentStatus;
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.evt.CommentEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.input.HtmlClean;
-import me.qyh.blog.mail.MailSender;
-import me.qyh.blog.mail.MailSender.MessageBean;
-import me.qyh.blog.message.Messages;
 import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -62,7 +52,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 import me.qyh.util.Validators;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public class CommentServiceImpl implements CommentService, InitializingBean {
+public class CommentServiceImpl implements CommentService, InitializingBean, ApplicationEventPublisherAware {
 
 	private static final Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
 
@@ -124,8 +114,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 	 * 用来过滤Html标签
 	 */
 	private HtmlClean htmlClean;
-
-	private MessageProcessor messageProcessor;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -271,13 +259,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		}
 		comment.setParent(parent);
 		comment.setUser(user);
+		comment.setArticle(article);// 用来获取文章链接
 
-		if ((!user.getAdmin() && parent == null) || (!user.getAdmin() && (parent.getUser().getAdmin()))
-				&& messageProcessor != null && UserContext.get() == null) {
-			comment.setArticle(article);// 用来获取文章链接
-			messageProcessor.add(comment);
-		}
-
+		applicationEventPublisher.publishEvent(new CommentEvent(this, comment));
 		return comment;
 	}
 
@@ -692,161 +676,11 @@ public class CommentServiceImpl implements CommentService, InitializingBean {
 		this.htmlClean = htmlClean;
 	}
 
-	public void setMessageProcessor(MessageProcessor messageProcessor) {
-		this.messageProcessor = messageProcessor;
-	}
+	private ApplicationEventPublisher applicationEventPublisher;
 
-	/**
-	 * 用来向管理员发送评论|回复通知邮件
-	 * <p>
-	 * <strong>删除评论不会对邮件的发送造成影响，即如果发送队列中或者待发送列表中的一条评论已经被删除，那么它将仍然被发送</strong>
-	 * </p>
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public static class MessageProcessor implements InitializingBean {
-		private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
-		private List<Comment> toSend = Collections.synchronizedList(new ArrayList<Comment>());
-		private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
-		private Resource mailTemplateResource = new ClassPathResource(
-				"me/qyh/blog/service/impl/defaultMailTemplate.html");
-		private String mailTemplate;
-		private String mailSubject;
-
-		/**
-		 * 每隔5秒从评论队列中获取评论放入待发送列表
-		 */
-		private static final Integer MESSAGE_PROCESS_SEC = 5;
-
-		/**
-		 * 如果待发送列表中有10或以上的评论，立即发送邮件
-		 */
-		private static final Integer MESSAGE_TIP_COUNT = 10;
-
-		/**
-		 * 如果发送列表中存在待发送评论，但是数量始终没有达到10条，那么每隔300秒会发送邮件同时清空发送列表
-		 */
-		private static final Integer MESSAGE_PROCESS_PERIOD_SEC = 300;
-
-		private int messageProcessSec = MESSAGE_PROCESS_SEC;
-		private int messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
-		private int messageTipCount = MESSAGE_TIP_COUNT;
-
-		/**
-		 * 邮件发送，用来提示管理员有新的回复或者评论
-		 */
-		@Autowired
-		private MailSender mailSender;
-		@Autowired
-		private UrlHelper urlHelper;
-		@Autowired
-		private Messages messages;
-
-		public void shutdown() {
-			synchronized (toSend) {
-				if (!toSend.isEmpty()) {
-					sendMail();
-					toSend.clear();
-				}
-			}
-		}
-
-		void add(Comment comment) {
-			toProcesses.add(comment);
-		}
-
-		void sendMail() {
-			Context context = new Context();
-			context.setVariable("urls", urlHelper.getUrls());
-			context.setVariable("comments", toSend);
-			context.setVariable("messages", messages);
-			mailSender.send(new MessageBean(mailSubject, true, mailTemplateEngine.process(mailTemplate, context)));
-		}
-
-		private final class MailTemplateEngine extends TemplateEngine {
-			public MailTemplateEngine() {
-				setTemplateResolver(new StringTemplateResolver());
-			}
-		}
-
-		public MessageProcessor() {
-		}
-
-		@Override
-		public void afterPropertiesSet() throws Exception {
-			if (mailSubject == null) {
-				throw new SystemException("邮件标题不能为空");
-			}
-			InputStream is = null;
-			try {
-				is = mailTemplateResource.getInputStream();
-				mailTemplate = IOUtils.toString(is, Constants.CHARSET);
-			} finally {
-				IOUtils.closeQuietly(is);
-			}
-			if (messageProcessPeriodSec <= 0)
-				messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
-			if (messageProcessSec <= 0)
-				messageProcessSec = MESSAGE_PROCESS_SEC;
-			if (messageTipCount <= 0)
-				messageTipCount = MESSAGE_TIP_COUNT;
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
-
-				@Override
-				public void run() {
-					synchronized (toSend) {
-						int size = toSend.size();
-						for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
-							Comment toProcess = iterator.next();
-							toSend.add(toProcess);
-							size++;
-							iterator.remove();
-							if (size >= messageTipCount) {
-								logger.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
-								sendMail();
-								toSend.clear();
-								break;
-							}
-						}
-					}
-				}
-			}, messageProcessSec, messageProcessSec, TimeUnit.SECONDS);
-
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
-
-				@Override
-				public void run() {
-					synchronized (toSend) {
-						if (!toSend.isEmpty()) {
-							logger.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
-							sendMail();
-							toSend.clear();
-						}
-					}
-				}
-			}, messageProcessPeriodSec, messageProcessPeriodSec, TimeUnit.SECONDS);
-		}
-
-		public void setMailTemplateResource(Resource mailTemplateResource) {
-			this.mailTemplateResource = mailTemplateResource;
-		}
-
-		public void setMailSubject(String mailSubject) {
-			this.mailSubject = mailSubject;
-		}
-
-		public void setMessageProcessSec(int messageProcessSec) {
-			this.messageProcessSec = messageProcessSec;
-		}
-
-		public void setMessageProcessPeriodSec(int messageProcessPeriodSec) {
-			this.messageProcessPeriodSec = messageProcessPeriodSec;
-		}
-
-		public void setMessageTipCount(int messageTipCount) {
-			this.messageTipCount = messageTipCount;
-		}
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
 }

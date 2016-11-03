@@ -14,9 +14,9 @@
 			alias="ArticleStatus" />
 		<typeAlias type="me.qyh.blog.entity.Article$ArticleFrom"
 			alias="ArticleFrom" />
-		<typeAlias type="me.qyh.blog.entity.Article$CommentConfig"
+		<typeAlias type="me.qyh.blog.entity.CommentConfig"
 			alias="CommentConfig" />
-		<typeAlias type="me.qyh.blog.entity.Article$CommentConfig$CommentMode"
+		<typeAlias type="me.qyh.blog.entity.CommentConfig$CommentMode"
 			alias="CommentMode" />
 		<typeAlias type="me.qyh.blog.entity.Editor" alias="Editor" />
 		<typeAlias type="me.qyh.blog.entity.Tag" alias="Tag" />

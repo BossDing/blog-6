@@ -11,13 +11,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockBean;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
+import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.lock.InvalidKeyException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
@@ -69,5 +72,21 @@ public class LockController extends BaseController {
 		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
 		LockHelper.clearLockBean(request);
 		return "redirect:" + lockBean.getRedirectUrl();
+	}
+
+	@RequestMapping(value = "unlock", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
+	@ResponseBody
+	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
+			throws InvalidKeyException, ErrorKeyException {
+		LockBean lockBean = LockHelper.getRequiredLockBean(request);
+		Lock lock = lockBean.getLock();
+		HttpSession session = request.getSession(false);
+		if (!Webs.matchValidateCode(validateCode, session))
+			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		LockKey key = lock.getKeyFromRequest(request);
+		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
+		lock.tryOpen(key);
+		LockHelper.clearLockBean(request);
+		return new JsonResult(true, lockBean.getRedirectUrl());
 	}
 }

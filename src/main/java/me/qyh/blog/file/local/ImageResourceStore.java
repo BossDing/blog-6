@@ -38,6 +38,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private static final char CONCAT_CHAR = 'X';
 	private static final char FORCE_CHAR = '!';
 
+	private static final String NO_WEBP = "nowebp";
+
 	private ResizeValidator resizeValidator;
 
 	@Autowired
@@ -275,6 +277,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	protected boolean supportWebp(HttpServletRequest request) {
 		if (!supportWebp)
+			return false;
+		if (request.getParameter(NO_WEBP) != null)
 			return false;
 		String accept = request.getHeader("Accept");
 		if (accept != null && accept.indexOf(WEBP_ACCEPT) != -1) {

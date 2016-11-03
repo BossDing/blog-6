@@ -38,6 +38,11 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	private static final boolean WINDOWS = (File.separatorChar == '\\');
 
 	/**
+	 * 如果为true，那么将会以渐进的方式显示出来，但在有些浏览器，例如EDGE则会先显示空白后再显示图片
+	 */
+	private boolean doInterlace = true;
+
+	/**
 	 * <p>
 	 * 用来指定缩放后的文件信息,如果指定了纵横比但同时指定了缩略图宽度和高度，将会以宽度或者长度为准(具体图片不同),如果只希望将长度(或宽度进行缩放)
 	 * ， 那么只要将另一个长度置位 <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/>
@@ -76,8 +81,17 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 		op.strip();
 		op.p_profile("*");
+		if (interlace(dest))
+			op.interlace("Line");
 		op.addImage();
 		getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+	}
+
+	private boolean interlace(File dest) {
+		if (!doInterlace)
+			return false;
+		String ext = FilenameUtils.getExtension(dest.getName());
+		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 
 	@Override
@@ -198,5 +212,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			cmd.setSearchPath(magickPath);
 		}
 		return cmd;
+	}
+
+	public void setDoInterlace(boolean doInterlace) {
+		this.doInterlace = doInterlace;
 	}
 }

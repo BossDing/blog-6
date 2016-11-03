@@ -58,10 +58,10 @@ public class CookieRememberMe implements RememberMe {
 	public User login(HttpServletRequest request, HttpServletResponse response) {
 		String rememberMeCookie = extractRememberMeCookie(request);
 		if (rememberMeCookie != null) {
-			if (rememberMeCookie.length() == 0) {
-				throw new InvalidCookieException("Cookie值为空");
-			}
 			try {
+				if (rememberMeCookie.length() == 0) {
+					throw new InvalidCookieException("Cookie值为空");
+				}
 				String[] cookieTokens = decodeCookie(rememberMeCookie);
 				if (cookieTokens != null) {
 					if (cookieTokens.length != 3) {

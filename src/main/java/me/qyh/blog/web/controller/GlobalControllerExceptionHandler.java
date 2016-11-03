@@ -92,8 +92,13 @@ public class GlobalControllerExceptionHandler {
 	 * @throws IOException
 	 */
 	@ExceptionHandler(MissLockException.class)
-	public String handleMissLockException(MissLockException ex) throws IOException {
-		return "redirect:" + urlHelper.getUrl();
+	public String handleMissLockException(HttpServletRequest request, HttpServletResponse resp, MissLockException ex)
+			throws IOException {
+		if (Webs.isAjaxRequest(request)) {
+			Webs.writeInfo(resp, new JsonResult(false, new Message("lock.miss", "锁缺失")));
+			return null;
+		} else
+			return "redirect:" + urlHelper.getUrl();
 	}
 
 	@ResponseStatus(HttpStatus.FORBIDDEN) // 403

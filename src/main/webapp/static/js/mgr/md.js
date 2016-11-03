@@ -124,7 +124,7 @@ var publishing = false;
     			commentConfig.check = $("#check").prop("checked");
     			article.commentConfig = commentConfig;
     			me.prop("disabled",true);
-    			var url = basePath+"/mgr/article/write";
+    			var url = basePath+"/mgr/article/write?autoDraft=false";
     			if($("#id").val() != ""){
     				article.id = $("#id").val();
     			}
@@ -286,7 +286,7 @@ var publishing = false;
 			}
 			commentConfig.check = $("#check").prop("checked");
 			article.commentConfig = commentConfig;
-			var url = basePath+"/mgr/article/write";
+			var url = basePath+"/mgr/article/write?autoDraft=true";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();
 			}

@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -35,6 +37,8 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
+import me.qyh.blog.evt.ArticlePublishedEvent;
+import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
@@ -46,7 +50,7 @@ import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public class ArticleServiceImpl implements ArticleService, InitializingBean {
+public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
 	@Autowired
 	private ArticleDao articleDao;
@@ -124,7 +128,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
-	public Article writeArticle(Article article) throws LogicException {
+	public Article writeArticle(Article article, boolean autoDraft) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
@@ -161,11 +165,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
 			Article updated = articleDao.selectById(article.getId());
-			if (article.isPublished()) {
-				articleIndexer.addOrUpdateDocument(updated);
-			}
 			// 由于alias的存在，硬编码删除cache
 			articleCache.evit(articleDb);
+			if (article.isPublished()) {
+				articleIndexer.addOrUpdateDocument(updated);
+				if (!autoDraft)// 自动草稿不推事件
+					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
+			}
 		} else {
 			if (article.getAlias() != null) {
 				Article aliasDb = articleDao.selectByAlias(article.getAlias());
@@ -186,6 +192,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 			Article updated = articleDao.selectById(article.getId());
 			if (article.isPublished()) {
 				articleIndexer.addOrUpdateDocument(updated);
+				if (!autoDraft)
+					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
 			}
 		}
 		return article;
@@ -206,8 +214,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
-		if (article.isPublished())
+		if (article.isPublished()) {
 			articleIndexer.addOrUpdateDocument(article);
+			applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, article, OP.UPDATE));
+		}
 	}
 
 	private void insertTags(Article article) {
@@ -332,9 +342,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 		for (Article article : articles) {
 			article.setStatus(ArticleStatus.PUBLISHED);
 			articleDao.update(article);
-			if (article.isPublished())
-				articleIndexer.addOrUpdateDocument(article);
+			articleIndexer.addOrUpdateDocument(article);
 		}
+		if (!articles.isEmpty())
+			applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
 		return articles.size();
 	}
 
@@ -362,8 +373,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleStatistics queryArticleStatistics(Space space,boolean querySpacePrivate) {
-		return articleDao.selectStatistics(space, UserContext.get() != null,querySpacePrivate);
+	public ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate) {
+		return articleDao.selectStatistics(space, UserContext.get() != null, querySpacePrivate);
 	}
 
 	@Override
@@ -394,5 +405,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean {
 
 	public void setRebuildIndex(boolean rebuildIndex) {
 		this.rebuildIndex = rebuildIndex;
+	}
+
+	private ApplicationEventPublisher applicationEventPublisher;
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

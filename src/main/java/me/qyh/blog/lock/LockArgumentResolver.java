@@ -86,7 +86,7 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 
 		private static final int MAX_NAME_LENGTH = 20;
 		private static final int MAX_PASSWORD_LENGTH = 16;
-		private static final int MAX_QUESTION_LENGTH = 500;
+		private static final int MAX_QUESTION_LENGTH = 10000;
 		private static final int MAX_ANSWERS_LENGTH = 500;
 		private static final int MAX_ANSWERS_SIZE = 10;// 答案的个数
 

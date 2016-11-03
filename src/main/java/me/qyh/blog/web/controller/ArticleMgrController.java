@@ -117,8 +117,10 @@ public class ArticleMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "write", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult write(@RequestBody @Validated Article article) throws LogicException {
-		return new JsonResult(true, articleService.writeArticle(article));
+	public JsonResult write(@RequestBody @Validated Article article,
+			@RequestParam(value = "autoDraft") boolean autoDraft)
+			throws LogicException {
+		return new JsonResult(true, articleService.writeArticle(article, autoDraft));
 	}
 
 	@RequestMapping(value = "pub", method = RequestMethod.POST)

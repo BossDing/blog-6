@@ -14,7 +14,7 @@ import org.springframework.validation.Validator;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Article.CommentConfig;
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
@@ -86,7 +86,7 @@ public class ArticleValidator implements Validator {
 			errors.reject("article.private.null", "文章私有性不能为空");
 			return;
 		}
-		if(article.getSpacePrivate() == null){
+		if (article.getSpacePrivate() == null) {
 			errors.reject("article.spaceprivate.null", "文章空间私有性不能为空");
 			return;
 		}

@@ -75,10 +75,12 @@ public interface ArticleService {
 	 * 插入|更新 文章
 	 * 
 	 * @param article
+	 * @param autoDraft
+	 *            是否是自动保存的草稿
 	 * @return
 	 * @throws LogicException
 	 */
-	Article writeArticle(Article article) throws LogicException;
+	Article writeArticle(Article article, boolean autoDraft) throws LogicException;
 
 	/**
 	 * 重建索引

@@ -52,7 +52,8 @@
 	</bean>
 
 	<import resource="file.xml" />
-	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config" />
+	<context:component-scan
+		base-package="me.qyh.blog.service,me.qyh.blog.config" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 	<!-- 验证码服务 -->
@@ -77,29 +78,14 @@
 
 	<!-- 锁 -->
 	<bean class="me.qyh.blog.lock.LockManager">
-		<property name="expandedLockProvider">
-			<bean class="me.qyh.blog.lock.ExpandedLockProvider">
-				<property name="expandedLocks">
-					<list>
-						<bean class="me.qyh.blog.lock.support.PictureQALock">
-							<property name="lockType" value="PictureQA" />
-							<property name="picture"
-								value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" />
-							<property name="question" value="which game ?" />
-							<property name="answers" value="WOW,wow,魔兽世界" />
-							<property name="id" value="expandedLock1"></property>
-							<property name="name" value="魔兽" />
-						</bean>
-					</list>
-				</property>
-				<property name="defaultTplResource">
-					<map>
-						<entry key="PictureQA"
-							value="classpath:me/qyh/blog/ui/page/PictureQALock.html" />
-					</map>
-				</property>
-			</bean>
-		</property>
+		<!-- <property name="expandedLockProvider"> <bean class="me.qyh.blog.lock.ExpandedLockProvider"> 
+			<property name="expandedLocks"> <list> <bean class="me.qyh.blog.lock.support.PictureQALock"> 
+			<property name="lockType" value="PictureQA" /> <property name="picture" value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" 
+			/> <property name="question" value="which game ?" /> <property name="answers" 
+			value="WOW,wow,魔兽世界" /> <property name="id" value="expandedLock1"></property> 
+			<property name="name" value="魔兽" /> </bean> </list> </property> <property 
+			name="defaultTplResource"> <map> <entry key="PictureQA" value="classpath:me/qyh/blog/ui/page/PictureQALock.html" 
+			/> </map> </property> </bean> </property> -->
 	</bean>
 	<bean class="me.qyh.blog.lock.SysLockProvider" />
 	<bean class="me.qyh.blog.lock.LockAspect" />
@@ -150,12 +136,17 @@
 		<property name="htmlClean">
 			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
 		</property>
-		<!-- 如果不需要邮件通知这个属性请不要设置 -->
-		<property name="messageProcessor">
-			<bean class="me.qyh.blog.service.impl.CommentServiceImpl$MessageProcessor"
-				destroy-method="shutdown">
-				<property name="mailSubject" value="您有新的评论" />
-			</bean>
+	</bean>
+
+	<bean class="me.qyh.blog.evt.CommentEventListener">
+		<property name="handlers">
+			<list>
+				<!-- 如果不需要邮件通知这个属性请不要设置 -->
+				<bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler"
+					destroy-method="shutdown">
+					<property name="mailSubject" value="您有新的评论" />
+				</bean>
+			</list>
 		</property>
 	</bean>
 
