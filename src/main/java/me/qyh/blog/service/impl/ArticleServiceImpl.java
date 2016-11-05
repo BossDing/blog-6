@@ -27,6 +27,7 @@ import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
+import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.CommentDao;
@@ -375,6 +376,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate) {
 		return articleDao.selectStatistics(space, UserContext.get() != null, querySpacePrivate);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	@Cacheable(value = "hotTags")
+	public List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate) {
+		return articleTagDao.selectTags(space, hasLock, queryPrivate);
 	}
 
 	@Override

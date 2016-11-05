@@ -8,6 +8,8 @@ import me.qyh.blog.pageparam.SpaceQueryParam;
 public interface SpaceDao {
 
 	Space selectByAlias(String alias);
+	
+	Space selectByName(String name);
 
 	void update(Space space);
 

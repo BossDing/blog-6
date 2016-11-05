@@ -169,6 +169,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="status != null">
 				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
+			<if test="status == null and statuses != null and !statuses.isEmpty()">
+				AND art.art_status IN 
+				<foreach collection="statuses" separator="," open="(" close=")" item="status">
+				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+				</foreach>
+			</if>
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
@@ -233,6 +239,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="status != null">
 				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+			</if>
+			<if test="status == null and statuses != null and !statuses.isEmpty()">
+				AND art.art_status IN 
+				<foreach collection="statuses" separator="," open="(" close=")" item="status">
+				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+				</foreach>
 			</if>
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}

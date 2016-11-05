@@ -224,6 +224,9 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			// GET请求不能检查，否则死循环
 			return;
 		}
+		// metaweblog等放行
+		if (Webs.apisRequest(request))
+			return;
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}

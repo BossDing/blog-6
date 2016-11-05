@@ -35,9 +35,9 @@
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
 				</bean>
-				<bean class="me.qyh.blog.ui.data.HotTagDataTagProcessor">
-					<constructor-arg index="0" value="热门标签" />
-					<constructor-arg index="1" value="hotTags" />
+				<bean class="me.qyh.blog.ui.data.ArticleTagDataTagProcessor">
+					<constructor-arg index="0" value="标签集-文章" />
+					<constructor-arg index="1" value="articleTags" />
 				</bean>
 				<bean class="me.qyh.blog.ui.data.ArticleStatisticsDataTagProcessor">
 					<constructor-arg index="0" value="文章统计" />
@@ -60,7 +60,7 @@
 							value="classpath:me/qyh/blog/ui/fragment/articleNav.html" />
 						<entry key="最近评论"
 							value="classpath:me/qyh/blog/ui/fragment/comments.html" />
-						<entry key="热门标签" value="classpath:me/qyh/blog/ui/fragment/hotTags.html" />
+						<entry key="标签集-文章" value="classpath:me/qyh/blog/ui/fragment/articleTags.html" />
 						<entry key="文章统计"
 							value="classpath:me/qyh/blog/ui/fragment/articleStatistics.html" />
 						<entry key="顶部导航" value="classpath:me/qyh/blog/ui/fragment/nav.html" />

@@ -1,9 +1,5 @@
 package me.qyh.blog.service;
 
-import java.util.List;
-
-import me.qyh.blog.bean.TagCount;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
@@ -37,16 +33,5 @@ public interface TagService {
 	 * @throws LogicException
 	 */
 	void deleteTag(Integer id) throws LogicException;
-
-	/**
-	 * 查询热门标签
-	 * 
-	 * @param space
-	 * @param hasLock
-	 * @param queryPrivate
-	 * @param limit
-	 * @return
-	 */
-	List<TagCount> queryHotTags(Space space, boolean hasLock, boolean queryPrivate, int limit);
 
 }

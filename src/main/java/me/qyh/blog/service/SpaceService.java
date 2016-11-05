@@ -47,4 +47,12 @@ public interface SpaceService {
 	 */
 	Space selectSpaceByAliasWithoutLockProtected(String alias);
 
+	/**
+	 * 更具空间名查询，不会进行锁检查
+	 * 
+	 * @param name
+	 * @return
+	 */
+	Space selectSpaceByName(String name);
+
 }

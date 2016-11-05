@@ -318,7 +318,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		if (space != null) {
 			Query query = new TermQuery(new Term(SPACE_ID, space.getId().toString()));
 			builder.add(query, Occur.MUST);
-		} 
+		}
 		Date begin = param.getBegin();
 		Date end = param.getEnd();
 		boolean dateRangeQuery = (begin != null && end != null);
@@ -331,7 +331,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
 			builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
 		}
-		if(!param.isQuerySpacePrivate()){
+		if (!param.isQuerySpacePrivate()) {
 			builder.add(new TermQuery(new Term(SPACE_PRIVATE, "false")), Occur.MUST);
 		}
 		ArticleFrom from = param.getFrom();
@@ -343,6 +343,14 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		if (status != null) {
 			Query query = new TermQuery(new Term(STATUS, status.name().toLowerCase()));
 			builder.add(query, Occur.MUST);
+		} else {
+			List<ArticleStatus> statuses = param.getStatuses();
+			if (!CollectionUtils.isEmpty(statuses)) {
+				for (ArticleStatus _status : statuses) {
+					Query query = new TermQuery(new Term(STATUS, _status.name().toLowerCase()));
+					builder.add(query, Occur.SHOULD);
+				}
+			}
 		}
 		if (param.getTag() != null) {
 			builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);

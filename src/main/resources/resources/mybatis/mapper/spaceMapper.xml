@@ -26,6 +26,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			space_alias = #{alias}
 	</select>
 	
+	<select id="selectByName" resultMap="SpaceDetail">
+		SELECT
+			id,
+			space_alias,
+			is_private,
+			createDate,
+			space_name,
+			space_lock
+		FROM
+			blog_space
+		WHERE
+			space_name = #{name}
+	</select>
+	
 	<select id="selectById" resultMap="SpaceDetail">
 		SELECT
 			id,

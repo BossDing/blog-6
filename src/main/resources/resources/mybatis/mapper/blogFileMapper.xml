@@ -24,7 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="file_count" property="count"/>
 	</resultMap>
 
-	<insert id="insert">
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_file(file_name,file_parent,file_type,file_createDate,common_file,file_lft,file_rgt,file_path)
 		VALUES(#{name},#{parent.id},#{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler},#{createDate},#{cf.id},#{lft},#{rgt},#{path})
 	</insert>

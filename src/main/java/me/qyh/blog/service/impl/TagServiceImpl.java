@@ -4,15 +4,12 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.TagDao;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
@@ -72,12 +69,5 @@ public class TagServiceImpl implements TagService {
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
 		articleIndexer.removeTag(db.getName());
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	@Cacheable(value = "hotTags")
-	public List<TagCount> queryHotTags(Space space, boolean hasLock, boolean queryPrivate, int limit) {
-		return articleTagDao.selectHotTags(space, hasLock, queryPrivate, limit);
 	}
 }

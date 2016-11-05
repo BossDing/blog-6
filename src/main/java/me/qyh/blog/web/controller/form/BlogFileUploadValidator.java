@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class BlogFileUploadValidator implements Validator {
 
-	private static final int MAX_FILE_NAME_LENGTH = 500;
+	public static final int MAX_FILE_NAME_LENGTH = 500;
 
 	@Override
 	public boolean supports(Class<?> clazz) {

@@ -65,4 +65,9 @@ public class Webs {
 		return (apm.match("/unlock", path) || apm.match("/unlock/", path) || apm.match("/space/*/unlock", path)
 				|| apm.match("/space/*/unlock/", path));
 	}
+
+	public static boolean apisRequest(HttpServletRequest request) {
+		String path = request.getRequestURI();
+		return apm.match("/apis/**", path);
+	}
 }

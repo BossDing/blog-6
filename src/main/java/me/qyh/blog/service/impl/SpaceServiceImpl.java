@@ -41,6 +41,10 @@ public class SpaceServiceImpl implements SpaceService {
 			throw new LogicException(
 					new Message("space.alias.exists", "别名为" + space.getAlias() + "的空间已经存在了", space.getAlias()));
 		}
+		if (spaceDao.selectByName(space.getName()) != null) {
+			throw new LogicException(
+					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
+		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		spaceDao.insert(space);
 	}
@@ -59,6 +63,12 @@ public class SpaceServiceImpl implements SpaceService {
 		if (aliasDb != null && !aliasDb.equals(db)) {
 			throw new LogicException(
 					new Message("space.alias.exists", "别名为" + space.getAlias() + "的空间已经存在了", space.getAlias()));
+		}
+
+		Space nameDb = spaceDao.selectByName(space.getName());
+		if (nameDb != null && !nameDb.equals(db)) {
+			throw new LogicException(
+					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 
 		checkLock(space.getLockId());
@@ -80,6 +90,18 @@ public class SpaceServiceImpl implements SpaceService {
 		return space;
 	}
 	
+	@Override
+	@Transactional(readOnly = true)
+	public Space selectSpaceByName(String name) {
+		Space space = spaceDao.selectByName(name);
+		if (space != null) {
+			if (space.getIsPrivate() && UserContext.get() == null) {
+				throw new AuthencationException();
+			}
+		}
+		return space;
+	}
+
 	@Override
 	@Cacheable(value = "userCache", key = "'space-'+#alias", unless = "#result == null || #result.isPrivate")
 	@Transactional(readOnly = true)

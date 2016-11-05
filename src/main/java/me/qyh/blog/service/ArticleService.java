@@ -7,6 +7,7 @@ import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
+import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
@@ -144,4 +145,14 @@ public interface ArticleService {
 	 * @return
 	 */
 	ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate);
+
+	/**
+	 * 查询被文章所引用的标签集
+	 * 
+	 * @param space
+	 * @param hasLock
+	 * @param queryPrivate
+	 * @return
+	 */
+	List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate);
 }

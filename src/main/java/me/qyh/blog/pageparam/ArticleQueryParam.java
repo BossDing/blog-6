@@ -1,13 +1,16 @@
 package me.qyh.blog.pageparam;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.util.Validators;
 import me.qyh.blog.entity.Space;
+import me.qyh.util.Validators;
 
 public class ArticleQueryParam extends PageQueryParam {
 
@@ -23,6 +26,7 @@ public class ArticleQueryParam extends PageQueryParam {
 	private Date end;
 	private String query;
 	private ArticleStatus status;
+	private List<ArticleStatus> statuses = new ArrayList<ArticleStatus>();
 	private ArticleFrom from;
 	private boolean ignoreLevel;// 忽略置顶
 	private boolean queryPrivate;// 查询私人博客
@@ -41,7 +45,7 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setSpace(Space space) {
 		this.space = space;
-		if(space != null)
+		if (space != null)
 			this.querySpacePrivate = true;
 	}
 
@@ -67,6 +71,10 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setQuery(String query) {
 		this.query = query;
+	}
+
+	public List<ArticleStatus> getStatuses() {
+		return statuses;
 	}
 
 	public ArticleStatus getStatus() {
@@ -137,11 +145,33 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.querySpacePrivate = querySpacePrivate;
 	}
 
-	@Override
-	public String toString() {
-		return "ArticleQueryParam [space=" + space + ", begin=" + begin + ", end=" + end + ", query=" + query
-				+ ", status=" + status + ", from=" + from + ", ignoreLevel=" + ignoreLevel + ", queryPrivate="
-				+ queryPrivate + ", tag=" + tag + ", hasLock=" + hasLock + ", sort=" + sort + "]";
+	public void setStatuses(List<ArticleStatus> statuses) {
+		this.statuses = statuses;
+	}
+
+	public void setStatuses(ArticleStatus... statuses) {
+		this.statuses = Arrays.asList(statuses);
+	}
+
+	public String getStatusStr() {
+		if (this.status != null)
+			return status.name();
+		StringBuilder sb = new StringBuilder();
+		for (ArticleStatus status : statuses)
+			sb.append(status.name()).append(",");
+		if (sb.length() > 1)
+			sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
+	}
+
+	public boolean hasStatus(String statusStr) {
+		if (this.status != null) {
+			return statusStr.equals(status.name());
+		}
+		for (ArticleStatus status : statuses)
+			if (statusStr.equals(status.name()))
+				return true;
+		return false;
 	}
 
 }

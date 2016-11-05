@@ -1,9 +1,11 @@
 package me.qyh.blog.service.impl;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
+import me.qyh.util.Validators;
 
 /**
  * {@link http://mikehillyer.com/articles/managing-hierarchical-data-in-mysql}
@@ -57,6 +60,30 @@ public class FileServiceImpl implements FileService {
 	private CommonFileDao commonFileDao;
 
 	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
+
+	@Override
+	public UploadedFile upload(String path, int server, MultipartFile file) throws LogicException {
+		BlogFile parent = null;
+		if (!Validators.isEmptyOrNull(path, true)) {
+			if (path.indexOf(FileService.SPLIT_CHAR) != -1) {
+
+			} else {
+				parent = new BlogFile();
+				parent.setName(path);
+				parent.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+				parent.setPath(path);
+				parent.setType(BlogFileType.DIRECTORY);
+				createFolder(parent);
+			}
+		} else {
+			parent = blogFileDao.selectRoot();
+		}
+		BlogFileUpload bfu = new BlogFileUpload();
+		bfu.setFiles(Arrays.asList(file));
+		bfu.setParent(parent.getId());
+		bfu.setServer(server);
+		return upload(bfu).get(0);
+	}
 
 	@Override
 	public List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
@@ -95,7 +122,7 @@ public class FileServiceImpl implements FileService {
 				}
 				cf.setServer(fs.id());
 				uploadedFiles.add(new UploadedFile(file.getOriginalFilename(), cf.getSize(),
-						fs.getFileStore(cf.getStore()).getPreviewUrl(key)));
+						fs.getFileStore(cf.getStore()).getUrl(key)));
 				commonFileDao.insert(cf);
 				BlogFile blogFile = new BlogFile();
 				blogFile.setCf(cf);

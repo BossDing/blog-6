@@ -171,4 +171,6 @@
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl" />
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
+	
+	<bean class="me.qyh.blog.metaweblog.MetaweblogHandler"/>
 </beans>      

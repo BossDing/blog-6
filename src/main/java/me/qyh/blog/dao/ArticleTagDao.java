@@ -20,7 +20,7 @@ public interface ArticleTagDao {
 
 	void merge(@Param("src") Tag src, @Param("dest") Tag dest);
 
-	List<TagCount> selectHotTags(@Param("space") Space space, @Param("hasLock") boolean hasLock,
-			@Param("queryPrivate") boolean queryPrivate, @Param("limit") int limit);
+	List<TagCount> selectTags(@Param("space") Space space, @Param("hasLock") boolean hasLock,
+			@Param("queryPrivate") boolean queryPrivate);
 
 }

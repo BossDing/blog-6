@@ -84,5 +84,5 @@
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
-
+	<bean class="me.qyh.blog.metaweblog.MetaweblogController"/>
 </beans>

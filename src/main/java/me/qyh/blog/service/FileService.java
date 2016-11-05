@@ -3,6 +3,8 @@ package me.qyh.blog.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.entity.BlogFile;
@@ -44,4 +46,6 @@ public interface FileService {
 	 * @see FileStore#delete(me.qyh.blog.file.CommonFile)
 	 */
 	void clearDeletedCommonFile();
+
+	UploadedFile upload(String path, int server, MultipartFile file) throws LogicException;
 }
