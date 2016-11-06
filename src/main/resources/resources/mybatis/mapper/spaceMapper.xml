@@ -4,59 +4,47 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="me.qyh.blog.dao.SpaceDao">
 	<resultMap type="Space" id="SpaceDetail">
-		<id column="id" property="id" />
+		<id column="space_id" property="id" />
 		<result column="space_alias" property="alias" />
 		<result column="is_private" property="isPrivate" />
 		<result column="createDate" property="createDate" />
 		<result column="space_name" property="name"/>
 		<result column="space_lock" property="lockId"/>
+		<result column="space_art_hidden" property="articleHidden"/>
+		
+		<association property="commentConfig" javaType="CommentConfig">
+			<id column="comment_config_id" property="id"></id>
+			<result column="allowComment" property="allowComment"/>
+			<result property="commentMode" column="comment_mode" typeHandler="EnumOrdinalTypeHandler"/>
+			<result column="comment_asc" property="asc"/>
+			<result column="comment_allowHtml" property="allowHtml"/>
+			<result column="comment_limitCount" property="limitCount"/>
+			<result column="comment_limitSec" property="limitSec"/>
+			<result column="comment_check" property="check"/>
+		</association>
 	</resultMap>
 
 	<select id="selectByAlias" resultMap="SpaceDetail">
-		SELECT
-			id,
-			space_alias,
-			is_private,
-			createDate,
-			space_name,
-			space_lock
-		FROM
-			blog_space
+		<include refid="spaceDetailSql"></include>
 		WHERE
 			space_alias = #{alias}
 	</select>
 	
 	<select id="selectByName" resultMap="SpaceDetail">
-		SELECT
-			id,
-			space_alias,
-			is_private,
-			createDate,
-			space_name,
-			space_lock
-		FROM
-			blog_space
+		<include refid="spaceDetailSql"></include>
 		WHERE
 			space_name = #{name}
 	</select>
 	
 	<select id="selectById" resultMap="SpaceDetail">
-		SELECT
-			id,
-			space_alias,
-			is_private,
-			createDate,
-			space_name,
-			space_lock
-		FROM
-			blog_space
+		<include refid="spaceDetailSql"></include>
 		WHERE
-			id = #{id}
+			bs.id = #{id}
 	</select>
 
 	<insert id="insert">
-		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock)
-		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId})
+		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,space_art_hidden)
+		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{articleHidden})
 	</insert>
 
 	<update id="update">
@@ -68,24 +56,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="name != null">
 				space_name = #{name},
 			</if>
+			<if test="articleHidden != null">
+				space_art_hidden = #{articleHidden},
+			</if>
 			<if test="isPrivate != null">
 				is_private = #{isPrivate},
 			</if>
+			comment_config = #{commentConfig.id},
 			space_lock = #{lockId}
 		</set>
 		WHERE id = #{id}
 	</update>
 
 	<select id="selectByParam" resultMap="SpaceDetail">
-		SELECT
-			id,
-			space_alias,
-			is_private,
-			createDate,
-			space_name,
-			space_lock
-		FROM
-			blog_space
+		<include refid="spaceDetailSql"></include>
 		<where>
 			<if test="name != null and name != ''">
 				space_name LIKE CONCAT('%', #{name},'%')
@@ -97,6 +81,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND is_private = #{isPrivate}
 			</if>
 		</where>
-		ORDER BY createDate DESC,id DESC
+		ORDER BY createDate DESC,bs.id DESC
 	</select>
+	
+	<sql id="spaceDetailSql">
+		SELECT
+			bs.id AS space_id,
+			space_alias,
+			is_private,
+			createDate,
+			space_name,
+			space_lock,
+			space_art_hidden,
+			bcc.allowComment,
+			bcc.comment_mode,
+			bcc.comment_asc,
+			bcc.comment_allowHtml,
+			bcc.comment_limitSec,
+			bcc.comment_limitCount,
+			bcc.comment_check,
+			bcc.id AS comment_config_id
+		FROM
+			blog_space bs
+		LEFT OUTER JOIN blog_comment_config bcc ON bs.comment_config = bcc.id
+	</sql>
 </mapper>

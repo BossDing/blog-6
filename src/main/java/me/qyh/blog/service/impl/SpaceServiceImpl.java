@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.dao.CommentConfigDao;
 import me.qyh.blog.dao.SpaceDao;
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
@@ -32,6 +34,8 @@ public class SpaceServiceImpl implements SpaceService {
 	private SpaceDao spaceDao;
 	@Autowired
 	private LockManager lockManager;
+	@Autowired
+	private CommentConfigDao commentConfigDao;
 
 	@Override
 	public void addSpace(Space space) throws LogicException {
@@ -46,6 +50,9 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+		CommentConfig config = space.getCommentConfig();
+		if (config != null)
+			commentConfigDao.insert(config);
 		spaceDao.insert(space);
 	}
 
@@ -72,8 +79,23 @@ public class SpaceServiceImpl implements SpaceService {
 		}
 
 		checkLock(space.getLockId());
+		CommentConfig oldConfig = db.getCommentConfig();
+		CommentConfig newConfig = space.getCommentConfig();
+		if (oldConfig != null) {
+			if (newConfig == null) {
+				spaceDao.update(space);
+				commentConfigDao.deleteById(oldConfig.getId());
+			} else {
+				newConfig.setId(oldConfig.getId());
+				commentConfigDao.update(newConfig);
+				spaceDao.update(space);
+			}
+		} else {
+			if (newConfig != null) 
+				commentConfigDao.insert(newConfig);
+			spaceDao.update(space);
+		}
 
-		spaceDao.update(space);
 	}
 
 	@Override
@@ -89,7 +111,13 @@ public class SpaceServiceImpl implements SpaceService {
 		}
 		return space;
 	}
-	
+
+	@Override
+	@Transactional(readOnly = true)
+	public Space getSpace(Integer id) {
+		return spaceDao.selectById(id);
+	}
+
 	@Override
 	@Transactional(readOnly = true)
 	public Space selectSpaceByName(String name) {
@@ -123,4 +151,5 @@ public class SpaceServiceImpl implements SpaceService {
 			}
 		}
 	}
+
 }

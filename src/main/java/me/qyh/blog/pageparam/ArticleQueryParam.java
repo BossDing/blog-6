@@ -33,7 +33,7 @@ public class ArticleQueryParam extends PageQueryParam {
 	private String tag;
 	private Boolean hasLock;
 	private Sort sort;
-	private boolean querySpacePrivate;// 如果为是，查询全部，如果为否，不查询空间私有文章(如果space==null)
+	private boolean queryHidden;// 如果为是，查询全部，如果为否，不查询空间私有文章(如果space==null)
 
 	public enum Sort {
 		HITS, COMMENTS
@@ -46,7 +46,7 @@ public class ArticleQueryParam extends PageQueryParam {
 	public void setSpace(Space space) {
 		this.space = space;
 		if (space != null)
-			this.querySpacePrivate = true;
+			this.queryHidden = true;
 	}
 
 	public Date getBegin() {
@@ -137,20 +137,20 @@ public class ArticleQueryParam extends PageQueryParam {
 		return !Validators.isEmptyOrNull(query, true);
 	}
 
-	public boolean isQuerySpacePrivate() {
-		return querySpacePrivate;
-	}
-
-	public void setQuerySpacePrivate(boolean querySpacePrivate) {
-		this.querySpacePrivate = querySpacePrivate;
-	}
-
 	public void setStatuses(List<ArticleStatus> statuses) {
 		this.statuses = statuses;
 	}
 
 	public void setStatuses(ArticleStatus... statuses) {
 		this.statuses = Arrays.asList(statuses);
+	}
+
+	public boolean isQueryHidden() {
+		return queryHidden;
+	}
+
+	public void setQueryHidden(boolean queryHidden) {
+		this.queryHidden = queryHidden;
 	}
 
 	public String getStatusStr() {

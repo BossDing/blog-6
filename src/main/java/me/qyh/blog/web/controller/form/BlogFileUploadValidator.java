@@ -32,6 +32,10 @@ public class BlogFileUploadValidator implements Validator {
 						"文件名不能超过" + MAX_FILE_NAME_LENGTH + "个字符");
 				return;
 			}
+			if (file.isEmpty()) {
+				errors.reject("file.content.blank", "文件内容不能为空");
+				return;
+			}
 		}
 		if (upload.getServer() == null) {
 			errors.reject("file.uploadserver.blank", "文件上传服务为空");

@@ -1,12 +1,13 @@
 package me.qyh.blog.entity;
 
-import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
 
-public class CommentConfig implements Serializable {
+public class CommentConfig extends Id	 {
 	/**
 	 * 
 	 */
@@ -85,6 +86,7 @@ public class CommentConfig implements Serializable {
 		this.limitCount = limitCount;
 	}
 
+	@JsonIgnore
 	public Limit getLimit() {
 		return new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 	}
@@ -95,5 +97,12 @@ public class CommentConfig implements Serializable {
 
 	public void setCheck(Boolean check) {
 		this.check = check;
+	}
+
+	@Override
+	public String toString() {
+		return "CommentConfig [allowHtml=" + allowHtml + ", allowComment=" + allowComment + ", asc=" + asc
+				+ ", commentMode=" + commentMode + ", limitCount=" + limitCount + ", limitSec=" + limitSec + ", check="
+				+ check + "]";
 	}
 }

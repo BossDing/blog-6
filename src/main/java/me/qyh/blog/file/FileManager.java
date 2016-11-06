@@ -8,4 +8,6 @@ public interface FileManager {
 
 	FileServer getFileServer(int id);
 
+	FileServer getFileServer();
+
 }

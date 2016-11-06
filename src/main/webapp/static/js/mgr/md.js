@@ -2,6 +2,13 @@ var editor;
 var publishing = false;
 		var tags = [];
 		$(function() {
+			$("#doCommentConfig").click(function(){
+				var check = $(this).prop('checked');
+				if(check)
+					$("#commentConfigContainer").show();
+				else
+					$("#commentConfigContainer").hide();
+			})
 			editor = editormd("editormd", {
 				width : "100%",
 				height : 800,
@@ -41,7 +48,6 @@ var publishing = false;
 				saveHTMLToTextarea : true,
 				path : basePath + '/static/editor/markdown/lib/'
 			});
-			$(".integer").on('keydown', function(e){-1!==$.inArray(e.keyCode,[46,8,9,27,13,110])||/65|67|86|88/.test(e.keyCode)&&(!0===e.ctrlKey||!0===e.metaKey)||35<=e.keyCode&&40>=e.keyCode||(e.shiftKey||48>e.keyCode||57<e.keyCode)&&(96>e.keyCode||105<e.keyCode)&&e.preventDefault()});
 			$('.form_datetime').datetimepicker({
 		        language:  'zh-CN',
 		        weekStart: 1,
@@ -105,7 +111,7 @@ var publishing = false;
     				article.level = $("#level").val();
     			}
     			article.isPrivate = $("#private").prop("checked");
-    			article.spacePrivate = $("#spacePrivate").prop("checked");
+    			article.hidden = $("#hidden").prop("checked");
     			article.tags = tags;
     			article.summary = $("#summary").val();
     			article.space = {"id":$("#space").val()};
@@ -114,15 +120,17 @@ var publishing = false;
     				article.lockId = $("#lockId").val();
     			}
     			article.alias = $("#alias").val();
-    			var commentConfig = {};
-    			commentConfig.allowComment = $("#allowComment").prop("checked");
-    			commentConfig.commentMode = $("#commentMode").val();
-    			commentConfig.asc = $("#commentSort").val();
-    			commentConfig.allowHtml = $("#allowHtml").prop("checked");
-    			commentConfig.limitSec = $("#limitSec").val();
-    			commentConfig.limitCount = $("#limitCount").val();
-    			commentConfig.check = $("#check").prop("checked");
-    			article.commentConfig = commentConfig;
+    			if($("#doCommentConfig").is(':checked')){
+    				var commentConfig = {};
+        			commentConfig.allowComment = $("#allowComment").prop("checked");
+        			commentConfig.commentMode = $("#commentMode").val();
+        			commentConfig.asc = $("#commentSort").val();
+        			commentConfig.allowHtml = $("#allowHtml").prop("checked");
+        			commentConfig.limitSec = $("#limitSec").val();
+        			commentConfig.limitCount = $("#limitCount").val();
+        			commentConfig.check = $("#check").prop("checked");
+        			article.commentConfig = commentConfig;
+    			}
     			me.prop("disabled",true);
     			var url = basePath+"/mgr/article/write?autoDraft=false";
     			if($("#id").val() != ""){
@@ -262,7 +270,7 @@ var publishing = false;
 				article.level = $("#level").val();
 			}
 			article.isPrivate = $("#private").prop("checked");
-			article.spacePrivate = $("#spacePrivate").prop("checked");
+			article.hidden = $("#hidden").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
 			article.space = {"id":$("#space").val()};
@@ -271,21 +279,24 @@ var publishing = false;
 				article.lockId = $("#lockId").val();
 			}
 			article.alias = $("#alias").val();
-			var commentConfig = {};
-			commentConfig.allowComment = $("#allowComment").prop("checked");
-			commentConfig.commentMode = $("#commentMode").val();
-			commentConfig.asc = $("#commentSort").val();
-			commentConfig.allowHtml = $("#allowHtml").prop("checked");
-			commentConfig.limitSec = $("#limitSec").val();
-			commentConfig.limitCount = $("#limitCount").val();
-			if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
-				commentConfig.limitSec = 60;
+			
+			if($("#doCommentConfig").is(':checked')){
+				var commentConfig = {};
+				commentConfig.allowComment = $("#allowComment").prop("checked");
+				commentConfig.commentMode = $("#commentMode").val();
+				commentConfig.asc = $("#commentSort").val();
+				commentConfig.allowHtml = $("#allowHtml").prop("checked");
+				commentConfig.limitSec = $("#limitSec").val();
+				commentConfig.limitCount = $("#limitCount").val();
+				if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
+					commentConfig.limitSec = 60;
+				}
+				if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
+					commentConfig.limitCount = 10;
+				}
+				commentConfig.check = $("#check").prop("checked");
+				article.commentConfig = commentConfig;
 			}
-			if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
-				commentConfig.limitCount = 10;
-			}
-			commentConfig.check = $("#check").prop("checked");
-			article.commentConfig = commentConfig;
 			var url = basePath+"/mgr/article/write?autoDraft=true";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();

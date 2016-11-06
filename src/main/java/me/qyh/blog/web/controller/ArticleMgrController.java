@@ -68,7 +68,7 @@ public class ArticleMgrController extends BaseMgrController {
 			articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
 		}
 		articleQueryParam.setQueryPrivate(true);
-		articleQueryParam.setQuerySpacePrivate(true);
+		articleQueryParam.setQueryHidden(true);
 		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		model.addAttribute("page", articleService.queryArticle(articleQueryParam));
 		return "mgr/article/index";
@@ -118,8 +118,7 @@ public class ArticleMgrController extends BaseMgrController {
 	@RequestMapping(value = "write", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult write(@RequestBody @Validated Article article,
-			@RequestParam(value = "autoDraft") boolean autoDraft)
-			throws LogicException {
+			@RequestParam(value = "autoDraft") boolean autoDraft) throws LogicException {
 		return new JsonResult(true, articleService.writeArticle(article, autoDraft));
 	}
 

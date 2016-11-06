@@ -47,5 +47,14 @@ public interface FileService {
 	 */
 	void clearDeletedCommonFile();
 
-	UploadedFile upload(String path, int server, MultipartFile file) throws LogicException;
+	/**
+	 * 上传metaweblog api上传的文件
+	 * 
+	 * @param path
+	 * @param server
+	 * @param file
+	 * @return
+	 * @throws LogicException
+	 */
+	UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException;
 }

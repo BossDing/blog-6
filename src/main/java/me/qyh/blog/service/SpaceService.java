@@ -54,5 +54,7 @@ public interface SpaceService {
 	 * @return
 	 */
 	Space selectSpaceByName(String name);
+	
+	Space getSpace(Integer id);
 
 }

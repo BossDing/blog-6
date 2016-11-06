@@ -16,6 +16,7 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Jsons;
+import me.qyh.util.Validators;
 
 public class Webs {
 	private static final AntPathMatcher apm = new AntPathMatcher();
@@ -69,5 +70,17 @@ public class Webs {
 	public static boolean apisRequest(HttpServletRequest request) {
 		String path = request.getRequestURI();
 		return apm.match("/apis/**", path);
+	}
+
+	private static String[] HEADERS_TO_TRY = { "REMOTE_ADDR", "X-Forwarded-For", "X-Real-IP" };
+
+	public static String getIp(HttpServletRequest request) {
+		for (String header : HEADERS_TO_TRY) {
+			String ip = request.getHeader(header);
+			if (!Validators.isEmptyOrNull(ip, true) && !"unknown".equalsIgnoreCase(ip)) {
+				return ip;
+			}
+		}
+		return request.getRemoteAddr();
 	}
 }

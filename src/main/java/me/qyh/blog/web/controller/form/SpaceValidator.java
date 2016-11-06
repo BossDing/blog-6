@@ -1,9 +1,11 @@
 package me.qyh.blog.web.controller.form;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.util.Validators;
 
@@ -12,6 +14,9 @@ public class SpaceValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_ALIAS_LENGTH = 20;
+
+	@Autowired
+	private CommentConfigValidator commentConfigValidator;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -52,6 +57,15 @@ public class SpaceValidator implements Validator {
 			errors.reject("space.private.blank", "空间私有性不能为空");
 			return;
 		}
+
+		if (space.getArticleHidden() == null) {
+			errors.reject("space.articleHidden.blank", "是否隐藏文章不能为空");
+			return;
+		}
+
+		CommentConfig commentConfig = space.getCommentConfig();
+		if (commentConfig != null)
+			commentConfigValidator.validate(commentConfig, errors);
 	}
 
 	/**

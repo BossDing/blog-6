@@ -38,4 +38,9 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 	public List<FileServer> getAllServers() {
 		return Collections.unmodifiableList(servers);
 	}
+
+	@Override
+	public FileServer getFileServer() {
+		return servers.get(0);
+	}
 }

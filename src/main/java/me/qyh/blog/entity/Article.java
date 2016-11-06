@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import me.qyh.blog.exception.SystemException;
@@ -41,12 +42,10 @@ public class Article extends BaseLockResource implements Cloneable {
 	private AtomicInteger _comments;
 
 	/**
-	 * 空间私有，当文章查询不携带空间参数时，将不会查询出空间私有的文章。除此之外不做任何权限控制。
-	 * <p>
-	 * <b>设置该属性的文章不会被非该空间统计到</b>
+	 * <b>设置该属性的文章不会被非该空间查询、统计到</b>
 	 * </p>
 	 */
-	private Boolean spacePrivate;
+	private Boolean hidden;
 
 	public enum ArticleFrom {
 		// 原创
@@ -305,12 +304,12 @@ public class Article extends BaseLockResource implements Cloneable {
 		this.alias = alias;
 	}
 
-	public Boolean getSpacePrivate() {
-		return spacePrivate;
+	public Boolean getHidden() {
+		return hidden;
 	}
 
-	public void setSpacePrivate(Boolean spacePrivate) {
-		this.spacePrivate = spacePrivate;
+	public void setHidden(Boolean hidden) {
+		this.hidden = hidden;
 	}
 
 	@Override
@@ -320,6 +319,12 @@ public class Article extends BaseLockResource implements Cloneable {
 		} catch (CloneNotSupportedException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
+	}
+	
+	@Override
+	@JsonIgnore
+	public String getLockId() {
+		return super.getLockId();
 	}
 
 }

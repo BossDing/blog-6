@@ -6,11 +6,13 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -41,6 +43,9 @@ import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.MissLockException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.message.Messages;
+import me.qyh.blog.metaweblog.FaultException;
+import me.qyh.blog.metaweblog.RequestXmlParser;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.util.UrlUtils;
@@ -57,6 +62,8 @@ public class GlobalControllerExceptionHandler {
 
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private Messages messages;
 
 	@ResponseStatus(HttpStatus.FORBIDDEN) // 403
 	@ExceptionHandler(AuthencationException.class)
@@ -71,6 +78,19 @@ public class GlobalControllerExceptionHandler {
 			}
 			return getErrorRedirect(request, 403);
 		}
+	}
+
+	@ResponseStatus(HttpStatus.OK)
+	@ExceptionHandler(FaultException.class)
+	public String handleFaultException(HttpServletRequest request, HttpServletResponse resp, FaultException ex)
+			throws IOException {
+		resp.setContentType(MediaType.APPLICATION_XML_VALUE);
+		byte[] bits = RequestXmlParser.getParser().createFailXml(ex.getCode(), messages.getMessage(ex.getDesc()))
+				.getBytes();
+		resp.setContentLength(bits.length);
+		IOUtils.write(bits, resp.getOutputStream());
+		resp.flushBuffer();
+		return null;
 	}
 
 	@ResponseStatus(HttpStatus.FORBIDDEN) // 403

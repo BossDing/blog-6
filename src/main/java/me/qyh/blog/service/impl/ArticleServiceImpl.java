@@ -30,12 +30,14 @@ import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
+import me.qyh.blog.dao.CommentConfigDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.ArticleTag;
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
@@ -48,6 +50,7 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -69,6 +72,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private LockManager lockManager;
 	@Autowired
 	private ArticleCache articleCache;
+	@Autowired
+	private CommentConfigDao commentConfigDao;
+	@Autowired
+	private ConfigService configService;
 
 	private boolean rebuildIndex = true;
 
@@ -92,7 +99,16 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				// 如果文章不在目标空间下
 				if (!Objects.equals(SpaceContext.get(), article.getSpace()))
 					return null;
-				return article;
+
+				Article clone = article.clone();
+				CommentConfig config = clone.getCommentConfig();
+				if (config == null) {
+					config = spaceDao.selectById(article.getSpace().getId()).getCommentConfig();
+					if (config == null)
+						config = configService.getCommentConfig();
+					clone.setCommentConfig(config);
+				}
+				return clone;
 			}
 		}
 		return null;
@@ -101,7 +117,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForEdit(Integer id) throws LogicException {
-		Article article = articleCache.getArticle(id);
+		Article article = articleDao.selectById(id);
 		if (article == null || article.isDeleted()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -134,6 +150,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
+		if (space.getArticleHidden())
+			article.setHidden(null);
 		article.setSpace(space);
 		checkLock(article.getLockId());
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
@@ -162,7 +180,24 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 			article.setLastModifyDate(now);
 			articleTagDao.deleteByArticle(articleDb);
-			articleDao.update(article);
+
+			CommentConfig oldConfig = articleDb.getCommentConfig();
+			CommentConfig newConfig = article.getCommentConfig();
+			if (oldConfig != null) {
+				if (newConfig == null) {
+					articleDao.update(article);
+					commentConfigDao.deleteById(oldConfig.getId());
+				} else {
+					newConfig.setId(oldConfig.getId());
+					commentConfigDao.update(newConfig);
+					articleDao.update(article);
+				}
+			} else {
+				if (newConfig != null)
+					commentConfigDao.insert(newConfig);
+				articleDao.update(article);
+			}
+
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
 			Article updated = articleDao.selectById(article.getId());
@@ -188,6 +223,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					article.setPubDate(now);
 				}
 			}
+			if (article.getCommentConfig() != null)
+				commentConfigDao.insert(article.getCommentConfig());
 			articleDao.insert(article);
 			insertTags(article);
 			Article updated = articleDao.selectById(article.getId());
@@ -332,6 +369,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// 删除博客所有的评论
 		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
+		// 删除评论配置
+		CommentConfig commentConfig = article.getCommentConfig();
+		if (commentConfig != null)
+			commentConfigDao.deleteById(commentConfig.getId());
 	}
 
 	@Override
@@ -374,8 +415,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate) {
-		return articleDao.selectStatistics(space, UserContext.get() != null, querySpacePrivate);
+	public ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden) {
+		return articleDao.selectStatistics(space, UserContext.get() != null, queryHidden);
 	}
 
 	@Override

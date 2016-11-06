@@ -1,7 +1,6 @@
 package me.qyh.blog.service.impl;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.ExpandedCommonFile;
 import me.qyh.blog.bean.UploadedFile;
+import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.dao.BlogFileDao;
 import me.qyh.blog.dao.CommonFileDao;
 import me.qyh.blog.dao.FileDeleteDao;
@@ -36,6 +36,7 @@ import me.qyh.blog.file.FileServer;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 import me.qyh.util.Validators;
@@ -58,30 +59,22 @@ public class FileServiceImpl implements FileService {
 	private FileDeleteDao fileDeleteDao;
 	@Autowired
 	private CommonFileDao commonFileDao;
+	@Autowired
+	private ConfigService configService;
 
 	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	@Override
-	public UploadedFile upload(String path, int server, MultipartFile file) throws LogicException {
-		BlogFile parent = null;
-		if (!Validators.isEmptyOrNull(path, true)) {
-			if (path.indexOf(FileService.SPLIT_CHAR) != -1) {
+	public synchronized UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException {
+		return upload(configService.getMetaweblogConfig(), file);
+	}
 
-			} else {
-				parent = new BlogFile();
-				parent.setName(path);
-				parent.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-				parent.setPath(path);
-				parent.setType(BlogFileType.DIRECTORY);
-				createFolder(parent);
-			}
-		} else {
-			parent = blogFileDao.selectRoot();
-		}
+	private UploadedFile upload(UploadConfig config, MultipartFile file) throws LogicException {
+		BlogFile parent = createFolder(config.getPath());
 		BlogFileUpload bfu = new BlogFileUpload();
 		bfu.setFiles(Arrays.asList(file));
 		bfu.setParent(parent.getId());
-		bfu.setServer(server);
+		bfu.setServer(config.getServer());
 		return upload(bfu).get(0);
 	}
 
@@ -96,10 +89,14 @@ public class FileServiceImpl implements FileService {
 		} else {
 			parent = blogFileDao.selectRoot();
 		}
-		FileServer fs = fileManager.getFileServer(upload.getServer());
-		if (fs == null) {
-			throw new LogicException("file.store.notexists", "文件存储器不存在");
-		}
+		Integer server = upload.getServer();
+		FileServer fs = null;
+		if (server != null) {
+			fs = fileManager.getFileServer(upload.getServer());
+			if (fs == null)
+				throw new LogicException("file.server.notexists", "文件存储服务不存在");
+		} else
+			fs = fileManager.getFileServer();
 		String folderKey = getFilePath(parent);
 		synchronized (this) {
 			deleteImmediatelyIfNeed(folderKey);
@@ -219,6 +216,40 @@ public class FileServiceImpl implements FileService {
 
 		blogFileDao.updateWhenAddChild(parent);
 		blogFileDao.insert(toCreate);
+	}
+
+	private BlogFile createFolder(String path) {
+		BlogFile root = blogFileDao.selectRoot();
+		if (Validators.isEmptyOrNull(path, true)) {
+			return root;
+		} else {
+			if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
+				return createFolder(root, path);
+			} else {
+				String[] pathArray = path.split(FileService.SPLIT_CHAR);
+				BlogFile parent = root;
+				for (String _path : pathArray)
+					parent = createFolder(parent, _path);
+				return parent;
+			}
+		}
+	}
+
+	private BlogFile createFolder(BlogFile parent, String folder) {
+		BlogFile check = blogFileDao.selectByParentAndPath(parent, folder);
+		if (check != null)
+			return check;
+		BlogFile bf = new BlogFile();
+		bf.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+		bf.setLft(parent.getLft() + 1);
+		bf.setRgt(parent.getLft() + 2);
+		bf.setParent(parent);
+		bf.setName(folder);
+		bf.setPath(folder);
+		bf.setType(BlogFileType.DIRECTORY);
+		blogFileDao.updateWhenAddChild(parent);
+		blogFileDao.insert(bf);
+		return bf;
 	}
 
 	@Override

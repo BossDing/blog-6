@@ -201,7 +201,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
 	private static final String ALIAS = "alias";
-	private static final String SPACE_PRIVATE = "spacePrivate";
+	private static final String HIDDEN = "spacePrivate";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
@@ -231,7 +231,8 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 				doc.add(new StringField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
 			}
 		}
-		doc.add(new StringField(SPACE_PRIVATE, article.getSpacePrivate().toString(), Field.Store.NO));
+		Boolean hidden = article.getHidden() == null ? article.getSpace().getArticleHidden() : article.getHidden();
+		doc.add(new StringField(HIDDEN, hidden.toString(), Field.Store.NO));
 		return doc;
 	}
 
@@ -331,8 +332,8 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
 			builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
 		}
-		if (!param.isQuerySpacePrivate()) {
-			builder.add(new TermQuery(new Term(SPACE_PRIVATE, "false")), Occur.MUST);
+		if (!param.isQueryHidden()) {
+			builder.add(new TermQuery(new Term(HIDDEN, "false")), Occur.MUST);
 		}
 		ArticleFrom from = param.getFrom();
 		if (from != null) {

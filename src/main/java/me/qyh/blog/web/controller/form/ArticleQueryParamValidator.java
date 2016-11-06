@@ -13,7 +13,7 @@ public class ArticleQueryParamValidator implements Validator {
 
 	private static final int MAX_QUERY_LENGTH = 40;
 	private static final int MAX_TAG_LENGTH = 20;
-
+	
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return ArticleQueryParam.class.isAssignableFrom(clazz);

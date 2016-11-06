@@ -16,9 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,6 +28,7 @@ import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
+import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.Comment.CommentStatus;
@@ -54,8 +52,6 @@ import me.qyh.util.Validators;
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class CommentServiceImpl implements CommentService, InitializingBean, ApplicationEventPublisherAware {
 
-	private static final Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
-
 	@Autowired
 	private ArticleCache articleCache;
 	@Autowired
@@ -66,6 +62,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	private ArticleDao articleDao;
 	@Autowired
 	private ArticleIndexer articleIndexer;
+	@Autowired
+	private SpaceDao spaceDao;
 
 	@Autowired
 	private ConfigService configService;
@@ -129,7 +127,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
 		int count = 0;
-		CommentConfig config = article.getCommentConfig();
+		CommentConfig config = getConfig(article);
 		switch (config.getCommentMode()) {
 		case TREE:
 			count = commentDao.selectCountWithTree(param);
@@ -189,31 +187,21 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		if (!article.getCommentConfig().getAllowComment() && (UserContext.get() == null || user.getAdmin())) {
+		CommentConfig config = getConfig(article);
+		if (!config.getAllowComment() && (UserContext.get() == null || user.getAdmin())) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		// 如果私人文章并且没有登录
 		if (article.isPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
 		}
-		CommentConfig config = article.getCommentConfig();
 		if (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin())) {
 			// 检查频率
 			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
 			int count = commentDao.selectCountByUserAndDatePeriod(new Timestamp(start), new Timestamp(now), user) + 1;
 			if (count > limit.getLimit()) {
-				InvalidCount invalidCount = invalidCountMap.increase(user, now);
-				logger.debug("用户" + user + "非法点击:" + invalidCount.count.get() + "..."
-						+ DateFormatUtils.format(now, "yyyy-MM-dd HH:mm:ss"));
-				if (invalidCount.reach(now)) {
-					logger.debug("用户" + user + "被放置到非法用户中" + DateFormatUtils.format(now, "yyyy-MM-dd HH:mm:ss"));
-					invalidUserMap.put(user, now);
-					invalidCountMap.remove(user);
-				} else if (invalidCount.overtime(now)) {
-					logger.debug("用户" + user + "非法点击数过期");
-					invalidCountMap.put(user, new InvalidCount(now, 1));
-				}
+				invalidCountMap.increase(user, now);
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}
 		}
@@ -263,6 +251,15 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 
 		applicationEventPublisher.publishEvent(new CommentEvent(this, comment));
 		return comment;
+	}
+
+	private CommentConfig getConfig(Article article) {
+		CommentConfig config = article.getCommentConfig();
+		if (config == null)
+			config = spaceDao.selectById(article.getSpace().getId()).getCommentConfig();
+		if (config == null)
+			config = configService.getCommentConfig();
+		return config;
 	}
 
 	@Override
@@ -464,17 +461,17 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			this.count = new AtomicInteger(0);
 		}
 
+		public boolean overtime(long now) {
+			return (now - start) > (invalidLimitSecond * 1000);
+		}
+
+		public int increase() {
+			return count.incrementAndGet();
+		}
+
 		public InvalidCount(long start, int count) {
 			this.start = start;
 			this.count = new AtomicInteger(count);
-		}
-
-		public boolean reach(long now) {
-			return (now - start) / 1000 <= invalidLimitSecond && count.get() >= invalidLimitCount;
-		}
-
-		public boolean overtime(long now) {
-			return (now - start) / 1000 > invalidLimitSecond;
 		}
 
 		@Override
@@ -539,7 +536,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			return false;
 		}
 		Long start = invalidUserMap.get(user);
-		if (start != null && (System.currentTimeMillis() - start) / 1000 <= invalidSecond) {
+		if (start != null && (System.currentTimeMillis() - start) <= (invalidSecond * 1000)) {
 			return true;
 		}
 		return false;
@@ -553,29 +550,11 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		}
 
 		public void put(OauthUser user, long time) {
-			while (true) {
-				Long old = map.get(user);
-				if (old == null) {
-					old = map.putIfAbsent(user, time);
-					if (old == null) {
-						return;
-					}
-				}
-				if (map.replace(user, old, time)) {
-					return;
-				}
-			}
+			map.computeIfAbsent(user, k -> time);
 		}
 
 		public void removeOvertimes() {
-			Iterator<Map.Entry<OauthUser, Long>> entryIterator = map.entrySet().iterator();
-			while (entryIterator.hasNext()) {
-				Map.Entry<OauthUser, Long> entry = entryIterator.next();
-				Long time = entry.getValue();
-				if (time != null && ((System.currentTimeMillis() - time) / 1000) > invalidSecond) {
-					entryIterator.remove();
-				}
-			}
+			map.values().removeIf(x -> (x != null && ((System.currentTimeMillis() - x) > invalidSecond * 1000)));
 		}
 
 		public Long get(OauthUser user) {
@@ -591,64 +570,25 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		}
 
 		public void put(OauthUser user, InvalidCount count) {
-			while (true) {
-				InvalidCount oldCount = map.get(user);
-				if (oldCount == null) {
-					oldCount = map.putIfAbsent(user, count);
-					if (oldCount == null) {
-						return;
-					}
-				}
-				if (map.replace(user, oldCount, count)) {
-					return;
-				}
-			}
+			map.computeIfAbsent(user, k -> count);
 		}
 
 		public void remove(OauthUser user) {
 			map.remove(user);
 		}
 
-		public InvalidCount increase(OauthUser user, long now) {
-			outer: while (true) {
-				InvalidCount oldCount = map.get(user);
-				if (oldCount == null) {
-					InvalidCount toPut = new InvalidCount(now);
-					// 如果用户没有开始计数，那么设置为0
-					oldCount = map.putIfAbsent(user, toPut);
-					if (oldCount == null) {
-						return toPut;
-					}
-				}
-
-				while (true) {
-					int oldValue = oldCount.count.get();
-					if (oldValue == 0L) {
-						InvalidCount toPut = new InvalidCount(now, 1);
-						if (map.replace(user, oldCount, toPut)) {
-							return toPut;
-						}
-						continue outer;
-					}
-
-					int newValue = oldValue + 1;
-					if (oldCount.count.compareAndSet(oldValue, newValue)) {
-						return oldCount;
-					}
-				}
-			}
+		public void increase(OauthUser user, long now) {
+			InvalidCount oldCount = map.computeIfAbsent(user, k -> new InvalidCount(now));
+			int count = oldCount.increase();
+			if (!oldCount.overtime(now) && (count >= invalidLimitCount)) {
+				invalidUserMap.put(user, now);
+				invalidCountMap.remove(user);
+			} else if (oldCount.overtime(now))
+				invalidCountMap.put(user, new InvalidCount(now, 1));
 		}
 
 		public void removeOvertimes() {
-			long now = System.currentTimeMillis();
-			Iterator<Map.Entry<OauthUser, InvalidCount>> entryIterator = map.entrySet().iterator();
-			while (entryIterator.hasNext()) {
-				Map.Entry<OauthUser, InvalidCount> entry = entryIterator.next();
-				InvalidCount count = entry.getValue();
-				if (count != null && count.overtime(now)) {
-					entryIterator.remove();
-				}
-			}
+			map.values().removeIf(x -> (x != null && x.overtime(System.currentTimeMillis())));
 		}
 	}
 
@@ -682,5 +622,4 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
-
 }

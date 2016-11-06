@@ -92,6 +92,8 @@
 		<mapper resource="resources/mybatis/mapper/oauthBindMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/commentConfigMapper.xml" />
+		
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
 	</mappers>
 </configuration>

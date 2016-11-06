@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,14 +26,10 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.CommentConfig;
-import me.qyh.blog.entity.CommentConfig.CommentMode;
 import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.message.Messages;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -65,21 +62,25 @@ public class MetaweblogHandler {
 	@Autowired
 	private ArticleService articleService;
 	@Autowired
-	private Messages messages;
-	@Autowired
 	private ConfigService configService;
 	@Autowired
 	private FileService fileService;
+	@Value("${app.uploadLimitSize}")
+	private long uploadLimitSize;
 
 	private Object execute(String username, String password, Execute execute) throws FaultException, ParseException {
 		LoginBean bean = new LoginBean(username, password);
+		User auth = null;
 		try {
-			User auth = userService.login(bean);
+			auth = userService.login(bean);
+		} catch (LogicException e) {
+			throw new FaultException(Constants.AUTH_ERROR, e.getLogicMessage());
+		}
+		try {
 			UserContext.set(auth);
 			return execute.execute();
 		} catch (LogicException e) {
-			System.out.println(e.getLocalizedMessage());
-			throw new FaultException("200", e.getLogicMessage());
+			throw new FaultException(Constants.LOGIC_ERROR, e.getLogicMessage());
 		} catch (Exception e) {
 			throw new ParseException(e.getMessage(), e);
 		} finally {
@@ -137,7 +138,7 @@ public class MetaweblogHandler {
 				ArticleQueryParam param = new ArticleQueryParam();
 				param.setCurrentPage(1);
 				param.setIgnoreLevel(true);
-				param.setQuerySpacePrivate(true);
+				param.setQueryHidden(true);
 				param.setPageSize(_limit);
 				param.setStatuses(ArticleStatus.PUBLISHED, ArticleStatus.SCHEDULED, ArticleStatus.DRAFT);
 				PageResult<Article> page = articleService.queryArticle(param);
@@ -206,9 +207,7 @@ public class MetaweblogHandler {
 
 			@Override
 			public Object execute() throws LogicException {
-				// TODO use metaweblog settings
-				UploadedFile res = fileService.upload("metaweblog", fileService.allServers().get(0).id(),
-						mapToFile(map));
+				UploadedFile res = fileService.uploadMetaweblogFile(mapToFile(map));
 				if (res.hasError())
 					throw new LogicException(res.getError());
 				else {
@@ -230,16 +229,14 @@ public class MetaweblogHandler {
 			throw new LogicException("file.uploadfiles.blank");
 		name = StringUtils.cleanPath(name);
 		if (name.indexOf('/') != -1)
-			name = name.substring(name.lastIndexOf('/')+1, name.length());
+			name = name.substring(name.lastIndexOf('/') + 1, name.length());
 		if (name.length() > BlogFileUploadValidator.MAX_FILE_NAME_LENGTH)
-			throw new LogicException("file.name.toolong",
-					"文件名不能超过" + BlogFileUploadValidator.MAX_FILE_NAME_LENGTH + "个字符",
-					BlogFileUploadValidator.MAX_FILE_NAME_LENGTH);
+			throw new LogicException("file.name.toolong", BlogFileUploadValidator.MAX_FILE_NAME_LENGTH);
 		byte[] bits = (byte[]) map.get("bits");
 		if (bits == null)
-			throw new LogicException("file.content.blank", "文件内容不能为空");
-		// TODO file size limit
-		// in config.properties
+			throw new LogicException("file.content.blank");
+		if (bits.length > uploadLimitSize)
+			throw new LogicException("upload.overlimitsize", uploadLimitSize);
 		final String originalFilename = name;
 		return new MultipartFile() {
 
@@ -317,17 +314,6 @@ public class MetaweblogHandler {
 			article.setPubDate(null);
 		}
 
-		// TODO use metaweblog settings
-		CommentConfig config = new CommentConfig();
-		config.setAllowComment(false);
-		config.setAllowHtml(false);
-		config.setAsc(true);
-		config.setCheck(false);
-		config.setCommentMode(CommentMode.LIST);
-		config.setLimitCount(10);
-		config.setLimitSec(60);
-		article.setCommentConfig(config);
-
 		if (published) {
 			Timestamp pubDate = article.getPubDate();
 			Timestamp now = Timestamp.valueOf(LocalDateTime.now());
@@ -346,7 +332,7 @@ public class MetaweblogHandler {
 		article.setEditor(Editor.HTML);
 		article.setFrom(ArticleFrom.ORIGINAL);
 		article.setIsPrivate(false);
-		article.setSpacePrivate(false);
+		article.setHidden(false);
 		article.setSummary("");
 		return article;
 	}
@@ -365,33 +351,4 @@ public class MetaweblogHandler {
 		return map;
 	}
 
-	final class FaultException extends Exception {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private String code;
-		private String desc;
-
-		public FaultException(String code, Message message) {
-			super();
-			this.code = code;
-			this.desc = messages.getMessage(message);
-		}
-
-		public FaultException(String code, String desc) {
-			super();
-			this.code = code;
-			this.desc = desc;
-		}
-
-		public String getCode() {
-			return code;
-		}
-
-		public String getDesc() {
-			return desc;
-		}
-
-	}
 }

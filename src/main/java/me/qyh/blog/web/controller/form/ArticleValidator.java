@@ -30,10 +30,10 @@ public class ArticleValidator implements Validator {
 	public static final int MAX_TAG_SIZE = 10;
 	private static final int[] LEVEL_RANGE = new int[] { 0, 100 };
 
-	private static final int[] LIMIT_SECOND_RANGE = { 1, 300 };
-	private static final int[] LIMIT_COUNT_RANGE = { 1, 100 };
-
 	private static final String[] ALIAS_KEY_WORDS = { "list" };
+
+	@Autowired
+	private CommentConfigValidator commentConfigValidator;
 
 	private static String KEY_WORD_STR = "";
 
@@ -84,10 +84,6 @@ public class ArticleValidator implements Validator {
 		}
 		if (article.getIsPrivate() == null) {
 			errors.reject("article.private.null", "文章私有性不能为空");
-			return;
-		}
-		if (article.getSpacePrivate() == null) {
-			errors.reject("article.spaceprivate.null", "文章空间私有性不能为空");
 			return;
 		}
 		if (article.getEditor() == null) {
@@ -192,45 +188,7 @@ public class ArticleValidator implements Validator {
 			}
 		}
 		CommentConfig config = article.getCommentConfig();
-		if (config == null) {
-			errors.reject("article.commentConfig.blank", "评论配置不能为空");
-			return;
-		}
-		if (config.getAllowComment() == null) {
-			errors.reject("article.commentConfig.allowComment.blank", "是否允许评论不能为空");
-			return;
-		}
-		if (config.getCommentMode() == null) {
-			errors.reject("article.commentConfig.commentMode.blank", "评论展现形式不能为空");
-			return;
-		}
-		if (config.getAllowHtml() == null) {
-			errors.reject("article.commentConfig.allowHtml.blank", "评论是否允许html不能为空");
-			return;
-		}
-		if (config.getAsc() == null) {
-			errors.reject("article.commentConfig.asc.blank", "评论展现排序方式不能为空");
-			return;
-		}
-		if (config.getCheck() == null) {
-			errors.reject("article.commentConfig.check.blank", "评论审核不能为空");
-			return;
-		}
-		Integer limitCount = config.getLimitCount();
-		if (limitCount < LIMIT_COUNT_RANGE[0] || limitCount > LIMIT_COUNT_RANGE[1]) {
-			errors.reject("article.commentConfig.limitCount.invalid",
-					new Object[] { LIMIT_COUNT_RANGE[0], LIMIT_COUNT_RANGE[1] },
-					"限制评论数应该在" + LIMIT_COUNT_RANGE[0] + "和" + LIMIT_COUNT_RANGE[1] + "之间");
-			return;
-		}
-
-		Integer limitSec = config.getLimitSec();
-		if (limitSec < LIMIT_SECOND_RANGE[0] || limitSec > LIMIT_SECOND_RANGE[1]) {
-			errors.reject("article.commentConfig.limitSec.invalid",
-					new Object[] { LIMIT_SECOND_RANGE[0], LIMIT_SECOND_RANGE[1] },
-					"限制评论时间应该在" + LIMIT_SECOND_RANGE[0] + "和" + LIMIT_SECOND_RANGE[1] + "之间");
-			return;
-		}
-
+		if (config != null)
+			commentConfigValidator.validate(config, errors);
 	}
 }

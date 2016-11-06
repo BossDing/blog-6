@@ -38,26 +38,23 @@ CREATE TABLE `blog_article` (
   `hits` int(11) NOT NULL DEFAULT '0',
   `comments` int(11) NOT NULL DEFAULT '0',
   `summary` varchar(3000) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `allowComment` tinyint(1) NOT NULL DEFAULT '1',
   `art_level` int(11) DEFAULT NULL,
   `art_status` int(11) NOT NULL DEFAULT '0',
   `art_from` int(11) NOT NULL DEFAULT '0',
   `editor` int(11) NOT NULL DEFAULT '0',
   `space_id` int(11) NOT NULL,
   `art_lock` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `comment_mode` int(11) NOT NULL DEFAULT '0',
-  `comment_asc` tinyint(1) NOT NULL DEFAULT '1',
-  `comment_allowHtml` tinyint(1) NOT NULL DEFAULT '0',
-  `comment_limitCount` int(11) NOT NULL,
-  `comment_limitSec` int(11) NOT NULL,
-  `comment_check` tinyint(1) NOT NULL DEFAULT '1',
   `art_alias` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `comment_config` int(11) DEFAULT NULL,
+  `art_hidden` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `space_id` (`space_id`),
   KEY `pubDate_idx` (`pubDate`,`art_level`),
   KEY `pubDate_idx2` (`pubDate`),
-  CONSTRAINT `blog_article_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=215 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `blog_article_ibfk_2` (`comment_config`),
+  CONSTRAINT `blog_article_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`),
+  CONSTRAINT `blog_article_ibfk_2` FOREIGN KEY (`comment_config`) REFERENCES `blog_comment_config` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=240 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_article_tag` */
 
@@ -72,7 +69,7 @@ CREATE TABLE `blog_article_tag` (
   KEY `tag_id` (`tag_id`),
   CONSTRAINT `blog_article_tag_ibfk_1` FOREIGN KEY (`article_id`) REFERENCES `blog_article` (`id`),
   CONSTRAINT `blog_article_tag_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `blog_tag` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=394 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=517 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_comment` */
 
@@ -95,7 +92,23 @@ CREATE TABLE `blog_comment` (
   KEY `parent_id_idx` (`parent_id`),
   CONSTRAINT `blog_comment_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `blog_oauth_user` (`id`),
   CONSTRAINT `blog_comment_ibfk_2` FOREIGN KEY (`article_id`) REFERENCES `blog_article` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=193 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=238 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Table structure for table `blog_comment_config` */
+
+DROP TABLE IF EXISTS `blog_comment_config`;
+
+CREATE TABLE `blog_comment_config` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `comment_mode` int(11) NOT NULL DEFAULT '0',
+  `comment_asc` tinyint(1) NOT NULL DEFAULT '1',
+  `comment_allowHtml` tinyint(1) NOT NULL DEFAULT '0',
+  `comment_limitCount` int(11) NOT NULL,
+  `comment_limitSec` int(11) NOT NULL,
+  `comment_check` tinyint(1) NOT NULL DEFAULT '0',
+  `allowComment` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_common_file` */
 
@@ -112,7 +125,7 @@ CREATE TABLE `blog_common_file` (
   `file_width` int(11) DEFAULT NULL,
   `file_height` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=397 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=497 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_file` */
 
@@ -133,7 +146,7 @@ CREATE TABLE `blog_file` (
   KEY `common_file` (`common_file`),
   KEY `file_createDate_idx` (`file_createDate`),
   CONSTRAINT `blog_file_ibfk_1` FOREIGN KEY (`common_file`) REFERENCES `blog_common_file` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=519 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=698 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_file_delete` */
 
@@ -146,7 +159,7 @@ CREATE TABLE `blog_file_delete` (
   `file_key` varchar(2000) COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_type` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_fragment_user` */
 
@@ -163,7 +176,7 @@ CREATE TABLE `blog_fragment_user` (
   PRIMARY KEY (`id`),
   KEY `space_id` (`space_id`),
   CONSTRAINT `blog_fragment_user_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_lock` */
 
@@ -175,7 +188,7 @@ CREATE TABLE `blog_lock` (
   `lock_password` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `lock_name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `createDate` datetime NOT NULL,
-  `lock_question` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lock_question` text COLLATE utf8mb4_unicode_ci,
   `lock_answers` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `createDate_idx` (`createDate`)
@@ -249,7 +262,7 @@ CREATE TABLE `blog_page_lock` (
   PRIMARY KEY (`id`),
   KEY `space_id` (`space_id`),
   CONSTRAINT `blog_page_lock_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_page_sys` */
 
@@ -281,7 +294,7 @@ CREATE TABLE `blog_page_user` (
   KEY `space_id` (`space_id`),
   KEY `page_create_date_idx` (`page_create_date`),
   CONSTRAINT `blog_page_user_ibfk_1` FOREIGN KEY (`space_id`) REFERENCES `blog_space` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_space` */
 
@@ -294,11 +307,16 @@ CREATE TABLE `blog_space` (
   `space_name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `space_lock` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_private` tinyint(1) NOT NULL DEFAULT '0',
+  `space_art_hidden` tinyint(1) NOT NULL DEFAULT '0',
+  `comment_config` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `space_alias` (`space_alias`),
+  UNIQUE KEY `space_name` (`space_name`),
   KEY `blog_space_ibfk_2` (`space_lock`),
-  KEY `createDate_idx` (`createDate`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `createDate_idx` (`createDate`),
+  KEY `blog_space_fk1` (`comment_config`),
+  CONSTRAINT `blog_space_fk1` FOREIGN KEY (`comment_config`) REFERENCES `blog_comment_config` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_tag` */
 
@@ -311,7 +329,7 @@ CREATE TABLE `blog_tag` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `tag_name` (`tag_name`),
   KEY `create_date_idx` (`create_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=129 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Table structure for table `blog_user` */
 

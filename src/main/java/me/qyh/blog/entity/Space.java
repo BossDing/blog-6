@@ -15,6 +15,9 @@ public class Space extends BaseLockResource {
 	private String alias;
 	private Timestamp createDate;// 创建时间
 	private Boolean isPrivate;
+	
+	private Boolean articleHidden;
+	private CommentConfig commentConfig;
 
 	public String getAlias() {
 		return alias;
@@ -59,5 +62,27 @@ public class Space extends BaseLockResource {
 
 	public void setIsPrivate(Boolean isPrivate) {
 		this.isPrivate = isPrivate;
+	}
+
+	public Boolean getArticleHidden() {
+		return articleHidden;
+	}
+
+	public void setArticleHidden(Boolean articleHidden) {
+		this.articleHidden = articleHidden;
+	}
+
+	public CommentConfig getCommentConfig() {
+		return commentConfig;
+	}
+
+	public void setCommentConfig(CommentConfig commentConfig) {
+		this.commentConfig = commentConfig;
+	}
+
+	@Override
+	public String toString() {
+		return "Space [name=" + name + ", alias=" + alias + ", createDate=" + createDate + ", isPrivate=" + isPrivate
+				+ ", articleHidden=" + articleHidden + ", commentConfig=" + commentConfig + "]";
 	}
 }

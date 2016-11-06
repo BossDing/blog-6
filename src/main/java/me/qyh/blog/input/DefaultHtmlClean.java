@@ -39,9 +39,8 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 
 	@Override
 	public String clean(String html) {
-		String cleand = Jsoup.clean(html, _Whitelist.configured(tags));
+		Document body = Jsoup.parseBodyFragment(html);
 		if (nofollow) {
-			Document body = Jsoup.parseBodyFragment(cleand);
 			Elements eles = body.select("a[href]");
 			for (Element ele : eles) {
 				String href = ele.attr("href");
@@ -50,9 +49,8 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 					ele.attr("rel", NOFOLLOW);
 				}
 			}
-			cleand = body.html();
 		}
-		return cleand;
+		return Jsoup.clean(body.html(), _Whitelist.configured(tags));
 	}
 
 	private boolean needNofollow(String href) {

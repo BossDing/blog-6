@@ -7,21 +7,25 @@ $(document).ready(function() {
 		clearTip();
 		$(this).find("form")[0].reset();
 		var a = $(event.relatedTarget);
-		var tr = a.parent().parent();
+		var id = a.attr("data-id");
 		var modal = $(this)
-		modal.find('.modal-body input[name="name"]').val($(tr.find('td')[0]).find('a').attr("data-original-title"));
-		modal.find('.modal-body input[name="alias"]').val($(tr.find('td')[1]).find('a').attr("data-original-title"));
-		var isPrivate = $(tr.find('td')[3]).text();
-		modal.find('.modal-body input[name="isPrivate"]').prop("checked",$.trim(isPrivate) == "是");
-		modal.find('.modal-body input[name="id"]').val(a.attr("data-id"));
-		var hasLock = $(tr.find('td')[4]).text();
-		if($.trim(hasLock) == "是"){
-			var lockId = $(tr.find('td')[4]).attr("data-lockId");
-			modal.find('.modal-body select[name="lockId"]').val(lockId)
-		} else {
-			modal.find('.modal-body select[name="lockId"]').val('');
-		}
-		
+		$.get(basePath+'/mgr/space/get/'+id,{},function(data){
+			if(data.success){
+				data = data.data;
+				modal.find('.modal-body input[name="name"]').val(data.name);
+				modal.find('.modal-body input[name="alias"]').val(data.alias);
+				modal.find('.modal-body input[name="isPrivate"]').prop("checked",data.isPrivate);
+				modal.find('.modal-body input[name="articleHidden"]').prop("checked",data.articleHidden);
+				modal.find('.modal-body input[name="id"]').val(id);
+				if(data.lockId){
+					modal.find('.modal-body select[name="lockId"]').val(data.lockId)
+				} else {
+					modal.find('.modal-body select[name="lockId"]').val('');
+				}
+			}else{
+				bootbox.alert(data.message);
+			}
+		});
 	});
 	
 	$.get(basePath + '/mgr/lock/all',{},function(data){
@@ -52,6 +56,7 @@ $(document).ready(function() {
 		$("#create").prop("disabled",true);
 		var data = $("#spaceModal").find("form").serializeObject();
 		data.isPrivate = $("#spaceModal").find('input[name="isPrivate"]').is(":checked");
+		data.articleHidden = $("#spaceModal").find('input[name="articleHidden"]').is(":checked");
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/add",
@@ -79,6 +84,8 @@ $(document).ready(function() {
 		$("#update").prop("disabled",true);
 		var data = $("#editSpaceModal").find("form").serializeObject();
 		data.isPrivate = $("#editSpaceModal").find('input[name="isPrivate"]').is(":checked");
+		data.articleHidden = $("#editSpaceModal").find('input[name="articleHidden"]').is(":checked");
+		console.log(data);
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/update",

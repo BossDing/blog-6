@@ -144,7 +144,7 @@ public interface ArticleService {
 	 * @param queryPrivate
 	 * @return
 	 */
-	ArticleStatistics queryArticleStatistics(Space space, boolean querySpacePrivate);
+	ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden);
 
 	/**
 	 * 查询被文章所引用的标签集

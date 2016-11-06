@@ -1,7 +1,6 @@
 package me.qyh.blog.metaweblog;
 
 import java.io.InputStream;
-import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -36,10 +34,7 @@ public class RequestXmlParser {
 		SAXBuilder builder = new SAXBuilder();
 		Document doc = null;
 		try {
-			// TODO
-			String xml = IOUtils.toString(is);
-			System.out.println(xml);
-			doc = builder.build(new StringReader(xml));
+			doc = builder.build(is);
 		} catch (Exception e) {
 			throw new ParseException(e.getMessage(), e);
 		}

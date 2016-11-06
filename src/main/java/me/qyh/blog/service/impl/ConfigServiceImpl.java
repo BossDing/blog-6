@@ -13,6 +13,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import me.qyh.blog.config.PageSizeConfig;
+import me.qyh.blog.config.UploadConfig;
+import me.qyh.blog.entity.CommentConfig;
+import me.qyh.blog.entity.CommentConfig.CommentMode;
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.ConfigService;
 
@@ -37,6 +41,38 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	}
 
 	@Override
+	@Cacheable(key = "'commentConfig'", value = "configCache", unless = "#result == null")
+	public CommentConfig getCommentConfig() {
+		CommentConfig config = new CommentConfig();
+		config.setAllowComment(getBoolean(ALLOW_COMMENT, true));
+		config.setAllowHtml(getBoolean(COMMENT_ALLOW_HTML, false));
+		config.setAsc(getBoolean(COMMENT_ASC, true));
+		config.setCheck(getBoolean(COMMENT_CHECK, false));
+		String commentMode = this.config.getProperty(COMMENT_MODE);
+		if (commentMode == null)
+			config.setCommentMode(CommentMode.LIST);
+		else
+			config.setCommentMode(CommentMode.valueOf(commentMode));
+		config.setLimitCount(getInt(COMMENT_LIMIT_COUNT, 10));
+		config.setLimitSec(getInt(COMMENT_LIMIT_SEC, 60));
+		return config;
+	}
+
+	@Override
+	@CachePut(key = "'commentConfig'", value = "configCache")
+	public CommentConfig updateCommentConfig(CommentConfig commentConfig) {
+		config.setProperty(COMMENT_ALLOW_HTML, commentConfig.getAllowHtml().toString());
+		config.setProperty(COMMENT_ASC, commentConfig.getAsc().toString());
+		config.setProperty(COMMENT_CHECK, commentConfig.getCheck().toString());
+		config.setProperty(COMMENT_LIMIT_COUNT, commentConfig.getLimitCount().toString());
+		config.setProperty(COMMENT_LIMIT_SEC, commentConfig.getLimitSec().toString());
+		config.setProperty(COMMENT_MODE, commentConfig.getCommentMode().name());
+		config.setProperty(ALLOW_COMMENT, commentConfig.getAllowComment().toString());
+		store();
+		return commentConfig;
+	}
+
+	@Override
 	@CachePut(key = "'pageSizeConfig'", value = "configCache")
 	public PageSizeConfig updatePageSizeConfig(PageSizeConfig pageSizeConfig) {
 		config.setProperty(PAGE_SIZE_FILE, pageSizeConfig.getFilePageSize() + "");
@@ -50,9 +86,40 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		return pageSizeConfig;
 	}
 
-	private Integer getInt(String key, int _default) {
+	@Override
+	@Cacheable(key = "'mateweblogUploadConfig'", value = "configCache", unless = "#result == null")
+	public UploadConfig getMetaweblogConfig() {
+		UploadConfig uploadConfig = new UploadConfig();
+		String path = config.getProperty(METAWEBLOG_UPLOAD_PATH);
+		if (path == null)
+			uploadConfig.setPath("");
+		else
+			uploadConfig.setPath(path);
+		uploadConfig.setServer(getInt(METAWEBLOG_UPLOAD_SERVER, null));
+		return uploadConfig;
+	}
+
+	@Override
+	@CachePut(key = "'mateweblogUploadConfig'", value = "configCache")
+	public UploadConfig updateMetaweblogConfig(UploadConfig uploadConfig) throws LogicException {
+		if (uploadConfig.getPath() != null)
+			config.setProperty(METAWEBLOG_UPLOAD_PATH, uploadConfig.getPath());
+		if (uploadConfig.getServer() != null)
+			config.setProperty(METAWEBLOG_UPLOAD_SERVER, uploadConfig.getServer().toString());
+		store();
+		return uploadConfig;
+	}
+
+	private Integer getInt(String key, Integer _default) {
 		if (config.containsKey(key)) {
 			return Integer.parseInt(config.getProperty(key));
+		}
+		return _default;
+	}
+
+	private Boolean getBoolean(String key, boolean _default) {
+		if (config.containsKey(key)) {
+			return Boolean.parseBoolean(config.getProperty(key));
 		}
 		return _default;
 	}
@@ -83,4 +150,16 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
 	private static final String PAGE_SIZE_OAUTHUSER = "pagesize.oauthuser";
 	private static final String PAGE_SIZE_COMMENT = "pagesize.comment";
+
+	private static final String ALLOW_COMMENT = "commentConfig.allowComment";
+	private static final String COMMENT_MODE = "commentConfig.commentMode";
+	private static final String COMMENT_ASC = "commentConfig.commentAsc";
+	private static final String COMMENT_ALLOW_HTML = "commentConfig.commentAllowHtml";
+	private static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
+	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
+	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
+
+	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
+	private static final String METAWEBLOG_UPLOAD_SERVER = "metaweblog.upload.server";
+
 }
