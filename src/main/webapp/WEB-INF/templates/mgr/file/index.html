@@ -78,11 +78,11 @@
 											</div>
 										</div>
 										<div th:case="FILE" class="thumbnail text-center">
-											<img th:src="${file.cf.previewUrl}"
-												th:if="${file.cf.previewUrl != null}" class="img-responsive"
+											<img th:src="${file.cf.thumbnailUrl.small}"
+												th:if="${file.cf.thumbnailUrl != null}" class="img-responsive"
 												style="height: 80px" /> <img
 												th:src="@{/static/fileicon/file.png}" class="img-responsive"
-												style="height: 80px" th:if="${file.cf.previewUrl == null}" />
+												style="height: 80px" th:if="${file.cf.thumbnailUrl == null}" />
 											<div class="caption">
 												<a th:title="${file.name}" data-toggle="tooltip"
 													th:text="${#strings.length(file.name) > 5  ? #strings.substring(file.name,0,5)+'...' : file.name}"></a>

@@ -26,6 +26,7 @@
 										<th>空间名</th>
 										<th>别名</th>
 										<th>创建日期</th>
+										<th>默认</th>
 										<th>私有</th>
 										<th>锁保护</th>
 										<th>&nbsp;</th>
@@ -41,12 +42,15 @@
 											href="###"></a></td>
 										<td
 											th:text="${#dates.format(space.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+										<td th:text="${space.isDefault ? '是' : '否'}"></td>
 										<td th:text="${space.isPrivate ? '是' : '否'}"></td>
 										<td th:data-lockId="${space.lockId}"
 											th:text="${space.lockId != null ? '是' : '否'}"></td>
 										<td><a href="###" data-toggle="modal"
 											data-target="#editSpaceModal" th:data-id="${space.id}"><span
-												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>&nbsp;&nbsp;&nbsp;<a
+											href="###"
+											th:onclick="'editCommentConfig(\''+${space.id}+'\')'">修改评论配置</a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -80,10 +84,14 @@
 								type="text" class="form-control" name="alias">
 						</div>
 						<div class="checkbox">
+							<label><input type="checkbox" name="isDefault" />默认 </label>
+						</div>
+						<div class="checkbox">
 							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
 						<div class="checkbox">
-							<label><input type="checkbox" name="articleHidden" />隐藏文章(只有在该空间内才能显示) </label>
+							<label><input type="checkbox" name="articleHidden" />隐藏文章(只有在该空间内才能显示)
+							</label>
 						</div>
 						<div class="lock_container"></div>
 					</form>
@@ -120,10 +128,14 @@
 								type="text" class="form-control" name="alias">
 						</div>
 						<div class="checkbox">
+							<label><input type="checkbox" name="isDefault" />默认 </label>
+						</div>
+						<div class="checkbox">
 							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
 						<div class="checkbox">
-							<label><input type="checkbox" name="articleHidden" />隐藏文章(只有在该空间内才能显示) </label>
+							<label><input type="checkbox" name="articleHidden" />隐藏文章(只有在该空间内才能显示)
+							</label>
 						</div>
 						<div class="lock_container"></div>
 					</form>
@@ -131,6 +143,67 @@
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
 					<button type="button" class="btn btn-primary" id="update">更新</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="editCommentConfigModal" tabindex="-1"
+		role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title">评论配置修改</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form id="editCommentConfigForm">
+						<input type="hidden" id="spaceId"/>
+						<div class="checkbox">
+							<label><input type="checkbox" id="allowComment" />允许评论 </label>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" id="check" />审核评论 </label>
+						</div>
+						<div class="form-group">
+							<label>评论展现排序(按评论时间)</label> <select class="form-control"
+								id="commentSort">
+								<option value="true">正序</option>
+								<option value="false">倒序</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>评论展现方式</label> <select class="form-control"
+								id="commentMode">
+								<option value="LIST">平铺</option>
+								<option value="TREE">嵌套</option>
+							</select>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" id="allowHtml" />允许html </label>
+						</div>
+						<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
+						<div class="form-group">
+							<label for="">时间(秒)(1~300)</label> <input
+								class="form-control integer" placeholder="时间" value="60"
+								id="limitSec">
+						</div>
+						<div class="form-group">
+							<label for="">允许发表评论数(1~100)</label> <input
+								class="form-control integer" placeholder="时间" value="10"
+								id="limitCount">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-default" data-cc-action="delete" style="display:none">删除</button>
+					<button type="button" class="btn btn-default" data-cc-action="update" style="display:none">更新</button>
+					<button type="button" class="btn btn-default" data-cc-action="add" style="display:none">新增</button>
 				</div>
 			</div>
 		</div>

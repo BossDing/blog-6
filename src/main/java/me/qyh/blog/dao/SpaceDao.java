@@ -8,7 +8,7 @@ import me.qyh.blog.pageparam.SpaceQueryParam;
 public interface SpaceDao {
 
 	Space selectByAlias(String alias);
-	
+
 	Space selectByName(String name);
 
 	void update(Space space);
@@ -18,5 +18,9 @@ public interface SpaceDao {
 	void insert(Space space);
 
 	Space selectById(Integer id);
+
+	void resetDefault();
+
+	Space selectDefault();
 
 }

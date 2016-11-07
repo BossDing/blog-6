@@ -2,6 +2,7 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
+import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
@@ -56,5 +57,9 @@ public interface SpaceService {
 	Space selectSpaceByName(String name);
 	
 	Space getSpace(Integer id);
+
+	Space updateCommentConfig(Integer spaceId, CommentConfig newConfig) throws LogicException;
+
+	Space deleteCommentConfig(Integer spaceId) throws LogicException;
 
 }

@@ -45,6 +45,7 @@ import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
+import me.qyh.blog.metaweblog.MetaweblogArticle;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
@@ -145,6 +146,66 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	public Article writeArticle(MetaweblogArticle mba) throws LogicException {
+		Space space = mba.getSpace() == null ? spaceDao.selectDefault() : spaceDao.selectByName(mba.getSpace());
+		if (space == null)
+			throw new LogicException("space.notExists", "空间不存在");
+		Article article = null;
+		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+		if (mba.hasId()) {
+			Article articleDb = articleDao.selectById(mba.getId());
+			if (articleDb == null) {
+				throw new LogicException("article.notExists", "文章不存在");
+			}
+			if (articleDb.isDeleted()) {
+				throw new LogicException("article.deleted", "文章已经被删除");
+			}
+
+			mba.mergeArticle(articleDb);
+			articleDb.setSpace(space);
+			article = articleDb;
+
+			if (!article.isSchedule()) {
+				if (article.isDraft()) {
+					article.setPubDate(null);
+				} else {
+					article.setPubDate(articleDb.isPublished() ? articleDb.getPubDate() : now);
+				}
+			}
+			article.setLastModifyDate(now);
+			articleDao.update(article);
+			articleIndexer.deleteDocument(article.getId());
+			articleCache.evit(articleDb);
+			if (article.isPublished()) {
+				Article updated = articleDao.selectById(article.getId());
+				articleIndexer.addOrUpdateDocument(updated);
+				applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
+			}
+		} else {
+			article = mba.toArticle();
+			article.setSpace(space);
+
+			if (!article.isSchedule()) {
+				if (article.isDraft()) {
+					article.setPubDate(null);
+				} else {
+					article.setPubDate(now);
+				}
+			}
+			articleDao.insert(article);
+			if (article.isPublished()) {
+				Article updated = articleDao.selectById(article.getId());
+				articleIndexer.addOrUpdateDocument(updated);
+				applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
+			}
+		}
+		return article;
+	}
+
+	@Override
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
 	public Article writeArticle(Article article, boolean autoDraft) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
@@ -200,10 +261,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
-			Article updated = articleDao.selectById(article.getId());
 			// 由于alias的存在，硬编码删除cache
 			articleCache.evit(articleDb);
 			if (article.isPublished()) {
+				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
 				if (!autoDraft)// 自动草稿不推事件
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
@@ -227,8 +288,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				commentConfigDao.insert(article.getCommentConfig());
 			articleDao.insert(article);
 			insertTags(article);
-			Article updated = articleDao.selectById(article.getId());
 			if (article.isPublished()) {
+				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
 				if (!autoDraft)
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
@@ -329,6 +390,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
+		articleCache.evit(article);
 		articleIndexer.deleteDocument(id);
 	}
 

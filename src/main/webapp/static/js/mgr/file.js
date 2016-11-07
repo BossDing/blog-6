@@ -81,10 +81,10 @@ $(document).ready(function(){
 			            } else {
 				            successUpload = true;
 			                row.find('.name').text(name);
-			                if (file.url) {
+			                if (file.thumbnailUrl) {
 			                    row.find('.preview').append(
 			                        $('<a></a>').append(
-			                            $('<img>').prop('src', file.url)
+			                            $('<img>').prop('src', file.thumbnailUrl.small)
 			                        )
 			                    );
 			                }

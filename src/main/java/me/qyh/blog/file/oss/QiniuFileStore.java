@@ -15,6 +15,7 @@ import com.qiniu.util.Auth;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.Resize;
+import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.service.FileService;
 import me.qyh.util.UrlUtils;
 import me.qyh.util.Validators;
@@ -57,7 +58,9 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	/**
 	 * 跟七牛云设置有关
 	 */
-	private Resize defaultResize;
+	private Resize smallResize;
+	private Resize middleResize;
+	private Resize largeResize;
 
 	private Auth auth;
 
@@ -124,17 +127,20 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	}
 
 	@Override
-	public String getPreviewUrl(String key) {
+	public ThumbnailUrl getThumbnailUrl(String key) {
 		if (image(key)) {
-			String param = buildResizeParam();
-			String url = urlPrefix + key + (param == null ? "" : "?" + param);
+			String small = buildResizeUrl(smallResize, key);
+			String middle = buildResizeUrl(middleResize, key);
+			String large = buildResizeUrl(largeResize, key);
 			if (secret) {
-				return auth.privateDownloadUrl(url);
+				return new ThumbnailUrl(auth.privateDownloadUrl(small), auth.privateDownloadUrl(middle),
+						auth.privateDownloadUrl(large));
 			} else if (sourceProtected) {
 				// 只能采用样式访问
-				return urlPrefix + key + styleSplitChar + style;
+				String url = urlPrefix + key + styleSplitChar + style;
+				return new ThumbnailUrl(url, url, url);
 			} else {
-				return url;
+				return new ThumbnailUrl(small, middle, large);
 			}
 		} else {
 			return null;
@@ -232,24 +238,29 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	 * 
 	 * @return
 	 */
-	protected String buildResizeParam() {
-		if (defaultResize == null) {
+	protected String buildResizeParam(Resize resize) {
+		if (resize == null) {
 			return null;
 		} else {
-			if (defaultResize.getSize() != null) {
-				return "imageView2/2/w/" + defaultResize.getSize() + "/h/" + defaultResize.getSize();
+			if (resize.getSize() != null) {
+				return "imageView2/2/w/" + resize.getSize() + "/h/" + resize.getSize();
 			}
-			if (defaultResize.getWidth() == 0 && defaultResize.getHeight() == 0) {
+			if (resize.getWidth() == 0 && resize.getHeight() == 0) {
 				return null;
 			}
-			if (defaultResize.getWidth() == 0) {
-				return "imageView2/2/h/" + defaultResize.getHeight();
+			if (resize.getWidth() == 0) {
+				return "imageView2/2/h/" + resize.getHeight();
 			}
-			if (defaultResize.getHeight() == 0) {
-				return "imageView2/2/w/" + defaultResize.getWidth();
+			if (resize.getHeight() == 0) {
+				return "imageView2/2/w/" + resize.getWidth();
 			}
-			return "imageView2/2/w/" + defaultResize.getWidth() + "/h/" + defaultResize.getHeight();
+			return "imageView2/2/w/" + resize.getWidth() + "/h/" + resize.getHeight();
 		}
+	}
+
+	private String buildResizeUrl(Resize resize, String key) {
+		String param = buildResizeParam(resize);
+		return urlPrefix + key + (param == null ? "" : "?" + param);
 	}
 
 	// 简单上传，使用默认策略，只需要设置上传的空间名就可以了
@@ -277,8 +288,16 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		this.secret = secret;
 	}
 
-	public void setDefaultResize(Resize defaultResize) {
-		this.defaultResize = defaultResize;
+	public void setSmallResize(Resize smallResize) {
+		this.smallResize = smallResize;
+	}
+
+	public void setMiddleResize(Resize middleResize) {
+		this.middleResize = middleResize;
+	}
+
+	public void setLargeResize(Resize largeResize) {
+		this.largeResize = largeResize;
 	}
 
 	public void setPrivateDownloadUrlExpires(long privateDownloadUrlExpires) {

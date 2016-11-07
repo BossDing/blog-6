@@ -136,7 +136,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				art.space_id = #{space.id}
 			</if>
 			<if test="!queryHidden">
-				AND art.art_hidden = false
+				AND IFNULL(art.art_hidden, false) = false
 				AND sp.space_art_hidden = false
 			</if>
 			<if test="!queryPrivate">
@@ -209,7 +209,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				art.space_id = #{space.id}
 			</if>
 			<if test="!queryHidden">
-				AND art.art_hidden = false
+				AND IFNULL(art.art_hidden, false) = false
 				AND sp.space_art_hidden = false
 			</if>
 			<if test="!queryPrivate">
@@ -314,7 +314,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND space_id = #{space.id}
 			</when>
 			<otherwise>
-				AND art.art_hidden = false
+				AND IFNULL(art.art_hidden, false) = false
 				AND sp.space_art_hidden = false
 			</otherwise>
 			</choose>
@@ -337,7 +337,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
-		AND art.art_hidden = false
+		AND IFNULL(art.art_hidden, false) = false
 		AND sp.space_art_hidden = false
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -400,7 +400,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.space_id = #{article.space.id}
 		</when>
 		<otherwise>
-			AND art.art_hidden = false
+			AND IFNULL(art.art_hidden, false) = false
 			AND sp.space_art_hidden = false
 		</otherwise>
 		</choose>
@@ -430,7 +430,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.space_id = #{article.space.id}
 		</when>
 		<otherwise>
-			AND art.art_hidden = false
+			AND IFNULL(art.art_hidden, false) = false
 			AND sp.space_art_hidden = false
 		</otherwise>
 		</choose>
@@ -457,7 +457,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.space_id = #{space.id}
 		</if>
 		<if test="!queryHidden">
-			AND art.art_hidden = false
+			AND IFNULL(art.art_hidden, false) = false
 			AND sp.space_art_hidden = false
 		</if>
 		<if test="!queryPrivate">

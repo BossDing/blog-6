@@ -22,6 +22,7 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
+import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.util.UrlUtils;
 import me.qyh.util.Validators;
 
@@ -108,7 +109,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public String getPreviewUrl(String key) {
+	public ThumbnailUrl getThumbnailUrl(String key) {
 		return null;
 	}
 

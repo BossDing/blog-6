@@ -115,8 +115,12 @@ public class MetaweblogController extends BaseController implements Initializing
 		private AtomicInteger count;
 
 		public FailInfo(long timestamp) {
+			this(timestamp, 0);
+		}
+
+		public FailInfo(long timestamp, int count) {
 			this.timestamp = timestamp;
-			this.count = new AtomicInteger(0);
+			this.count = new AtomicInteger(count);
 		}
 
 		public boolean overtime(long now) {
@@ -135,7 +139,7 @@ public class MetaweblogController extends BaseController implements Initializing
 			invalidIpMap.computeIfAbsent(ip, k -> now);
 			authFailMap.remove(ip);
 		} else if (fi.overtime(now)) {
-			authFailMap.computeIfAbsent(ip, k -> new FailInfo(now));
+			authFailMap.computeIfAbsent(ip, k -> new FailInfo(now, 1));
 		}
 	}
 

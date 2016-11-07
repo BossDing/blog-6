@@ -15,9 +15,11 @@ public class Space extends BaseLockResource {
 	private String alias;
 	private Timestamp createDate;// 创建时间
 	private Boolean isPrivate;
-	
+
 	private Boolean articleHidden;
 	private CommentConfig commentConfig;
+
+	private Boolean isDefault;
 
 	public String getAlias() {
 		return alias;
@@ -78,6 +80,14 @@ public class Space extends BaseLockResource {
 
 	public void setCommentConfig(CommentConfig commentConfig) {
 		this.commentConfig = commentConfig;
+	}
+
+	public Boolean getIsDefault() {
+		return isDefault;
+	}
+
+	public void setIsDefault(Boolean isDefault) {
+		this.isDefault = isDefault;
 	}
 
 	@Override

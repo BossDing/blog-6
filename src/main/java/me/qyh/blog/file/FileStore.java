@@ -58,11 +58,11 @@ public interface FileStore {
 	String getDownloadUrl(String key);
 
 	/**
-	 * 获取预览路径
+	 * 获取缩略图路径
 	 * 
 	 * @param cf
 	 * @return
 	 */
-	String getPreviewUrl(String key);
+	ThumbnailUrl getThumbnailUrl(String key);
 
 }

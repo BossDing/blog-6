@@ -26,6 +26,7 @@ import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
+import me.qyh.blog.file.ThumbnailUrl;
 
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
@@ -55,7 +56,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private String thumbAbsPath;
 	private File thumbAbsFolder;
 
-	private Resize defaultResize;
+	private Resize smallResize;
+	private Resize middleResize;
+	private Resize largeResize;
 
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException, IOException {
@@ -201,26 +204,26 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			if (ImageHelper.isGIF(FilenameUtils.getExtension(key))) {
 				return super.getUrl(key);
 			}
-			return buildResizePath(key);
+			Resize resize = largeResize == null ? (middleResize == null ? smallResize : middleResize) : largeResize;
+			return buildResizePath(resize, key);
 		} else {
 			return super.getUrl(key);
 		}
 	}
 
 	@Override
-	public String getPreviewUrl(String key) {
-		if (defaultResize == null) {
-			return getUrl(key);
-		} else {
-			return buildResizePath(key);
-		}
+	public ThumbnailUrl getThumbnailUrl(String key) {
+		return new ThumbnailUrl(buildResizePath(smallResize, key), buildResizePath(middleResize, key),
+				buildResizePath(largeResize, key));
 	}
 
-	private String buildResizePath(String key) {
-		if (!key.startsWith("/")) {
+	private String buildResizePath(Resize resize, String key) {
+		if (!key.startsWith("/"))
 			key = "/" + key;
-		}
-		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(defaultResize, key));
+		if (resize == null)
+			return getUrl(key);
+
+		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(resize, key));
 	}
 
 	@Override
@@ -235,17 +238,22 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			resizeValidator = new DefaultResizeValidator();
 		}
 
-		if (defaultResize != null && !resizeValidator.valid(defaultResize)) {
-			throw new SystemException("默认缩放尺寸：" + defaultResize + "无法被接受！请调整ResizeUrlParser");
-		}
+		validateResize(smallResize);
+		validateResize(middleResize);
+		validateResize(largeResize);
 
-		if (sourceProtected && defaultResize == null) {
+		if (sourceProtected && (smallResize == null && middleResize == null && largeResize == null)) {
 			throw new SystemException("开启原图保护必须提供默认缩放尺寸");
 		}
 
 		if (sourceProtected) {
 			setEnableDownloadHandler(false);
 		}
+	}
+
+	private void validateResize(Resize resize) {
+		if (resize != null && !resizeValidator.valid(resize))
+			throw new SystemException("默认缩放尺寸：" + resize + "无法被接受！请调整ResizeUrlParser");
 	}
 
 	private File findThumbByPath(String path) {
@@ -416,10 +424,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		this.imageHelper = imageHelper;
 	}
 
-	public void setDefaultResize(Resize defaultResize) {
-		this.defaultResize = defaultResize;
-	}
-
 	public void setSourceProtected(boolean sourceProtected) {
 		this.sourceProtected = sourceProtected;
 	}
@@ -430,5 +434,17 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	public void setSupportWebp(boolean supportWebp) {
 		this.supportWebp = supportWebp;
+	}
+
+	public void setSmallResize(Resize smallResize) {
+		this.smallResize = smallResize;
+	}
+
+	public void setMiddleResize(Resize middleResize) {
+		this.middleResize = middleResize;
+	}
+
+	public void setLargeResize(Resize largeResize) {
+		this.largeResize = largeResize;
 	}
 }

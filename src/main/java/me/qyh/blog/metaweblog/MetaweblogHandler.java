@@ -24,13 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
+import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.SpaceQueryParam;
@@ -47,6 +46,10 @@ import me.qyh.util.Validators;
 
 /**
  * http://www.oschina.net/uploads/doc/MetaWeblog.html
+ * <p>
+ * <strong>只在<a href=
+ * "http://openlivewriter.org/">openlivewriter</a>上测试通过</strong>
+ * </p>
  * 
  * @author Administrator
  *
@@ -81,15 +84,13 @@ public class MetaweblogHandler {
 			return execute.execute();
 		} catch (LogicException e) {
 			throw new FaultException(Constants.LOGIC_ERROR, e.getLogicMessage());
-		} catch (Exception e) {
-			throw new ParseException(e.getMessage(), e);
 		} finally {
 			UserContext.remove();
 		}
 	}
 
 	private interface Execute {
-		Object execute() throws LogicException;
+		Object execute() throws LogicException, ParseException;
 	}
 
 	public Object getUsersBlogs(String key, String username, String password) throws FaultException, ParseException {
@@ -162,28 +163,27 @@ public class MetaweblogHandler {
 		});
 	}
 
-	public Object newPost(String blogid, String username, String password, HashMap<String, Object> map, Boolean publish)
+	public Object newPost(String blogid, String username, String password, Struct struct, Boolean publish)
 			throws FaultException, ParseException {
 		return execute(username, password, new Execute() {
 
 			@Override
-			public Object execute() throws LogicException {
-				Article article = mapToArticle(map, publish == null ? true : publish);
-				articleService.writeArticle(article, false);
-				return article.getId().toString();
+			public Object execute() throws LogicException, ParseException {
+				MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
+				return articleService.writeArticle(article).getId().toString();
 			}
 		});
 	}
 
-	public Object editPost(String postid, String username, String password, HashMap<String, Object> map,
-			Boolean publish) throws FaultException, ParseException {
+	public Object editPost(String postid, String username, String password, Struct struct, Boolean publish)
+			throws FaultException, ParseException {
 		return execute(username, password, new Execute() {
 
 			@Override
-			public Object execute() throws LogicException {
-				Article article = mapToArticle(map, publish == null ? true : publish);
+			public Object execute() throws LogicException, ParseException {
+				MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
 				article.setId(Integer.parseInt(postid));
-				articleService.writeArticle(article, false);
+				articleService.writeArticle(article);
 				return article.getId().toString();
 			}
 		});
@@ -201,18 +201,18 @@ public class MetaweblogHandler {
 		});
 	}
 
-	public Object newMediaObject(String blogid, String username, String password, HashMap<String, Object> map)
+	public Object newMediaObject(String blogid, String username, String password, Struct struct)
 			throws FaultException, ParseException {
 		return execute(username, password, new Execute() {
 
 			@Override
-			public Object execute() throws LogicException {
-				UploadedFile res = fileService.uploadMetaweblogFile(mapToFile(map));
+			public Object execute() throws LogicException, ParseException {
+				UploadedFile res = fileService.uploadMetaweblogFile(structToFile(struct));
 				if (res.hasError())
 					throw new LogicException(res.getError());
 				else {
 					Map<String, String> urlMap = new HashMap<String, String>();
-					urlMap.put("url", res.getUrl());
+					urlMap.put("url", res.getThumbnailUrl().getMiddle());
 					return urlMap;
 				}
 			}
@@ -223,8 +223,8 @@ public class MetaweblogHandler {
 		return getUsersBlogs(null, username, password);
 	}
 
-	private MultipartFile mapToFile(final HashMap<String, Object> map) throws LogicException {
-		String name = (String) map.get("name");
+	private MultipartFile structToFile(final Struct struct) throws LogicException, ParseException {
+		String name = struct.getString("name");
 		if (Validators.isEmptyOrNull(name, true))
 			throw new LogicException("file.uploadfiles.blank");
 		name = StringUtils.cleanPath(name);
@@ -232,7 +232,7 @@ public class MetaweblogHandler {
 			name = name.substring(name.lastIndexOf('/') + 1, name.length());
 		if (name.length() > BlogFileUploadValidator.MAX_FILE_NAME_LENGTH)
 			throw new LogicException("file.name.toolong", BlogFileUploadValidator.MAX_FILE_NAME_LENGTH);
-		byte[] bits = (byte[]) map.get("bits");
+		byte[] bits = struct.getBase64("bits");
 		if (bits == null)
 			throw new LogicException("file.content.blank");
 		if (bits.length > uploadLimitSize)
@@ -282,25 +282,24 @@ public class MetaweblogHandler {
 		};
 	}
 
-	private Article mapToArticle(Map<String, Object> map, boolean published) throws LogicException {
-		Article article = new Article();
-		@SuppressWarnings("unchecked")
-		List<String> categories = (List<String>) map.get("categories");
-		if (CollectionUtils.isEmpty(categories))
-			throw new LogicException("metaweblog.space.blank", "空间(文章分类)不能为空");
-		String category = categories.get(0);
-		Space space = spaceService.selectSpaceByName(category);
-		if (space == null)
-			throw new LogicException("metaweblog.space.notexists", "空间(文章分类):" + category + "不存在", category);
-		article.setSpace(space);
-		String title = (String) map.get("title");
+	private MetaweblogArticle structToArticle(Struct struct, boolean published) throws LogicException, ParseException {
+		MetaweblogArticle article = new MetaweblogArticle();
+		List<String> categories = struct.getArray("categories", String.class);
+		if (!CollectionUtils.isEmpty(categories)) {
+			for (String category : categories)
+				if (!Validators.isEmptyOrNull(category, true)) {
+					article.setSpace(category.trim());
+					break;
+				}
+		}
+		String title = struct.getString("title");
 		if (Validators.isEmptyOrNull(title, true))
 			throw new LogicException("article.title.blank");
 		if (title.length() > ArticleValidator.MAX_TITLE_LENGTH)
 			throw new LogicException("article.title.toolong");
 		article.setTitle(title);
 
-		String content = (String) map.get("description");
+		String content = struct.getString("description");
 		if (Validators.isEmptyOrNull(content, true))
 			throw new LogicException("article.content.blank");
 		if (content.length() > ArticleValidator.MAX_CONTENT_LENGTH)
@@ -308,7 +307,7 @@ public class MetaweblogHandler {
 		article.setContent(content);
 
 		try {
-			Date pub = (Date) map.get("dateCreated");
+			Date pub = struct.getDate("dateCreated");
 			article.setPubDate(new Timestamp(pub.getTime()));
 		} catch (Exception e) {
 			article.setPubDate(null);
@@ -329,11 +328,6 @@ public class MetaweblogHandler {
 		} else {
 			article.setStatus(ArticleStatus.DRAFT);
 		}
-		article.setEditor(Editor.HTML);
-		article.setFrom(ArticleFrom.ORIGINAL);
-		article.setIsPrivate(false);
-		article.setHidden(false);
-		article.setSummary("");
 		return article;
 	}
 

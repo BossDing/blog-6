@@ -11,6 +11,7 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.metaweblog.MetaweblogArticle;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
@@ -155,4 +156,13 @@ public interface ArticleService {
 	 * @return
 	 */
 	List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate);
+
+	/**
+	 * 更新metaweblog文章
+	 * 
+	 * @param article
+	 * @return
+	 * @throws LogicException
+	 */
+	Article writeArticle(MetaweblogArticle article) throws LogicException;
 }

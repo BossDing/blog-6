@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.util.CollectionUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import me.qyh.blog.exception.SystemException;
@@ -320,11 +319,4 @@ public class Article extends BaseLockResource implements Cloneable {
 			throw new SystemException(e.getMessage(), e);
 		}
 	}
-	
-	@Override
-	@JsonIgnore
-	public String getLockId() {
-		return super.getLockId();
-	}
-
 }

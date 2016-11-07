@@ -1,6 +1,7 @@
 package me.qyh.blog.bean;
 
 import me.qyh.blog.file.CommonFile;
+import me.qyh.blog.file.ThumbnailUrl;
 
 public class ExpandedCommonFile extends CommonFile {
 
@@ -8,16 +9,16 @@ public class ExpandedCommonFile extends CommonFile {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String previewUrl;
+	private ThumbnailUrl thumbnailUrl;
 	private String url;
 	private String downloadUrl;
 
-	public String getPreviewUrl() {
-		return previewUrl;
+	public ThumbnailUrl getThumbnailUrl() {
+		return thumbnailUrl;
 	}
 
-	public void setPreviewUrl(String previewUrl) {
-		this.previewUrl = previewUrl;
+	public void setThumbnailUrl(ThumbnailUrl thumbnailUrl) {
+		this.thumbnailUrl = thumbnailUrl;
 	}
 
 	public String getUrl() {

@@ -50,10 +50,45 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		CommentConfig config = space.getCommentConfig();
-		if (config != null)
-			commentConfigDao.insert(config);
+		space.setCommentConfig(null);
+		if (space.getIsDefault())
+			spaceDao.resetDefault();
 		spaceDao.insert(space);
+	}
+
+	@Override
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#result.alias") })
+	public Space updateCommentConfig(Integer spaceId, CommentConfig newConfig) throws LogicException {
+		Space db = spaceDao.selectById(spaceId);
+		if (db == null)
+			throw new LogicException("space.notExists", "空间不存在");
+		CommentConfig oldConfig = db.getCommentConfig();
+		if (oldConfig != null) {
+			newConfig.setId(oldConfig.getId());
+			commentConfigDao.update(newConfig);
+		} else {
+			commentConfigDao.insert(newConfig);
+		}
+		db.setCommentConfig(newConfig);
+		spaceDao.update(db);
+		return db;
+	}
+
+	@Override
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#result.alias") })
+	public Space deleteCommentConfig(Integer spaceId) throws LogicException {
+		Space db = spaceDao.selectById(spaceId);
+		if (db == null)
+			throw new LogicException("space.notExists", "空间不存在");
+		CommentConfig oldConfig = db.getCommentConfig();
+		if (oldConfig != null) {
+			db.setCommentConfig(null);
+			spaceDao.update(db);
+			commentConfigDao.deleteById(oldConfig.getId());
+		}
+		return db;
 	}
 
 	@Override
@@ -79,23 +114,12 @@ public class SpaceServiceImpl implements SpaceService {
 		}
 
 		checkLock(space.getLockId());
-		CommentConfig oldConfig = db.getCommentConfig();
-		CommentConfig newConfig = space.getCommentConfig();
-		if (oldConfig != null) {
-			if (newConfig == null) {
-				spaceDao.update(space);
-				commentConfigDao.deleteById(oldConfig.getId());
-			} else {
-				newConfig.setId(oldConfig.getId());
-				commentConfigDao.update(newConfig);
-				spaceDao.update(space);
-			}
-		} else {
-			if (newConfig != null) 
-				commentConfigDao.insert(newConfig);
-			spaceDao.update(space);
-		}
 
+		if (space.getIsDefault())
+			spaceDao.resetDefault();
+
+		space.setCommentConfig(db.getCommentConfig());
+		spaceDao.update(space);
 	}
 
 	@Override

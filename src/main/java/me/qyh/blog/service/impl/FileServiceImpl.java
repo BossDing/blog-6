@@ -118,8 +118,9 @@ public class FileServiceImpl implements FileService {
 					throw new SystemException(e.getMessage(), e);
 				}
 				cf.setServer(fs.id());
-				uploadedFiles.add(new UploadedFile(file.getOriginalFilename(), cf.getSize(),
-						fs.getFileStore(cf.getStore()).getUrl(key)));
+				FileStore store = fs.getFileStore(cf.getStore());
+				uploadedFiles.add(new UploadedFile(file.getOriginalFilename(), cf.getSize(), store.getThumbnailUrl(key),
+						store.getUrl(key)));
 				commonFileDao.insert(cf);
 				BlogFile blogFile = new BlogFile();
 				blogFile.setCf(cf);
@@ -389,7 +390,7 @@ public class FileServiceImpl implements FileService {
 				FileStore fs = getFileStore(cf);
 				ExpandedCommonFile pcf = new ExpandedCommonFile();
 				BeanUtils.copyProperties(cf, pcf);
-				pcf.setPreviewUrl(fs.getPreviewUrl(key));
+				pcf.setThumbnailUrl(fs.getThumbnailUrl(key));
 				pcf.setDownloadUrl(fs.getDownloadUrl(key));
 				pcf.setUrl(fs.getUrl(key));
 				bf.setCf(pcf);

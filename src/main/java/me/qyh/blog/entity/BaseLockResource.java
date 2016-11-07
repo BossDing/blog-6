@@ -1,7 +1,5 @@
 package me.qyh.blog.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import me.qyh.blog.lock.LockResource;
 
 public abstract class BaseLockResource extends Id implements LockResource {
@@ -10,7 +8,6 @@ public abstract class BaseLockResource extends Id implements LockResource {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	@JsonProperty
 	private String lockId;
 
 	@Override

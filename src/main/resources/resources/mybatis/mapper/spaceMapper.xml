@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="space_name" property="name"/>
 		<result column="space_lock" property="lockId"/>
 		<result column="space_art_hidden" property="articleHidden"/>
+		<result column="is_default" property="isDefault"/>
 		
 		<association property="commentConfig" javaType="CommentConfig">
 			<id column="comment_config_id" property="id"></id>
@@ -23,6 +24,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="comment_check" property="check"/>
 		</association>
 	</resultMap>
+	
+	<update id="resetDefault">
+		UPDATE blog_space SET is_default = FALSE
+	</update>
 
 	<select id="selectByAlias" resultMap="SpaceDetail">
 		<include refid="spaceDetailSql"></include>
@@ -43,8 +48,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 
 	<insert id="insert">
-		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,space_art_hidden)
-		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{articleHidden})
+		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,space_art_hidden,is_default)
+		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{articleHidden},#{isDefault})
 	</insert>
 
 	<update id="update">
@@ -61,6 +66,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="isPrivate != null">
 				is_private = #{isPrivate},
+			</if>
+			<if test="isDefault != null">
+				is_default = #{isDefault},
 			</if>
 			comment_config = #{commentConfig.id},
 			space_lock = #{lockId}
@@ -84,6 +92,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY createDate DESC,bs.id DESC
 	</select>
 	
+	<select id="selectDefault" resultMap="SpaceDetail">
+		<include refid="spaceDetailSql"></include>
+		WHERE
+			is_default = true
+	</select>
+	
 	<sql id="spaceDetailSql">
 		SELECT
 			bs.id AS space_id,
@@ -92,6 +106,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			createDate,
 			space_name,
 			space_lock,
+			is_default,
 			space_art_hidden,
 			bcc.allowComment,
 			bcc.comment_mode,

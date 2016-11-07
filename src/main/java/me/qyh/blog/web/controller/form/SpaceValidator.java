@@ -63,6 +63,11 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 
+		if (space.getIsDefault() == null) {
+			errors.reject("space.isDefault.blank", "是否是默认空间不能为空");
+			return;
+		}
+
 		CommentConfig commentConfig = space.getCommentConfig();
 		if (commentConfig != null)
 			commentConfigValidator.validate(commentConfig, errors);

@@ -222,7 +222,7 @@ public class RequestXmlParser {
 					throw new ParseException("解析失败，name节点不能为空");
 				map.put(name, parseValueElement((Element) memberValueNodes.get(0)));
 			}
-			return map;
+			return new Struct(map);
 		case "array":
 			List<?> dataNodes = ve.getChild("array").getChildren("data");
 			if (dataNodes.size() != 1)
@@ -280,5 +280,69 @@ public class RequestXmlParser {
 
 	public static RequestXmlParser getParser() {
 		return INSTANCE;
+	}
+
+	final class Struct {
+		private Map<String, Object> data = new HashMap<String, Object>();
+
+		public Struct(Map<String, Object> data) {
+			this.data = data;
+		}
+
+		public String getString(String key) throws ParseException {
+			return get(key, String.class);
+		}
+
+		public Integer getInt(String key) throws ParseException {
+			return get(key, Integer.class);
+		}
+
+		public Boolean getBoolean(String key) throws ParseException {
+			return get(key, Boolean.class);
+		}
+
+		public Double getDouble(String key) throws ParseException {
+			return get(key, Double.class);
+		}
+
+		public Date getDate(String key) throws ParseException {
+			return get(key, Date.class);
+		}
+
+		public byte[] getBase64(String key) throws ParseException {
+			return get(key, byte[].class);
+		}
+
+		@SuppressWarnings("unchecked")
+		public List<Object> getArray(String key) throws ParseException {
+			return get(key, List.class);
+		}
+
+		@SuppressWarnings("unchecked")
+		public <T> List<T> getArray(String key, Class<T> t) throws ParseException {
+			List<Object> list = getArray(key);
+			List<T> rest = new ArrayList<>(list.size());
+			for (Object o : list) {
+				if (o != null && !t.isInstance(o))
+					throw new ParseException(o.getClass() + "不是" + t.getName() + "类型");
+				rest.add((T) o);
+			}
+			return rest;
+		}
+
+		@SuppressWarnings("unchecked")
+		public Struct getStruct(String key) throws ParseException {
+			Map<String, Object> map = get(key, Map.class);
+			return new Struct(map);
+		}
+
+		@SuppressWarnings("unchecked")
+		private <T> T get(String key, Class<T> t) throws ParseException {
+			Object v = data.get(key);
+			if (v != null && !t.isInstance(v)) {
+				throw new ParseException(v.getClass() + "不是" + t.getName() + "类型");
+			}
+			return (T) v;
+		}
 	}
 }

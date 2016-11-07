@@ -15,6 +15,7 @@ $(document).ready(function() {
 				modal.find('.modal-body input[name="name"]').val(data.name);
 				modal.find('.modal-body input[name="alias"]').val(data.alias);
 				modal.find('.modal-body input[name="isPrivate"]').prop("checked",data.isPrivate);
+				modal.find('.modal-body input[name="isDefault"]').prop("checked",data.isDefault);
 				modal.find('.modal-body input[name="articleHidden"]').prop("checked",data.articleHidden);
 				modal.find('.modal-body input[name="id"]').val(id);
 				if(data.lockId){
@@ -27,7 +28,6 @@ $(document).ready(function() {
 			}
 		});
 	});
-	
 	$.get(basePath + '/mgr/lock/all',{},function(data){
 		if(data.success){
 			var locks = data.data;
@@ -57,6 +57,7 @@ $(document).ready(function() {
 		var data = $("#spaceModal").find("form").serializeObject();
 		data.isPrivate = $("#spaceModal").find('input[name="isPrivate"]').is(":checked");
 		data.articleHidden = $("#spaceModal").find('input[name="articleHidden"]').is(":checked");
+		data.isDefault = $("#spaceModal").find('input[name="isDefault"]').is(":checked");
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/add",
@@ -85,7 +86,7 @@ $(document).ready(function() {
 		var data = $("#editSpaceModal").find("form").serializeObject();
 		data.isPrivate = $("#editSpaceModal").find('input[name="isPrivate"]').is(":checked");
 		data.articleHidden = $("#editSpaceModal").find('input[name="articleHidden"]').is(":checked");
-		console.log(data);
+		data.isDefault = $("#editSpaceModal").find('input[name="isDefault"]').is(":checked");
 		$.ajax({
 			type : "post",
 			url : basePath+"/mgr/space/update",
@@ -107,4 +108,93 @@ $(document).ready(function() {
 			}
 		});
 	});
+	$("button[data-cc-action]").click(function(){
+		var action = $(this).attr('data-cc-action');
+		switch(action){
+		case 'add':
+		case 'update':
+			var commentConfig = {};
+			commentConfig.allowComment = $("#allowComment").prop("checked");
+			commentConfig.commentMode = $("#commentMode").val();
+			commentConfig.asc = $("#commentSort").val();
+			commentConfig.allowHtml = $("#allowHtml").prop("checked");
+			commentConfig.limitSec = $("#limitSec").val();
+			commentConfig.limitCount = $("#limitCount").val();
+			commentConfig.check = $("#check").prop("checked");
+			$.ajax({
+				type : "post",
+				url : basePath+'/mgr/space/commentConfig/update?spaceId='+$("#spaceId").val(),
+	            contentType:"application/json",
+				data : JSON.stringify(commentConfig),
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500);
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+				}
+			});
+			break;
+		case "delete":
+			$.ajax({
+				type : "post",
+				url : basePath+'/mgr/space/commentConfig/delete?spaceId='+$("#spaceId").val(),
+	            contentType:"application/json",
+				data : {},
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500);
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+				}
+			});
+
+			break;
+		}
+	})
 });
+function editCommentConfig(id){
+	clearTip();
+	$("#spaceId").val(id);
+	$("#editCommentConfigForm")[0].reset();
+	var modal = $(this);
+	$.get(basePath+'/mgr/space/get/'+id,{},function(data){
+		if(data.success){
+			data = data.data;
+			if(!data.commentConfig){
+				//没有配置评论
+				$("button[data-cc-action]").hide();
+				$("button[data-cc-action='add']").show();
+			}else{
+				var cc = data.commentConfig;
+				if(cc.allowComment)
+					$("#allowComment").prop("checked",true);
+				$("#commentMode").val(cc.commentMode);
+				$("#commentSort").val(cc.asc+"")
+				if(cc.allowHtml)
+					$("#allowHtml").prop("checked",true)
+				$("#limitSec").val(cc.limitSec);
+				$("#limitCount").val(cc.limitCount);
+				if(cc.check)
+					$("#check").prop("checked",true);
+				$("button[data-cc-action]").hide();
+				$("button[data-cc-action='delete']").show();
+				$("button[data-cc-action='update']").show();
+			}
+			$("#editCommentConfigModal").modal('show');
+		}else{
+			bootbox.alert(data.message);
+		}
+	});
+}

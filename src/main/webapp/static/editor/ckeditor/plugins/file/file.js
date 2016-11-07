@@ -309,7 +309,7 @@
 			                if (file.thumbnailUrl) {
 			                    row.find('.preview').append(
 			                        $('<a></a>').append(
-			                            $('<img>').prop('src', file.thumbnailUrl)
+			                            $('<img>').prop('src', file.thumbnailUrl.small)
 			                        )
 			                    );
 			                }
@@ -494,8 +494,8 @@
 				} else {
 					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;
 					html += '<a href="###" data-extension="'+data.cf.extension+'"  data-url="'+url+'" data-description="'+data.cf.originalFilename+'">'
-					if(data.cf.previewUrl){
-						html += '<img  src="'+data.cf.previewUrl+'" class="img-responsive" style="height:100px"/>';
+					if(data.cf.thumbnailUrl){
+						html += '<img  src="'+data.cf.thumbnailUrl.small+'" class="img-responsive" style="height:100px"/>';
 					} else {
 						html += '<img src="'+basePath+'/static/fileicon/file.png" class="img-responsive" style="height:100px"/>';
 					}
