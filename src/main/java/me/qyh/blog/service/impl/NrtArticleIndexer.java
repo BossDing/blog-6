@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.service.impl;
 
 import java.io.IOException;
@@ -5,14 +20,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.miscellaneous.LimitTokenCountAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.DateTools.Resolution;
 import org.apache.lucene.document.Document;
@@ -43,6 +59,10 @@ import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.Formatter;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.TokenGroup;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -65,7 +85,6 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
-import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
@@ -86,20 +105,18 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private final ReferenceManager<IndexSearcher> searcherManager;
 	private final Directory dir;
 	private final IndexWriter oriWriter;
-
 	private JcsegAnalyzer5X analyzer5x;
+
+	private boolean highlight = true;
+
+	private Formatter titleFormatter;
+	private Formatter tagFormatter;
+	private Formatter summaryFormatter;
 
 	/**
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
-	/**
-	 * 每个字段 索引term个数限制
-	 */
-	private static final int MAX_CONTENT_TERM_RESULTS = 100;
-
-	private int maxContentTermResults = MAX_CONTENT_TERM_RESULTS;
-
 	private static final long DEFAULT_COMMIT_PERIOD = 30 * 60 * 1000;
 
 	private Set<String> tags = new HashSet<String>();
@@ -121,10 +138,19 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 
 	public NrtArticleIndexer(String indexDir, JcsegMode mode, long commitPeriod) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
-		JcsegTaskConfig taskConfig = new JcsegTaskConfig();
+		analyzer5x = new JcsegAnalyzer5X(mode.getMode());
+		JcsegTaskConfig taskConfig = analyzer5x.getTaskConfig();
 		taskConfig.setClearStopwords(true);
-		analyzer5x = new JcsegAnalyzer5X(mode.getMode(), taskConfig);
-		this.analyzer = new LimitTokenCountAnalyzer(analyzer5x, maxContentTermResults);
+		if (highlight) {
+			/**
+			 * http://git.oschina.net/lionsoul/jcseg/issues/24
+			 */
+			taskConfig.setAppendCJKSyn(false);
+			taskConfig.setLoadCJKPinyin(false);
+			taskConfig.setLoadCJKSyn(false);
+			taskConfig.setAppendCJKPinyin(false);
+		}
+		this.analyzer = analyzer5x;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {
@@ -202,12 +228,18 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private static final String LOCKED = "locked";
 	private static final String ALIAS = "alias";
 	private static final String HIDDEN = "spacePrivate";
+	private static final String SUMMARY = "summary";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
 		doc.add(new StringField(ID, article.getId().toString(), Field.Store.YES));
 		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.NO));
-		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.NO));
+		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.NO));
+		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.YES));
+		Set<Tag> tags = article.getTags();
+		if (!CollectionUtils.isEmpty(tags))
+			for (Tag tag : tags)
+				doc.add(new TextField(TAG, tag.getName().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(SPACE_ID, article.getSpace().getId().toString(), Field.Store.NO));
 		doc.add(new StringField(PRIVATE, article.isPrivate().toString(), Field.Store.NO));
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
@@ -225,12 +257,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
 		doc.add(new StringField(PUB_DATE, pubDateStr, Field.Store.NO));
 		doc.add(new SortedDocValuesField(ID, new BytesRef(article.getId().toString())));
-		Set<Tag> tags = article.getTags();
-		if (!CollectionUtils.isEmpty(tags)) {
-			for (Tag tag : tags) {
-				doc.add(new StringField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
-			}
-		}
 		Boolean hidden = article.getHidden() == null ? article.getSpace().getArticleHidden() : article.getHidden();
 		doc.add(new StringField(HIDDEN, hidden.toString(), Field.Store.NO));
 		return doc;
@@ -262,7 +288,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
-	public PageResult<Integer> query(ArticleQueryParam param) {
+	public PageResult<Article> query(ArticleQueryParam param, ArticlesDetailQuery dquery) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
@@ -286,22 +312,71 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			fields.add(new SortField(ID, SortField.Type.STRING, true));
 			logger.debug(fields.toString());
 			Sort sort = new Sort(fields.toArray(new SortField[] {}));
-			Query query = parseBlogPageParam(param);
+
+			Builder builder = new Builder();
+			Space space = param.getSpace();
+			if (space != null) {
+				Query query = new TermQuery(new Term(SPACE_ID, space.getId().toString()));
+				builder.add(query, Occur.MUST);
+			}
+			Date begin = param.getBegin();
+			Date end = param.getEnd();
+			boolean dateRangeQuery = (begin != null && end != null);
+			if (dateRangeQuery) {
+				TermRangeQuery query = new TermRangeQuery(PUB_DATE, new Term(PUB_DATE, timeToString(begin)).bytes(),
+						new Term(PUB_DATE, timeToString(end)).bytes(), true, true);
+				builder.add(query, Occur.MUST);
+			}
+			if (!param.isQueryPrivate()) {
+				builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
+				builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
+			}
+			if (!param.isQueryHidden()) {
+				builder.add(new TermQuery(new Term(HIDDEN, "false")), Occur.MUST);
+			}
+			ArticleFrom from = param.getFrom();
+			if (from != null) {
+				Query query = new TermQuery(new Term(FROM, from.name().toLowerCase()));
+				builder.add(query, Occur.MUST);
+			}
+			if (param.getTag() != null) {
+				builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
+			}
+			Query multiFieldQuery = null;
+			if (!Validators.isEmptyOrNull(param.getQuery(), true)) {
+				MultiFieldQueryParser parser = new MultiFieldQueryParser(
+						new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT }, analyzer);
+				try {
+					multiFieldQuery = parser.parse(param.getQuery());
+					builder.add(multiFieldQuery, Occur.MUST);
+				} catch (ParseException e) {
+					// ingore
+				}
+			}
+			Query query = builder.build();
 			logger.debug(query.toString());
 
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();
-			List<Integer> datas = new ArrayList<Integer>();
+			Map<Integer, String> datas = new LinkedHashMap<Integer, String>();
 			if (offset < total) {
 				ScoreDoc[] docs = tds.scoreDocs;
 				int last = offset + param.getPageSize();
 				for (int i = offset; i < Math.min(Math.min(last, total), MAX_RESULTS); i++) {
-					Document doc = searcher.doc(docs[i].doc);
-					datas.add(Integer.parseInt(doc.get(ID)));
+					int docId = docs[i].doc;
+					Document doc = searcher.doc(docId);
+					datas.put(Integer.parseInt(doc.get(ID)), doc.get(CONTENT));
 				}
 			}
-			return new PageResult<Integer>(param, Math.min(MAX_RESULTS, total), datas);
+			List<Article> articles = dquery.queryArticle(new ArrayList<Integer>(datas.keySet()));
+			if (highlight && multiFieldQuery != null) {
+				for (Article article : articles) {
+					doHightlight(article, datas.get(article.getId()), multiFieldQuery);
+					article.setContent(null);
+				}
+			}
+			return new PageResult<Article>(param, Math.min(MAX_RESULTS, total), articles);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
@@ -313,59 +388,46 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
-	protected Query parseBlogPageParam(ArticleQueryParam param) {
-		Builder builder = new Builder();
-		Space space = param.getSpace();
-		if (space != null) {
-			Query query = new TermQuery(new Term(SPACE_ID, space.getId().toString()));
-			builder.add(query, Occur.MUST);
+	/**
+	 * 高亮显示
+	 * 
+	 * @param article
+	 *            文章
+	 * @param content
+	 *            文章内容
+	 * @param query
+	 */
+	protected void doHightlight(Article article, String content, Query query) {
+		String titleHL = getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE,
+				article.getTitle());
+		if (titleHL != null)
+			article.setTitle(titleHL);
+		String summaryHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
+				clean(article.getSummary()));
+		if (summaryHL != null)
+			article.setSummary(summaryHL);
+		else {
+			String contentHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT,
+					clean(content));
+			if (contentHL != null)
+				article.setSummary(contentHL);
 		}
-		Date begin = param.getBegin();
-		Date end = param.getEnd();
-		boolean dateRangeQuery = (begin != null && end != null);
-		if (dateRangeQuery) {
-			TermRangeQuery query = new TermRangeQuery(PUB_DATE, new Term(PUB_DATE, timeToString(begin)).bytes(),
-					new Term(PUB_DATE, timeToString(end)).bytes(), true, true);
-			builder.add(query, Occur.MUST);
-		}
-		if (!param.isQueryPrivate()) {
-			builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
-			builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
-		}
-		if (!param.isQueryHidden()) {
-			builder.add(new TermQuery(new Term(HIDDEN, "false")), Occur.MUST);
-		}
-		ArticleFrom from = param.getFrom();
-		if (from != null) {
-			Query query = new TermQuery(new Term(FROM, from.name().toLowerCase()));
-			builder.add(query, Occur.MUST);
-		}
-		ArticleStatus status = param.getStatus();
-		if (status != null) {
-			Query query = new TermQuery(new Term(STATUS, status.name().toLowerCase()));
-			builder.add(query, Occur.MUST);
-		} else {
-			List<ArticleStatus> statuses = param.getStatuses();
-			if (!CollectionUtils.isEmpty(statuses)) {
-				for (ArticleStatus _status : statuses) {
-					Query query = new TermQuery(new Term(STATUS, _status.name().toLowerCase()));
-					builder.add(query, Occur.SHOULD);
-				}
+		if (!CollectionUtils.isEmpty(article.getTags())) {
+			for (Tag tag : article.getTags()) {
+				String tagHL = getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag.getName());
+				if (tagHL != null)
+					tag.setName(tagHL);
 			}
 		}
-		if (param.getTag() != null) {
-			builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
+
+	}
+
+	private String getHightlight(Highlighter highlighter, String fieldName, String text) {
+		try {
+			return highlighter.getBestFragment(analyzer, fieldName, text);
+		} catch (Exception e) {
+			throw new SystemException(e.getMessage(), e);
 		}
-		if (!Validators.isEmptyOrNull(param.getQuery(), true)) {
-			MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, ALIAS, CONTENT },
-					analyzer);
-			try {
-				builder.add(parser.parse(param.getQuery()), Occur.MUST);
-			} catch (ParseException e) {
-				// ingore
-			}
-		}
-		return builder.build();
 	}
 
 	@Override
@@ -379,10 +441,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 
 	private String clean(String content) {
 		return Jsoup.clean(content, Whitelist.none());
-	}
-
-	public void setMaxContentTermResults(int maxContentTermResults) {
-		this.maxContentTermResults = maxContentTermResults;
 	}
 
 	@Override
@@ -426,5 +484,43 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		reloadTags();
+		if (titleFormatter == null)
+			titleFormatter = new DefaultFormatter("lucene-highlight-title");
+		if (tagFormatter == null)
+			tagFormatter = new DefaultFormatter("lucene-highlight-tag");
+		if (summaryFormatter == null)
+			summaryFormatter = new DefaultFormatter("lucene-highlight-summary");
+	}
+
+	public void setHighlight(boolean highlight) {
+		this.highlight = highlight;
+	}
+
+	public void setTitleFormatter(Formatter titleFormatter) {
+		this.titleFormatter = titleFormatter;
+	}
+
+	public void setTagFormatter(Formatter tagFormatter) {
+		this.tagFormatter = tagFormatter;
+	}
+
+	public void setSummaryFormatter(Formatter summaryFormatter) {
+		this.summaryFormatter = summaryFormatter;
+	}
+
+	private static final class DefaultFormatter implements Formatter {
+		private String classes;
+
+		@Override
+		public String highlightTerm(String originalText, TokenGroup tokenGroup) {
+			return tokenGroup.getTotalScore() <= 0 ? originalText
+					: new StringBuilder("<b class=\"").append(classes).append("\">").append(originalText).append("</b>")
+							.toString();
+		}
+
+		DefaultFormatter(String classes) {
+			this.classes = classes;
+		}
+
 	}
 }

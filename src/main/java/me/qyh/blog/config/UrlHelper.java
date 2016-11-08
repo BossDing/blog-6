@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.config;
 
 import java.util.Date;
@@ -6,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -161,9 +178,13 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public String getArticlesUrl(Tag tag) {
+			return getArticlesUrl(tag.getName());
+		}
+
+		public String getArticlesUrl(String tag) {
 			ArticleQueryParam param = new ArticleQueryParam();
 			param.setCurrentPage(1);
-			param.setTag(tag.getName());
+			param.setTag(Jsoup.clean(tag, Whitelist.none()));
 			return getArticlesUrl(param, 1);
 		}
 

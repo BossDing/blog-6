@@ -1,9 +1,21 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.pageparam;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -26,7 +38,6 @@ public class ArticleQueryParam extends PageQueryParam {
 	private Date end;
 	private String query;
 	private ArticleStatus status;
-	private List<ArticleStatus> statuses = new ArrayList<ArticleStatus>();
 	private ArticleFrom from;
 	private boolean ignoreLevel;// 忽略置顶
 	private boolean queryPrivate;// 查询私人博客
@@ -71,10 +82,6 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setQuery(String query) {
 		this.query = query;
-	}
-
-	public List<ArticleStatus> getStatuses() {
-		return statuses;
 	}
 
 	public ArticleStatus getStatus() {
@@ -137,41 +144,12 @@ public class ArticleQueryParam extends PageQueryParam {
 		return !Validators.isEmptyOrNull(query, true);
 	}
 
-	public void setStatuses(List<ArticleStatus> statuses) {
-		this.statuses = statuses;
-	}
-
-	public void setStatuses(ArticleStatus... statuses) {
-		this.statuses = Arrays.asList(statuses);
-	}
-
 	public boolean isQueryHidden() {
 		return queryHidden;
 	}
 
 	public void setQueryHidden(boolean queryHidden) {
 		this.queryHidden = queryHidden;
-	}
-
-	public String getStatusStr() {
-		if (this.status != null)
-			return status.name();
-		StringBuilder sb = new StringBuilder();
-		for (ArticleStatus status : statuses)
-			sb.append(status.name()).append(",");
-		if (sb.length() > 1)
-			sb.deleteCharAt(sb.length() - 1);
-		return sb.toString();
-	}
-
-	public boolean hasStatus(String statusStr) {
-		if (this.status != null) {
-			return statusStr.equals(status.name());
-		}
-		for (ArticleStatus status : statuses)
-			if (statusStr.equals(status.name()))
-				return true;
-		return false;
 	}
 
 }

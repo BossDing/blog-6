@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
@@ -52,6 +67,7 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.ConfigService;
+import me.qyh.blog.service.impl.ArticleIndexer.ArticlesDetailQuery;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -364,10 +380,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		PageResult<Article> page = null;
 		if (param.hasQuery()) {
-			PageResult<Integer> result = articleIndexer.query(param);
-			List<Article> articles = result.hasResult() ? articleDao.selectByIds(result.getDatas())
-					: new ArrayList<Article>();
-			page = new PageResult<Article>(param, result.getTotalRow(), articles);
+			page = articleIndexer.query(param, new ArticlesDetailQuery() {
+
+				@Override
+				public List<Article> queryArticle(List<Integer> articleIds) {
+					return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>()
+							: articleDao.selectByIds(articleIds);
+				}
+			});
 		} else {
 			int count = articleDao.selectCount(param);
 			List<Article> datas = articleDao.selectPage(param);
@@ -489,6 +509,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<Article> queryRecentArticles(Integer limit) {
+		return articleDao.selectRecentArticles(limit);
+	}
+
+	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (rebuildIndex) {
 			rebuildIndex();
@@ -524,4 +550,5 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
+
 }

@@ -1,3 +1,16 @@
-body{
-	word-wrap: break-word;word-break:break-all;
+body {
+	word-wrap: break-word;
+	word-break: break-all;
+}
+
+.lucene-highlight-title {
+	background: aquamarine
+}
+
+.lucene-highlight-tag {
+	background: #ffff00
+}
+
+.lucene-highlight-summary{
+	background: #80ff00
 }

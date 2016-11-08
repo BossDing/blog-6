@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.metaweblog;
 
 import java.io.ByteArrayInputStream;
@@ -30,12 +45,9 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
-import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UserService;
@@ -64,8 +76,6 @@ public class MetaweblogHandler {
 	private UrlHelper urlHelper;
 	@Autowired
 	private ArticleService articleService;
-	@Autowired
-	private ConfigService configService;
 	@Autowired
 	private FileService fileService;
 	@Value("${app.uploadLimitSize}")
@@ -130,21 +140,17 @@ public class MetaweblogHandler {
 
 	public Object getRecentPosts(String blogid, String username, String password, final Integer limit)
 			throws FaultException, ParseException {
+		if (limit == null)
+			throw new ParseException("查询最近文章时文章数量限制不能为空");
+		if (limit <= 0)
+			throw new ParseException("查询最近文章时文章数量限制必须为大于0的数字");
 		return execute(username, password, new Execute() {
 
 			@Override
 			public Object execute() throws LogicException {
-				int max = configService.getPageSizeConfig().getArticlePageSize();
-				int _limit = limit == null ? max : (limit > max ? max : limit);
-				ArticleQueryParam param = new ArticleQueryParam();
-				param.setCurrentPage(1);
-				param.setIgnoreLevel(true);
-				param.setQueryHidden(true);
-				param.setPageSize(_limit);
-				param.setStatuses(ArticleStatus.PUBLISHED, ArticleStatus.SCHEDULED, ArticleStatus.DRAFT);
-				PageResult<Article> page = articleService.queryArticle(param);
+				List<Article> articles = articleService.queryRecentArticles(limit);
 				List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
-				for (Article art : page.getDatas())
+				for (Article art : articles)
 					result.add(articleToMap(art));
 				return result;
 			}
@@ -344,5 +350,4 @@ public class MetaweblogHandler {
 			map.put("description", art.getContent());
 		return map;
 	}
-
 }

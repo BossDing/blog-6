@@ -22,13 +22,13 @@
 				th:if="${space == null}"><a
 				th:href="${urls.getUrl(article.space)}"
 				th:text="'【'+${article.space.name}+'】'"></a></span> <a
-				th:href="${urls.getUrl(article)}" th:text="${article.title}"> </a>
+				th:href="${urls.getUrl(article)}" th:utext="${article.title}"> </a>
 		</h4>
 		<div style="margin-top: 5px; margin-bottom: 10px"
 			th:unless="${#lists.isEmpty(article.tags)}">
 			<span class="glyphicon glyphicon-tag" aria-hidden="true"></span> <span
 				th:each="tag : ${article.tags}" style="margin-right: 10px"> <a
-				th:href=" ${urls.getArticlesUrl(tag)}" th:text=" ${tag.name}"></a>
+				th:href=" ${urls.getArticlesUrl(tag)}" th:utext=" ${tag.name}"></a>
 			</span>
 		</div>
 		<div style="margin-top: 5px; margin-bottom: 10px"

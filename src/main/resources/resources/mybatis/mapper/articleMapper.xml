@@ -65,7 +65,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="totalHits" property="totalHits"/>
 		<result column="totalComments" property="totalComments"/>
 	</resultMap>
-	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
@@ -149,12 +148,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="status != null">
 				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
-			<if test="status == null and statuses != null and !statuses.isEmpty()">
-				AND art.art_status IN 
-				<foreach collection="statuses" separator="," open="(" close=")" item="status">
-				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
-				</foreach>
-			</if>
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
@@ -221,12 +214,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="status != null">
 				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
-			</if>
-			<if test="status == null and statuses != null and !statuses.isEmpty()">
-				AND art.art_status IN 
-				<foreach collection="statuses" separator="," open="(" close=")" item="status">
-				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
-				</foreach>
 			</if>
 			<if test="from != null">
 				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
@@ -464,6 +451,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.isPrivate = false
 			AND sp.is_private = false
 		</if>
+	</select>
+	
+	<select id="selectRecentArticles" resultMap="ArticleDetail">
+		SELECT
+			art.id AS art_id,
+			art.pubDate,
+			art.title,
+			sp.space_alias,
+			sp.space_name,
+			art.art_alias
+		FROM
+			blog_article art
+		LEFT OUTER JOIN blog_space sp
+			ON art.space_id = sp.id
+		WHERE art.art_status != 3<!-- DELETED -->
+		ORDER BY art.pubDate DESC,art.id DESC
+		LIMIT 0,#{limit}
 	</select>
 	
 	<sql id="articleDetailSql">
