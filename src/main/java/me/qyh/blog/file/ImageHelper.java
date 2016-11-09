@@ -19,8 +19,12 @@ import java.io.File;
 
 import org.apache.commons.io.FilenameUtils;
 
-import me.qyh.blog.file.local.ImageReadException;
-
+/**
+ * 图片辅助类，用来处理图片格式的转化，缩放以及图片的读取
+ * 
+ * @author Administrator
+ *
+ */
 public abstract class ImageHelper {
 
 	public static final String GIF = "gif";
@@ -31,19 +35,43 @@ public abstract class ImageHelper {
 
 	public static final String[] IMG_EXTENSIONS = { GIF, JPEG, JPG, PNG, WEBP };
 
-	public abstract void resize(Resize resize, File src, File dest) throws Exception;
-
-	public abstract ImageInfo read(File file) throws ImageReadException;
-
-	public abstract void getGifCover(File gif, File dest) throws ImageReadException;
-
-	public abstract void format(File src, File dest) throws Exception;
-
-	public final static boolean maybeImage(String filename) {
-		String extension = FilenameUtils.getExtension(filename);
-		return (GIF.equalsIgnoreCase(extension) || JPEG.equalsIgnoreCase(extension) || JPG.equalsIgnoreCase(extension)
-				|| PNG.equalsIgnoreCase(extension) || WEBP.equalsIgnoreCase(extension));
+	public final void resize(Resize resize, File src, File dest)
+			throws UnsupportFormatException, ImageReadWriteException {
+		formatCheck(src);
+		formatCheck(dest);
+		_resize(resize, src, dest);
 	}
+
+	public final ImageInfo read(File file) throws UnsupportFormatException, ImageReadWriteException {
+		formatCheck(file);
+		ImageInfo ii = _read(file);
+		if (!supportFormat(ii.getExtension()))
+			throw new UnsupportFormatException(ii.getExtension());
+		return ii;
+
+	}
+
+	public final void getGifCover(File gif, File dest) throws UnsupportFormatException, ImageReadWriteException {
+		formatCheck(gif);
+		formatCheck(dest);
+		_getGifCover(gif, dest);
+	}
+
+	public final void format(File src, File dest) throws UnsupportFormatException, ImageReadWriteException {
+		formatCheck(src);
+		formatCheck(dest);
+		_format(src, dest);
+	}
+
+	protected abstract void _resize(Resize resize, File src, File dest) throws ImageReadWriteException;
+
+	protected abstract ImageInfo _read(File file) throws ImageReadWriteException;
+
+	protected abstract void _getGifCover(File gif, File dest) throws ImageReadWriteException;
+
+	protected abstract void _format(File src, File dest) throws ImageReadWriteException;
+
+	public abstract boolean supportFormat(String extension);
 
 	public final class ImageInfo {
 		private int width;
@@ -68,15 +96,11 @@ public abstract class ImageHelper {
 		public String getExtension() {
 			return extension;
 		}
-	}
 
-	public static boolean isImage(String extension) {
-		for (String imgExtension : IMG_EXTENSIONS) {
-			if (extension.equalsIgnoreCase(imgExtension)) {
-				return true;
-			}
+		@Override
+		public String toString() {
+			return "ImageInfo [width=" + width + ", height=" + height + ", extension=" + extension + "]";
 		}
-		return false;
 	}
 
 	public static boolean isJPEG(String extension) {
@@ -95,8 +119,19 @@ public abstract class ImageHelper {
 		return GIF.equalsIgnoreCase(extension);
 	}
 
+	public static boolean sameFormat(String ext1, String ext2) {
+		if (ext1.equalsIgnoreCase(ext2))
+			return true;
+		return isJPEG(ext1) && isJPEG(ext2);
+	}
+
 	public static boolean maybeTransparentBg(String extension) {
 		return isPNG(extension) || isGIF(extension) || isWEBP(extension);
 	}
 
+	private void formatCheck(File file) throws UnsupportFormatException {
+		String extension = FilenameUtils.getExtension(file.getName());
+		if (!supportFormat(extension))
+			throw new UnsupportFormatException(extension);
+	}
 }

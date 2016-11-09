@@ -74,4 +74,6 @@ public interface ArticleIndexer {
 		List<Article> queryArticle(List<Integer> articleIds);
 	}
 
+	List<Article> querySimilar(Article article, ArticlesDetailQuery dquery, int limit);
+
 }

@@ -68,6 +68,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		Space space = new Space();
 		space.setId(1);
 		space.setAlias("preview");
+		space.setName("preview");
 		article.setSpace(space);
 		article.setSummary("这是预览内容");
 		article.setTitle("预览内容");

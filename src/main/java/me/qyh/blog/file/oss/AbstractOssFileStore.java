@@ -32,8 +32,8 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ImageHelper;
+import me.qyh.blog.file.ImageReadWriteException;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
-import me.qyh.blog.file.local.ImageReadException;
 import me.qyh.blog.message.Message;
 
 public abstract class AbstractOssFileStore implements FileStore, InitializingBean {
@@ -57,7 +57,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			if (ImageHelper.isImage(extension)) {
 				try {
 					ii = imageHelper.read(tmp);
-				} catch (ImageReadException e) {
+				} catch (ImageReadWriteException e) {
 					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 				}
 			}

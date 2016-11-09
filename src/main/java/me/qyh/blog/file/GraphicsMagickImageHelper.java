@@ -32,6 +32,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.im4java.core.ConvertCmd;
+import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
 import org.im4java.core.IdentifyCmd;
 import org.im4java.process.ArrayListOutputConsumer;
@@ -40,7 +41,6 @@ import org.springframework.beans.factory.InitializingBean;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.file.local.ImageReadException;
 import me.qyh.util.Validators;
 
 public class GraphicsMagickImageHelper extends ImageHelper implements InitializingBean {
@@ -69,7 +69,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 *
 	 */
 	@Override
-	public void resize(Resize resize, File src, File dest) throws Exception {
+	protected void _resize(Resize resize, File src, File dest) throws ImageReadWriteException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		if (resize.getSize() != null) {
@@ -99,7 +99,13 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (interlace(dest))
 			op.interlace("Line");
 		op.addImage();
-		getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		try {
+			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		} catch (IOException | InterruptedException e) {
+			throw new SystemException(e.getMessage(), e);
+		} catch (IM4JavaException e) {
+			throw new ImageReadWriteException(e.getMessage(), e);
+		}
 	}
 
 	private boolean interlace(File dest) {
@@ -110,7 +116,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	public ImageInfo read(File file) throws ImageReadException {
+	protected ImageInfo _read(File file) throws ImageReadWriteException {
 		IMOperation localIMOperation = new IMOperation();
 		localIMOperation.ping();
 		localIMOperation.format("%w\n%h\n%m\n");
@@ -127,7 +133,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			Iterator<String> it = atts.iterator();
 			return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
 		} catch (Exception e) {
-			throw new ImageReadException(e.getMessage(), e);
+			throw new ImageReadWriteException(e.getMessage(), e);
 		}
 	}
 
@@ -143,7 +149,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	public void getGifCover(File gif, File dest) throws ImageReadException {
+	protected void _getGifCover(File gif, File dest) throws ImageReadWriteException {
 		String ext = FilenameUtils.getExtension(dest.getName());
 		File png = null;
 		try {
@@ -170,7 +176,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 				}
 				int flag = gd.read(is);
 				if (flag != GifDecoder.STATUS_OK) {
-					throw new ImageReadException(gif + "文件无法获取封面");
+					throw new ImageReadWriteException(gif + "文件无法获取封面");
 				}
 				BufferedImage bi = gd.getFrame(0);
 				try {
@@ -205,7 +211,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	public void format(File src, File dest) throws Exception {
+	protected void _format(File src, File dest) throws ImageReadWriteException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		String ext = FilenameUtils.getExtension(dest.getName());
@@ -218,7 +224,13 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
-		getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		try {
+			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		} catch (IOException | InterruptedException e) {
+			throw new SystemException(e.getMessage(), e);
+		} catch (IM4JavaException e) {
+			throw new ImageReadWriteException(e.getMessage(), e);
+		}
 	}
 
 	private ConvertCmd getConvertCmd() {
@@ -231,5 +243,11 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	public void setDoInterlace(boolean doInterlace) {
 		this.doInterlace = doInterlace;
+	}
+
+	@Override
+	public boolean supportFormat(String extension) {
+		return (GIF.equalsIgnoreCase(extension) || JPEG.equalsIgnoreCase(extension) || JPG.equalsIgnoreCase(extension)
+				|| PNG.equalsIgnoreCase(extension) || WEBP.equalsIgnoreCase(extension));
 	}
 }

@@ -75,10 +75,6 @@ public class CommonFile extends Id {
 		this.height = height;
 	}
 
-	public boolean isImage() {
-		return ImageHelper.isImage(extension);
-	}
-
 	public int getStore() {
 		return store;
 	}

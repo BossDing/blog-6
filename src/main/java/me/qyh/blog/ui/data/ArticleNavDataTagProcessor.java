@@ -53,9 +53,8 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 		Article article = params.get("article", Article.class);
 		if (article == null) {
 			String idOrAlias = attributes.get("article");
-			if (idOrAlias != null) {
-				article = articleService.getArticleForView(idOrAlias);
-			}
+			if (idOrAlias != null)
+				return articleService.getArticleNav(idOrAlias);
 		}
 		if (article != null && space.getAlias().equals(article.getSpace().getAlias()))
 			return articleService.getArticleNav(article);

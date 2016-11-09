@@ -17,8 +17,8 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -39,14 +39,16 @@ import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.DefaultResizeValidator;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
+import me.qyh.blog.file.ImageReadWriteException;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
+import me.qyh.blog.file.UnsupportFormatException;
 
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(ImageResourceStore.class);
-	private static final Set<String> errorThumbPaths = new CopyOnWriteArraySet<String>();// 当缩略图制作失败时存放路径，防止下次再次读取
+	private static final Set<String> errorThumbPaths = new HashSet<String>();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
 	private static final String JPEG_EXT = ".jpeg";
@@ -66,7 +68,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 */
 	private boolean sourceProtected;
 
-	private boolean supportWebp = true;
+	private boolean supportWebp = false;
 
 	private String thumbAbsPath;
 	private File thumbAbsFolder;
@@ -121,7 +123,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			cf.setHeight(ii.getHeight());
 
 			return cf;
-		} catch (ImageReadException e) {
+		} catch (UnsupportFormatException e) {
+			throw new LogicException("file.format.notsupport", "文件格式：" + e.getFormat() + "不被支持", e.getFormat());
+		} catch (ImageReadWriteException e) {
 			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
 		} finally {
 			if (finalFile.exists() && !FileUtils.deleteQuietly(finalFile)) {
@@ -150,9 +154,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			String ext = FilenameUtils.getExtension(getSourcePathByResizePath(path));
 			String thumbPath = path + (supportWebp ? WEBP_EXT
 					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
-			if (errorThumbPaths.contains(thumbPath)) {
-				return null;
-			}
 			// 缩略图是否已经存在
 			File file = findThumbByPath(thumbPath);
 			if (!file.exists()) {
@@ -161,7 +162,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				File local = super.findByKey(sourcePath);
 				// 如果原图存在，进行缩放
 				if (local != null) {
-					if (ImageHelper.isImage(FilenameUtils.getExtension(local.getName()))) {
+					if (errorThumbPaths.contains(thumbPath))
+						return sourceProtected ? null : new PathResource(local.toPath());
+					if (imageHelper.supportFormat(FilenameUtils.getExtension(local.getName()))) {
 						synchronized (this) {
 							File check = findThumbByPath(thumbPath);
 							if (check.exists()) {
@@ -170,9 +173,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 							try {
 								return new PathResource(doResize(local, resize, check, sourcePath).toPath());
 							} catch (Throwable e) {
-								logger.error(e.getMessage(), e);
-								errorThumbPaths.add(path);
-								return null;
+								if (e instanceof ImageReadWriteException)
+									logger.error(e.getMessage(), e);
+								errorThumbPaths.add(thumbPath);
+								return sourceProtected ? null : new PathResource(local.toPath());
 							}
 						}
 					}
@@ -210,7 +214,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		return ImageHelper.isImage(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
+		return imageHelper.supportFormat(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
 	}
 
 	@Override
@@ -278,21 +282,29 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	protected File doResize(File local, Resize resize, File thumb, String key) throws Exception {
-		ImageInfo ii = imageHelper.read(local);
+	protected File doResize(File local, Resize resize, File thumb, String key)
+			throws UnsupportFormatException, ImageReadWriteException {
 		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
 		String ext = FilenameUtils.getExtension(local.getName());
 		File cover = new File(thumbAbsFolder, key + File.separator + FilenameUtils.getBaseName(key)
 				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
 		if (!cover.exists()) {
-			FileUtils.forceMkdir(cover.getParentFile());
-			if (ImageHelper.isGIF(ii.getExtension())) {
+			try {
+				FileUtils.forceMkdir(cover.getParentFile());
+			} catch (IOException e) {
+				throw new SystemException(e.getMessage(), e);
+			}
+			if (ImageHelper.isGIF(FilenameUtils.getExtension(local.getName()))) {
 				imageHelper.getGifCover(local, cover);
 			} else {
 				imageHelper.format(local, cover);
 			}
 		}
-		FileUtils.forceMkdir(thumb.getParentFile());
+		try {
+			FileUtils.forceMkdir(thumb.getParentFile());
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 		// 基于封面缩放
 		imageHelper.resize(resize, cover, thumb);
 		return thumb;

@@ -17,7 +17,8 @@
 							name="tag" /> <input type="hidden"
 							th:value="${page.param.query}" name="query" /> <input
 							type="hidden" th:value="${page.param.status.name()}"
-							name="status" />
+							name="status" /> <input type="hidden"
+							value="false" name="highlight" />
 					</form>
 					<div>
 
@@ -108,7 +109,8 @@
 														th:if="${page.param.status.name() == 'DRAFT'}"><span
 															class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></a>
 														<a th:href="@{/mgr/article/update/}+${article.id}"
-														style="margin-left: 10px" title="编辑"><span
+														style="margin-left: 10px" title="编辑"
+														th:if="${page.param.status.name() != 'DELETED'}"><span
 															class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 														<a style="margin-left: 10px" href="###" data-action="link"
 														th:if="${page.param.status.name() == 'PUBLISHED'}"

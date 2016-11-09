@@ -18,7 +18,10 @@ package me.qyh.blog.service.impl;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,11 +40,13 @@ import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TrackingIndexWriter;
+import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -107,11 +112,12 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private final IndexWriter oriWriter;
 	private JcsegAnalyzer5X analyzer5x;
 
-	private boolean highlight = true;
-
 	private Formatter titleFormatter;
 	private Formatter tagFormatter;
 	private Formatter summaryFormatter;
+
+	private Map<String, Float> boostMap = new HashMap<String, Float>();
+	private Map<String, Float> qboostMap = new HashMap<String, Float>();
 
 	/**
 	 * 最大查询数量
@@ -141,15 +147,13 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		analyzer5x = new JcsegAnalyzer5X(mode.getMode());
 		JcsegTaskConfig taskConfig = analyzer5x.getTaskConfig();
 		taskConfig.setClearStopwords(true);
-		if (highlight) {
-			/**
-			 * http://git.oschina.net/lionsoul/jcseg/issues/24
-			 */
-			taskConfig.setAppendCJKSyn(false);
-			taskConfig.setLoadCJKPinyin(false);
-			taskConfig.setLoadCJKSyn(false);
-			taskConfig.setAppendCJKPinyin(false);
-		}
+		/**
+		 * http://git.oschina.net/lionsoul/jcseg/issues/24
+		 */
+		taskConfig.setAppendCJKSyn(false);
+		taskConfig.setLoadCJKPinyin(false);
+		taskConfig.setLoadCJKSyn(false);
+		taskConfig.setAppendCJKPinyin(false);
 		this.analyzer = analyzer5x;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
@@ -233,20 +237,20 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
 		doc.add(new StringField(ID, article.getId().toString(), Field.Store.YES));
-		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.NO));
-		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.NO));
+		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.YES));
+		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.YES));
 		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.YES));
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags))
 			for (Tag tag : tags)
-				doc.add(new TextField(TAG, tag.getName().toLowerCase(), Field.Store.NO));
+				doc.add(new TextField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
 		doc.add(new StringField(SPACE_ID, article.getSpace().getId().toString(), Field.Store.NO));
 		doc.add(new StringField(PRIVATE, article.isPrivate().toString(), Field.Store.NO));
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(FROM, article.getFrom().name().toLowerCase(), Field.Store.NO));
 		doc.add(new StringField(LOCKED, article.hasLock() ? "true" : "false", Field.Store.NO));
 		if (article.getAlias() != null) {
-			doc.add(new TextField(ALIAS, article.getAlias(), Field.Store.NO));
+			doc.add(new TextField(ALIAS, article.getAlias(), Field.Store.YES));
 		}
 		Integer level = article.getLevel();
 		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
@@ -288,6 +292,72 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
+	@Override
+	public List<Article> querySimilar(Article article, ArticlesDetailQuery dquery, int limit) {
+		IndexSearcher searcher = null;
+		try {
+			searcherManager.maybeRefresh();
+			searcher = searcherManager.acquire();
+
+			Query likeQuery = buildLikeQuery(article, searcher);
+			if (likeQuery == null)
+				return Collections.emptyList();
+			Builder builder = new Builder();
+			builder.add(likeQuery, Occur.MUST);
+			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
+			TopDocs likeDocs = searcher.search(builder.build(), limit + 1);
+			List<Integer> datas = new ArrayList<Integer>();
+			for (ScoreDoc scoreDoc : likeDocs.scoreDocs) {
+				Document aSimilar = searcher.doc(scoreDoc.doc);
+				datas.add(Integer.parseInt(aSimilar.get(ID)));
+			}
+			if (datas.isEmpty())
+				return new ArrayList<Article>();
+			List<Article> articles = dquery.queryArticle(datas);
+			if (!articles.isEmpty())
+				Collections.sort(articles, COMPARATOR);
+			List<Article> results = new ArrayList<Article>();
+			int size = 0;
+			for (Article art : articles) {
+				if (art.equals(article))
+					continue;
+				results.add(art);
+				size++;
+				if (size >= limit)
+					break;
+			}
+			return results;
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		} finally {
+			try {
+				searcherManager.release(searcher);
+			} catch (Exception e) {
+				//
+			}
+		}
+	}
+
+	protected Query buildLikeQuery(Article article, IndexSearcher searcher) throws IOException {
+
+		TermQuery tq = new TermQuery(new Term(ID, article.getId().toString()));
+		TopDocs topDocs = searcher.search(tq, 1);
+		int total = topDocs.totalHits;
+		if (total > 0) {
+
+			int docId = topDocs.scoreDocs[0].doc;
+			IndexReader reader = searcher.getIndexReader();
+			MoreLikeThis mlt = new MoreLikeThis(reader);
+			mlt.setMinTermFreq(1);
+			mlt.setMinDocFreq(1);
+			mlt.setMinWordLen(2);
+			mlt.setFieldNames(new String[] { TITLE, TAG, ALIAS }); // fields
+			mlt.setAnalyzer(analyzer);
+			return mlt.like(docId);
+		}
+		return null;
+	}
+
 	public PageResult<Article> query(ArticleQueryParam param, ArticlesDetailQuery dquery) {
 		IndexSearcher searcher = null;
 		try {
@@ -295,10 +365,12 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			searcher = searcherManager.acquire();
 
 			List<SortField> fields = new ArrayList<SortField>();
-			if (!param.isIgnoreLevel()) {
+			if (!param.isIgnoreLevel())
 				fields.add(new SortField(LEVEL, Type.INT, true));
-			}
-			if (param.getSort() != null) {
+			ArticleQueryParam.Sort psort = param.getSort();
+			if (psort == null)
+				fields.add(SortField.FIELD_SCORE);
+			else {
 				switch (param.getSort()) {
 				case COMMENTS:
 					fields.add(new SortField(COMMENTS, Type.INT, true));
@@ -306,10 +378,13 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 				case HITS:
 					fields.add(new SortField(HITS, Type.INT, true));
 					break;
+				case PUBDATE:
+					break;
 				}
+				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
+				fields.add(new SortField(ID, SortField.Type.STRING, true));
 			}
-			fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
-			fields.add(new SortField(ID, SortField.Type.STRING, true));
+
 			logger.debug(fields.toString());
 			Sort sort = new Sort(fields.toArray(new SortField[] {}));
 
@@ -345,12 +420,11 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			Query multiFieldQuery = null;
 			if (!Validators.isEmptyOrNull(param.getQuery(), true)) {
 				MultiFieldQueryParser parser = new MultiFieldQueryParser(
-						new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT }, analyzer);
+						new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT }, analyzer, qboostMap);
 				try {
 					multiFieldQuery = parser.parse(param.getQuery());
 					builder.add(multiFieldQuery, Occur.MUST);
 				} catch (ParseException e) {
-					// ingore
 				}
 			}
 			Query query = builder.build();
@@ -370,7 +444,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 				}
 			}
 			List<Article> articles = dquery.queryArticle(new ArrayList<Integer>(datas.keySet()));
-			if (highlight && multiFieldQuery != null) {
+			if (param.isHighlight() && multiFieldQuery != null) {
 				for (Article article : articles) {
 					doHightlight(article, datas.get(article.getId()), multiFieldQuery);
 					article.setContent(null);
@@ -490,10 +564,11 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			tagFormatter = new DefaultFormatter("lucene-highlight-tag");
 		if (summaryFormatter == null)
 			summaryFormatter = new DefaultFormatter("lucene-highlight-summary");
-	}
-
-	public void setHighlight(boolean highlight) {
-		this.highlight = highlight;
+		qboostMap.put(TAG, boostMap.getOrDefault(TAG, 20F));
+		qboostMap.put(ALIAS, boostMap.getOrDefault(ALIAS, 10F));
+		qboostMap.put(TITLE, boostMap.getOrDefault(TITLE, 7F));
+		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
+		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
 	}
 
 	public void setTitleFormatter(Formatter titleFormatter) {
@@ -521,6 +596,23 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		DefaultFormatter(String classes) {
 			this.classes = classes;
 		}
-
 	}
+
+	private static final Comparator<Article> COMPARATOR = new ArticleCommparator();
+
+	private static class ArticleCommparator implements Comparator<Article> {
+
+		@Override
+		public int compare(Article o1, Article o2) {
+			int compare = -(o1.getPubDate().compareTo(o2.getPubDate()));
+			if (compare == 0)
+				compare = -o1.getId().compareTo(o2.getId());
+			return compare;
+		}
+	}
+
+	public void setBoostMap(Map<String, Float> boostMap) {
+		this.boostMap = boostMap;
+	}
+
 }

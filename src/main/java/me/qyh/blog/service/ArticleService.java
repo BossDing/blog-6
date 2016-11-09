@@ -153,6 +153,14 @@ public interface ArticleService {
 	ArticleNav getArticleNav(Article article);
 
 	/**
+	 * 上一篇，下一篇文章
+	 * 
+	 * @param article
+	 * @return
+	 */
+	ArticleNav getArticleNav(String idOrAlias);
+
+	/**
 	 * 查询博客统计 <br>
 	 * <strong>只会统计状态为发表的博客点击数、评论数、最近撰写日期和最后修改日期</strong>
 	 * 
@@ -188,4 +196,21 @@ public interface ArticleService {
 	 * @return
 	 */
 	List<Article> queryRecentArticles(Integer limit);
+
+	/**
+	 * 查询类似文章
+	 * 
+	 * @param idOrAlias
+	 * @return
+	 * @throws LogicException
+	 */
+	List<Article> findSimilar(String idOrAlias,int limit) throws LogicException;
+
+	/**
+	 * 
+	 * @param article
+	 * @return
+	 * @throws LogicException
+	 */
+	List<Article> findSimilar(Article article,int limit) throws LogicException;
 }

@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -497,6 +498,15 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
+	public ArticleNav getArticleNav(String idOrAlias) {
+		Article article = getArticleForView(idOrAlias);
+		if (article != null)
+			return getArticleNav(article);
+		return null;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden) {
 		return articleDao.selectStatistics(space, UserContext.get() != null, queryHidden);
 	}
@@ -512,6 +522,27 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public List<Article> queryRecentArticles(Integer limit) {
 		return articleDao.selectRecentArticles(limit);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
+		Article article = getArticleForView(idOrAlias);
+		return findSimilar(article, limit);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Article> findSimilar(Article article, int limit) throws LogicException {
+		if (article == null)
+			return Collections.emptyList();
+		return articleIndexer.querySimilar(article, new ArticlesDetailQuery() {
+
+			@Override
+			public List<Article> queryArticle(List<Integer> articleIds) {
+				return articleDao.selectByIds(articleIds);
+			}
+		}, limit);
 	}
 
 	@Override

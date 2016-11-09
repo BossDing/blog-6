@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.file.local;
+package me.qyh.blog.file;
 
 /**
  * 错误的图片文件
@@ -21,18 +21,18 @@ package me.qyh.blog.file.local;
  * @author Administrator
  *
  */
-public class ImageReadException extends Exception {
+public class ImageReadWriteException extends Exception {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public ImageReadException(String message, Throwable cause) {
+	public ImageReadWriteException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ImageReadException(String message) {
+	public ImageReadWriteException(String message) {
 		super(message);
 	}
 

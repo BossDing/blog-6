@@ -43,6 +43,10 @@
 					<constructor-arg index="0" value="文章统计" />
 					<constructor-arg index="1" value="articleStatistics" />
 				</bean>
+				<bean class="me.qyh.blog.ui.data.ArticleSimilarDataTagProcessor">
+					<constructor-arg index="0" value="相似文章" />
+					<constructor-arg index="1" value="similarArticles" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragments">
@@ -50,28 +54,30 @@
 				<property name="tplMap">
 					<map>
 						<entry key="文章详情" value="classpath:me/qyh/blog/ui/fragment/article.html" />
-						<entry key="文章列表"
-							value="classpath:me/qyh/blog/ui/fragment/articles.html" />
+						<entry key="文章列表" value="classpath:me/qyh/blog/ui/fragment/articles.html" />
 						<entry key="文章空间归档"
 							value="classpath:me/qyh/blog/ui/fragment/articleSpaceFiles.html" />
 						<entry key="文章日期归档"
 							value="classpath:me/qyh/blog/ui/fragment/articleDateFiles.html" />
 						<entry key="上一篇下一篇"
 							value="classpath:me/qyh/blog/ui/fragment/articleNav.html" />
-						<entry key="最近评论"
-							value="classpath:me/qyh/blog/ui/fragment/comments.html" />
-						<entry key="标签集-文章" value="classpath:me/qyh/blog/ui/fragment/articleTags.html" />
+						<entry key="最近评论" value="classpath:me/qyh/blog/ui/fragment/comments.html" />
+						<entry key="标签集-文章"
+							value="classpath:me/qyh/blog/ui/fragment/articleTags.html" />
 						<entry key="文章统计"
 							value="classpath:me/qyh/blog/ui/fragment/articleStatistics.html" />
 						<entry key="顶部导航" value="classpath:me/qyh/blog/ui/fragment/nav.html" />
 						<entry key="底部" value="classpath:me/qyh/blog/ui/fragment/foot.html" />
-						<entry key="评论" value="classpath:me/qyh/blog/ui/fragment/_comments.html" />
+						<entry key="评论"
+							value="classpath:me/qyh/blog/ui/fragment/_comments.html" />
+						<entry key="相似文章"
+							value="classpath:me/qyh/blog/ui/fragment/similarArticles.html" />
 					</map>
 				</property>
 			</bean>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.ui.UIExposeHelper"/>
+	<bean class="me.qyh.blog.ui.UIExposeHelper" />
 
 	<!-- 用来增加拓展页面 -->
 	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />

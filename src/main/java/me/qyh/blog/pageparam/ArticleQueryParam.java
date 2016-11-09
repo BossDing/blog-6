@@ -44,10 +44,11 @@ public class ArticleQueryParam extends PageQueryParam {
 	private String tag;
 	private Boolean hasLock;
 	private Sort sort;
-	private boolean queryHidden;// 如果为是，查询全部，如果为否，不查询空间私有文章(如果space==null)
+	private boolean queryHidden;
+	private boolean highlight = true;// 查询是否高亮显示
 
 	public enum Sort {
-		HITS, COMMENTS
+		HITS, COMMENTS, PUBDATE
 	}
 
 	public Space getSpace() {
@@ -150,6 +151,14 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setQueryHidden(boolean queryHidden) {
 		this.queryHidden = queryHidden;
+	}
+
+	public boolean isHighlight() {
+		return highlight;
+	}
+
+	public void setHighlight(boolean highlight) {
+		this.highlight = highlight;
 	}
 
 }

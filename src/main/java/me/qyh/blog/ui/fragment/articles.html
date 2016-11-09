@@ -2,7 +2,10 @@
 	th:if="${attributes.getBoolean('data-sort-lab',true)}">
 	<li role="presentation"
 		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,null)}">时间顺序</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,null)}" >默认</a></li>
+	<li role="presentation"
+		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'PUBDATE') ? 'active' : null}"><a
+		th:href="${urls.getArticlesUrl(articlePage.param,'PUBDATE')}" th:if="${articlePage.param.hasQuery()}">发布时间</a></li>
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
 		th:href="${urls.getArticlesUrl(articlePage.param,'HITS')}">点击量</a></li>

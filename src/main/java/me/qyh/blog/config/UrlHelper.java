@@ -223,6 +223,8 @@ public class UrlHelper implements InitializingBean {
 			if (param.getSort() != null) {
 				sb.append("&sort=").append(param.getSort().name());
 			}
+			if (param.hasQuery())
+				sb.append("&highlight=").append(param.isHighlight() ? "true" : "false");
 			return sb.toString();
 		}
 
