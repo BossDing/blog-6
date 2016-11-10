@@ -44,7 +44,6 @@ import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.ExpandedPageDao;
 import me.qyh.blog.dao.LockPageDao;
-import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.SysPageDao;
 import me.qyh.blog.dao.UserFragmentDao;
 import me.qyh.blog.dao.UserPageDao;
@@ -56,6 +55,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
+import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ExportPage;
@@ -97,13 +97,15 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private UserFragmentDao userFragmentDao;
 	@Autowired
-	private SpaceDao spaceDao;
+	private SpaceCache spaceCache;
 	@Autowired
 	private ExpandedPageDao expandedPageDao;
 	@Autowired
 	private ExpandedPageServer expandedPageServer;
 	@Autowired
 	private LockManager lockManager;
+	@Autowired
+	private ConfigService configService;
 
 	private UICacheRender uiCacheRender;
 
@@ -138,7 +140,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceDao.selectById(space.getId()) == null) {
+		if (space != null && spaceCache.getSpace(space.getId()) == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
 		UserFragment db = null;
@@ -173,7 +175,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceDao.selectById(space.getId()) == null) {
+		if (space != null && spaceCache.getSpace(space.getId()) == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
 		UserFragment old = userFragmentDao.selectById(userFragment.getId());
@@ -200,6 +202,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<UserFragment> queryUserFragment(UserFragmentQueryParam param) {
+		param.setPageSize(configService.getGlobalConfig().getUserFragmentPageSize());
 		int count = userFragmentDao.selectCount(param);
 		List<UserFragment> datas = userFragmentDao.selectPage(param);
 		return new PageResult<UserFragment>(param, count, datas);
@@ -226,6 +229,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<UserPage> queryUserPage(UserPageQueryParam param) {
+		param.setPageSize(configService.getGlobalConfig().getUserPagePageSize());
 		int count = userPageDao.selectCount(param);
 		List<UserPage> datas = userPageDao.selectPage(param);
 		return new PageResult<UserPage>(param, count, datas);
@@ -270,7 +274,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public RenderedPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
-		Space db = spaceDao.selectById(space.getId());
+		Space db = spaceCache.getSpace(space.getId());
 		if (db == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
@@ -512,7 +516,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Transactional(readOnly = true)
 	public List<ExportPage> export(ExportReq req) throws LogicException {
 		Space space = req.getSpace();
-		final Space sp = space == null ? null : spaceDao.selectById(space.getId());
+		final Space sp = space == null ? null : spaceCache.getSpace(space.getId());
 		if (space != null && sp == null)
 			throw new LogicException("space.notExists", "空间不存在");
 		List<ExportPage> pages = new ArrayList<ExportPage>();
@@ -580,7 +584,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public ImportResult importTemplate(List<ImportPageWrapper> wrappers, ImportReq req) throws LogicException {
 		Space space = req.getSpace();
 		if (space != null) {
-			space = spaceDao.selectById(space.getId());
+			space = spaceCache.getSpace(space.getId());
 			if (space == null)
 				throw new LogicException("space.notExists", "空间不存在");
 		}
@@ -820,7 +824,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private void checkSpace(Page page) throws LogicException {
 		Space space = page.getSpace();
 		if (space != null) {
-			space = spaceDao.selectById(space.getId());
+			space = spaceCache.getSpace(space.getId());
 			if (space == null)
 				throw new LogicException("space.notExists", "空间不存在");
 			page.setSpace(space);

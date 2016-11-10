@@ -32,7 +32,7 @@ public class Space extends BaseLockResource {
 	private Boolean isPrivate;
 
 	private Boolean articleHidden;
-	private CommentConfig commentConfig;
+	private SpaceConfig config;
 
 	private Boolean isDefault;
 
@@ -89,12 +89,12 @@ public class Space extends BaseLockResource {
 		this.articleHidden = articleHidden;
 	}
 
-	public CommentConfig getCommentConfig() {
-		return commentConfig;
+	public SpaceConfig getConfig() {
+		return config;
 	}
 
-	public void setCommentConfig(CommentConfig commentConfig) {
-		this.commentConfig = commentConfig;
+	public void setConfig(SpaceConfig config) {
+		this.config = config;
 	}
 
 	public Boolean getIsDefault() {
@@ -108,6 +108,7 @@ public class Space extends BaseLockResource {
 	@Override
 	public String toString() {
 		return "Space [name=" + name + ", alias=" + alias + ", createDate=" + createDate + ", isPrivate=" + isPrivate
-				+ ", articleHidden=" + articleHidden + ", commentConfig=" + commentConfig + "]";
+				+ ", articleHidden=" + articleHidden + ", config=" + config + ", isDefault=" + isDefault + "]";
 	}
+
 }

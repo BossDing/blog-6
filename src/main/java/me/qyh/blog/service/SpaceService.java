@@ -17,8 +17,8 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 
@@ -43,9 +43,11 @@ public interface SpaceService {
 	 * 根据空间名查询空间
 	 * 
 	 * @param spaceName
+	 * @param lockCheck
+	 *            是否进行锁检查
 	 * @return
 	 */
-	Space selectSpaceByAlias(String alias);
+	Space selectSpaceByAlias(String alias, boolean lockCheck);
 
 	/**
 	 * 查询空间
@@ -55,26 +57,10 @@ public interface SpaceService {
 	 */
 	List<Space> querySpace(SpaceQueryParam param);
 
-	/**
-	 * 根据空间名查询空间，不会进行锁检查
-	 * 
-	 * @param alias
-	 * @return
-	 */
-	Space selectSpaceByAliasWithoutLockProtected(String alias);
-
-	/**
-	 * 更具空间名查询，不会进行锁检查
-	 * 
-	 * @param name
-	 * @return
-	 */
-	Space selectSpaceByName(String name);
-	
 	Space getSpace(Integer id);
 
-	Space updateCommentConfig(Integer spaceId, CommentConfig newConfig) throws LogicException;
+	Space updateConfig(Integer spaceId, SpaceConfig config) throws LogicException;
 
-	Space deleteCommentConfig(Integer spaceId) throws LogicException;
+	Space deleteConfig(Integer spaceId) throws LogicException;
 
 }

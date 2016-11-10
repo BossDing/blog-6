@@ -45,8 +45,6 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
-import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
@@ -82,8 +80,6 @@ public class MetaweblogHandler {
 	private FileService fileService;
 	@Value("${app.uploadLimitSize}")
 	private long uploadLimitSize;
-
-	private int postsLimit = 100;
 
 	private Object execute(String username, String password, Execute execute) throws FaultException, ParseException {
 		LoginBean bean = new LoginBean(username, password);
@@ -144,19 +140,17 @@ public class MetaweblogHandler {
 
 	public Object getRecentPosts(String blogid, String username, String password, final Integer limit)
 			throws FaultException, ParseException {
+		if (limit == null)
+			throw new ParseException("最近文章数量限制不能为空");
+		if (limit <= 0)
+			throw new ParseException("最近文章数量限制必须为大于0的整数");
 		return execute(username, password, new Execute() {
 
 			@Override
 			public Object execute() throws LogicException {
-				int _limit = limit == null ? postsLimit : (limit > postsLimit ? postsLimit : limit);
-				ArticleQueryParam param = new ArticleQueryParam();
-				param.setCurrentPage(1);
-				param.setIgnoreLevel(true);
-				param.setQueryHidden(true);
-				param.setPageSize(_limit);
-				PageResult<Article> page = articleService.queryArticle(param);
+				List<Article> articles = articleService.queryRecentArticles(limit);
 				List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
-				for (Article art : page.getDatas())
+				for (Article art : articles)
 					result.add(articleToMap(art));
 				return result;
 			}
@@ -356,9 +350,4 @@ public class MetaweblogHandler {
 			map.put("description", art.getContent());
 		return map;
 	}
-
-	public void setPostsLimit(int postsLimit) {
-		this.postsLimit = postsLimit;
-	}
-
 }

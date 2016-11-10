@@ -39,6 +39,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="comment_limitCount" property="limitCount"/>
 			<result column="comment_limitSec" property="limitSec"/>
 			<result column="comment_check" property="check"/>
+			<result column="comment_pagesize" property="pageSize"/>
 		</association>
 	</resultMap>
 	
@@ -66,10 +67,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="totalComments" property="totalComments"/>
 	</resultMap>
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden,comment_config)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{hidden})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{hidden},#{commentConfig.id})
 	</insert>
 	
 	<update id="update">
@@ -466,7 +467,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 			ON art.space_id = sp.id
 		WHERE art.art_status != 3<!-- DELETED -->
-		ORDER BY art.pubDate DESC,art.id DESC
+		ORDER BY art.id DESC <!-- 这里不按照时间排序，因为这样草稿将会最后显示 -->
 		LIMIT 0,#{limit}
 	</select>
 	
@@ -500,6 +501,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			bcc.comment_limitSec,
 			bcc.comment_limitCount,
 			bcc.comment_check,
+			bcc.comment_pageSize,
 			bcc.id AS comment_config_id,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags

@@ -34,7 +34,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.fragment.UserFragment;
@@ -51,8 +50,6 @@ public class UserFragmentMgrController extends BaseMgrController {
 	private UserFragmentQueryParamValidator userFragmentParamValidator;
 	@Autowired
 	private UserFragmentValidator userFragmentValidator;
-	@Autowired
-	private ConfigService configService;
 	@Autowired
 	private SpaceService spaceService;
 
@@ -72,7 +69,6 @@ public class UserFragmentMgrController extends BaseMgrController {
 			userFragmentQueryParam = new UserFragmentQueryParam();
 			userFragmentQueryParam.setCurrentPage(1);
 		}
-		userFragmentQueryParam.setPageSize(configService.getPageSizeConfig().getUserFragmentPageSize());
 		model.addAttribute("page", uiService.queryUserFragment(userFragmentQueryParam));
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		return "mgr/fragment/user/index";
@@ -86,7 +82,6 @@ public class UserFragmentMgrController extends BaseMgrController {
 			userFragmentQueryParam = new UserFragmentQueryParam();
 			userFragmentQueryParam.setCurrentPage(1);
 		}
-		userFragmentQueryParam.setPageSize(configService.getPageSizeConfig().getUserFragmentPageSize());
 		return new JsonResult(true, uiService.queryUserFragment(userFragmentQueryParam));
 	}
 

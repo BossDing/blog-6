@@ -31,7 +31,6 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.OauthService;
 import me.qyh.blog.web.controller.form.OauthUserQueryParamValidator;
 
@@ -41,9 +40,6 @@ public class OauthMgrController extends BaseMgrController {
 
 	@Autowired
 	private OauthService oauthService;
-	@Autowired
-	private ConfigService configService;
-
 	@Autowired
 	private OauthUserQueryParamValidator oauthQueryParamValidator;
 
@@ -59,7 +55,6 @@ public class OauthMgrController extends BaseMgrController {
 			oauthUserQueryParam = new OauthUserQueryParam();
 			oauthUserQueryParam.setCurrentPage(1);
 		}
-		oauthUserQueryParam.setPageSize(configService.getPageSizeConfig().getOauthUserPageSize());
 		modelMap.addAttribute("page", oauthService.queryOauthUsers(oauthUserQueryParam));
 		return "mgr/oauth/index";
 	}
@@ -70,7 +65,7 @@ public class OauthMgrController extends BaseMgrController {
 		oauthService.disableUser(id);
 		return new JsonResult(true, new Message("oauth.disable.success", "禁用成功"));
 	}
-	
+
 	@RequestMapping(value = "enable", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult enable(@RequestParam("id") Integer id) throws LogicException {

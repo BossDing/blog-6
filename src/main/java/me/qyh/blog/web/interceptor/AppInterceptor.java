@@ -218,8 +218,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
 		boolean needLockProtected = !Webs.unlockRequest(request);
-		Space space = needLockProtected ? spaceService.selectSpaceByAlias(spaceAlias)
-				: spaceService.selectSpaceByAliasWithoutLockProtected(spaceAlias);
+		Space space = spaceService.selectSpaceByAlias(spaceAlias, needLockProtected);
 		if (space == null) {
 			throw new SpaceNotFoundException(spaceAlias);
 		}

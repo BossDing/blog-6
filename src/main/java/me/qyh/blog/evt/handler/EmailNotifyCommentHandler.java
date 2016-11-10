@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -36,6 +34,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
@@ -100,6 +99,8 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	private UrlHelper urlHelper;
 	@Autowired
 	private Messages messages;
+	@Autowired
+	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	public void shutdown() {
 		if (!toSend.isEmpty()) {
@@ -167,7 +168,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 				logger.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 		}
 
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
@@ -187,9 +188,9 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 					}
 				}
 			}
-		}, messageProcessSec, messageProcessSec, TimeUnit.SECONDS);
+		}, messageProcessSec * 1000);
 
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
@@ -201,7 +202,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 					}
 				}
 			}
-		}, messageProcessPeriodSec, messageProcessPeriodSec, TimeUnit.SECONDS);
+		}, messageProcessPeriodSec * 1000);
 	}
 
 	public void setMailTemplateResource(Resource mailTemplateResource) {

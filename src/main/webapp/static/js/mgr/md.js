@@ -129,6 +129,7 @@ var publishing = false;
         			commentConfig.limitSec = $("#limitSec").val();
         			commentConfig.limitCount = $("#limitCount").val();
         			commentConfig.check = $("#check").prop("checked");
+    				commentConfig.pageSize = $("#pageSize").val();
         			article.commentConfig = commentConfig;
     			}
     			me.prop("disabled",true);
@@ -288,6 +289,7 @@ var publishing = false;
 				commentConfig.allowHtml = $("#allowHtml").prop("checked");
 				commentConfig.limitSec = $("#limitSec").val();
 				commentConfig.limitCount = $("#limitCount").val();
+				commentConfig.pageSize = $("#pageSize").val();
 				if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
 					commentConfig.limitSec = 60;
 				}

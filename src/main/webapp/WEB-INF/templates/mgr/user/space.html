@@ -50,7 +50,7 @@
 											data-target="#editSpaceModal" th:data-id="${space.id}"><span
 												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>&nbsp;&nbsp;&nbsp;<a
 											href="###"
-											th:onclick="'editCommentConfig(\''+${space.id}+'\')'">修改评论配置</a></td>
+											th:onclick="'editConfig(\''+${space.id}+'\')'"><span class="glyphicon glyphicon-asterisk"></span></a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -148,7 +148,7 @@
 		</div>
 	</div>
 
-	<div class="modal fade" id="editCommentConfigModal" tabindex="-1"
+	<div class="modal fade" id="editConfigModal" tabindex="-1"
 		role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
@@ -157,12 +157,19 @@
 						aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
-					<h4 class="modal-title">评论配置修改</h4>
+					<h4 class="modal-title">配置修改</h4>
 				</div>
 				<div class="modal-body">
 					<div class="tip"></div>
-					<form id="editCommentConfigForm">
+					<form id="editConfigForm">
+						<div class="form-group">
+							<label for="">文章每页显示数目(1~50)</label> <input
+								class="form-control integer" placeholder="文章每页显示数目" value="10"
+								id="articlePageSize">
+						</div>
 						<input type="hidden" id="spaceId"/>
+						<hr>
+						<label>评论配置</label>
 						<div class="checkbox">
 							<label><input type="checkbox" id="allowComment" />允许评论 </label>
 						</div>
@@ -185,6 +192,11 @@
 						</div>
 						<div class="checkbox">
 							<label><input type="checkbox" id="allowHtml" />允许html </label>
+						</div>
+						<div class="form-group">
+							<label for="">每页显示数目(1~50)</label> <input
+								class="form-control integer" placeholder="每页显示数目" value="10"
+								id="pageSize">
 						</div>
 						<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
 						<div class="form-group">

@@ -52,8 +52,7 @@
 	</bean>
 
 	<import resource="file.xml" />
-	<context:component-scan
-		base-package="me.qyh.blog.service,me.qyh.blog.config" />
+	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 	<!-- 验证码服务 -->
@@ -104,20 +103,6 @@
 	<bean class="me.qyh.blog.message.Messages">
 		<property name="locale" value="zh_CN" />
 	</bean>
-
-	<!-- 查询是否存在待发表的计划中博客，如果存在则发表该博客 -->
-	<bean id="pushScheduledArticleJob" class="me.qyh.blog.service.impl.PushScheduledArticleJob" />
-	<!-- 重建文章索引，之所以需要定时更新文章索引，是因为在用户插入、修改标签之后，此时老的索引并没有更新，并且无法精确更新索引，所以只能每隔一段时间全部重建索引 -->
-	<bean id="articleIndexRebuildJob" class="me.qyh.blog.service.impl.ArticleIndexRebuildJob" />
-	<task:scheduled-tasks scheduler="articleSchedule">
-		<!-- 默认5秒查询一次 -->
-		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
-			cron="0/5 * * * * ?" />
-		<!-- 0 0/5 * * * ? -->
-		<task:scheduled ref="articleIndexRebuildJob" method="doJob"
-			cron="0 0/5 * * * ?" />
-	</task:scheduled-tasks>
-	<task:scheduler id="articleSchedule" pool-size="2" />
 
 	<bean class="me.qyh.blog.service.impl.NrtArticleIndexer">
 		<constructor-arg index="0" value="/web/blog_index" />
@@ -171,6 +156,32 @@
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl" />
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
-	
-	<bean class="me.qyh.blog.metaweblog.MetaweblogHandler"/>
+
+	<bean class="me.qyh.blog.metaweblog.MetaweblogHandler" />
+
+	<bean id="taskExecutor"
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" destroy-method="destroy">
+		<property name="waitForTasksToCompleteOnShutdown" value="true" />
+	</bean>
+
+	<bean id="taskScheduler"
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler" destroy-method="destroy">
+		<property name="poolSize" value="20" />
+		<property name="waitForTasksToCompleteOnShutdown" value="true" />
+	</bean>
+
+	<!-- 查询是否存在待发表的计划中博客，如果存在则发表该博客 -->
+	<bean id="pushScheduledArticleJob" class="me.qyh.blog.service.impl.PushScheduledArticleJob" />
+	<!-- 重建文章索引，之所以需要定时更新文章索引，是因为在用户插入、修改标签之后，此时老的索引并没有更新，并且无法精确更新索引，所以只能每隔一段时间全部重建索引 -->
+	<bean id="articleIndexRebuildJob" class="me.qyh.blog.service.impl.ArticleIndexRebuildJob" />
+	<task:scheduled-tasks scheduler="taskScheduler">
+		<!-- 默认5秒查询一次 -->
+		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
+			cron="0/5 * * * * ?" />
+		<!-- 0 0/5 * * * ? -->
+		<task:scheduled ref="articleIndexRebuildJob" method="doJob"
+			cron="0 0/5 * * * ?" />
+	</task:scheduled-tasks>
+
+
 </beans>      

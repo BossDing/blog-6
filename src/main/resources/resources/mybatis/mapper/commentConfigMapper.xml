@@ -32,13 +32,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="check != null">
 			comment_check = #{check},
 		</if>
+		<if test="pageSize != null">
+			comment_pagesize = #{pageSize}
+		</if>
 		</set>
 		WHERE id = #{id}
 	</update>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_comment_config(allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check)
-		VALUES(#{allowComment},#{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{asc},#{allowHtml},#{limitCount},#{limitSec},#{check})
+		INSERT INTO blog_comment_config(allowComment,comment_mode,comment_asc,comment_allowHtml,comment_limitCount,comment_limitSec,comment_check,comment_pagesize)
+		VALUES(#{allowComment},#{commentMode,javaType=CommentMode,typeHandler=EnumOrdinalTypeHandler},#{asc},#{allowHtml},#{limitCount},#{limitSec},#{check},#{pageSize})
 	</insert>
 	
 </mapper>

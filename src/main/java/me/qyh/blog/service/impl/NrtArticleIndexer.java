@@ -95,7 +95,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.util.Validators;
 
 public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, ApplicationListener<ContextClosedEvent> {
 
@@ -110,7 +109,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	private final ReferenceManager<IndexSearcher> searcherManager;
 	private final Directory dir;
 	private final IndexWriter oriWriter;
-	private JcsegAnalyzer5X analyzer5x;
 
 	private Formatter titleFormatter;
 	private Formatter tagFormatter;
@@ -144,8 +142,8 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 
 	public NrtArticleIndexer(String indexDir, JcsegMode mode, long commitPeriod) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
-		analyzer5x = new JcsegAnalyzer5X(mode.getMode());
-		JcsegTaskConfig taskConfig = analyzer5x.getTaskConfig();
+		analyzer = new JcsegAnalyzer5X(mode.getMode());
+		JcsegTaskConfig taskConfig = ((JcsegAnalyzer5X) analyzer).getTaskConfig();
 		taskConfig.setClearStopwords(true);
 		/**
 		 * http://git.oschina.net/lionsoul/jcseg/issues/24
@@ -154,7 +152,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		taskConfig.setLoadCJKPinyin(false);
 		taskConfig.setLoadCJKSyn(false);
 		taskConfig.setAppendCJKPinyin(false);
-		this.analyzer = analyzer5x;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {
@@ -193,10 +190,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		reopenThread.setPriority(Math.min(Thread.currentThread().getPriority() + 2, Thread.MAX_PRIORITY));
 		reopenThread.setDaemon(true);
 		reopenThread.start();
-	}
-
-	public void setJcsegTaskConfig(JcsegTaskConfig jcsegTaskConfig) {
-		analyzer5x.setConfig(jcsegTaskConfig);
 	}
 
 	@Override
@@ -418,11 +411,14 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 				builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
 			}
 			Query multiFieldQuery = null;
-			if (!Validators.isEmptyOrNull(param.getQuery(), true)) {
+			if (param.hasQuery()) {
+				String query = MultiFieldQueryParser.escape(param.getQuery().trim());
 				MultiFieldQueryParser parser = new MultiFieldQueryParser(
 						new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT }, analyzer, qboostMap);
+				parser.setAutoGeneratePhraseQueries(true);
+				parser.setPhraseSlop(0);
 				try {
-					multiFieldQuery = parser.parse(param.getQuery());
+					multiFieldQuery = parser.parse(query);
 					builder.add(multiFieldQuery, Occur.MUST);
 				} catch (ParseException e) {
 				}
@@ -519,7 +515,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 
 	@Override
 	public synchronized void removeTag(String... tags) {
-		ADictionary dict = analyzer5x.getDict();
+		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
 		for (String tag : tags) {
 			this.tags.remove(tag);
 			dict.remove(ILexicon.CJK_WORD, tag);
@@ -528,7 +524,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 
 	@Override
 	public synchronized void reloadTags() {
-		ADictionary dict = analyzer5x.getDict();
+		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
 		for (String tag : this.tags) {
 			dict.remove(ILexicon.CJK_WORD, tag);
 		}
@@ -547,7 +543,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	@Override
 	public void addTags(String... tags) {
 		synchronized (this) {
-			ADictionary dict = analyzer5x.getDict();
+			ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
 			for (String tag : tags) {
 				this.tags.add(tag);
 				dict.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);

@@ -27,7 +27,6 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.security.UserContext;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
@@ -41,9 +40,6 @@ public class ArticleController {
 
 	@Autowired
 	private UIService uiService;
-	@Autowired
-	private ConfigService configService;
-
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
 
@@ -63,7 +59,6 @@ public class ArticleController {
 		articleQueryParam.setSpace(null);
 		articleQueryParam.setIgnoreLevel(false);
 		articleQueryParam.setQueryPrivate(UserContext.get() != null);
-		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		return uiService.renderSysPage(null, PageTarget.ARTICLE_LIST,
 				new Params().add(ArticlesDataTagProcessor.PARAMETER_KEY, articleQueryParam));
 	}

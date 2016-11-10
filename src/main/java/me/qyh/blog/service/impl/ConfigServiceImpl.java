@@ -27,7 +27,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import me.qyh.blog.config.PageSizeConfig;
+import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.CommentConfig.CommentMode;
@@ -42,40 +42,44 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private Resource resource;
 
 	@Override
-	@Cacheable(key = "'pageSizeConfig'", value = "configCache", unless = "#result == null")
-	public PageSizeConfig getPageSizeConfig() {
-		PageSizeConfig config = new PageSizeConfig();
+	@Cacheable(key = "'globalConfig'", value = "configCache", unless = "#result == null")
+	public GlobalConfig getGlobalConfig() {
+		GlobalConfig config = new GlobalConfig();
 		config.setArticlePageSize(getInt(PAGE_SIZE_ARICLE, 5));
 		config.setFilePageSize(getInt(PAGE_SIZE_FILE, 5));
 		config.setTagPageSize(getInt(PAGE_SIZE_TAG, 5));
 		config.setUserPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
 		config.setUserFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
 		config.setOauthUserPageSize(getInt(PAGE_SIZE_OAUTHUSER, 5));
-		config.setCommentPageSize(getInt(PAGE_SIZE_COMMENT, 5));
-		return config;
-	}
 
-	@Override
-	@Cacheable(key = "'commentConfig'", value = "configCache", unless = "#result == null")
-	public CommentConfig getCommentConfig() {
-		CommentConfig config = new CommentConfig();
-		config.setAllowComment(getBoolean(ALLOW_COMMENT, true));
-		config.setAllowHtml(getBoolean(COMMENT_ALLOW_HTML, false));
-		config.setAsc(getBoolean(COMMENT_ASC, true));
-		config.setCheck(getBoolean(COMMENT_CHECK, false));
+		CommentConfig commentConfig = new CommentConfig();
+		commentConfig.setAllowComment(getBoolean(ALLOW_COMMENT, true));
+		commentConfig.setAllowHtml(getBoolean(COMMENT_ALLOW_HTML, false));
+		commentConfig.setAsc(getBoolean(COMMENT_ASC, true));
+		commentConfig.setCheck(getBoolean(COMMENT_CHECK, false));
 		String commentMode = this.config.getProperty(COMMENT_MODE);
 		if (commentMode == null)
-			config.setCommentMode(CommentMode.LIST);
+			commentConfig.setCommentMode(CommentMode.LIST);
 		else
-			config.setCommentMode(CommentMode.valueOf(commentMode));
-		config.setLimitCount(getInt(COMMENT_LIMIT_COUNT, 10));
-		config.setLimitSec(getInt(COMMENT_LIMIT_SEC, 60));
+			commentConfig.setCommentMode(CommentMode.valueOf(commentMode));
+		commentConfig.setLimitCount(getInt(COMMENT_LIMIT_COUNT, 10));
+		commentConfig.setLimitSec(getInt(COMMENT_LIMIT_SEC, 60));
+		commentConfig.setPageSize(getInt(COMMENT_PAGESIZE, 10));
+		config.setCommentConfig(commentConfig);
+
 		return config;
 	}
 
 	@Override
-	@CachePut(key = "'commentConfig'", value = "configCache")
-	public CommentConfig updateCommentConfig(CommentConfig commentConfig) {
+	@CachePut(key = "'globalConfig'", value = "configCache")
+	public GlobalConfig updateGlobalConfig(GlobalConfig globalConfig) {
+		config.setProperty(PAGE_SIZE_FILE, globalConfig.getFilePageSize() + "");
+		config.setProperty(PAGE_SIZE_TAG, globalConfig.getTagPageSize() + "");
+		config.setProperty(PAGE_SIZE_ARICLE, globalConfig.getArticlePageSize() + "");
+		config.setProperty(PAGE_SIZE_USERFRAGEMENT, globalConfig.getUserFragmentPageSize() + "");
+		config.setProperty(PAGE_SIZE_USERPAGE, globalConfig.getUserPagePageSize() + "");
+		config.setProperty(PAGE_SIZE_OAUTHUSER, globalConfig.getOauthUserPageSize() + "");
+		CommentConfig commentConfig = globalConfig.getCommentConfig();
 		config.setProperty(COMMENT_ALLOW_HTML, commentConfig.getAllowHtml().toString());
 		config.setProperty(COMMENT_ASC, commentConfig.getAsc().toString());
 		config.setProperty(COMMENT_CHECK, commentConfig.getCheck().toString());
@@ -83,22 +87,9 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setProperty(COMMENT_LIMIT_SEC, commentConfig.getLimitSec().toString());
 		config.setProperty(COMMENT_MODE, commentConfig.getCommentMode().name());
 		config.setProperty(ALLOW_COMMENT, commentConfig.getAllowComment().toString());
+		config.setProperty(COMMENT_PAGESIZE, commentConfig.getPageSize() + "");
 		store();
-		return commentConfig;
-	}
-
-	@Override
-	@CachePut(key = "'pageSizeConfig'", value = "configCache")
-	public PageSizeConfig updatePageSizeConfig(PageSizeConfig pageSizeConfig) {
-		config.setProperty(PAGE_SIZE_FILE, pageSizeConfig.getFilePageSize() + "");
-		config.setProperty(PAGE_SIZE_TAG, pageSizeConfig.getTagPageSize() + "");
-		config.setProperty(PAGE_SIZE_ARICLE, pageSizeConfig.getArticlePageSize() + "");
-		config.setProperty(PAGE_SIZE_USERFRAGEMENT, pageSizeConfig.getUserFragmentPageSize() + "");
-		config.setProperty(PAGE_SIZE_USERPAGE, pageSizeConfig.getUserPagePageSize() + "");
-		config.setProperty(PAGE_SIZE_OAUTHUSER, pageSizeConfig.getOauthUserPageSize() + "");
-		config.setProperty(PAGE_SIZE_COMMENT, pageSizeConfig.getCommentPageSize() + "");
-		store();
-		return pageSizeConfig;
+		return globalConfig;
 	}
 
 	@Override
@@ -164,7 +155,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
 	private static final String PAGE_SIZE_OAUTHUSER = "pagesize.oauthuser";
-	private static final String PAGE_SIZE_COMMENT = "pagesize.comment";
 
 	private static final String ALLOW_COMMENT = "commentConfig.allowComment";
 	private static final String COMMENT_MODE = "commentConfig.commentMode";
@@ -173,6 +163,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
 	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
 	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
+	private static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
 
 	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
 	private static final String METAWEBLOG_UPLOAD_SERVER = "metaweblog.upload.server";

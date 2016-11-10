@@ -22,6 +22,7 @@
 		<typeAlias type="me.qyh.blog.entity.Tag" alias="Tag" />
 
 		<typeAlias type="me.qyh.blog.entity.Space" alias="Space" />
+		<typeAlias type="me.qyh.blog.entity.SpaceConfig" alias="SpaceConfig" />
 
 		<typeAlias type="me.qyh.blog.entity.BlogFile" alias="BlogFile" />
 		<typeAlias type="me.qyh.blog.entity.BlogFile$BlogFileType"
@@ -71,6 +72,7 @@
 	<mappers>
 		<mapper resource="resources/mybatis/mapper/userMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/spaceMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/spaceConfigMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/articleMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/articleTagMapper.xml" />

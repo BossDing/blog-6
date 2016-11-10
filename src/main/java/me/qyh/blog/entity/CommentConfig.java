@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
 
-public class CommentConfig extends Id	 {
+public class CommentConfig extends Id {
 	/**
 	 * 
 	 */
@@ -34,6 +34,7 @@ public class CommentConfig extends Id	 {
 	private Integer limitCount;
 	private Integer limitSec;
 	private Boolean check;// 审核
+	private Integer pageSize;// 每页显示数量
 
 	public enum CommentMode {
 		LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
@@ -112,6 +113,14 @@ public class CommentConfig extends Id	 {
 
 	public void setCheck(Boolean check) {
 		this.check = check;
+	}
+
+	public Integer getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(Integer pageSize) {
+		this.pageSize = pageSize;
 	}
 
 	@Override

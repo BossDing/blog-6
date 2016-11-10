@@ -21,20 +21,20 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.CommentConfigDao;
+import me.qyh.blog.dao.SpaceConfigDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
-import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.AuthencationException;
@@ -47,6 +47,10 @@ public class SpaceServiceImpl implements SpaceService {
 
 	@Autowired
 	private SpaceDao spaceDao;
+	@Autowired
+	private SpaceCache spaceCache;
+	@Autowired
+	private SpaceConfigDao spaceConfigDao;
 	@Autowired
 	private LockManager lockManager;
 	@Autowired
@@ -65,7 +69,7 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		space.setCommentConfig(null);
+		space.setConfig(null);
 		if (space.getIsDefault())
 			spaceDao.resetDefault();
 		spaceDao.insert(space);
@@ -73,43 +77,50 @@ public class SpaceServiceImpl implements SpaceService {
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#result.alias") })
-	public Space updateCommentConfig(Integer spaceId, CommentConfig newConfig) throws LogicException {
+	public Space updateConfig(Integer spaceId, SpaceConfig config) throws LogicException {
 		Space db = spaceDao.selectById(spaceId);
 		if (db == null)
 			throw new LogicException("space.notExists", "空间不存在");
-		CommentConfig oldConfig = db.getCommentConfig();
-		if (oldConfig != null) {
+		SpaceConfig dbConfig = db.getConfig();
+		if (dbConfig == null) {
+			commentConfigDao.insert(config.getCommentConfig());
+			spaceConfigDao.insert(config);
+		} else {
+			CommentConfig oldConfig = dbConfig.getCommentConfig();
+			CommentConfig newConfig = config.getCommentConfig();
 			newConfig.setId(oldConfig.getId());
 			commentConfigDao.update(newConfig);
-		} else {
-			commentConfigDao.insert(newConfig);
+			config.setId(dbConfig.getId());
+			spaceConfigDao.update(config);
 		}
-		db.setCommentConfig(newConfig);
+		db.setConfig(config);
 		spaceDao.update(db);
+		spaceCache.evit(db);
 		return db;
 	}
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#result.alias") })
-	public Space deleteCommentConfig(Integer spaceId) throws LogicException {
+	public Space deleteConfig(Integer spaceId) throws LogicException {
 		Space db = spaceDao.selectById(spaceId);
 		if (db == null)
 			throw new LogicException("space.notExists", "空间不存在");
-		CommentConfig oldConfig = db.getCommentConfig();
-		if (oldConfig != null) {
-			db.setCommentConfig(null);
+		SpaceConfig config = db.getConfig();
+		if (config != null) {
+			// 删除空间配置
+			db.setConfig(null);
 			spaceDao.update(db);
-			commentConfigDao.deleteById(oldConfig.getId());
+			spaceConfigDao.deleteById(config.getId());
+			commentConfigDao.deleteById(config.getCommentConfig().getId());
+
+			spaceCache.evit(db);
 		}
 		return db;
 	}
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "userCache", key = "'space-'+#space.alias"),
-			@CacheEvict(value = "articleCache", key = "'space-'+#space.alias"),
+	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
@@ -127,22 +138,24 @@ public class SpaceServiceImpl implements SpaceService {
 			throw new LogicException(
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
-
-		checkLock(space.getLockId());
+		// 如果空间是私有的，那么无法加锁
+		if (space.getIsPrivate())
+			space.setLockId(null);
+		else
+			checkLock(space.getLockId());
 
 		if (space.getIsDefault())
 			spaceDao.resetDefault();
 
-		space.setCommentConfig(db.getCommentConfig());
+		space.setConfig(db.getConfig());
 		spaceDao.update(space);
+		spaceCache.evit(db);
 	}
 
 	@Override
-	@Cacheable(value = "userCache", key = "'space-'+#alias", unless = "#result == null || #result.isPrivate")
-	@LockProtected
 	@Transactional(readOnly = true)
-	public Space selectSpaceByAlias(String alias) {
-		Space space = spaceDao.selectByAlias(alias);
+	public Space selectSpaceByAlias(String alias, boolean lockCheck) {
+		Space space = lockCheck ? spaceCache.getSpaceWithLockCheck(alias) : spaceCache.getSpaceWithoutLockCheck(alias);
 		if (space != null) {
 			if (space.getIsPrivate() && UserContext.get() == null) {
 				throw new AuthencationException();
@@ -154,26 +167,7 @@ public class SpaceServiceImpl implements SpaceService {
 	@Override
 	@Transactional(readOnly = true)
 	public Space getSpace(Integer id) {
-		return spaceDao.selectById(id);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public Space selectSpaceByName(String name) {
-		Space space = spaceDao.selectByName(name);
-		if (space != null) {
-			if (space.getIsPrivate() && UserContext.get() == null) {
-				throw new AuthencationException();
-			}
-		}
-		return space;
-	}
-
-	@Override
-	@Cacheable(value = "userCache", key = "'space-'+#alias", unless = "#result == null || #result.isPrivate")
-	@Transactional(readOnly = true)
-	public Space selectSpaceByAliasWithoutLockProtected(String alias) {
-		return selectSpaceByAlias(alias);
+		return spaceCache.getSpace(id);
 	}
 
 	@Override

@@ -88,10 +88,8 @@
 	</bean>
 
 	<bean id="clearDeletedCommonFileJob" class="me.qyh.blog.service.impl.ClearDeletedCommonFileJob" />
-	<task:scheduled-tasks scheduler="clearDeletedCommonFileSchedule">
+	<task:scheduled-tasks scheduler="taskScheduler">
 		<task:scheduled ref="clearDeletedCommonFileJob" method="doJob"
 			cron="0 0 3 * * ?" />
 	</task:scheduled-tasks>
-	<task:scheduler id="clearDeletedCommonFileSchedule"
-		pool-size="1" />
 </beans>      

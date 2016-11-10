@@ -29,6 +29,7 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
+import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
 @Service
@@ -41,10 +42,13 @@ public class TagServiceImpl implements TagService {
 	private ArticleTagDao articleTagDao;
 	@Autowired
 	private ArticleIndexer articleIndexer;
+	@Autowired
+	private ConfigService configSerivce;
 
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Tag> queryTag(TagQueryParam param) {
+		param.setPageSize(configSerivce.getGlobalConfig().getTagPageSize());
 		int count = tagDao.selectCount(param);
 		List<Tag> datas = tagDao.selectPage(param);
 		return new PageResult<Tag>(param, count, datas);
@@ -72,6 +76,7 @@ public class TagServiceImpl implements TagService {
 		} else {
 			tagDao.update(tag);
 		}
+		articleIndexer.addTags(tag.getName());
 	}
 
 	@Override

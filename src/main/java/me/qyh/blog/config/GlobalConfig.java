@@ -15,13 +15,15 @@
  */
 package me.qyh.blog.config;
 
+import me.qyh.blog.entity.CommentConfig;
+
 /**
- * 分页配置
+ * 全局配置
  * 
  * @author mhlx
  *
  */
-public class PageSizeConfig {
+public class GlobalConfig {
 
 	/**
 	 * 文件管理每页数量
@@ -53,10 +55,7 @@ public class PageSizeConfig {
 	 */
 	private int oauthUserPageSize;
 
-	/**
-	 * 评论分页数量
-	 */
-	private int commentPageSize;
+	private CommentConfig commentConfig;
 
 	public int getFilePageSize() {
 		return filePageSize;
@@ -106,12 +105,12 @@ public class PageSizeConfig {
 		this.oauthUserPageSize = oauthUserPageSize;
 	}
 
-	public int getCommentPageSize() {
-		return commentPageSize;
+	public CommentConfig getCommentConfig() {
+		return commentConfig;
 	}
 
-	public void setCommentPageSize(int commentPageSize) {
-		this.commentPageSize = commentPageSize;
+	public void setCommentConfig(CommentConfig commentConfig) {
+		this.commentConfig = commentConfig;
 	}
 
 }

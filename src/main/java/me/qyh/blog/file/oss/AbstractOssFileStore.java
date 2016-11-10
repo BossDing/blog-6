@@ -33,6 +33,7 @@ import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageReadWriteException;
+import me.qyh.blog.file.UnsupportFormatException;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.message.Message;
 
@@ -54,9 +55,11 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		ImageInfo ii = null;
 		try {
 			multipartFile.transferTo(tmp);
-			if (ImageHelper.isImage(extension)) {
+			if (imageHelper.supportFormat(extension)) {
 				try {
 					ii = imageHelper.read(tmp);
+				} catch (UnsupportFormatException e) {
+					throw new LogicException("file.format.notsupport", e.getFormat() + "格式不被支持", e.getFormat());
 				} catch (ImageReadWriteException e) {
 					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 				}
@@ -95,7 +98,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	protected abstract void upload(String key, File file) throws UploadException;
 
 	protected boolean image(String key) {
-		return ImageHelper.isImage(FilenameUtils.getExtension(key));
+		return imageHelper.supportFormat(FilenameUtils.getExtension(key));
 	}
 
 	@Override

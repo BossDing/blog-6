@@ -27,37 +27,37 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.PageSizeConfig;
+import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.ConfigService;
-import me.qyh.blog.web.controller.form.PageSizeConfigValidator;
+import me.qyh.blog.web.controller.form.GlobalConfigValidator;
 
-@RequestMapping("mgr/config/pagesize")
+@RequestMapping("mgr/config/global")
 @Controller
-public class PageSizeConfigMgrController extends BaseMgrController {
+public class GlobalConfigMgrController extends BaseMgrController {
 
 	@Autowired
 	private ConfigService configService;
 	@Autowired
-	private PageSizeConfigValidator pageSizeConfigValidator;
+	private GlobalConfigValidator globalConfigValidator;
 
-	@InitBinder(value = "pageSizeConfig")
+	@InitBinder(value = "globalConfig")
 	protected void initBinder(WebDataBinder binder) {
-		binder.setValidator(pageSizeConfigValidator);
+		binder.setValidator(globalConfigValidator);
 	}
 
 	@RequestMapping("index")
 	public String index(Model model) {
-		model.addAttribute("pageSize", configService.getPageSizeConfig());
-		return "mgr/config/pagesize";
+		model.addAttribute("config", configService.getGlobalConfig());
+		return "mgr/config/global";
 	}
 
 	@RequestMapping(value = "update", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult update(@Validated @RequestBody PageSizeConfig pageSizeConfig) throws LogicException {
-		configService.updatePageSizeConfig(pageSizeConfig);
-		return new JsonResult(true, new Message("pagesize.update.success", "更新成功"));
+	public JsonResult update(@Validated @RequestBody GlobalConfig globalConfig) throws LogicException {
+		configService.updateGlobalConfig(globalConfig);
+		return new JsonResult(true, new Message("global.update.success", "更新成功"));
 	}
 
 }

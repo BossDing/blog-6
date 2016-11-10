@@ -162,6 +162,11 @@
 									th:if="${article.commentConfig.allowHtml != null && article.commentConfig.allowHtml}"><input
 									type="checkbox" id="allowHtml" checked="checked" />允许html </label>
 							</div>
+							<div class="form-group">
+								<label for="">每页显示数目(1~50)</label> <input
+									class="form-control integer" placeholder="每页显示数目" th:value="${article.commentConfig.pageSize}"
+									id="pageSize">
+							</div>
 							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
 							<div class="form-group">
 								<label for="">时间(秒)</label> <input class="form-control integer"
@@ -205,6 +210,11 @@
 							</div>
 							<div class="checkbox">
 								<label><input type="checkbox" id="allowHtml" />允许html </label>
+							</div>
+							<div class="form-group">
+								<label for="">每页显示数目(1~50)</label> <input
+									class="form-control integer" placeholder="每页显示数目" value="10" 
+									id="pageSize">
 							</div>
 							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
 							<div class="form-group">

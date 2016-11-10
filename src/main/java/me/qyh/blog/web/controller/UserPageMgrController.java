@@ -38,7 +38,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
@@ -59,10 +58,7 @@ public class UserPageMgrController extends BaseMgrController {
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
-	private ConfigService configService;
-	@Autowired
 	private TplRender tplRender;
-
 	@Autowired
 	private PageValidator pageValidator;
 
@@ -82,7 +78,6 @@ public class UserPageMgrController extends BaseMgrController {
 			param = new UserPageQueryParam();
 			param.setCurrentPage(1);
 		}
-		param.setPageSize(configService.getPageSizeConfig().getUserPagePageSize());
 		Model.addAttribute("page", uiService.queryUserPage(param));
 		return "mgr/page/user/index";
 	}

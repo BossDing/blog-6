@@ -27,14 +27,13 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.HtmlUtils;
@@ -43,12 +42,12 @@ import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.OauthUserDao;
-import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.Comment.CommentStatus;
 import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.evt.CommentEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -78,8 +77,9 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	@Autowired
-	private SpaceDao spaceDao;
-
+	private SpaceCache spaceCache;
+	@Autowired
+	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 	@Autowired
 	private ConfigService configService;
 
@@ -151,14 +151,14 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			count = commentDao.selectCountWithList(param);
 			break;
 		}
+		int pageSize = config.getPageSize();
+		param.setPageSize(pageSize);
 		if (count == 0) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}
 		boolean asc = config.getAsc();
 		if (param.getCurrentPage() <= 0) {
 			if (asc) {
-				// 查询最后一页
-				int pageSize = configService.getPageSizeConfig().getCommentPageSize();
 				param.setCurrentPage(count % pageSize == 0 ? count / pageSize : count / pageSize + 1);
 			} else {
 				param.setCurrentPage(1);
@@ -270,10 +270,13 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 
 	private CommentConfig getConfig(Article article) {
 		CommentConfig config = article.getCommentConfig();
+		if (config == null) {
+			SpaceConfig spaceConfig = spaceCache.getSpace(article.getSpace().getId()).getConfig();
+			if (spaceConfig != null)
+				config = spaceConfig.getCommentConfig();
+		}
 		if (config == null)
-			config = spaceDao.selectById(article.getSpace().getId()).getCommentConfig();
-		if (config == null)
-			config = configService.getCommentConfig();
+			config = configService.getGlobalConfig().getCommentConfig();
 		return config;
 	}
 
@@ -535,15 +538,14 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		if (invalidClearSecond < 0) {
 			invalidClearSecond = INVALID_CLEAR_SECOND;
 		}
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
 				invalidUserMap.removeOvertimes();
 				invalidCountMap.removeOvertimes();
 			}
-		}, invalidClearSecond, invalidClearSecond, TimeUnit.SECONDS);
-
+		}, invalidClearSecond * 1000);
 	}
 
 	private boolean isInvalidUser(OauthUser user) {

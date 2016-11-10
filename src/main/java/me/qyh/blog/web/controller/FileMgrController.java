@@ -42,7 +42,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.file.FileServer;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.web.controller.form.BlogFileQueryParamValidator;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
@@ -61,8 +60,6 @@ public class FileMgrController extends BaseMgrController {
 	private BlogFileUploadValidator blogFileUploadValidator;
 	@Autowired
 	private BlogFileValidator blogFileValidator;
-	@Autowired
-	private ConfigService configService;
 
 	@InitBinder(value = "blogFileQueryParam")
 	protected void initBlogFileQueryParamBinder(WebDataBinder binder) {
@@ -85,7 +82,6 @@ public class FileMgrController extends BaseMgrController {
 			blogFileQueryParam = new BlogFileQueryParam();
 			blogFileQueryParam.setCurrentPage(1);
 		}
-		blogFileQueryParam.setPageSize(configService.getPageSizeConfig().getFilePageSize());
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
 			model.addAttribute("servers", fileService.allServers());
@@ -114,7 +110,6 @@ public class FileMgrController extends BaseMgrController {
 			blogFileQueryParam = new BlogFileQueryParam();
 			blogFileQueryParam.setCurrentPage(1);
 		}
-		blogFileQueryParam.setPageSize(configService.getPageSizeConfig().getFilePageSize());
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
 

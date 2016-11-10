@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.dao.SpaceConfigDao">
+
+	<delete id="deleteById">
+		DELETE FROM blog_space_config WHERE id = #{id}
+	</delete>
+	
+	<update id="update">
+		UPDATE blog_space_config
+		SET 
+			article_pagesize = #{articlePageSize},
+			comment_config = #{commentConfig.id}
+		WHERE id = #{id}
+	</update>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		INSERT INTO blog_space_config(article_pagesize,comment_config)
+		VALUES(#{articlePageSize},#{commentConfig.id})
+	</insert>
+	
+</mapper>

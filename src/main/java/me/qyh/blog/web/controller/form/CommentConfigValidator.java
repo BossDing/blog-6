@@ -27,6 +27,8 @@ public class CommentConfigValidator implements Validator {
 	private static final int[] LIMIT_SECOND_RANGE = { 1, 300 };
 	private static final int[] LIMIT_COUNT_RANGE = { 1, 100 };
 
+	private static final int[] COMMENT_PAGE_SIZE_RANGE = { 1, 50 };
+
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return CommentConfig.class.isAssignableFrom(clazz);
@@ -68,6 +70,25 @@ public class CommentConfigValidator implements Validator {
 			errors.reject("commentConfig.limitSec.invalid",
 					new Object[] { LIMIT_SECOND_RANGE[0], LIMIT_SECOND_RANGE[1] },
 					"限制评论时间应该在" + LIMIT_SECOND_RANGE[0] + "和" + LIMIT_SECOND_RANGE[1] + "之间");
+			return;
+		}
+
+		Integer pageSize = config.getPageSize();
+
+		if (pageSize == null) {
+			errors.reject("commentConfig.pagesize.blank", "评论每页显示数目不能为空");
+			return;
+		}
+
+		if (pageSize < COMMENT_PAGE_SIZE_RANGE[0]) {
+			errors.reject("commentConfig.pagesize.toosmall", new Object[] { COMMENT_PAGE_SIZE_RANGE[0] },
+					"评论每页数量不能小于" + COMMENT_PAGE_SIZE_RANGE[0]);
+			return;
+		}
+
+		if (pageSize > COMMENT_PAGE_SIZE_RANGE[1]) {
+			errors.reject("commentConfig.pagesize.toobig", new Object[] { COMMENT_PAGE_SIZE_RANGE[1] },
+					"评论每页数量不能大于" + COMMENT_PAGE_SIZE_RANGE[1]);
 			return;
 		}
 

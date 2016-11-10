@@ -42,7 +42,6 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
@@ -55,9 +54,6 @@ public class ArticleMgrController extends BaseMgrController {
 	private SpaceService spaceService;
 	@Autowired
 	private ArticleService articleService;
-	@Autowired
-	private ConfigService configService;
-
 	@Autowired
 	private ArticleValidator articleValidator;
 	@Autowired
@@ -84,7 +80,6 @@ public class ArticleMgrController extends BaseMgrController {
 		}
 		articleQueryParam.setQueryPrivate(true);
 		articleQueryParam.setQueryHidden(true);
-		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		model.addAttribute("page", articleService.queryArticle(articleQueryParam));
 		return "mgr/article/index";
 	}

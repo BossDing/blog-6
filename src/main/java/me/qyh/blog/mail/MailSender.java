@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
@@ -48,6 +49,8 @@ public class MailSender implements InitializingBean {
 	private JavaMailSender javaMailSender;
 	@Autowired
 	private UserDao userDao;
+	@Autowired
+	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	private static final Executor executor = Executors.newCachedThreadPool();
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<MessageBean>();
@@ -146,7 +149,7 @@ public class MailSender implements InitializingBean {
 			if (!FileUtils.deleteQuietly(sdfile))
 				logger.warn("删除序列文件失败");
 		}
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
@@ -157,7 +160,7 @@ public class MailSender implements InitializingBean {
 					iterator.remove();
 				}
 			}
-		}, 1, 1, TimeUnit.SECONDS);
+		}, 1000);
 	}
 
 	public void shutdown() {

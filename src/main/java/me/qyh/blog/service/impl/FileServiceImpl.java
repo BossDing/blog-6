@@ -284,6 +284,7 @@ public class FileServiceImpl implements FileService {
 		} else {
 			param.setParent(blogFileDao.selectRoot().getId());
 		}
+		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
 		int count = blogFileDao.selectCount(param);
 		List<BlogFile> datas = blogFileDao.selectPage(param);
 		for (BlogFile file : datas) {

@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.util.Validators;
 
 @Component
@@ -31,7 +31,7 @@ public class SpaceValidator implements Validator {
 	private static final int MAX_ALIAS_LENGTH = 20;
 
 	@Autowired
-	private CommentConfigValidator commentConfigValidator;
+	private SpaceConfigValidator spaceConfigValidator;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -83,9 +83,9 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 
-		CommentConfig commentConfig = space.getCommentConfig();
-		if (commentConfig != null)
-			commentConfigValidator.validate(commentConfig, errors);
+		SpaceConfig spaceConfig = space.getConfig();
+		if (spaceConfig != null)
+			spaceConfigValidator.validate(spaceConfig, errors);
 	}
 
 	/**

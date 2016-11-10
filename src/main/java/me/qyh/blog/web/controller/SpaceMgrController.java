@@ -30,13 +30,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.web.controller.form.CommentConfigValidator;
+import me.qyh.blog.web.controller.form.SpaceConfigValidator;
 import me.qyh.blog.web.controller.form.SpaceQueryParamValidator;
 import me.qyh.blog.web.controller.form.SpaceValidator;
 import me.qyh.util.Validators;
@@ -52,16 +52,16 @@ public class SpaceMgrController extends BaseMgrController {
 	@Autowired
 	private SpaceQueryParamValidator spaceQueryParamValidator;
 	@Autowired
-	private CommentConfigValidator commentConfigValidator;
+	private SpaceConfigValidator spaceConfigValidator;
 
 	@InitBinder(value = "space")
 	protected void initBinder(WebDataBinder binder) {
 		binder.setValidator(spaceValidator);
 	}
 
-	@InitBinder(value = "commentConfig")
+	@InitBinder(value = "spaceConfig")
 	protected void initCommentConfigBinder(WebDataBinder binder) {
-		binder.setValidator(commentConfigValidator);
+		binder.setValidator(spaceConfigValidator);
 	}
 
 	@InitBinder(value = "spaceQueryParam")
@@ -104,18 +104,18 @@ public class SpaceMgrController extends BaseMgrController {
 		return new JsonResult(true, spaceService.getSpace(id));
 	}
 
-	@RequestMapping(value = "commentConfig/update", method = RequestMethod.POST)
+	@RequestMapping(value = "config/update", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult updateCommentConfig(@RequestBody @Validated CommentConfig commentConfig,
+	public JsonResult updateConfig(@RequestBody @Validated SpaceConfig spaceConfig,
 			@RequestParam("spaceId") Integer spaceId) throws LogicException {
-		spaceService.updateCommentConfig(spaceId, commentConfig);
+		spaceService.updateConfig(spaceId, spaceConfig);
 		return new JsonResult(true, new Message("space.update.success", "更新成功"));
 	}
 
-	@RequestMapping(value = "commentConfig/delete", method = RequestMethod.POST)
+	@RequestMapping(value = "config/delete", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult deleteCommentConfig(@RequestParam("spaceId") Integer spaceId) throws LogicException {
-		spaceService.deleteCommentConfig(spaceId);
+	public JsonResult deleteConfig(@RequestParam("spaceId") Integer spaceId) throws LogicException {
+		spaceService.deleteConfig(spaceId);
 		return new JsonResult(true, new Message("space.update.success", "更新成功"));
 	}
 }

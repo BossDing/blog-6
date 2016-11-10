@@ -15,20 +15,15 @@
  */
 package me.qyh.blog.service;
 
-import me.qyh.blog.config.PageSizeConfig;
+import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.UploadConfig;
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.exception.LogicException;
 
 public interface ConfigService {
 
-	PageSizeConfig getPageSizeConfig();
+	GlobalConfig getGlobalConfig();
 
-	PageSizeConfig updatePageSizeConfig(PageSizeConfig pageSizeConfig);
-
-	CommentConfig getCommentConfig();
-
-	CommentConfig updateCommentConfig(CommentConfig config);
+	GlobalConfig updateGlobalConfig(GlobalConfig globalConfig);
 
 	UploadConfig getMetaweblogConfig();
 

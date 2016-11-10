@@ -113,6 +113,7 @@ $(document).ready(function() {
 		switch(action){
 		case 'add':
 		case 'update':
+			var spaceConfig = {};
 			var commentConfig = {};
 			commentConfig.allowComment = $("#allowComment").prop("checked");
 			commentConfig.commentMode = $("#commentMode").val();
@@ -121,11 +122,14 @@ $(document).ready(function() {
 			commentConfig.limitSec = $("#limitSec").val();
 			commentConfig.limitCount = $("#limitCount").val();
 			commentConfig.check = $("#check").prop("checked");
+			commentConfig.pageSize = $("#pageSize").val();
+			spaceConfig.commentConfig = commentConfig;
+			spaceConfig.articlePageSize = $("#articlePageSize").val();
 			$.ajax({
 				type : "post",
-				url : basePath+'/mgr/space/commentConfig/update?spaceId='+$("#spaceId").val(),
+				url : basePath+'/mgr/space/config/update?spaceId='+$("#spaceId").val(),
 	            contentType:"application/json",
-				data : JSON.stringify(commentConfig),
+				data : JSON.stringify(spaceConfig),
 				success : function(data){
 					if(data.success){
 						success(data.message);
@@ -143,7 +147,7 @@ $(document).ready(function() {
 		case "delete":
 			$.ajax({
 				type : "post",
-				url : basePath+'/mgr/space/commentConfig/delete?spaceId='+$("#spaceId").val(),
+				url : basePath+'/mgr/space/config/delete?spaceId='+$("#spaceId").val(),
 	            contentType:"application/json",
 				data : {},
 				success : function(data){
@@ -164,20 +168,21 @@ $(document).ready(function() {
 		}
 	})
 });
-function editCommentConfig(id){
+function editConfig(id){
 	clearTip();
 	$("#spaceId").val(id);
-	$("#editCommentConfigForm")[0].reset();
+	$("#editConfigForm")[0].reset();
 	var modal = $(this);
 	$.get(basePath+'/mgr/space/get/'+id,{},function(data){
 		if(data.success){
 			data = data.data;
-			if(!data.commentConfig){
+			if(!data.config){
 				//没有配置评论
 				$("button[data-cc-action]").hide();
 				$("button[data-cc-action='add']").show();
 			}else{
-				var cc = data.commentConfig;
+				$("#articlePageSize").val(data.config.articlePageSize);
+				var cc = data.config.commentConfig;
 				if(cc.allowComment)
 					$("#allowComment").prop("checked",true);
 				$("#commentMode").val(cc.commentMode);
@@ -186,13 +191,14 @@ function editCommentConfig(id){
 					$("#allowHtml").prop("checked",true)
 				$("#limitSec").val(cc.limitSec);
 				$("#limitCount").val(cc.limitCount);
+				$("#pageSize").val(cc.pageSize);
 				if(cc.check)
 					$("#check").prop("checked",true);
 				$("button[data-cc-action]").hide();
 				$("button[data-cc-action='delete']").show();
 				$("button[data-cc-action='update']").show();
 			}
-			$("#editCommentConfigModal").modal('show');
+			$("#editConfigModal").modal('show');
 		}else{
 			bootbox.alert(data.message);
 		}

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,6 +73,8 @@ public class MetaweblogController extends BaseController implements Initializing
 
 	@Autowired
 	private MetaweblogHandler handler;
+	@Autowired
+	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	@RequestMapping(value = "metaweblog", method = RequestMethod.POST, produces = "application/xml;charset=utf8")
 	@ResponseBody
@@ -181,21 +183,21 @@ public class MetaweblogController extends BaseController implements Initializing
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.limit = new Limit(count, sec, TimeUnit.SECONDS);
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
 				invalidIpMap.values().removeIf(x -> ((System.currentTimeMillis() - x) > invalidSec * 1000));
 			}
-		}, invalidIpClearSec, invalidIpClearSec, TimeUnit.SECONDS);
+		}, invalidIpClearSec * 1000);
 
-		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
 
 			@Override
 			public void run() {
 				authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
 			}
-		}, failClearSec, failClearSec, TimeUnit.SECONDS);
+		}, failClearSec * 1000);
 	}
 
 }

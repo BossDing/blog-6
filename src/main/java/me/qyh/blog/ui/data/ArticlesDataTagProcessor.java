@@ -36,7 +36,6 @@ import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
@@ -44,8 +43,6 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 
 	@Autowired
 	private ArticleService articleService;
-	@Autowired
-	private ConfigService configService;
 
 	public static final String PARAMETER_KEY = "articleQueryParam";
 
@@ -76,13 +73,12 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		tags.add(new Tag("预览"));
 		article.setTags(tags);
 		articles.add(article);
-		int pageSize = configService.getPageSizeConfig().getArticlePageSize();
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setCurrentPage(1);
 		param.setSpace(space);
-		param.setPageSize(pageSize);
+		param.setPageSize(5);
 		param.setStatus(ArticleStatus.PUBLISHED);
-		return new PageResult<>(param, pageSize + 1, articles);
+		return new PageResult<>(param, 6, articles);
 	}
 
 	@Override
@@ -93,13 +89,11 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		}
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setQueryPrivate(UserContext.get() != null);
-		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		return articleService.queryArticle(param);
 	}
 
 	private ArticleQueryParam parseParam(Space space, Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
-		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		param.setSpace(space);
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setCurrentPage(1);

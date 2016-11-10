@@ -124,6 +124,7 @@ $(document).ready(function(){
 			commentConfig.limitSec = $("#limitSec").val();
 			commentConfig.limitCount = $("#limitCount").val();
 			commentConfig.check = $("#check").prop("checked");
+			commentConfig.pageSize = $("#pageSize").val();
 			article.commentConfig = commentConfig;
 		}
 		
@@ -363,6 +364,7 @@ function changeEditorCss(csses,style){
 				commentConfig.limitSec = $("#limitSec").val();
 				commentConfig.limitCount = $("#limitCount").val();
 				commentConfig.check = $("#check").prop("checked");
+				commentConfig.pageSize = $("#pageSize").val();
 				if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
 					commentConfig.limitSec = 60;
 				}

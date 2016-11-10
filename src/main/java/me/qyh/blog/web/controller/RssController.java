@@ -26,16 +26,12 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.ConfigService;
 
 @Controller
 public class RssController {
 
 	@Autowired
 	private ArticleService articleService;
-	@Autowired
-	private ConfigService configService;
-
 	@Autowired
 	private RssView rssView;
 
@@ -52,7 +48,6 @@ public class RssController {
 		param.setHasLock(false);
 		param.setQueryPrivate(false);
 		param.setSort(null);
-		param.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 		PageResult<Article> page = articleService.queryArticle(param);
 		model.addAttribute("page", page);
 		return rssView;

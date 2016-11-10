@@ -28,14 +28,11 @@ import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.CommentService;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.ui.Params;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<PageResult<Comment>> {
 	@Autowired
 	private CommentService commentService;
-	@Autowired
-	private ConfigService configService;
 
 	public CommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -57,7 +54,6 @@ public class CommentsDataTagProcessor extends DataTagProcessor<PageResult<Commen
 	private CommentQueryParam parseParam(Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		param.setPageSize(configService.getPageSizeConfig().getCommentPageSize());
 		String articleStr = attributes.get("article");
 		if (articleStr != null) {
 			try {

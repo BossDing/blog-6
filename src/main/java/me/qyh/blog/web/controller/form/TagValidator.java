@@ -51,8 +51,11 @@ public class TagValidator implements Validator {
 			errors.reject("tag.name.toolong", new Object[] { MAX_NAME_LENGTH }, "文章标签名不能超过" + MAX_NAME_LENGTH + "个字符");
 			return;
 		}
-		// TODO special char check
+		for (char ch : name.toCharArray())
+			if (!Character.isLetterOrDigit(ch) && !(ch == ' ')) {
+				errors.reject("tag.name.invalid", new Object[] { name }, "标签名:" + name + "异常");
+				return;
+			}
 		tag.setName(name);
 	}
-
 }

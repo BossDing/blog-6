@@ -16,8 +16,6 @@
 package me.qyh.blog.service.impl;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -36,6 +34,7 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
@@ -51,12 +50,13 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 
 	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
 	private boolean rebuilding;
-	private final Executor executor = Executors.newFixedThreadPool(1);
 	private final ExpressionParser parser = new SpelExpressionParser();
 	private final ParameterNameDiscoverer paramNameDiscoverer = new DefaultParameterNameDiscoverer();
 
 	@Autowired
 	private CacheManager cacheManager;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	@Before("@annotation(ArticleIndexRebuild)")
 	public void before(JoinPoint joinPoint) {
@@ -91,24 +91,28 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		throwableLocal.set(e);
 	}
 
+	private synchronized void rebuild() {
+		rebuilding = true;
+		try {
+			// 清空所有的缓存
+			for (String name : cacheManager.getCacheNames())
+				cacheManager.getCache(name).clear();
+			ctx.getBean(ArticleService.class).rebuildIndex();
+		} finally {
+			rebuilding = false;
+		}
+	}
+
 	@Override
 	public void afterCompletion(int status) {
 		try {
 			if (status == STATUS_ROLLED_BACK) {
 				if (!noReload()) {
-					executor.execute(new Runnable() {
+					threadPoolTaskExecutor.execute(new Runnable() {
 
 						@Override
 						public void run() {
-							setRebuilding(true);
-							try {
-								//清空所有的缓存
-								for (String name : cacheManager.getCacheNames()) 
-									cacheManager.getCache(name).clear();
-								ctx.getBean(ArticleService.class).rebuildIndex();
-							} finally {
-								setRebuilding(false);
-							}
+							rebuild();
 						}
 					});
 				}
@@ -122,10 +126,6 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		Throwable e = throwableLocal.get();
 		return (e != null
 				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException));
-	}
-
-	private void setRebuilding(boolean rebuilding) {
-		this.rebuilding = rebuilding;
 	}
 
 	private void waitWhileRebuilding() {

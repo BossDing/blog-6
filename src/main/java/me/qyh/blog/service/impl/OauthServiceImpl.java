@@ -34,6 +34,7 @@ import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.oauth2.OauthUser.OauthUserStatus;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.OauthService;
 
 @Service
@@ -46,6 +47,8 @@ public class OauthServiceImpl implements OauthService {
 	private OauthBindDao oauthBindDao;
 	@Autowired
 	private Oauth2Provider oauth2Provider;
+	@Autowired
+	private ConfigService configService;
 
 	@Override
 	public void insertOrUpdate(OauthUser user) {
@@ -152,6 +155,7 @@ public class OauthServiceImpl implements OauthService {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param) {
+		param.setPageSize(configService.getGlobalConfig().getOauthUserPageSize());
 		int count = oauthUserDao.selectCount(param);
 		List<OauthUser> datas = oauthUserDao.selectPage(param);
 		for (OauthUser user : datas) {

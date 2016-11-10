@@ -44,6 +44,7 @@ import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
+import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.CommentConfigDao;
@@ -55,6 +56,7 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
@@ -80,6 +82,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private CommentDao commentDao;
 	@Autowired
 	private SpaceDao spaceDao;
+	@Autowired
+	private SpaceCache spaceCache;
 	@Autowired
 	private ArticleTagDao articleTagDao;
 	@Autowired
@@ -121,9 +125,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				Article clone = article.clone();
 				CommentConfig config = clone.getCommentConfig();
 				if (config == null) {
-					config = spaceDao.selectById(article.getSpace().getId()).getCommentConfig();
+					SpaceConfig spaceConfig = spaceCache.getSpace(article.getSpace().getId()).getConfig();
+					if (spaceConfig != null)
+						config = spaceConfig.getCommentConfig();
 					if (config == null)
-						config = configService.getCommentConfig();
+						config = configService.getGlobalConfig().getCommentConfig();
 					clone.setCommentConfig(config);
 				}
 				return clone;
@@ -231,7 +237,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (space.getArticleHidden())
 			article.setHidden(null);
 		article.setSpace(space);
-		checkLock(article.getLockId());
+		// 如果文章是私有的，无法设置锁
+		if (article.isPrivate())
+			article.setLockId(null);
+		else
+			checkLock(article.getLockId());
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (article.hasId()) {
 			Article articleDb = articleDao.selectById(article.getId());
@@ -379,6 +389,19 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	@ArticleIndexRebuild(readOnly = true, conditionForWait = "#param.hasQuery()")
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
+		GlobalConfig globalConfig = configService.getGlobalConfig();
+		if (param.getSpace() == null) {
+			param.setPageSize(globalConfig.getArticlePageSize());
+		} else {
+			Space space = spaceCache.getSpace(param.getSpace().getId());
+			if (space == null) {
+				param.setPageSize(globalConfig.getArticlePageSize());
+				return new PageResult<>(param, 0, Collections.emptyList());
+			} else {
+				SpaceConfig config = space.getConfig();
+				param.setPageSize(config == null ? globalConfig.getArticlePageSize() : config.getArticlePageSize());
+			}
+		}
 		PageResult<Article> page = null;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param, new ArticlesDetailQuery() {

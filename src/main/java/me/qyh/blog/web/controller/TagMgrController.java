@@ -33,7 +33,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.TagQueryParam;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 import me.qyh.blog.web.controller.form.TagQueryParamValidator;
 import me.qyh.blog.web.controller.form.TagValidator;
@@ -48,8 +47,6 @@ public class TagMgrController extends BaseMgrController {
 	private TagValidator tagValidator;
 	@Autowired
 	private TagQueryParamValidator tagQueryParamValidator;
-	@Autowired
-	private ConfigService configService;
 
 	@InitBinder(value = "tag")
 	protected void initBinder(WebDataBinder binder) {
@@ -67,7 +64,6 @@ public class TagMgrController extends BaseMgrController {
 			tagQueryParam = new TagQueryParam();
 			tagQueryParam.setCurrentPage(1);
 		}
-		tagQueryParam.setPageSize(configService.getPageSizeConfig().getTagPageSize());
 		model.addAttribute("page", tagService.queryTag(tagQueryParam));
 		return "mgr/tag/index";
 	}

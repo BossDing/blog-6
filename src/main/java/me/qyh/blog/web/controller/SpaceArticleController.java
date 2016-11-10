@@ -43,7 +43,6 @@ import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.CommentService;
-import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.RenderedPage;
@@ -58,8 +57,6 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 @RequestMapping("space/{alias}/article")
 public class SpaceArticleController extends BaseController {
 
-	@Autowired
-	private ConfigService configService;
 	@Autowired
 	private ArticleService articleService;
 	@Autowired
@@ -126,7 +123,6 @@ public class SpaceArticleController extends BaseController {
 		articleQueryParam.setSpace(space);
 		articleQueryParam.setIgnoreLevel(false);
 		articleQueryParam.setQueryPrivate(UserContext.get() != null);
-		articleQueryParam.setPageSize(configService.getPageSizeConfig().getArticlePageSize());
 	}
 
 	@RequestMapping(value = "{id}/addComment", method = RequestMethod.POST)
