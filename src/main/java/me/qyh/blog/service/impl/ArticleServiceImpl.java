@@ -17,7 +17,6 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -70,7 +70,7 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.ConfigService;
-import me.qyh.blog.service.impl.ArticleIndexer.ArticlesDetailQuery;
+import me.qyh.blog.service.impl.NRTArticleIndexer.ArticlesDetailQuery;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -89,7 +89,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private TagDao tagDao;
 	@Autowired
-	private ArticleIndexer articleIndexer;
+	private NRTArticleIndexer articleIndexer;
 	@Autowired
 	private LockManager lockManager;
 	@Autowired
@@ -98,6 +98,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private CommentConfigDao commentConfigDao;
 	@Autowired
 	private ConfigService configService;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	private boolean rebuildIndex = true;
 
@@ -349,6 +351,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private void insertTags(Article article) {
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
+			boolean rebuildIndex = false;
 			for (Tag tag : tags) {
 				Tag tagDb = tagDao.selectByName(cleanTag(tag.getName()));
 				ArticleTag articleTag = new ArticleTag();
@@ -360,11 +363,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
 					articleIndexer.addTags(tag.getName());
+					rebuildIndex = true;
 				} else {
 					articleTag.setTag(tagDb);
 				}
 				articleTagDao.insert(articleTag);
 			}
+			if (rebuildIndex)
+				rebuildIndex(true);// 新增了标签，重新建立索引
 		}
 	}
 
@@ -407,7 +413,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			page = articleIndexer.query(param, new ArticlesDetailQuery() {
 
 				@Override
-				public List<Article> queryArticle(List<Integer> articleIds) {
+				public List<Article> query(List<Integer> articleIds) {
 					return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>()
 							: articleDao.selectByIds(articleIds);
 				}
@@ -498,8 +504,21 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Transactional(readOnly = true)
-	public synchronized void rebuildIndex() {
-		logger.debug("开始重新建立博客索引" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+	public synchronized void rebuildIndex(boolean async) {
+		if (async) {
+			threadPoolTaskExecutor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					rebuildIndex();
+				}
+			});
+		} else {
+			rebuildIndex();
+		}
+	}
+
+	private void rebuildIndex() {
 		long begin = System.currentTimeMillis();
 		articleIndexer.deleteAll();
 		List<Article> articles = articleDao.selectPublished(null);
@@ -562,7 +581,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return articleIndexer.querySimilar(article, new ArticlesDetailQuery() {
 
 			@Override
-			public List<Article> queryArticle(List<Integer> articleIds) {
+			public List<Article> query(List<Integer> articleIds) {
 				return articleDao.selectByIds(articleIds);
 			}
 		}, limit);
@@ -604,5 +623,4 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
-
 }

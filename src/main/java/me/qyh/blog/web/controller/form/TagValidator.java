@@ -52,7 +52,7 @@ public class TagValidator implements Validator {
 			return;
 		}
 		for (char ch : name.toCharArray())
-			if (!Character.isLetterOrDigit(ch) && !(ch == ' ')) {
+			if (!Character.isLetterOrDigit(ch)) {
 				errors.reject("tag.name.invalid", new Object[] { name }, "标签名:" + name + "异常");
 				return;
 			}

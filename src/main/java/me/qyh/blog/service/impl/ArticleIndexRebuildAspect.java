@@ -24,7 +24,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -53,8 +52,6 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	private final ExpressionParser parser = new SpelExpressionParser();
 	private final ParameterNameDiscoverer paramNameDiscoverer = new DefaultParameterNameDiscoverer();
 
-	@Autowired
-	private CacheManager cacheManager;
 	@Autowired
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -94,10 +91,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	private synchronized void rebuild() {
 		rebuilding = true;
 		try {
-			// 清空所有的缓存
-			for (String name : cacheManager.getCacheNames())
-				cacheManager.getCache(name).clear();
-			ctx.getBean(ArticleService.class).rebuildIndex();
+			ctx.getBean(ArticleService.class).rebuildIndex(false);
 		} finally {
 			rebuilding = false;
 		}

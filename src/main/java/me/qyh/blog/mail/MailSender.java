@@ -69,10 +69,14 @@ public class MailSender implements InitializingBean {
 	private TimeCount timeCount;
 
 	public void send(MessageBean mb) {
-		doSend(mb, true);
+		doSend(mb, true, null);
 	}
 
-	private synchronized boolean doSend(MessageBean mb, boolean pull) {
+	public void send(MessageBean mb, MailSendCallBack callback) {
+		doSend(mb, true, callback);
+	}
+
+	private synchronized boolean doSend(MessageBean mb, boolean pull, MailSendCallBack callBack) {
 		long current = System.currentTimeMillis();
 		if (timeCount == null)
 			timeCount = new TimeCount(current, 1);
@@ -88,11 +92,11 @@ public class MailSender implements InitializingBean {
 			if (timeCount.reset(current))
 				this.timeCount = new TimeCount(current, 1);
 		}
-		sendMail(mb);
+		sendMail(mb, callBack);
 		return true;
 	}
 
-	protected void sendMail(final MessageBean mb) {
+	protected void sendMail(final MessageBean mb, final MailSendCallBack callBack) {
 		executor.execute(new Runnable() {
 
 			@Override
@@ -110,8 +114,10 @@ public class MailSender implements InitializingBean {
 							mimeMessage.setFrom();
 						}
 					});
+					callBack.callBack(mb, true);
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
+					callBack.callBack(mb, false);
 				}
 			}
 		});
@@ -155,7 +161,7 @@ public class MailSender implements InitializingBean {
 			public void run() {
 				for (Iterator<MessageBean> iterator = queue.iterator(); iterator.hasNext();) {
 					MessageBean mb = iterator.next();
-					if (!doSend(mb, false))
+					if (!doSend(mb, false, null))
 						break;
 					iterator.remove();
 				}

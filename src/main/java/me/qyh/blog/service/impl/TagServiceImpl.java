@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.util.List;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -29,19 +30,20 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
+import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
 @Service
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public class TagServiceImpl implements TagService {
+public class TagServiceImpl implements TagService, InitializingBean {
 
 	@Autowired
 	private TagDao tagDao;
 	@Autowired
 	private ArticleTagDao articleTagDao;
 	@Autowired
-	private ArticleIndexer articleIndexer;
+	private NRTArticleIndexer articleIndexer;
 	@Autowired
 	private ConfigService configSerivce;
 
@@ -77,6 +79,7 @@ public class TagServiceImpl implements TagService {
 			tagDao.update(tag);
 		}
 		articleIndexer.addTags(tag.getName());
+		rebuildIndex();
 	}
 
 	@Override
@@ -89,5 +92,16 @@ public class TagServiceImpl implements TagService {
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
 		articleIndexer.removeTag(db.getName());
+		rebuildIndex();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		for (Tag tag : tagDao.selectAll())
+			articleIndexer.addTags(tag.getName());
+	}
+
+	private void rebuildIndex() {
+		ApplicationContextProvider.getApplicationContext().getBean(ArticleService.class).rebuildIndex(true);
 	}
 }

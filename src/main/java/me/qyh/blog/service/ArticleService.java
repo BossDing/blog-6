@@ -101,8 +101,10 @@ public interface ArticleService {
 
 	/**
 	 * 重建索引
+	 * 
+	 * @param async
 	 */
-	void rebuildIndex();
+	void rebuildIndex(boolean async);
 
 	/**
 	 * 将博客放入回收站
@@ -204,7 +206,7 @@ public interface ArticleService {
 	 * @return
 	 * @throws LogicException
 	 */
-	List<Article> findSimilar(String idOrAlias,int limit) throws LogicException;
+	List<Article> findSimilar(String idOrAlias, int limit) throws LogicException;
 
 	/**
 	 * 
@@ -212,5 +214,5 @@ public interface ArticleService {
 	 * @return
 	 * @throws LogicException
 	 */
-	List<Article> findSimilar(Article article,int limit) throws LogicException;
+	List<Article> findSimilar(Article article, int limit) throws LogicException;
 }

@@ -75,7 +75,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
-	private ArticleIndexer articleIndexer;
+	private NRTArticleIndexer articleIndexer;
 	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired

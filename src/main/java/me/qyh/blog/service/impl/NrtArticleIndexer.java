@@ -22,16 +22,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.DateTools.Resolution;
 import org.apache.lucene.document.Document;
@@ -74,20 +71,15 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
-import org.lionsoul.jcseg.analyzer.v5x.JcsegAnalyzer5X;
-import org.lionsoul.jcseg.tokenizer.core.ADictionary;
-import org.lionsoul.jcseg.tokenizer.core.ILexicon;
-import org.lionsoul.jcseg.tokenizer.core.IWord;
-import org.lionsoul.jcseg.tokenizer.core.JcsegTaskConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Space;
@@ -96,14 +88,11 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
-public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, ApplicationListener<ContextClosedEvent> {
+public abstract class NRTArticleIndexer implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 
-	@Autowired
-	private TagDao tagDao;
+	private static final Logger logger = LoggerFactory.getLogger(NRTArticleIndexer.class);
 
-	private static final Logger logger = LoggerFactory.getLogger(NrtArticleIndexer.class);
-
-	private final Analyzer analyzer;
+	protected Analyzer analyzer;
 	private final ControlledRealTimeReopenThread<IndexSearcher> reopenThread;
 	private final TrackingIndexWriter writer;
 	private final ReferenceManager<IndexSearcher> searcherManager;
@@ -121,37 +110,18 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
-	private static final long DEFAULT_COMMIT_PERIOD = 30 * 60 * 1000;
+	private static final long DEFAULT_COMMIT_PERIOD = 5 * 60 * 1000;
 
-	private Set<String> tags = new HashSet<String>();
+	private long commitPeriod = DEFAULT_COMMIT_PERIOD;
 
-	public enum JcsegMode {
+	@Autowired
+	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
-		SIMPLE(1), COMPLEX(2), DECECT(3), SEARCH(4);
-
-		private int mode;
-
-		private JcsegMode(int mode) {
-			this.mode = mode;
-		}
-
-		public int getMode() {
-			return mode;
-		}
-	}
-
-	public NrtArticleIndexer(String indexDir, JcsegMode mode, long commitPeriod) throws IOException {
+	public NRTArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
-		analyzer = new JcsegAnalyzer5X(mode.getMode());
-		JcsegTaskConfig taskConfig = ((JcsegAnalyzer5X) analyzer).getTaskConfig();
-		taskConfig.setClearStopwords(true);
-		/**
-		 * http://git.oschina.net/lionsoul/jcseg/issues/24
-		 */
-		taskConfig.setAppendCJKSyn(false);
-		taskConfig.setLoadCJKPinyin(false);
-		taskConfig.setLoadCJKSyn(false);
-		taskConfig.setAppendCJKPinyin(false);
+		if (analyzer == null)
+			analyzer = new StandardAnalyzer();
+		this.analyzer = analyzer;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {
@@ -163,25 +133,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		if (commitPeriod <= 0) {
 			commitPeriod = DEFAULT_COMMIT_PERIOD;
 		}
-		new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread thread = new Thread();
-				thread.setDaemon(true);
-				return thread;
-			}
-		}).scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					oriWriter.commit();
-				} catch (IOException e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
-		}, commitPeriod, commitPeriod, TimeUnit.MILLISECONDS);
 
 		writer = new TrackingIndexWriter(oriWriter);
 		searcherManager = new SearcherManager(writer.getIndexWriter(), new SearcherFactory());
@@ -263,7 +214,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		return DateTools.timeToString(date.getTime(), Resolution.MILLISECOND);
 	}
 
-	@Override
 	public void addOrUpdateDocument(Article article) {
 		try {
 			if (article.hasId()) {
@@ -275,7 +225,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
-	@Override
 	public void deleteDocument(Integer id) {
 		Term term = new Term(ID, id.toString());
 		try {
@@ -285,7 +234,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
-	@Override
 	public List<Article> querySimilar(Article article, ArticlesDetailQuery dquery, int limit) {
 		IndexSearcher searcher = null;
 		try {
@@ -306,7 +254,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 			}
 			if (datas.isEmpty())
 				return new ArrayList<Article>();
-			List<Article> articles = dquery.queryArticle(datas);
+			List<Article> articles = dquery.query(datas);
 			if (!articles.isEmpty())
 				Collections.sort(articles, COMPARATOR);
 			List<Article> results = new ArrayList<Article>();
@@ -439,7 +387,7 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 					datas.put(Integer.parseInt(doc.get(ID)), doc.get(CONTENT));
 				}
 			}
-			List<Article> articles = dquery.queryArticle(new ArrayList<Integer>(datas.keySet()));
+			List<Article> articles = dquery.query(new ArrayList<Integer>(datas.keySet()));
 			if (param.isHighlight() && multiFieldQuery != null) {
 				for (Article article : articles) {
 					doHightlight(article, datas.get(article.getId()), multiFieldQuery);
@@ -500,7 +448,6 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
-	@Override
 	public void deleteAll() {
 		try {
 			oriWriter.deleteAll();
@@ -513,47 +460,12 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		return Jsoup.clean(content, Whitelist.none());
 	}
 
-	@Override
-	public synchronized void removeTag(String... tags) {
-		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
-		for (String tag : tags) {
-			this.tags.remove(tag);
-			dict.remove(ILexicon.CJK_WORD, tag);
-		}
-	}
+	public abstract void removeTag(String... tags);
 
-	@Override
-	public synchronized void reloadTags() {
-		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
-		for (String tag : this.tags) {
-			dict.remove(ILexicon.CJK_WORD, tag);
-		}
-		this.tags.clear();
-		// 将所有tag加载到字典中
-		List<Tag> tags = tagDao.selectAll();
-		if (!CollectionUtils.isEmpty(tags)) {
-			List<String> _tags = new ArrayList<>();
-			for (Tag tag : tags) {
-				_tags.add(tag.getName());
-			}
-			addTags(_tags.toArray(new String[] {}));
-		}
-	}
-
-	@Override
-	public void addTags(String... tags) {
-		synchronized (this) {
-			ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
-			for (String tag : tags) {
-				this.tags.add(tag);
-				dict.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);
-			}
-		}
-	}
+	public abstract void addTags(String... tags);
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		reloadTags();
 		if (titleFormatter == null)
 			titleFormatter = new DefaultFormatter("lucene-highlight-title");
 		if (tagFormatter == null)
@@ -565,6 +477,19 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		qboostMap.put(TITLE, boostMap.getOrDefault(TITLE, 7F));
 		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
+		if (commitPeriod <= 0)
+			commitPeriod = DEFAULT_COMMIT_PERIOD;
+		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					oriWriter.commit();
+				} catch (IOException e) {
+					logger.error(e.getMessage(), e);
+				}
+			}
+		}, commitPeriod);
 	}
 
 	public void setTitleFormatter(Formatter titleFormatter) {
@@ -607,8 +532,16 @@ public class NrtArticleIndexer implements ArticleIndexer, InitializingBean, Appl
 		}
 	}
 
+	public interface ArticlesDetailQuery {
+		List<Article> query(List<Integer> ids);
+	}
+
 	public void setBoostMap(Map<String, Float> boostMap) {
 		this.boostMap = boostMap;
+	}
+
+	public void setCommitPeriod(int commitPeriod) {
+		this.commitPeriod = commitPeriod;
 	}
 
 }

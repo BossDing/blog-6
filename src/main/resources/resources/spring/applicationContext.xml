@@ -104,11 +104,10 @@
 		<property name="locale" value="zh_CN" />
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.NrtArticleIndexer">
+	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
-		<!-- 索引commit间隔，由于commit操作相对比较笨重，所以这里定时处理提高性能 -->
-		<constructor-arg index="2" value="0" />
+		<property name="commitPeriod" value="1000"/>
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
@@ -172,15 +171,11 @@
 
 	<!-- 查询是否存在待发表的计划中博客，如果存在则发表该博客 -->
 	<bean id="pushScheduledArticleJob" class="me.qyh.blog.service.impl.PushScheduledArticleJob" />
-	<!-- 重建文章索引，之所以需要定时更新文章索引，是因为在用户插入、修改标签之后，此时老的索引并没有更新，并且无法精确更新索引，所以只能每隔一段时间全部重建索引 -->
-	<bean id="articleIndexRebuildJob" class="me.qyh.blog.service.impl.ArticleIndexRebuildJob" />
 	<task:scheduled-tasks scheduler="taskScheduler">
 		<!-- 默认5秒查询一次 -->
 		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
 			cron="0/5 * * * * ?" />
 		<!-- 0 0/5 * * * ? -->
-		<task:scheduled ref="articleIndexRebuildJob" method="doJob"
-			cron="0 0/5 * * * ?" />
 	</task:scheduled-tasks>
 
 
