@@ -17,5 +17,5 @@
 * 文件管理，七牛云存储，实时缩略图服务
 * metaweblog api支持
 
-### doc: doc.qyh.me
+### doc: http://doc.qyh.me
 
