@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.HtmlUtils;
 
+import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.CommentDao;
@@ -132,6 +133,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryComment(CommentQueryParam param) {
 		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
+		GlobalConfig gc = configService.getGlobalConfig();
+		param.setPageSize(gc.getCommentConfig().getPageSize());
 		if (article == null || !article.isPublished()) {
 			return new PageResult<>(param, 0, Collections.emptyList());
 		}

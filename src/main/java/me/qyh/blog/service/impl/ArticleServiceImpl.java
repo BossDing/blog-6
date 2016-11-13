@@ -105,6 +105,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 
+	private List<ArticleContentHandler> articleContentHandlers = new ArrayList<ArticleContentHandler>();
+
 	@Override
 	@Transactional(readOnly = true)
 	public Article getArticleForView(String idOrAlias) {
@@ -134,6 +136,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 						config = configService.getGlobalConfig().getCommentConfig();
 					clone.setCommentConfig(config);
 				}
+
+				if (!CollectionUtils.isEmpty(articleContentHandlers))
+					for (ArticleContentHandler handler : articleContentHandlers)
+						handler.handle(clone);
 				return clone;
 			}
 		}
@@ -623,4 +629,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
+
+	public interface ArticleContentHandler {
+		void handle(Article article);
+	}
+
+	public void setArticleContentHandlers(List<ArticleContentHandler> articleContentHandlers) {
+		this.articleContentHandlers = articleContentHandlers;
+	}
+
 }

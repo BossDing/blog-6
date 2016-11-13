@@ -1,4 +1,3 @@
-var editor;
 var publishing = false;
 		var tags = [];
 		$(function() {
@@ -9,45 +8,6 @@ var publishing = false;
 				else
 					$("#commentConfigContainer").hide();
 			})
-			editor = editormd("editormd", {
-				width : "100%",
-				height : 800,
-				toolbarIcons : function() {
-					return  [
-					            "undo", "redo", "|", 
-					            "bold", "del", "italic", "quote", "ucwords", "uppercase", "lowercase", "|", 
-					            "h1", "h2", "h3", "h4", "h5", "h6", "|", 
-					            "list-ul", "list-ol", "hr", "|",
-					            "link", "reference-link", "image", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "html-entities", "pagebreak", "|",
-					            "goto-line", "watch", "preview","clear", "search","fileIcon", "|",
-					            "help", "info"
-					        ]
-		        },
-		        toolbarIconsClass : {
-		           fileIcon : "fa-file"  // 指定一个FontAawsome的图标类
-		        },
-		        toolbarHandlers : {
-		            fileIcon : function(cm, icon, cursor, selection) {
-		            	this.executePlugin("blogFile", "blog-file/file-dialog");  
-		            }
-		        },
-
-		        lang : {
-		            toolbar : {
-		               fileIcon : "文件"  // 自定义按钮的提示文本，即title属性
-		            }
-		        },
-				tex : true,
-				tocm : true,
-				emoji : true,
-				taskList : true,
-				codeFold : true,
-				searchReplace : true,
-				flowChart : true,
-				sequenceDiagram : true,
-				saveHTMLToTextarea : true,
-				path : basePath + '/static/editor/markdown/lib/'
-			});
 			$('.form_datetime').datetimepicker({
 		        language:  'zh-CN',
 		        weekStart: 1,
@@ -101,7 +61,7 @@ var publishing = false;
 				var me = $(this);
 				var article = {};
     			article.title = $("#title").val();
-    			article.content = editor.getMarkdown();
+    			article.content = $("#text").val();
     			article.from = $("#from").val();
     			article.status = $("#status").val();
     			if(article.status == 'SCHEDULED'){
@@ -249,9 +209,9 @@ var publishing = false;
 			var article = {};
 			article.title = $("#title").val();
 			if($.trim(article.title) == ""){
-				article.title = editormd.dateFormat("yyyy-MM-dd HH:mm");
+				article.title = "No title";
 			}
-			article.content = editor.getMarkdown();
+			article.content = $("#text").val();
 			if($.trim(article.content) == ''){
 				return ;
 			}

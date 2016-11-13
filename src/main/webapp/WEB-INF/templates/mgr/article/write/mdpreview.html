@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.selected {
+	background-color: #eeeeee;
+}
+</style>
+<script type="text/javascript"
+	src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+	<script type="text/javascript" src="//cdn.bootcss.com/prettify/r298/prettify.min.js" ></script>
+</head>
+<body>
+	<button id="css-btn">设置css</button>
+	<div id="css-area" style="display:none">
+		<div>
+		<div>
+		<label style="display:block">preview样式</label>
+		<input style="width:50%" type="text" id="css-preview-text">
+		</div>
+		<label style="display:block">css文件位置</label>
+		<textarea placeholder="以回车分隔" style="width:50%" rows="8" id="css-link-text"></textarea>
+		</div>
+		<div>
+		<label style="display:block">style样式</label>
+		<textarea style="width:50%" rows="8" id="css-style-text"></textarea>
+		</div>
+		<button id="do-css">确定</button>
+	</div>
+	<div id="preview" class="markdown-body"></div>
+	<input type="hidden" id="basePath" th:value="@{/}" />
+	<script type="text/javascript">
+		var basePath = $("#basePath").val();
+		$(document).ready(function(){
+			getStyles();
+			$("#preview").on("click","a",function(e){
+			    e.preventDefault();
+			}); 
+			$("#css-btn").click(function(){
+				$("#css-area").toggle();
+			})
+			$("#do-css").click(function(){
+				//清除所有样式
+				$("head").find('link[type="text/css"]').remove();
+				$("head").find('style').remove();
+				
+				var csses = $("#css-link-text").val().split("\n");
+				var styles = $("#css-style-text").val();
+				var _csses = [];
+				if(csses.length > 0){
+					for(var i=0;i<csses.length;i++){
+						var css = $.trim(csses[i]);
+						$("head").append($("<link rel='stylesheet' href='"+css+"' type='text/css' media='screen' />"));
+					}
+				}
+				if($.trim(styles) != ""){
+					$('head').append('<style>'+styles+'</style>')
+				}
+				if($.trim($("#css-preview-text").val()) != "" ){
+					$("#preview").removeClass();
+					$("#preview").addClass($("#css-preview-text").val());
+				}
+			});
+		});
+		var parent = window.parent;
+		var id = $('#space', parent.document).val();
+		function getStyles(){
+			if($.trim($("#css-link-text").val())=="" && $.trim($("#css-style-text").val())==""){
+				$.get(basePath+'mgr/page/sys/getStyles',{"id":id},function(data){
+					if(data.success){
+						var csses = data.data.csses;
+						if(csses.length > 0){
+							var text = '';
+							for(var i=0;i<csses.length;i++){
+								var css =  $.trim(csses[i]);
+								$("head").append($("<link rel='stylesheet' href='"+css+"' type='text/css' media='screen' />"));
+							}
+						}
+					}else{
+						//ignore
+					}
+				})
+			}
+		}
+		setInterval(function(){
+			var nId =  $('#space', parent.document).val();
+			if(nId != id){
+				id = nId;
+				getStyles();
+			}
+		},100)
+		setInterval(function(){
+			var p = false;
+			$("pre").each(function(){
+				var me = $(this);
+				if(me.hasClass('prettyprint prettyprinted'))
+					return true;
+				if(me.find('code').length == 0)
+					 return true;
+				else{
+					p = true;
+					me.addClass("prettyprint");
+				}
+			});
+			if(p)
+				prettyPrint();
+		},500)
+	</script>
+</body>
+</html>

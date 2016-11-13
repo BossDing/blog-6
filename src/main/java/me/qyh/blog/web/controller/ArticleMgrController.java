@@ -43,6 +43,7 @@ import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.service.impl.Markdown2Html;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 
@@ -58,6 +59,8 @@ public class ArticleMgrController extends BaseMgrController {
 	private ArticleValidator articleValidator;
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
+	@Autowired
+	private Markdown2Html markdown2Html;
 
 	@InitBinder(value = "article")
 	protected void initBinder(WebDataBinder binder) {
@@ -123,6 +126,17 @@ public class ArticleMgrController extends BaseMgrController {
 		default:
 			return "mgr/article/write/html";
 		}
+	}
+
+	@RequestMapping(value = "write/md/preview", method = RequestMethod.GET)
+	public String mdPreview() {
+		return "mgr/article/write/mdpreview";
+	}
+
+	@RequestMapping(value = "write/md/preview", method = RequestMethod.POST)
+	@ResponseBody
+	public JsonResult mdPreview(@RequestParam("content") String markdown) {
+		return new JsonResult(true, markdown2Html.toHtml(markdown));
 	}
 
 	@RequestMapping(value = "write", method = RequestMethod.POST)

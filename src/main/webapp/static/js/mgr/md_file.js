@@ -1,3 +1,40 @@
+	function insertAtCaret(areaId, text) {
+		var txtarea = document.getElementById(areaId);
+		if (!txtarea) { return; }
+
+		var scrollPos = txtarea.scrollTop;
+		var strPos = 0;
+		var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
+			"ff" : (document.selection ? "ie" : false ) );
+		if (br == "ie") {
+			txtarea.focus();
+			var range = document.selection.createRange();
+			range.moveStart ('character', -txtarea.value.length);
+			strPos = range.text.length;
+		} else if (br == "ff") {
+			strPos = txtarea.selectionStart;
+		}
+
+		var front = (txtarea.value).substring(0, strPos);
+		var back = (txtarea.value).substring(strPos, txtarea.value.length);
+		txtarea.value = front + text + back;
+		strPos = strPos + text.length;
+		if (br == "ie") {
+			txtarea.focus();
+			var ieRange = document.selection.createRange();
+			ieRange.moveStart ('character', -txtarea.value.length);
+			ieRange.moveStart ('character', strPos);
+			ieRange.moveEnd ('character', 0);
+			ieRange.select();
+		} else if (br == "ff") {
+			txtarea.selectionStart = strPos;
+			txtarea.selectionEnd = strPos;
+			txtarea.focus();
+		}
+
+		txtarea.scrollTop = scrollPos;
+	}
+	
 
 	var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 	modal += 'role="dialog" aria-labelledby="fileSelectModalLabel">';
@@ -43,9 +80,6 @@
 	imageModal += '</div>';
 	imageModal += '<div class="form-group">';
 	imageModal += '<label >图片链接</label> <input class="form-control" placeholder="图片链接" >';
-	imageModal += '</div>';
-	imageModal += '<div class="form-group">';
-	imageModal += '<label >图片样式</label> <input  class="form-control" placeholder="图片样式" >';
 	imageModal += '</div>';
 	imageModal += '</div>';
 	imageModal += '<div class="modal-footer">';
@@ -354,7 +388,7 @@
 			var me = $(this);
 			var ext = me.attr("data-extension");
 			if(isImage(ext)){
-				$("#imageModal").find("input").eq(0).val(me.find('img').attr("src"));
+				$("#imageModal").find("input").eq(0).val(me.find('img').attr("data-middle"));
 				$("#imageModal").find("input").eq(1).val(me.attr("data-description"));
 				$("#imageModal").find("input").eq(2).val(me.attr("data-url"));
 				$("#imageModal").modal("show")
@@ -376,29 +410,27 @@
 			
 			$("#image-confirm-btn").click(function(){
 				  var url  = $("#imageModal").find("input").eq(0).val();
-                  var alt  = $("#imageModal").find("input").eq(1).val();
-                  var link = $("#imageModal").find("input").eq(2).val();
-                  var classes = $("#imageModal").find("input").eq(3).val();
-                  if(url == ""){
-                	  $("#imageModal").modal("hide");
-                	  return ;
-                  }else{
-                	  var html = '';
-                	  html = '<img src="'+url+'" ';
-                	  if(classes != ''){
-                		  html += 'class="'+classes+'" ';
-                	  }
-                	  if(alt != ''){
-                		  html += 'alt="'+alt+'"/>';
-                	  }else{
-                		  html += '/>';
-                	  }
-                	  if(link != ''){
-                		  html = '<a href="'+link+'" target="_blank">'+html+'</a>';
-                	  }
-                  }
-                  editor.insertHtml(html);
-                  $("#imageModal").modal("hide");
+                var alt  = $("#imageModal").find("input").eq(1).val();
+                var link = $("#imageModal").find("input").eq(2).val();
+
+                if (url === "")
+                {
+              	  $("#imageModal").modal("hide");
+              	  return ;
+                }
+
+					var altAttr = (alt !== "") ? " \"" + alt + "\"" : "";
+
+                if (link === "" || link === "http://")
+                {
+                	insertAtCaret('text', "![" + alt + "](" + url + altAttr + ")")
+                }
+                else
+                {
+                	insertAtCaret('text', "[![" + alt + "](" + url + altAttr + ")](" + link + altAttr + ")")
+                }
+
+                $("#imageModal").modal("hide");
 			});
 		}
 		
@@ -409,31 +441,25 @@
 				$("#fileSelectModal").modal("show");
 			});
 			
-			
 			$("#link-confirm-btn").click(function(){
 				  var url  = $("#linkModal").find("input").eq(0).val();
-                  var title  = $("#linkModal").find("input").eq(1).val();
+                var title  = $("#linkModal").find("input").eq(1).val();
 
-                  if (url === "http://" || url === "")
-                  {
-                	  $("#linkModal").modal("hide");return;
-                  }
-                  
-                  var html = '';
-            	  html = '<a href="'+url+'" target="_blank" ';
-            	  if(title != ''){
-            		  html += 'title="'+title+'">';
-            	  }else{
-            		  html += '>';
-            	  }
-            	  if(title != ''){
-            		  html += title;
-            	  }else{
-            		  html += url;
-            	  }
-            	  html += '</a>';
-            	  editor.insertHtml(html);
-                  $("#linkModal").modal("hide");
+                if (url === "http://" || url === "")
+                {
+              	  $("#linkModal").modal("hide");return;
+                }
+                
+                var str = "[" + title + "](" + url + " \"" + title + "\")";
+                
+                if (title == "")
+                {
+                    str = "[" + url + "](" + url + ")";
+                }                                
+
+                insertAtCaret('text',str);
+
+                $("#linkModal").modal("hide");
 			});
 		}
 	}
@@ -498,7 +524,7 @@
 					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;
 					html += '<a href="###" data-extension="'+data.cf.extension+'"  data-url="'+url+'" data-description="'+data.cf.originalFilename+'">'
 					if(data.cf.thumbnailUrl){
-						html += '<img  src="'+data.cf.thumbnailUrl.small+'" class="img-responsive" style="height:100px"/>';
+						html += '<img  src="'+data.cf.thumbnailUrl.small+'" data-middle="'+data.cf.thumbnailUrl.middle+'" class="img-responsive" style="height:100px"/>';
 					} else {
 						html += '<img src="'+basePath+'/static/fileicon/file.png" class="img-responsive" style="height:100px"/>';
 					}

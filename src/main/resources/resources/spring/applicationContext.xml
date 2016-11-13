@@ -152,7 +152,14 @@
 			</props>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl" />
+	
+	
+	<bean class="me.qyh.blog.service.impl.Markdown2HtmlArticleContentHandler" id="markdown2Html"/>
+	
+	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
+		<!-- markdown2html handler -->
+		<property name="articleContentHandlers" ref="markdown2Html"/>
+	</bean>
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
 

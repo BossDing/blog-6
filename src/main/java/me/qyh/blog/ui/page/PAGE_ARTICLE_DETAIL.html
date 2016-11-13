@@ -11,6 +11,7 @@
 <link rel="stylesheet"
 	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" />
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<link th:href="@{/static/css/markdown.css}" rel="stylesheet" th:if="${article.editor.name() == 'MD'}">
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -70,40 +71,6 @@
 	
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
-	<div th:if="${article.editor.name() == 'MD'}" th:remove="tag">
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/prettify.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/raphael.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/underscore.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/sequence-diagram.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/flowchart.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/jquery.flowchart.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/lib/marked.min.js}"></script>
-		<script type="text/javascript"
-			th:src="@{/static/editor/markdown/editormd.min.js}"></script>
-		<script type="text/javascript">
-			$(document).ready(function() {
-				editormd.katexURL = {
-					css : basePath + "/static/editor/markdown/lib/katex.min",
-					js : basePath + "/static/editor/markdown/lib/katex.min"
-				};
-				editormd.markdownToHTML("markdown-rendered", {
-					emoji : true,
-					taskList : true,
-					tex : true, // 默认不解析
-					flowChart : true, // 默认不解析
-					sequenceDiagram : true, // 默认不解析
-					tocm : true
-				});
-			})
-		</script>
-	</div>
 	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 
 	<data name="文章详情" />

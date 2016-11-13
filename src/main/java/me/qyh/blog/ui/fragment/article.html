@@ -1,11 +1,5 @@
-
 <h3 th:text="${article.title}"></h3>
 <div style="margin-bottom: 20px">
-	<div id="markdown-rendered" th:if="${article.editor.name() == 'MD'}">
-		<textarea rows="" cols="" th:text="${article.content}"
-			style="display: none;"></textarea>
-	</div>
-	<div id="article-content" th:if="${article.editor.name() == 'HTML'}"
-		th:utext="${article.content}"></div>
+	<div id="article-content" th:attr="class=${article.editor.name() == 'MD' ? 'markdown-body' : null}" th:utext="${article.content}"></div>
 	<div class="clearfix">&nbsp;</div>
 </div>

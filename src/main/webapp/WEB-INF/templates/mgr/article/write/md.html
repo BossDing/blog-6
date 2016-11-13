@@ -7,10 +7,12 @@
 	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
 	rel="stylesheet">
 <link rel="stylesheet"
+	href="//cdn.bootcss.com/blueimp-file-upload/9.12.5/css/jquery.fileupload.css">
+<link rel="stylesheet"
 	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
 <link rel="stylesheet"
 	th:href="@{/static/editor/markdown/css/editormd.css}" />
-	<link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
 <!--[if lt IE 9]>
   <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
   <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
@@ -38,25 +40,50 @@
 					</div>
 					<div class="form-group">
 						<label>博客编辑器</label>
-						<div id="editormd">
-							<textarea style="display: none;" th:text="${article.content}"></textarea>
+
+						<!-- Nav tabs -->
+						<ul class="nav nav-tabs" role="tablist">
+							<li role="presentation" class="active"><a href="#editor"
+								role="tab" data-toggle="tab">编辑器</a></li>
+							<li role="presentation"><a href="#preview" role="tab"
+								data-toggle="tab" id="previewLab">预览</a></li>
+						</ul>
+						<div class="tab-content" style="margin-top: 10px" >
+							<div role="tabpanel" class="tab-pane active" id="editor">
+								<div class="md-header btn-toolbar">
+									<div class="btn-group">
+										<button class="btn-default btn-sm btn" type="button"
+											data-md-handler="file">
+											<span class="glyphicon glyphicon-file"></span>
+										</button>
+									</div>
+								</div>
+								<textarea id="text" style="height: 600px" class="form-control"
+									th:text="${article.content}"></textarea>
+							</div>
+							<div role="tabpanel" class="tab-pane" id="preview">
+								<div class="embed-responsive embed-responsive-16by9">
+									<iframe class="embed-responsive-item"
+										th:src="@{/mgr/article/write/md/preview}"></iframe>
+								</div>
+							</div>
 						</div>
+
 					</div>
 					<div class="form-group">
 						<label>别名</label><input type="text" class="form-control"
-							placeholder="博客别名(1-50个字符，不能为村数字以及包含'<'、'>','='和空格等字符)" maxlength="50" id="alias"
-							th:value="${article.alias}" />
+							placeholder="博客别名(1-50个字符，不能为村数字以及包含'<'、'>','='和空格等字符)"
+							maxlength="50" id="alias" th:value="${article.alias}" />
 					</div>
 					<div class="form-group">
-						<label>摘要 
-						</label>
+						<label>摘要 </label>
 						<textarea class="form-control" cols="8" rows="8"
 							placeholder="(0~500字符)" id="summary" th:text="${article.summary}"></textarea>
 					</div>
 					<div class="form-group">
-						<label>标签
-						</label> <input type="text" id="tags-input" class="form-control"
-							placeholder="标签(1-20个字符)，按空格键确认" maxlength="20" />
+						<label>标签 </label> <input type="text" id="tags-input"
+							class="form-control" placeholder="标签(1-20个字符)，按空格键确认"
+							maxlength="20" />
 						<div id="tags-container" class="well" style="margin-top: 5px"></div>
 					</div>
 					<div class="form-group">
@@ -91,7 +118,8 @@
 						</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
 							type="checkbox" id="private" checked="checked" />私人博客 </label>
 					</div>
-					<div class="checkbox" th:if="${article.space != null && !article.space.articleHidden}">
+					<div class="checkbox"
+						th:if="${article.space != null && !article.space.articleHidden}">
 						<label th:if="${article.hidden == null || !article.hidden}">
 							<input type="checkbox" id="hidden" />空间私有
 						</label> <label th:if="${article.hidden != null && article.hidden}"><input
@@ -100,8 +128,8 @@
 					<div class="form-group"
 						th:style="${article.isSchedule() ? '' : 'display: none'}"
 						id="scheduleContainer">
-						<label>计划发表日期</label>
-						<input type="text" class="form-control" id="scheduleDate"
+						<label>计划发表日期</label> <input type="text" class="form-control"
+							id="scheduleDate"
 							th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm') : #dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"><br>
 					</div>
 					<div class="form-group">
@@ -110,11 +138,12 @@
 							th:value="${article.level}" />
 					</div>
 					<div class="checkbox">
-						<label >
-							<input type="checkbox" id="doCommentConfig" th:attr="checked=${article.commentConfig == null ? null : 'checked'}"/>配置评论
-						</label> 
+						<label> <input type="checkbox" id="doCommentConfig"
+							th:attr="checked=${article.commentConfig == null ? null : 'checked'}" />配置评论
+						</label>
 					</div>
-					<div id="commentConfigContainer" th:attr="style=${article.commentConfig == null ? 'display:none' : null}">
+					<div id="commentConfigContainer"
+						th:attr="style=${article.commentConfig == null ? 'display:none' : null}">
 						<label>评论配置</label>
 						<div th:if="${article.commentConfig != null}" th:remove="tag">
 							<div class="checkbox">
@@ -164,8 +193,8 @@
 							</div>
 							<div class="form-group">
 								<label for="">每页显示数目(1~50)</label> <input
-									class="form-control integer" placeholder="每页显示数目" th:value="${article.commentConfig.pageSize}"
-									id="pageSize">
+									class="form-control integer" placeholder="每页显示数目"
+									th:value="${article.commentConfig.pageSize}" id="pageSize">
 							</div>
 							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
 							<div class="form-group">
@@ -178,8 +207,8 @@
 									id="limitSec">
 							</div>
 							<div class="form-group">
-								<label for="">允许发表评论数</label> <input class="form-control integer"
-									placeholder="允许评论数"
+								<label for="">允许发表评论数</label> <input
+									class="form-control integer" placeholder="允许评论数"
 									th:if="${article.commentConfig.limitCount != null}"
 									th:value="${article.commentConfig.limitCount}" id="limitCount">
 								<input class="form-control integer" placeholder="时间"
@@ -189,7 +218,8 @@
 						</div>
 						<div th:if="${article.commentConfig == null}" th:remove="tag">
 							<div class="checkbox">
-								<label><input type="checkbox" id="allowComment" />允许评论 </label>
+								<label><input type="checkbox" id="allowComment" />允许评论
+								</label>
 							</div>
 							<div class="checkbox">
 								<label><input type="checkbox" id="check" />审核评论 </label>
@@ -213,7 +243,7 @@
 							</div>
 							<div class="form-group">
 								<label for="">每页显示数目(1~50)</label> <input
-									class="form-control integer" placeholder="每页显示数目" value="10" 
+									class="form-control integer" placeholder="每页显示数目" value="10"
 									id="pageSize">
 							</div>
 							<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
@@ -247,15 +277,8 @@
 		th:value="${article.space == null ? '' : article.space.id}"
 		id="oldSpace" style="display: none" />
 	<div th:replace="base/foot_source"></div>
-	<script th:src="@{/static/editor/markdown/editormd.min.js}"></script>
-	<script
-		th:src="@{/static/editor/markdown/plugins/blog-file/file-dialog.js}"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/md.js}"></script>
 	<script type="text/javascript"
 		th:src="@{/static/bootstrap-timepicker/js/bootstrap-datetimepicker.js}"
-		charset="UTF-8"></script>
-	<script type="text/javascript"
-		th:src="@{/static/bootstrap-timepicker/js/locales/bootstrap-datetimepicker.zh-CN.js}"
 		charset="UTF-8"></script>
 		<script type="text/javascript"
 		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
@@ -279,6 +302,51 @@
 		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-video.min.js"></script>
 	<script
 		src="//cdn.bootcss.com/blueimp-file-upload/9.12.4/js/jquery.fileupload-validate.min.js"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/file.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/js/mgr/md.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/js/mgr/md_file.js}"></script>
+	<script>
+		var render = function(parsed) {
+			if (parsed === undefined) {
+				return;
+			}
+			var preview = $("#preview iframe").contents().find('#preview');
+			try{
+				preview.get(0).innerHTML = parsed;
+			}catch(e){
+				
+			}
+		};
+
+		$(document).ready(function(){
+			$("#previewLab").click(function(){
+				var preview = $("#preview iframe").contents().find('#preview');
+				preview.get(0).innerHTML = "<img src='"+basePath+"/static/img/loading.gif'/>";
+				parseAndRender();
+			});
+			$('[data-md-handler]').click(function(){
+				var m = $(this).attr("data-md-handler");
+				switch(m){
+				case 'file':
+					fileSelectPageQuery(1,'');
+		        	$("#fileSelectModal").modal("show");
+					break;
+				}
+			})
+		})
+
+
+		var parseAndRender = function() {
+			var textarea = $("#text");
+			var parsed = $.post(basePath+'/mgr/article/write/md/preview',{"content":textarea.val()},function(data){
+				if(data.success){
+					render(data.data);
+				}else{
+					bootbox.alert(data.message);
+				}
+			})
+		};
+	</script>
 </body>
 </html>
