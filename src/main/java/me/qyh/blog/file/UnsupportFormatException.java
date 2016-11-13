@@ -22,7 +22,7 @@ public class UnsupportFormatException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String format;
+	private final String format;
 
 	public UnsupportFormatException(String format) {
 		this.format = format;

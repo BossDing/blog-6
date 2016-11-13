@@ -25,15 +25,15 @@ import org.springframework.context.MessageSourceResolvable;
  * @author mhlx
  *
  */
-public class Message implements MessageSourceResolvable,Serializable {
+public class Message implements MessageSourceResolvable, Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	private String code;
-	private Object[] arguments;
+	private transient Object[] arguments;
 	private String defaultMessage;
 
 	public Message(String code, String defaultMessage, Object... arguments) {

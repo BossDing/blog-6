@@ -62,7 +62,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 
 	private static final Logger logger = LoggerFactory.getLogger(EmailNotifyCommentHandler.class);
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
-	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<Comment>());
+	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
 	private Resource mailTemplateResource = new ClassPathResource("me/qyh/blog/service/impl/defaultMailTemplate.html");
 	private String mailTemplate;
@@ -168,41 +168,33 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 				logger.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 		}
 
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				synchronized (toSend) {
-					int size = toSend.size();
-					for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
-						Comment toProcess = iterator.next();
-						toSend.add(toProcess);
-						size++;
-						iterator.remove();
-						if (size >= messageTipCount) {
-							logger.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
-							sendMail();
-							toSend.clear();
-							break;
-						}
-					}
-				}
-			}
-		}, messageProcessSec * 1000);
-
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				synchronized (toSend) {
-					if (!toSend.isEmpty()) {
-						logger.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			synchronized (toSend) {
+				int size = toSend.size();
+				for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
+					Comment toProcess = iterator.next();
+					toSend.add(toProcess);
+					size++;
+					iterator.remove();
+					if (size >= messageTipCount) {
+						logger.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
 						sendMail();
 						toSend.clear();
+						break;
 					}
 				}
 			}
-		}, messageProcessPeriodSec * 1000);
+		}, messageProcessSec * 1000L);
+
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			synchronized (toSend) {
+				if (!toSend.isEmpty()) {
+					logger.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+					sendMail();
+					toSend.clear();
+				}
+			}
+		}, messageProcessPeriodSec * 1000L);
 	}
 
 	public void setMailTemplateResource(Resource mailTemplateResource) {

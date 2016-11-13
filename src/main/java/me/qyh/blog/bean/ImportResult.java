@@ -24,11 +24,11 @@ import me.qyh.blog.ui.ExportPage;
 public class ImportResult {
 
 	// 原始页面，用于恢复
-	private List<ExportPage> oldPages = new ArrayList<ExportPage>();
+	private List<ExportPage> oldPages = new ArrayList<>();
 	// 导入过程中出错
-	private List<ImportError> errors = new ArrayList<ImportError>();
+	private List<ImportError> errors = new ArrayList<>();
 	// 导入成功的页面序号
-	private List<ImportSuccess> successes = new ArrayList<ImportSuccess>();
+	private List<ImportSuccess> successes = new ArrayList<>();
 
 	public List<ExportPage> getOldPages() {
 		return oldPages;

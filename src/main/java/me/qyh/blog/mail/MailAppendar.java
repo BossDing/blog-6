@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.mail;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -34,6 +36,7 @@ import ch.qos.logback.core.sift.DefaultDiscriminator;
 import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.spi.CyclicBufferTracker;
 import ch.qos.logback.core.util.ContentTypeUtil;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.service.impl.ApplicationContextProvider;
 
@@ -43,6 +46,8 @@ import me.qyh.blog.service.impl.ApplicationContextProvider;
  *
  */
 public class MailAppendar extends AppenderBase<ILoggingEvent> {
+
+	private static final Logger logger = LoggerFactory.getLogger(MailAppendar.class);
 
 	// ~ 14 days
 	static final int MAX_DELAY_BETWEEN_STATUS_MESSAGES = 1228800 * CoreConstants.MILLIS_IN_ONE_SECOND;
@@ -56,12 +61,12 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	private Layout<ILoggingEvent> layout;
 	private EventEvaluator<ILoggingEvent> eventEvaluator;
 
-	private Discriminator<ILoggingEvent> discriminator = new DefaultDiscriminator<ILoggingEvent>();
+	private Discriminator<ILoggingEvent> discriminator = new DefaultDiscriminator<>();
 	private CyclicBufferTracker<ILoggingEvent> cbTracker;
 	private int errorCount;
 
 	private boolean includeCallerData = false;
-	private String subjectStr;
+	private String subjectPattern;
 
 	// value "%logger{20} - %m" is referenced in the docs!
 	private static final String DEFAULT_SUBJECT_PATTERN = "%logger{20} - %m";
@@ -74,7 +79,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 				try {
 					mailSender = ctx.getBean(MailSender.class);
 				} catch (BeansException e) {
-					// ignore;
+					logger.error("没有找到邮件发送服务:" + e.getMessage(), e);
 				}
 		}
 		if (!checkEntryConditions()) {
@@ -94,12 +99,10 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 		try {
 			if (eventEvaluator.evaluate(eventObject)) {
 				// clone the CyclicBuffer before sending out asynchronously
-				CyclicBuffer<ILoggingEvent> cbClone = new CyclicBuffer<ILoggingEvent>(cb);
+				CyclicBuffer<ILoggingEvent> cbClone = new CyclicBuffer<>(cb);
 				// see http://jira.qos.ch/browse/LBCLASSIC-221
 				cb.clear();
-
 				// build MessageBean
-
 				sendMail(cbClone, eventObject);
 
 			}
@@ -129,7 +132,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 
 	private void sendMail(CyclicBuffer<ILoggingEvent> cb, ILoggingEvent lastEventObject) {
 		try {
-			StringBuffer sbuf = new StringBuffer();
+			StringBuilder sbuf = new StringBuilder();
 			String header = layout.getFileHeader();
 			if (header != null) {
 				sbuf.append(header);
@@ -157,14 +160,14 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 			String subjectStr = "Undefined subject";
 			if (subjectLayout != null) {
 				subjectStr = subjectLayout.doLayout(lastEventObject);
-
+				if (subjectStr == null)
+					throw new SystemException("邮件发送标题不能为null");
 				// The subject must not contain new-line characters, which cause
 				// an SMTP error (LOGBACK-865). Truncate the string at the first
 				// new-line character.
-				int newLinePos = (subjectStr != null) ? subjectStr.indexOf('\n') : -1;
-				if (newLinePos > -1) {
+				int newLinePos = subjectStr.indexOf('\n');
+				if (newLinePos > -1)
 					subjectStr = subjectStr.substring(0, newLinePos);
-				}
 			}
 			String contentType = layout.getContentType();
 			MessageBean mb = new MessageBean(subjectStr, !ContentTypeUtil.isTextual(contentType), sbuf.toString());
@@ -177,7 +180,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	@Override
 	public void start() {
 		if (cbTracker == null) {
-			cbTracker = new CyclicBufferTracker<ILoggingEvent>();
+			cbTracker = new CyclicBufferTracker<>();
 		}
 
 		if (this.eventEvaluator == null) {
@@ -188,12 +191,12 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 			this.eventEvaluator = onError;
 		}
 
-		if (subjectStr == null) {
-			subjectStr = DEFAULT_SUBJECT_PATTERN;
+		if (subjectPattern == null) {
+			subjectPattern = DEFAULT_SUBJECT_PATTERN;
 		}
 		PatternLayout pl = new PatternLayout();
 		pl.setContext(getContext());
-		pl.setPattern(subjectStr);
+		pl.setPattern(subjectPattern);
 		// we don't want a ThrowableInformationConverter appended
 		// to the end of the converter chain
 		// This fixes issue LBCLASSIC-67
@@ -204,7 +207,8 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 		super.start();
 	}
 
-	synchronized public void stop() {
+	@Override
+	public synchronized void stop() {
 		this.started = false;
 	}
 
@@ -245,8 +249,8 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 		this.eventEvaluator = eventEvaluator;
 	}
 
-	public void setSubject(String subject) {
-		this.subjectStr = subject;
+	public void setSubjectPattern(String subjectPattern) {
+		this.subjectPattern = subjectPattern;
 	}
 
 	public void setIncludeCallerData(boolean includeCallerData) {

@@ -23,7 +23,7 @@ import javax.servlet.http.HttpSession;
 
 public final class LockHelper {
 
-	public static final String LOCKKEY_SESSION_KEY = "lockKeys";
+	private static final String LOCKKEY_SESSION_KEY = "lockKeys";
 	public static final String LAST_LOCK_SESSION_KEY = "lastLockResource";
 
 	public static LockBean getLockBean(HttpServletRequest request) {
@@ -53,7 +53,7 @@ public final class LockHelper {
 	public static void addKey(HttpServletRequest request, LockKey key, String resourceId) {
 		Map<String, LockKey> keysMap = getKeysMap(request);
 		if (keysMap == null) {
-			keysMap = new HashMap<String, LockKey>();
+			keysMap = new HashMap<>();
 		}
 		keysMap.put(resourceId, key);
 		request.getSession().setAttribute(LOCKKEY_SESSION_KEY, keysMap);

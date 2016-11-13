@@ -28,7 +28,7 @@ import me.qyh.blog.exception.SystemException;
 public class DefaultFileManager implements FileManager, InitializingBean {
 
 	private List<FileServer> servers;
-	private Map<Integer, FileServer> serverMap = new HashMap<Integer, FileServer>();
+	private Map<Integer, FileServer> serverMap = new HashMap<>();
 
 	public void setServers(List<FileServer> servers) {
 		this.servers = servers;

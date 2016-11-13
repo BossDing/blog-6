@@ -32,7 +32,7 @@ public class GlobalConfigValidator implements Validator {
 	private static final int[] FILE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] USER_FRAGEMENT_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] USER_PAGE_PAGE_SIZE_RANGE = { 1, 100 };
-	public static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
+	protected static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] OAUTH_USER_PAGE_SIZE_RANGE = { 1, 50 };
 

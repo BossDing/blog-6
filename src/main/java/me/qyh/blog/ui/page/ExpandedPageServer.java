@@ -32,7 +32,7 @@ public class ExpandedPageServer {
 
 	private static final int NAME_MAX_LENGTH = 20;
 
-	private Map<Integer, ExpandedPageHandler> handlers = new HashMap<Integer, ExpandedPageHandler>();
+	private Map<Integer, ExpandedPageHandler> handlers = new HashMap<>();
 
 	public ExpandedPageHandler getPageHandler(HttpServletRequest request) {
 		for (ExpandedPageHandler handler : handlers.values()) {

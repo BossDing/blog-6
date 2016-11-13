@@ -50,7 +50,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 */
 	private String magickPath;
 
-	private static final boolean WINDOWS = (File.separatorChar == '\\');
+	private static final boolean WINDOWS = File.separatorChar == '\\';
+	private static final String WHITE_BACKGROUND = "rgb(255,255,255)";
+	private static final String MATTE_RAW_ARG = "+matte";
 
 	/**
 	 * 如果为true，那么将会以渐进的方式显示出来，但在有些浏览器，例如EDGE则会先显示空白后再显示图片
@@ -69,7 +71,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 *
 	 */
 	@Override
-	protected void _resize(Resize resize, File src, File dest) throws ImageReadWriteException {
+	protected void doResize(Resize resize, File src, File dest) throws ImageReadWriteException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		if (resize.getSize() != null) {
@@ -90,9 +92,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		String ext = FilenameUtils.getExtension(dest.getName());
 		String srcExt = FilenameUtils.getExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
-			op.background("rgb(255,255,255)");
+			op.background(WHITE_BACKGROUND);
 			op.extent(0, 0);
-			op.addRawArgs("+matte");
+			op.addRawArgs(MATTE_RAW_ARG);
 		}
 		op.strip();
 		op.p_profile("*");
@@ -116,7 +118,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected ImageInfo _read(File file) throws ImageReadWriteException {
+	protected ImageInfo doRead(File file) throws ImageReadWriteException {
 		IMOperation localIMOperation = new IMOperation();
 		localIMOperation.ping();
 		localIMOperation.format("%w\n%h\n%m\n");
@@ -149,7 +151,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected void _getGifCover(File gif, File dest) throws ImageReadWriteException {
+	protected void doGetGifCover(File gif, File dest) throws ImageReadWriteException {
 		String ext = FilenameUtils.getExtension(dest.getName());
 		File png = null;
 		try {
@@ -193,9 +195,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		IMOperation op = new IMOperation();
 		op.addImage();
 		if (!maybeTransparentBg(ext)) {
-			op.background("rgb(255,255,255)");
+			op.background(WHITE_BACKGROUND);
 			op.extent(0, 0);
-			op.addRawArgs("+matte");
+			op.addRawArgs(MATTE_RAW_ARG);
 		}
 		op.strip();
 		op.p_profile("*");
@@ -211,15 +213,15 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected void _format(File src, File dest) throws ImageReadWriteException {
+	protected void doFormat(File src, File dest) throws ImageReadWriteException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		String ext = FilenameUtils.getExtension(dest.getName());
 		String srcExt = FilenameUtils.getExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
-			op.background("rgb(255,255,255)");
+			op.background(WHITE_BACKGROUND);
 			op.extent(0, 0);
-			op.addRawArgs("+matte");
+			op.addRawArgs(MATTE_RAW_ARG);
 		}
 		op.strip();
 		op.p_profile("*");
@@ -247,7 +249,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	public boolean supportFormat(String extension) {
-		return (GIF.equalsIgnoreCase(extension) || JPEG.equalsIgnoreCase(extension) || JPG.equalsIgnoreCase(extension)
-				|| PNG.equalsIgnoreCase(extension) || WEBP.equalsIgnoreCase(extension));
+		for (String ext : IMG_EXTENSIONS) {
+			if (ext.equalsIgnoreCase(extension))
+				return true;
+		}
+		return false;
 	}
 }

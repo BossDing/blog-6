@@ -23,7 +23,7 @@ import me.qyh.blog.pageparam.PageResult;
 
 public class BlogFilePageResult {
 
-	private List<BlogFile> paths = new ArrayList<BlogFile>();
+	private List<BlogFile> paths = new ArrayList<>();
 	private PageResult<BlogFile> page;
 
 	public List<BlogFile> getPaths() {

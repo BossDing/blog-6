@@ -24,7 +24,7 @@ import me.qyh.blog.exception.SystemException;
 
 class LocalResourceUrlMappingHolder {
 
-	private static Map<String, Object> urlMap = new HashMap<String, Object>();
+	private static Map<String, Object> urlMap = new HashMap<>();
 
 	static void put(String pattern, Object handler) {
 		if (!(handler instanceof HttpRequestHandler)) {

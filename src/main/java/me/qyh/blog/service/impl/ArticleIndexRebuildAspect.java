@@ -56,7 +56,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	@Before("@annotation(ArticleIndexRebuild)")
-	public void before(JoinPoint joinPoint) {
+	public void before(JoinPoint joinPoint) throws InterruptedException {
 		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 		Method method = signature.getMethod();
 		String methodName = method.getName();
@@ -102,12 +102,8 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		try {
 			if (status == STATUS_ROLLED_BACK) {
 				if (!noReload()) {
-					threadPoolTaskExecutor.execute(new Runnable() {
-
-						@Override
-						public void run() {
-							rebuild();
-						}
+					threadPoolTaskExecutor.execute(()->{
+						rebuild();
 					});
 				}
 			}
@@ -118,17 +114,13 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 
 	private boolean noReload() {
 		Throwable e = throwableLocal.get();
-		return (e != null
-				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException));
+		return e != null
+				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException);
 	}
 
-	private void waitWhileRebuilding() {
+	private void waitWhileRebuilding() throws InterruptedException {
 		while (rebuilding) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
+			Thread.sleep(100);
 		}
 	}
 
@@ -140,17 +132,17 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	 * @return
 	 */
 	private StandardEvaluationContext buildStandardEvaluationContext(Method method, Object[] args) {
-		StandardEvaluationContext ctx = new StandardEvaluationContext();
+		StandardEvaluationContext standardEvaluationContext = new StandardEvaluationContext();
 		if (ObjectUtils.isEmpty(args)) {
-			return ctx;
+			return standardEvaluationContext;
 		}
 		String[] parameterNames = paramNameDiscoverer.getParameterNames(method);
 		if (parameterNames != null) {
 			for (int i = 0; i < parameterNames.length; i++) {
-				ctx.setVariable(parameterNames[i], args[i]);
+				standardEvaluationContext.setVariable(parameterNames[i], args[i]);
 			}
 		}
-		return ctx;
+		return standardEvaluationContext;
 	}
 
 	private ApplicationContext ctx = null;

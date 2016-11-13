@@ -222,9 +222,8 @@ public class CookieRememberMe implements RememberMe {
 	}
 
 	private static byte[] bytesUtf8(String s) {
-		if (s == null) {
-			return null;
-		}
+		if (s == null)
+			return new byte[0];
 		try {
 			ByteBuffer bytes = Constants.CHARSET.newEncoder().encode(CharBuffer.wrap(s));
 			byte[] bytesCopy = new byte[bytes.limit()];

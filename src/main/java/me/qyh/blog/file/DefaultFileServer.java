@@ -34,7 +34,7 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	private int id;
 	private String name;
 	protected List<T> stores;// 注意顺序
-	private Map<Integer, T> storeMap = new HashMap<Integer, T>();
+	private Map<Integer, T> storeMap = new HashMap<>();
 
 	@Override
 	public CommonFile store(String key, MultipartFile file) throws LogicException, IOException {

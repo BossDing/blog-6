@@ -28,7 +28,7 @@ import me.qyh.blog.ui.fragment.Fragment;
 public class ParseResult {
 
 	private List<DataBind<?>> binds = new ArrayList<DataBind<?>>();
-	private Map<String, Fragment> fragments = new HashMap<String, Fragment>();
+	private Map<String, Fragment> fragments = new HashMap<>();
 	private Set<DataTag> unkownDatas = new LinkedHashSet<DataTag>();
 	private Set<String> unkownFragments = new LinkedHashSet<String>();
 

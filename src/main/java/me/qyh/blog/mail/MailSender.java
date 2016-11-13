@@ -97,28 +97,24 @@ public class MailSender implements InitializingBean {
 	}
 
 	protected void sendMail(final MessageBean mb, final MailSendCallBack callBack) {
-		executor.execute(new Runnable() {
+		executor.execute(() -> {
+			try {
+				javaMailSender.send(new MimeMessagePreparator() {
 
-			@Override
-			public void run() {
-				try {
-					javaMailSender.send(new MimeMessagePreparator() {
-
-						@Override
-						public void prepare(MimeMessage mimeMessage) throws Exception {
-							MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html,
-									Constants.CHARSET.name());
-							helper.setText(mb.text, mb.html);
-							helper.setTo(userDao.select().getEmail());
-							helper.setSubject(mb.subject);
-							mimeMessage.setFrom();
-						}
-					});
-					callBack.callBack(mb, true);
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-					callBack.callBack(mb, false);
-				}
+					@Override
+					public void prepare(MimeMessage mimeMessage) throws Exception {
+						MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html,
+								Constants.CHARSET.name());
+						helper.setText(mb.text, mb.html);
+						helper.setTo(userDao.select().getEmail());
+						helper.setSubject(mb.subject);
+						mimeMessage.setFrom();
+					}
+				});
+				callBack.callBack(mb, true);
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+				callBack.callBack(mb, false);
 			}
 		});
 	}
@@ -155,16 +151,12 @@ public class MailSender implements InitializingBean {
 			if (!FileUtils.deleteQuietly(sdfile))
 				logger.warn("删除序列文件失败");
 		}
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				for (Iterator<MessageBean> iterator = queue.iterator(); iterator.hasNext();) {
-					MessageBean mb = iterator.next();
-					if (!doSend(mb, false, null))
-						break;
-					iterator.remove();
-				}
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			for (Iterator<MessageBean> iterator = queue.iterator(); iterator.hasNext();) {
+				MessageBean mb = iterator.next();
+				if (!doSend(mb, false, null))
+					break;
+				iterator.remove();
 			}
 		}, 1000);
 	}

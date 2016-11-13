@@ -15,9 +15,11 @@
  */
 package me.qyh.blog.lock;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface LockResource {
+public interface LockResource extends Serializable{
 
 	/**
 	 * 被锁保护的资源，应该提供一个唯一的ID

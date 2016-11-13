@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.service.impl;
 
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -28,7 +27,7 @@ public class ApplicationContextProvider implements ApplicationContextAware {
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext ac) throws BeansException {
+	public void setApplicationContext(ApplicationContext ac) {
 		context = ac;
 	}
 }

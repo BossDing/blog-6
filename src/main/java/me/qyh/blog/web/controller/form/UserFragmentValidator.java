@@ -52,7 +52,7 @@ public class UserFragmentValidator implements Validator {
 			errors.reject("fragment.user.description.null", "模板片段描述不能为空");
 			return;
 		}
-		if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
+		if (description.length() > MAX_DESCRIPTION_LENGTH) {
 			errors.reject("fragment.user.description.toolong", new Object[] { MAX_DESCRIPTION_LENGTH },
 					"模板片段描述长度不能超过" + MAX_DESCRIPTION_LENGTH + "个字符");
 			return;

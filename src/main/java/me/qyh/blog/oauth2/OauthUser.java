@@ -145,5 +145,4 @@ public class OauthUser extends Id {
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
 	}
-
 }

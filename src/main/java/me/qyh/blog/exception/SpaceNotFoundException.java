@@ -21,7 +21,7 @@ public class SpaceNotFoundException extends Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String alias;
+	private final String alias;
 
 	public SpaceNotFoundException(String alias) {
 		this.alias = alias;

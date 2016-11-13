@@ -22,8 +22,8 @@ public final class FaultException extends Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String code;
-	private Message desc;
+	private final String code;
+	private final Message desc;
 
 	public FaultException(String code, Message dest) {
 		super();

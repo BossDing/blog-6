@@ -37,7 +37,7 @@ public class Article extends BaseLockResource implements Cloneable {
 	private Space space;// 空间
 	private String title;// 标题
 	private String content;// 博客原始内容
-	private Set<Tag> tags = new LinkedHashSet<Tag>();// 博客标签
+	private Set<Tag> tags = new LinkedHashSet<>();// 博客标签
 	@JsonDeserialize(using = DateDeserializer.class)
 	private Timestamp pubDate;// 撰写日期
 	private Timestamp lastModifyDate;// 最后修改日期

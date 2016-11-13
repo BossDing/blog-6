@@ -483,7 +483,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		}
 
 		public boolean overtime(long now) {
-			return (now - start) > (invalidLimitSecond * 1000);
+			return (now - start) > (invalidLimitSecond * 1000L);
 		}
 
 		public int increase() {
@@ -541,14 +541,10 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		if (invalidClearSecond < 0) {
 			invalidClearSecond = INVALID_CLEAR_SECOND;
 		}
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				invalidUserMap.removeOvertimes();
-				invalidCountMap.removeOvertimes();
-			}
-		}, invalidClearSecond * 1000);
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			invalidUserMap.removeOvertimes();
+			invalidCountMap.removeOvertimes();
+		}, invalidClearSecond * 1000L);
 	}
 
 	private boolean isInvalidUser(OauthUser user) {
@@ -556,7 +552,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			return false;
 		}
 		Long start = invalidUserMap.get(user);
-		if (start != null && (System.currentTimeMillis() - start) <= (invalidSecond * 1000)) {
+		if (start != null && (System.currentTimeMillis() - start) <= (invalidSecond * 1000L)) {
 			return true;
 		}
 		return false;
@@ -574,7 +570,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		}
 
 		public void removeOvertimes() {
-			map.values().removeIf(x -> (x != null && ((System.currentTimeMillis() - x) > invalidSecond * 1000)));
+			map.values().removeIf(x -> (x != null && ((System.currentTimeMillis() - x) > invalidSecond * 1000L)));
 		}
 
 		public Long get(OauthUser user) {

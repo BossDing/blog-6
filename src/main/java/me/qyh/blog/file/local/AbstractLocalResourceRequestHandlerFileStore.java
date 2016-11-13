@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -53,6 +55,8 @@ import me.qyh.util.Validators;
  */
 abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		implements LocalFileStore {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractLocalResourceRequestHandlerFileStore.class);
 
 	protected int id;
 	protected String absPath;
@@ -105,19 +109,21 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public String getUrl(String key) {
+		String path = key;
 		if (!key.startsWith("/")) {
-			key = "/" + key;
+			path = "/" + key;
 		}
-		return StringUtils.cleanPath(urlPrefix + key);
+		return StringUtils.cleanPath(urlPrefix + path);
 	}
 
 	@Override
 	public String getDownloadUrl(String key) {
 		if (enableDownloadHandler) {
+			String path = key;
 			if (!key.startsWith("/")) {
-				key = "/" + key;
+				path = "/" + key;
 			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + key);
+			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
 		} else {
 			return getUrl(key);
 		}
@@ -148,7 +154,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	@Override
 	public final void afterPropertiesSet() throws Exception {
 		// 忽略location的警告
-		_afterPropertiesSet();
+		moreAfterPropertiesSet();
 
 		if (absPath == null) {
 			throw new SystemException("文件存储路径不能为null");
@@ -188,7 +194,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return type;
 	}
 
-	protected void _afterPropertiesSet() throws Exception {
+	protected void moreAfterPropertiesSet() {
 
 	}
 
@@ -252,7 +258,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			try {
 				FileUtils.copyFile(file, response.getOutputStream());
 			} catch (IOException e) {
-				//
+				logger.error(e.getMessage(), e);
 			}
 		}
 	}

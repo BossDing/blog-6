@@ -22,7 +22,7 @@ import me.qyh.blog.exception.SystemException;
 
 public class Params {
 
-	private Map<String, Object> datas = new HashMap<String, Object>();
+	private Map<String, Object> datas = new HashMap<>();
 
 	public Params add(String key, Object data) {
 		datas.put(key, data);

@@ -38,9 +38,9 @@ public class Comment extends Id {
 	private OauthUser user;
 	@JsonIgnore
 	private Article article;// 文章
-	private List<Integer> parents = new ArrayList<Integer>();
+	private List<Integer> parents = new ArrayList<>();
 	private Timestamp commentDate;
-	private List<Comment> children = new ArrayList<Comment>();
+	private List<Comment> children = new ArrayList<>();
 	private CommentStatus status;
 
 	public enum CommentStatus {

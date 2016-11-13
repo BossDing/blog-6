@@ -24,7 +24,7 @@ import me.qyh.blog.evt.handler.ArticlePublishedHandler;
 
 public class ArticlePublishedEventListener implements ApplicationListener<ArticlePublishedEvent> {
 
-	private List<ArticlePublishedHandler> handlers = new ArrayList<ArticlePublishedHandler>();
+	private List<ArticlePublishedHandler> handlers = new ArrayList<>();
 
 	@Override
 	public final void onApplicationEvent(ArticlePublishedEvent event) {

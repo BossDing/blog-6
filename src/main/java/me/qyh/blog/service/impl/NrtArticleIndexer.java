@@ -65,7 +65,6 @@ import org.apache.lucene.search.highlight.Formatter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.QueryScorer;
 import org.apache.lucene.search.highlight.TokenGroup;
-import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -92,6 +91,25 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 
 	private static final Logger logger = LoggerFactory.getLogger(NRTArticleIndexer.class);
 
+	private static final Comparator<Article> COMPARATOR = new ArticleCommparator();
+
+	private static final String ID = "id";
+	private static final String TITLE = "title";
+	private static final String CONTENT = "content";
+	private static final String SPACE_ID = "spaceId";
+	private static final String PRIVATE = "private";
+	private static final String STATUS = "status";
+	private static final String FROM = "from";
+	private static final String LEVEL = "level";
+	private static final String HITS = "hits";
+	private static final String COMMENTS = "comments";
+	private static final String PUB_DATE = "pubDate";
+	private static final String TAG = "tag";
+	private static final String LOCKED = "locked";
+	private static final String ALIAS = "alias";
+	private static final String HIDDEN = "spacePrivate";
+	private static final String SUMMARY = "summary";
+
 	protected Analyzer analyzer;
 	private final ControlledRealTimeReopenThread<IndexSearcher> reopenThread;
 	private final TrackingIndexWriter writer;
@@ -103,14 +121,14 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 	private Formatter tagFormatter;
 	private Formatter summaryFormatter;
 
-	private Map<String, Float> boostMap = new HashMap<String, Float>();
-	private Map<String, Float> qboostMap = new HashMap<String, Float>();
+	private Map<String, Float> boostMap = new HashMap<>();
+	private Map<String, Float> qboostMap = new HashMap<>();
 
 	/**
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
-	private static final long DEFAULT_COMMIT_PERIOD = 5 * 60 * 1000;
+	private static final long DEFAULT_COMMIT_PERIOD = 5 * 60 * 1000L;
 
 	private long commitPeriod = DEFAULT_COMMIT_PERIOD;
 
@@ -119,9 +137,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 
 	public NRTArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
-		if (analyzer == null)
-			analyzer = new StandardAnalyzer();
-		this.analyzer = analyzer;
+		this.analyzer = analyzer == null ? new StandardAnalyzer() : analyzer;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {
@@ -155,28 +171,10 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			writer.getIndexWriter().commit();
 			writer.getIndexWriter().close();
 			dir.close();
-		} catch (AlreadyClosedException e) {
 		} catch (IOException e) {
 			logger.warn(e.getMessage(), e);
 		}
 	}
-
-	private static final String ID = "id";
-	private static final String TITLE = "title";
-	private static final String CONTENT = "content";
-	private static final String SPACE_ID = "spaceId";
-	private static final String PRIVATE = "private";
-	private static final String STATUS = "status";
-	private static final String FROM = "from";
-	private static final String LEVEL = "level";
-	private static final String HITS = "hits";
-	private static final String COMMENTS = "comments";
-	private static final String PUB_DATE = "pubDate";
-	private static final String TAG = "tag";
-	private static final String LOCKED = "locked";
-	private static final String ALIAS = "alias";
-	private static final String HIDDEN = "spacePrivate";
-	private static final String SUMMARY = "summary";
 
 	protected Document buildDocument(Article article) {
 		Document doc = new Document();
@@ -197,7 +195,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			doc.add(new TextField(ALIAS, article.getAlias(), Field.Store.YES));
 		}
 		Integer level = article.getLevel();
-		doc.add(new NumericDocValuesField(LEVEL, (level == null ? -1 : level)));
+		doc.add(new NumericDocValuesField(LEVEL, level == null ? -1 : level));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
 		doc.add(new NumericDocValuesField(COMMENTS, article.getComments()));
 		String pubDateStr = timeToString(article.getPubDate());
@@ -247,17 +245,17 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			builder.add(likeQuery, Occur.MUST);
 			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
 			TopDocs likeDocs = searcher.search(builder.build(), limit + 1);
-			List<Integer> datas = new ArrayList<Integer>();
+			List<Integer> datas = new ArrayList<>();
 			for (ScoreDoc scoreDoc : likeDocs.scoreDocs) {
 				Document aSimilar = searcher.doc(scoreDoc.doc);
 				datas.add(Integer.parseInt(aSimilar.get(ID)));
 			}
 			if (datas.isEmpty())
-				return new ArrayList<Article>();
+				return new ArrayList<>();
 			List<Article> articles = dquery.query(datas);
 			if (!articles.isEmpty())
 				Collections.sort(articles, COMPARATOR);
-			List<Article> results = new ArrayList<Article>();
+			List<Article> results = new ArrayList<>();
 			int size = 0;
 			for (Article art : articles) {
 				if (art.equals(article))
@@ -305,7 +303,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			searcherManager.maybeRefresh();
 			searcher = searcherManager.acquire();
 
-			List<SortField> fields = new ArrayList<SortField>();
+			List<SortField> fields = new ArrayList<>();
 			if (!param.isIgnoreLevel())
 				fields.add(new SortField(LEVEL, Type.INT, true));
 			ArticleQueryParam.Sort psort = param.getSort();
@@ -319,7 +317,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 				case HITS:
 					fields.add(new SortField(HITS, Type.INT, true));
 					break;
-				case PUBDATE:
+				default:
 					break;
 				}
 				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
@@ -337,7 +335,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			}
 			Date begin = param.getBegin();
 			Date end = param.getEnd();
-			boolean dateRangeQuery = (begin != null && end != null);
+			boolean dateRangeQuery = begin != null && end != null;
 			if (dateRangeQuery) {
 				TermRangeQuery query = new TermRangeQuery(PUB_DATE, new Term(PUB_DATE, timeToString(begin)).bytes(),
 						new Term(PUB_DATE, timeToString(end)).bytes(), true, true);
@@ -377,7 +375,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();
-			Map<Integer, String> datas = new LinkedHashMap<Integer, String>();
+			Map<Integer, String> datas = new LinkedHashMap<>();
 			if (offset < total) {
 				ScoreDoc[] docs = tds.scoreDocs;
 				int last = offset + param.getPageSize();
@@ -387,14 +385,14 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 					datas.put(Integer.parseInt(doc.get(ID)), doc.get(CONTENT));
 				}
 			}
-			List<Article> articles = dquery.query(new ArrayList<Integer>(datas.keySet()));
+			List<Article> articles = dquery.query(new ArrayList<>(datas.keySet()));
 			if (param.isHighlight() && multiFieldQuery != null) {
 				for (Article article : articles) {
 					doHightlight(article, datas.get(article.getId()), multiFieldQuery);
 					article.setContent(null);
 				}
 			}
-			return new PageResult<Article>(param, Math.min(MAX_RESULTS, total), articles);
+			return new PageResult<>(param, Math.min(MAX_RESULTS, total), articles);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
@@ -479,15 +477,11 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
 		if (commitPeriod <= 0)
 			commitPeriod = DEFAULT_COMMIT_PERIOD;
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					oriWriter.commit();
-				} catch (IOException e) {
-					logger.error(e.getMessage(), e);
-				}
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			try {
+				oriWriter.commit();
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
 			}
 		}, commitPeriod);
 	}
@@ -519,7 +513,6 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		}
 	}
 
-	private static final Comparator<Article> COMPARATOR = new ArticleCommparator();
 
 	private static class ArticleCommparator implements Comparator<Article> {
 

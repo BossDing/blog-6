@@ -109,17 +109,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private UICacheRender uiCacheRender;
 
-	private Map<PageTarget, Resource> sysPageDefaultTpls = new HashMap<PageTarget, Resource>();
-	private Map<PageTarget, String> _sysPageDefaultTpls = new HashMap<PageTarget, String>();
-
-	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<ErrorCode, Resource>();
-	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<ErrorCode, String>();
-
-	private Map<String, String> lockPageDefaultTpls = new HashMap<String, String>();
-
+	private Map<PageTarget, Resource> sysPageDefaultTpls = new HashMap<>();
+	private Map<PageTarget, String> _sysPageDefaultTpls = new HashMap<>();
+	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<>();
+	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<>();
+	private Map<String, String> lockPageDefaultTpls = new HashMap<>();
+	private List<DataTagProcessor<?>> processors = new ArrayList<>();
+	
 	private final TemplateParser templateParser = new TemplateParser();
-
-	private List<DataTagProcessor<?>> processors = new ArrayList<DataTagProcessor<?>>();
 
 	private final DataQuery previewDataQuery = new DataQuery() {
 

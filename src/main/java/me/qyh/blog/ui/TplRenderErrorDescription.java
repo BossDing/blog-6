@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.ui;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,11 +26,16 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageSerializer;
 
-public class TplRenderErrorDescription {
+public class TplRenderErrorDescription implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	private Integer line;// 行号
 	private Integer col;// 列号
-	private List<String> templateNames = new ArrayList<String>();// 模板名
+	private ArrayList<String> templateNames = new ArrayList<String>();// 模板名
 	private String expression;// 表达式
 	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;// 错误信息

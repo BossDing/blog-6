@@ -65,7 +65,7 @@ public class RequestXmlParser {
 		List<?> paramsNodes = root.getChildren("params");
 		if (paramsNodes.size() > 1)
 			throw new ParseException("解析失败，存在多个params节点");
-		List<Object> arguments = new ArrayList<Object>();
+		List<Object> arguments = new ArrayList<>();
 		if (!paramsNodes.isEmpty()) {
 			List<?> params = ((Element) paramsNodes.get(0)).getChildren("param");
 			if (!params.isEmpty()) {
@@ -104,7 +104,7 @@ public class RequestXmlParser {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<methodResponse>");
 		sb.append("<fault>");
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 		map.put("faultCode", code);
 		map.put("faultString", desc);
 		sb.append(buildVXml(map));
@@ -159,9 +159,8 @@ public class RequestXmlParser {
 
 	private Object parseValueElement(Element ve) throws ParseException {
 		List<?> vNodes = null;
-		List<?> cvNodes = null;
 		for (String v : VALUES) {
-			cvNodes = ve.getChildren(v);
+			List<?> cvNodes = ve.getChildren(v);
 			if (!cvNodes.isEmpty()) {
 				if (vNodes != null && !vNodes.isEmpty())
 					throw new ParseException("解析失败，value节点下存在多个可被解析的值");
@@ -242,7 +241,7 @@ public class RequestXmlParser {
 			List<?> dataNodes = ve.getChild("array").getChildren("data");
 			if (dataNodes.size() != 1)
 				throw new ParseException("解析失败，array节点下存在:" + dataNodes.size() + "个data节点");
-			List<Object> results = new ArrayList<Object>();
+			List<Object> results = new ArrayList<>();
 			for (Object vNode : ((Element) dataNodes.get(0)).getChildren("value")) {
 				Element dataVe = (Element) vNode;
 				results.add(parseValueElement(dataVe));
@@ -298,7 +297,7 @@ public class RequestXmlParser {
 	}
 
 	final class Struct {
-		private Map<String, Object> data = new HashMap<String, Object>();
+		private Map<String, Object> data = new HashMap<>();
 
 		public Struct(Map<String, Object> data) {
 			this.data = data;

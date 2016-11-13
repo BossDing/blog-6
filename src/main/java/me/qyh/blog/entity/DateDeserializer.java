@@ -35,13 +35,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
  */
 public class DateDeserializer extends JsonDeserializer<Timestamp> {
 
-	public static final DateParser[] PARSERS = { FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss"),
+	private static final DateParser[] PARSERS = { FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss"),
 			FastDateFormat.getInstance("yyyy-MM-dd HH:mm"), FastDateFormat.getInstance("yyyy-MM-dd HH"),
 			FastDateFormat.getInstance("yyyy-MM-dd") };
 
 	@Override
 	public Timestamp deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
+			throws IOException {
 		return parse(p.getText().trim());
 	}
 

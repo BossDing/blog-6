@@ -116,7 +116,7 @@ public class FileServiceImpl implements FileService {
 		synchronized (this) {
 			deleteImmediatelyIfNeed(folderKey);
 		}
-		List<UploadedFile> uploadedFiles = new ArrayList<UploadedFile>();
+		List<UploadedFile> uploadedFiles = new ArrayList<>();
 		for (MultipartFile file : upload.getFiles()) {
 			try {
 				if (blogFileDao.selectByParentAndPath(parent, file.getOriginalFilename()) != null)
@@ -202,6 +202,8 @@ public class FileServiceImpl implements FileService {
 						key);
 			fileDeleteDao.deleteById(fd.getId());
 			break;
+		default:
+			throw new SystemException("未知文件类型");
 		}
 
 	}
@@ -308,7 +310,7 @@ public class FileServiceImpl implements FileService {
 		if (file == null) {
 			throw new LogicException("file.notexists", "文件不存在");
 		}
-		Map<String, Object> proMap = new HashMap<String, Object>();
+		Map<String, Object> proMap = new HashMap<>();
 		if (file.isDir()) {
 			proMap.put("counts", blogFileDao.selectSubBlogFileCount(file));
 			proMap.put("totalSize", blogFileDao.selectSubBlogFileSize(file));
@@ -366,6 +368,7 @@ public class FileServiceImpl implements FileService {
 
 		FileServer server = null;
 		FileStore store = null;
+		FileDelete fd = new FileDelete();
 		if (db.isFile()) {
 			server = fileManager.getFileServer(db.getCf().getServer());
 			if (server == null) {
@@ -375,13 +378,12 @@ public class FileServiceImpl implements FileService {
 			if (store == null) {
 				return;
 			}
+			fd.setServer(server.id());
+			fd.setStore(store.id());
 		} else {
 			fileDeleteDao.deleteChildren(key);
 		}
-		FileDelete fd = new FileDelete();
 		fd.setKey(key);
-		fd.setServer(db.isDir() ? null : server.id());
-		fd.setStore(db.isDir() ? null : store.id());
 		fd.setType(db.getType());
 		fileDeleteDao.insert(fd);
 
@@ -400,17 +402,15 @@ public class FileServiceImpl implements FileService {
 
 	private void setExpandedCommonFile(BlogFile bf) {
 		CommonFile cf = bf.getCf();
-		if (cf != null) {
-			if (bf.isFile()) {
-				String key = getFilePath(bf);
-				FileStore fs = getFileStore(cf);
-				ExpandedCommonFile pcf = new ExpandedCommonFile();
-				BeanUtils.copyProperties(cf, pcf);
-				pcf.setThumbnailUrl(fs.getThumbnailUrl(key));
-				pcf.setDownloadUrl(fs.getDownloadUrl(key));
-				pcf.setUrl(fs.getUrl(key));
-				bf.setCf(pcf);
-			}
+		if (cf != null && bf.isFile()) {
+			String key = getFilePath(bf);
+			FileStore fs = getFileStore(cf);
+			ExpandedCommonFile pcf = new ExpandedCommonFile();
+			BeanUtils.copyProperties(cf, pcf);
+			pcf.setThumbnailUrl(fs.getThumbnailUrl(key));
+			pcf.setDownloadUrl(fs.getDownloadUrl(key));
+			pcf.setUrl(fs.getUrl(key));
+			bf.setCf(pcf);
 		}
 	}
 

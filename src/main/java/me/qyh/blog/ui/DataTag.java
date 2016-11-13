@@ -21,7 +21,7 @@ import java.util.Map;
 public class DataTag {
 
 	private String name;
-	private Map<String, String> attrs = new HashMap<String, String>();
+	private Map<String, String> attrs = new HashMap<>();
 
 	public String getName() {
 		return name;

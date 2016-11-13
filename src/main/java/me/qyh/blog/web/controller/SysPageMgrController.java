@@ -166,7 +166,7 @@ public class SysPageMgrController extends BaseMgrController {
 					csses.add(link);
 				}
 			}
-			Map<String, Object> resultMap = new HashMap<String, Object>();
+			Map<String, Object> resultMap = new HashMap<>();
 			resultMap.put("csses", csses);
 			if (style != null)
 				resultMap.put("style", style.trim());

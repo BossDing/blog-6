@@ -70,19 +70,18 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 					if (attributes == null) {
 						attributes = new Attributes();
 					}
-					IEngineContext _context = (IEngineContext) context;
-					_context.setVariable(ATTRIBUTES, attributes);
-					_context.setVariable(TEMPLATE_NAME, page.getTemplateName());
-					try {
-						IModel model = context.getModelFactory().parse(context.getTemplateData(), fragment.getTpl());
-						Writer writer = new FastStringWriter(200);
-						context.getConfiguration().getTemplateManager().process((TemplateModel) model, _context,
+					IEngineContext iEngineContext = (IEngineContext) context;
+					iEngineContext.setVariable(ATTRIBUTES, attributes);
+					iEngineContext.setVariable(TEMPLATE_NAME, page.getTemplateName());
+					IModel model = context.getModelFactory().parse(context.getTemplateData(), fragment.getTpl());
+					try (Writer writer = new FastStringWriter(200)) {
+						context.getConfiguration().getTemplateManager().process((TemplateModel) model, iEngineContext,
 								writer);
 						structureHandler.replaceWith(writer.toString(), false);
-					} catch (Throwable e) {
+					} catch (Exception e) {
 						throw new FragmentTagParseException(e, name);
 					} finally {
-						_context.removeVariable(ATTRIBUTES);
+						iEngineContext.removeVariable(ATTRIBUTES);
 					}
 					return;
 				}
@@ -97,8 +96,8 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 		 * 
 		 */
 		private static final long serialVersionUID = 1L;
-		private Throwable originalThrowable;
-		private String fragment;
+		private final Throwable originalThrowable;
+		private final String fragment;
 
 		public FragmentTagParseException(Throwable originalThrowable, String fragment) {
 			this.originalThrowable = originalThrowable;
@@ -128,49 +127,49 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 	}
 
 	protected class Attributes {
-		private Map<String, String> attributes = new HashMap<>();
+		private Map<String, String> map = new HashMap<>();
 
 		public String get(String key) {
-			return attributes.get(key);
+			return map.get(key);
 		}
 
-		public double getDouble(String key, double _default) {
+		public double getDouble(String key, double defaultV) {
 			String v = get(key);
 			if (v != null) {
 				return Double.parseDouble(v);
 			}
-			return _default;
+			return defaultV;
 		}
 
-		public long getLong(String key, long _default) {
+		public long getLong(String key, long defaultV) {
 			String v = get(key);
 			if (v != null) {
 				return Long.parseLong(v);
 			}
-			return _default;
+			return defaultV;
 		}
 
-		public int getInt(String key, int _default) {
+		public int getInt(String key, int defaultV) {
 			String v = get(key);
 			if (v != null) {
 				return Integer.parseInt(v);
 			}
-			return _default;
+			return defaultV;
 		}
 
-		public boolean getBoolean(String key, boolean _default) {
+		public boolean getBoolean(String key, boolean defaultV) {
 			String v = get(key);
 			if (v != null) {
 				return Boolean.parseBoolean(v);
 			}
-			return _default;
+			return defaultV;
 		}
 
 		public Attributes() {
 		}
 
 		private void put(String key, String v) {
-			attributes.put(key, v);
+			map.put(key, v);
 		}
 	}
 }

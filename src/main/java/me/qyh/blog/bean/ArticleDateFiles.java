@@ -30,7 +30,7 @@ public class ArticleDateFiles {
 		Y, YM, YMD
 	}
 
-	private List<ArticleDateFile> files = new ArrayList<ArticleDateFile>();
+	private List<ArticleDateFile> files = new ArrayList<>();
 	private ArticleDateFileMode mode;
 
 	public ArticleDateFileMode getMode() {

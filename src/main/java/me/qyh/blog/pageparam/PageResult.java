@@ -22,7 +22,7 @@ import org.springframework.util.CollectionUtils;
 
 public class PageResult<T> {
 
-	private List<T> datas = new ArrayList<T>();
+	private List<T> datas = new ArrayList<>();
 	private int totalPage;// 总页码
 	private int offset;
 	private int currentPage;// 当前页

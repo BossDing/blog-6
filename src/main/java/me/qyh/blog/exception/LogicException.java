@@ -24,7 +24,7 @@ public class LogicException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Message logicMessage;
+	private final Message logicMessage;
 
 	public LogicException(Message message) {
 		this.logicMessage = message;

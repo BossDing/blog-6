@@ -18,6 +18,7 @@ package me.qyh.blog.web.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
@@ -130,7 +132,7 @@ public class TplMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "lastImportPageBackUp", method = RequestMethod.POST)
 	public Object downloadLastImportPageBackUp(HttpSession session, RedirectAttributes ra)
-			throws LogicException, JsonProcessingException {
+			throws JsonProcessingException {
 		@SuppressWarnings("unchecked")
 		List<ExportPage> oldPages = (List<ExportPage>) session.getAttribute(OLD_PAGES);
 		if (CollectionUtils.isEmpty(oldPages)) {
@@ -145,8 +147,8 @@ public class TplMgrController extends BaseMgrController {
 		header.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		header.set("Content-Disposition", "attachment; filename=template-"
 				+ DateFormatUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss") + ".json");
-		return new ResponseEntity<byte[]>(
-				Jsons.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(pages), header, HttpStatus.OK);
+		return new ResponseEntity<>(Jsons.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(pages),
+				header, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "import", method = RequestMethod.GET)
@@ -165,6 +167,7 @@ public class TplMgrController extends BaseMgrController {
 		try {
 			tpl = IOUtils.toString(file.getBytes(), Constants.CHARSET.name());
 		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
 			ra.addFlashAttribute(ERROR, new Message("tpl.upload.fail", "模板文件上传失败"));
 			return "redirect:/mgr/tpl/import";
 		}
@@ -173,10 +176,11 @@ public class TplMgrController extends BaseMgrController {
 		try {
 			node = reader.readTree(tpl);
 		} catch (Exception e) {
+			logger.debug(e.getMessage(), e);
 			ra.addFlashAttribute(ERROR, new Message("tpl.parse.fail", "模板解析失败"));
 			return "redirect:/mgr/tpl/import";
 		}
-		Map<Integer, ImportPageWrapper> parses = parse(reader, node);
+		HashMap<Integer, ImportPageWrapper> parses = parse(reader, node);
 		ra.addFlashAttribute(PARSERS, parses.values());
 		session.setAttribute(PARSERS, parses);
 		return "redirect:/mgr/tpl/import";
@@ -201,7 +205,7 @@ public class TplMgrController extends BaseMgrController {
 			req.setSpace(null);
 		}
 		Map<Integer, ImportPageWrapper> parses = (Map<Integer, ImportPageWrapper>) session.getAttribute(PARSERS);
-		List<ImportPageWrapper> toImport = new ArrayList<ImportPageWrapper>();
+		List<ImportPageWrapper> toImport = new ArrayList<>();
 		for (int id : req.getIds()) {
 			ImportPageWrapper wrapper = parses.get(id);
 			if (wrapper == null) {
@@ -234,6 +238,8 @@ public class TplMgrController extends BaseMgrController {
 				case LOCK:
 					renderedPage = uiService.renderPreviewPage((LockPage) cloned);
 					break;
+				default:
+					throw new SystemException("无法被处理的页面类型：" + page.getType());
 				}
 			} catch (LogicException e) {
 				errors.add(new ImportError(wrapper.getIndex(), e.getLogicMessage()));
@@ -276,8 +282,8 @@ public class TplMgrController extends BaseMgrController {
 		return new JsonResult(true, uiService.queryDataTags());
 	}
 
-	private Map<Integer, ImportPageWrapper> parse(ObjectReader reader, JsonNode node) {
-		Map<Integer, ImportPageWrapper> wrappers = new LinkedHashMap<Integer, ImportPageWrapper>();
+	private HashMap<Integer, ImportPageWrapper> parse(ObjectReader reader, JsonNode node) {
+		HashMap<Integer, ImportPageWrapper> wrappers = new LinkedHashMap<>();
 		for (int i = 0; i < node.size(); i++) {
 			JsonNode epNode = node.get(i);
 			if (epNode == null) {

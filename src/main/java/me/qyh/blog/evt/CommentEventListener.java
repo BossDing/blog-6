@@ -24,7 +24,7 @@ import me.qyh.blog.evt.handler.CommentHandler;
 
 public class CommentEventListener implements ApplicationListener<CommentEvent> {
 
-	private List<CommentHandler> handlers = new ArrayList<CommentHandler>();
+	private List<CommentHandler> handlers = new ArrayList<>();
 
 	@Override
 	public final void onApplicationEvent(CommentEvent event) {

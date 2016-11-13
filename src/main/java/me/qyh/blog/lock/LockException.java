@@ -24,9 +24,9 @@ public class LockException extends RuntimeException {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Lock lock;
-	private LockResource lockResource;
-	private Message error;
+	private final Lock lock;
+	private final LockResource lockResource;
+	private final Message error;
 
 	public LockException(Lock lock, LockResource lockResource, Message error) {
 		super();

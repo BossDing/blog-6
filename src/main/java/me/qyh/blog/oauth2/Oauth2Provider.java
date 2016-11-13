@@ -25,7 +25,7 @@ import me.qyh.blog.exception.SystemException;
 
 public class Oauth2Provider {
 
-	private Map<String, Oauth2> oauth2Map = new HashMap<String, Oauth2>();
+	private Map<String, Oauth2> oauth2Map = new HashMap<>();
 
 	public Oauth2 getOauth2(String id) {
 		return oauth2Map.get(id);

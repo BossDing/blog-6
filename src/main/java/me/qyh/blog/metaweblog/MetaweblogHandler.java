@@ -108,7 +108,7 @@ public class MetaweblogHandler {
 
 			@Override
 			public Object execute() throws LogicException {
-				Map<String, String> map = new HashMap<String, String>();
+				Map<String, String> map = new HashMap<>();
 				map.put("blogid", "1");
 				map.put("blogName", username);
 				map.put("url", urlHelper.getUrl());
@@ -125,7 +125,7 @@ public class MetaweblogHandler {
 				List<Space> spaces = spaceService.querySpace(new SpaceQueryParam());
 				List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
 				for (Space space : spaces) {
-					Map<String, String> map = new HashMap<String, String>();
+					Map<String, String> map = new HashMap<>();
 					map.put("description", "");
 					map.put("htmlUrl", urlHelper.getUrls().getUrl(space));
 					map.put("rssUrl", urlHelper.getUrls().getUrl(space) + "/rss");
@@ -217,7 +217,7 @@ public class MetaweblogHandler {
 				if (res.hasError())
 					throw new LogicException(res.getError());
 				else {
-					Map<String, String> urlMap = new HashMap<String, String>();
+					Map<String, String> urlMap = new HashMap<>();
 					urlMap.put("url", res.getThumbnailUrl().getMiddle());
 					return urlMap;
 				}
@@ -338,7 +338,7 @@ public class MetaweblogHandler {
 	}
 
 	private Map<String, Object> articleToMap(Article art) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		map.put("dateCreated", art.getPubDate());
 		map.put("title", art.getTitle());
 		map.put("categories", Arrays.asList(art.getSpace().getName()));

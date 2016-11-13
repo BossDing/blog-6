@@ -105,7 +105,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 
-	private List<ArticleContentHandler> articleContentHandlers = new ArrayList<ArticleContentHandler>();
+	private List<ArticleContentHandler> articleContentHandlers = new ArrayList<>();
 
 	@Override
 	@Transactional(readOnly = true)
@@ -512,12 +512,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public synchronized void rebuildIndex(boolean async) {
 		if (async) {
-			threadPoolTaskExecutor.execute(new Runnable() {
-
-				@Override
-				public void run() {
-					rebuildIndex();
-				}
+			threadPoolTaskExecutor.execute(() -> {
+				rebuildIndex();
 			});
 		} else {
 			rebuildIndex();

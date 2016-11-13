@@ -82,7 +82,7 @@ public class MetaweblogController extends BaseController implements Initializing
 		long now = System.currentTimeMillis();
 		String ip = Webs.getIp(request);
 		Long time = invalidIpMap.get(ip);
-		if (time != null && ((now - time) <= invalidSec * 1000))
+		if (time != null && ((now - time) <= invalidSec * 1000L))
 			throw new FaultException(Constants.AUTH_ERROR, new Message("metaweblog.user.forbidden", "用户暂时被禁止访问"));
 		MethodCaller mc = null;
 		try {
@@ -183,21 +183,13 @@ public class MetaweblogController extends BaseController implements Initializing
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.limit = new Limit(count, sec, TimeUnit.SECONDS);
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			invalidIpMap.values().removeIf(x -> ((System.currentTimeMillis() - x) > invalidSec * 1000L));
+		}, invalidIpClearSec * 1000L);
 
-			@Override
-			public void run() {
-				invalidIpMap.values().removeIf(x -> ((System.currentTimeMillis() - x) > invalidSec * 1000));
-			}
-		}, invalidIpClearSec * 1000);
-
-		threadPoolTaskScheduler.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
-			}
-		}, failClearSec * 1000);
+		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
+			authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
+		}, failClearSec * 1000L);
 	}
 
 }

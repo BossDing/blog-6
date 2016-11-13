@@ -23,7 +23,7 @@ import me.qyh.util.Validators;
 public class Tags {
 
 	private String simpleTags;
-	private List<Tag> tags = new ArrayList<Tag>();
+	private List<Tag> tags = new ArrayList<>();
 
 	public void setSimpleTags(String simpleTags) {
 		this.simpleTags = simpleTags;

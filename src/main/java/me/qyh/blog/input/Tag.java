@@ -21,7 +21,7 @@ import java.util.List;
 public class Tag {
 
 	private String name;
-	private List<Attribute> attributes = new ArrayList<Attribute>();
+	private List<Attribute> attributes = new ArrayList<>();
 
 	public String getName() {
 		return name;

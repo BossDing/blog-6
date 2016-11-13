@@ -33,18 +33,18 @@ public abstract class ImageHelper {
 	public static final String PNG = "png";
 	public static final String WEBP = "webp";
 
-	public static final String[] IMG_EXTENSIONS = { GIF, JPEG, JPG, PNG, WEBP };
+	protected static final String[] IMG_EXTENSIONS = { GIF, JPEG, JPG, PNG, WEBP };
 
 	public final void resize(Resize resize, File src, File dest)
 			throws UnsupportFormatException, ImageReadWriteException {
 		formatCheck(src);
 		formatCheck(dest);
-		_resize(resize, src, dest);
+		doResize(resize, src, dest);
 	}
 
 	public final ImageInfo read(File file) throws UnsupportFormatException, ImageReadWriteException {
 		formatCheck(file);
-		ImageInfo ii = _read(file);
+		ImageInfo ii = doRead(file);
 		if (!supportFormat(ii.getExtension()))
 			throw new UnsupportFormatException(ii.getExtension());
 		return ii;
@@ -54,22 +54,22 @@ public abstract class ImageHelper {
 	public final void getGifCover(File gif, File dest) throws UnsupportFormatException, ImageReadWriteException {
 		formatCheck(gif);
 		formatCheck(dest);
-		_getGifCover(gif, dest);
+		doGetGifCover(gif, dest);
 	}
 
 	public final void format(File src, File dest) throws UnsupportFormatException, ImageReadWriteException {
 		formatCheck(src);
 		formatCheck(dest);
-		_format(src, dest);
+		doFormat(src, dest);
 	}
 
-	protected abstract void _resize(Resize resize, File src, File dest) throws ImageReadWriteException;
+	protected abstract void doResize(Resize resize, File src, File dest) throws ImageReadWriteException;
 
-	protected abstract ImageInfo _read(File file) throws ImageReadWriteException;
+	protected abstract ImageInfo doRead(File file) throws ImageReadWriteException;
 
-	protected abstract void _getGifCover(File gif, File dest) throws ImageReadWriteException;
+	protected abstract void doGetGifCover(File gif, File dest) throws ImageReadWriteException;
 
-	protected abstract void _format(File src, File dest) throws ImageReadWriteException;
+	protected abstract void doFormat(File src, File dest) throws ImageReadWriteException;
 
 	public abstract boolean supportFormat(String extension);
 

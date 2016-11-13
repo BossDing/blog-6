@@ -27,7 +27,7 @@ public class ImportSuccess {
 
 	private int index;
 	@JsonSerialize(using = MessageListSerializer.class)
-	private List<Message> warnings = new ArrayList<Message>();
+	private List<Message> warnings = new ArrayList<>();
 
 	public int getIndex() {
 		return index;

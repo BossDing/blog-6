@@ -112,7 +112,7 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	protected final class Attributes {
-		private Map<String, String> attMap = new HashMap<String, String>();
+		private Map<String, String> attMap = new HashMap<>();
 
 		public String get(String key) {
 			return attMap.get(key.toLowerCase());

@@ -34,7 +34,7 @@ public class ExpandedLockProvider implements InitializingBean {
 	private static final int MAX_TYPE_LENGTH = 20;
 	private static final int MAX_NAME_LENGTH = 20;
 
-	private List<Lock> expandedLocks = new ArrayList<Lock>();
+	private List<Lock> expandedLocks = new ArrayList<>();
 
 	private Map<String, List<Lock>> typesMap = new LinkedHashMap<>();
 	private Map<String, Lock> idsMap = new LinkedHashMap<>();

@@ -22,8 +22,8 @@ public class TplRenderException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private TplRenderErrorDescription renderErrorDescription;
-	private Throwable original;
+	private final TplRenderErrorDescription renderErrorDescription;
+	private final Throwable original;
 
 	public TplRenderException(TplRenderErrorDescription description, Throwable original) {
 		this.renderErrorDescription = description;

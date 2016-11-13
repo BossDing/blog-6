@@ -25,7 +25,7 @@ public class ImportReq {
 	private boolean insertNotExistsFragment;
 	private boolean updateExistsFragment;
 	private Space space;
-	private List<Integer> ids = new ArrayList<Integer>();
+	private List<Integer> ids = new ArrayList<>();
 
 	public boolean isInsertNotExistsFragment() {
 		return insertNotExistsFragment;

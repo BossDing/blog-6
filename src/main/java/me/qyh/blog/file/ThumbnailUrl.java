@@ -15,8 +15,14 @@
  */
 package me.qyh.blog.file;
 
-public class ThumbnailUrl {
+import java.io.Serializable;
 
+public class ThumbnailUrl implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String small;
 	private String middle;
 	private String large;

@@ -79,7 +79,7 @@ public class IndexController {
 		if (pjax) {
 			Page page = new Page();
 			page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), null));
-			Map<String, Fragment> frMap = new HashMap<String, Fragment>();
+			Map<String, Fragment> frMap = new HashMap<>();
 			frMap.put(fr.getName(), fr);
 			RenderedPage rp = new RenderedPage(page, result == null ? Collections.emptyList() : Arrays.asList(result),
 					frMap);
@@ -103,7 +103,7 @@ public class IndexController {
 			return new JsonResult(true);
 		Page page = new Page();
 		page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), allRequestParams));
-		Map<String, Fragment> frMap = new HashMap<String, Fragment>();
+		Map<String, Fragment> frMap = new HashMap<>();
 		frMap.put(fr.getName(), fr);
 		RenderedPage rp = new RenderedPage(page, Collections.emptyList(), frMap);
 		try {
