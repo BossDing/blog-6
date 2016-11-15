@@ -21,11 +21,28 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+/**
+ * 锁辅助类
+ * 
+ * @author Administrator
+ *
+ */
 public final class LockHelper {
 
 	private static final String LOCKKEY_SESSION_KEY = "lockKeys";
 	public static final String LAST_LOCK_SESSION_KEY = "lastLockResource";
 
+	private LockHelper() {
+
+	}
+
+	/**
+	 * 从请求中获取访问失败的锁资源对象
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @return 访问失败的锁资源对象，可能为null
+	 */
 	public static LockBean getLockBean(HttpServletRequest request) {
 		LockBean lockBean = null;
 		HttpSession session = request.getSession(false);
@@ -35,12 +52,26 @@ public final class LockHelper {
 		return lockBean;
 	}
 
+	/**
+	 * 从请求中获取访问失败的锁资源对象
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @return 如果为null，将会抛出MissLockException
+	 */
 	public static LockBean getRequiredLockBean(HttpServletRequest request) {
 		LockBean lockBean = getLockBean(request);
 		checkLockBean(lockBean);
 		return lockBean;
 	}
 
+	/**
+	 * 从请求中获取中获取资源id和钥匙集合
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @return 资源id和钥匙的集合，可能为null
+	 */
 	@SuppressWarnings("unchecked")
 	public static Map<String, LockKey> getKeysMap(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
@@ -50,8 +81,18 @@ public final class LockHelper {
 		return (Map<String, LockKey>) session.getAttribute(LOCKKEY_SESSION_KEY);
 	}
 
+	/**
+	 * 在session中为对应锁增加钥匙
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @param key
+	 *            用户提供的钥匙
+	 * @param resourceId
+	 *            资源Id
+	 */
 	public static void addKey(HttpServletRequest request, LockKey key, String resourceId) {
-		Map<String, LockKey> keysMap = getKeysMap(request);
+		HashMap<String, LockKey> keysMap = (HashMap<String, LockKey>) getKeysMap(request);
 		if (keysMap == null) {
 			keysMap = new HashMap<>();
 		}
@@ -59,10 +100,24 @@ public final class LockHelper {
 		request.getSession().setAttribute(LOCKKEY_SESSION_KEY, keysMap);
 	}
 
+	/**
+	 * 在session中存储解锁失败后的锁对象
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @param lockBean
+	 *            解锁失败后的所对象
+	 */
 	public static void storeLockBean(HttpServletRequest request, LockBean lockBean) {
 		request.getSession().setAttribute(LAST_LOCK_SESSION_KEY, lockBean);
 	}
 
+	/**
+	 * 清除解锁失败后的锁对象
+	 * 
+	 * @param request
+	 *            当前请求
+	 */
 	public static void clearLockBean(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
 		if (session != null) {
@@ -70,6 +125,12 @@ public final class LockHelper {
 		}
 	}
 
+	/**
+	 * 检查LockBean是否存在，如果不存在将会抛出MissLockException
+	 * 
+	 * @param request
+	 *            当前请求
+	 */
 	public static void checkLockBean(HttpServletRequest request) {
 		getRequiredLockBean(request);
 	}

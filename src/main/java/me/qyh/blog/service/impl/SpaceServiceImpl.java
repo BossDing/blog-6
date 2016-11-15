@@ -77,7 +77,7 @@ public class SpaceServiceImpl implements SpaceService {
 
 	@Override
 	@ArticleIndexRebuild
-	public Space updateConfig(Integer spaceId, SpaceConfig config) throws LogicException {
+	public void updateConfig(Integer spaceId, SpaceConfig config) throws LogicException {
 		Space db = spaceDao.selectById(spaceId);
 		if (db == null)
 			throw new LogicException("space.notExists", "空间不存在");
@@ -96,12 +96,11 @@ public class SpaceServiceImpl implements SpaceService {
 		db.setConfig(config);
 		spaceDao.update(db);
 		spaceCache.evit(db);
-		return db;
 	}
 
 	@Override
 	@ArticleIndexRebuild
-	public Space deleteConfig(Integer spaceId) throws LogicException {
+	public void deleteConfig(Integer spaceId) throws LogicException {
 		Space db = spaceDao.selectById(spaceId);
 		if (db == null)
 			throw new LogicException("space.notExists", "空间不存在");
@@ -115,7 +114,6 @@ public class SpaceServiceImpl implements SpaceService {
 
 			spaceCache.evit(db);
 		}
-		return db;
 	}
 
 	@Override

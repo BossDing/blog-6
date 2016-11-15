@@ -23,13 +23,19 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface CommentService {
 
 	/**
 	 * 插入评论
 	 * 
 	 * @param comment
-	 * @return
+	 *            待插入的评论
+	 * @return 插入后的评论
 	 * @throws LogicException
 	 */
 	Comment insertComment(Comment comment) throws LogicException;
@@ -38,6 +44,7 @@ public interface CommentService {
 	 * 删除某条评论和该评论的所有回复
 	 * 
 	 * @param id
+	 *            评论id
 	 * @throws LogicException
 	 */
 	void deleteComment(Integer id) throws LogicException;
@@ -46,7 +53,8 @@ public interface CommentService {
 	 * 分页查询评论
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return 分页评论
 	 */
 	PageResult<Comment> queryComment(CommentQueryParam param);
 
@@ -57,7 +65,7 @@ public interface CommentService {
 	 * <strong>只会查询回复我的评论和回复文章的评论，如果社交账号被标记为admin，那么它作出的任何回复都不会被查询出来</strong>
 	 * </p>
 	 * 
-	 * @return
+	 * @return 最后几条回复我的评论
 	 */
 	List<Comment> queryLastComments(Space space, int limit);
 
@@ -84,8 +92,11 @@ public interface CommentService {
 	/**
 	 * 查询对话
 	 * 
+	 * @param articleId
+	 *            文章id
 	 * @param id
-	 * @return
+	 *            评论id
+	 * @return 开始评论到当前评论集合
 	 * @throws LogicException
 	 */
 	List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException;

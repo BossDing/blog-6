@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.file;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,6 +28,13 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 
+/**
+ * 默认文件服务
+ * 
+ * @author Administrator
+ *
+ * @param <T>
+ */
 public class DefaultFileServer<T extends FileStore> implements FileServer, InitializingBean {
 
 	private int id;
@@ -37,7 +43,7 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	private Map<Integer, T> storeMap = new HashMap<>();
 
 	@Override
-	public CommonFile store(String key, MultipartFile file) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile file) throws LogicException {
 		return stores.get(0).store(key, file);
 	}
 
@@ -72,10 +78,10 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 
 	@Override
 	public List<FileStore> allStore() {
-		List<FileStore> stores = new ArrayList<>();
+		List<FileStore> results = new ArrayList<>();
 		for (T t : this.stores)
-			stores.add(t);
-		return Collections.unmodifiableList(stores);
+			results.add(t);
+		return Collections.unmodifiableList(results);
 	}
 
 	public void setId(int id) {

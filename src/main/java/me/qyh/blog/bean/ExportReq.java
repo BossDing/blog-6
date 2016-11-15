@@ -17,6 +17,11 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.entity.Space;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class ExportReq {
 
 	private boolean exportExpandedPage;

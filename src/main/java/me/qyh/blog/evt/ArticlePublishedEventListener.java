@@ -22,6 +22,12 @@ import org.springframework.context.ApplicationListener;
 
 import me.qyh.blog.evt.handler.ArticlePublishedHandler;
 
+/**
+ * 文章发布事件监听器
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticlePublishedEventListener implements ApplicationListener<ArticlePublishedEvent> {
 
 	private List<ArticlePublishedHandler> handlers = new ArrayList<>();

@@ -17,8 +17,20 @@ package me.qyh.blog.file.local;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface RequestMatcher {
 
+	/**
+	 * 是否匹配请求
+	 * 
+	 * @param request
+	 *            当前请求
+	 * @return 是否匹配
+	 */
 	boolean match(HttpServletRequest request);
 
 }

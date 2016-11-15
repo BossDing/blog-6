@@ -23,10 +23,23 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.exception.SystemException;
 
+/**
+ * oauth2服务提供器
+ * 
+ * @author Administrator
+ *
+ */
 public class Oauth2Provider {
 
 	private Map<String, Oauth2> oauth2Map = new HashMap<>();
 
+	/**
+	 * 根据id查找对应的oauth2服务商
+	 * 
+	 * @param id
+	 *            oauth2服务商id
+	 * @return 如果不存在返回null
+	 */
 	public Oauth2 getOauth2(String id) {
 		return oauth2Map.get(id);
 	}

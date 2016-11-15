@@ -20,16 +20,53 @@ import java.util.List;
 import me.qyh.blog.oauth2.OauthBind;
 import me.qyh.blog.oauth2.OauthUser;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface OauthBindDao {
 
+	/**
+	 * 插入绑定记录
+	 * 
+	 * @param bind
+	 *            待插入的绑定记录
+	 */
 	void insert(OauthBind bind);
 
+	/**
+	 * 根据id删除绑定记录
+	 * 
+	 * @param id
+	 *            纪录id
+	 */
 	void deleteById(Integer id);
 
+	/**
+	 * 查询所有的绑定纪录
+	 * 
+	 * @return 记录集
+	 */
 	List<OauthBind> selectAll();
 
+	/**
+	 * 根据用户查询绑定记录
+	 * 
+	 * @param user
+	 *            用户
+	 * @return 如果没有绑定，返回null
+	 */
 	OauthBind selectByOauthUser(OauthUser user);
-	
+
+	/**
+	 * 根据id查询绑定纪录
+	 * 
+	 * @param id
+	 *            纪录id
+	 * @return 如果没有，返回null
+	 * 
+	 */
 	OauthBind selectById(Integer id);
 
 }

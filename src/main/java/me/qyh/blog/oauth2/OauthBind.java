@@ -17,9 +17,17 @@ package me.qyh.blog.oauth2;
 
 import java.sql.Timestamp;
 
-import me.qyh.blog.entity.Id;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class OauthBind extends Id {
+import me.qyh.blog.entity.BaseEntity;
+
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class OauthBind extends BaseEntity {
 
 	/**
 	 * 
@@ -44,4 +52,23 @@ public class OauthBind extends Id {
 		this.bindDate = bindDate;
 	}
 
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		OauthBind rhs = (OauthBind) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
+	}
 }

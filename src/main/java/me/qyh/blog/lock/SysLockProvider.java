@@ -35,6 +35,12 @@ import me.qyh.blog.lock.support.SysLockDao;
 import me.qyh.blog.security.BCrypts;
 import me.qyh.util.UUIDs;
 
+/**
+ * 系统锁管理
+ * 
+ * @author Administrator
+ *
+ */
 public class SysLockProvider {
 
 	@Autowired
@@ -42,31 +48,63 @@ public class SysLockProvider {
 
 	private static final String[] LOCK_TYPES = { SysLockType.PASSWORD.name(), SysLockType.QA.name() };
 
+	/**
+	 * 删除锁
+	 * 
+	 * @param id
+	 *            锁id
+	 */
 	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#id")
-	public void removeLock(String id) throws LogicException {
+	public void removeLock(String id) {
 		sysLockDao.delete(id);
 	}
 
+	/**
+	 * 根据id查找锁
+	 * 
+	 * @param id
+	 *            锁id
+	 * @return 如果不存在返回null
+	 */
 	@Transactional(readOnly = true)
 	@Cacheable(value = "lockCache", key = "'lock-'+#id", unless = "#result == null")
 	public SysLock findLock(String id) {
 		return sysLockDao.selectById(id);
 	}
 
+	/**
+	 * 获取所有的系统锁
+	 * 
+	 * @return 所有的锁
+	 */
 	@Transactional(readOnly = true)
 	public List<SysLock> allLock() {
 		return sysLockDao.selectAll();
 	}
 
+	/**
+	 * 新增系统锁
+	 * 
+	 * @param lock
+	 *            待新增的系统锁
+	 */
 	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-	public void addLock(SysLock lock) throws LogicException {
+	public void addLock(SysLock lock) {
 		lock.setId(UUIDs.uuid());
 		lock.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		encryptPasswordLock(lock);
 		sysLockDao.insert(lock);
 	}
 
+	/**
+	 * 更新系统锁
+	 * 
+	 * @param lock
+	 *            待更新的锁
+	 * @throws LogicException
+	 *             逻辑异常：锁不存在|锁类型不匹配
+	 */
 	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#lock.id")
 	public void updateLock(SysLock lock) throws LogicException {
@@ -84,7 +122,7 @@ public class SysLockProvider {
 	/**
 	 * 获取所有的系统锁类型
 	 * 
-	 * @return
+	 * @return 所有的锁类型
 	 */
 	public String[] getLockTypes() {
 		return LOCK_TYPES;
@@ -94,7 +132,8 @@ public class SysLockProvider {
 	 * 检查目标锁类型是否存在
 	 * 
 	 * @param lockType
-	 * @return
+	 *            锁类型
+	 * @return 存在：true，不存在：false
 	 */
 	public boolean checkLockTypeExists(String lockType) {
 		for (String _lockType : LOCK_TYPES)
@@ -103,6 +142,13 @@ public class SysLockProvider {
 		return false;
 	}
 
+	/**
+	 * 根据锁类型获取默认的模板资源
+	 * 
+	 * @param lockType
+	 *            锁类型
+	 * @return 模板资源
+	 */
 	public Resource getDefaultTemplateResource(String lockType) {
 		return new ClassPathResource("me/qyh/blog/ui/page/LOCK_" + lockType + ".html");
 	}

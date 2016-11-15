@@ -21,12 +21,17 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.InvalidKeyException;
 
+/**
+ * 系统锁
+ * 
+ * @author Administrator
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SysLock extends Lock {
 
@@ -36,14 +41,6 @@ public class SysLock extends Lock {
 	private static final long serialVersionUID = 1L;
 	private SysLockType type;
 	private Timestamp createDate;
-
-	public SysLock() {
-
-	}
-
-	protected SysLock(SysLockType type) {
-		this.type = type;
-	}
 
 	/**
 	 * 锁类型
@@ -56,17 +53,28 @@ public class SysLock extends Lock {
 		QA// 问答锁
 	}
 
+	/**
+	 * default
+	 */
+	public SysLock() {
+		super();
+	}
+
+	protected SysLock(SysLockType type) {
+		this.type = type;
+	}
+
 	public SysLockType getType() {
 		return type;
 	}
 
 	@Override
-	public LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException {
+	public LockKey getKeyFromRequest(HttpServletRequest request) throws LogicException {
 		throw new SystemException("不支持的操作");
 	}
 
 	@Override
-	public void tryOpen(LockKey key) throws ErrorKeyException {
+	public void tryOpen(LockKey key) throws LogicException {
 		throw new SystemException("不支持的操作");
 	}
 

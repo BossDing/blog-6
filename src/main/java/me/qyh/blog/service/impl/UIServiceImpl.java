@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,13 +110,13 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private UICacheRender uiCacheRender;
 
-	private Map<PageTarget, Resource> sysPageDefaultTpls = new HashMap<>();
-	private Map<PageTarget, String> _sysPageDefaultTpls = new HashMap<>();
-	private Map<ErrorCode, Resource> errorPageDefaultTpls = new HashMap<>();
-	private Map<ErrorCode, String> _errorPageDefaultTpls = new HashMap<>();
+	private Map<PageTarget, Resource> sysPageDefaultTpls = new EnumMap<>(PageTarget.class);
+	private Map<PageTarget, String> sysPageDefaultParsedTpls = new EnumMap<>(PageTarget.class);
+	private Map<ErrorCode, Resource> errorPageDefaultTpls = new EnumMap<>(ErrorCode.class);
+	private Map<ErrorCode, String> errorPageDefaultParsedTpls = new EnumMap<>(ErrorCode.class);
 	private Map<String, String> lockPageDefaultTpls = new HashMap<>();
 	private List<DataTagProcessor<?>> processors = new ArrayList<>();
-	
+
 	private final TemplateParser templateParser = new TemplateParser();
 
 	private final DataQuery previewDataQuery = new DataQuery() {
@@ -129,6 +130,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	};
 
+	private static final Message SPACE_NOT_EXISTS = new Message("space.notExists", "空间不存在");
+	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
+
 	/**
 	 * 系统默认片段
 	 */
@@ -137,10 +141,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
-		UserFragment db = null;
+		if (space != null && spaceCache.getSpace(space.getId()) == null)
+			throw new LogicException(SPACE_NOT_EXISTS);
+		UserFragment db;
 		if (userFragment.isGlobal()) {
 			db = userFragmentDao.selectGlobalByName(userFragment.getName());
 		} else {
@@ -172,14 +175,13 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
+		if (space != null && spaceCache.getSpace(space.getId()) == null)
+			throw new LogicException(SPACE_NOT_EXISTS);
 		UserFragment old = userFragmentDao.selectById(userFragment.getId());
 		if (old == null) {
 			throw new LogicException("fragment.user.notExists", "挂件不存在");
 		}
-		UserFragment db = null;
+		UserFragment db;
 		// 查找当前数据库是否存在同名
 		if (userFragment.isGlobal()) {
 			db = userFragmentDao.selectGlobalByName(userFragment.getName());
@@ -236,7 +238,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void deleteUserPage(Integer id) throws LogicException {
 		UserPage db = userPageDao.selectById(id);
 		if (db == null) {
-			throw new LogicException("page.user.notExists", "自定义页面不存在");
+			throw new LogicException(USER_PAGE_NOT_EXISTS);
 		}
 		userPageDao.deleteById(id);
 		uiCacheRender.evit(db.getTemplateName());
@@ -248,7 +250,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		SysPage sysPage = sysPageDao.selectBySpaceAndPageTarget(space, target);
 		if (sysPage == null) {
 			sysPage = new SysPage(space, target);
-			sysPage.setTpl(_sysPageDefaultTpls.get(target));
+			sysPage.setTpl(sysPageDefaultParsedTpls.get(target));
 		}
 		sysPage.setSpace(space);
 		return sysPage;
@@ -273,7 +275,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public RenderedPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
 		Space db = spaceCache.getSpace(space.getId());
 		if (db == null) {
-			throw new LogicException("space.notExists", "空间不存在");
+			throw new LogicException(SPACE_NOT_EXISTS);
 		}
 		return uiCacheRender.renderPreview(new SysPageLoader(target, db));
 	}
@@ -322,7 +324,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (update) {
 			UserPage db = userPageDao.selectById(userPage.getId());
 			if (db == null) {
-				throw new LogicException("page.user.notExists", "自定义页面不存在");
+				throw new LogicException(USER_PAGE_NOT_EXISTS);
 			}
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(db.getSpace(), alias);
@@ -410,7 +412,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			throw new LogicException("page.expanded.notExists", "拓展页面不存在");
 		}
 		ExpandedPage db = expandedPageDao.selectById(page.getId());
-		boolean update = (db != null);
+		boolean update = db != null;
 		if (update) {
 			page.setId(db.getId());
 			expandedPageDao.update(page);
@@ -498,7 +500,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(space, code);
 		if (db == null) {
 			db = new ErrorPage(space, code);
-			db.setTpl(_errorPageDefaultTpls.get(code));
+			db.setTpl(errorPageDefaultParsedTpls.get(code));
 		}
 		return db;
 	}
@@ -515,7 +517,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		Space space = req.getSpace();
 		final Space sp = space == null ? null : spaceCache.getSpace(space.getId());
 		if (space != null && sp == null)
-			throw new LogicException("space.notExists", "空间不存在");
+			throw new LogicException(SPACE_NOT_EXISTS);
 		List<ExportPage> pages = new ArrayList<ExportPage>();
 		// 系统页面
 		for (PageTarget target : PageTarget.values()) {
@@ -583,7 +585,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (space != null) {
 			space = spaceCache.getSpace(space.getId());
 			if (space == null)
-				throw new LogicException("space.notExists", "空间不存在");
+				throw new LogicException(SPACE_NOT_EXISTS);
 		}
 		ImportResult result = new ImportResult();
 		for (ImportPageWrapper ipw : wrappers) {
@@ -758,7 +760,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (Validators.isEmptyOrNull(tpl, true)) {
 				throw new SystemException("系统页面：" + target + "模板不能为空");
 			}
-			_sysPageDefaultTpls.put(target, tpl);
+			sysPageDefaultParsedTpls.put(target, tpl);
 		}
 		for (ErrorCode code : ErrorCode.values()) {
 			Resource resource = errorPageDefaultTpls.get(code);
@@ -771,7 +773,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (Validators.isEmptyOrNull(tpl, true)) {
 				throw new SystemException("错误页面：" + code + "模板不能为空");
 			}
-			_errorPageDefaultTpls.put(code, tpl);
+			errorPageDefaultParsedTpls.put(code, tpl);
 		}
 		for (String lockType : lockManager.allTypes()) {
 			Resource resource = lockManager.getDefaultTemplateResource(lockType);
@@ -823,7 +825,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (space != null) {
 			space = spaceCache.getSpace(space.getId());
 			if (space == null)
-				throw new LogicException("space.notExists", "空间不存在");
+				throw new LogicException(SPACE_NOT_EXISTS);
 			page.setSpace(space);
 		}
 	}
@@ -1007,7 +1009,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		public Page loadFromDb() throws LogicException {
 			UserPage db = userPageDao.selectBySpaceAndAlias(space, alias);
 			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace())) {
-				throw new LogicException("page.user.notExists", "自定义页面不存在");
+				throw new LogicException(USER_PAGE_NOT_EXISTS);
 			}
 			return db;
 		}

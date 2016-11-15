@@ -47,6 +47,12 @@ import me.qyh.blog.service.impl.Markdown2Html;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 
+/**
+ * 、 文章管理控制器
+ * 
+ * @author Administrator
+ *
+ */
 @Controller
 @RequestMapping("mgr/article")
 public class ArticleMgrController extends BaseMgrController {

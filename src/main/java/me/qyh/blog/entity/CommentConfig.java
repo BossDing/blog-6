@@ -17,12 +17,20 @@ package me.qyh.blog.entity;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
 
-public class CommentConfig extends Id {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class CommentConfig extends BaseEntity {
 	/**
 	 * 
 	 */
@@ -36,6 +44,12 @@ public class CommentConfig extends Id {
 	private Boolean check;// 审核
 	private Integer pageSize;// 每页显示数量
 
+	/**
+	 * 展现方式
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum CommentMode {
 		LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
 
@@ -128,5 +142,25 @@ public class CommentConfig extends Id {
 		return "CommentConfig [allowHtml=" + allowHtml + ", allowComment=" + allowComment + ", asc=" + asc
 				+ ", commentMode=" + commentMode + ", limitCount=" + limitCount + ", limitSec=" + limitSec + ", check="
 				+ check + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		CommentConfig rhs = (CommentConfig) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

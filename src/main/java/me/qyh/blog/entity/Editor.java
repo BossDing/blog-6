@@ -15,6 +15,11 @@
  */
 package me.qyh.blog.entity;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public enum Editor {
 
 	MD, // MARKDOWN

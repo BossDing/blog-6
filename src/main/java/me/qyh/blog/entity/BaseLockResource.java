@@ -17,13 +17,34 @@ package me.qyh.blog.entity;
 
 import me.qyh.blog.lock.LockResource;
 
-public abstract class BaseLockResource extends Id implements LockResource {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public abstract class BaseLockResource extends BaseEntity implements LockResource {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
 	private String lockId;
+
+	/**
+	 * default
+	 */
+	public BaseLockResource() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param id
+	 *            资源id
+	 */
+	public BaseLockResource(Integer id) {
+		super(id);
+	}
 
 	@Override
 	public String getResourceId() {
@@ -39,16 +60,12 @@ public abstract class BaseLockResource extends Id implements LockResource {
 		this.lockId = lockId;
 	}
 
+	/**
+	 * 是否受到锁保护
+	 * 
+	 * @return
+	 */
 	public boolean hasLock() {
-		return (lockId != null);
+		return lockId != null;
 	}
-
-	public BaseLockResource() {
-		super();
-	}
-
-	public BaseLockResource(Integer id) {
-		super(id);
-	}
-
 }

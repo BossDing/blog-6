@@ -19,16 +19,51 @@ import java.util.List;
 
 import me.qyh.blog.ui.page.ExpandedPage;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface ExpandedPageDao {
 
+	/**
+	 * 根据id查询拓展页面
+	 * 
+	 * @param id
+	 *            拓展页面id
+	 * @return 如果不存在，返回null
+	 */
 	ExpandedPage selectById(Integer id);
 
+	/**
+	 * 插入拓展页面模板
+	 * 
+	 * @param page
+	 *            待插入的拓展页面
+	 */
 	void insert(ExpandedPage page);
 
+	/**
+	 * 更新拓展页面
+	 * 
+	 * @param page
+	 *            待更新的拓展页面
+	 */
 	void update(ExpandedPage page);
-	
+
+	/**
+	 * 查询所有的拓展页面
+	 * 
+	 * @return
+	 */
 	List<ExpandedPage> selectAll();
-	
+
+	/**
+	 * 根据id删除拓展页面
+	 * 
+	 * @param id
+	 *            页面id
+	 */
 	void deleteById(Integer id);
 
 }

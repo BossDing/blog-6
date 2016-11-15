@@ -1,19 +1,4 @@
 /*
- * Copyright 2016 qyh.me
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/*
  * Copyright 2004, 2005, 2006 Acegi Technology Pty Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,9 +29,23 @@ import javax.servlet.http.HttpServletRequest;
  * @author Ben Alex
  */
 public final class UrlUtils {
+
+	/**
+	 * private
+	 */
+	private UrlUtils() {
+		super();
+	}
 	// ~ Methods
 	// ========================================================================================================
 
+	/**
+	 * 获取请求的完整链接
+	 * 
+	 * @param r
+	 *            当前请求
+	 * @return 完整的链接
+	 */
 	public static String buildFullRequestUrl(HttpServletRequest r) {
 		return buildFullRequestUrl(r.getScheme(), r.getServerName(), r.getServerPort(), r.getRequestURI(),
 				r.getQueryString());
@@ -73,10 +72,8 @@ public final class UrlUtils {
 			if (serverPort != 80) {
 				url.append(":").append(serverPort);
 			}
-		} else if ("https".equals(scheme)) {
-			if (serverPort != 443) {
-				url.append(":").append(serverPort);
-			}
+		} else if ("https".equals(scheme) && (serverPort != 443)) {
+			url.append(":").append(serverPort);
 		}
 
 		// Use the requestURI as it is encoded (RFC 3986) and hence suitable for

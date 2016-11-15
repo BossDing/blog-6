@@ -17,12 +17,35 @@ package me.qyh.blog.file;
 
 import java.util.List;
 
+/**
+ * 文件服务管理器
+ * 
+ * @author Administrator
+ *
+ */
 public interface FileManager {
 
+	/**
+	 * 获取所有的文件服务
+	 * 
+	 * @return
+	 */
 	List<FileServer> getAllServers();
 
+	/**
+	 * 根据id查询文件服务
+	 * 
+	 * @param id
+	 *            服务id
+	 * @return 如果不存在，返回null
+	 */
 	FileServer getFileServer(int id);
 
+	/**
+	 * 获取文件服务
+	 * 
+	 * @return 如果没有任何文件服务，返回null
+	 */
 	FileServer getFileServer();
 
 }

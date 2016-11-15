@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.lock;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,12 +36,19 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.QALock;
 import me.qyh.blog.lock.support.SysLock;
 import me.qyh.util.Jsons;
 import me.qyh.util.Validators;
 
+/**
+ * 锁属性赋值器
+ * 
+ * @author Administrator
+ *
+ */
 public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 
 	private SysLockValidator validator = new SysLockValidator();
@@ -77,7 +85,7 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 		return lock;
 	}
 
-	private SysLock getLockFromRequest(HttpServletRequest request) throws Exception {
+	private SysLock getLockFromRequest(HttpServletRequest request) throws IOException {
 		InputStream is = request.getInputStream();
 		ObjectReader reader = Jsons.reader();
 		JsonParser jp = reader.getFactory().createParser(is);
@@ -85,14 +93,9 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 		JsonNode typeNode = node.get("type");
 		if (typeNode != null && typeNode.textValue() != null) {
 			String type = typeNode.textValue();
-			if (type != null) {
-				switch (type) {
-				case "PASSWORD":
-					return reader.treeToValue(node, PasswordLock.class);
-				case "QA":
-					return reader.treeToValue(node, QALock.class);
-				}
-			}
+			if (type != null)
+				return "PASSWORD".equals(type) ? reader.treeToValue(node, PasswordLock.class)
+						: reader.treeToValue(node, QALock.class);
 		}
 		return null;
 	}
@@ -125,45 +128,56 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 			switch (lock.getType()) {
 			case PASSWORD:
 				PasswordLock plock = (PasswordLock) lock;
-				String password = plock.getPassword();
-				if (Validators.isEmptyOrNull(password, true)) {
-					errors.reject("lock.pwd.empty", "锁的密码不能为空");
-					return;
-				}
-				if (password.length() > MAX_PASSWORD_LENGTH) {
-					errors.reject("lock.pwd.toolong", "锁的密码不能超过" + MAX_PASSWORD_LENGTH + "个字符");
-					return;
-				}
+				validPasswordLock(plock, errors);
 				break;
 			case QA:
 				QALock qaLock = (QALock) lock;
-				String question = qaLock.getQuestion();
-				if (Validators.isEmptyOrNull(question, true)) {
-					errors.reject("lock.question.empty", "问题不能为空");
-					return;
-				}
-				if (question.length() > MAX_QUESTION_LENGTH) {
-					errors.reject("lock.question.toolong", "问题不能超过" + MAX_QUESTION_LENGTH + "个字符");
-					return;
-				}
-
-				String answers = qaLock.getAnswers();
-				if (answers == null || answers.isEmpty()) {
-					errors.reject("lock.answers.empty", "答案不能为空");
-					return;
-				}
-				if (answers.length() > MAX_ANSWERS_LENGTH) {
-					errors.reject("lock.answers.toolong", "答案不能超过" + MAX_ANSWERS_LENGTH + "个字符");
-					return;
-				}
-
-				String[] _answers = answers.split(",");
-				if (_answers.length > MAX_ANSWERS_SIZE) {
-					errors.reject("lock.answers.oversize", "答案不能超过" + MAX_ANSWERS_SIZE + "个");
-					return;
-				}
+				validQALock(qaLock, errors);
+				break;
+			default:
+				throw new SystemException("无法处理的锁类型：" + lock.getLockType());
 			}
 		}
 
+		private void validPasswordLock(PasswordLock plock, Errors errors) {
+			String password = plock.getPassword();
+			if (Validators.isEmptyOrNull(password, true)) {
+				errors.reject("lock.pwd.empty", "锁的密码不能为空");
+				return;
+			}
+			if (password.length() > MAX_PASSWORD_LENGTH) {
+				errors.reject("lock.pwd.toolong", "锁的密码不能超过" + MAX_PASSWORD_LENGTH + "个字符");
+				return;
+			}
+		}
+
+		private void validQALock(QALock qaLock, Errors errors) {
+			String question = qaLock.getQuestion();
+			if (Validators.isEmptyOrNull(question, true)) {
+				errors.reject("lock.question.empty", "问题不能为空");
+				return;
+			}
+			if (question.length() > MAX_QUESTION_LENGTH) {
+				errors.reject("lock.question.toolong", "问题不能超过" + MAX_QUESTION_LENGTH + "个字符");
+				return;
+			}
+
+			String answers = qaLock.getAnswers();
+			if (answers == null || answers.isEmpty()) {
+				errors.reject("lock.answers.empty", "答案不能为空");
+				return;
+			}
+			if (answers.length() > MAX_ANSWERS_LENGTH) {
+				errors.reject("lock.answers.toolong", "答案不能超过" + MAX_ANSWERS_LENGTH + "个字符");
+				return;
+			}
+
+			String[] answerArray = answers.split(",");
+			if (answerArray.length > MAX_ANSWERS_SIZE) {
+				errors.reject("lock.answers.oversize", "答案不能超过" + MAX_ANSWERS_SIZE + "个");
+				return;
+			}
+		}
 	}
+
 }

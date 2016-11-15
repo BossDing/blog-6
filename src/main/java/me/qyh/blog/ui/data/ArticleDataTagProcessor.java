@@ -35,7 +35,7 @@ import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.Params;
 
 /**
- * 文章详情数据
+ * 文章详情数据数据器
  * 
  * @author Administrator
  *

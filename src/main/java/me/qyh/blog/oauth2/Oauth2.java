@@ -15,31 +15,42 @@
  */
 package me.qyh.blog.oauth2;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface Oauth2 {
 
 	/**
-	 * 用户授权路径
+	 * 获取授权路径
+	 * 
+	 * @param state
+	 *            随机码
+	 * @return 授权路径
 	 */
 	String getAuthorizeUrl(String state);
 
 	/**
 	 * 服务id
 	 * 
-	 * @return
+	 * @return 服务id
 	 */
 	String getId();
 
 	/**
 	 * 服务名称
 	 * 
-	 * @return
+	 * @return 服务名
 	 */
 	String getName();
 
 	/**
 	 * 通过凭证查询用户信息
 	 * 
-	 * @return
+	 * @param code
+	 *            凭证
+	 * @return 用户信息
 	 */
 	UserInfo getUserInfo(String code);
 

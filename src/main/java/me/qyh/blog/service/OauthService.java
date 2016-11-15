@@ -23,19 +23,25 @@ import me.qyh.blog.oauth2.OauthUser;
 import me.qyh.blog.pageparam.OauthUserQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface OauthService {
 
 	/**
 	 * 插入|更新 账号
 	 * 
 	 * @param user
+	 *            oauth用户信息
 	 */
 	void insertOrUpdate(OauthUser user);
 
 	/**
 	 * 查询所有的绑定账号
 	 * 
-	 * @return
+	 * @return 已绑定账号的集合
 	 */
 	List<OauthBind> queryAllBind();
 
@@ -43,8 +49,10 @@ public interface OauthService {
 	 * 查询绑定账号
 	 * 
 	 * @param user
-	 * @return
+	 *            oauth用户
+	 * @return 绑定信息，如果没有绑定，返回null
 	 * @throws LogicException
+	 *             查询过程中发生逻辑异常
 	 */
 	OauthBind queryBind(OauthUser user) throws LogicException;
 
@@ -52,15 +60,19 @@ public interface OauthService {
 	 * 绑定用户
 	 * 
 	 * @param oauthUser
+	 *            待绑定的用户
 	 * @throws LogicException
+	 *             绑定过程中发生逻辑异常
 	 */
 	void bind(OauthUser oauthUser) throws LogicException;
 
 	/**
-	 * 接触绑定
+	 * 解除绑定
 	 * 
 	 * @param id
+	 *            绑定纪录的id
 	 * @throws LogicException
+	 *             解除过程中发生逻辑异常
 	 */
 	void unbind(Integer id) throws LogicException;
 
@@ -68,7 +80,8 @@ public interface OauthService {
 	 * 分页查询用户
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return oauth用户列表
 	 */
 	PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param);
 
@@ -76,7 +89,9 @@ public interface OauthService {
 	 * 禁用用户
 	 * 
 	 * @param id
+	 *            用户id
 	 * @throws LogicException
+	 *             禁用过程中发生的逻辑异常
 	 */
 	void disableUser(Integer id) throws LogicException;
 
@@ -84,7 +99,9 @@ public interface OauthService {
 	 * 解除禁用
 	 * 
 	 * @param id
+	 *            用户id
 	 * @throws LogicException
+	 *             解禁过程中发生的逻辑异常
 	 */
 	void enableUser(Integer id) throws LogicException;
 

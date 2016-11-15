@@ -21,6 +21,11 @@ import java.util.List;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.pageparam.PageResult;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class BlogFilePageResult {
 
 	private List<BlogFile> paths = new ArrayList<>();

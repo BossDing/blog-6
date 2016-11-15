@@ -43,6 +43,12 @@ import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.UserDao;
 
+/**
+ * 邮件发送服务
+ * 
+ * @author Administrator
+ *
+ */
 public class MailSender implements InitializingBean {
 
 	@Autowired
@@ -68,10 +74,24 @@ public class MailSender implements InitializingBean {
 
 	private TimeCount timeCount;
 
+	/**
+	 * 发送邮件
+	 * 
+	 * @param mb
+	 *            邮件对象
+	 */
 	public void send(MessageBean mb) {
 		doSend(mb, true, null);
 	}
 
+	/**
+	 * 发送邮件
+	 * 
+	 * @param mb
+	 *            邮件对象
+	 * @param callback
+	 *            发送成功|失败回调
+	 */
 	public void send(MessageBean mb, MailSendCallBack callback) {
 		doSend(mb, true, callback);
 	}
@@ -84,7 +104,7 @@ public class MailSender implements InitializingBean {
 			timeCount.count++;
 			if (timeCount.exceed(current)) {
 				if (pull) {
-					logger.debug("在" + (current - timeCount.start) + "毫秒内，发送邮件数量达到了" + limit.getLimit() + "封，放入队列中");
+					logger.debug("在" + (current - timeCount.start) + "毫秒内，发送邮件数量达到了" + limit.getCount() + "封，放入队列中");
 					queue.add(mb);
 				}
 				return false;
@@ -123,17 +143,17 @@ public class MailSender implements InitializingBean {
 		private long start;
 		private int count;
 
-		public TimeCount(long start, int count) {
+		private TimeCount(long start, int count) {
 			super();
 			this.start = start;
 			this.count = count;
 		}
 
-		public boolean exceed(long current) {
-			return (limit.toMill() + start) >= current && (count > limit.getLimit());
+		private boolean exceed(long current) {
+			return (limit.toMill() + start) >= current && (count > limit.getCount());
 		}
 
-		public boolean reset(long current) {
+		private boolean reset(long current) {
 			return (limit.toMill() + start) < current;
 		}
 	}
@@ -161,6 +181,9 @@ public class MailSender implements InitializingBean {
 		}, 1000);
 	}
 
+	/**
+	 * 关闭
+	 */
 	public void shutdown() {
 		if (!queue.isEmpty()) {
 			logger.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
@@ -174,16 +197,30 @@ public class MailSender implements InitializingBean {
 		}
 	}
 
+	/**
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public static final class MessageBean implements Serializable {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 1L;
 
-		private String subject;
-		private boolean html = true;
-		private String text;
+		private final String subject;
+		private final boolean html;
+		private final String text;
 
+		/**
+		 * 
+		 * @param subject
+		 *            主题
+		 * @param html
+		 *            是否是html
+		 * @param text
+		 *            内容
+		 */
 		public MessageBean(String subject, boolean html, String text) {
 			super();
 			this.subject = subject;

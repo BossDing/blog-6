@@ -34,6 +34,14 @@ public abstract class DataTagProcessor<T> {
 	private String name;// 数据名，唯一
 	private String dataName;// 默认数据绑定名，页面唯一
 
+	/**
+	 * 构造器
+	 * 
+	 * @param name
+	 *            数据处理器名称
+	 * @param dataName
+	 *            页面dataName
+	 */
 	public DataTagProcessor(String name, String dataName) {
 		this.name = name;
 		this.dataName = dataName;

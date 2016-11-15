@@ -15,9 +15,17 @@
  */
 package me.qyh.blog.file;
 
-import me.qyh.blog.entity.Id;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class CommonFile extends Id {
+import me.qyh.blog.entity.BaseEntity;
+
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class CommonFile extends BaseEntity {
 
 	/**
 	 * 
@@ -32,7 +40,11 @@ public class CommonFile extends Id {
 	private Integer width;// 图片等文件
 	private Integer height;// 图片等文件
 
+	/**
+	 * default
+	 */
 	public CommonFile() {
+		super();
 	}
 
 	public long getSize() {
@@ -89,5 +101,25 @@ public class CommonFile extends Id {
 
 	public void setServer(int server) {
 		this.server = server;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		CommonFile rhs = (CommonFile) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

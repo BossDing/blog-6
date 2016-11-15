@@ -17,9 +17,17 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import me.qyh.blog.file.CommonFile;
 
-public class BlogFile extends Id {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class BlogFile extends BaseEntity {
 
 	/**
 	 * 
@@ -29,6 +37,12 @@ public class BlogFile extends Id {
 	private Timestamp createDate;
 	private Timestamp lastModifyDate;
 
+	/**
+	 * 文件类型
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum BlogFileType {
 		DIRECTORY, // 文件夹
 		FILE // 文件
@@ -99,8 +113,13 @@ public class BlogFile extends Id {
 		return BlogFileType.FILE.equals(type);
 	}
 
+	/**
+	 * 是否是根节点
+	 * 
+	 * @return
+	 */
 	public boolean isRoot() {
-		return (parent == null);
+		return parent == null;
 	}
 
 	public Timestamp getLastModifyDate() {
@@ -132,5 +151,25 @@ public class BlogFile extends Id {
 
 	public void setPath(String path) {
 		this.path = path;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		BlogFile rhs = (BlogFile) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

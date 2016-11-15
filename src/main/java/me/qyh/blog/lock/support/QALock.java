@@ -19,11 +19,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.InvalidKeyException;
-import me.qyh.blog.lock.ErrorKeyException;
 import me.qyh.blog.message.Message;
 
 /**
@@ -46,11 +45,18 @@ public class QALock extends SysLock {
 	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String answers;
 
+	/**
+	 * default
+	 */
+	public QALock() {
+		super(SysLockType.QA);
+	}
+
 	@Override
-	public LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException {
+	public LockKey getKeyFromRequest(HttpServletRequest request) throws LogicException {
 		final String answer = request.getParameter(ANSWER_PARAMETER);
 		if (answer == null || answer.isEmpty()) {
-			throw new InvalidKeyException(new Message("lock.qa.answer.blank", "请填写问题答案"));
+			throw new LogicException(new Message("lock.qa.answer.blank", "请填写问题答案"));
 		}
 		return new LockKey() {
 
@@ -67,7 +73,7 @@ public class QALock extends SysLock {
 	}
 
 	@Override
-	public void tryOpen(LockKey key) throws ErrorKeyException {
+	public void tryOpen(LockKey key) throws LogicException {
 		if (key != null) {
 			Object data = key.getKey();
 			if (data != null) {
@@ -77,7 +83,7 @@ public class QALock extends SysLock {
 				}
 			}
 		}
-		throw new ErrorKeyException(new Message("lock.qa.unlock.fail", "答案错误"));
+		throw new LogicException(new Message("lock.qa.unlock.fail", "答案错误"));
 	}
 
 	private boolean isCorrectAnswer(String answer) {
@@ -107,9 +113,4 @@ public class QALock extends SysLock {
 	public void setAnswers(String answers) {
 		this.answers = answers;
 	}
-
-	public QALock() {
-		super(SysLockType.QA);
-	}
-
 }

@@ -23,11 +23,32 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageListSerializer;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportSuccess {
 
 	private int index;
 	@JsonSerialize(using = MessageListSerializer.class)
 	private List<Message> warnings = new ArrayList<>();
+
+	/**
+	 * default
+	 */
+	public ImportSuccess() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param index
+	 *            序号
+	 */
+	public ImportSuccess(int index) {
+		this.index = index;
+	}
 
 	public int getIndex() {
 		return index;
@@ -45,14 +66,11 @@ public class ImportSuccess {
 		this.warnings = warnings;
 	}
 
-	public ImportSuccess() {
-
-	}
-
-	public ImportSuccess(int index) {
-		this.index = index;
-	}
-
+	/**
+	 * 添加警告信息
+	 * 
+	 * @param warning
+	 */
 	public void addWarning(Message warning) {
 		this.warnings.add(warning);
 	}

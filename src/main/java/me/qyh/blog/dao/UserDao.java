@@ -17,10 +17,26 @@ package me.qyh.blog.dao;
 
 import me.qyh.blog.entity.User;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface UserDao {
 
+	/**
+	 * 查询管理员
+	 * 
+	 * @return
+	 */
 	public User select();
 
+	/**
+	 * 更新管理员
+	 * 
+	 * @param current
+	 *            待更新的管理员
+	 */
 	public void update(User current);
 
 }

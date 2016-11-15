@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.entity.Article;
@@ -39,15 +41,30 @@ import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
+/**
+ * 文章列表数据处理器
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Article>> {
+
+	private static final Logger logger = LoggerFactory.getLogger(ArticleDataTagProcessor.class);
 
 	@Autowired
 	private ArticleService articleService;
 
 	public static final String PARAMETER_KEY = "articleQueryParam";
-
 	private static final String[] TIME_PATTERNS = new String[] { "yyyy-MM-dd", "yyyy-MM", "yyyy-MM-dd HH:mm:ss" };
 
+	/**
+	 * 构造器
+	 * 
+	 * @param name
+	 *            数据处理器名称
+	 * @param dataName
+	 *            页面dataName
+	 */
 	public ArticlesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
@@ -105,6 +122,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 				param.setBegin(DateUtils.parseDate(beginStr, TIME_PATTERNS));
 				param.setEnd(DateUtils.parseDate(endStr, TIME_PATTERNS));
 			} catch (Exception e) {
+				logger.debug("开始时间和结束时间:[" + beginStr + "," + endStr + "]无法被转化:" + e.getMessage(), e);
 				param.setBegin(null);
 				param.setEnd(null);
 			}
@@ -118,6 +136,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setFrom(ArticleFrom.valueOf(fromStr.toUpperCase()));
 			} catch (Exception e) {
+				logger.debug("文章来源:" + fromStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 
@@ -130,6 +149,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setSort(Sort.valueOf(sortStr.toUpperCase()));
 			} catch (Exception e) {
+				logger.debug("排序方式:" + sortStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 
@@ -138,33 +158,22 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));
 			} catch (Exception e) {
+				logger.debug("当前页码:" + currentPageStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 
 		if (UserContext.get() != null) {
 			String ignoreLevelStr = attributes.get("ignoreLevel");
-			if (ignoreLevelStr != null) {
-				try {
-					param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
-				} catch (Exception e) {
-				}
-			}
+			if (ignoreLevelStr != null)
+				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
 
 			String queryPrivateStr = attributes.get("queryPrivate");
-			if (queryPrivateStr != null) {
-				try {
-					param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
-				} catch (Exception e) {
-				}
-			}
+			if (queryPrivateStr != null)
+				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 
 			String hasLockStr = attributes.get("hasLock");
-			if (hasLockStr != null) {
-				try {
-					param.setHasLock(Boolean.parseBoolean(hasLockStr));
-				} catch (Exception e) {
-				}
-			}
+			if (hasLockStr != null)
+				param.setHasLock(Boolean.parseBoolean(hasLockStr));
 		}
 
 		ArticleQueryParamValidator.validate(param);

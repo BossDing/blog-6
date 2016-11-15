@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.input.JsonHtmlXssSerializer;
 
 /**
@@ -43,21 +44,22 @@ public abstract class Lock implements Serializable {
 	 * 从请求中获取钥匙
 	 * 
 	 * @param request
-	 * @throws LockException
+	 *            当前请求
 	 */
-	public abstract LockKey getKeyFromRequest(HttpServletRequest request) throws InvalidKeyException;
+	public abstract LockKey getKeyFromRequest(HttpServletRequest request) throws LogicException;
 
 	/**
 	 * 开锁
 	 * 
-	 * @return
+	 * @param key
+	 *            钥匙
 	 */
-	public abstract void tryOpen(LockKey key) throws ErrorKeyException;
+	public abstract void tryOpen(LockKey key) throws LogicException;
 
 	/**
 	 * 获取锁类型(用于模板)
 	 * 
-	 * @return
+	 * @return 锁类型
 	 */
 	public abstract String getLockType();
 

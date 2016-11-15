@@ -15,8 +15,21 @@
  */
 package me.qyh.blog.input;
 
+/**
+ * html文本清理
+ * 
+ * @author Administrator
+ *
+ */
 public interface HtmlClean {
 
+	/**
+	 * 清理文本
+	 * 
+	 * @param html
+	 *            待清理的html文本
+	 * @return 清理后的html文本
+	 */
 	String clean(String html);
 
 }

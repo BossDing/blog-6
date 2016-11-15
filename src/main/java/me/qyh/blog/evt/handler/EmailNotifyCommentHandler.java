@@ -102,6 +102,9 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
+	/**
+	 * 系统关闭时序列化待发送列表和待处理列表
+	 */
 	public void shutdown() {
 		if (!toSend.isEmpty()) {
 			try {
@@ -222,12 +225,11 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		OauthUser user = comment.getUser();
 		Comment parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
-		if (UserContext.get() == null) {
-			// 如果评论人不是绑定账户并且直接回复文章
-			// 如果评论人不是绑定账户并且回复了绑定账户
-			if ((!user.getAdmin() && parent == null) || (!user.getAdmin() && (parent.getUser().getAdmin()))) {
-				add(comment);
-			}
+		// 如果评论人不是绑定账户并且直接回复文章
+		// 如果评论人不是绑定账户并且回复了绑定账户
+		if (UserContext.get() == null && (!user.getAdmin() && parent == null)
+				|| (!user.getAdmin() && (parent.getUser().getAdmin()))) {
+			add(comment);
 		}
 	}
 

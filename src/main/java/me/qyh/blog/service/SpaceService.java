@@ -22,13 +22,20 @@ import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface SpaceService {
 
 	/**
 	 * 添加空间
 	 * 
 	 * @param space
+	 *            待添加的空间
 	 * @throws LogicException
+	 *             添加过程中发生逻辑异常
 	 */
 	void addSpace(Space space) throws LogicException;
 
@@ -36,16 +43,20 @@ public interface SpaceService {
 	 * 更新空间
 	 * 
 	 * @param space
+	 *            待更新的空间
+	 * @throws LogicException
+	 *             更新过程中发生逻辑异常
 	 */
 	void updateSpace(Space space) throws LogicException;
 
 	/**
-	 * 根据空间名查询空间
+	 * 根据空间别名查询空间
 	 * 
-	 * @param spaceName
+	 * @param alias
+	 *            空间别名
 	 * @param lockCheck
 	 *            是否进行锁检查
-	 * @return
+	 * @return 空间，如果不存在，返回null
 	 */
 	Space selectSpaceByAlias(String alias, boolean lockCheck);
 
@@ -53,14 +64,42 @@ public interface SpaceService {
 	 * 查询空间
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return 空间列表
 	 */
 	List<Space> querySpace(SpaceQueryParam param);
 
+	/**
+	 * 根据id查询空间
+	 * 
+	 * @param id
+	 *            空间id
+	 * @return 如果不存在，返回null
+	 * 
+	 */
 	Space getSpace(Integer id);
 
-	Space updateConfig(Integer spaceId, SpaceConfig config) throws LogicException;
+	/**
+	 * 更新|插入空间配置
+	 * 
+	 * @param spaceId
+	 *            空间id
+	 * @param config
+	 *            配置
+	 * @throws LogicException
+	 *             更新配置过程中发生逻辑异常
+	 * 
+	 */
+	void updateConfig(Integer spaceId, SpaceConfig config) throws LogicException;
 
-	Space deleteConfig(Integer spaceId) throws LogicException;
+	/**
+	 * 删除空间配置
+	 * 
+	 * @param spaceId
+	 *            空间id
+	 * @throws LogicException
+	 *             删除过程中发生逻辑异常
+	 */
+	void deleteConfig(Integer spaceId) throws LogicException;
 
 }

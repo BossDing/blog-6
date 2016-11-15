@@ -147,9 +147,9 @@ public class SysPageMgrController extends BaseMgrController {
 	 */
 	@RequestMapping(value = "getStyles", method = RequestMethod.GET)
 	@ResponseBody
-	public JsonResult getStyles(Space space, HttpServletRequest request, HttpServletResponse response)
+	public JsonResult getStyles(@RequestParam("id") Integer id, HttpServletRequest request, HttpServletResponse response)
 			throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(space, PageTarget.ARTICLE_DETAIL);
+		RenderedPage page = uiService.renderPreviewPage(new Space(id), PageTarget.ARTICLE_DETAIL);
 		try {
 			String rendered = tplRender.tryRender(page, request, response);
 			Document doc = Jsoup.parse(rendered);

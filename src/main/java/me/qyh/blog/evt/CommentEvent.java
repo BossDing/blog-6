@@ -32,12 +32,19 @@ public class CommentEvent extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private final Comment comment;
+
+	/**
+	 * 
+	 * @param source
+	 *            操作对象
+	 * @param comment
+	 *            评论
+	 */
 	public CommentEvent(Object source, Comment comment) {
 		super(source);
 		this.comment = comment;
 	}
-
-	private Comment comment;
 
 	public Comment getComment() {
 		return comment;

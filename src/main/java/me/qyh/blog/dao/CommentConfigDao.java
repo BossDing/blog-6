@@ -17,12 +17,35 @@ package me.qyh.blog.dao;
 
 import me.qyh.blog.entity.CommentConfig;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface CommentConfigDao {
 
+	/**
+	 * 根据id删除评论配置
+	 * 
+	 * @param id
+	 *            要删除的配置id
+	 */
 	void deleteById(Integer id);
 
+	/**
+	 * 更新
+	 * 
+	 * @param config
+	 *            待更新的配置
+	 */
 	void update(CommentConfig config);
 
+	/**
+	 * 插入
+	 * 
+	 * @param config
+	 *            带插入的配置
+	 */
 	void insert(CommentConfig config);
 
 }

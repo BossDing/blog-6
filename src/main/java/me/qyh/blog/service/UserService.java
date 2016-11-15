@@ -19,13 +19,18 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.web.controller.form.LoginBean;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface UserService {
 
 	/**
 	 * 更新用户
 	 * 
-	 * @param oldPwd
-	 * @param newPwd
+	 * @param user
+	 *            待更新的用户
 	 * @throws LogicException
 	 */
 	void updateUser(User user) throws LogicException;
@@ -33,16 +38,18 @@ public interface UserService {
 	/**
 	 * 登录
 	 * 
-	 * @param username
-	 *            用户名
-	 * @param password
-	 *            密码
+	 * @param loginBean
+	 *            登录信息
 	 * @return 登录成功后的用户
 	 * @throws LogicException
-	 *             登录失败
 	 */
 	User login(LoginBean loginBean) throws LogicException;
 
+	/**
+	 * 查询管理员
+	 * 
+	 * @return 管理员
+	 */
 	User select();
 
 }

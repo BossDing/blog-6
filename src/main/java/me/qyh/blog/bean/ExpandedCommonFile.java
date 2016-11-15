@@ -18,6 +18,11 @@ package me.qyh.blog.bean;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.ThumbnailUrl;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class ExpandedCommonFile extends CommonFile {
 
 	/**

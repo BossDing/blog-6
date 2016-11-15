@@ -74,9 +74,8 @@ public class CookieRememberMe implements RememberMe {
 		String rememberMeCookie = extractRememberMeCookie(request);
 		if (rememberMeCookie != null) {
 			try {
-				if (rememberMeCookie.length() == 0) {
+				if (rememberMeCookie.length() == 0)
 					throw new InvalidCookieException("Cookie值为空");
-				}
 				String[] cookieTokens = decodeCookie(rememberMeCookie);
 				if (cookieTokens != null) {
 					if (cookieTokens.length != 3) {
@@ -110,10 +109,9 @@ public class CookieRememberMe implements RememberMe {
 					throw new InvalidCookieException("自动登录失败");
 				}
 			} catch (InvalidCookieException e) {
-				logger.warn(e.getMessage());
+				logger.warn(e.getMessage(), e);
 				remove(request, response);
 			}
-			// token错误
 		}
 		return null;
 	}

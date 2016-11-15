@@ -17,10 +17,34 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.file.FileServer;
 
+/**
+ * 文件服务描述
+ * 
+ * @author Administrator
+ *
+ */
 public class FileServerBean {
 
 	private int id;
 	private String name;
+
+	/**
+	 * default
+	 */
+	public FileServerBean() {
+		super();
+	}
+
+	/**
+	 * 文件服务描述构造器
+	 * 
+	 * @param server
+	 *            文件服务
+	 */
+	public FileServerBean(FileServer server) {
+		this.id = server.id();
+		this.name = server.name();
+	}
 
 	public int getId() {
 		return id;
@@ -36,14 +60,5 @@ public class FileServerBean {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public FileServerBean() {
-
-	}
-
-	public FileServerBean(FileServer server) {
-		this.id = server.id();
-		this.name = server.name();
 	}
 }

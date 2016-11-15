@@ -42,12 +42,18 @@ import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface UIService {
 
 	/**
-	 * 插入用户自定义挂件
+	 * 插入用户自定义模板片段
 	 * 
 	 * @param userFragment
+	 *            用户自定义模板片段
 	 * @throws LogicException
 	 */
 	void insertUserFragment(UserFragment userFragment) throws LogicException;
@@ -56,15 +62,17 @@ public interface UIService {
 	 * 删除用户自定义挂件
 	 * 
 	 * @param id
+	 *            挂件id
 	 * @throws LogicException
 	 */
 	void deleteUserFragment(Integer id) throws LogicException;
 
 	/**
-	 * 分页查询用户自定义挂件
+	 * 分页查询用户自定义模板片段
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return 模板片段分页
 	 */
 	PageResult<UserFragment> queryUserFragment(UserFragmentQueryParam param);
 
@@ -95,7 +103,8 @@ public interface UIService {
 	/**
 	 * 根据alias查询用户页面
 	 * 
-	 * @param id
+	 * @param alias
+	 *            页面别名
 	 * @return
 	 */
 	UserPage queryUserPage(String alias);
@@ -185,8 +194,10 @@ public interface UIService {
 	/**
 	 * 渲染拓展页面
 	 * 
-	 * @param expandedPage
+	 * @param id
+	 *            拓展页面id
 	 * @param params
+	 *            参数
 	 * @return
 	 * @throws LogicException
 	 */
@@ -203,6 +214,7 @@ public interface UIService {
 	 * 还原用户拓展页面
 	 * 
 	 * @param id
+	 *            页面id
 	 * @throws LogicException
 	 */
 	void deleteExpandedPage(Integer id) throws LogicException;
@@ -236,10 +248,10 @@ public interface UIService {
 	 * 删除错误挂件模板
 	 * 
 	 * @param space
-	 * @param target
+	 * @param errorCode
 	 * @throws LogicException
 	 */
-	void deleteErrorPage(Space space, ErrorCode erroCode) throws LogicException;
+	void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException;
 
 	/**
 	 * 查询错误页面
@@ -266,7 +278,7 @@ public interface UIService {
 	 * <strong>无法导出拓展页面的模板！</strong>
 	 * </p>
 	 * 
-	 * @param space
+	 * @param req
 	 * @return
 	 * @throws LogicException
 	 */
@@ -275,7 +287,7 @@ public interface UIService {
 	/**
 	 * 导入空间下的模板
 	 * 
-	 * @param page
+	 * @param pages
 	 * @param req
 	 * @return 该空间下以前所有的模板
 	 * @throws LogicException

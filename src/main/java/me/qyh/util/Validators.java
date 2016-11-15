@@ -17,31 +17,48 @@ package me.qyh.util;
 
 import java.util.regex.Pattern;
 
+/**
+ * 校验辅助
+ * 
+ * @author Administrator
+ *
+ */
 public final class Validators {
 
-	private static final Pattern IPADDRESS_PATTERN = Pattern
-			.compile("((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
-					+ "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
-					+ "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}" + "|[1-9][0-9]|[0-9]))");
-
+	/**
+	 * private
+	 */
 	private Validators() {
-
+		super();
 	}
 
-	public static boolean validateIp(CharSequence input) {
-		return validate(IPADDRESS_PATTERN, input);
-	}
-
+	/**
+	 * 校验字符串
+	 * 
+	 * @param pattern
+	 *            正则表达式
+	 * @param input
+	 *            字符串
+	 * @return 是否校验通过
+	 */
 	public static boolean validate(Pattern pattern, CharSequence input) {
 		return pattern.matcher(input).matches();
 	}
 
+	/**
+	 * 判断字符串是否为null或空
+	 * 
+	 * @param str
+	 *            字符串
+	 * @param trim
+	 *            是否trim
+	 * @return 如果为null|空 返回true,否则返回false
+	 */
 	public static boolean isEmptyOrNull(String str, boolean trim) {
 		if (str == null) {
 			return true;
 		}
 		return trim ? str.trim().isEmpty() : str.isEmpty();
 	}
-	
 
 }

@@ -22,6 +22,12 @@ import org.springframework.context.ApplicationListener;
 
 import me.qyh.blog.evt.handler.CommentHandler;
 
+/**
+ * 评论监听器 
+ * 
+ * @author Administrator
+ *
+ */
 public class CommentEventListener implements ApplicationListener<CommentEvent> {
 
 	private List<CommentHandler> handlers = new ArrayList<>();

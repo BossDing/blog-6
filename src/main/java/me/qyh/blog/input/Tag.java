@@ -18,6 +18,11 @@ package me.qyh.blog.input;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class Tag {
 
 	private String name;
@@ -39,6 +44,12 @@ public class Tag {
 		this.attributes = attributes;
 	}
 
+	/**
+	 * 添加属性
+	 * 
+	 * @param att
+	 *            属性
+	 */
 	public void addAttribute(Attribute att) {
 		this.attributes.add(att);
 	}

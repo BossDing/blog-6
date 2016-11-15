@@ -27,6 +27,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
+/**
+ * 锁管理器
+ * 
+ * @author Administrator
+ *
+ */
 public class LockManager implements InitializingBean {
 	@Autowired
 	private SysLockProvider sysLockProvider;
@@ -34,11 +40,23 @@ public class LockManager implements InitializingBean {
 
 	private List<String> allTypes = new ArrayList<>();
 
+	/**
+	 * 根据id获取锁
+	 * 
+	 * @param id
+	 *            锁id
+	 * @return 如果不存在返回null
+	 */
 	public Lock findLock(String id) {
 		Lock lock = expandedLockProvider.findLock(id);
 		return lock == null ? sysLockProvider.findLock(id) : lock;
 	}
 
+	/**
+	 * 获取所有的锁
+	 * 
+	 * @return 所有的锁
+	 */
 	public List<Lock> allLock() {
 		Map<String, Lock> idsMap = new LinkedHashMap<String, Lock>();
 		for (Lock lock : expandedLockProvider.allLock())
@@ -49,14 +67,33 @@ public class LockManager implements InitializingBean {
 		return Collections.unmodifiableList(new ArrayList<>(idsMap.values()));
 	}
 
+	/**
+	 * 获取所有的锁类型
+	 * 
+	 * @return
+	 */
 	public List<String> allTypes() {
 		return allTypes;
 	}
 
+	/**
+	 * 检查锁类型是否存在
+	 * 
+	 * @param lockType
+	 *            锁类型
+	 * @return 存在true，不存在false
+	 */
 	public boolean checkLockTypeExists(String lockType) {
 		return expandedLockProvider.checkLockTypeExists(lockType) || sysLockProvider.checkLockTypeExists(lockType);
 	}
 
+	/**
+	 * 根据锁类型获取默认模板
+	 * 
+	 * @param lockType
+	 *            锁类型
+	 * @return 模板资源
+	 */
 	public Resource getDefaultTemplateResource(String lockType) {
 		Resource resource = expandedLockProvider.getDefaultTemplateResource(lockType);
 		return resource == null ? sysLockProvider.getDefaultTemplateResource(lockType) : resource;

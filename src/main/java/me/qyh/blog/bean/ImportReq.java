@@ -20,6 +20,12 @@ import java.util.List;
 
 import me.qyh.blog.entity.Space;
 
+/**
+ * 导入请求
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportReq {
 
 	private boolean insertNotExistsFragment;

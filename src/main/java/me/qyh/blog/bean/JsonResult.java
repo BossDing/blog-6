@@ -34,6 +34,38 @@ public class JsonResult {
 	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;
 
+	/**
+	 * @param success
+	 *            是否成功
+	 * @param data
+	 *            数据
+	 */
+	public JsonResult(boolean success, Object data) {
+		this.success = success;
+		this.data = data;
+	}
+
+	/**
+	 * 
+	 * @param success
+	 *            是否成功
+	 * @param message
+	 *            信息
+	 */
+	public JsonResult(boolean success, Message message) {
+		this.success = success;
+		this.message = message;
+	}
+
+	/**
+	 * 
+	 * @param success
+	 *            是否成功
+	 */
+	public JsonResult(boolean success) {
+		this.success = success;
+	}
+
 	public boolean isSuccess() {
 		return success;
 	}
@@ -48,20 +80,6 @@ public class JsonResult {
 
 	public void setData(Object data) {
 		this.data = data;
-	}
-
-	public JsonResult(boolean success, Object data) {
-		this.success = success;
-		this.data = data;
-	}
-
-	public JsonResult(boolean success, Message message) {
-		this.success = success;
-		this.message = message;
-	}
-
-	public JsonResult(boolean success) {
-		this.success = success;
 	}
 
 	public Message getMessage() {

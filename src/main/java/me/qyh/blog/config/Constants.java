@@ -18,6 +18,12 @@ package me.qyh.blog.config;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 系统常量
+ * 
+ * @author Administrator
+ *
+ */
 public class Constants {
 
 	public static final String USER_SESSION_KEY = "user";

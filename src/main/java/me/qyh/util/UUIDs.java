@@ -17,12 +17,25 @@ package me.qyh.util;
 
 import java.util.UUID;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class UUIDs {
 
+	/**
+	 * private
+	 */
 	private UUIDs() {
-
+		super();
 	}
 
+	/**
+	 * 获取uuid字符串
+	 * 
+	 * @return uuid
+	 */
 	public static String uuid() {
 		return UUID.randomUUID().toString().replace("-", "");
 	}

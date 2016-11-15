@@ -15,6 +15,11 @@
  */
 package me.qyh.blog.security;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class AuthencationException extends RuntimeException {
 
 	/**
@@ -22,10 +27,17 @@ public class AuthencationException extends RuntimeException {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * default
+	 */
 	public AuthencationException() {
-
+		super();
 	}
 
+	/**
+	 * @param msg
+	 *            error msg
+	 */
 	public AuthencationException(String msg) {
 		super(msg);
 	}

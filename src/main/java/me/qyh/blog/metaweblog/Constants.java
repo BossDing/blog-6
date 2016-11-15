@@ -15,6 +15,12 @@
  */
 package me.qyh.blog.metaweblog;
 
+/**
+ * metaweblog常量
+ * 
+ * @author Administrator
+ *
+ */
 public class Constants {
 
 	public static final String AUTH_ERROR = "403";

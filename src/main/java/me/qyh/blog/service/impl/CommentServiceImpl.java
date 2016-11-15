@@ -218,7 +218,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
 			int count = commentDao.selectCountByUserAndDatePeriod(new Timestamp(start), new Timestamp(now), user) + 1;
-			if (count > limit.getLimit()) {
+			if (count > limit.getCount()) {
 				invalidCountMap.increase(user, now);
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}

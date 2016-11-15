@@ -17,6 +17,12 @@ package me.qyh.blog.lock;
 
 import me.qyh.blog.message.Message;
 
+/**
+ * 锁异常
+ * 
+ * @author Administrator
+ *
+ */
 public class LockException extends RuntimeException {
 
 	/**
@@ -28,8 +34,15 @@ public class LockException extends RuntimeException {
 	private final LockResource lockResource;
 	private final Message error;
 
+	/**
+	 * @param lock
+	 *            锁
+	 * @param lockResource
+	 *            锁保护的资源
+	 * @param error
+	 *            错误信息
+	 */
 	public LockException(Lock lock, LockResource lockResource, Message error) {
-		super();
 		this.lock = lock;
 		this.lockResource = lockResource;
 		this.error = error;

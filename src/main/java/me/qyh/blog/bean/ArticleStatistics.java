@@ -17,6 +17,12 @@ package me.qyh.blog.bean;
 
 import java.sql.Timestamp;
 
+/**
+ * 文章统计
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleStatistics {
 
 	private Timestamp lastModifyDate;// 最后修改日期

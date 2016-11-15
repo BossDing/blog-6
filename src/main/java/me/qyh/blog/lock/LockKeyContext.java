@@ -17,19 +17,44 @@ package me.qyh.blog.lock;
 
 import java.util.Map;
 
+/**
+ * 钥匙上下文
+ * 
+ * @author Administrator
+ *
+ */
 public class LockKeyContext {
 
 	private static final ThreadLocal<Map<String, LockKey>> keysLocal = new ThreadLocal<Map<String, LockKey>>();
 
+	private LockKeyContext() {
+		super();
+	}
+
+	/**
+	 * 从上下文中获取钥匙
+	 * 
+	 * @param id
+	 *            资源id
+	 * @return 如果不存在返回null
+	 */
 	public static LockKey getKey(String id) {
 		Map<String, LockKey> keyMap = keysLocal.get();
 		return keyMap == null ? null : keyMap.get(id);
 	}
 
+	/**
+	 * 清理上下文
+	 */
 	public static void remove() {
 		keysLocal.remove();
 	}
 
+	/**
+	 * 设置上下文
+	 * 
+	 * @param keysMap
+	 */
 	public static void set(Map<String, LockKey> keysMap) {
 		keysLocal.set(keysMap);
 	}

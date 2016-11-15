@@ -25,16 +25,38 @@ import java.util.concurrent.TimeUnit;
  */
 public class Limit {
 
-	private int limit;
+	private int count;
 	private long time;
 	private TimeUnit unit;
 
-	public int getLimit() {
-		return limit;
+	/**
+	 * default
+	 */
+	public Limit() {
+		super();
 	}
 
-	public void setLimit(int limit) {
-		this.limit = limit;
+	/**
+	 * 
+	 * @param count
+	 *            最大数目
+	 * @param time
+	 *            时间
+	 * @param unit
+	 *            时间单位
+	 */
+	public Limit(int count, long time, TimeUnit unit) {
+		this.count = count;
+		this.time = time;
+		this.unit = unit;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
+	public void setCount(int count) {
+		this.count = count;
 	}
 
 	public long getTime() {
@@ -50,16 +72,6 @@ public class Limit {
 	}
 
 	public void setUnit(TimeUnit unit) {
-		this.unit = unit;
-	}
-
-	public Limit() {
-
-	}
-
-	public Limit(int limit, long time, TimeUnit unit) {
-		this.limit = limit;
-		this.time = time;
 		this.unit = unit;
 	}
 

@@ -126,7 +126,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				if (!Objects.equals(SpaceContext.get(), article.getSpace()))
 					return null;
 
-				Article clone = article.clone();
+				Article clone = new Article(article);
 				CommentConfig config = clone.getCommentConfig();
 				if (config == null) {
 					SpaceConfig spaceConfig = spaceCache.getSpace(article.getSpace().getId()).getConfig();

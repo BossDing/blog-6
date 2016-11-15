@@ -19,12 +19,17 @@ import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface LockResource extends Serializable{
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public interface LockResource extends Serializable {
 
 	/**
 	 * 被锁保护的资源，应该提供一个唯一的ID
 	 * 
-	 * @return
+	 * @return 锁资源id
 	 */
 	@JsonIgnore
 	String getResourceId();
@@ -32,7 +37,7 @@ public interface LockResource extends Serializable{
 	/**
 	 * 获取锁ID
 	 * 
-	 * @return
+	 * @return 锁id
 	 */
 	String getLockId();
 

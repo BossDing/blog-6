@@ -17,6 +17,12 @@ package me.qyh.blog.metaweblog;
 
 import me.qyh.blog.message.Message;
 
+/**
+ * xmlrpc 错误
+ * 
+ * @author Administrator
+ *
+ */
 public final class FaultException extends Exception {
 	/**
 	 * 
@@ -25,6 +31,12 @@ public final class FaultException extends Exception {
 	private final String code;
 	private final Message desc;
 
+	/**
+	 * @param code
+	 *            错误码
+	 * @param dest
+	 *            错误描述
+	 */
 	public FaultException(String code, Message dest) {
 		super();
 		this.code = code;

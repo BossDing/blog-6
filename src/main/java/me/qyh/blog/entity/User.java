@@ -15,7 +15,12 @@
  */
 package me.qyh.blog.entity;
 
-public class User extends Id {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class User extends BaseEntity {
 
 	/**
 	 * 

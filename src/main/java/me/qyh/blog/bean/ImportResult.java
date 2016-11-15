@@ -21,6 +21,12 @@ import java.util.List;
 
 import me.qyh.blog.ui.ExportPage;
 
+/**
+ * 导入结果
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportResult {
 
 	// 原始页面，用于恢复
@@ -54,23 +60,46 @@ public class ImportResult {
 		this.successes = successes;
 	}
 
+	/**
+	 * 增加原始页面
+	 * 
+	 * @param old
+	 */
 	public void addOldPage(ExportPage old) {
 		oldPages.add(old);
 	}
 
+	/**
+	 * 添加导入失败信息
+	 * 
+	 * @param error
+	 */
 	public void addError(ImportError error) {
 		errors.add(error);
 	}
 
+	/**
+	 * 添加导入成功信息
+	 * 
+	 * @param success
+	 */
 	public void addSuccess(ImportSuccess success) {
 		successes.add(success);
 	}
 
+	/**
+	 * 添加导入失败信息
+	 * 
+	 * @param errors
+	 */
 	public void addErrors(List<ImportError> errors) {
 		this.errors.addAll(errors);
 	}
-	
-	public void sort(){
+
+	/**
+	 * 按照index对错误排序
+	 */
+	public void sort() {
 		Collections.sort(errors);
 	}
 

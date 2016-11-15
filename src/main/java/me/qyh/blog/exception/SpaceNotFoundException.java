@@ -15,6 +15,12 @@
  */
 package me.qyh.blog.exception;
 
+/**
+ * 空间不存在异常
+ * 
+ * @author Administrator
+ *
+ */
 public class SpaceNotFoundException extends Exception {
 
 	/**
@@ -23,6 +29,10 @@ public class SpaceNotFoundException extends Exception {
 	private static final long serialVersionUID = 1L;
 	private final String alias;
 
+	/**
+	 * @param alias
+	 *            别名
+	 */
 	public SpaceNotFoundException(String alias) {
 		this.alias = alias;
 	}

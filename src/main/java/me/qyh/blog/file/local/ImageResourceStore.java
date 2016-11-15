@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,17 +36,22 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.DefaultResizeValidator;
+import me.qyh.blog.file.FileHelper;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
-import me.qyh.blog.file.ImageReadWriteException;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
-import me.qyh.blog.file.UnsupportFormatException;
 
+/**
+ * 本地图片存储，图片访问
+ * 
+ * @author Administrator
+ *
+ */
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
+	private static final Logger imageResourceStoreLogger = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final Set<String> errorThumbPaths = new HashSet<>();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
@@ -78,41 +82,27 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize largeResize;
 
 	@Override
-	public CommonFile store(String key, MultipartFile mf) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		File dest = new File(absFolder, key);
-		if (dest.exists()) {
-			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
-					dest.getAbsolutePath());
-		}
-		if (inThumbDir(dest)) {
-			throw new LogicException("file.inThumb", "文件" + dest.getAbsolutePath() + "不能被存放在缩略图文件夹下",
-					dest.getAbsolutePath());
-		}
+		checkFileStoreable(dest);
 		// 先写入临时文件
-		File tmp = File.createTempFile(RandomStringUtils.randomNumeric(6),
-				"." + FilenameUtils.getExtension(mf.getOriginalFilename()));
-		mf.transferTo(tmp);
-		File finalFile = tmp;
+		File tmp = FileHelper.temp(FilenameUtils.getExtension(mf.getOriginalFilename()));
 		try {
-			ImageInfo ii = imageHelper.read(tmp);
-			String extension = ii.getExtension();
-			if (ImageHelper.isWEBP(extension)) {
-				if (!supportWebp) {
-					throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
-				}
-				// 如果是webp的图片，需要转化为jpeg格式
-				finalFile = File.createTempFile(RandomStringUtils.randomNumeric(7), "." + ImageHelper.JPEG);
-				try {
-					imageHelper.format(tmp, finalFile);
-				} catch (Exception e) {
-					throw new SystemException(e.getMessage(), e);
-				}
-				extension = ImageHelper.JPEG;
-			}
-
+			mf.transferTo(tmp);
+		} catch (IOException e1) {
+			throw new SystemException(e1.getMessage(), e1);
+		}
+		File finalFile = tmp;
+		ImageInfo ii = readImage(tmp);
+		String extension = ii.getExtension();
+		if (ImageHelper.isWEBP(extension)) {
+			finalFile = FileHelper.temp(ImageHelper.JPEG);
+			webpFormat(tmp, finalFile);
+			extension = ImageHelper.JPEG;
+		}
+		try {
 			FileUtils.forceMkdir(dest.getParentFile());
 			FileUtils.moveFile(finalFile, dest);
-
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
 			cf.setSize(mf.getSize());
@@ -123,17 +113,42 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			cf.setHeight(ii.getHeight());
 
 			return cf;
-		} catch (UnsupportFormatException e) {
-			throw new LogicException("file.format.notsupport", "文件格式：" + e.getFormat() + "不被支持", e.getFormat());
-		} catch (ImageReadWriteException e) {
-			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
 		} finally {
-			if (finalFile.exists() && !FileUtils.deleteQuietly(finalFile)) {
-				finalFile.deleteOnExit();
-			}
-			if (tmp.exists() && !FileUtils.deleteQuietly(tmp)) {
-				tmp.deleteOnExit();
-			}
+			FileUtils.deleteQuietly(finalFile);
+			FileUtils.deleteQuietly(tmp);
+		}
+	}
+
+	private void checkFileStoreable(File dest) throws LogicException {
+		if (dest.exists()) {
+			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
+					dest.getAbsolutePath());
+		}
+		if (inThumbDir(dest)) {
+			throw new LogicException("file.inThumb", "文件" + dest.getAbsolutePath() + "不能被存放在缩略图文件夹下",
+					dest.getAbsolutePath());
+		}
+	}
+
+	private ImageInfo readImage(File tmp) throws LogicException {
+		try {
+			return imageHelper.read(tmp);
+		} catch (IOException e) {
+			imageResourceStoreLogger.debug(e.getMessage(), e);
+			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
+		}
+	}
+
+	private void webpFormat(File src, File dest) throws LogicException {
+		if (!supportWebp)
+			throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
+		// 如果是webp的图片，需要转化为jpeg格式
+		try {
+			imageHelper.format(src, dest);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
@@ -159,24 +174,24 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				String sourcePath = getSourcePathByResizePath(path);
 				// 缩略图不存在，寻找原图
 				File local = super.findByKey(sourcePath);
+				if (local == null)
+					// 返回null
+					return null;
 				// 如果原图存在，进行缩放
-				if (local != null) {
-					if (errorThumbPaths.contains(thumbPath))
-						return detectSupportWebp ? null : new PathResource(local.toPath());
-					if (imageHelper.supportFormat(FilenameUtils.getExtension(local.getName()))) {
-						synchronized (this) {
-							File check = findThumbByPath(thumbPath);
-							if (check.exists()) {
-								return new PathResource(check.toPath());
-							}
-							try {
-								return new PathResource(doResize(local, resize, check, sourcePath).toPath());
-							} catch (ImageReadWriteException e) {
-								LOGGER.error(e.getMessage(), e);
-							} catch (Exception e) {
-								errorThumbPaths.add(thumbPath);
-								return detectSupportWebp ? null : new PathResource(local.toPath());
-							}
+				if (errorThumbPaths.contains(thumbPath))
+					return detectSupportWebp ? null : new PathResource(local.toPath());
+				if (imageHelper.supportFormat(FilenameUtils.getExtension(local.getName()))) {
+					synchronized (this) {
+						File check = findThumbByPath(thumbPath);
+						if (check.exists()) {
+							return new PathResource(check.toPath());
+						}
+						try {
+							return new PathResource(doResize(local, resize, check, sourcePath).toPath());
+						} catch (IOException e) {
+							imageResourceStoreLogger.error(e.getMessage(), e);
+							errorThumbPaths.add(thumbPath);
+							return detectSupportWebp ? null : new PathResource(local.toPath());
 						}
 					}
 				}
@@ -283,8 +298,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	protected File doResize(File local, Resize resize, File thumb, String key)
-			throws UnsupportFormatException, ImageReadWriteException {
+	protected File doResize(File local, Resize resize, File thumb, String key) throws IOException {
 		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
 		String ext = FilenameUtils.getExtension(local.getName());
 		File cover = new File(thumbAbsFolder, key + File.separator + FilenameUtils.getBaseName(key)

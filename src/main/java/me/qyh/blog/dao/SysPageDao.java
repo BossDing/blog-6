@@ -21,16 +21,55 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface SysPageDao {
 
+	/**
+	 * 根据空间和页面类型查询系统页面
+	 * 
+	 * @param space
+	 *            空间
+	 * @param target
+	 *            页面类型
+	 * @return 如果不存在，返回null
+	 */
 	SysPage selectBySpaceAndPageTarget(@Param("space") Space space, @Param("pageTarget") PageTarget target);
 
+	/**
+	 * 插入系统页面
+	 * 
+	 * @param sysPage
+	 *            待插入的系统页面
+	 */
 	void insert(SysPage sysPage);
 
+	/**
+	 * 更新系统页面
+	 * 
+	 * @param sysPage
+	 *            待更新的系统页面
+	 */
 	void update(SysPage sysPage);
 
+	/**
+	 * 根据id删除系统页面
+	 * 
+	 * @param id
+	 *            页面id
+	 */
 	void deleteById(Integer id);
-	
+
+	/**
+	 * 根据id查询系统页面
+	 * 
+	 * @param id
+	 *            页面id
+	 * @return 如果不存在，返回null
+	 */
 	SysPage selectById(Integer id);
 
 }

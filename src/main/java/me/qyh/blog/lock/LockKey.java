@@ -17,8 +17,19 @@ package me.qyh.blog.lock;
 
 import java.io.Serializable;
 
+/**
+ * 开锁钥匙
+ * 
+ * @author Administrator
+ *
+ */
 public interface LockKey extends Serializable {
-	
+
+	/**
+	 * 得到钥匙
+	 * 
+	 * @return 钥匙
+	 */
 	Object getKey();
 
 }

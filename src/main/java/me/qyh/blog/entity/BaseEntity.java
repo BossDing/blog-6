@@ -13,26 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.lock;
+package me.qyh.blog.entity;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
+import java.io.Serializable;
 
 /**
- * 用来处理用户key输入错误
  * 
  * @author Administrator
  *
  */
-public class InvalidKeyException extends LogicException {
+public class BaseEntity implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	protected Integer id;
 
-	public InvalidKeyException(Message message) {
-		super(message);
+	/**
+	 * default
+	 */
+	public BaseEntity() {
+		super();
 	}
 
+	/**
+	 * @param id
+	 *            entity id
+	 */
+	public BaseEntity(Integer id) {
+		super();
+		this.id = id;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	/**
+	 * 是否拥有id
+	 * 
+	 * @return
+	 */
+	public boolean hasId() {
+		return id != null;
+	}
 }

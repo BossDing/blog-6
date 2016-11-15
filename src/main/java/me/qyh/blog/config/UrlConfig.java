@@ -87,7 +87,7 @@ public class UrlConfig implements InitializingBean {
 			throw new SystemException("开了博客分类域名后必须提供一个访问域名");
 		}
 		domain = domain.toLowerCase();
-		if (domain.indexOf(".") == -1) {
+		if (domain.indexOf('.') == -1) {
 			throw new SystemException("错误的域名:" + domain);
 		}
 		String[] splitResult = domain.split("\\.");

@@ -76,14 +76,18 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public CommonFile store(String key, MultipartFile mf) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		File dest = new File(absFolder, key);
 		if (dest.exists()) {
 			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
 					dest.getAbsolutePath());
 		}
-		FileUtils.forceMkdir(dest.getParentFile());
-		mf.transferTo(dest);
+		try {
+			FileUtils.forceMkdir(dest.getParentFile());
+			mf.transferTo(dest);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 		CommonFile cf = new CommonFile();
 		cf.setExtension(FilenameUtils.getExtension(mf.getOriginalFilename()));
 		cf.setSize(mf.getSize());
@@ -180,9 +184,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			urlPatternPrefix = urlPrefix.substring(urlPrefix.lastIndexOf('/'), urlPrefix.length());
 		}
 
-		LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/**", this);
+		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler)
-			LocalResourceUrlMappingHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
+			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
 	}
 
 	@Override

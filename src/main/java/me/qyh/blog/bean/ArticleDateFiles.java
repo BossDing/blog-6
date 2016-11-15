@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import me.qyh.blog.exception.SystemException;
+
 /**
  * 文档日期归档
  * 
@@ -26,12 +28,38 @@ import java.util.List;
  *
  */
 public class ArticleDateFiles {
+	/**
+	 * 文章日期归档模式
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum ArticleDateFileMode {
 		Y, YM, YMD
 	}
 
 	private List<ArticleDateFile> files = new ArrayList<>();
 	private ArticleDateFileMode mode;
+
+	/**
+	 * 构造器
+	 * 
+	 * @param files
+	 *            文章归档集合
+	 * @param mode
+	 *            归档模式
+	 */
+	public ArticleDateFiles(List<ArticleDateFile> files, ArticleDateFileMode mode) {
+		this.files = files;
+		this.mode = mode;
+	}
+
+	/**
+	 * default
+	 */
+	public ArticleDateFiles() {
+		super();
+	}
 
 	public ArticleDateFileMode getMode() {
 		return mode;
@@ -49,11 +77,9 @@ public class ArticleDateFiles {
 		this.files = files;
 	}
 
-	public ArticleDateFiles(List<ArticleDateFile> files, ArticleDateFileMode mode) {
-		this.files = files;
-		this.mode = mode;
-	}
-
+	/**
+	 * 根据模式计算归档的开始和结束日期
+	 */
 	public void calDate() {
 		for (ArticleDateFile file : files) {
 			Calendar cal = Calendar.getInstance();
@@ -75,21 +101,25 @@ public class ArticleDateFiles {
 				cal.add(Calendar.MONTH, 1);
 				file.setEnd(cal.getTime());
 				break;
-			case YMD :
+			case YMD:
 				cal.set(Calendar.MONTH, month);
 				cal.set(Calendar.DAY_OF_MONTH, day);
 				file.setBegin(cal.getTime());
 				cal.add(Calendar.DAY_OF_MONTH, 1);
 				file.setEnd(cal.getTime());
 				break;
+			default:
+				throw new SystemException("无法识别的归档模式：" + mode);
 			}
 		}
 	}
 
-	public ArticleDateFiles() {
-
-	}
-
+	/**
+	 * 增加归档记录
+	 * 
+	 * @param file
+	 *            归档记录
+	 */
 	public void addArticleDateFile(ArticleDateFile file) {
 		files.add(file);
 	}

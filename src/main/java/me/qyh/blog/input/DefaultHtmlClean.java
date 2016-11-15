@@ -36,6 +36,11 @@ import me.qyh.util.Jsons;
 import me.qyh.util.UrlUtils;
 import me.qyh.util.Validators;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 
 	@Autowired
@@ -47,10 +52,10 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	 * @see JsonWhitelist
 	 */
 	private Resource whitelistJsonResource;
-	private Tags tags;
+	private AllowTags tags;
 	private boolean nofollow = true;// 是否在超链接上机上nofollow属性
 
-	private static final String NOFOLLOW = "external nofollow";
+	private static final String NOFOLLOW_ATTR = "external nofollow";
 
 	@Override
 	public String clean(String html) {
@@ -61,41 +66,37 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 				String href = ele.attr("href");
 				// only abs url need to do
 				if (needNofollow(href)) {
-					ele.attr("rel", NOFOLLOW);
+					ele.attr("rel", NOFOLLOW_ATTR);
 				}
 			}
 		}
-		return Jsoup.clean(body.html(), _Whitelist.configured(tags));
+		return Jsoup.clean(body.html(), InnerWhitelist.configured(tags));
 	}
 
 	private boolean needNofollow(String href) {
-		if (UrlUtils.isAbsoluteUrl(href)) {
-			if (StringUtils.startsWithIgnoreCase(href, "http://")
-					|| StringUtils.startsWithIgnoreCase(href, "https://")) {
-				UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
-				String host = uc.getHost();
-				if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain()))
-					return false;
-			}
+		if (UrlUtils.isAbsoluteUrl(href) && (StringUtils.startsWithIgnoreCase(href, "http://")
+				|| StringUtils.startsWithIgnoreCase(href, "https://"))) {
+			UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
+			String host = uc.getHost();
+			if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain()))
+				return false;
 		}
 		return true;
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (tags == null) {
-			if (whitelistJsonResource != null) {
-				InputStream is = null;
-				try {
-					is = whitelistJsonResource.getInputStream();
-					tags = Jsons.readValue(Tags.class, IOUtils.toString(is, Constants.CHARSET));
-				} finally {
-					IOUtils.closeQuietly(is);
-				}
+		if (tags == null && (whitelistJsonResource != null)) {
+			InputStream is = null;
+			try {
+				is = whitelistJsonResource.getInputStream();
+				tags = Jsons.readValue(AllowTags.class, IOUtils.toString(is, Constants.CHARSET));
+			} finally {
+				IOUtils.closeQuietly(is);
 			}
 		}
 		if (tags == null) {
-			tags = new Tags();
+			tags = new AllowTags();
 			tags.setSimpleTags("b,code,em,del,small,strong");
 			Tag a = new Tag();
 			a.setName("a");
@@ -106,8 +107,8 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 		}
 	}
 
-	private static final class _Whitelist extends Whitelist {
-		_Whitelist(Tags tags) {
+	private static final class InnerWhitelist extends Whitelist {
+		InnerWhitelist(AllowTags tags) {
 			for (Tag tag : tags.getTags()) {
 				addTags(tag.getName());
 				for (Attribute att : tag.getAttributes()) {
@@ -126,12 +127,12 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 			}
 		}
 
-		static Whitelist configured(Tags tags) {
-			return new _Whitelist(tags);
+		static Whitelist configured(AllowTags tags) {
+			return new InnerWhitelist(tags);
 		}
 	}
 
-	public void setTags(Tags tags) {
+	public void setTags(AllowTags tags) {
 		this.tags = tags;
 	}
 

@@ -20,14 +20,20 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 
-public class Article extends BaseLockResource implements Cloneable {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class Article extends BaseLockResource {
 
 	/**
 	 * 
@@ -52,8 +58,8 @@ public class Article extends BaseLockResource implements Cloneable {
 	private CommentConfig commentConfig;
 	private String alias;// 别名，可通过别名访问文章
 
-	private AtomicInteger _hits;
-	private AtomicInteger _comments;
+	private AtomicInteger atomicHits;
+	private AtomicInteger atomicComments;
 
 	/**
 	 * <b>设置该属性的文章不会被非该空间查询、统计到</b>
@@ -61,6 +67,12 @@ public class Article extends BaseLockResource implements Cloneable {
 	 */
 	private Boolean hidden;
 
+	/**
+	 * 文章来源
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum ArticleFrom {
 		// 原创
 		ORIGINAL(new Message("article.from.original", "原创")),
@@ -82,6 +94,12 @@ public class Article extends BaseLockResource implements Cloneable {
 		}
 	}
 
+	/**
+	 * 文章状态
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum ArticleStatus {
 		// 正常
 		PUBLISHED(new Message("article.status.published", "已发布")),
@@ -107,12 +125,49 @@ public class Article extends BaseLockResource implements Cloneable {
 		}
 	}
 
+	/**
+	 * default
+	 */
 	public Article() {
 		super();
 	}
 
+	/**
+	 * 
+	 * @param id
+	 *            文章id
+	 */
 	public Article(Integer id) {
 		super(id);
+	}
+
+	/**
+	 * clone
+	 * 
+	 * @param source
+	 *            源文章
+	 */
+	public Article(Article source) {
+		this.atomicComments = source.atomicComments;
+		this.atomicHits = source.atomicHits;
+		this.alias = source.alias;
+		this.commentConfig = source.commentConfig;
+		this.comments = source.comments;
+		this.content = source.content;
+		this.editor = source.editor;
+		this.from = source.from;
+		this.hidden = source.hidden;
+		this.hits = source.hits;
+		this.isPrivate = source.isPrivate;
+		this.lastModifyDate = source.lastModifyDate;
+		this.level = source.level;
+		this.pubDate = source.pubDate;
+		this.space = source.space;
+		this.status = source.status;
+		this.summary = source.summary;
+		this.tags = source.tags;
+		this.title = source.title;
+		this.id = source.id;
 	}
 
 	public Space getSpace() {
@@ -159,10 +214,8 @@ public class Article extends BaseLockResource implements Cloneable {
 		if (isPrivate == null) {
 			return false;
 		}
-		if (!isPrivate) {
-			if (space != null && space.getIsPrivate() != null) {
-				return space.getIsPrivate();
-			}
+		if (!isPrivate && (space != null && space.getIsPrivate() != null)) {
+			return space.getIsPrivate();
 		}
 		return isPrivate;
 	}
@@ -176,36 +229,53 @@ public class Article extends BaseLockResource implements Cloneable {
 	}
 
 	public int getHits() {
-		return _hits != null ? _hits.get() : hits;
+		return atomicHits != null ? atomicHits.get() : hits;
 	}
 
 	public void setHits(int hits) {
 		this.hits = hits;
-		this._hits = new AtomicInteger(hits);
+		this.atomicHits = new AtomicInteger(hits);
 	}
 
+	/**
+	 * 点击量+1
+	 * 
+	 * @return 当前点击量
+	 */
 	public int addHits() {
-		return _hits.incrementAndGet();
+		return atomicHits.incrementAndGet();
 	}
 
+	/**
+	 * 评论数+1
+	 * 
+	 * @return 当前评论数
+	 */
 	public int addComments() {
-		return _comments.incrementAndGet();
+		return atomicComments.incrementAndGet();
 	}
 
+	/**
+	 * 减少评论数
+	 * 
+	 * @param count
+	 *            数目
+	 * @return 当前评论数
+	 */
 	public int decrementComment(int count) {
 		if (count == 1) {
-			return _comments.decrementAndGet();
+			return atomicComments.decrementAndGet();
 		}
-		return _comments.updateAndGet(i -> i - count);
+		return atomicComments.updateAndGet(i -> i - count);
 	}
 
 	public int getComments() {
-		return _comments != null ? _comments.get() : comments;
+		return atomicComments != null ? atomicComments.get() : comments;
 	}
 
 	public void setComments(int comments) {
 		this.comments = comments;
-		this._comments = new AtomicInteger(comments);
+		this.atomicComments = new AtomicInteger(comments);
 	}
 
 	public ArticleFrom getFrom() {
@@ -296,11 +366,18 @@ public class Article extends BaseLockResource implements Cloneable {
 	public boolean hasLock() {
 		boolean hasLock = super.hasLock();
 		if (!hasLock) {
-			hasLock = (space != null && space.hasLock());
+			hasLock = space != null && space.hasLock();
 		}
 		return hasLock;
 	}
 
+	/**
+	 * 是否包含某个标签
+	 * 
+	 * @param tag
+	 *            标签
+	 * @return true包含，false不包含
+	 */
 	public boolean hasTag(String tag) {
 		for (Tag _tag : this.tags) {
 			if (tag.equals(_tag.getName())) {
@@ -327,11 +404,22 @@ public class Article extends BaseLockResource implements Cloneable {
 	}
 
 	@Override
-	public Article clone() {
-		try {
-			return (Article) super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new SystemException(e.getMessage(), e);
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
 		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		Article rhs = (Article) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

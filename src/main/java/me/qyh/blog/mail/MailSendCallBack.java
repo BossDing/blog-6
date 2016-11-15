@@ -2,6 +2,12 @@ package me.qyh.blog.mail;
 
 import me.qyh.blog.mail.MailSender.MessageBean;
 
+/**
+ * 邮件发送回调
+ * 
+ * @author Administrator
+ *
+ */
 public interface MailSendCallBack {
 
 	/**

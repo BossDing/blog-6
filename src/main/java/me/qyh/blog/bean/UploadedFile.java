@@ -29,17 +29,35 @@ import me.qyh.blog.message.MessageSerializer;
  */
 public class UploadedFile {
 	@JsonSerialize(using = MessageSerializer.class)
-	private Message error;// 上传失败原因;
+	private Message error;
 	private long size;// 上传文件大小
 	private String name;// 上传文件名称
 	private ThumbnailUrl thumbnailUrl;// 缩略图路径
 	private String url;// 访问路径
 
+	/**
+	 * 
+	 * @param name
+	 *            失败文件名
+	 * @param error
+	 *            失败信息
+	 */
 	public UploadedFile(String name, Message error) {
 		this.error = error;
 		this.name = name;
 	}
 
+	/**
+	 * 
+	 * @param name
+	 *            文件名
+	 * @param size
+	 *            文件大小
+	 * @param thumbnailUrl
+	 *            缩略图链接
+	 * @param url
+	 *            访问链接
+	 */
 	public UploadedFile(String name, long size, ThumbnailUrl thumbnailUrl, String url) {
 		this.url = url;
 		this.size = size;
@@ -59,6 +77,11 @@ public class UploadedFile {
 		return name;
 	}
 
+	/**
+	 * 是否存在异常
+	 * 
+	 * @return
+	 */
 	public boolean hasError() {
 		return error != null;
 	}

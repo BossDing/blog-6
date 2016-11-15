@@ -31,8 +31,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.ErrorKeyException;
-import me.qyh.blog.lock.InvalidKeyException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockBean;
 import me.qyh.blog.lock.LockHelper;
@@ -82,7 +80,7 @@ public class SpaceLockController extends BaseController {
 		LockKey key = null;
 		try {
 			key = lock.getKeyFromRequest(request);
-		} catch (InvalidKeyException e) {
+		} catch (LogicException e) {
 			ra.addFlashAttribute(ERROR, e.getMessage());
 			return "redirect:/unlock";
 		}
@@ -94,7 +92,7 @@ public class SpaceLockController extends BaseController {
 	@RequestMapping(value = "unlock", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
-			throws InvalidKeyException, ErrorKeyException {
+			throws LogicException {
 		LockBean lockBean = LockHelper.getRequiredLockBean(request);
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);

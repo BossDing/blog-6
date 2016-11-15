@@ -19,12 +19,20 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import me.qyh.blog.message.Message;
 import me.qyh.blog.oauth2.OauthUser;
 
-public class Comment extends Id {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class Comment extends BaseEntity {
 
 	/**
 	 * 
@@ -43,6 +51,12 @@ public class Comment extends Id {
 	private List<Comment> children = new ArrayList<>();
 	private CommentStatus status;
 
+	/**
+	 * 评论状态
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum CommentStatus {
 		NORMAL(new Message("comment.status.normal", "正常")), CHECK(new Message("comment.status.check", "审核"));
 
@@ -75,11 +89,11 @@ public class Comment extends Id {
 	}
 
 	public void setParentPath(String parentPath) {
-		if (!parentPath.equals("/")) {
-			String[] _parents = parentPath.split("/");
-			for (String _parent : _parents) {
-				if (!_parent.isEmpty()) {
-					parents.add(Integer.parseInt(_parent));
+		if (!"/".equals(parentPath)) {
+			String[] parentArray = parentPath.split("/");
+			for (String p : parentArray) {
+				if (!p.isEmpty()) {
+					this.parents.add(Integer.parseInt(p));
 				}
 			}
 		}
@@ -144,5 +158,25 @@ public class Comment extends Id {
 
 	public boolean isChecking() {
 		return CommentStatus.CHECK.equals(status);
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		Comment rhs = (Comment) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

@@ -17,6 +17,11 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.entity.BlogFile.BlogFileType;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class BlogFileCount {
 
 	private BlogFileType type;

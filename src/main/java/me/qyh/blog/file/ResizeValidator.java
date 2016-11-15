@@ -15,6 +15,12 @@
  */
 package me.qyh.blog.file;
 
+/**
+ * resize 校验器
+ * 
+ * @author Administrator
+ *
+ */
 public interface ResizeValidator {
 	/**
 	 * 验证是否是一个正确的缩略图尺寸

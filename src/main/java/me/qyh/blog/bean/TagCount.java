@@ -17,6 +17,11 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.entity.Tag;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class TagCount {
 
 	private Tag tag;

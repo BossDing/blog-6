@@ -20,11 +20,37 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageSerializer;
 
+/**
+ * 导入失败信息
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportError implements Comparable<ImportError> {
 
 	private int index;
 	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;
+
+	/**
+	 * default
+	 */
+	public ImportError() {
+		super();
+	}
+
+	/**
+	 * 构造器
+	 * 
+	 * @param index
+	 *            序号
+	 * @param message
+	 *            失败信息
+	 */
+	public ImportError(int index, Message message) {
+		this.index = index;
+		this.message = message;
+	}
 
 	public int getIndex() {
 		return index;
@@ -39,15 +65,6 @@ public class ImportError implements Comparable<ImportError> {
 	}
 
 	public void setMessage(Message message) {
-		this.message = message;
-	}
-
-	public ImportError() {
-
-	}
-
-	public ImportError(int index, Message message) {
-		this.index = index;
 		this.message = message;
 	}
 

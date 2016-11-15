@@ -20,6 +20,11 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface TagService {
 
 	/**
@@ -27,7 +32,8 @@ public interface TagService {
 	 * 
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return 标签该分页对象
 	 */
 	PageResult<Tag> queryTag(TagQueryParam param);
 
@@ -35,9 +41,11 @@ public interface TagService {
 	 * 更新标签
 	 * 
 	 * @param tag
+	 *            待更新的标签
 	 * @param merge
 	 *            是否合并已经存在的标签
 	 * @throws LogicException
+	 *             更新过程中发生逻辑异常
 	 */
 	void updateTag(Tag tag, boolean merge) throws LogicException;
 
@@ -45,7 +53,9 @@ public interface TagService {
 	 * 删除标签
 	 * 
 	 * @param id
+	 *            标签id
 	 * @throws LogicException
+	 *             删除过程中发生逻辑异常
 	 */
 	void deleteTag(Integer id) throws LogicException;
 

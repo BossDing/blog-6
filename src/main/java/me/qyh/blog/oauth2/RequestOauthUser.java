@@ -22,12 +22,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 @Target({ ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
 public @interface RequestOauthUser {
 
+	/**
+	 * 如果当前用户不存在是否抛出异常
+	 * 
+	 * @return 是：抛出 否：不跑出
+	 */
 	abstract boolean throwAuthencationExceptionIfNotExists() default true;
 
 }

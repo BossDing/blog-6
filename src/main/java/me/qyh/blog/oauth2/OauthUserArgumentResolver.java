@@ -25,6 +25,11 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.security.AuthencationException;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class OauthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
 	@Override

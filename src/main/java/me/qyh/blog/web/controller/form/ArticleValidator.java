@@ -39,7 +39,7 @@ import me.qyh.util.Validators;
 
 @Component
 public class ArticleValidator implements Validator {
-
+	
 	public static final int MAX_SUMMARY_LENGTH = 500;
 	public static final int MAX_TITLE_LENGTH = 200;
 	private static final int MAX_ALIAS_LENGTH = 50;

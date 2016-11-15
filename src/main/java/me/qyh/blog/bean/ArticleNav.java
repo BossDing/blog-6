@@ -17,10 +17,29 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.entity.Article;
 
+/**
+ * 上一篇文章，下一篇文章
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleNav {
 
 	private Article previous;
 	private Article next;
+
+	/**
+	 * 构造器
+	 * 
+	 * @param previous
+	 *            上一篇文章
+	 * @param next
+	 *            下一篇文章
+	 */
+	public ArticleNav(Article previous, Article next) {
+		this.previous = previous;
+		this.next = next;
+	}
 
 	public Article getPrevious() {
 		return previous;
@@ -35,11 +54,6 @@ public class ArticleNav {
 	}
 
 	public void setNext(Article next) {
-		this.next = next;
-	}
-
-	public ArticleNav(Article previous, Article next) {
-		this.previous = previous;
 		this.next = next;
 	}
 

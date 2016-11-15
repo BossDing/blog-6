@@ -17,6 +17,14 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class Space extends BaseLockResource {
 
 	/**
@@ -35,6 +43,22 @@ public class Space extends BaseLockResource {
 	private SpaceConfig config;
 
 	private Boolean isDefault;
+
+	/**
+	 * default
+	 */
+	public Space() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param id
+	 *            空间id
+	 */
+	public Space(Integer id) {
+		super(id);
+	}
 
 	public String getAlias() {
 		return alias;
@@ -58,14 +82,6 @@ public class Space extends BaseLockResource {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public Space() {
-		super();
-	}
-
-	public Space(Integer id) {
-		super(id);
 	}
 
 	@Override
@@ -109,6 +125,26 @@ public class Space extends BaseLockResource {
 	public String toString() {
 		return "Space [name=" + name + ", alias=" + alias + ", createDate=" + createDate + ", isPrivate=" + isPrivate
 				+ ", articleHidden=" + articleHidden + ", config=" + config + ", isDefault=" + isDefault + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		Space rhs = (Space) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 
 }

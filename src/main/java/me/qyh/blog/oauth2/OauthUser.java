@@ -17,9 +17,12 @@ package me.qyh.blog.oauth2;
 
 import java.sql.Timestamp;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import me.qyh.blog.entity.Id;
+import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.message.Message;
 
@@ -29,10 +32,10 @@ import me.qyh.blog.message.Message;
  * 在绑定账户中需要更新用户信息需要用到凭证，但是让该社交账号再次走oauth登录流程即可。<br>
  * 除此之外，再无用到，所以这里不存储第三方凭证
  * 
- * @author mhlx
+ * @author Administrator
  *
  */
-public class OauthUser extends Id {
+public class OauthUser extends BaseEntity {
 
 	/**
 	 * 
@@ -47,9 +50,14 @@ public class OauthUser extends Id {
 	private Timestamp registerDate;// 注册日期
 	private String serverId;
 	private String serverName;
-
 	private Boolean admin;
 
+	/**
+	 * oauth用户状态
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum OauthUserStatus {
 		NORMAL(new Message("oauth.status.normal", "正常")), DISABLED(new Message("oauth.status.disabled", "禁用"));// 禁用
 
@@ -66,6 +74,24 @@ public class OauthUser extends Id {
 		public Message getMessage() {
 			return message;
 		}
+	}
+
+	/**
+	 * default
+	 */
+	public OauthUser() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param info
+	 *            用户信息
+	 */
+	public OauthUser(UserInfo info) {
+		this.avatar = info.getAvatar();
+		this.nickname = info.getNickname();
+		this.oauthid = info.getId();
 	}
 
 	public String getOauthid() {
@@ -108,16 +134,6 @@ public class OauthUser extends Id {
 		this.serverId = serverId;
 	}
 
-	public OauthUser() {
-
-	}
-
-	public OauthUser(UserInfo info) {
-		this.avatar = info.getAvatar();
-		this.nickname = info.getNickname();
-		this.oauthid = info.getId();
-	}
-
 	public OauthUserStatus getStatus() {
 		return status;
 	}
@@ -144,5 +160,25 @@ public class OauthUser extends Id {
 
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		OauthUser rhs = (OauthUser) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

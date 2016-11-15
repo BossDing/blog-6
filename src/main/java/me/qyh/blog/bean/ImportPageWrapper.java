@@ -17,19 +17,33 @@ package me.qyh.blog.bean;
 
 import me.qyh.blog.ui.ExportPage;
 
+/**
+ * 导入页面封装
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportPageWrapper {
 
 	private int index;// 页面序号
 	private ExportPage page;// 页面
 
-	public int getIndex() {
-		return index;
-	}
-
+	/**
+	 * 构造器
+	 * 
+	 * @param index
+	 *            序号
+	 * @param page
+	 *            页面
+	 */
 	public ImportPageWrapper(int index, ExportPage page) {
 		super();
 		this.index = index;
 		this.page = page;
+	}
+
+	public int getIndex() {
+		return index;
 	}
 
 	public ExportPage getPage() {

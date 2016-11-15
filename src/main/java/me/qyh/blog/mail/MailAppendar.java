@@ -220,7 +220,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 		return marker.contains(ClassicConstants.FINALIZE_SESSION_MARKER);
 	}
 
-	public boolean checkEntryConditions() {
+	private boolean checkEntryConditions() {
 		if (!this.started) {
 			addError("Attempting to append to a non-started appender: " + this.getName());
 			return false;

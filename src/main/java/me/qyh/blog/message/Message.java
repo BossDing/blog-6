@@ -36,12 +36,25 @@ public class Message implements MessageSourceResolvable, Serializable {
 	private transient Object[] arguments;
 	private String defaultMessage;
 
+	/**
+	 * 
+	 * @param code
+	 *            错误码
+	 * @param defaultMessage
+	 *            默认信息
+	 * @param arguments
+	 *            参数
+	 */
 	public Message(String code, String defaultMessage, Object... arguments) {
 		this.code = code;
 		this.arguments = arguments;
 		this.defaultMessage = defaultMessage;
 	}
 
+	/**
+	 * @param code
+	 *            错误码
+	 */
 	public Message(String code) {
 		this.code = code;
 	}

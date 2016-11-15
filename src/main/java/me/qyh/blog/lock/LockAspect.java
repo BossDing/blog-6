@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
 
 /**
@@ -43,8 +44,14 @@ public class LockAspect {
 
 	private static final Logger logger = LoggerFactory.getLogger(LockAspect.class);
 
+	/**
+	 * 尝试用LockKeyContext上下文中存在的钥匙开锁
+	 * 
+	 * @param lockResource
+	 *            被锁的资源
+	 */
 	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "lockResource")
-	public void after(LockResource lockResource) throws Throwable {
+	public void after(LockResource lockResource) {
 		// 需要验证密码
 		if (lockResource != null && lockResource.getLockId() != null && UserContext.get() == null) {
 			Lock lock = lockManager.findLock(lockResource.getLockId());
@@ -54,9 +61,10 @@ public class LockAspect {
 					throw new LockException(lock, lockResource, null);
 				try {
 					lock.tryOpen(key);
-				} catch (ErrorKeyException e) {
+				} catch (LogicException e) {
+					logger.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
 					throw new LockException(lock, lockResource, e.getLogicMessage());
-				} catch (Throwable e) {
+				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
 				}
 			}

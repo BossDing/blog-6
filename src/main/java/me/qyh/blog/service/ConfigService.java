@@ -19,14 +19,43 @@ import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.exception.LogicException;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface ConfigService {
 
+	/**
+	 * 获取全局配置
+	 * 
+	 * @return 全局配置
+	 */
 	GlobalConfig getGlobalConfig();
 
+	/**
+	 * 更新全局配置
+	 * 
+	 * @param globalConfig
+	 *            待更新的全局配置
+	 * @return 更新后的全局配置
+	 */
 	GlobalConfig updateGlobalConfig(GlobalConfig globalConfig);
 
+	/**
+	 * 获取metaweblog的文件上传配置
+	 * 
+	 * @return 上传配置
+	 */
 	UploadConfig getMetaweblogConfig();
 
+	/**
+	 * 更新metaweblog 的上传配置
+	 * 
+	 * @param uploadConfig
+	 *            待更新的上传配置
+	 * @return 更新后的上传配置
+	 */
 	UploadConfig updateMetaweblogConfig(UploadConfig uploadConfig) throws LogicException;
 
 }

@@ -30,6 +30,11 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Validators;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class TagsTypeHandler extends BaseTypeHandler<Set<Tag>> {
 	@Override
 	public Set<Tag> getNullableResult(ResultSet rs, String str) throws SQLException {
@@ -53,10 +58,10 @@ public class TagsTypeHandler extends BaseTypeHandler<Set<Tag>> {
 		}
 		String[] tagArray = str.split(",");
 		Set<Tag> tags = new LinkedHashSet<Tag>();
-		for (String tag : tagArray) {
-			Tag _tag = new Tag();
-			_tag.setName(tag);
-			tags.add(_tag);
+		for (String tagStr : tagArray) {
+			Tag tag = new Tag();
+			tag.setName(tagStr);
+			tags.add(tag);
 		}
 		return tags;
 	}

@@ -20,8 +20,22 @@ import java.util.List;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 
+/**
+ * 文章发布事件处理器
+ * 
+ * @author Administrator
+ *
+ */
 public interface ArticlePublishedHandler {
 
+	/**
+	 * 处理文章的发布
+	 * 
+	 * @param articles
+	 *            发布的文章集合
+	 * @param op
+	 *            操作方式
+	 */
 	void handle(List<Article> articles, OP op);
 
 }

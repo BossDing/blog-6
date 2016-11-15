@@ -34,6 +34,8 @@ import me.qyh.blog.security.Base64;
 import me.qyh.util.Validators;
 
 /**
+ * xmlrpc xml解析器
+ * 
  * @see https://github.com/apache/oodt/blob/master/commons/src/main/java/org/apache/oodt/commons/util/XMLRPC.java
  * @author Administrator
  *
@@ -41,10 +43,28 @@ import me.qyh.util.Validators;
 public class RequestXmlParser {
 
 	private static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+	private static final RequestXmlParser INSTANCE = new RequestXmlParser();
 
 	private static final String[] VALUES = new String[] { "i4", "int", "boolean", "string", "double",
 			"dateTime.iso8601", "base64", "struct", "array" };
 
+	private RequestXmlParser() {
+		super();
+	}
+
+	public static RequestXmlParser getParser() {
+		return INSTANCE;
+	}
+
+	/**
+	 * 解析流获取方法和参数对象
+	 * 
+	 * @param is
+	 *            流
+	 * @return 方法详情
+	 * @throws ParseException
+	 *             解析失败
+	 */
 	public MethodCaller parse(InputStream is) throws ParseException {
 		SAXBuilder builder = new SAXBuilder();
 		Document doc = null;
@@ -54,7 +74,7 @@ public class RequestXmlParser {
 			throw new ParseException(e.getMessage(), e);
 		}
 		Element root = doc.getRootElement();
-		if (!root.getName().equals("methodCall"))
+		if (!"methodCall".equals(root.getName()))
 			throw new ParseException("解析失败，无法匹配:methodCall根节点");
 		List<?> mnNodes = root.getChildren("methodName");
 		if (mnNodes.size() != 1)
@@ -82,6 +102,13 @@ public class RequestXmlParser {
 		return new MethodCaller(mnEle.getTextTrim(), arguments.toArray(new Object[arguments.size()]));
 	}
 
+	/**
+	 * 创建响应报文
+	 * 
+	 * @param params
+	 *            参数
+	 * @return xml报文
+	 */
 	public String createResponseXml(Object... params) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -99,6 +126,15 @@ public class RequestXmlParser {
 		return sb.toString();
 	}
 
+	/**
+	 * 创建失败报文
+	 * 
+	 * @param code
+	 *            错误码
+	 * @param desc
+	 *            描述
+	 * @return xml报文
+	 */
 	public String createFailXml(String code, String desc) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -268,10 +304,22 @@ public class RequestXmlParser {
 		}
 	}
 
+	/**
+	 * 调用的方法
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public final class MethodCaller {
-		private String name;
-		private Object[] arguments;
+		private final String name;
+		private final Object[] arguments;
 
+		/**
+		 * @param name
+		 *            方法名
+		 * @param arguments
+		 *            参数
+		 */
 		public MethodCaller(String name, Object[] arguments) {
 			this.name = name;
 			this.arguments = arguments;
@@ -286,55 +334,122 @@ public class RequestXmlParser {
 		}
 	}
 
-	private RequestXmlParser() {
-
-	}
-
-	private static final RequestXmlParser INSTANCE = new RequestXmlParser();
-
-	public static RequestXmlParser getParser() {
-		return INSTANCE;
-	}
-
 	final class Struct {
 		private Map<String, Object> data = new HashMap<>();
 
-		public Struct(Map<String, Object> data) {
+		Struct(Map<String, Object> data) {
 			this.data = data;
 		}
 
+		/**
+		 * 获取字符串
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为字符串
+		 */
 		public String getString(String key) throws ParseException {
 			return get(key, String.class);
 		}
 
+		/**
+		 * 获取Integer
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为Integer
+		 */
 		public Integer getInt(String key) throws ParseException {
 			return get(key, Integer.class);
 		}
 
+		/**
+		 * 获取Boolean
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为Boolean
+		 */
 		public Boolean getBoolean(String key) throws ParseException {
 			return get(key, Boolean.class);
 		}
 
+		/**
+		 * 获取Double
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为Double
+		 */
 		public Double getDouble(String key) throws ParseException {
 			return get(key, Double.class);
 		}
 
+		/**
+		 * 获取Date
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为Date
+		 */
 		public Date getDate(String key) throws ParseException {
 			return get(key, Date.class);
 		}
 
+		/**
+		 * 获取byte []
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回空集合
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为byte[]
+		 */
 		public byte[] getBase64(String key) throws ParseException {
 			return get(key, byte[].class);
 		}
 
+		/**
+		 * 获取List
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回空集合
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为List
+		 */
 		@SuppressWarnings("unchecked")
 		public List<Object> getArray(String key) throws ParseException {
 			return get(key, List.class);
 		}
 
+		/**
+		 * 获取存放指定对象的List
+		 * 
+		 * @param key
+		 *            键
+		 * @param t
+		 *            类型
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为指定对象的List
+		 * 
+		 */
 		@SuppressWarnings("unchecked")
 		public <T> List<T> getArray(String key, Class<T> t) throws ParseException {
 			List<Object> list = getArray(key);
+			if (list == null)
+				return new ArrayList<>();
 			List<T> rest = new ArrayList<>(list.size());
 			for (Object o : list) {
 				if (o != null && !t.isInstance(o))
@@ -344,6 +459,15 @@ public class RequestXmlParser {
 			return rest;
 		}
 
+		/**
+		 * 获取Struct
+		 * 
+		 * @param key
+		 *            键
+		 * @return 如果不存在，返回null
+		 * @throws ParseException
+		 *             key对应的对象无法被转化为Map
+		 */
 		@SuppressWarnings("unchecked")
 		public Struct getStruct(String key) throws ParseException {
 			Map<String, Object> map = get(key, Map.class);

@@ -22,7 +22,6 @@ import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 import org.springframework.web.util.HtmlUtils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
@@ -37,20 +36,22 @@ public class MessageSerializer extends JsonSerializer<Message> {
 	@Autowired
 	private Messages messages;
 
+	/**
+	 * default
+	 */
+	public MessageSerializer() {
+		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
+	}
+
 	@Override
 	public Class<Message> handledType() {
 		return Message.class;
 	}
 
 	@Override
-	public void serialize(Message value, JsonGenerator gen, SerializerProvider serializers)
-			throws IOException, JsonProcessingException {
+	public void serialize(Message value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 		String message = HtmlUtils.htmlEscape(messages.getMessage(value));
 		gen.writeString(message);
-	}
-
-	public MessageSerializer() {
-		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
 	}
 
 }

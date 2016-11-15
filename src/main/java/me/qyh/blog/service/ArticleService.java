@@ -31,6 +31,11 @@ import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface ArticleService {
 
 	/**
@@ -48,9 +53,9 @@ public interface ArticleService {
 	 * 获取一篇可以被编辑的文章
 	 * 
 	 * @param id
+	 *            文章id
 	 * @throws LogicException
-	 *             文章不存在|文章不能被编辑
-	 * @return 不会为null
+	 * @return 文章
 	 */
 	Article getArticleForEdit(Integer id) throws LogicException;
 
@@ -61,14 +66,14 @@ public interface ArticleService {
 	 *            空间
 	 * @param mode
 	 *            归档方式
-	 * @return 不会为null
+	 * @return 文章归档
 	 */
 	ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode);
 
 	/**
 	 * 查询文章空间归档
 	 * 
-	 * @return 不会为null
+	 * @return 文章空间归档集合
 	 */
 	List<ArticleSpaceFile> queryArticleSpaceFiles();
 
@@ -76,7 +81,8 @@ public interface ArticleService {
 	 * 分页查询文章
 	 * 
 	 * @param param
-	 * @return
+	 *            查询参数
+	 * @return 文章分页对象
 	 */
 	PageResult<Article> queryArticle(ArticleQueryParam param);
 
@@ -92,9 +98,10 @@ public interface ArticleService {
 	 * 插入|更新 文章
 	 * 
 	 * @param article
+	 *            文章
 	 * @param autoDraft
 	 *            是否是自动保存的草稿
-	 * @return
+	 * @return 插入后的文章
 	 * @throws LogicException
 	 */
 	Article writeArticle(Article article, boolean autoDraft) throws LogicException;
@@ -103,6 +110,7 @@ public interface ArticleService {
 	 * 重建索引
 	 * 
 	 * @param async
+	 *            是否异步
 	 */
 	void rebuildIndex(boolean async);
 
@@ -110,6 +118,7 @@ public interface ArticleService {
 	 * 将博客放入回收站
 	 * 
 	 * @param id
+	 *            文章id
 	 * @throws LogicException
 	 */
 	void logicDeleteArticle(Integer id) throws LogicException;
@@ -118,6 +127,7 @@ public interface ArticleService {
 	 * 从回收站中恢复
 	 * 
 	 * @param id
+	 *            文章id
 	 * @throws LogicException
 	 */
 	void recoverArticle(Integer id) throws LogicException;
@@ -126,15 +136,17 @@ public interface ArticleService {
 	 * 删除博客
 	 * 
 	 * @param id
+	 *            文章id
 	 * @throws LogicException
 	 */
 	void deleteArticle(Integer id) throws LogicException;
 
 	/**
-	 * 增加博客点击数
+	 * 增加文章点击数
 	 * 
 	 * @param id
-	 * @return
+	 *            文章id
+	 * @return 被点击的文章
 	 */
 	Article hit(Integer id);
 
@@ -142,6 +154,7 @@ public interface ArticleService {
 	 * 发布草稿
 	 * 
 	 * @param id
+	 *            草稿id
 	 * @throws LogicException
 	 */
 	void publishDraft(Integer id) throws LogicException;
@@ -150,15 +163,17 @@ public interface ArticleService {
 	 * 上一篇，下一篇文章
 	 * 
 	 * @param article
-	 * @return
+	 *            当前文章
+	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
 	 */
 	ArticleNav getArticleNav(Article article);
 
 	/**
 	 * 上一篇，下一篇文章
 	 * 
-	 * @param article
-	 * @return
+	 * @param idOrAlias
+	 *            文章的id或者别名
+	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
 	 */
 	ArticleNav getArticleNav(String idOrAlias);
 
@@ -167,8 +182,10 @@ public interface ArticleService {
 	 * <strong>只会统计状态为发表的博客点击数、评论数、最近撰写日期和最后修改日期</strong>
 	 * 
 	 * @param space
-	 * @param queryPrivate
-	 * @return
+	 *            空间
+	 * @param queryHidden
+	 *            是否查询隐藏的文章
+	 * @return 文章统计详情
 	 */
 	ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden);
 
@@ -176,9 +193,12 @@ public interface ArticleService {
 	 * 查询被文章所引用的标签集
 	 * 
 	 * @param space
+	 *            空间
 	 * @param hasLock
+	 *            是否查询锁保护的文章
 	 * @param queryPrivate
-	 * @return
+	 *            是否查询私人文章
+	 * @return 标签集
 	 */
 	List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate);
 
@@ -186,7 +206,8 @@ public interface ArticleService {
 	 * 更新metaweblog文章
 	 * 
 	 * @param article
-	 * @return
+	 *            metaweblog 撰写的文章
+	 * @return 保存后的文章
 	 * @throws LogicException
 	 */
 	Article writeArticle(MetaweblogArticle article) throws LogicException;
@@ -194,8 +215,9 @@ public interface ArticleService {
 	/**
 	 * 查询最近的文章
 	 * 
-	 * @param id
-	 * @return
+	 * @param limit
+	 *            最大返回数目限制
+	 * @return 最近的文章
 	 */
 	List<Article> queryRecentArticles(Integer limit);
 
@@ -203,15 +225,22 @@ public interface ArticleService {
 	 * 查询类似文章
 	 * 
 	 * @param idOrAlias
-	 * @return
+	 *            文章id或者别名
+	 * @param limit
+	 *            最大数目
+	 * @return 类似文章集合
 	 * @throws LogicException
 	 */
 	List<Article> findSimilar(String idOrAlias, int limit) throws LogicException;
 
 	/**
+	 * 查询类似文章
 	 * 
 	 * @param article
-	 * @return
+	 *            当前文章
+	 * @param limit
+	 *            最大返回条目
+	 * @return 类似文章集合
 	 * @throws LogicException
 	 */
 	List<Article> findSimilar(Article article, int limit) throws LogicException;

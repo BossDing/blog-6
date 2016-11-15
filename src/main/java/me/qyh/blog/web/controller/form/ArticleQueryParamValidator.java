@@ -23,12 +23,17 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.pageparam.ArticleQueryParam;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 @Component
 public class ArticleQueryParamValidator implements Validator {
 
 	private static final int MAX_QUERY_LENGTH = 40;
 	private static final int MAX_TAG_LENGTH = 20;
-	
+
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return ArticleQueryParam.class.isAssignableFrom(clazz);
@@ -39,6 +44,12 @@ public class ArticleQueryParamValidator implements Validator {
 		validate((ArticleQueryParam) target);
 	}
 
+	/**
+	 * 校验查询参数
+	 * 
+	 * @param param
+	 *            查询参数
+	 */
 	public static void validate(ArticleQueryParam param) {
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);

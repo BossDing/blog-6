@@ -22,7 +22,12 @@ import org.springframework.web.HttpRequestHandler;
 
 import me.qyh.blog.exception.SystemException;
 
-class LocalResourceUrlMappingHolder {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class LocalResourceHttpRequestHandlerHolder {
 
 	private static Map<String, Object> urlMap = new HashMap<>();
 

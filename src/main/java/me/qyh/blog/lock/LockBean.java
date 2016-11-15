@@ -17,16 +17,30 @@ package me.qyh.blog.lock;
 
 import java.io.Serializable;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class LockBean implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Lock lock;
-	private String redirectUrl;
-	private LockResource lockResource;
+	private final Lock lock;
+	private final String redirectUrl;
+	private final LockResource lockResource;
 
+	/**
+	 * 
+	 * @param lock
+	 *            锁
+	 * @param lockResource
+	 *            锁保护的资源
+	 * @param redirectUrl
+	 *            访问地址
+	 */
 	public LockBean(Lock lock, LockResource lockResource, String redirectUrl) {
 		this.lock = lock;
 		this.redirectUrl = redirectUrl;

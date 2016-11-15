@@ -28,6 +28,12 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Validators;
 
+/**
+ * 拓展锁提供器
+ * 
+ * @author Administrator
+ *
+ */
 public class ExpandedLockProvider implements InitializingBean {
 
 	private static final int MAX_ID_LENGTH = 20;
@@ -40,10 +46,18 @@ public class ExpandedLockProvider implements InitializingBean {
 	private Map<String, Lock> idsMap = new LinkedHashMap<>();
 	private Map<String, Resource> defaultTplResource = new LinkedHashMap<String, Resource>();
 
+	/**
+	 * 根据id查询对应的锁
+	 * 
+	 * @param id
+	 *            锁id
+	 * @return 如果不存在返回null
+	 */
 	public Lock findLock(String id) {
 		return idsMap.get(id);
 	}
 
+	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (!CollectionUtils.isEmpty(expandedLocks)) {
 			for (Lock lock : expandedLocks) {
@@ -101,18 +115,42 @@ public class ExpandedLockProvider implements InitializingBean {
 		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9');
 	}
 
-	public List<? extends Lock> allLock() {
+	/**
+	 * 获取所有的锁
+	 * 
+	 * @return 所有的锁
+	 */
+	public List<Lock> allLock() {
 		return Collections.unmodifiableList(new ArrayList<>(idsMap.values()));
 	}
 
+	/**
+	 * 获取所有的锁类型
+	 * 
+	 * @return 所有的锁类型
+	 */
 	public String[] getLockTypes() {
 		return typesMap.keySet().toArray(new String[typesMap.size()]);
 	}
 
+	/**
+	 * 检查锁类型是否存在
+	 * 
+	 * @param lockType
+	 *            锁类型
+	 * @return 是否存在
+	 */
 	public boolean checkLockTypeExists(String lockType) {
 		return typesMap.containsKey(lockType);
 	}
 
+	/**
+	 * 根据某个锁类型获取对应的默认模板
+	 * 
+	 * @param lockType
+	 *            锁类型
+	 * @return 模板资源
+	 */
 	public Resource getDefaultTemplateResource(String lockType) {
 		return defaultTplResource.get(lockType);
 	}

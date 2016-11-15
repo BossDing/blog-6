@@ -21,17 +21,25 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.exception.LogicException;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface FileStore {
 
 	/**
-	 * 存储文件
+	 * 储存文件
 	 * 
+	 * @param key
+	 *            文件路径
 	 * @param multipartFile
-	 * @return
+	 *            文件
+	 * @return 尺寸成功后的文件信息
 	 * @throws LogicException
-	 *             存储异常
+	 * @throws IOException
 	 */
-	CommonFile store(String key, MultipartFile multipartFile) throws LogicException, IOException;
+	CommonFile store(String key, MultipartFile multipartFile) throws LogicException;
 
 	/**
 	 * 存储器ID
@@ -44,6 +52,7 @@ public interface FileStore {
 	 * 删除物理文件
 	 * 
 	 * @param key
+	 *            文件路径
 	 * @return true:删除成功|文件不存在，无需删除 false :删除失败(可能占用中)
 	 */
 	boolean delete(String key);
@@ -52,6 +61,7 @@ public interface FileStore {
 	 * 删除文件夹下物理文件
 	 * 
 	 * @param key
+	 *            文件路径
 	 * @return true:如果文件夹不存在或者全部文件删除成功
 	 */
 	boolean deleteBatch(String key);
@@ -60,6 +70,7 @@ public interface FileStore {
 	 * 获取文件的访问路径
 	 * 
 	 * @param key
+	 *            文件路径
 	 * @return
 	 */
 	String getUrl(String key);
@@ -67,7 +78,8 @@ public interface FileStore {
 	/**
 	 * 获取下载路径
 	 * 
-	 * @param cf
+	 * @param key
+	 *            文件路径
 	 * @return
 	 */
 	String getDownloadUrl(String key);
@@ -75,7 +87,8 @@ public interface FileStore {
 	/**
 	 * 获取缩略图路径
 	 * 
-	 * @param cf
+	 * @param key
+	 *            文件路径
 	 * @return
 	 */
 	ThumbnailUrl getThumbnailUrl(String key);

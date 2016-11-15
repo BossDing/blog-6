@@ -17,9 +17,17 @@ package me.qyh.blog.file.local;
 
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class LocalResourceSimpleUrlHandlerMapping extends SimpleUrlHandlerMapping {
 
+	/**
+	 * default
+	 */
 	public LocalResourceSimpleUrlHandlerMapping() {
-		setUrlMap(LocalResourceUrlMappingHolder.get());
+		setUrlMap(LocalResourceHttpRequestHandlerHolder.get());
 	}
 }

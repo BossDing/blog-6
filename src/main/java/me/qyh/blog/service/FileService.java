@@ -29,20 +29,73 @@ import me.qyh.blog.file.FileStore;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface FileService {
 
 	public static final String SPLIT_CHAR = "/";
 
+	/**
+	 * 上传文件
+	 * 
+	 * @param upload
+	 *            文件对象
+	 * @return 上传详情
+	 * @throws LogicException
+	 *             上传过程中发生逻辑异常
+	 */
 	List<UploadedFile> upload(BlogFileUpload upload) throws LogicException;
 
+	/**
+	 * 创建文件夹
+	 * 
+	 * @param toCreate
+	 *            待创建的文件夹
+	 * @throws LogicException
+	 *             创建逻辑异常
+	 */
 	void createFolder(BlogFile toCreate) throws LogicException;
 
+	/**
+	 * 分页查询文件
+	 * 
+	 * @param param
+	 *            查询参数
+	 * @return 文件分页对象
+	 * @throws LogicException
+	 *             查询逻辑异常
+	 */
 	BlogFilePageResult queryBlogFiles(BlogFileQueryParam param) throws LogicException;
 
+	/**
+	 * 获取文件属性
+	 * 
+	 * @param id
+	 *            文件id
+	 * @return 文件属性map
+	 * @throws LogicException
+	 *             查询属性异常
+	 */
 	Map<String, Object> getBlogFileProperty(Integer id) throws LogicException;
 
+	/**
+	 * 获取所有的文件服务
+	 * 
+	 * @return 文件服务列表
+	 */
 	List<FileServer> allServers();
 
+	/**
+	 * 更新文件
+	 * 
+	 * @param toUpdate
+	 *            待更新的文件
+	 * @throws LogicException
+	 *             更新过程中逻辑异常
+	 */
 	void update(BlogFile toUpdate) throws LogicException;
 
 	/**
@@ -50,7 +103,9 @@ public interface FileService {
 	 * 
 	 * @see FileService#clearDeletedCommonFile()
 	 * @param id
+	 *            文件id
 	 * @throws LogicException
+	 *             删除过程中逻辑异常
 	 */
 	void delete(Integer id) throws LogicException;
 
@@ -63,13 +118,13 @@ public interface FileService {
 	void clearDeletedCommonFile();
 
 	/**
-	 * 上传metaweblog api上传的文件
+	 * 保存metaweblog api 上传的文件
 	 * 
-	 * @param path
-	 * @param server
 	 * @param file
-	 * @return
+	 *            待保存的文件
+	 * @return 上传完成后的信息
 	 * @throws LogicException
+	 *             保存过程中发生逻辑异常
 	 */
 	UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException;
 }

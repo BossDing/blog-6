@@ -87,6 +87,15 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
+/**
+ * 近实时文章索引
+ * <p>
+ * 通过配置commitPeriod可以设置commit频率
+ * </p>
+ * 
+ * @author Administrator
+ *
+ */
 public abstract class NRTArticleIndexer implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 
 	private static final Logger logger = LoggerFactory.getLogger(NRTArticleIndexer.class);
@@ -135,6 +144,17 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
+	/**
+	 * 构造器
+	 * 
+	 * @param indexDir
+	 *            索引文件目录
+	 * @param analyzer
+	 *            分析器
+	 * @throws IOException
+	 *             索引目录打开失败等
+	 * 
+	 */
 	public NRTArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
 		this.analyzer = analyzer == null ? new StandardAnalyzer() : analyzer;
@@ -164,7 +184,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		close();
 	}
 
-	public void close() {
+	private void close() {
 		try {
 			reopenThread.close();
 			searcherManager.maybeRefreshBlocking();
@@ -212,6 +232,12 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		return DateTools.timeToString(date.getTime(), Resolution.MILLISECOND);
 	}
 
+	/**
+	 * 增加|更新文章索引，如果文章索引存在，则先删除后增加索引
+	 * 
+	 * @param article
+	 *            要增加|更新索引的文章
+	 */
 	public void addOrUpdateDocument(Article article) {
 		try {
 			if (article.hasId()) {
@@ -223,6 +249,12 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		}
 	}
 
+	/**
+	 * 删除索引
+	 * 
+	 * @param id
+	 *            文章id
+	 */
 	public void deleteDocument(Integer id) {
 		Term term = new Term(ID, id.toString());
 		try {
@@ -232,6 +264,17 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		}
 	}
 
+	/**
+	 * 查询相似文章
+	 * 
+	 * @param article
+	 *            源文章
+	 * @param dquery
+	 *            文章详情查询接口
+	 * @param limit
+	 *            文章数
+	 * @return
+	 */
 	public List<Article> querySimilar(Article article, ArticlesDetailQuery dquery, int limit) {
 		IndexSearcher searcher = null;
 		try {
@@ -256,23 +299,20 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			if (!articles.isEmpty())
 				Collections.sort(articles, COMPARATOR);
 			List<Article> results = new ArrayList<>();
-			int size = 0;
 			for (Article art : articles) {
-				if (art.equals(article))
-					continue;
-				results.add(art);
-				size++;
-				if (size >= limit)
-					break;
+				if (!art.equals(article))
+					results.add(art);
 			}
-			return results;
+			int size = results.size();
+			int max = Math.min(limit, size);
+			return size > max ? results.subList(0, max) : results;
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			try {
 				searcherManager.release(searcher);
 			} catch (Exception e) {
-				//
+				logger.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -297,35 +337,21 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		return null;
 	}
 
+	/**
+	 * 查询文章
+	 * 
+	 * @param param
+	 *            查询参数
+	 * @param dquery
+	 *            文章详情接口
+	 * @return 分页内容
+	 */
 	public PageResult<Article> query(ArticleQueryParam param, ArticlesDetailQuery dquery) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
 			searcher = searcherManager.acquire();
-
-			List<SortField> fields = new ArrayList<>();
-			if (!param.isIgnoreLevel())
-				fields.add(new SortField(LEVEL, Type.INT, true));
-			ArticleQueryParam.Sort psort = param.getSort();
-			if (psort == null)
-				fields.add(SortField.FIELD_SCORE);
-			else {
-				switch (param.getSort()) {
-				case COMMENTS:
-					fields.add(new SortField(COMMENTS, Type.INT, true));
-					break;
-				case HITS:
-					fields.add(new SortField(HITS, Type.INT, true));
-					break;
-				default:
-					break;
-				}
-				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
-				fields.add(new SortField(ID, SortField.Type.STRING, true));
-			}
-
-			logger.debug(fields.toString());
-			Sort sort = new Sort(fields.toArray(new SortField[] {}));
+			Sort sort = buildSort(param);
 
 			Builder builder = new Builder();
 			Space space = param.getSpace();
@@ -358,16 +384,9 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			}
 			Query multiFieldQuery = null;
 			if (param.hasQuery()) {
-				String query = MultiFieldQueryParser.escape(param.getQuery().trim());
-				MultiFieldQueryParser parser = new MultiFieldQueryParser(
-						new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT }, analyzer, qboostMap);
-				parser.setAutoGeneratePhraseQueries(true);
-				parser.setPhraseSlop(0);
-				try {
-					multiFieldQuery = parser.parse(query);
+				multiFieldQuery = buildMultiFieldQuery(param.getQuery());
+				if (multiFieldQuery != null)
 					builder.add(multiFieldQuery, Occur.MUST);
-				} catch (ParseException e) {
-				}
 			}
 			Query query = builder.build();
 			logger.debug(query.toString());
@@ -399,9 +418,47 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 			try {
 				searcherManager.release(searcher);
 			} catch (Exception e) {
-				//
+				logger.error(e.getMessage(), e);
 			}
 		}
+	}
+
+	protected Query buildMultiFieldQuery(String query) {
+		String escaped = MultiFieldQueryParser.escape(query.trim());
+		MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT },
+				analyzer, qboostMap);
+		parser.setAutoGeneratePhraseQueries(true);
+		parser.setPhraseSlop(0);
+		try {
+			return parser.parse(escaped);
+		} catch (ParseException e) {
+			logger.debug("无法解析输入的查询表达式:" + escaped + ":" + e.getMessage(), e);
+			return null;
+		}
+	}
+
+	protected Sort buildSort(ArticleQueryParam param) {
+		List<SortField> fields = new ArrayList<>();
+		if (!param.isIgnoreLevel())
+			fields.add(new SortField(LEVEL, Type.INT, true));
+		ArticleQueryParam.Sort psort = param.getSort();
+		if (psort == null)
+			fields.add(SortField.FIELD_SCORE);
+		else {
+			switch (param.getSort()) {
+			case COMMENTS:
+				fields.add(new SortField(COMMENTS, Type.INT, true));
+				break;
+			case HITS:
+				fields.add(new SortField(HITS, Type.INT, true));
+				break;
+			default:
+				break;
+			}
+			fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
+			fields.add(new SortField(ID, SortField.Type.STRING, true));
+		}
+		return new Sort(fields.toArray(new SortField[] {}));
 	}
 
 	/**
@@ -446,6 +503,9 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		}
 	}
 
+	/**
+	 * 删除所有已经存在的文章索引
+	 */
 	public void deleteAll() {
 		try {
 			oriWriter.deleteAll();
@@ -458,8 +518,20 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		return Jsoup.clean(content, Whitelist.none());
 	}
 
+	/**
+	 * 删除标签
+	 * 
+	 * @param tags
+	 *            要删除的标签名
+	 */
 	public abstract void removeTag(String... tags);
 
+	/**
+	 * 增加标签
+	 * 
+	 * @param tags
+	 *            标签名
+	 */
 	public abstract void addTags(String... tags);
 
 	@Override
@@ -501,18 +573,17 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 	private static final class DefaultFormatter implements Formatter {
 		private String classes;
 
+		private DefaultFormatter(String classes) {
+			this.classes = classes;
+		}
+
 		@Override
 		public String highlightTerm(String originalText, TokenGroup tokenGroup) {
 			return tokenGroup.getTotalScore() <= 0 ? originalText
 					: new StringBuilder("<b class=\"").append(classes).append("\">").append(originalText).append("</b>")
 							.toString();
 		}
-
-		DefaultFormatter(String classes) {
-			this.classes = classes;
-		}
 	}
-
 
 	private static class ArticleCommparator implements Comparator<Article> {
 
@@ -525,7 +596,20 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		}
 	}
 
+	/**
+	 * 文章查询接口
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public interface ArticlesDetailQuery {
+		/**
+		 * 通过id集合查询对应的文章
+		 * 
+		 * @param ids
+		 *            要查询的文章id集合
+		 * @return 文章集合
+		 */
 		List<Article> query(List<Integer> ids);
 	}
 

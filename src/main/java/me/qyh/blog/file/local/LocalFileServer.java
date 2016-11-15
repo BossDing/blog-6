@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.file.local;
 
-import java.io.IOException;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.exception.LogicException;
@@ -24,15 +22,19 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.DefaultFileServer;
 
+/**
+ * 本地文件存储服务
+ * 
+ * @author Administrator
+ *
+ */
 public class LocalFileServer extends DefaultFileServer<LocalFileStore> {
 
 	@Override
-	public CommonFile store(String key, MultipartFile file) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile file) throws LogicException {
 		for (LocalFileStore store : stores) {
-			if (store.canStore(file)) {
-				CommonFile cf = store.store(key, file);
-				return cf;
-			}
+			if (store.canStore(file))
+				return store.store(key, file);
 		}
 		throw new SystemException("储存失败:" + file + "，没有找到符合条件的存储器");
 	}

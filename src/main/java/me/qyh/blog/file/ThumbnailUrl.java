@@ -17,6 +17,12 @@ package me.qyh.blog.file;
 
 import java.io.Serializable;
 
+/**
+ * 缩略图链接
+ * 
+ * @author Administrator
+ *
+ */
 public class ThumbnailUrl implements Serializable {
 
 	/**
@@ -27,6 +33,14 @@ public class ThumbnailUrl implements Serializable {
 	private String middle;
 	private String large;
 
+	/**
+	 * @param small
+	 *            小尺寸缩略图链接
+	 * @param middle
+	 *            中尺寸缩略图链接
+	 * @param large
+	 *            大尺寸缩略图链接
+	 */
 	public ThumbnailUrl(String small, String middle, String large) {
 		super();
 		this.small = small;

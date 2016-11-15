@@ -15,10 +15,34 @@
  */
 package me.qyh.blog.entity;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleTag {
 
 	private Article article;
 	private Tag tag;
+
+	/**
+	 * default
+	 */
+	public ArticleTag() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param article
+	 *            文章
+	 * @param tag
+	 *            标签
+	 */
+	public ArticleTag(Article article, Tag tag) {
+		this.article = article;
+		this.tag = tag;
+	}
 
 	public Article getArticle() {
 		return article;
@@ -33,15 +57,6 @@ public class ArticleTag {
 	}
 
 	public void setTag(Tag tag) {
-		this.tag = tag;
-	}
-
-	public ArticleTag() {
-
-	}
-
-	public ArticleTag(Article article, Tag tag) {
-		this.article = article;
 		this.tag = tag;
 	}
 

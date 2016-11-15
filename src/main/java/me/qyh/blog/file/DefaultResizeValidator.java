@@ -15,9 +15,31 @@
  */
 package me.qyh.blog.file;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class DefaultResizeValidator implements ResizeValidator {
 
 	private Integer[] allowSizes;
+
+	/**
+	 * default
+	 */
+	public DefaultResizeValidator() {
+		super();
+	}
+
+	/**
+	 * 
+	 * @param allowSizes
+	 *            允许的尺寸
+	 */
+	public DefaultResizeValidator(Integer[] allowSizes) {
+		super();
+		this.allowSizes = allowSizes;
+	}
 
 	@Override
 	public boolean valid(Resize resize) {
@@ -54,14 +76,5 @@ public class DefaultResizeValidator implements ResizeValidator {
 
 	public void setAllowSizes(Integer[] allowSizes) {
 		this.allowSizes = allowSizes;
-	}
-
-	public DefaultResizeValidator(Integer[] allowSizes) {
-		super();
-		this.allowSizes = allowSizes;
-	}
-
-	public DefaultResizeValidator() {
-
 	}
 }

@@ -17,7 +17,6 @@ package me.qyh.blog.file.oss;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -30,13 +29,18 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
+import me.qyh.blog.file.FileHelper;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ImageHelper;
-import me.qyh.blog.file.ImageReadWriteException;
-import me.qyh.blog.file.UnsupportFormatException;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.message.Message;
 
+/**
+ * oss文件存储抽象类
+ * 
+ * @author Administrator
+ *
+ */
 public abstract class AbstractOssFileStore implements FileStore, InitializingBean {
 
 	private int id;
@@ -49,35 +53,17 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	protected ImageHelper imageHelper;
 
 	@Override
-	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException, IOException {
+	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
 		String extension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
-		File tmp = Files.createTempFile(null, "." + extension).toFile();
-		ImageInfo ii = null;
+		File tmp = FileHelper.temp(extension);
 		try {
 			multipartFile.transferTo(tmp);
-			if (imageHelper.supportFormat(extension)) {
-				try {
-					ii = imageHelper.read(tmp);
-				} catch (UnsupportFormatException e) {
-					throw new LogicException("file.format.notsupport", e.getFormat() + "格式不被支持", e.getFormat());
-				} catch (ImageReadWriteException e) {
-					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
-				}
-			}
-			File backup = null;
-			try {
-				if (backupDir != null) {
-					backup = new File(backupDir, key);
-					FileUtils.forceMkdir(backup.getParentFile());
-					FileUtils.copyFile(tmp, backup);
-				}
-				upload(key, tmp);
-			} catch (UploadException e) {
-				if (backup != null && !FileUtils.deleteQuietly(backup) && backup.exists()) {
-					backup.deleteOnExit();
-				}
-				throw new SystemException(e.getMessage(), e);
-			}
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+		try {
+			ImageInfo ii = readImage(tmp, extension);
+			doUpload(key, tmp);
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
 			cf.setOriginalFilename(multipartFile.getOriginalFilename());
@@ -95,7 +81,36 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 	}
 
-	protected abstract void upload(String key, File file) throws UploadException;
+	private ImageInfo readImage(File tmp, String extension) throws LogicException {
+		if (imageHelper.supportFormat(extension)) {
+			try {
+				return imageHelper.read(tmp);
+			} catch (IOException e) {
+				logger.debug(e.getMessage(), e);
+				throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
+			}
+		}
+		return null;
+	}
+
+	private void doUpload(String key, File tmp) {
+		File backup = null;
+		try {
+			if (backupDir != null) {
+				backup = new File(backupDir, key);
+				FileUtils.forceMkdir(backup.getParentFile());
+				FileUtils.copyFile(tmp, backup);
+			}
+			upload(key, tmp);
+		} catch (IOException e) {
+			if (backup != null && !FileUtils.deleteQuietly(backup) && backup.exists()) {
+				backup.deleteOnExit();
+			}
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	protected abstract void upload(String key, File file) throws IOException;
 
 	protected boolean image(String key) {
 		return imageHelper.supportFormat(FilenameUtils.getExtension(key));
@@ -116,7 +131,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public final boolean deleteBatch(String key) {
-		boolean flag = _deleteBatch(key);
+		boolean flag = doDeleteBatch(key);
 		if (flag)
 			flag = deleteBackup(key);
 		return flag;
@@ -124,7 +139,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public final boolean delete(String key) {
-		boolean flag = _delete(key);
+		boolean flag = doDelete(key);
 		if (flag)
 			flag = deleteBackup(key);
 		return flag;
@@ -139,9 +154,9 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		return false;
 	}
 
-	protected abstract boolean _delete(String key);
+	protected abstract boolean doDelete(String key);
 
-	protected abstract boolean _deleteBatch(String key);
+	protected abstract boolean doDeleteBatch(String key);
 
 	public void setId(int id) {
 		this.id = id;
@@ -149,22 +164,5 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	public void setBackupAbsPath(String backupAbsPath) {
 		this.backupAbsPath = backupAbsPath;
-	}
-
-	protected class UploadException extends Exception {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-		public UploadException(String message, Throwable cause) {
-			super(message, cause);
-		}
-
-		public UploadException(String message) {
-			super(message);
-		}
-
 	}
 }

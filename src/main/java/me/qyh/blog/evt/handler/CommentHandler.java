@@ -17,8 +17,20 @@ package me.qyh.blog.evt.handler;
 
 import me.qyh.blog.entity.Comment;
 
+/**
+ * 评论事件处理器
+ * 
+ * @author Administrator
+ *
+ */
 public interface CommentHandler {
 
+	/**
+	 * 处理评论
+	 * 
+	 * @param comment
+	 *            评论
+	 */
 	void handle(Comment comment);
 
 }

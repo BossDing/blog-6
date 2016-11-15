@@ -17,7 +17,15 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 
-public class Tag extends Id {
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class Tag extends BaseEntity {
 
 	/**
 	 * 
@@ -25,6 +33,21 @@ public class Tag extends Id {
 	private static final long serialVersionUID = 1L;
 	private String name;
 	private Timestamp create;
+
+	/**
+	 * default
+	 */
+	public Tag() {
+		super();
+	}
+
+	/**
+	 * @param name
+	 *            标签名
+	 */
+	public Tag(String name) {
+		this.name = name;
+	}
 
 	public String getName() {
 		return name;
@@ -41,38 +64,24 @@ public class Tag extends Id {
 	public void setCreate(Timestamp create) {
 		this.create = create;
 	}
-
+	
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return new HashCodeBuilder().append(name).build();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null)
+		if (obj == null) {
 			return false;
-		if (this == obj)
+		}
+		if (obj == this) {
 			return true;
-		if (getClass() != obj.getClass())
+		}
+		if (obj.getClass() != getClass()) {
 			return false;
-		Tag other = (Tag) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+		}
+		Tag rhs = (Tag) obj;
+		return new EqualsBuilder().append(name, rhs.name).isEquals();
 	}
-
-	public Tag() {
-		super();
-	}
-
-	public Tag(String name) {
-		this.name = name;
-	}
-
 }

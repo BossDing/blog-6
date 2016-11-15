@@ -28,10 +28,14 @@ public class MissLockException extends RuntimeException {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * @param message
+	 *            信息
+	 */
 	public MissLockException(String message) {
 		super(message);
 	}
-	
+
 	public MissLockException() {
 		super();
 	}

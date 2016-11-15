@@ -22,25 +22,53 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.exception.LogicException;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface FileServer {
 
 	/**
 	 * 储存文件
 	 * 
+	 * @param key
+	 *            文件路径
 	 * @param file
-	 *            上传的文件
-	 * @return
+	 *            文件
+	 * @return 尺寸成功后的文件信息
 	 * @throws LogicException
 	 * @throws IOException
 	 */
-	CommonFile store(String key, MultipartFile file) throws LogicException, IOException;
+	CommonFile store(String key, MultipartFile file) throws LogicException;
 
+	/**
+	 * 存储服务id
+	 * 
+	 * @return
+	 */
 	int id();
 
+	/**
+	 * 根据id查询存储器
+	 * 
+	 * @param id
+	 *            存储器id
+	 * @return 如果不存在返回null
+	 */
 	FileStore getFileStore(int id);
 
+	/**
+	 * 
+	 * @return 存储服务name
+	 */
 	String name();
-	
+
+	/**
+	 * 获取所有的文件存储器
+	 * 
+	 * @return
+	 */
 	List<FileStore> allStore();
 
 }

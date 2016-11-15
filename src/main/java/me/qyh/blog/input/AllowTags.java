@@ -20,7 +20,12 @@ import java.util.List;
 
 import me.qyh.util.Validators;
 
-public class Tags {
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class AllowTags {
 
 	private String simpleTags;
 	private List<Tag> tags = new ArrayList<>();
@@ -48,6 +53,11 @@ public class Tags {
 		this.tags = tags;
 	}
 
+	/**
+	 * 添加允许的标签
+	 * 
+	 * @param tag
+	 */
 	public void addTag(Tag tag) {
 		this.tags.add(tag);
 	}

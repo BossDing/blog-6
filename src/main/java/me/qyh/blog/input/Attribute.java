@@ -15,6 +15,11 @@
  */
 package me.qyh.blog.input;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class Attribute {
 	private String name;
 	private String protocols;

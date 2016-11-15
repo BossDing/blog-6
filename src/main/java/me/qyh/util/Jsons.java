@@ -21,56 +21,119 @@ import java.io.OutputStream;
 import java.net.URL;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
+/**
+ * json处理工具类
+ * 
+ * @author Administrator
+ *
+ */
 public class Jsons {
 
-	private Jsons() {
-
-	}
-
 	private static final ObjectMapper mapper = new ObjectMapper();
+
+	/**
+	 * private
+	 */
+	private Jsons() {
+		super();
+	}
 
 	static {
 		mapper.setFilters(new SimpleFilterProvider().setFailOnUnknownId(false));
 		mapper.setSerializationInclusion(Include.NON_NULL);
 	}
 
+	/**
+	 * 获取ObjectMapper
+	 * 
+	 * @return ObjectMapper
+	 */
 	public static ObjectMapper getMapper() {
 		return mapper;
 	}
 
-	public static <T> T readValue(Class<T> t, String json) throws JsonProcessingException, IOException {
+	/**
+	 * 将json转为对应的对象
+	 * 
+	 * @param t
+	 *            对象class
+	 * @param json
+	 *            json文本
+	 * @return 对象
+	 * @throws IOException
+	 *             转化异常
+	 */
+	public static <T> T readValue(Class<T> t, String json) throws IOException {
 		ObjectReader reader = mapper.reader(t);
 		return reader.readValue(json);
 	}
 
-	public static <T> T readValue(Class<T> t, InputStream is) throws JsonProcessingException, IOException {
+	/**
+	 * 将json流转化为对应的对象
+	 * 
+	 * @param t
+	 *            对象class
+	 * @param is
+	 *            流
+	 * @return 对象
+	 * @throws IOException
+	 *             转换失败
+	 */
+	public static <T> T readValue(Class<T> t, InputStream is) throws IOException {
 		ObjectReader reader = mapper.reader(t);
 		return reader.readValue(is);
 	}
 
-	public static <T> T readValue(Class<T> t, URL url) throws JsonProcessingException, IOException {
+	/**
+	 * 从链接中读取json信息，转化为对应的对象
+	 * 
+	 * @param t
+	 *            对象class
+	 * @param url
+	 *            链接
+	 * @return 对象
+	 * @throws IOException
+	 *             转换失败
+	 */
+	public static <T> T readValue(Class<T> t, URL url) throws IOException {
 		ObjectReader reader = mapper.reader(t);
 		return reader.readValue(url);
 	}
 
+	/**
+	 * 获取json读操作对象
+	 *
+	 * @return ObjectReader
+	 */
 	public static ObjectReader reader() {
 		return mapper.reader();
 	}
 
+	/**
+	 * 获取json写操作对象
+	 * 
+	 * @return ObjectWriter
+	 */
 	public static ObjectWriter writer() {
 		return mapper.writer();
 	}
 
-	public static void write(OutputStream os, Object toWrite)
-			throws JsonGenerationException, JsonMappingException, IOException {
+	/**
+	 * 将对象的json数据写入流中
+	 * 
+	 * @param os
+	 *            输出流
+	 * @param toWrite
+	 *            代写入的对象
+	 * @throws IOException
+	 *             写入失败
+	 */
+	public static void write(OutputStream os, Object toWrite) throws IOException {
 		writer().writeValue(os, toWrite);
 	}
 

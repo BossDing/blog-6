@@ -22,6 +22,12 @@ import org.springframework.context.ApplicationEvent;
 
 import me.qyh.blog.entity.Article;
 
+/**
+ * 文章发布事件
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticlePublishedEvent extends ApplicationEvent {
 
 	/**
@@ -31,16 +37,40 @@ public class ArticlePublishedEvent extends ApplicationEvent {
 	private List<Article> articles;
 	private OP op;
 
+	/**
+	 * 操作方式
+	 * 
+	 * @author Administrator
+	 *
+	 */
 	public enum OP {
 		INSERT, UPDATE;
 	}
 
+	/**
+	 * 
+	 * @param source
+	 *            操作对象
+	 * @param article
+	 *            文章
+	 * @param op
+	 *            操作方式
+	 */
 	public ArticlePublishedEvent(Object source, Article article, OP op) {
 		super(source);
 		this.articles = Arrays.asList(article);
 		this.op = op;
 	}
 
+	/**
+	 * 
+	 * @param source
+	 *            操作对象
+	 * @param articles
+	 *            文章集合
+	 * @param op
+	 *            操作方式
+	 */
 	public ArticlePublishedEvent(Object source, List<Article> articles, OP op) {
 		super(source);
 		this.articles = articles;

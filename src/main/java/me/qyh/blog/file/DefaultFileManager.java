@@ -25,6 +25,12 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.exception.SystemException;
 
+/**
+ * 默认文件服务管理器
+ * 
+ * @author Administrator
+ *
+ */
 public class DefaultFileManager implements FileManager, InitializingBean {
 
 	private List<FileServer> servers;

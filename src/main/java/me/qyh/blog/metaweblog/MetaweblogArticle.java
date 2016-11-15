@@ -22,6 +22,12 @@ import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
 
+/**
+ * metaweblog api撰写的文章
+ * 
+ * @author Administrator
+ *
+ */
 public class MetaweblogArticle {
 
 	private String space;
@@ -80,6 +86,11 @@ public class MetaweblogArticle {
 		this.id = id;
 	}
 
+	/**
+	 * 设置文章内容
+	 * 
+	 * @param ori
+	 */
 	public void mergeArticle(Article ori) {
 		ori.setTitle(title);
 		ori.setContent(content);
@@ -87,6 +98,11 @@ public class MetaweblogArticle {
 		ori.setStatus(status);
 	}
 
+	/**
+	 * 转化为系统文章
+	 * 
+	 * @return
+	 */
 	public Article toArticle() {
 		Article article = new Article();
 		article.setTitle(title);
@@ -101,6 +117,11 @@ public class MetaweblogArticle {
 		return article;
 	}
 
+	/**
+	 * 是否包含id
+	 * 
+	 * @return 是true，否false
+	 */
 	public boolean hasId() {
 		return id != null;
 	}

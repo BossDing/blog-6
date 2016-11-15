@@ -1,6 +1,14 @@
 package me.qyh.blog.entity;
 
-public class SpaceConfig extends Id{
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+/**
+ * 
+ * @author Administrator
+ *
+ */
+public class SpaceConfig extends BaseEntity {
 
 	/**
 	 * 
@@ -25,4 +33,23 @@ public class SpaceConfig extends Id{
 		this.articlePageSize = articlePageSize;
 	}
 
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(id).build();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		SpaceConfig rhs = (SpaceConfig) obj;
+		return new EqualsBuilder().append(id, rhs.id).isEquals();
+	}
 }

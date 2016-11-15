@@ -15,6 +15,11 @@
  */
 package me.qyh.blog.oauth2;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class UserInfo {
 
 	private String avatar;

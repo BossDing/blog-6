@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,12 +29,13 @@ import javax.imageio.ImageIO;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
 import org.im4java.core.IdentifyCmd;
 import org.im4java.process.ArrayListOutputConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.madgag.gif.fmsware.GifDecoder;
@@ -43,7 +43,15 @@ import com.madgag.gif.fmsware.GifDecoder;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.util.Validators;
 
+/**
+ * 图片处理类，基于{@link http://www.graphicsmagick.org/}，可以用来处理PNG,JPEG,GIF,WEBP等多种格式
+ * 
+ * @author Administrator
+ *
+ */
 public class GraphicsMagickImageHelper extends ImageHelper implements InitializingBean {
+
+	private static final Logger logger = LoggerFactory.getLogger(GraphicsMagickImageHelper.class);
 
 	/**
 	 * 在windows环境下，必须设置这个路径
@@ -51,8 +59,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	private String magickPath;
 
 	private static final boolean WINDOWS = File.separatorChar == '\\';
-	private static final String WHITE_BACKGROUND = "rgb(255,255,255)";
-	private static final String MATTE_RAW_ARG = "+matte";
 
 	/**
 	 * 如果为true，那么将会以渐进的方式显示出来，但在有些浏览器，例如EDGE则会先显示空白后再显示图片
@@ -71,9 +77,29 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 *
 	 */
 	@Override
-	protected void doResize(Resize resize, File src, File dest) throws ImageReadWriteException {
+	protected void doResize(Resize resize, File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
+		setResize(resize, op);
+		String ext = FilenameUtils.getExtension(dest.getName());
+		String srcExt = FilenameUtils.getExtension(src.getName());
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
+			setWhiteBg(op);
+		op.strip();
+		op.p_profile("*");
+		if (interlace(dest))
+			op.interlace("Line");
+		op.addImage();
+		try {
+			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		} catch (IOException | InterruptedException e) {
+			throw new SystemException(e.getMessage(), e);
+		} catch (IM4JavaException e) {
+			throw new IOException(e.getMessage(), e);
+		}
+	}
+
+	protected void setResize(Resize resize, IMOperation op) {
 		if (resize.getSize() != null) {
 			op.resize(resize.getSize(), resize.getSize(), '>');
 		} else {
@@ -89,36 +115,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 				}
 			}
 		}
-		String ext = FilenameUtils.getExtension(dest.getName());
-		String srcExt = FilenameUtils.getExtension(src.getName());
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
-			op.background(WHITE_BACKGROUND);
-			op.extent(0, 0);
-			op.addRawArgs(MATTE_RAW_ARG);
-		}
-		op.strip();
-		op.p_profile("*");
-		if (interlace(dest))
-			op.interlace("Line");
-		op.addImage();
-		try {
-			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
-		} catch (IOException | InterruptedException e) {
-			throw new SystemException(e.getMessage(), e);
-		} catch (IM4JavaException e) {
-			throw new ImageReadWriteException(e.getMessage(), e);
-		}
-	}
-
-	private boolean interlace(File dest) {
-		if (!doInterlace)
-			return false;
-		String ext = FilenameUtils.getExtension(dest.getName());
-		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 
 	@Override
-	protected ImageInfo doRead(File file) throws ImageReadWriteException {
+	protected ImageInfo doRead(File file) throws IOException {
 		IMOperation localIMOperation = new IMOperation();
 		localIMOperation.ping();
 		localIMOperation.format("%w\n%h\n%m\n");
@@ -135,30 +135,14 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			Iterator<String> it = atts.iterator();
 			return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
 		} catch (Exception e) {
-			throw new ImageReadWriteException(e.getMessage(), e);
-		}
-	}
-
-	public void setMagickPath(String magickPath) {
-		this.magickPath = magickPath;
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		if (WINDOWS && Validators.isEmptyOrNull(magickPath, true)) {
-			throw new SystemException("windows下必须设置GraphicsMagick的主目录");
+			throw new IOException(e.getMessage(), e);
 		}
 	}
 
 	@Override
-	protected void doGetGifCover(File gif, File dest) throws ImageReadWriteException {
+	protected void doGetGifCover(File gif, File dest) throws IOException {
 		String ext = FilenameUtils.getExtension(dest.getName());
-		File png = null;
-		try {
-			png = File.createTempFile(RandomStringUtils.random(6), "." + PNG);
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+		File png = FileHelper.temp(PNG);
 		try {
 			IMOperation op = new IMOperation();
 			op.addImage();
@@ -167,38 +151,14 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			op.addImage();
 			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", png.getAbsolutePath());
 		} catch (Exception e) {
-			// Corrupt Image
-			GifDecoder gd = new GifDecoder();
-			InputStream is = null;
-			try {
-				try {
-					is = new FileInputStream(gif);
-				} catch (FileNotFoundException e1) {
-					throw new SystemException(e1.getMessage(), e1);
-				}
-				int flag = gd.read(is);
-				if (flag != GifDecoder.STATUS_OK) {
-					throw new ImageReadWriteException(gif + "文件无法获取封面");
-				}
-				BufferedImage bi = gd.getFrame(0);
-				try {
-					png = Files.createTempFile("tmp", "." + PNG).toFile();
-					ImageIO.write(bi, PNG, png);
-				} catch (IOException e1) {
-					throw new SystemException(e1.getMessage(), e1);
-				}
-			} finally {
-				IOUtils.closeQuietly(is);
-			}
+			logger.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
+			getGifCoverUseJava(gif, png);
 		}
 		// png to dest
 		IMOperation op = new IMOperation();
 		op.addImage();
-		if (!maybeTransparentBg(ext)) {
-			op.background(WHITE_BACKGROUND);
-			op.extent(0, 0);
-			op.addRawArgs(MATTE_RAW_ARG);
-		}
+		if (!maybeTransparentBg(ext))
+			setWhiteBg(op);
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
@@ -213,26 +173,72 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected void doFormat(File src, File dest) throws ImageReadWriteException {
+	protected void doFormat(File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		String ext = FilenameUtils.getExtension(dest.getName());
 		String srcExt = FilenameUtils.getExtension(src.getName());
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
-			op.background(WHITE_BACKGROUND);
-			op.extent(0, 0);
-			op.addRawArgs(MATTE_RAW_ARG);
-		}
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
+			setWhiteBg(op);
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
 		try {
 			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
-		} catch (IOException | InterruptedException e) {
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			throw new SystemException(e.getMessage(), e);
 		} catch (IM4JavaException e) {
-			throw new ImageReadWriteException(e.getMessage(), e);
+			throw new IOException(e.getMessage(), e);
 		}
+	}
+
+	@Override
+	public boolean supportFormat(String extension) {
+		for (String ext : IMG_EXTENSIONS) {
+			if (ext.equalsIgnoreCase(extension))
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (WINDOWS && Validators.isEmptyOrNull(magickPath, true)) {
+			throw new SystemException("windows下必须设置GraphicsMagick的主目录");
+		}
+	}
+
+	private boolean interlace(File dest) {
+		if (!doInterlace)
+			return false;
+		String ext = FilenameUtils.getExtension(dest.getName());
+		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
+	}
+
+	private void getGifCoverUseJava(File gif, File png) throws IOException {
+		GifDecoder gd = new GifDecoder();
+		InputStream is = null;
+		try {
+			try {
+				is = new FileInputStream(gif);
+			} catch (FileNotFoundException e1) {
+				throw new SystemException(e1.getMessage(), e1);
+			}
+			int flag = gd.read(is);
+			if (flag != GifDecoder.STATUS_OK)
+				throw new IOException(gif + "文件无法获取封面");
+			BufferedImage bi = gd.getFrame(0);
+			ImageIO.write(bi, PNG, png);
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
+	}
+
+	private void setWhiteBg(IMOperation op) {
+		op.background("rgb(255,255,255)");
+		op.extent(0, 0);
+		op.addRawArgs("+matte");
 	}
 
 	private ConvertCmd getConvertCmd() {
@@ -247,12 +253,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		this.doInterlace = doInterlace;
 	}
 
-	@Override
-	public boolean supportFormat(String extension) {
-		for (String ext : IMG_EXTENSIONS) {
-			if (ext.equalsIgnoreCase(extension))
-				return true;
-		}
-		return false;
+	public void setMagickPath(String magickPath) {
+		this.magickPath = magickPath;
 	}
 }
