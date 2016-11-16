@@ -97,7 +97,6 @@ public class SpaceArticleController extends BaseController {
 					&& !apm.match("/article/*", uc.getPath()))
 				return new JsonResult(false);
 		} catch (Exception e) {
-			e.printStackTrace();
 			return new JsonResult(false);
 		}
 

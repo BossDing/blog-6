@@ -78,7 +78,7 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 						context.getConfiguration().getTemplateManager().process((TemplateModel) model, iEngineContext,
 								writer);
 						structureHandler.replaceWith(writer.toString(), false);
-					} catch (Exception e) {
+					} catch (Throwable e) {
 						throw new FragmentTagParseException(e, name);
 					} finally {
 						iEngineContext.removeVariable(ATTRIBUTES);

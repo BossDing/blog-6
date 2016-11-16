@@ -120,6 +120,7 @@ public class CookieRememberMe implements RememberMe {
 	public void remove(HttpServletRequest request, HttpServletResponse response) {
 		Cookie cookie = new Cookie(COOKIE_NAME, null);
 		cookie.setMaxAge(0);
+		cookie.setSecure(true);
 		setCookie(cookie, request);
 		response.addCookie(cookie);
 	}

@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.DateTools.Resolution;
 import org.apache.lucene.document.Document;
@@ -157,7 +156,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 	 */
 	public NRTArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
-		this.analyzer = analyzer == null ? new StandardAnalyzer() : analyzer;
+		this.analyzer = analyzer;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		try {

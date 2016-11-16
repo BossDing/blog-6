@@ -18,11 +18,16 @@ package me.qyh.blog.security;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 @Aspect
 public class EnsureLoginAspect {
 
 	@Before(value = "@within(EnsureLogin) || @annotation(EnsureLogin)")
-	public void before() throws Throwable {
+	public void before() {
 		if (UserContext.get() == null) {
 			throw new AuthencationException();
 		}

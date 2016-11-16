@@ -115,7 +115,7 @@ public class ArticleMgrController extends BaseMgrController {
 	}
 
 	@RequestMapping(value = "write", method = RequestMethod.GET)
-	public String write(@RequestParam(value = "editor", required = false, defaultValue = "HTML") Editor editor,
+	public String write(@RequestParam(value = "editor", required = false, defaultValue = "MD") Editor editor,
 			RedirectAttributes ra, Model model) {
 		SpaceQueryParam param = new SpaceQueryParam();
 		List<Space> spaces = spaceService.querySpace(param);
