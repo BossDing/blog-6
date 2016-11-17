@@ -4,6 +4,7 @@
 ## 采用 spring4&mybaits&thymeleaf开发
 
 # www.qyh.me
+## 一个重型博客，需要400m左右内存用于工作
 
 一个基于java开发的单用户博客，采用了用了那么多却依然用不好的spring&mybatis，模板引擎采用了thymeleaf，面向用户：对spring有一定开发人员。 特性如下：
 * 放弃了博客文章的分类属性，采用了space替代，一个space代表了一种分类，space可以被独立的子域名所访问
