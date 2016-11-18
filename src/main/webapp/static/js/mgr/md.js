@@ -1,6 +1,28 @@
-var publishing = false;
+		var publishing = false;
 		var tags = [];
+		var editor;
 		$(function() {
+			editor = CodeMirror.fromTextArea(document.getElementById("text"), {
+		        mode: 'markdown',
+		        lineNumbers: true,
+		        theme: "default",
+		        extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
+		      });
+			editor.setSize('100%',600)
+			$("#previewLab").click(function(){
+				var preview = $("#preview iframe").contents().find('#preview');
+				preview.get(0).innerHTML = "<img src='"+basePath+"/static/img/loading.gif'/>";
+				parseAndRender();
+			});
+			$('[data-md-handler]').click(function(){
+				var m = $(this).attr("data-md-handler");
+				switch(m){
+				case 'file':
+					fileSelectPageQuery(1,'');
+		        	$("#fileSelectModal").modal("show");
+					break;
+				}
+			})
 			$("#doCommentConfig").click(function(){
 				var check = $(this).prop('checked');
 				if(check)
@@ -61,7 +83,7 @@ var publishing = false;
 				var me = $(this);
 				var article = {};
     			article.title = $("#title").val();
-    			article.content = $("#text").val();
+    			article.content = editor.getValue();
     			article.from = $("#from").val();
     			article.status = $("#status").val();
     			if(article.status == 'SCHEDULED'){
@@ -211,7 +233,7 @@ var publishing = false;
 			if($.trim(article.title) == ""){
 				article.title = "No title";
 			}
-			article.content = $("#text").val();
+			article.content = editor.getValue();
 			if($.trim(article.content) == ''){
 				return ;
 			}
@@ -296,3 +318,25 @@ var publishing = false;
 				}
 			}
 		}
+		
+		var render = function(parsed) {
+			if (parsed === undefined) {
+				return;
+			}
+			var preview = $("#preview iframe").contents().find('#preview');
+			try{
+				preview.get(0).innerHTML = parsed;
+			}catch(e){
+				
+			}
+		};
+
+		var parseAndRender = function() {
+			var parsed = $.post(basePath+'/mgr/article/write/md/preview',{"content":editor.getValue()},function(data){
+				if(data.success){
+					render(data.data);
+				}else{
+					bootbox.alert(data.message);
+				}
+			})
+		};

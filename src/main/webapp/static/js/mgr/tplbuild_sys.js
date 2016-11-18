@@ -1,5 +1,6 @@
-function preview() {
-		var page = {"tpl":editor.getValue()};
+	
+	function preview() {
+		var page = {"target":$("#target").val(),"tpl":editor.getValue()};
 		page.tpls = fragments;
 		var space = $("#space").val();
 		if(space != null && $.trim(space) != ''){
@@ -9,12 +10,9 @@ function preview() {
 		if(id != null && $.trim(id) != ''){
 			page.id = id;
 		}
-		page.name="test";
-		page.description="";
-		page.alias = "test";
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/user/preview',
+			url : basePath + '/mgr/page/sys/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
@@ -34,22 +32,13 @@ function preview() {
 	function save() {
 		var page = {"target":$("#target").val(),"tpl":editor.getValue()};
 		page.tpls = fragments;
-		var space = $("#spaceSelect").val();
-		if(space != ''){
+		var space = $("#space").val();
+		if(space != null && $.trim(space) != ''){
 			page.space = {"id":space}
 		}
-		var id = $("#pageId").val();
-		if(id != null && $.trim(id) != ''){
-			page.id = id;
-		}
-		if($.trim($("#alias").val()) != ''){
-			page.alias = $.trim($("#alias").val());
-		}
-		page.name=$("#name").val();
-		page.description=$("#description").val();
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/user/build',
+			url : basePath + '/mgr/page/sys/build',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',

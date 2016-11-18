@@ -1,43 +1,13 @@
 <!DOCTYPE HTML>
 <html>
-<head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="_csrf" th:content="${_csrf.token}" />
-<meta name="_csrf_header" th:content="${_csrf.headerName}" />
-<link
-	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
-	rel="stylesheet">
-<link rel="stylesheet"
-	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
-<link rel="stylesheet"
-	th:href="@{/static/editor/markdown/css/editormd.css}" />
-<link th:href="@{/static/css/blog.css}" rel="stylesheet">
-<!--[if lt IE 9]>
-  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-<style type="text/css">
-.table-borderless tbody tr td, .table-borderless tbody tr th,
-	.table-borderless thead tr th {
-	border: none;
-}
-
-.cm-tab {
-	background: none !important;
-}
-</style>
-<title>自定义页面模板编辑</title>
-</head>
+<head th:replace="mgr/page/head :: head('自定义页面页面模板编辑')"></head>
 <body>
 	<nav th:replace="mgr/base/nav :: active('tpl-user')"></nav>
 	<div id="page-wrapper" style="padding: 10px">
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-md-12">
-					<div id="editor">
-						<textarea style="display: none;" th:text="${page.tpl}"></textarea>
-					</div>
+					<textarea style="display: none;" th:text="${page.tpl}" id="editor"></textarea>
 				</div>
 			</div>
 			<div class="row">
@@ -102,7 +72,6 @@
 			</div>
 		</div>
 	</div>
-	<div th:replace="base/foot_source"></div>
 	<div class="modal " id="fragmentsModal" tabindex="-1" role="dialog"
 		aria-labelledby="fragmentsLabel">
 		<div class="modal-dialog" role="document">
@@ -119,8 +88,8 @@
 			</div>
 		</div>
 	</div>
-	
-	
+
+
 	<div class="modal" id="lookupModal" tabindex="-1" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
@@ -137,11 +106,11 @@
 					</ul>
 					<div class="tab-content">
 						<div role="tabpanel" class="tab-pane fade in active" id="dataTags"
-							aria-labelledby="data-tab">
-						</div>
+							aria-labelledby="data-tab"></div>
 						<div role="tabpanel" class="tab-pane fade" id="fragment"
 							aria-labelledby="fragment-tab">
-							<ul id="fragmentTab" class="nav nav-tabs" role="tablist" style="margin-top:10px">
+							<ul id="fragmentTab" class="nav nav-tabs" role="tablist"
+								style="margin-top: 10px">
 								<li role="presentation" class="active"><a href="#sys"
 									id="sys-tab" role="tab" data-toggle="tab" aria-controls="home"
 									aria-expanded="true">系统模板片段</a></li>
@@ -149,12 +118,10 @@
 									id="user-tab" data-toggle="tab" aria-controls="profile">自定义模板片段</a></li>
 							</ul>
 							<div class="tab-content">
-							<div role="tabpanel" class="tab-pane fade in active"
-								id="sys" aria-labelledby="sys-tab">
-							</div>
-							<div role="tabpanel" class="tab-pane fade in active"
-								id="user" aria-labelledby="user-tab">
-							</div>
+								<div role="tabpanel" class="tab-pane fade in active" id="sys"
+									aria-labelledby="sys-tab"></div>
+								<div role="tabpanel" class="tab-pane fade in active" id="user"
+									aria-labelledby="user-tab"></div>
 							</div>
 						</div>
 					</div>
@@ -165,8 +132,10 @@
 			</div>
 		</div>
 	</div>
-
-	<script th:src="@{/static/editor/markdown/editormd.min.js}"></script>
+	<div th:replace="base/foot_source"></div>
+	<div th:replace="mgr/page/source"></div>
+	<script type="text/javascript"
+		th:src="@{/static/js/mgr/tplbuild_base.js}"></script>
 	<script type="text/javascript"
 		th:src="@{/static/js/mgr/tplbuild_user.js}"></script>
 </body>

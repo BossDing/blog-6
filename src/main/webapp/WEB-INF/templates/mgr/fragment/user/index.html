@@ -11,7 +11,9 @@
 <link rel="stylesheet"
 	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
 <link rel="stylesheet"
-	th:href="@{/static/editor/markdown/css/editormd.css}" />
+	th:href="@{/static/editor/codemirror-5.20.2/lib/codemirror.css}">
+<link rel="stylesheet"
+	th:href="@{/static/editor/codemirror-5.20.2/addon/hint/show-hint.css}">
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
 <!--[if lt IE 9]>
   <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -40,8 +42,8 @@
 			</div>
 			<div class="row">
 				<div class="col-md-12">
-					<form style="display: none"
-						th:action="@{/mgr/fragment/user/index}" id="pageForm">
+					<form style="display: none" th:action="@{/mgr/fragment/user/index}"
+						id="pageForm">
 						<input type="hidden" th:value="${page.currentPage}"
 							name="currentPage" />
 					</form>
@@ -121,9 +123,9 @@
 							<textarea rows="8" cols="8" class="form-control"
 								name="description"></textarea>
 						</div>
-							<div class="checkbox">
-							<label><input
-								type="checkbox" name="global" value="true"/>全局 </label>
+						<div class="checkbox">
+							<label><input type="checkbox" name="global" value="true" />全局
+							</label>
 						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" name="space">
@@ -134,9 +136,7 @@
 						</div>
 						<div class="form-group">
 							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<div id="editor">
-								<textarea rows="8" cols="8" class="form-control"></textarea>
-							</div>
+							<textarea rows="8" cols="8" class="form-control" id="editor"></textarea>
 						</div>
 					</form>
 				</div>
@@ -176,8 +176,8 @@
 								name="description"></textarea>
 						</div>
 						<div class="checkbox">
-							<label><input
-								type="checkbox" name="global" value="true"/>全局 </label>
+							<label><input type="checkbox" name="global" value="true" />全局
+							</label>
 						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" name="space">
@@ -188,9 +188,7 @@
 						</div>
 						<div class="form-group">
 							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<div id="upeditor">
-								<textarea rows="8" cols="8" class="form-control"></textarea>
-							</div>
+							<textarea rows="8" cols="8" class="form-control" id="upeditor"></textarea>
 						</div>
 					</form>
 				</div>
@@ -202,7 +200,30 @@
 			</div>
 		</div>
 	</div>
-	<script th:src="@{/static/editor/markdown/editormd.min.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/lib/codemirror.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/addon/mode/overlay.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/mode/javascript/javascript.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/mode/css/css.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/mode/xml/xml.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/edit/closetag.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/fold/xml-fold.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/hint/show-hint.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/hint/xml-hint.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/hint/html-hint.js}"></script>
+	<script
+		th:src="@{/static/editor/codemirror-5.20.2/addon/hint/javascript-hint.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/editor/codemirror-5.20.2/mode/htmlmixed/htmlmixed.js}"></script>
 	<script th:src="@{/static/js/mgr/fragment.js}"></script>
 </body>
 </html>

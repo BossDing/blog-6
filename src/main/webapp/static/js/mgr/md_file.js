@@ -1,41 +1,3 @@
-	function insertAtCaret(areaId, text) {
-		var txtarea = document.getElementById(areaId);
-		if (!txtarea) { return; }
-
-		var scrollPos = txtarea.scrollTop;
-		var strPos = 0;
-		var br = ((txtarea.selectionStart || txtarea.selectionStart == '0') ?
-			"ff" : (document.selection ? "ie" : false ) );
-		if (br == "ie") {
-			txtarea.focus();
-			var range = document.selection.createRange();
-			range.moveStart ('character', -txtarea.value.length);
-			strPos = range.text.length;
-		} else if (br == "ff") {
-			strPos = txtarea.selectionStart;
-		}
-
-		var front = (txtarea.value).substring(0, strPos);
-		var back = (txtarea.value).substring(strPos, txtarea.value.length);
-		txtarea.value = front + text + back;
-		strPos = strPos + text.length;
-		if (br == "ie") {
-			txtarea.focus();
-			var ieRange = document.selection.createRange();
-			ieRange.moveStart ('character', -txtarea.value.length);
-			ieRange.moveStart ('character', strPos);
-			ieRange.moveEnd ('character', 0);
-			ieRange.select();
-		} else if (br == "ff") {
-			txtarea.selectionStart = strPos;
-			txtarea.selectionEnd = strPos;
-			txtarea.focus();
-		}
-
-		txtarea.scrollTop = scrollPos;
-	}
-	
-
 	var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 	modal += 'role="dialog" aria-labelledby="fileSelectModalLabel">';
 	modal += '<div class="modal-dialog modal-lg" role="document">';
@@ -423,11 +385,11 @@
 
                 if (link === "" || link === "http://")
                 {
-                	insertAtCaret('text', "![" + alt + "](" + url + altAttr + ")")
+                	editor.replaceSelection("![" + alt + "](" + url + altAttr + ")")
                 }
                 else
                 {
-                	insertAtCaret('text', "[![" + alt + "](" + url + altAttr + ")](" + link + altAttr + ")")
+                	editor.replaceSelection("[![" + alt + "](" + url + altAttr + ")](" + link + altAttr + ")")
                 }
 
                 $("#imageModal").modal("hide");
@@ -457,7 +419,7 @@
                     str = "[" + url + "](" + url + ")";
                 }                                
 
-                insertAtCaret('text',str);
+                editor.replaceSelection(str);
 
                 $("#linkModal").modal("hide");
 			});

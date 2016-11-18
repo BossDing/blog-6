@@ -2,28 +2,21 @@ var editor;
 var upeditor;
 $(document).ready(
 	function() {
-		editor = editormd("editor", {
-			width : "100%",
-			height : 400,
-			 watch            : false,
-             toolbar          : false,
-             codeFold         : true,
-             searchReplace    : true,
-             theme            : "default",
-             mode             : "text/html",
-             path : basePath + '/static/editor/markdown/lib/'
-		});
-		upeditor = editormd("upeditor", {
-			width : "100%",
-			height : 400,
-			 watch            : false,
-             toolbar          : false,
-             codeFold         : true,
-             searchReplace    : true,
-             theme            : "default",
-             mode             : "text/html",
-             path : basePath + '/static/editor/markdown/lib/'
-		});
+		var mixedMode = {
+		        name: "htmlmixed",
+		        scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
+		                       mode: null},
+		                      {matches: /(text|application)\/(x-)?vb(a|script)/i,
+		                       mode: "vbscript"}]
+		      };
+	    
+	    upeditor = CodeMirror.fromTextArea(document.getElementById("upeditor"), {
+	        mode: mixedMode,
+	        lineNumbers: true,
+	        autoCloseTags: true,
+	        extraKeys: {"Ctrl-Space": "autocomplete"}
+	      });
+	    upeditor.setSize('100%',400);
 		$("[data-page]").click(function(){
 			var page = $(this).attr("data-page");
 			$("#pageForm").find("input[name='currentPage']").val(page);
@@ -34,17 +27,22 @@ $(document).ready(
 			clearTip();
 			$("#createUserFragmentModal").find("form")[0].reset();
 		}).on("shown.bs.modal",function(){
-			editor.resize();
+			if(!editor){
+				editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+			        mode: mixedMode,
+			        lineNumbers: true,
+			        autoCloseTags: true,
+			        extraKeys: {"Ctrl-Space": "autocomplete"}
+			      });
+			    editor.setSize('100%',400);
+			}
 		}).on('hidden.bs.modal', function() {
-			editor.clear();
 		});
 		$("#updateUserFragmentModal").on("show.bs.modal", function() {
 			clearTip();
 			$("#updateUserFragmentModal").find("form")[0].reset();
 		}).on("shown.bs.modal",function(){
-			upeditor.resize();
 		}).on('hidden.bs.modal', function() {
-			upeditor.setValue("");
 		});
 		$("#show-create").click(function(){
 			$('#createUserFragmentModal').modal('show')
