@@ -38,7 +38,7 @@ public interface CommentService {
 	 * @return 插入后的评论
 	 * @throws LogicException
 	 */
-	Comment insertComment(Comment comment) throws LogicException;
+	Comment insertComment(String email, Comment comment) throws LogicException;
 
 	/**
 	 * 删除某条评论和该评论的所有回复

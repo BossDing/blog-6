@@ -42,6 +42,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.dao.UserDao;
+import me.qyh.util.Validators;
 
 /**
  * 邮件发送服务
@@ -126,7 +127,7 @@ public class MailSender implements InitializingBean {
 						MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html,
 								Constants.CHARSET.name());
 						helper.setText(mb.text, mb.html);
-						helper.setTo(userDao.select().getEmail());
+						helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? userDao.select().getEmail() : mb.to);
 						helper.setSubject(mb.subject);
 						mimeMessage.setFrom();
 					}
@@ -211,6 +212,7 @@ public class MailSender implements InitializingBean {
 		private final String subject;
 		private final boolean html;
 		private final String text;
+		private String to;
 
 		/**
 		 * 
@@ -226,6 +228,10 @@ public class MailSender implements InitializingBean {
 			this.subject = subject;
 			this.html = html;
 			this.text = text;
+		}
+
+		public void setTo(String to) {
+			this.to = to;
 		}
 
 		@Override

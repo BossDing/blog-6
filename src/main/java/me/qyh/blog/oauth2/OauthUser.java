@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.message.Message;
+import me.qyh.util.Validators;
 
 /**
  * 这里没有保存凭证<br>
@@ -47,10 +48,11 @@ public class OauthUser extends BaseEntity {
 	private String nickname;
 	private String avatar;
 	private OauthUserStatus status;
-	private Timestamp registerDate;// 注册日期
+	private Timestamp registerDate;
 	private String serverId;
 	private String serverName;
 	private Boolean admin;
+	private String email;
 
 	/**
 	 * oauth用户状态
@@ -160,6 +162,18 @@ public class OauthUser extends BaseEntity {
 
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public boolean hasEmail() {
+		return !Validators.isEmptyOrNull(email, true);
 	}
 
 	@Override

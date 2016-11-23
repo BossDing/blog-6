@@ -144,12 +144,8 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}
-		InputStream is = null;
-		try {
-			is = mailTemplateResource.getInputStream();
+		try (InputStream is = mailTemplateResource.getInputStream()) {
 			mailTemplate = IOUtils.toString(is, Constants.CHARSET);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 		if (messageProcessPeriodSec <= 0)
 			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;

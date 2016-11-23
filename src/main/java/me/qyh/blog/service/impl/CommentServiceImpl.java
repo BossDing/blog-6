@@ -188,7 +188,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	public Comment insertComment(Comment comment) throws LogicException {
+	public Comment insertComment(String email,Comment comment) throws LogicException {
 		long now = System.currentTimeMillis();
 		if (isInvalidUser(comment.getUser())) {
 			throw new LogicException("comment.user.invalid", "该账户暂时被禁止评论");

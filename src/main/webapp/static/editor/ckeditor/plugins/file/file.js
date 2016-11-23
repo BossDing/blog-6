@@ -354,7 +354,7 @@
 			var me = $(this);
 			var ext = me.attr("data-extension");
 			if(isImage(ext)){
-				$("#imageModal").find("input").eq(0).val(me.find('img').attr("src"));
+				$("#imageModal").find("input").eq(0).val(me.find('img').attr("data-middle"));
 				$("#imageModal").find("input").eq(1).val(me.attr("data-description"));
 				$("#imageModal").find("input").eq(2).val(me.attr("data-url"));
 				$("#imageModal").modal("show")
@@ -498,7 +498,7 @@
 					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;
 					html += '<a href="###" data-extension="'+data.cf.extension+'"  data-url="'+url+'" data-description="'+data.cf.originalFilename+'">'
 					if(data.cf.thumbnailUrl){
-						html += '<img  src="'+data.cf.thumbnailUrl.small+'" class="img-responsive" style="height:100px"/>';
+						html += '<img  src="'+data.cf.thumbnailUrl.small+'" data-middle="'+data.cf.thumbnail.middle+'" class="img-responsive" style="height:100px"/>';
 					} else {
 						html += '<img src="'+basePath+'/static/fileicon/file.png" class="img-responsive" style="height:100px"/>';
 					}

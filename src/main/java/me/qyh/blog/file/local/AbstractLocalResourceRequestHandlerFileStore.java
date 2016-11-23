@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -82,6 +83,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
 					dest.getAbsolutePath());
 		}
+		String originalFilename = mf.getOriginalFilename();
 		try {
 			FileUtils.forceMkdir(dest.getParentFile());
 			mf.transferTo(dest);
@@ -89,10 +91,10 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			throw new SystemException(e.getMessage(), e);
 		}
 		CommonFile cf = new CommonFile();
-		cf.setExtension(FilenameUtils.getExtension(mf.getOriginalFilename()));
+		cf.setExtension(FilenameUtils.getExtension(originalFilename));
 		cf.setSize(mf.getSize());
 		cf.setStore(id);
-		cf.setOriginalFilename(mf.getOriginalFilename());
+		cf.setOriginalFilename(originalFilename);
 
 		return cf;
 	}
@@ -258,7 +260,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			long length = file.length();
 			response.setContentLength((int) length);
 			response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-			response.setHeader("Content-Disposition", "attachment; filename=" + file.getName());
+			response.setHeader("Content-Disposition",
+					"attachment; filename=" + new String(file.getName().getBytes(Constants.CHARSET), "iso-8859-1"));
 			try {
 				FileUtils.copyFile(file, response.getOutputStream());
 			} catch (IOException e) {

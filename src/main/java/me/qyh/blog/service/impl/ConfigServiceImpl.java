@@ -19,7 +19,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -131,14 +130,10 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	}
 
 	private void store() {
-		OutputStream os = null;
-		try {
-			os = new FileOutputStream(resource.getFile());
+		try (OutputStream os = new FileOutputStream(resource.getFile())) {
 			config.store(os, "");
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
-		} finally {
-			IOUtils.closeQuietly(os);
 		}
 	}
 

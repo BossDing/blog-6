@@ -125,7 +125,6 @@ public class SinaOauth2 extends AbstractOauth2 {
 	}
 
 	private static String sendPost(String url) {
-		BufferedReader in = null;
 		String result = "";
 		HttpURLConnection conn = null;
 		try {
@@ -134,15 +133,15 @@ public class SinaOauth2 extends AbstractOauth2 {
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 			conn.setRequestMethod("POST");
-			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String line;
-			while ((line = in.readLine()) != null) {
-				result += line;
+			try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+				String line;
+				while ((line = in.readLine()) != null) {
+					result += line;
+				}
 			}
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
-			IOUtils.closeQuietly(in);
 			if (conn != null) {
 				conn.disconnect();
 			}

@@ -30,14 +30,10 @@ public abstract class AbstractExpandedPageHandler implements ExpandedPageHandler
 	private String name;
 
 	public AbstractExpandedPageHandler(int id, String name, Resource template) {
-		InputStream is = null;
-		try {
-			is = template.getInputStream();
+		try (InputStream is = template.getInputStream()) {
 			_template = IOUtils.toString(is, Constants.CHARSET);
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 		this.id = id;
 		this.name = name;

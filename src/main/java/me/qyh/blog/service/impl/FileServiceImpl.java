@@ -133,10 +133,10 @@ public class FileServiceImpl implements FileService {
 
 	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileServer fs)
 			throws LogicException {
-		if (blogFileDao.selectByParentAndPath(parent, file.getOriginalFilename()) != null)
+		String originalFilename = file.getOriginalFilename();
+		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null)
 			throw new LogicException("file.path.exists", "文件已经存在");
-		String key = folderKey.isEmpty() ? file.getOriginalFilename()
-				: (folderKey + SPLIT_CHAR + file.getOriginalFilename());
+		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
 		CommonFile cf = null;
 		synchronized (fs) {
 			deleteImmediatelyIfNeed(key);
@@ -147,18 +147,17 @@ public class FileServiceImpl implements FileService {
 		commonFileDao.insert(cf);
 		BlogFile blogFile = new BlogFile();
 		blogFile.setCf(cf);
-		blogFile.setPath(file.getOriginalFilename());
+		blogFile.setPath(originalFilename);
 		blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		blogFile.setLft(parent.getLft() + 1);
 		blogFile.setRgt(parent.getLft() + 2);
-		blogFile.setName(cf.getOriginalFilename());
+		blogFile.setName(originalFilename);
 		blogFile.setParent(parent);
 		blogFile.setType(BlogFileType.FILE);
 
 		blogFileDao.updateWhenAddChild(parent);
 		blogFileDao.insert(blogFile);
-		return new UploadedFile(file.getOriginalFilename(), cf.getSize(), store.getThumbnailUrl(key),
-				store.getUrl(key));
+		return new UploadedFile(originalFilename, cf.getSize(), store.getThumbnailUrl(key), store.getUrl(key));
 	}
 
 	private void deleteImmediatelyIfNeed(String key) throws LogicException {
@@ -401,6 +400,8 @@ public class FileServiceImpl implements FileService {
 			} catch (LogicException e) {
 				continue;
 			}
+
+		blogFileDao.deleteUnassociateCommonFile();
 	}
 
 	private void setExpandedCommonFile(BlogFile bf) {

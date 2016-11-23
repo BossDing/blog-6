@@ -54,7 +54,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
-		String extension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+		String originalFilename = multipartFile.getOriginalFilename();
+		String extension = FilenameUtils.getExtension(originalFilename);
 		File tmp = FileHelper.temp(extension);
 		try {
 			multipartFile.transferTo(tmp);
@@ -66,7 +67,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			doUpload(key, tmp);
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
-			cf.setOriginalFilename(multipartFile.getOriginalFilename());
+			cf.setOriginalFilename(originalFilename);
 			cf.setSize(tmp.length());
 			cf.setStore(id);
 			if (ii != null) {

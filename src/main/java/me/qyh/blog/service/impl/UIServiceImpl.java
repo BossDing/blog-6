@@ -792,14 +792,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	private String fromResource(Resource resource) {
-		InputStream is = null;
-		try {
-			is = resource.getInputStream();
+		try (InputStream is = resource.getInputStream()) {
 			return IOUtils.toString(is, Constants.CHARSET);
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 

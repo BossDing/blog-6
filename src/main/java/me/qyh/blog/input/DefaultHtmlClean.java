@@ -87,12 +87,8 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (tags == null && (whitelistJsonResource != null)) {
-			InputStream is = null;
-			try {
-				is = whitelistJsonResource.getInputStream();
+			try (InputStream is = whitelistJsonResource.getInputStream()) {
 				tags = Jsons.readValue(AllowTags.class, IOUtils.toString(is, Constants.CHARSET));
-			} finally {
-				IOUtils.closeQuietly(is);
 			}
 		}
 		if (tags == null) {

@@ -274,5 +274,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			bf.file_lft >= #{lft}
 			AND bf.file_rgt <![CDATA[ <= ]]> #{rgt}
 	</select>
+	
+	<delete id="deleteUnassociateCommonFile">
+		DELETE FROM blog_common_file  WHERE id NOT IN(SELECT common_file FROM blog_file bf WHERE bf.`common_file` IS NOT NULL )
+	</delete>
 
 </mapper>

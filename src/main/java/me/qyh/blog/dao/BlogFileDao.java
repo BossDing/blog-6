@@ -169,4 +169,9 @@ public interface BlogFileDao {
 	 * @return 如果不存在，返回null。否在返回已经存在的节点对象
 	 */
 	BlogFile selectByParentAndPath(@Param("parent") BlogFile parent, @Param("path") String path);
+
+	/**
+	 * 删除没有关联的文件信息
+	 */
+	void deleteUnassociateCommonFile();
 }

@@ -61,27 +61,19 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	private ImageInfo readGif(File file) throws IOException {
-		InputStream is = null;
-		try {
-			is = FileHelper.openStream(file);
+		try (InputStream is = FileHelper.openStream(file)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
 				throw new IOException(file + "文件无法读取");
 			Dimension dim = gd.getFrameSize();
 			return new ImageInfo(dim.width, dim.height, GIF);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 
 	private ImageInfo readOtherImage(File file) throws IOException {
-		InputStream is = null;
-		try {
-			is = FileHelper.openStream(file);
-			ImageInputStream iis = null;
-			try {
-				iis = ImageIO.createImageInputStream(is);
+		try (InputStream is = FileHelper.openStream(file)) {
+			try (ImageInputStream iis = ImageIO.createImageInputStream(is)) {
 				Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
 				while (imageReaders.hasNext()) {
 					ImageReader reader = imageReaders.next();
@@ -91,20 +83,14 @@ public class JavaImageHelper extends ImageHelper {
 							reader.getFormatName());
 				}
 				throw new IOException("无法确定图片:" + file.getAbsolutePath() + "的具体类型");
-			} finally {
-				IOUtils.closeQuietly(iis);
 			}
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
-		InputStream is = null;
 		File png = null;
-		try {
-			is = FileHelper.openStream(gif);
+		try (InputStream is = FileHelper.openStream(gif)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
@@ -131,7 +117,6 @@ public class JavaImageHelper extends ImageHelper {
 			writeImg(newBufferedImage, destExt, dest);
 		} finally {
 			FileUtils.deleteQuietly(png);
-			IOUtils.closeQuietly(is);
 		}
 	}
 

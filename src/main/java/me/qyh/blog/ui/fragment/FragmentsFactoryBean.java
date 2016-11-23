@@ -55,13 +55,9 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 	}
 
 	private String getTpl(Resource resource) throws IOException {
-		InputStream is = null;
 		String tpl = null;
-		try {
-			is = resource.getInputStream();
+		try (InputStream is = resource.getInputStream()) {
 			tpl = IOUtils.toString(is, Constants.CHARSET);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 		return tpl;
 	}

@@ -130,7 +130,7 @@ public class SpaceArticleController extends BaseController {
 			@PathVariable("id") Integer articleId) throws LogicException {
 		comment.setArticle(new Article(articleId));
 		comment.setUser(user);
-		return new JsonResult(true, commentService.insertComment(comment));
+		return new JsonResult(true, commentService.insertComment(null, comment));
 	}
 
 	@RequestMapping(value = "{articleId}/comment/{id}/conversations")

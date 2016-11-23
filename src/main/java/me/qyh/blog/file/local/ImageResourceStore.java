@@ -86,7 +86,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		File dest = new File(absFolder, key);
 		checkFileStoreable(dest);
 		// 先写入临时文件
-		File tmp = FileHelper.temp(FilenameUtils.getExtension(mf.getOriginalFilename()));
+		String originalFilename = mf.getOriginalFilename();
+		File tmp = FileHelper.temp(FilenameUtils.getExtension(originalFilename));
 		try {
 			mf.transferTo(tmp);
 		} catch (IOException e1) {
@@ -107,7 +108,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			cf.setExtension(extension);
 			cf.setSize(mf.getSize());
 			cf.setStore(id);
-			cf.setOriginalFilename(mf.getOriginalFilename());
+			cf.setOriginalFilename(originalFilename);
 
 			cf.setWidth(ii.getWidth());
 			cf.setHeight(ii.getHeight());

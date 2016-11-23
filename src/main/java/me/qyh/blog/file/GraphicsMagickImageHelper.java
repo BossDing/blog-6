@@ -18,7 +18,6 @@ package me.qyh.blog.file;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -28,7 +27,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
@@ -218,20 +216,12 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	private void getGifCoverUseJava(File gif, File png) throws IOException {
 		GifDecoder gd = new GifDecoder();
-		InputStream is = null;
-		try {
-			try {
-				is = new FileInputStream(gif);
-			} catch (FileNotFoundException e1) {
-				throw new SystemException(e1.getMessage(), e1);
-			}
+		try (InputStream is = new FileInputStream(gif)) {
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
 				throw new IOException(gif + "文件无法获取封面");
 			BufferedImage bi = gd.getFrame(0);
 			ImageIO.write(bi, PNG, png);
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 
