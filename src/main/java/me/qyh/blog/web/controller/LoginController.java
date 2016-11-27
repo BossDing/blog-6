@@ -35,21 +35,20 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
+import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.security.BCrypts;
 import me.qyh.blog.security.RememberMe;
 import me.qyh.blog.security.csrf.CsrfToken;
 import me.qyh.blog.security.csrf.CsrfTokenRepository;
-import me.qyh.blog.service.UserService;
 import me.qyh.blog.web.controller.form.LoginBean;
 import me.qyh.blog.web.controller.form.LoginBeanValidator;
 
 @Controller
 public class LoginController extends BaseController {
 
-	@Autowired
-	private UserService userService;
 	@Autowired
 	private RememberMe rememberMe;
 	@Autowired
@@ -75,20 +74,13 @@ public class LoginController extends BaseController {
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session))
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
-		User authenticated = null;
 		try {
-			authenticated = userService.login(loginBean);
+			login(loginBean, request, response);
+			return new JsonResult(true, new Message("login.success", "登录成功"));
 		} catch (LogicException e) {
 			rememberMe.remove(request, response);
-			return new JsonResult(false, e.getLogicMessage());
+			return new JsonResult(false, new Message("user.loginFail", "登录失败"));
 		}
-		if (loginBean.isRememberMe())
-			rememberMe.save(authenticated, request, response);
-
-		putInSession(authenticated, session);
-
-		changeCsrf(request, response);
-		return new JsonResult(true, new Message("login.success", "登录成功"));
 	}
 
 	@RequestMapping(value = "login", method = RequestMethod.POST)
@@ -106,21 +98,13 @@ public class LoginController extends BaseController {
 			model.addAttribute(ERROR, new Message("validateCode.error", "验证码错误"));
 			return "login";
 		}
-		User authenticated = null;
 		try {
-			authenticated = userService.login(loginBean);
+			login(loginBean, request, response);
 		} catch (LogicException e) {
 			rememberMe.remove(request, response);
 			model.addAttribute(ERROR, e.getLogicMessage());
 			return "login";
 		}
-		if (loginBean.isRememberMe()) {
-			rememberMe.save(authenticated, request, response);
-		}
-
-		putInSession(authenticated, session);
-
-		changeCsrf(request, response);
 
 		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 		String redirectUrl = "/";
@@ -129,6 +113,24 @@ public class LoginController extends BaseController {
 			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 		}
 		return "redirect:" + redirectUrl;
+	}
+
+	private void login(LoginBean loginBean, HttpServletRequest request, HttpServletResponse response)
+			throws LogicException {
+		User user = UserConfig.get();
+		if (user.getName().equals(loginBean.getUsername())) {
+			String encrptPwd = user.getPassword();
+			if (BCrypts.matches(loginBean.getPassword(), encrptPwd)) {
+				if (loginBean.isRememberMe())
+					rememberMe.save(user, request, response);
+
+				putInSession(user, request.getSession());
+
+				changeCsrf(request, response);
+				return;
+			}
+		}
+		throw new LogicException("user.loginFail", "登录失败");
 	}
 
 	private void changeCsrf(HttpServletRequest request, HttpServletResponse response) {

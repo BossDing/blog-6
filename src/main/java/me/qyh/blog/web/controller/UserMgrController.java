@@ -29,19 +29,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
+import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.security.UserContext;
-import me.qyh.blog.service.UserService;
 import me.qyh.blog.web.controller.form.UserValidator;
 
 @Controller
 @RequestMapping("mgr/user")
 public class UserMgrController extends BaseMgrController {
 
-	@Autowired
-	private UserService userMgrService;
 	@Autowired
 	private UserValidator userValidator;
 
@@ -58,8 +55,7 @@ public class UserMgrController extends BaseMgrController {
 	@RequestMapping(value = "update", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult update(@Validated @RequestBody User user, HttpSession session) throws LogicException {
-		user.setId(UserContext.get().getId());
-		userMgrService.updateUser(user);
+		UserConfig.update(user);
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		return new JsonResult(true, new Message("user.update.success", "更新成功"));
 	}

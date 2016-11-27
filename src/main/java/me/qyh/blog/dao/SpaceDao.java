@@ -91,4 +91,12 @@ public interface SpaceDao {
 	 */
 	Space selectDefault();
 
+	/**
+	 * 删除锁
+	 * 
+	 * @param lockId
+	 *            锁id
+	 */
+	void deleteLock(String lockId);
+
 }

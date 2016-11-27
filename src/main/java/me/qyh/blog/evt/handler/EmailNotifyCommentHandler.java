@@ -64,7 +64,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
 	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
-	private Resource mailTemplateResource = new ClassPathResource("me/qyh/blog/service/impl/defaultMailTemplate.html");
+	private Resource mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
 	private String mailTemplate;
 	private String mailSubject;
 

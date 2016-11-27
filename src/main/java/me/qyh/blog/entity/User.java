@@ -15,12 +15,14 @@
  */
 package me.qyh.blog.entity;
 
+import java.io.Serializable;
+
 /**
  * 
  * @author Administrator
  *
  */
-public class User extends BaseEntity {
+public class User implements Serializable {
 
 	/**
 	 * 
@@ -54,4 +56,15 @@ public class User extends BaseEntity {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
+	public User(User source) {
+		this.name = source.getName();
+		this.password = source.getPassword();
+		this.email = source.getEmail();
+	}
+
+	public User() {
+		super();
+	}
+
 }

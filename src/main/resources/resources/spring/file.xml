@@ -22,7 +22,7 @@
 							<bean class="me.qyh.blog.file.local.ImageResourceStore">
 								<property name="absPath" value="/web/nginx/html/blog_file/image" />
 								<property name="id" value="1" />
-								<property name="urlPrefix" value="http://img.static.qyh.me" />
+								<property name="urlPrefix" value="image" />
 								<property name="thumbAbsPath" value="/web/nginx/html/blog_file/image/thumb" />
 								<property name="handlerPrefix" value="image" />
 								<property name="cacheSeconds" value="31556926" />

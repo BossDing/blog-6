@@ -752,7 +752,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		for (PageTarget target : PageTarget.values()) {
 			Resource resource = sysPageDefaultTpls.get(target);
 			if (resource == null)
-				resource = new ClassPathResource("me/qyh/blog/ui/page/PAGE_" + target.name() + ".html");
+				resource = new ClassPathResource("resources/page/PAGE_" + target.name() + ".html");
 			String tpl = fromResource(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
@@ -765,7 +765,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		for (ErrorCode code : ErrorCode.values()) {
 			Resource resource = errorPageDefaultTpls.get(code);
 			if (resource == null)
-				resource = new ClassPathResource("me/qyh/blog/ui/page/" + code.name() + ".html");
+				resource = new ClassPathResource("resources/page/" + code.name() + ".html");
 			String tpl = fromResource(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");

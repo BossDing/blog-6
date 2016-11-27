@@ -38,22 +38,23 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.message.Message;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
 import me.qyh.blog.pageparam.SpaceQueryParam;
+import me.qyh.blog.security.BCrypts;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.UserService;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 import me.qyh.blog.web.controller.form.BlogFileUploadValidator;
-import me.qyh.blog.web.controller.form.LoginBean;
 import me.qyh.util.Validators;
 
 /**
@@ -69,8 +70,6 @@ import me.qyh.util.Validators;
 public class MetaweblogHandler {
 
 	@Autowired
-	private UserService userService;
-	@Autowired
 	private SpaceService spaceService;
 	@Autowired
 	private UrlHelper urlHelper;
@@ -82,21 +81,26 @@ public class MetaweblogHandler {
 	private long uploadLimitSize;
 
 	private Object execute(String username, String password, Execute execute) throws FaultException, ParseException {
-		LoginBean bean = new LoginBean(username, password);
-		User auth = null;
+		login(username, password);
 		try {
-			auth = userService.login(bean);
-		} catch (LogicException e) {
-			throw new FaultException(Constants.AUTH_ERROR, e.getLogicMessage());
-		}
-		try {
-			UserContext.set(auth);
 			return execute.execute();
 		} catch (LogicException e) {
 			throw new FaultException(Constants.LOGIC_ERROR, e.getLogicMessage());
 		} finally {
 			UserContext.remove();
 		}
+	}
+
+	private void login(String username, String password) throws FaultException {
+		User user = UserConfig.get();
+		if (user.getName().equals(username)) {
+			String encrptPwd = user.getPassword();
+			if (BCrypts.matches(password, encrptPwd)) {
+				UserContext.set(user);
+				return;
+			}
+		}
+		throw new FaultException(Constants.AUTH_ERROR, new Message("user.loginFail", "登录失败"));
 	}
 
 	private interface Execute {

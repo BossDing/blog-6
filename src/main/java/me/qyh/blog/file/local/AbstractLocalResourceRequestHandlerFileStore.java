@@ -244,17 +244,17 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		public void handleRequest(HttpServletRequest request, HttpServletResponse response)
 				throws ServletException, IOException {
 			if (requestMatcher != null && requestMatcher.match(request)) {
-				response.sendError(404);
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
 			String path = getPathFromRequest(request);
 			if (path == null) {
-				response.sendError(404);
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
 			File file = getFile(path);
 			if (file == null) {
-				response.sendError(404);
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
 			long length = file.length();

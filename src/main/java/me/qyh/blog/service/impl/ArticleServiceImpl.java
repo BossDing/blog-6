@@ -420,8 +420,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 				@Override
 				public List<Article> query(List<Integer> articleIds) {
-					return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>()
-							: articleDao.selectByIds(articleIds);
+					return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>() : selectByIds(articleIds);
 				}
 			});
 		} else {
@@ -430,6 +429,21 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			page = new PageResult<Article>(param, count, datas);
 		}
 		return page;
+	}
+
+	private List<Article> selectByIds(List<Integer> ids) {
+		// mysql can use order by field
+		// but h2 can not
+		List<Article> articles = articleDao.selectByIds(ids);
+		List<Article> ordered = new ArrayList<>();
+		Article art;
+		for (Integer id : ids) {
+			art = new Article(id);
+			int index = articles.indexOf(art);
+			if (index != -1)
+				ordered.add(articles.get(index));
+		}
+		return ordered;
 	}
 
 	@Override

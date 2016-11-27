@@ -283,9 +283,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 		WHERE art.id IN <foreach collection="list" item="id" open="(" close=")" separator=",">#{id}</foreach>
 		GROUP BY art.id
-		ORDER BY FIELD(art.id,
-		<foreach collection="list" item="id" separator=",">#{id}</foreach>
-		)
 	</select>
 	
 	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
@@ -470,6 +467,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY art.id DESC <!-- 这里不按照时间排序，因为这样草稿将会最后显示 -->
 		LIMIT 0,#{limit}
 	</select>
+	
+	<update id="deleteLock">
+		UPDATE blog_article SET  art_lock = NULL WHERE art_lock = #{lockId}
+	</update>
 	
 	<sql id="articleDetailSql">
 		SELECT

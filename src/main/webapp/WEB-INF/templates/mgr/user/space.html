@@ -8,7 +8,7 @@
 			<div class="row" style="padding: 5px">
 				<div class="col-md-8 col-md-offset-2">
 					<div class="alert alert-danger" th:unless="${error == null}"
-						th:text="${error}"></div>
+						th:text="${messages.getMessage(error)}"></div>
 					<div style="margin-bottom: 5px">
 						<button class="btn btn-default" data-toggle="modal"
 							data-target="#spaceModal">创建一个新的空间</button>

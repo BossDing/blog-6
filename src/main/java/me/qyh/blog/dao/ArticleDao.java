@@ -209,4 +209,12 @@ public interface ArticleDao {
 	 */
 	List<Article> selectRecentArticles(int limit);
 
+	/**
+	 * 删除锁
+	 * 
+	 * @param lockId
+	 *            锁id
+	 */
+	void deleteLock(String lockId);
+
 }

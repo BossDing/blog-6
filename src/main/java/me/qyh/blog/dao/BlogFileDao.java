@@ -48,12 +48,36 @@ public interface BlogFileDao {
 	BlogFile selectById(Integer id);
 
 	/**
-	 * 当插入新节点时，更新父节点的左右值
+	 * 当插入新节点时，更新父节点的左值
 	 * 
 	 * @param parent
 	 *            父节点
 	 */
-	void updateWhenAddChild(BlogFile parent);
+	void updateLftWhenAddChild(BlogFile parent);
+
+	/**
+	 * 当插入新节点时，更新父节点的右值
+	 * 
+	 * @param parent
+	 *            父节点
+	 */
+	void updateRgtWhenAddChild(BlogFile parent);
+
+	/**
+	 * 删除节点时，更新受影响节点的左值
+	 * 
+	 * @param toDelete
+	 *            待删除的节点
+	 */
+	void updateLftWhenDelete(BlogFile toDelete);
+
+	/**
+	 * 删除节点时，更新受影响节点的右值
+	 * 
+	 * @param toDelete
+	 *            待删除的节点
+	 */
+	void updateRgtWhenDelete(BlogFile toDelete);
 
 	/**
 	 * 查询文件数目
@@ -114,24 +138,6 @@ public interface BlogFileDao {
 	 *            待更新的文件节点
 	 */
 	void update(BlogFile toUpdate);
-
-	/**
-	 * 删除节点时，更新受影响节点的左右值
-	 * 
-	 * @param toDelete
-	 *            待删除的节点
-	 */
-	void updateWhenDelete(BlogFile toDelete);
-
-	/**
-	 * 移动节点时，更新受影响节点的左右值
-	 * 
-	 * @param src
-	 *            源节点
-	 * @param parent
-	 *            目标节点
-	 */
-	void updateWhenMove(@Param("src") BlogFile src, @Param("parent") BlogFile parent);
 
 	/**
 	 * 删除

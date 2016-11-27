@@ -32,11 +32,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectByParentAndPath" resultMap="BlogFileDetail">
 		SELECT id FROM blog_file WHERE file_parent = #{parent.id} AND file_path = #{path}
 	</select>
-
-	<update id="updateWhenAddChild">
-		UPDATE blog_file SET file_rgt = file_rgt + 2 WHERE file_rgt > #{lft};
-		UPDATE blog_file SET file_lft = file_lft + 2 WHERE file_lft > #{lft};
-	</update>
 	
 	<select id="selectById" resultMap="BlogFileDetail">
 		SELECT 
@@ -188,9 +183,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		(SELECT common_file FROM blog_file bf WHERE file_lft >= #{lft} AND file_rgt <![CDATA[ <= ]]> #{rgt})
 	</delete>
 	
-	<update id="updateWhenDelete">
+		
+	<update id="updateLftWhenAddChild">
+        UPDATE blog_file SET file_rgt = file_rgt + 2 WHERE file_rgt > #{lft};
+	</update>
+	
+	<update id="updateRgtWhenAddChild">
+        UPDATE blog_file SET file_lft = file_lft + 2 WHERE file_lft > #{lft};
+	</update>
+	
+	
+	<update id="updateRgtWhenDelete">
 		UPDATE blog_file SET file_rgt = file_rgt - #{width} WHERE file_rgt > #{rgt};
-	 	UPDATE blog_file SET file_lft = file_lft - #{width} WHERE file_lft > #{rgt};
+	</update>
+	
+	<update id="updateLftWhenDelete">
+		UPDATE blog_file SET file_lft = file_lft - #{width} WHERE file_lft > #{rgt};
 	</update>
 	
 	<update id="updateWhenMove">

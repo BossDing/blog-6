@@ -107,7 +107,7 @@
 	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
-		<property name="commitPeriod" value="1000"/>
+		<property name="commitPeriod" value="1000" />
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
@@ -126,39 +126,32 @@
 		<property name="handlers">
 			<list>
 				<!-- 如果不需要邮件通知这个属性请不要设置 -->
-				<bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler"
-					destroy-method="shutdown">
-					<property name="mailSubject" value="您有新的评论" />
-				</bean>
+				<!-- <bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler" 
+					destroy-method="shutdown"> <property name="mailSubject" value="您有新的评论" /> 
+					</bean> -->
 			</list>
 		</property>
 	</bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean>
+	<!-- <bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean> -->
 	<bean class="me.qyh.blog.service.impl.ApplicationContextProvider" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
-		<property name="protocol" value="${mail.protocol}" />
-		<property name="host" value="${mail.host}" />
-		<property name="port" value="${mail.port}" />
-		<property name="username" value="${mail.username}" />
-		<property name="password" value="${mail.password}" />
-		<property name="javaMailProperties">
-			<props>
-				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
-				<prop key="mail.from">${mail.from}</prop>
-			</props>
-		</property>
-	</bean>
-	
-	
-	<bean class="me.qyh.blog.service.impl.Markdown2HtmlArticleContentHandler" id="markdown2Html"/>
-	
+	<!-- <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl"> 
+		<property name="protocol" value="${mail.protocol}" /> <property name="host" 
+		value="${mail.host}" /> <property name="port" value="${mail.port}" /> <property 
+		name="username" value="${mail.username}" /> <property name="password" value="${mail.password}" 
+		/> <property name="javaMailProperties"> <props> <prop key="mail.smtp.auth">${mail.smtp.auth}</prop> 
+		<prop key="mail.from">${mail.from}</prop> </props> </property> </bean> -->
+
+
+	<bean class="me.qyh.blog.service.impl.Markdown2HtmlArticleContentHandler"
+		id="markdown2Html" />
+
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<!-- markdown2html handler -->
-		<property name="articleContentHandlers" ref="markdown2Html"/>
+		<property name="articleContentHandlers" ref="markdown2Html" />
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
@@ -166,12 +159,14 @@
 	<bean class="me.qyh.blog.metaweblog.MetaweblogHandler" />
 
 	<bean id="taskExecutor"
-		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" destroy-method="destroy">
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
+		destroy-method="destroy">
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>
 
 	<bean id="taskScheduler"
-		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler" destroy-method="destroy">
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
+		destroy-method="destroy">
 		<property name="poolSize" value="20" />
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>

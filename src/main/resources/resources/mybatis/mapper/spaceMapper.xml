@@ -102,6 +102,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			is_default = true
 	</select>
 	
+	<update id="deleteLock">
+		UPDATE blog_space SET  space_lock = NULL WHERE space_lock = #{lockId}
+	</update>
+	
 	<sql id="spaceDetailSql">
 		SELECT
 			bs.id AS space_id,

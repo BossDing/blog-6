@@ -53,25 +53,25 @@
 			<bean class="me.qyh.blog.ui.fragment.FragmentsFactoryBean">
 				<property name="tplMap">
 					<map>
-						<entry key="文章详情" value="classpath:me/qyh/blog/ui/fragment/article.html" />
-						<entry key="文章列表" value="classpath:me/qyh/blog/ui/fragment/articles.html" />
+						<entry key="文章详情" value="classpath:resources/fragment/article.html" />
+						<entry key="文章列表" value="classpath:resources/fragment/articles.html" />
 						<entry key="文章空间归档"
-							value="classpath:me/qyh/blog/ui/fragment/articleSpaceFiles.html" />
+							value="classpath:resources/fragment/articleSpaceFiles.html" />
 						<entry key="文章日期归档"
-							value="classpath:me/qyh/blog/ui/fragment/articleDateFiles.html" />
+							value="classpath:resources/fragment/articleDateFiles.html" />
 						<entry key="上一篇下一篇"
-							value="classpath:me/qyh/blog/ui/fragment/articleNav.html" />
-						<entry key="最近评论" value="classpath:me/qyh/blog/ui/fragment/comments.html" />
+							value="classpath:resources/fragment/articleNav.html" />
+						<entry key="最近评论" value="classpath:resources/fragment/comments.html" />
 						<entry key="标签集-文章"
-							value="classpath:me/qyh/blog/ui/fragment/articleTags.html" />
+							value="classpath:resources/fragment/articleTags.html" />
 						<entry key="文章统计"
-							value="classpath:me/qyh/blog/ui/fragment/articleStatistics.html" />
-						<entry key="顶部导航" value="classpath:me/qyh/blog/ui/fragment/nav.html" />
-						<entry key="底部" value="classpath:me/qyh/blog/ui/fragment/foot.html" />
+							value="classpath:resources/fragment/articleStatistics.html" />
+						<entry key="顶部导航" value="classpath:resources/fragment/nav.html" />
+						<entry key="底部" value="classpath:resources/fragment/foot.html" />
 						<entry key="评论"
-							value="classpath:me/qyh/blog/ui/fragment/_comments.html" />
+							value="classpath:resources/fragment/_comments.html" />
 						<entry key="相似文章"
-							value="classpath:me/qyh/blog/ui/fragment/similarArticles.html" />
+							value="classpath:resources/fragment/similarArticles.html" />
 					</map>
 				</property>
 			</bean>

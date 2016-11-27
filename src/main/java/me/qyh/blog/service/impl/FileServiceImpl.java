@@ -26,6 +26,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -64,7 +65,7 @@ import me.qyh.util.Validators;
  */
 @Service
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl implements FileService, InitializingBean {
 
 	@Autowired
 	private FileManager fileManager;
@@ -76,6 +77,8 @@ public class FileServiceImpl implements FileService {
 	private CommonFileDao commonFileDao;
 	@Autowired
 	private ConfigService configService;
+
+	private BlogFile root;
 
 	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
 
@@ -105,7 +108,7 @@ public class FileServiceImpl implements FileService {
 				throw new LogicException(PARENT_NOT_EXISTS);
 			}
 		} else {
-			parent = blogFileDao.selectRoot();
+			parent = root;
 		}
 		Integer server = upload.getServer();
 		FileServer fs;
@@ -133,6 +136,7 @@ public class FileServiceImpl implements FileService {
 
 	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileServer fs)
 			throws LogicException {
+		BlogFile blogFile;
 		String originalFilename = file.getOriginalFilename();
 		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null)
 			throw new LogicException("file.path.exists", "文件已经存在");
@@ -142,22 +146,29 @@ public class FileServiceImpl implements FileService {
 			deleteImmediatelyIfNeed(key);
 			cf = fs.store(key, file);
 		}
-		cf.setServer(fs.id());
 		FileStore store = fs.getFileStore(cf.getStore());
-		commonFileDao.insert(cf);
-		BlogFile blogFile = new BlogFile();
-		blogFile.setCf(cf);
-		blogFile.setPath(originalFilename);
-		blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		blogFile.setLft(parent.getLft() + 1);
-		blogFile.setRgt(parent.getLft() + 2);
-		blogFile.setName(originalFilename);
-		blogFile.setParent(parent);
-		blogFile.setType(BlogFileType.FILE);
+		try {
+			cf.setServer(fs.id());
+			commonFileDao.insert(cf);
+			blogFile = new BlogFile();
+			blogFile.setCf(cf);
+			blogFile.setPath(originalFilename);
+			blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+			blogFile.setLft(parent.getLft() + 1);
+			blogFile.setRgt(parent.getLft() + 2);
+			blogFile.setName(originalFilename);
+			blogFile.setParent(parent);
+			blogFile.setType(BlogFileType.FILE);
 
-		blogFileDao.updateWhenAddChild(parent);
-		blogFileDao.insert(blogFile);
-		return new UploadedFile(originalFilename, cf.getSize(), store.getThumbnailUrl(key), store.getUrl(key));
+			blogFileDao.updateLftWhenAddChild(parent);
+			blogFileDao.updateRgtWhenAddChild(parent);
+			blogFileDao.insert(blogFile);
+			return new UploadedFile(originalFilename, cf.getSize(), store.getThumbnailUrl(key), store.getUrl(key));
+		} catch (RuntimeException | Error e) {
+			// delete file;
+			store.delete(key);
+			throw e;
+		}
 	}
 
 	private void deleteImmediatelyIfNeed(String key) throws LogicException {
@@ -238,12 +249,12 @@ public class FileServiceImpl implements FileService {
 		toCreate.setParent(parent);
 		toCreate.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 
-		blogFileDao.updateWhenAddChild(parent);
+		blogFileDao.updateLftWhenAddChild(parent);
+		blogFileDao.updateRgtWhenAddChild(parent);
 		blogFileDao.insert(toCreate);
 	}
 
 	private BlogFile createFolder(String path) {
-		BlogFile root = blogFileDao.selectRoot();
 		if (Validators.isEmptyOrNull(path, true)) {
 			return root;
 		} else {
@@ -271,7 +282,8 @@ public class FileServiceImpl implements FileService {
 		bf.setName(folder);
 		bf.setPath(folder);
 		bf.setType(BlogFileType.DIRECTORY);
-		blogFileDao.updateWhenAddChild(parent);
+		blogFileDao.updateLftWhenAddChild(parent);
+		blogFileDao.updateRgtWhenAddChild(parent);
 		blogFileDao.insert(bf);
 		return bf;
 	}
@@ -290,7 +302,7 @@ public class FileServiceImpl implements FileService {
 			}
 			paths = blogFileDao.selectPath(parent);
 		} else {
-			param.setParent(blogFileDao.selectRoot().getId());
+			param.setParent(root.getId());
 		}
 		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
 		int count = blogFileDao.selectCount(param);
@@ -327,6 +339,7 @@ public class FileServiceImpl implements FileService {
 				FileStore fs = getFileStore(cf);
 				proMap.put("url", fs.getUrl(key));
 				proMap.put("downloadUrl", fs.getDownloadUrl(key));
+				proMap.put("thumbUrl", fs.getThumbnailUrl(key));
 				proMap.put("totalSize", cf.getSize());
 				if (cf.getWidth() != null) {
 					proMap.put("width", cf.getWidth());
@@ -337,7 +350,6 @@ public class FileServiceImpl implements FileService {
 			}
 		}
 		proMap.put("type", file.getType());
-		proMap.put("lastModifyDate", file.getLastModifyDate());
 		return proMap;
 	}
 
@@ -370,7 +382,8 @@ public class FileServiceImpl implements FileService {
 		blogFileDao.delete(db);
 		blogFileDao.deleteCommonFile(db);
 		// 更新受影响节点的左右值
-		blogFileDao.updateWhenDelete(db);
+		blogFileDao.updateLftWhenDelete(db);
+		blogFileDao.updateRgtWhenDelete(db);
 
 		FileDelete fd = new FileDelete();
 		if (db.isFile()) {
@@ -441,6 +454,23 @@ public class FileServiceImpl implements FileService {
 		if (path.length() > 0)
 			path.deleteCharAt(path.length() - 1);
 		return path.toString();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		// 找根目录
+		root = blogFileDao.selectRoot();
+		if (root == null) {
+			logger.debug("没有找到任何根目录，将创建一个根目录");
+			root = new BlogFile();
+			root.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+			root.setLft(1);
+			root.setName("");
+			root.setPath("");
+			root.setRgt(2);
+			root.setType(BlogFileType.DIRECTORY);
+			blogFileDao.insert(root);
+		}
 	}
 
 }

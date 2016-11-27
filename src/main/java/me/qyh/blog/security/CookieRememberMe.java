@@ -35,8 +35,8 @@ import org.springframework.util.StringUtils;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlConfig;
+import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
-import me.qyh.blog.service.UserService;
 
 /**
  * 
@@ -55,8 +55,6 @@ public class CookieRememberMe implements RememberMe {
 	private static final String DELIMITER = ":";
 	private static final Logger logger = LoggerFactory.getLogger(CookieRememberMe.class);
 
-	@Autowired
-	private UserService userService;
 	@Autowired
 	private UrlConfig urlConfig;
 
@@ -95,7 +93,7 @@ public class CookieRememberMe implements RememberMe {
 						remove(request, response);
 						return null;
 					}
-					User user = userService.select();
+					User user = UserConfig.get();
 					if (user != null) {
 						if (!user.getName().equals(cookieTokens[0])) {
 							throw new InvalidCookieException("自动登录失败，用户名被修改");

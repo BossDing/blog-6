@@ -17,6 +17,7 @@
 		location="classpath:resources/app.properties" />
 
 	<mvc:view-controller path="/error" view-name="error/500" />
+	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
 
 	<bean id="multipartResolver"
 		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">

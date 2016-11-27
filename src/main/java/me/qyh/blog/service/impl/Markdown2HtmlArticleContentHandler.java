@@ -37,7 +37,6 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
 /**
  * 用来将markdown文本转化成html后向前台输出<br>
  * {@link https://github.com/atlassian/commonmark-java}
- * {@link https://github.com/jgm/commonmark.js}
  * 
  * @author Administrator
  *

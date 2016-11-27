@@ -41,7 +41,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
-import me.qyh.blog.dao.UserDao;
+import me.qyh.blog.config.UserConfig;
 import me.qyh.util.Validators;
 
 /**
@@ -54,8 +54,6 @@ public class MailSender implements InitializingBean {
 
 	@Autowired
 	private JavaMailSender javaMailSender;
-	@Autowired
-	private UserDao userDao;
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
@@ -127,7 +125,7 @@ public class MailSender implements InitializingBean {
 						MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html,
 								Constants.CHARSET.name());
 						helper.setText(mb.text, mb.html);
-						helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? userDao.select().getEmail() : mb.to);
+						helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
 						helper.setSubject(mb.subject);
 						mimeMessage.setFrom();
 					}

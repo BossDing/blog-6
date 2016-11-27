@@ -27,6 +27,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.dao.ArticleDao;
+import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.SysLock;
@@ -45,6 +47,10 @@ public class SysLockProvider {
 
 	@Autowired
 	private SysLockDao sysLockDao;
+	@Autowired
+	private SpaceDao spaceDao;
+	@Autowired
+	private ArticleDao articleDao;
 
 	private static final String[] LOCK_TYPES = { SysLockType.PASSWORD.name(), SysLockType.QA.name() };
 
@@ -58,6 +64,8 @@ public class SysLockProvider {
 	@CacheEvict(value = "lockCache", key = "'lock-'+#id")
 	public void removeLock(String id) {
 		sysLockDao.delete(id);
+		articleDao.deleteLock(id);
+		spaceDao.deleteLock(id);
 	}
 
 	/**
@@ -150,7 +158,7 @@ public class SysLockProvider {
 	 * @return 模板资源
 	 */
 	public Resource getDefaultTemplateResource(String lockType) {
-		return new ClassPathResource("me/qyh/blog/ui/page/LOCK_" + lockType + ".html");
+		return new ClassPathResource("resources/page/LOCK_" + lockType + ".html");
 	}
 
 	private void encryptPasswordLock(SysLock lock) {
