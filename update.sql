@@ -1,1 +1,0 @@
-insert  into `blog_user`(`id`,`user_name`,`user_password`,`user_email`) values (2,'admin','$2a$10$ulTl80OWAFb8F.Mj3M12ueChA8Q0MykQhSQmwixgvyhekoLLnyvBO','youremail@email.com');

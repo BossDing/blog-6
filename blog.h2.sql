@@ -204,13 +204,3 @@ CREATE TABLE IF NOT EXISTS `blog_tag` (
   `create_date` datetime NOT NULL,
   PRIMARY KEY (`id`)
 );
-
-CREATE TABLE  IF NOT EXISTS `blog_user` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_name` varchar(20)  NOT NULL,
-  `user_password` varchar(128)  NOT NULL,
-  `user_email` varchar(100)  NOT NULL,
-  PRIMARY KEY (`id`)
-);
-
-
