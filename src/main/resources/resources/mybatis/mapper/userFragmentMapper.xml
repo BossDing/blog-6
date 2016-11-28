@@ -21,7 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</delete>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
-		INSERT blog_fragment_user(fragment_name,fragment_description,fragment_tpl,fragment_create_date,space_id,is_global)
+		INSERT INTO blog_fragment_user(fragment_name,fragment_description,fragment_tpl,fragment_create_date,space_id,is_global)
 		VALUES(#{name},#{description},#{tpl},#{createDate},#{space.id},#{global})
 	</insert>
 	

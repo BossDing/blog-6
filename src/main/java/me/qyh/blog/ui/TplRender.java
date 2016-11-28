@@ -56,15 +56,14 @@ public class TplRender {
 			Map<String, Object> datas) throws TplRenderException {
 		// 清除模板缓存
 		try {
-			Map<String,Object> templateDatas = new HashMap<>();
-			if (datas != null) 
+			Map<String, Object> templateDatas = new HashMap<>();
+			if (datas != null)
 				templateDatas.putAll(datas);
 			templateDatas.putAll(uiExposeHelper.getHelpers(request));
 			View view = resolver.resolveViewName(viewTemplateName, request.getLocale());
 			// 调用view来渲染模板，获取response中的数据
 			TemplateDebugResponseWrapper wrapper = new TemplateDebugResponseWrapper(response);
 			view.render(templateDatas, request, wrapper);
-			// 再次清除缓存
 			return wrapper.output();
 		} catch (Exception e) {
 			if (e instanceof TplRenderException)

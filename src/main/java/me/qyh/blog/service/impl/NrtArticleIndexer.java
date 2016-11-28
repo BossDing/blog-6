@@ -73,8 +73,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.CollectionUtils;
 
@@ -95,7 +93,7 @@ import me.qyh.blog.pageparam.PageResult;
  * @author Administrator
  *
  */
-public abstract class NRTArticleIndexer implements InitializingBean, ApplicationListener<ContextClosedEvent> {
+public abstract class NRTArticleIndexer implements InitializingBean {
 
 	private static final Logger logger = LoggerFactory.getLogger(NRTArticleIndexer.class);
 
@@ -136,7 +134,7 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
-	private static final long DEFAULT_COMMIT_PERIOD = 5 * 60 * 1000L;
+	private static final long DEFAULT_COMMIT_PERIOD = 30 * 60 * 1000L;
 
 	private long commitPeriod = DEFAULT_COMMIT_PERIOD;
 
@@ -165,9 +163,6 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-		if (commitPeriod <= 0) {
-			commitPeriod = DEFAULT_COMMIT_PERIOD;
-		}
 
 		writer = new TrackingIndexWriter(oriWriter);
 		searcherManager = new SearcherManager(writer.getIndexWriter(), new SearcherFactory());
@@ -178,15 +173,10 @@ public abstract class NRTArticleIndexer implements InitializingBean, Application
 		reopenThread.start();
 	}
 
-	@Override
-	public void onApplicationEvent(ContextClosedEvent event) {
-		close();
-	}
-
-	private void close() {
+	public void close() {
 		try {
-			reopenThread.close();
 			searcherManager.maybeRefreshBlocking();
+			reopenThread.close();
 			writer.getIndexWriter().commit();
 			writer.getIndexWriter().close();
 			dir.close();

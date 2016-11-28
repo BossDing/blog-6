@@ -104,10 +104,9 @@
 		<property name="locale" value="zh_CN" />
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer">
+	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer" destroy-method="close">
 		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
-		<property name="commitPeriod" value="1000" />
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
@@ -177,7 +176,6 @@
 		<!-- 默认5秒查询一次 -->
 		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
 			cron="0/5 * * * * ?" />
-		<!-- 0 0/5 * * * ? -->
 	</task:scheduled-tasks>
 
 

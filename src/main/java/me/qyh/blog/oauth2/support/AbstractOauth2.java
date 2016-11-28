@@ -19,8 +19,13 @@ import me.qyh.blog.oauth2.Oauth2;
 
 public abstract class AbstractOauth2 implements Oauth2 {
 
-	private String id;
-	private String name;
+	private final String id;
+	private final String name;
+
+	public AbstractOauth2(String id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 
 	@Override
 	public String getId() {
@@ -30,11 +35,6 @@ public abstract class AbstractOauth2 implements Oauth2 {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	public AbstractOauth2(String id, String name) {
-		this.id = id;
-		this.name = name;
 	}
 
 }

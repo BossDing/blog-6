@@ -44,14 +44,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<resultMap type="ArticleDateFile" id="ArticleDateFileDetail">
-		<id column="id"/>
+		<id column="art_id"/>
 		<result column="pubDate" property="begin"/>
 		<result column="pubDate" property="end"/>
 		<result column="art_count" property="count"/>
 	</resultMap>
 	
 	<resultMap type="ArticleSpaceFile" id="ArticleSpaceFileDetail">
-		<id column="art_id"/>
+		<id column="space_id"/>
 		<result column="art_count" property="count"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
@@ -286,7 +286,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
-		SELECT pubDate,COUNT(art.id) AS art_count,art.id 
+		SELECT MIN(pubDate) AS pubDate,COUNT(*) AS art_count,MIN(art.id) AS art_id
 		FROM blog_article art
 		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
@@ -311,13 +311,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				GROUP BY YEAR(pubDate),MONTH(pubDate)
 			</when>
 			<otherwise>
-				GROUP BY YEAR(pubDate),MONTH(pubDate),DATE(pubDate)
+				GROUP BY YEAR(pubDate),MONTH(pubDate),DAY(pubDate)
 			</otherwise>
 		</choose>
+		ORDER BY pubDate DESC
 	</select>
 	
 	<select id="selectSpaceFiles" resultMap="ArticleSpaceFileDetail">
-		SELECT space_id,space_alias,space_name,COUNT(art.id) AS art_count,art.id AS art_id 
+		SELECT space_id,space_alias,space_name,COUNT(*) AS art_count
 		FROM blog_article art
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id

@@ -94,17 +94,14 @@ public class CookieRememberMe implements RememberMe {
 						return null;
 					}
 					User user = UserConfig.get();
-					if (user != null) {
-						if (!user.getName().equals(cookieTokens[0])) {
-							throw new InvalidCookieException("自动登录失败，用户名被修改");
-						}
-						String expectedTokenSignature = makeTokenSignature(tokenExpiryTime, user);
-						if (!equals(expectedTokenSignature, cookieTokens[2])) {
-							throw new InvalidCookieException("自动登录失败，密码被修改");
-						}
-						return user;
+					if (!user.getName().equals(cookieTokens[0])) {
+						throw new InvalidCookieException("自动登录失败，用户名被修改");
 					}
-					throw new InvalidCookieException("自动登录失败");
+					String expectedTokenSignature = makeTokenSignature(tokenExpiryTime, user);
+					if (!equals(expectedTokenSignature, cookieTokens[2])) {
+						throw new InvalidCookieException("自动登录失败，密码被修改");
+					}
+					return user;
 				}
 			} catch (InvalidCookieException e) {
 				logger.warn(e.getMessage(), e);

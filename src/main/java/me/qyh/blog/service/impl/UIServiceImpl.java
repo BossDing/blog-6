@@ -631,6 +631,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				String param = null;
 				switch (page.getType()) {
 				case USER:
+					param = ((UserPage) page).getAlias();
+					break;
 				case EXPANDED:
 					param = page.getId() + "";
 					break;

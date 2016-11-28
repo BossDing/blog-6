@@ -62,18 +62,13 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ExportPage;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TplRender;
-import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
@@ -94,8 +89,6 @@ public class TplMgrController extends BaseMgrController {
 	private SpaceService spaceService;
 	@Autowired
 	private TemplateEngine templateEngine;
-	@Autowired
-	private TplRender tplRender;
 
 	private static final String PARSERS = "parses";
 	private static final String OLD_PAGES = "oldPages";
@@ -209,46 +202,6 @@ public class TplMgrController extends BaseMgrController {
 		for (int id : req.getIds()) {
 			ImportPageWrapper wrapper = parses.get(id);
 			if (wrapper == null) {
-				continue;
-			}
-			ExportPage ep = wrapper.getPage();
-			Page page = ep.getPage();
-
-			Page cloned = (Page) page.clone();
-			cloned.setSpace(space);
-
-			RenderedPage renderedPage = null;
-			try {
-				switch (page.getType()) {
-				case USER:
-					renderedPage = uiService.renderPreviewPage((UserPage) cloned);
-					break;
-				case ERROR:
-					if (ErrorCode.ERROR_200.equals(((ErrorPage) page).getErrorCode())) {
-						request.setAttribute("error", new Message("error.200", "200"));
-					}
-					renderedPage = uiService.renderPreviewPage((ErrorPage) cloned);
-					break;
-				case EXPANDED:
-					renderedPage = uiService.renderPreviewPage((ExpandedPage) cloned);
-					break;
-				case SYSTEM:
-					renderedPage = uiService.renderPreviewPage((SysPage) cloned);
-					break;
-				case LOCK:
-					renderedPage = uiService.renderPreviewPage((LockPage) cloned);
-					break;
-				default:
-					throw new SystemException("无法被处理的页面类型：" + page.getType());
-				}
-			} catch (LogicException e) {
-				errors.add(new ImportError(wrapper.getIndex(), e.getLogicMessage()));
-				continue;
-			}
-			try {
-				tplRender.tryRender(renderedPage, request, response);
-			} catch (TplRenderException e) {
-				errors.add(new ImportError(wrapper.getIndex(), new Message("tpl.import.parseFaild", "模板解析失败")));
 				continue;
 			}
 			toImport.add(wrapper);
