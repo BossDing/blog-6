@@ -17,7 +17,6 @@
 * RSS订阅
 * 文件管理，七牛云存储，实时缩略图服务
 * metaweblog api支持
-* mysql | h2
 
 ### doc: http://doc.qyh.me
 
