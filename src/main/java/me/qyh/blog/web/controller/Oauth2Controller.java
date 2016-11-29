@@ -48,6 +48,9 @@ public class Oauth2Controller extends BaseController {
 	@RequestMapping("login")
 	public String login(@PathVariable("id") String id, HttpSession session,
 			@RequestHeader(value = "referer", required = false) final String referer) {
+		if (!provider.isEnable()) {
+			return "redirect:" + referer;
+		}
 		Oauth2 oauth2 = provider.getOauth2(id);
 		if (oauth2 != null) {
 			String state = UUIDs.uuid();
@@ -62,6 +65,9 @@ public class Oauth2Controller extends BaseController {
 
 	@RequestMapping("success")
 	public String success(@PathVariable("id") String id, HttpServletRequest request) {
+		if (!provider.isEnable()) {
+			return "redirect:/";
+		}
 		Oauth2 oauth2 = provider.getOauth2(id);
 		if (oauth2 != null) {
 			if (!validState(request, oauth2)) {

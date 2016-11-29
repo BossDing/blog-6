@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -72,6 +73,9 @@ public class OauthServiceImpl implements OauthService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<OauthBind> queryAllBind() {
+		if (!oauth2Provider.isEnable()) {
+			return Collections.emptyList();
+		}
 		List<OauthBind> binds = oauthBindDao.selectAll();
 		for (OauthBind bind : binds) {
 			OauthUser user = bind.getUser();
@@ -156,6 +160,9 @@ public class OauthServiceImpl implements OauthService {
 	@Transactional(readOnly = true)
 	public PageResult<OauthUser> queryOauthUsers(OauthUserQueryParam param) {
 		param.setPageSize(configService.getGlobalConfig().getOauthUserPageSize());
+		if (!oauth2Provider.isEnable()) {
+			return new PageResult<>(param, 0, Collections.emptyList());
+		}
 		int count = oauthUserDao.selectCount(param);
 		List<OauthUser> datas = oauthUserDao.selectPage(param);
 		for (OauthUser user : datas) {

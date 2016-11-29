@@ -83,6 +83,7 @@
 		<property name="prefix" value="/WEB-INF/templates/" />
 		<property name="suffix" value=".html" />
 		<property name="templateMode" value="HTML" />
+		<property name="characterEncoding" value="utf-8"/>
 	</bean>
 
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">

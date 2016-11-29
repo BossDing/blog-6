@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.exception.SystemException;
@@ -29,9 +30,11 @@ import me.qyh.blog.exception.SystemException;
  * @author Administrator
  *
  */
-public class Oauth2Provider {
+public class Oauth2Provider implements InitializingBean {
 
 	private Map<String, Oauth2> oauth2Map = new HashMap<>();
+
+	private boolean enable;
 
 	/**
 	 * 根据id查找对应的oauth2服务商
@@ -45,9 +48,8 @@ public class Oauth2Provider {
 	}
 
 	public void setOauth2s(List<Oauth2> oauth2s) {
-		if (CollectionUtils.isEmpty(oauth2s)) {
-			throw new SystemException("oauth2服务不能为空");
-		}
+		if (CollectionUtils.isEmpty(oauth2s))
+			return;
 		for (Oauth2 oauth2 : oauth2s) {
 			String id = oauth2.getId();
 			if (oauth2Map.containsKey(id)) {
@@ -55,6 +57,15 @@ public class Oauth2Provider {
 			}
 			oauth2Map.put(id, oauth2);
 		}
+	}
+
+	public boolean isEnable() {
+		return enable;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		enable = !CollectionUtils.isEmpty(oauth2Map);
 	}
 
 }

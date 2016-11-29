@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.ui;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 import org.springframework.core.io.ByteArrayResource;
@@ -26,6 +27,7 @@ import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.spring4.templateresource.SpringResourceTemplateResource;
 import org.thymeleaf.templateresource.ITemplateResource;
 
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.page.Page;
 
 public class TplResolver extends SpringResourceTemplateResolver {
@@ -51,9 +53,14 @@ public class TplResolver extends SpringResourceTemplateResolver {
 			Map<String, Object> templateResolutionAttributes) {
 		RenderedPage page = UIContext.get();
 		if (page != null && page.getTemplateName().equals(template)) {
-			return new SpringResourceTemplateResource(
-					new ByteArrayResource(page.getPage().getTpl().getBytes(), page.getTemplateName()),
-					characterEncoding);
+			try {
+				return new SpringResourceTemplateResource(
+						new ByteArrayResource(page.getPage().getTpl().getBytes(characterEncoding),
+								page.getTemplateName()),
+						characterEncoding);
+			} catch (UnsupportedEncodingException e) {
+				throw new SystemException(e.getMessage(), e);
+			}
 		}
 		return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding,
 				templateResolutionAttributes);

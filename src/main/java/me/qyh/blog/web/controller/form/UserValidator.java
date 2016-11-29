@@ -56,17 +56,18 @@ public class UserValidator implements Validator {
 			return;
 		}
 		String email = user.getEmail();
-		if (Validators.isEmptyOrNull(email, true)) {
-			errors.reject("user.email.blank", "邮箱为空");
-			return;
-		}
-		if (email.length() > MAX_EMAIL_LENGTH) {
-			errors.reject("user.email.toolong", new Object[] { MAX_EMAIL_LENGTH }, "邮箱不能超过" + MAX_EMAIL_LENGTH + "位");
-			return;
-		}
-		if (!EMAIL_PATTERN.matcher(email).matches()) {
-			errors.reject("user.email.invalid", "邮箱不是正确的格式");
-			return;
+		if (email != null) {
+			email = email.trim();
+			if (email.length() > MAX_EMAIL_LENGTH) {
+				errors.reject("user.email.toolong", new Object[] { MAX_EMAIL_LENGTH },
+						"邮箱不能超过" + MAX_EMAIL_LENGTH + "位");
+				return;
+			}
+			if (!email.isEmpty() && !EMAIL_PATTERN.matcher(email).matches()) {
+				errors.reject("user.email.invalid", "邮箱不是正确的格式");
+				return;
+			}
+			user.setEmail(email);
 		}
 	}
 
