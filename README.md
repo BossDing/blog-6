@@ -16,11 +16,7 @@
 * 文件管理，七牛云存储，实时缩略图服务
 * metaweblog api支持
 
-## 本地测试：http://pan.baidu.com/s/1slMY6Vb
-
-* 无法使用oauth2评论服务
-* 内置了jetty服务器和h2数据库
-* 通过java -jar blog.war既可启动博客程序
+## Executable War http://www.qyh.me/page/executable-war
 
 
 ## doc: http://doc.qyh.me
