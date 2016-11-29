@@ -299,7 +299,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			try {
-				searcherManager.release(searcher);
+				if (searcher != null)
+					searcherManager.release(searcher);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
@@ -405,7 +406,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			try {
-				searcherManager.release(searcher);
+				if (searcher != null)
+					searcherManager.release(searcher);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
