@@ -26,7 +26,7 @@ var login = $("#login").val() == 'true';
 					$.ajax({
 						type : "post",
 						url : actPath+"/article/"+$("#articleId").val()+"/addComment",
-						data : JSON.stringify({content:$('#comment-box').val()}),
+						data : JSON.stringify({"comment":{content:$('#comment-box').val()},"email":$("#comment-email").val()}),
 						dataType : "json",
 						contentType : 'application/json',
 						success : function(data){
@@ -37,6 +37,7 @@ var login = $("#login").val() == 'true';
 								}else{
 									bootbox.alert("评论成功");
 									queryComments(cp);
+									$("#oauthEmail").val($("#comment-email").val());
 								}
 							}else{
 								bootbox.alert(data.message);
@@ -70,7 +71,7 @@ var login = $("#login").val() == 'true';
 			function toReply(parent){
 				bootbox.dialog({
 					title : '回复一个评论',
-					message : '<div id="reply-tip"></div><textarea class="form-control" id="reply-box" placeholder="对TA说点什么"></textarea>',
+					message : '<div id="reply-tip"></div><textarea class="form-control" id="reply-box" placeholder="对TA说点什么"></textarea><div class="form-group" style="margin-top:10px"><label for="exampleInputEmail1">邮箱(非必填，如果需要接收管理员回复后的邮件通知，则请填写该项)</label><input type="text" class="form-control" value="'+$("#oauthEmail").val()+'" id="reply-email" placeholder=""/></div>',
 					buttons : {
 						success : {
 							label : "确定",
@@ -88,7 +89,7 @@ var login = $("#login").val() == 'true';
 								$.ajax({
 									type : "post",
 									url : actPath+"/article/"+$("#articleId").val()+"/addComment",
-									data : JSON.stringify(data),
+									data : JSON.stringify({"comment":data,"email":$("#reply-email").val()}),
 									async:false,
 									dataType : "json",
 									contentType : 'application/json',
@@ -96,6 +97,8 @@ var login = $("#login").val() == 'true';
 										if(data.success){
 											queryComments(cp);
 											sign = true;
+											$("#comment-email").val($("#reply-email").val());
+											$("#oauthEmail").val($("#reply-email").val());
 										}else{
 											$("#reply-tip").html('<div class="alert alert-danger">'+data.message+'</div>');
 										}

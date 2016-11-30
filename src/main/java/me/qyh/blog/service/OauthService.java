@@ -35,8 +35,9 @@ public interface OauthService {
 	 * 
 	 * @param user
 	 *            oauth用户信息
+	 * @return 用户
 	 */
-	void insertOrUpdate(OauthUser user);
+	OauthUser insertOrUpdate(OauthUser user);
 
 	/**
 	 * 查询所有的绑定账号

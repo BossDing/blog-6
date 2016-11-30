@@ -15,6 +15,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="nick_name" property="nickname"/>
 			<result column="avatar" property="avatar"/>
 			<result column="is_admin" property="admin"/>
+			<result column="email" property="email"/>
 			<result column="oauth_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
 		</association>
 		<association property="article" javaType="Article">
@@ -32,6 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				<result column="p_nick_name" property="nickname"/>
 				<result column="p_avatar" property="avatar"/>
 				<result column="p_is_admin" property="admin"/>
+				<result column="p_email" property="email"/>
 			</association>
 		</association>
 	</resultMap>
@@ -123,7 +125,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectById" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date,bou.is_admin,a.comment_status
+		  a.id,a.parent_id,a.parent_path,a.content,a.user_id,a.article_id,a.comment_date,bou.avatar,bou.nick_name,comment_date,bou.is_admin,a.comment_status,bou.email
 		 FROM blog_comment a 
 		 LEFT OUTER JOIN blog_oauth_user  bou ON a.`user_id` = bou.id
 		 WHERE a.id = #{id}

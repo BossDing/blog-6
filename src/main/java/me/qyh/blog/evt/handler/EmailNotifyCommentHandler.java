@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -125,12 +126,15 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		toProcesses.add(comment);
 	}
 
-	private void sendMail() {
+	private void sendMail(List<Comment> comments, String to) {
 		Context context = new Context();
 		context.setVariable("urls", urlHelper.getUrls());
-		context.setVariable("comments", toSend);
+		context.setVariable("comments", comments);
 		context.setVariable("messages", messages);
-		mailSender.send(new MessageBean(mailSubject, true, mailTemplateEngine.process(mailTemplate, context)));
+		MessageBean mb = new MessageBean(mailSubject, true, mailTemplateEngine.process(mailTemplate, context));
+		if (to != null)
+			mb.setTo(to);
+		mailSender.send(mb);
 	}
 
 	private final class MailTemplateEngine extends TemplateEngine {
@@ -177,7 +181,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 					iterator.remove();
 					if (size >= messageTipCount) {
 						logger.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
-						sendMail();
+						sendMail(toSend, null);
 						toSend.clear();
 						break;
 					}
@@ -189,7 +193,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 			synchronized (toSend) {
 				if (!toSend.isEmpty()) {
 					logger.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
-					sendMail();
+					sendMail(toSend, null);
 					toSend.clear();
 				}
 			}
@@ -223,9 +227,15 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		// 如果在用户登录的情况下评论，一律不发送邮件
 		// 如果评论人不是绑定账户并且直接回复文章
 		// 如果评论人不是绑定账户并且回复了绑定账户
-		if (UserContext.get() == null && (!user.getAdmin() && parent == null)
-				|| (!user.getAdmin() && (parent.getUser().getAdmin()))) {
+		if (UserContext.get() == null
+				&& ((!user.getAdmin() && parent == null) || (!user.getAdmin() && parent.getUser().getAdmin()))) {
 			add(comment);
+		}
+		// 如果父评论不是管理员的评论
+		// 如果回复是管理员
+		if (parent != null && !parent.getUser().getAdmin() && parent.getUser().getEmail() != null && user.getAdmin()) {
+			// 直接邮件通知被回复对象
+			sendMail(Arrays.asList(comment), parent.getUser().getEmail());
 		}
 	}
 

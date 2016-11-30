@@ -23,18 +23,23 @@ import me.qyh.blog.entity.Comment;
 import me.qyh.util.Validators;
 
 @Component
-public class CommentValidator implements Validator {
+public class CommentBeanValidator implements Validator {
 
 	public static final int MAX_COMMENT_LENGTH = 500;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return Comment.class.isAssignableFrom(clazz);
+		return CommentBean.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		Comment comment = (Comment) target;
+		CommentBean cb = (CommentBean) target;
+		Comment comment = cb.getComment();
+		if (comment == null) {
+			errors.reject("comment.blank", "评论不能为空");
+			return;
+		}
 		String content = comment.getContent();
 		if (Validators.isEmptyOrNull(content, true)) {
 			errors.reject("comment.content.blank", "回复内容不能为空");
@@ -45,6 +50,24 @@ public class CommentValidator implements Validator {
 					"回复的内容不能超过" + MAX_COMMENT_LENGTH + "个字符");
 			return;
 		}
+		String email = cb.getEmail();
+		if (email != null) {
+			email = email.trim();
+			if (!email.isEmpty()) {
+				if (email.length() > UserValidator.MAX_EMAIL_LENGTH) {
+					errors.reject("comment.email.toolong", new Object[] { UserValidator.MAX_EMAIL_LENGTH },
+							"邮箱不能超过" + UserValidator.MAX_EMAIL_LENGTH + "位");
+					return;
+				}
+				if (!UserValidator.EMAIL_PATTERN.matcher(email).matches()) {
+					errors.reject("comment.email.invalid", "邮箱不是正确的格式");
+					return;
+				}
+			} else {
+				email = null;
+			}
+		}
+		cb.setEmail(email);
 	}
 
 }

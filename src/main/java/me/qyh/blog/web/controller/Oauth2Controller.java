@@ -81,9 +81,9 @@ public class Oauth2Controller extends BaseController {
 			if (user != null) {
 				OauthUser oauthUser = new OauthUser(user);
 				oauthUser.setServerId(id);
-				oauthUserService.insertOrUpdate(oauthUser);
+				OauthUser updated = oauthUserService.insertOrUpdate(oauthUser);
 				HttpSession session = request.getSession();
-				session.setAttribute(Constants.OAUTH_SESSION_KEY, oauthUser);
+				session.setAttribute(Constants.OAUTH_SESSION_KEY, updated);
 				String referer = (String) session.getAttribute(REFERER_URL);
 				if (referer != null) {
 					return "redirect:" + referer;

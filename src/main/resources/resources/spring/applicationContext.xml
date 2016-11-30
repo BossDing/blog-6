@@ -92,7 +92,7 @@
 	<!-- 登录验证 -->
 	<bean class="me.qyh.blog.security.EnsureLoginAspect" />
 	<!-- 自动登录 -->
-	<bean class="me.qyh.blog.security.CookieRememberMe" />
+	<bean class="me.qyh.blog.security.RememberMe" />
 
 	<bean id="messageSource"
 		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
@@ -104,7 +104,8 @@
 		<property name="locale" value="zh_CN" />
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer" destroy-method="close">
+	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer"
+		destroy-method="close">
 		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
 	</bean>
@@ -124,25 +125,31 @@
 	<bean class="me.qyh.blog.evt.CommentEventListener">
 		<property name="handlers">
 			<list>
-				<!-- 如果不需要邮件通知这个属性请不要设置 -->
-				<!-- <bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler" 
-					destroy-method="shutdown"> <property name="mailSubject" value="您有新的评论" /> 
-					</bean> -->
+				<bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler"
+					destroy-method="shutdown">
+					<property name="mailSubject" value="您有新的评论" />
+				</bean>
 			</list>
 		</property>
 	</bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<!-- <bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean> -->
-	<bean class="me.qyh.blog.service.impl.ApplicationContextProvider" />
+	<bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<!-- <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl"> 
-		<property name="protocol" value="${mail.protocol}" /> <property name="host" 
-		value="${mail.host}" /> <property name="port" value="${mail.port}" /> <property 
-		name="username" value="${mail.username}" /> <property name="password" value="${mail.password}" 
-		/> <property name="javaMailProperties"> <props> <prop key="mail.smtp.auth">${mail.smtp.auth}</prop> 
-		<prop key="mail.from">${mail.from}</prop> </props> </property> </bean> -->
+	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="protocol" value="${mail.protocol}" />
+		<property name="host" value="${mail.host}" />
+		<property name="port" value="${mail.port}" />
+		<property name="username" value="${mail.username}" />
+		<property name="password" value="${mail.password}" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+				<prop key="mail.from">${mail.from}</prop>
+			</props>
+		</property>
+	</bean>
 
 
 	<bean class="me.qyh.blog.service.impl.Markdown2HtmlArticleContentHandler"

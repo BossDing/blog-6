@@ -60,7 +60,8 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.CommentService;
 import me.qyh.blog.service.ConfigService;
-import me.qyh.blog.web.controller.form.CommentValidator;
+import me.qyh.blog.web.controller.form.CommentBean;
+import me.qyh.blog.web.controller.form.CommentBeanValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 import me.qyh.util.Validators;
 
@@ -85,6 +86,8 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	private ConfigService configService;
 
 	private CommentContentChecker commentContentChecker;
+	private CommentEmailChecker commentEmailChecker;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	private final CommentComparator ascCommentComparator = new CommentComparator();
 	private final Comparator<Comment> descCommentComparator = new Comparator<Comment>() {
@@ -122,7 +125,7 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 	 * 同时为了走索引，只能限制它为255个字符，由于id为数字的原因，实际上一般情况下很难达到255的长度(即便id很大)，所以这里完全够用
 	 */
 	private static final int PATH_MAX_LENGTH = 255;
-	public static final int MAX_COMMENT_LENGTH = CommentValidator.MAX_COMMENT_LENGTH;
+	public static final int MAX_COMMENT_LENGTH = CommentBeanValidator.MAX_COMMENT_LENGTH;
 
 	/**
 	 * 用来过滤Html标签
@@ -188,32 +191,30 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	public Comment insertComment(Comment comment) throws LogicException {
+	public Comment insertComment(CommentBean cb) throws LogicException {
+		Comment comment = cb.getComment();
 		long now = System.currentTimeMillis();
-		if (isInvalidUser(comment.getUser())) {
+		if (isInvalidUser(comment.getUser()))
 			throw new LogicException("comment.user.invalid", "该账户暂时被禁止评论");
-		}
+
 		OauthUser user = oauthUserDao.selectById(comment.getUser().getId());
-		if (user == null) {
+		if (user == null)
 			throw new LogicException("comment.user.notExists", "账户不存在");
-		}
-		if (user.isDisabled()) {
+		if (user.isDisabled())
 			throw new LogicException("comment.user.ban", "该账户被禁止评论");
-		}
+
 		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
-		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
+		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished())
 			throw new LogicException("article.notExists", "文章不存在");
-		}
-		CommentConfig config = getConfig(article);
-		if (!config.getAllowComment() && (UserContext.get() == null || user.getAdmin())) {
-			throw new LogicException("article.notAllowComment", "文章不允许被评论");
-		}
 		// 如果私人文章并且没有登录
-		if (article.isPrivate() && UserContext.get() == null) {
+		if (article.isPrivate() && UserContext.get() == null)
 			throw new AuthencationException();
-		}
-		if (UserContext.get() == null || !Boolean.TRUE.equals(user.getAdmin())) {
+
+		CommentConfig config = getConfig(article);
+		if (!config.getAllowComment() && (UserContext.get() == null || user.getAdmin()))
+			throw new LogicException("article.notAllowComment", "文章不允许被评论");
+		if (UserContext.get() == null || !user.getAdmin()) {
 			// 检查频率
 			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
@@ -242,15 +243,26 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 			}
 			parentPath = parent.getParentPath() + parent.getId() + "/";
 		}
-		if (parentPath.length() > PATH_MAX_LENGTH) {
+		if (parentPath.length() > PATH_MAX_LENGTH)
 			throw new LogicException("comment.path.toolong", "该评论不能再被回复了");
-		}
+
 		Comment last = commentDao.selectLast(comment);
-		if (last != null && last.getContent().equals(comment.getContent())) {
+		if (last != null && last.getContent().equals(comment.getContent()))
 			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
+
+		if (user.getAdmin()) {
+			user.setEmail(null);
+		} else {
+			String email = cb.getEmail();
+			if (email != null)
+				commentEmailChecker.doCheck(user, email);
+			user.setEmail(email);
 		}
+		oauthUserDao.update(user);
+
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
+
 		boolean check = config.getCheck() && !user.getAdmin() && (UserContext.get() == null);
 		comment.setStatus(check ? CommentStatus.CHECK : CommentStatus.NORMAL);
 		commentDao.insert(comment);
@@ -464,15 +476,6 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		root.setChildren(children);
 	}
 
-	private final class DefaultCommentContentChecker implements CommentContentChecker {
-
-		@Override
-		public void doCheck(String content, boolean html) throws LogicException {
-
-		}
-
-	}
-
 	private final class InvalidCount {
 		private long start;
 		private AtomicInteger count;
@@ -530,9 +533,10 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		if (htmlClean == null) {
 			throw new SystemException("必须要提供一个html内容的清理器");
 		}
-		if (commentContentChecker == null) {
+		if (commentContentChecker == null)
 			commentContentChecker = new DefaultCommentContentChecker();
-		}
+		if (commentEmailChecker == null)
+			commentEmailChecker = new DefaultEmailChecker();
 		if (invalidLimitCount < 0 || invalidLimitSecond < 0 || invalidSecond < 0) {
 			invalidLimitCount = INVALID_LIMIT_COUNT;
 			invalidLimitSecond = INVALID_LIMIT_SECOND;
@@ -632,7 +636,26 @@ public class CommentServiceImpl implements CommentService, InitializingBean, App
 		this.htmlClean = htmlClean;
 	}
 
-	private ApplicationEventPublisher applicationEventPublisher;
+	public void setCommentEmailChecker(CommentEmailChecker commentEmailChecker) {
+		this.commentEmailChecker = commentEmailChecker;
+	}
+
+	private final class DefaultCommentContentChecker implements CommentContentChecker {
+
+		@Override
+		public void doCheck(String content, boolean html) throws LogicException {
+
+		}
+
+	}
+
+	private final class DefaultEmailChecker extends CommentEmailChecker {
+
+		@Override
+		protected void checkMore(final OauthUser user, final String email) throws LogicException {
+		}
+
+	}
 
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {

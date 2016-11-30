@@ -47,6 +47,12 @@ public class TagServiceImpl implements TagService, InitializingBean {
 	@Autowired
 	private ConfigService configSerivce;
 
+	/**
+	 * 用于重建文章索引
+	 */
+	@Autowired
+	private ArticleService articleService;
+
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Tag> queryTag(TagQueryParam param) {
@@ -79,7 +85,7 @@ public class TagServiceImpl implements TagService, InitializingBean {
 			tagDao.update(tag);
 		}
 		articleIndexer.addTags(tag.getName());
-		rebuildIndex();
+		articleService.rebuildIndex(true);
 	}
 
 	@Override
@@ -92,16 +98,12 @@ public class TagServiceImpl implements TagService, InitializingBean {
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
 		articleIndexer.removeTag(db.getName());
-		rebuildIndex();
+		articleService.rebuildIndex(true);
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		for (Tag tag : tagDao.selectAll())
 			articleIndexer.addTags(tag.getName());
-	}
-
-	private void rebuildIndex() {
-		ApplicationContextProvider.getApplicationContext().getBean(ArticleService.class).rebuildIndex(true);
 	}
 }

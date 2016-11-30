@@ -46,9 +46,9 @@ public class SinaOauth2 extends AbstractOauth2 {
 	private static final String USER_INFO_URL = "https://api.weibo.com/2/users/show.json";
 	private static final String TOKEN_INFO_URL = "https://api.weibo.com/oauth2/get_token_info";
 
-	private String appkey;
-	private String appsecret;
-	private String redirectUri;
+	private final String appkey;
+	private final String appsecret;
+	private final String redirectUri;
 
 	public SinaOauth2(String id, String name, String appkey, String appsecret, String redirectUri) {
 		super(id, name);

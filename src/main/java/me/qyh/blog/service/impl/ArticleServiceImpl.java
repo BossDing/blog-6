@@ -70,7 +70,6 @@ import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.ConfigService;
-import me.qyh.blog.service.impl.NRTArticleIndexer.ArticlesDetailQuery;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -416,12 +415,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		PageResult<Article> page = null;
 		if (param.hasQuery()) {
-			page = articleIndexer.query(param, new ArticlesDetailQuery() {
-
-				@Override
-				public List<Article> query(List<Integer> articleIds) {
-					return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>() : selectByIds(articleIds);
-				}
+			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
+				return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>() : selectByIds(articleIds);
 			});
 		} else {
 			int count = articleDao.selectCount(param);
@@ -594,12 +589,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public List<Article> findSimilar(Article article, int limit) throws LogicException {
 		if (article == null)
 			return Collections.emptyList();
-		return articleIndexer.querySimilar(article, new ArticlesDetailQuery() {
-
-			@Override
-			public List<Article> query(List<Integer> articleIds) {
-				return articleDao.selectByIds(articleIds);
-			}
+		return articleIndexer.querySimilar(article, (List<Integer> articleIds) -> {
+			return articleDao.selectByIds(articleIds);
 		}, limit);
 	}
 

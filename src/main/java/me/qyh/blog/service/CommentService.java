@@ -22,6 +22,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.web.controller.form.CommentBean;
 
 /**
  * 
@@ -38,7 +39,7 @@ public interface CommentService {
 	 * @return 插入后的评论
 	 * @throws LogicException
 	 */
-	Comment insertComment(Comment comment) throws LogicException;
+	Comment insertComment(CommentBean cb) throws LogicException;
 
 	/**
 	 * 删除某条评论和该评论的所有回复

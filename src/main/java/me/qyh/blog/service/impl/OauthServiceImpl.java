@@ -52,21 +52,25 @@ public class OauthServiceImpl implements OauthService {
 	private ConfigService configService;
 
 	@Override
-	public void insertOrUpdate(OauthUser user) {
+	public OauthUser insertOrUpdate(OauthUser user) {
 		OauthUser db = oauthUserDao.selectByOauthIdAndServerId(user.getOauthid(), user.getServerId());
 		if (db == null) {
 			// 插入
 			user.setRegisterDate(Timestamp.valueOf(LocalDateTime.now()));
 			user.setStatus(OauthUserStatus.NORMAL);
 			oauthUserDao.insert(user);
+			return user;
 		} else {
 			user.setId(db.getId());
 			boolean update = !user.getNickname().equals(db.getNickname())
 					|| !StringUtils.equals(db.getAvatar(), user.getAvatar());
 			if (update) {
+				db.setNickname(user.getNickname());
+				db.setAvatar(user.getAvatar());
 				user.setStatus(db.getStatus());
 				oauthUserDao.update(user);
 			}
+			return db;
 		}
 	}
 

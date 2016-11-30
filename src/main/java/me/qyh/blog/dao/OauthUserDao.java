@@ -66,7 +66,7 @@ public interface OauthUserDao {
 	int selectCount(OauthUserQueryParam param);
 
 	/**
-	 * 查询用户结婚
+	 * 查询用户
 	 * 
 	 * @param param
 	 *            查询参数

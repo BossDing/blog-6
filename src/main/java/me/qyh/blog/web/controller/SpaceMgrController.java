@@ -60,7 +60,7 @@ public class SpaceMgrController extends BaseMgrController {
 	}
 
 	@InitBinder(value = "spaceConfig")
-	protected void initCommentConfigBinder(WebDataBinder binder) {
+	protected void initSpaceConfigBinder(WebDataBinder binder) {
 		binder.setValidator(spaceConfigValidator);
 	}
 

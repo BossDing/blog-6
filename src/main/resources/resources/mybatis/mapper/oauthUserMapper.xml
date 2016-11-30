@@ -12,10 +12,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="server_id" property="serverId"/>
 		<result column="is_admin" property="admin"/>
 		<result column="oauth_status" property="status" typeHandler="EnumOrdinalTypeHandler" />
+		<result column="email" property="email"/>
 	</resultMap>
 	
 	<select id="selectByOauthIdAndServerId" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
+		<include refid="detailQuery"></include>
 		WHERE 
 				oauth_id = #{oauthid} 
 			AND 
@@ -32,7 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectPage" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
+		<include refid="detailQuery"></include> 
 		<where>
 			<if test="nickname != null and nickname != ''">
 				nickname LIKE CONCAT('%', #{nickname},'%')
@@ -55,6 +56,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="admin != null">
 				is_admin = #{admin},
 			</if>
+			email = #{email},
 			<if test="status != null">
 				oauth_status = #{status,javaType=OauthUserStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
@@ -63,7 +65,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</update>
 
 	<select id="selectById" resultMap="OauthUserDetail">
-		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin FROM blog_oauth_user 
+		<include refid="detailQuery"></include>
 		WHERE id = #{id}
 	</select>
+	
+	<sql id="detailQuery">
+		SELECT id,oauth_id,avatar,nick_name,server_id,oauth_status,register_date,is_admin,email FROM blog_oauth_user
+	</sql>
 </mapper>

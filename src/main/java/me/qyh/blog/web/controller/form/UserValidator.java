@@ -29,8 +29,8 @@ public class UserValidator implements Validator {
 
 	public static final int MAX_NAME_LENGTH = 10;// 用户名最大长度为10位
 	public static final int MAX_PWD_LENGTH = 16; // 密码最大长度为16位
-	private static final int MAX_EMAIL_LENGTH = 100;// 邮箱最大长度为100位
-	private static final Pattern EMAIL_PATTERN = Pattern.compile(
+	public static final int MAX_EMAIL_LENGTH = 100;// 邮箱最大长度为100位
+	public static final Pattern EMAIL_PATTERN = Pattern.compile(
 			"^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$");
 
 	@Override
@@ -58,16 +58,18 @@ public class UserValidator implements Validator {
 		String email = user.getEmail();
 		if (email != null) {
 			email = email.trim();
-			if (email.length() > MAX_EMAIL_LENGTH) {
-				errors.reject("user.email.toolong", new Object[] { MAX_EMAIL_LENGTH },
-						"邮箱不能超过" + MAX_EMAIL_LENGTH + "位");
-				return;
+			if (!email.isEmpty()) {
+				if (email.length() > MAX_EMAIL_LENGTH) {
+					errors.reject("user.email.toolong", new Object[] { MAX_EMAIL_LENGTH },
+							"邮箱不能超过" + MAX_EMAIL_LENGTH + "位");
+					return;
+				}
+				if (!EMAIL_PATTERN.matcher(email).matches()) {
+					errors.reject("user.email.invalid", "邮箱不是正确的格式");
+					return;
+				}
+				user.setEmail(email);
 			}
-			if (!email.isEmpty() && !EMAIL_PATTERN.matcher(email).matches()) {
-				errors.reject("user.email.invalid", "邮箱不是正确的格式");
-				return;
-			}
-			user.setEmail(email);
 		}
 	}
 

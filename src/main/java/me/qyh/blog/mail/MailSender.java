@@ -118,6 +118,13 @@ public class MailSender implements InitializingBean {
 	protected void sendMail(final MessageBean mb, final MailSendCallBack callBack) {
 		executor.execute(() -> {
 			try {
+				String email = mb.to;
+				if (Validators.isEmptyOrNull(email, true))
+					email = UserConfig.get().getEmail();
+				if (Validators.isEmptyOrNull(email, true)) {
+					logger.error("接受人邮箱为空，无法发送邮件");
+					return;
+				}
 				javaMailSender.send(new MimeMessagePreparator() {
 
 					@Override
@@ -130,10 +137,12 @@ public class MailSender implements InitializingBean {
 						mimeMessage.setFrom();
 					}
 				});
-				callBack.callBack(mb, true);
+				if (callBack != null)
+					callBack.callBack(mb, true);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
-				callBack.callBack(mb, false);
+				if (callBack != null)
+					callBack.callBack(mb, false);
 			}
 		});
 	}

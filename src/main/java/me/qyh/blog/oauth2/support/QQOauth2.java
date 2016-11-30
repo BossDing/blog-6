@@ -52,8 +52,8 @@ public class QQOauth2 extends AbstractOauth2 {
 	private static final String[] AVATAR_URL_NODES = { "figureurl_qq_2", "figureurl_qq_1", "figureurl_2",
 			"figureurl_1" };
 
-	private String appId;
-	private String appKey;
+	private final String appId;
+	private final String appKey;
 	/**
 	 * 验证成功后的回调地址
 	 */

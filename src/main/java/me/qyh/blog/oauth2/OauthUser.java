@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import me.qyh.blog.entity.BaseEntity;
@@ -51,6 +52,7 @@ public class OauthUser extends BaseEntity {
 	private String serverId;
 	private String serverName;
 	private Boolean admin;
+	private String email;
 
 	/**
 	 * oauth用户状态
@@ -160,6 +162,15 @@ public class OauthUser extends BaseEntity {
 
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
+	}
+
+	@JsonIgnore
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	@Override

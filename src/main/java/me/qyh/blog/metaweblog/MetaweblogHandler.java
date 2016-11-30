@@ -108,37 +108,29 @@ public class MetaweblogHandler {
 	}
 
 	public Object getUsersBlogs(String key, String username, String password) throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException {
-				Map<String, String> map = new HashMap<>();
-				map.put("blogid", "1");
-				map.put("blogName", username);
-				map.put("url", urlHelper.getUrl());
-				return Arrays.asList(map);
-			}
+		return execute(username, password, () -> {
+			Map<String, String> map = new HashMap<>();
+			map.put("blogid", "1");
+			map.put("blogName", username);
+			map.put("url", urlHelper.getUrl());
+			return Arrays.asList(map);
 		});
 	}
 
 	public Object getCategories(String blogid, String username, String password) throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException {
-				List<Space> spaces = spaceService.querySpace(new SpaceQueryParam());
-				List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
-				for (Space space : spaces) {
-					Map<String, String> map = new HashMap<>();
-					map.put("description", "");
-					map.put("htmlUrl", urlHelper.getUrls().getUrl(space));
-					map.put("rssUrl", urlHelper.getUrls().getUrl(space) + "/rss");
-					map.put("title", space.getName());
-					map.put("categoryid", space.getId().toString());
-					result.add(map);
-				}
-				return result;
+		return execute(username, password, () -> {
+			List<Space> spaces = spaceService.querySpace(new SpaceQueryParam());
+			List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
+			for (Space space : spaces) {
+				Map<String, String> map = new HashMap<>();
+				map.put("description", "");
+				map.put("htmlUrl", urlHelper.getUrls().getUrl(space));
+				map.put("rssUrl", urlHelper.getUrls().getUrl(space) + "/rss");
+				map.put("title", space.getName());
+				map.put("categoryid", space.getId().toString());
+				result.add(map);
 			}
+			return result;
 		});
 	}
 
@@ -148,83 +140,59 @@ public class MetaweblogHandler {
 			throw new ParseException("最近文章数量限制不能为空");
 		if (limit <= 0)
 			throw new ParseException("最近文章数量限制必须为大于0的整数");
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException {
-				List<Article> articles = articleService.queryRecentArticles(limit);
-				List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
-				for (Article art : articles)
-					result.add(articleToMap(art));
-				return result;
-			}
+		return execute(username, password, () -> {
+			List<Article> articles = articleService.queryRecentArticles(limit);
+			List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
+			for (Article art : articles)
+				result.add(articleToMap(art));
+			return result;
 		});
 	}
 
 	public Object getPost(String postid, String username, String password) throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException {
-				Integer id = Integer.parseInt(postid);
-				Article article = articleService.getArticleForEdit(id);
-				return articleToMap(article);
-			}
+		return execute(username, password, () -> {
+			Integer id = Integer.parseInt(postid);
+			Article article = articleService.getArticleForEdit(id);
+			return articleToMap(article);
 		});
 	}
 
 	public Object newPost(String blogid, String username, String password, Struct struct, Boolean publish)
 			throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException, ParseException {
-				MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
-				return articleService.writeArticle(article).getId().toString();
-			}
+		return execute(username, password, () -> {
+			MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
+			return articleService.writeArticle(article).getId().toString();
 		});
 	}
 
 	public Object editPost(String postid, String username, String password, Struct struct, Boolean publish)
 			throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException, ParseException {
-				MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
-				article.setId(Integer.parseInt(postid));
-				articleService.writeArticle(article);
-				return article.getId().toString();
-			}
+		return execute(username, password, () -> {
+			MetaweblogArticle article = structToArticle(struct, publish == null ? true : publish);
+			article.setId(Integer.parseInt(postid));
+			articleService.writeArticle(article);
+			return article.getId().toString();
 		});
 	}
 
 	public Object deletePost(String appkey, String postid, String username, String password, Boolean published)
 			throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException {
-				articleService.logicDeleteArticle(Integer.parseInt(postid));
-				return Boolean.TRUE;
-			}
+		return execute(username, password, () -> {
+			articleService.logicDeleteArticle(Integer.parseInt(postid));
+			return Boolean.TRUE;
 		});
 	}
 
 	public Object newMediaObject(String blogid, String username, String password, Struct struct)
 			throws FaultException, ParseException {
-		return execute(username, password, new Execute() {
-
-			@Override
-			public Object execute() throws LogicException, ParseException {
-				UploadedFile res = fileService.uploadMetaweblogFile(structToFile(struct));
-				if (res.hasError())
-					throw new LogicException(res.getError());
-				else {
-					Map<String, String> urlMap = new HashMap<>();
-					urlMap.put("url", res.getThumbnailUrl().getMiddle());
-					return urlMap;
-				}
+		return execute(username, password, () -> {
+			UploadedFile res = fileService.uploadMetaweblogFile(structToFile(struct));
+			if (res.hasError())
+				throw new LogicException(res.getError());
+			else {
+				Map<String, String> urlMap = new HashMap<>();
+				urlMap.put("url", res.getThumbnailUrl().getMiddle());
+				return urlMap;
 			}
 		});
 	}
@@ -247,49 +215,59 @@ public class MetaweblogHandler {
 			throw new LogicException("file.content.blank");
 		if (bits.length > uploadLimitSize)
 			throw new LogicException("upload.overlimitsize", uploadLimitSize);
-		final String originalFilename = name;
-		return new MultipartFile() {
+		return new MetaweblogFile(bits, name);
+	}
 
-			@Override
-			public void transferTo(File dest) throws IOException, IllegalStateException {
-				FileUtils.writeByteArrayToFile(dest, bits);
-			}
+	private final class MetaweblogFile implements MultipartFile {
 
-			@Override
-			public boolean isEmpty() {
-				return bits.length == 0;
-			}
+		private final byte[] bits;
+		private final String originalFilename;
 
-			@Override
-			public long getSize() {
-				return bits.length;
-			}
+		public MetaweblogFile(byte[] bits, String originalFilename) {
+			super();
+			this.bits = bits;
+			this.originalFilename = originalFilename;
+		}
 
-			@Override
-			public String getOriginalFilename() {
-				return originalFilename;
-			}
+		@Override
+		public void transferTo(File dest) throws IOException, IllegalStateException {
+			FileUtils.writeByteArrayToFile(dest, bits);
+		}
 
-			@Override
-			public String getName() {
-				return null;
-			}
+		@Override
+		public boolean isEmpty() {
+			return bits.length == 0;
+		}
 
-			@Override
-			public InputStream getInputStream() throws IOException {
-				return new ByteArrayInputStream(bits);
-			}
+		@Override
+		public long getSize() {
+			return bits.length;
+		}
 
-			@Override
-			public String getContentType() {
-				return URLConnection.guessContentTypeFromName(originalFilename);
-			}
+		@Override
+		public String getOriginalFilename() {
+			return originalFilename;
+		}
 
-			@Override
-			public byte[] getBytes() throws IOException {
-				return bits;
-			}
-		};
+		@Override
+		public String getName() {
+			return null;
+		}
+
+		@Override
+		public InputStream getInputStream() throws IOException {
+			return new ByteArrayInputStream(bits);
+		}
+
+		@Override
+		public String getContentType() {
+			return URLConnection.guessContentTypeFromName(originalFilename);
+		}
+
+		@Override
+		public byte[] getBytes() throws IOException {
+			return bits;
+		}
 	}
 
 	private MetaweblogArticle structToArticle(Struct struct, boolean published) throws LogicException, ParseException {

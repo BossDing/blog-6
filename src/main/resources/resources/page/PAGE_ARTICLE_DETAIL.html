@@ -11,7 +11,8 @@
 <link rel="stylesheet"
 	href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" />
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
-<link th:href="@{/static/css/markdown.css}" rel="stylesheet" th:if="${article.editor.name() == 'MD'}">
+<link th:href="@{/static/css/markdown.css}" rel="stylesheet"
+	th:if="${article.editor.name() == 'MD'}">
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
@@ -39,6 +40,11 @@
 						</div>
 					</div>
 					<div>
+						<div class="form-group" style="margin-top:10px">
+                        	<label for="exampleInputEmail1">邮箱(非必填，如果需要接收管理员回复后的邮件通知，则请填写该项)</label>
+                       		<input type="text" class="form-control" th:value="${session.oauth != null ? session.oauth.email : ''}" id="comment-email" placeholder=""/>
+                      	</div>
+                      	<input type="hidden" class="form-control" th:value="${session.oauth != null ? session.oauth.email : ''}" id="oauthEmail"/>
 						<label>社交账号登录</label>:<a th:href="${urls.url}+'/oauth2/qq/login'"><img
 							th:src="@{/static/img/qq.png}"
 							style="width: 32px; height: 32px; margin-top: 10px" title="QQ登录"
@@ -68,7 +74,7 @@
 		th:value="${session.oauth != null}" />
 	<input type="hidden" id="commentMode"
 		th:value="${article.commentConfig.commentMode.name()}" />
-	
+
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>

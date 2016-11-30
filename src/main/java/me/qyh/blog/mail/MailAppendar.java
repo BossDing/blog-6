@@ -15,11 +15,9 @@
  */
 package me.qyh.blog.mail;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import ch.qos.logback.classic.ClassicConstants;
 import ch.qos.logback.classic.PatternLayout;
@@ -38,16 +36,16 @@ import ch.qos.logback.core.spi.CyclicBufferTracker;
 import ch.qos.logback.core.util.ContentTypeUtil;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.mail.MailSender.MessageBean;
-import me.qyh.blog.service.impl.ApplicationContextProvider;
 
 /**
+ * 这个用来将错误信息发送至管理员邮箱，由于借用了MailSender来发送邮件，所以append()方法必须在Spring容器初始化完成之后被调用
+ * 
+ * @see MailSender
  * @see SMTPAppender
  * @author Administrator
  *
  */
 public class MailAppendar extends AppenderBase<ILoggingEvent> {
-
-	private static final Logger logger = LoggerFactory.getLogger(MailAppendar.class);
 
 	// ~ 14 days
 	static final int MAX_DELAY_BETWEEN_STATUS_MESSAGES = 1228800 * CoreConstants.MILLIS_IN_ONE_SECOND;
@@ -55,6 +53,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	long lastTrackerStatusPrint = 0;
 	int delayBetweenStatusMessages = 300 * CoreConstants.MILLIS_IN_ONE_SECOND;
 
+	@Autowired(required = false)
 	private MailSender mailSender;
 
 	private Layout<ILoggingEvent> subjectLayout;
@@ -71,16 +70,13 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	// value "%logger{20} - %m" is referenced in the docs!
 	private static final String DEFAULT_SUBJECT_PATTERN = "%logger{20} - %m";
 
+	/**
+	 * 这个方法的调用必须在spring容器初始化之后
+	 */
 	@Override
 	protected void append(ILoggingEvent eventObject) {
 		if (mailSender == null) {
-			ApplicationContext ctx = ApplicationContextProvider.getApplicationContext();
-			if (ctx != null)
-				try {
-					mailSender = ctx.getBean(MailSender.class);
-				} catch (BeansException e) {
-					logger.error("没有找到邮件发送服务:" + e.getMessage(), e);
-				}
+			SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
 		}
 		if (!checkEntryConditions()) {
 			return;

@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.controller;
 
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
@@ -32,6 +34,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.bean.JsonResult;
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Comment;
@@ -50,7 +53,8 @@ import me.qyh.blog.ui.data.ArticleDataTagProcessor;
 import me.qyh.blog.ui.data.ArticlesDataTagProcessor;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
-import me.qyh.blog.web.controller.form.CommentValidator;
+import me.qyh.blog.web.controller.form.CommentBean;
+import me.qyh.blog.web.controller.form.CommentBeanValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
@@ -75,11 +79,11 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@Autowired
-	private CommentValidator commentValidator;
+	private CommentBeanValidator commentBeanValidator;
 
-	@InitBinder(value = "comment")
+	@InitBinder(value = "commentBean")
 	protected void initCommentBinder(WebDataBinder binder) {
-		binder.setValidator(commentValidator);
+		binder.setValidator(commentBeanValidator);
 	}
 
 	@RequestMapping("{idOrAlias}")
@@ -126,11 +130,13 @@ public class SpaceArticleController extends BaseController {
 
 	@RequestMapping(value = "{id}/addComment", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult addComment(@RequestOauthUser OauthUser user, @RequestBody @Validated Comment comment,
-			@PathVariable("id") Integer articleId) throws LogicException {
-		comment.setArticle(new Article(articleId));
-		comment.setUser(user);
-		return new JsonResult(true, commentService.insertComment(comment));
+	public JsonResult addComment(@RequestOauthUser OauthUser user, @RequestBody @Validated CommentBean commentBean,
+			@PathVariable("id") Integer articleId, HttpSession session) throws LogicException {
+		commentBean.getComment().setArticle(new Article(articleId));
+		commentBean.getComment().setUser(user);
+		Comment comment = commentService.insertComment(commentBean);
+		session.setAttribute(Constants.OAUTH_SESSION_KEY, comment.getUser());
+		return new JsonResult(true, comment);
 	}
 
 	@RequestMapping(value = "{articleId}/comment/{id}/conversations")
