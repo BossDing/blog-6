@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,6 +41,7 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.comment.CommentDao;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
@@ -47,14 +49,11 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
-import me.qyh.blog.dao.CommentConfigDao;
-import me.qyh.blog.dao.CommentDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.ArticleTag;
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.entity.Tag;
@@ -69,6 +68,7 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
@@ -94,11 +94,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private ArticleCache articleCache;
 	@Autowired
-	private CommentConfigDao commentConfigDao;
-	@Autowired
 	private ConfigService configService;
 	@Autowired
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+	@Autowired
+	private CommentServer commentServer;
 
 	private boolean rebuildIndex = true;
 
@@ -126,15 +126,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					return null;
 
 				Article clone = new Article(article);
-				CommentConfig config = clone.getCommentConfig();
-				if (config == null) {
-					SpaceConfig spaceConfig = spaceCache.getSpace(article.getSpace().getId()).getConfig();
-					if (spaceConfig != null)
-						config = spaceConfig.getCommentConfig();
-					if (config == null)
-						config = configService.getGlobalConfig().getCommentConfig();
-					clone.setCommentConfig(config);
-				}
+				clone.setComments(commentServer.queryArticleCommentCount(article.getId()));
 
 				if (!CollectionUtils.isEmpty(articleContentHandlers))
 					for (ArticleContentHandler handler : articleContentHandlers)
@@ -276,22 +268,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			article.setLastModifyDate(now);
 			articleTagDao.deleteByArticle(articleDb);
 
-			CommentConfig oldConfig = articleDb.getCommentConfig();
-			CommentConfig newConfig = article.getCommentConfig();
-			if (oldConfig != null) {
-				if (newConfig == null) {
-					articleDao.update(article);
-					commentConfigDao.deleteById(oldConfig.getId());
-				} else {
-					newConfig.setId(oldConfig.getId());
-					commentConfigDao.update(newConfig);
-					articleDao.update(article);
-				}
-			} else {
-				if (newConfig != null)
-					commentConfigDao.insert(newConfig);
-				articleDao.update(article);
-			}
+			articleDao.update(article);
 
 			insertTags(article);
 			articleIndexer.deleteDocument(article.getId());
@@ -318,8 +295,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					article.setPubDate(now);
 				}
 			}
-			if (article.getCommentConfig() != null)
-				commentConfigDao.insert(article.getCommentConfig());
 			articleDao.insert(article);
 			insertTags(article);
 			if (article.isPublished()) {
@@ -423,6 +398,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			List<Article> datas = articleDao.selectPage(param);
 			page = new PageResult<Article>(param, count, datas);
 		}
+		// query comments
+		List<Article> datas = page.getDatas();
+		if (!CollectionUtils.isEmpty(datas)) {
+			List<Integer> ids = new ArrayList<>(datas.size());
+			for (Article article : datas)
+				ids.add(article.getId());
+			Map<Integer, Integer> countsMap = commentServer.queryArticlesCommentCount(ids);
+			for (Article article : datas) {
+				Integer comments = countsMap.get(article.getId());
+				article.setComments(comments == null ? 0 : comments);
+			}
+		}
 		return page;
 	}
 
@@ -496,10 +483,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// 删除博客所有的评论
 		commentDao.deleteByArticle(article);
 		articleDao.deleteById(id);
-		// 删除评论配置
-		CommentConfig commentConfig = article.getCommentConfig();
-		if (commentConfig != null)
-			commentConfigDao.deleteById(commentConfig.getId());
 	}
 
 	@Override
@@ -561,7 +544,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden) {
-		return articleDao.selectStatistics(space, UserContext.get() != null, queryHidden);
+		boolean queryPrivate = UserContext.get() != null;
+		ArticleStatistics statistics = articleDao.selectStatistics(space, queryPrivate, queryHidden);
+		statistics.setTotalComments(commentServer.queryArticlesTotalCommentCount(space, queryPrivate, queryHidden));
+		return statistics;
 	}
 
 	@Override

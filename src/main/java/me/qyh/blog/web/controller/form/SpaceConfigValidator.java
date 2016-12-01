@@ -15,19 +15,14 @@
  */
 package me.qyh.blog.web.controller.form;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.SpaceConfig;
 
 @Component
 public class SpaceConfigValidator implements Validator {
-
-	@Autowired
-	private CommentConfigValidator commentConfigValidator;
 
 	private static final int[] ARTICLE_PAGE_SIZE_RANGE = GlobalConfigValidator.ARTICLE_PAGE_SIZE_RANGE;
 
@@ -52,13 +47,6 @@ public class SpaceConfigValidator implements Validator {
 					"文章每页数量不能大于" + ARTICLE_PAGE_SIZE_RANGE[1]);
 			return;
 		}
-
-		CommentConfig commentConfig = config.getCommentConfig();
-		if (commentConfig == null) {
-			errors.reject("global.commentConfig.null", "评论配置不能为空");
-			return;
-		}
-		commentConfigValidator.validate(commentConfig, errors);
 	}
 
 }

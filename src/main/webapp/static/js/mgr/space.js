@@ -114,16 +114,6 @@ $(document).ready(function() {
 		case 'add':
 		case 'update':
 			var spaceConfig = {};
-			var commentConfig = {};
-			commentConfig.allowComment = $("#allowComment").prop("checked");
-			commentConfig.commentMode = $("#commentMode").val();
-			commentConfig.asc = $("#commentSort").val();
-			commentConfig.allowHtml = $("#allowHtml").prop("checked");
-			commentConfig.limitSec = $("#limitSec").val();
-			commentConfig.limitCount = $("#limitCount").val();
-			commentConfig.check = $("#check").prop("checked");
-			commentConfig.pageSize = $("#pageSize").val();
-			spaceConfig.commentConfig = commentConfig;
 			spaceConfig.articlePageSize = $("#articlePageSize").val();
 			$.ajax({
 				type : "post",
@@ -182,18 +172,6 @@ function editConfig(id){
 				$("button[data-cc-action='add']").show();
 			}else{
 				$("#articlePageSize").val(data.config.articlePageSize);
-				var cc = data.config.commentConfig;
-				if(cc.allowComment)
-					$("#allowComment").prop("checked",true);
-				$("#commentMode").val(cc.commentMode);
-				$("#commentSort").val(cc.asc+"")
-				if(cc.allowHtml)
-					$("#allowHtml").prop("checked",true)
-				$("#limitSec").val(cc.limitSec);
-				$("#limitCount").val(cc.limitCount);
-				$("#pageSize").val(cc.pageSize);
-				if(cc.check)
-					$("#check").prop("checked",true);
 				$("button[data-cc-action]").hide();
 				$("button[data-cc-action='delete']").show();
 				$("button[data-cc-action='update']").show();

@@ -25,8 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.CommentConfig;
-import me.qyh.blog.entity.CommentConfig.CommentMode;
 import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
@@ -65,14 +63,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 		article.setIsPrivate(false);
 		article.setLastModifyDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
-
-		CommentConfig config = new CommentConfig();
-		config.setAsc(true);
-		config.setAllowHtml(false);
-		config.setCommentMode(CommentMode.LIST);
-		config.setAllowComment(true);
-		config.setCheck(false);
-		article.setCommentConfig(config);
+		article.setAllowComment(true);
 
 		Space space = new Space();
 		space.setId(1);

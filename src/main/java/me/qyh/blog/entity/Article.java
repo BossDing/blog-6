@@ -55,11 +55,10 @@ public class Article extends BaseLockResource {
 	private Editor editor;// 编辑器
 	private String summary;// 博客摘要
 	private Integer level; // 博客级别，级别越高显示越靠前
-	private CommentConfig commentConfig;
 	private String alias;// 别名，可通过别名访问文章
+	private Boolean allowComment;
 
 	private AtomicInteger atomicHits;
-	private AtomicInteger atomicComments;
 
 	/**
 	 * <b>设置该属性的文章不会被非该空间查询、统计到</b>
@@ -148,10 +147,8 @@ public class Article extends BaseLockResource {
 	 *            源文章
 	 */
 	public Article(Article source) {
-		this.atomicComments = source.atomicComments;
 		this.atomicHits = source.atomicHits;
 		this.alias = source.alias;
-		this.commentConfig = source.commentConfig;
 		this.comments = source.comments;
 		this.content = source.content;
 		this.editor = source.editor;
@@ -246,36 +243,12 @@ public class Article extends BaseLockResource {
 		return atomicHits.incrementAndGet();
 	}
 
-	/**
-	 * 评论数+1
-	 * 
-	 * @return 当前评论数
-	 */
-	public int addComments() {
-		return atomicComments.incrementAndGet();
-	}
-
-	/**
-	 * 减少评论数
-	 * 
-	 * @param count
-	 *            数目
-	 * @return 当前评论数
-	 */
-	public int decrementComment(int count) {
-		if (count == 1) {
-			return atomicComments.decrementAndGet();
-		}
-		return atomicComments.updateAndGet(i -> i - count);
-	}
-
 	public int getComments() {
-		return atomicComments != null ? atomicComments.get() : comments;
+		return comments;
 	}
 
 	public void setComments(int comments) {
 		this.comments = comments;
-		this.atomicComments = new AtomicInteger(comments);
 	}
 
 	public ArticleFrom getFrom() {
@@ -342,14 +315,6 @@ public class Article extends BaseLockResource {
 		this.content = content;
 	}
 
-	public CommentConfig getCommentConfig() {
-		return commentConfig;
-	}
-
-	public void setCommentConfig(CommentConfig commentConfig) {
-		this.commentConfig = commentConfig;
-	}
-
 	public String getTagStr() {
 		if (CollectionUtils.isEmpty(tags)) {
 			return "";
@@ -401,6 +366,14 @@ public class Article extends BaseLockResource {
 
 	public void setHidden(Boolean hidden) {
 		this.hidden = hidden;
+	}
+
+	public Boolean getAllowComment() {
+		return allowComment;
+	}
+
+	public void setAllowComment(Boolean allowComment) {
+		this.allowComment = allowComment;
 	}
 
 	@Override

@@ -40,7 +40,6 @@
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 	<import resource="ui.xml" />
-	<import resource="oauth.xml" />
 
 	<bean id="txManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
@@ -48,11 +47,11 @@
 	<tx:annotation-driven transaction-manager="txManager" />
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="me.qyh.blog.dao,me.qyh.blog.lock.support" />
+		<property name="basePackage" value="me.qyh.blog.dao,me.qyh.blog.lock.support,me.qyh.blog.comment" />
 	</bean>
 
 	<import resource="file.xml" />
-	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config" />
+	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 	<!-- 验证码服务 -->
@@ -110,29 +109,6 @@
 		<constructor-arg index="1" value="SEARCH" />
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.CommentServiceImpl">
-		<!-- 如果10秒内增加了2次非法评论，加入暂屏蔽名单，屏蔽时间为300秒，同时每隔600秒清理过期点击数和过期的非法用户 -->
-		<property name="invalidLimitCount" value="5" />
-		<property name="invalidLimitSecond" value="20" />
-		<property name="invalidSecond" value="300" />
-		<property name="invalidClearSecond" value="600" />
-		<!-- html内容清理器 -->
-		<property name="htmlClean">
-			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
-		</property>
-	</bean>
-
-	<bean class="me.qyh.blog.evt.CommentEventListener">
-		<property name="handlers">
-			<list>
-				<bean class="me.qyh.blog.evt.handler.EmailNotifyCommentHandler"
-					destroy-method="shutdown">
-					<property name="mailSubject" value="您有新的评论" />
-				</bean>
-			</list>
-		</property>
-	</bean>
-
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean>
 
@@ -185,5 +161,31 @@
 			cron="0/5 * * * * ?" />
 	</task:scheduled-tasks>
 
+
+
+
+	<!-- 默认评论服务 -->
+	<bean class="me.qyh.blog.comment.DftCommentService">
+		<!-- 如果10秒内增加了2次非法评论，加入暂屏蔽名单，屏蔽时间为300秒，同时每隔600秒清理过期点击数和过期的非法用户 -->
+		<property name="invalidLimitCount" value="5" />
+		<property name="invalidLimitSecond" value="20" />
+		<property name="invalidSecond" value="300" />
+		<property name="invalidClearSecond" value="600" />
+		<!-- html内容清理器 -->
+		<property name="htmlClean">
+			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
+		</property>
+	</bean>
+
+	<bean class="me.qyh.blog.comment.CommentEventListener">
+		<property name="handlers">
+			<list>
+				<bean class="me.qyh.blog.comment.EmailNotifyCommentHandler"
+					destroy-method="shutdown">
+					<property name="mailSubject" value="您有新的评论" />
+				</bean>
+			</list>
+		</property>
+	</bean>
 
 </beans>      

@@ -35,83 +35,6 @@
 								class="form-control integer" placeholder="标签每页显示数量"
 								th:value="${config.tagPageSize}" name="tagPageSize">
 						</div>
-						<div class="form-group">
-							<label for="">Oauth用户每页显示数量</label> <input
-								class="form-control integer" placeholder="Oauth用户每页显示数量"
-								th:value="${config.oauthUserPageSize}"
-								name="oauthUserPageSize">
-						</div>
-						<hr />
-						<label>评论配置</label>
-						<div class="form-group">
-							<label>是否允许评论</label> <label class="radio-inline"> <input
-								type="radio" name="allowComment" value="true"
-								th:attr="checked=${config.commentConfig.allowComment ? 'checked' : null}">
-								是
-							</label> <label class="radio-inline"> <input type="radio"
-								name="allowComment" value="false"
-								th:attr="checked=${config.commentConfig.allowComment ? null : 'checked'}">
-								否
-							</label>
-						</div>
-						<div class="form-group">
-							<label>是否审核评论</label> <label class="radio-inline"> <input
-								type="radio" name="check" value="true"
-								th:attr="checked=${config.commentConfig.check ? 'checked' : null}">
-								是
-							</label> <label class="radio-inline"> <input type="radio"
-								name="check" value="false"
-								th:attr="checked=${config.commentConfig.check ? null : 'checked'}">
-								否
-							</label>
-						</div>
-						<div class="form-group">
-							<label>评论是否允许html标签</label> <label class="radio-inline">
-								<input type="radio" name="allowHtml" value="true"
-								th:attr="checked=${config.commentConfig.allowHtml ? 'checked' : null}">
-								是
-							</label> <label class="radio-inline"> <input type="radio"
-								name="allowHtml" value="false"
-								th:attr="checked=${config.commentConfig.allowHtml ? null : 'checked'}">
-								否
-							</label>
-						</div>
-						<div class="form-group">
-							<label>评论展现方式</label> <select class="form-control"
-								name="commentMode">
-								<option th:value="${config.commentConfig.commentMode.name()}"
-									selected="selected"
-									th:text="'当前:'+${messages.getMessage(config.commentConfig.commentMode.getMessage())}"></option>
-								<option value="LIST">平铺</option>
-								<option value="TREE">嵌套</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label>评论展现顺序</label> <select class="form-control"
-								name="asc">
-								<option th:value="${config.commentConfig.asc}"
-									selected="selected"
-									th:text="'当前:'+${config.commentConfig.asc ? '正序' : '倒叙'}"></option>
-								<option value="true">正序</option>
-								<option value="false">倒叙</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label for="">每页显示数量(1~50)</label> <input
-								class="form-control integer" placeholder="时间" th:value="${config.commentConfig.pageSize}"
-								name="_commentPageSize">
-						</div>
-						<div class="alert alert-info">在单位时间(秒)内，用户最多只能评论多少条</div>
-						<div class="form-group">
-							<label for="">时间(秒)(1~300)</label> <input
-								class="form-control integer" placeholder="时间" th:value="${config.commentConfig.limitCount}"
-								name="limitSec">
-						</div>
-						<div class="form-group">
-							<label for="">允许发表评论数(1~100)</label> <input
-								class="form-control integer" placeholder="时间" th:value="${config.commentConfig.limitSec}"
-								name="limitCount">
-						</div>
 						<button type="button" id="update" class="btn btn-default">修改全局配置</button>
 					</form>
 				</div>
@@ -123,24 +46,6 @@
 	$(document).ready(function() {
 		$("#update").click(function() {
 			var data = $("#globalForm").serializeObject();
-			var commentConfig = {};
-			commentConfig.allowComment = data.allowComment;
-			delete data['allowComment'];
-			commentConfig.allowHtml = data.allowHtml;
-			delete data['allowHtml'];
-			commentConfig.asc = data.asc;
-			delete data['asc'];
-			commentConfig.check = data.check;
-			delete data['check'];
-			commentConfig.commentMode = data.commentMode;
-			delete data['commentMode'];
-			commentConfig.limitCount = data.limitCount;
-			delete data['limitCount'];
-			commentConfig.limitSec = data.limitSec;
-			delete data['limitSec'];
-			commentConfig.pageSize = data['_commentPageSize'];
-			delete data['_commentPageSize'];
-			data.commentConfig = commentConfig;
 			$.ajax({
 				type : "post",
 				url : basePath + "/mgr/config/global/update",

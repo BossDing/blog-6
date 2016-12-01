@@ -26,10 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.dao.CommentConfigDao;
 import me.qyh.blog.dao.SpaceConfigDao;
 import me.qyh.blog.dao.SpaceDao;
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
@@ -53,8 +51,6 @@ public class SpaceServiceImpl implements SpaceService {
 	private SpaceConfigDao spaceConfigDao;
 	@Autowired
 	private LockManager lockManager;
-	@Autowired
-	private CommentConfigDao commentConfigDao;
 
 	@Override
 	public void addSpace(Space space) throws LogicException {
@@ -83,14 +79,8 @@ public class SpaceServiceImpl implements SpaceService {
 			throw new LogicException("space.notExists", "空间不存在");
 		SpaceConfig dbConfig = db.getConfig();
 		if (dbConfig == null) {
-			commentConfigDao.insert(config.getCommentConfig());
 			spaceConfigDao.insert(config);
 		} else {
-			CommentConfig oldConfig = dbConfig.getCommentConfig();
-			CommentConfig newConfig = config.getCommentConfig();
-			newConfig.setId(oldConfig.getId());
-			commentConfigDao.update(newConfig);
-			config.setId(dbConfig.getId());
 			spaceConfigDao.update(config);
 		}
 		db.setConfig(config);
@@ -110,8 +100,6 @@ public class SpaceServiceImpl implements SpaceService {
 			db.setConfig(null);
 			spaceDao.update(db);
 			spaceConfigDao.deleteById(config.getId());
-			commentConfigDao.deleteById(config.getCommentConfig().getId());
-
 			spaceCache.evit(db);
 		}
 	}

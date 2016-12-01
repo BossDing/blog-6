@@ -49,7 +49,6 @@
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
 			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
-			<bean class="me.qyh.blog.oauth2.OauthUserArgumentResolver" />
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
 			<bean class="me.qyh.blog.web.controller.PageReturnMethodReturnValueHandler" />
@@ -90,4 +89,9 @@
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
 	<bean class="me.qyh.blog.metaweblog.MetaweblogController" />
+	
+	
+	<!-- 默认评论服务 -->
+	<bean class="me.qyh.blog.comment.CommentController"/>
+	<bean class="me.qyh.blog.comment.CommentMgrController"/>
 </beans>

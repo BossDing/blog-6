@@ -13,27 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.config;
+package me.qyh.blog.comment;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.context.ApplicationListener;
 
 /**
- * 系统常量
+ * 评论监听器 
  * 
  * @author Administrator
  *
  */
-public class Constants {
+public class CommentEventListener implements ApplicationListener<CommentEvent> {
 
-	public static final String USER_SESSION_KEY = "user";
-	public static final String VALIDATE_CODE_SESSION_KEY = com.google.code.kaptcha.Constants.KAPTCHA_SESSION_KEY;
-	public static final Charset CHARSET = StandardCharsets.UTF_8;
-	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
-	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
+	private List<CommentHandler> handlers = new ArrayList<>();
 
-	private Constants() {
+	@Override
+	public final void onApplicationEvent(CommentEvent event) {
+		for (CommentHandler handle : handlers)
+			handle.handle(event.getComment());
+	}
 
+	public void setHandlers(List<CommentHandler> handlers) {
+		this.handlers = handlers;
 	}
 
 }

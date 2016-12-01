@@ -13,27 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.config;
+package me.qyh.blog.comment;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * 系统常量
+ * 用户评论后触发
  * 
  * @author Administrator
  *
  */
-public class Constants {
+public class CommentEvent extends ApplicationEvent {
 
-	public static final String USER_SESSION_KEY = "user";
-	public static final String VALIDATE_CODE_SESSION_KEY = com.google.code.kaptcha.Constants.KAPTCHA_SESSION_KEY;
-	public static final Charset CHARSET = StandardCharsets.UTF_8;
-	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
-	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-	private Constants() {
+	private final Comment comment;
 
+	/**
+	 * 
+	 * @param source
+	 *            操作对象
+	 * @param comment
+	 *            评论
+	 */
+	public CommentEvent(Object source, Comment comment) {
+		super(source);
+		this.comment = comment;
 	}
 
+	public Comment getComment() {
+		return comment;
+	}
 }

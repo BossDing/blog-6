@@ -146,16 +146,6 @@ public interface ArticleDao {
 	void updateHits(@Param("id") Integer id, @Param("hits") int increase);
 
 	/**
-	 * 更新文章的评论数
-	 * 
-	 * @param id
-	 *            文章的id
-	 * @param increase
-	 *            <strong>增加的</strong>评论数
-	 */
-	void updateComments(@Param("id") Integer id, @Param("comments") int increase);
-
-	/**
 	 * 上一篇文章
 	 * 
 	 * @param article

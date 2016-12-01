@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.config;
 
-import me.qyh.blog.entity.CommentConfig;
-
 /**
  * 全局配置
  * 
@@ -49,13 +47,6 @@ public class GlobalConfig {
 	 * 标签页面分页数量
 	 */
 	private int tagPageSize;
-
-	/**
-	 * oauth用户分页数量
-	 */
-	private int oauthUserPageSize;
-
-	private CommentConfig commentConfig;
 
 	public int getFilePageSize() {
 		return filePageSize;
@@ -96,21 +87,4 @@ public class GlobalConfig {
 	public void setTagPageSize(int tagPageSize) {
 		this.tagPageSize = tagPageSize;
 	}
-
-	public int getOauthUserPageSize() {
-		return oauthUserPageSize;
-	}
-
-	public void setOauthUserPageSize(int oauthUserPageSize) {
-		this.oauthUserPageSize = oauthUserPageSize;
-	}
-
-	public CommentConfig getCommentConfig() {
-		return commentConfig;
-	}
-
-	public void setCommentConfig(CommentConfig commentConfig) {
-		this.commentConfig = commentConfig;
-	}
-
 }

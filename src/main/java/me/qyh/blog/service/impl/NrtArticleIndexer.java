@@ -108,7 +108,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	private static final String FROM = "from";
 	private static final String LEVEL = "level";
 	private static final String HITS = "hits";
-	private static final String COMMENTS = "comments";
 	private static final String PUB_DATE = "pubDate";
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
@@ -206,7 +205,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		Integer level = article.getLevel();
 		doc.add(new NumericDocValuesField(LEVEL, level == null ? -1 : level));
 		doc.add(new NumericDocValuesField(HITS, article.getHits()));
-		doc.add(new NumericDocValuesField(COMMENTS, article.getComments()));
 		String pubDateStr = timeToString(article.getPubDate());
 		BytesRef pubDate = new BytesRef(pubDateStr);
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
@@ -437,9 +435,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			fields.add(SortField.FIELD_SCORE);
 		else {
 			switch (param.getSort()) {
-			case COMMENTS:
-				fields.add(new SortField(COMMENTS, Type.INT, true));
-				break;
 			case HITS:
 				fields.add(new SortField(HITS, Type.INT, true));
 				break;

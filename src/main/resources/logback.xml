@@ -48,9 +48,10 @@
 	<logger name="me.qyh.blog.mail.MailSender" level="ERROR"
 		additivity="false">
 		<appender-ref ref="errorDailyRollingFileAppender" />
+		<appender-ref ref="consoleAppender" />
 	</logger>
 
-	<root level="ERROR">
+	<root level="DEBUG">
 		<appender-ref ref="consoleAppender" />
 	</root>
 

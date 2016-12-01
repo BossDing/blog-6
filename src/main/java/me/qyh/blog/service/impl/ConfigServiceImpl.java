@@ -28,8 +28,6 @@ import org.springframework.stereotype.Service;
 
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.UploadConfig;
-import me.qyh.blog.entity.CommentConfig;
-import me.qyh.blog.entity.CommentConfig.CommentMode;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.ConfigService;
@@ -49,22 +47,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setTagPageSize(getInt(PAGE_SIZE_TAG, 5));
 		config.setUserPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
 		config.setUserFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
-		config.setOauthUserPageSize(getInt(PAGE_SIZE_OAUTHUSER, 5));
-
-		CommentConfig commentConfig = new CommentConfig();
-		commentConfig.setAllowComment(getBoolean(ALLOW_COMMENT, true));
-		commentConfig.setAllowHtml(getBoolean(COMMENT_ALLOW_HTML, false));
-		commentConfig.setAsc(getBoolean(COMMENT_ASC, true));
-		commentConfig.setCheck(getBoolean(COMMENT_CHECK, false));
-		String commentMode = this.config.getProperty(COMMENT_MODE);
-		if (commentMode == null)
-			commentConfig.setCommentMode(CommentMode.LIST);
-		else
-			commentConfig.setCommentMode(CommentMode.valueOf(commentMode));
-		commentConfig.setLimitCount(getInt(COMMENT_LIMIT_COUNT, 10));
-		commentConfig.setLimitSec(getInt(COMMENT_LIMIT_SEC, 60));
-		commentConfig.setPageSize(getInt(COMMENT_PAGESIZE, 10));
-		config.setCommentConfig(commentConfig);
 
 		return config;
 	}
@@ -77,16 +59,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setProperty(PAGE_SIZE_ARICLE, globalConfig.getArticlePageSize() + "");
 		config.setProperty(PAGE_SIZE_USERFRAGEMENT, globalConfig.getUserFragmentPageSize() + "");
 		config.setProperty(PAGE_SIZE_USERPAGE, globalConfig.getUserPagePageSize() + "");
-		config.setProperty(PAGE_SIZE_OAUTHUSER, globalConfig.getOauthUserPageSize() + "");
-		CommentConfig commentConfig = globalConfig.getCommentConfig();
-		config.setProperty(COMMENT_ALLOW_HTML, commentConfig.getAllowHtml().toString());
-		config.setProperty(COMMENT_ASC, commentConfig.getAsc().toString());
-		config.setProperty(COMMENT_CHECK, commentConfig.getCheck().toString());
-		config.setProperty(COMMENT_LIMIT_COUNT, commentConfig.getLimitCount().toString());
-		config.setProperty(COMMENT_LIMIT_SEC, commentConfig.getLimitSec().toString());
-		config.setProperty(COMMENT_MODE, commentConfig.getCommentMode().name());
-		config.setProperty(ALLOW_COMMENT, commentConfig.getAllowComment().toString());
-		config.setProperty(COMMENT_PAGESIZE, commentConfig.getPageSize() + "");
 		store();
 		return globalConfig;
 	}
@@ -122,13 +94,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		return _default;
 	}
 
-	private Boolean getBoolean(String key, boolean _default) {
-		if (config.containsKey(key)) {
-			return Boolean.parseBoolean(config.getProperty(key));
-		}
-		return _default;
-	}
-
 	private void store() {
 		try (OutputStream os = new FileOutputStream(resource.getFile())) {
 			config.store(os, "");
@@ -149,16 +114,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
-	private static final String PAGE_SIZE_OAUTHUSER = "pagesize.oauthuser";
-
-	private static final String ALLOW_COMMENT = "commentConfig.allowComment";
-	private static final String COMMENT_MODE = "commentConfig.commentMode";
-	private static final String COMMENT_ASC = "commentConfig.commentAsc";
-	private static final String COMMENT_ALLOW_HTML = "commentConfig.commentAllowHtml";
-	private static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
-	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
-	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
-	private static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
 
 	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
 	private static final String METAWEBLOG_UPLOAD_SERVER = "metaweblog.upload.server";

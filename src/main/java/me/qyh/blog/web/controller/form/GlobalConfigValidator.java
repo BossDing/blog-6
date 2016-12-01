@@ -15,26 +15,20 @@
  */
 package me.qyh.blog.web.controller.form;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.config.GlobalConfig;
-import me.qyh.blog.entity.CommentConfig;
 
 @Component
 public class GlobalConfigValidator implements Validator {
-
-	@Autowired
-	private CommentConfigValidator commentConfigValidator;
 
 	private static final int[] FILE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] USER_FRAGEMENT_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] USER_PAGE_PAGE_SIZE_RANGE = { 1, 100 };
 	protected static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
-	private static final int[] OAUTH_USER_PAGE_SIZE_RANGE = { 1, 50 };
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -107,26 +101,6 @@ public class GlobalConfigValidator implements Validator {
 					"标签每页数量不能大于" + TAG_PAGE_SIZE_RANGE[1]);
 			return;
 		}
-
-		int oauthUserPageSize = config.getOauthUserPageSize();
-		if (oauthUserPageSize < OAUTH_USER_PAGE_SIZE_RANGE[0]) {
-			errors.reject("global.oauthuser.toosmall", new Object[] { OAUTH_USER_PAGE_SIZE_RANGE[0] },
-					"Oauth用户每页数量不能小于" + OAUTH_USER_PAGE_SIZE_RANGE[0]);
-			return;
-		}
-
-		if (oauthUserPageSize > OAUTH_USER_PAGE_SIZE_RANGE[1]) {
-			errors.reject("global.oauthuser.toobig", new Object[] { OAUTH_USER_PAGE_SIZE_RANGE[1] },
-					"Oauth用户每页数量不能大于" + OAUTH_USER_PAGE_SIZE_RANGE[1]);
-			return;
-		}
-
-		CommentConfig commentConfig = config.getCommentConfig();
-		if (commentConfig == null) {
-			errors.reject("global.commentConfig.null", "评论配置不能为空");
-			return;
-		}
-		commentConfigValidator.validate(commentConfig, errors);
 	}
 
 }

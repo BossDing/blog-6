@@ -42,16 +42,6 @@
 					<li><a th:href="@{/mgr/article/index}"
 						th:class="${tag == 'article'}? active:''"> 博客管理</a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
-						data-target="#oauthMgr"> 社交账号管理</a>
-						<ul id="oauthMgr" class="nav nav-second-level collapse in">
-							<li><a th:class="${tag == 'oauth-bind-index'}? active:''"
-								th:href="@{/mgr/oauth/bind/index}">绑定管理</a></li>
-							<li><a th:class="${tag == 'oauth-bind'}? active:''"
-								th:href="@{/mgr/oauth/bind/toBind}">账号绑定</a></li>
-							<li><a th:class="${tag == 'oauth-index'}? active:''"
-								th:href="@{/mgr/oauth/index}">账号管理</a></li>
-						</ul> <!-- /.nav-second-level --></li>
-					<li><a href="javascript:;" data-toggle="collapse"
 						data-target="#tplMgr"> 模板管理</a>
 						<ul id="tplMgr" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'tpl-user'}? active:''"
@@ -76,7 +66,8 @@
 						<ul id="config" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'config-global'}? active:''"
 								th:href="@{/mgr/config/global/index}">分页数目配置</a></li>
-							<li><a th:class="${tag == 'config-metaweblogConfig'}? active:''"
+							<li><a
+								th:class="${tag == 'config-metaweblogConfig'}? active:''"
 								th:href="@{/mgr/config/metaweblogConfig/index}">mateweblog配置</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 				</ul>

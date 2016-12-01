@@ -31,7 +31,6 @@ import org.springframework.validation.Validator;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.CommentConfig;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
@@ -39,18 +38,14 @@ import me.qyh.util.Validators;
 
 @Component
 public class ArticleValidator implements Validator {
-	
+
 	public static final int MAX_SUMMARY_LENGTH = 500;
 	public static final int MAX_TITLE_LENGTH = 200;
 	private static final int MAX_ALIAS_LENGTH = 50;
 	public static final int MAX_CONTENT_LENGTH = 200000;
 	public static final int MAX_TAG_SIZE = 10;
 	private static final int[] LEVEL_RANGE = new int[] { 0, 100 };
-
 	private static final String[] ALIAS_KEY_WORDS = { "list" };
-
-	@Autowired
-	private CommentConfigValidator commentConfigValidator;
 
 	private static String KEY_WORD_STR = "";
 
@@ -104,6 +99,10 @@ public class ArticleValidator implements Validator {
 					return;
 				}
 			}
+		}
+		if (article.getAllowComment() == null) {
+			errors.reject("article.allowComment.null", "文章是否允许评论不能为空");
+			return;
 		}
 		if (article.getIsPrivate() == null) {
 			errors.reject("article.private.null", "文章私有性不能为空");
@@ -210,8 +209,5 @@ public class ArticleValidator implements Validator {
 				}
 			}
 		}
-		CommentConfig config = article.getCommentConfig();
-		if (config != null)
-			commentConfigValidator.validate(config, errors);
 	}
 }

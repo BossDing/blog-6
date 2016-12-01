@@ -9,9 +9,6 @@
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
 		th:href="${urls.getArticlesUrl(articlePage.param,'HITS')}">点击量</a></li>
-	<li role="presentation"
-		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'COMMENTS') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,'COMMENTS')}">评论数</a></li>
 </ul>
 <div th:if="${#lists.isEmpty(articlePage.datas)}">
 	<div class="alert alert-info">当前没有任何文章</div>

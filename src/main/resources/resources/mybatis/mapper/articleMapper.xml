@@ -12,7 +12,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="title" property="title" />
 		<result column="isPrivate" property="isPrivate" />
 		<result column="hits" property="hits" />
-		<result column="comments" property="comments" />
+		<result column="allowComment" property="allowComment" />
 		<result column="summary" property="summary" />
 		<result property="level" column="art_level" />
 		<result column="art_lock" property="lockId"/>
@@ -29,17 +29,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="space_is_private" property="isPrivate"/>
 			<result column="space_lock" property="lockId"/>
 			<result column="space_art_hidden" property="articleHidden"/>
-		</association>
-		<association property="commentConfig" javaType="CommentConfig">
-			<id column="comment_config_id" property="id"></id>
-			<result column="allowComment" property="allowComment"/>
-			<result property="commentMode" column="comment_mode" typeHandler="EnumOrdinalTypeHandler"/>
-			<result column="comment_asc" property="asc"/>
-			<result column="comment_allowHtml" property="allowHtml"/>
-			<result column="comment_limitCount" property="limitCount"/>
-			<result column="comment_limitSec" property="limitSec"/>
-			<result column="comment_check" property="check"/>
-			<result column="comment_pagesize" property="pageSize"/>
 		</association>
 	</resultMap>
 	
@@ -64,13 +53,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id column="space_id"/>
 		<result column="lastModifyDate" property="lastModifyDate"/>
 		<result column="totalHits" property="totalHits"/>
-		<result column="totalComments" property="totalComments"/>
 	</resultMap>
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden,comment_config)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden,allowComment)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{hidden},#{commentConfig.id})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{hidden},#{allowComment})
 	</insert>
 	
 	<update id="update">
@@ -104,7 +92,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="hidden != null">
 				art_hidden = #{hidden},
 			</if>
-			comment_config = #{commentConfig.id},
+			<if test="allowComment != null">
+				allowComment = #{allowComment},
+			</if>
 			art_alias = #{alias},
 			lastModifyDate = #{lastModifyDate}
 		</set>
@@ -176,7 +166,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.title,
 			art.isPrivate,
 			art.hits,
-			art.comments,
 			art.summary,
 			art.art_level,
 			art.art_status,
@@ -243,9 +232,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				<when test='sort.name() == "HITS"'>
 					art.hits DESC,
 				</when>
-				<when test='sort.name() == "COMMENTS"'>
-					art.comments DESC,
-				</when>
 			</choose>
 		</if>
 		art.pubDate DESC,art.id DESC
@@ -260,7 +246,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.title,
 			art.isPrivate,
 			art.hits,
-			art.comments,
 			art.summary,
 			art.art_level,
 			art.art_status,
@@ -359,10 +344,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		UPDATE blog_article SET hits = hits + #{hits} WHERE id = #{id}
 	</update>
 	
-	<update id="updateComments">
-		UPDATE blog_article SET comments = comments + #{comments} WHERE id = #{id}
-	</update>
-	
 	<select id="selectAll" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
 		GROUP BY art.id
@@ -431,7 +412,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
 			SUM(hits) AS totalHits,
-			SUM(comments) AS totalComments,
 			MAX(lastModifyDate) AS lastModifyDate,
 			MAX(pubDate) AS lastPubDate
 		FROM
@@ -482,7 +462,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.title,
 			art.isPrivate,
 			art.hits,
-			art.comments,
 			art.summary,
 			art.art_level,
 			art.art_status,
@@ -492,19 +471,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.art_lock,
 			art.art_alias,
 			art.art_hidden,
+			art.allowComment,
 			sp.space_alias,
 			sp.space_name,
 			sp.space_art_hidden,
 			space_lock,
-			bcc.allowComment,
-			bcc.comment_mode,
-			bcc.comment_asc,
-			bcc.comment_allowHtml,
-			bcc.comment_limitSec,
-			bcc.comment_limitCount,
-			bcc.comment_check,
-			bcc.comment_pageSize,
-			bcc.id AS comment_config_id,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
@@ -513,6 +484,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			ON art.space_id = sp.id
 		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
-		LEFT OUTER JOIN blog_comment_config bcc ON art.comment_config = bcc.id
 	</sql>
 </mapper>

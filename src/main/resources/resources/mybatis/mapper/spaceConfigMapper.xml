@@ -11,14 +11,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<update id="update">
 		UPDATE blog_space_config
 		SET 
-			article_pagesize = #{articlePageSize},
-			comment_config = #{commentConfig.id}
+			article_pagesize = #{articlePageSize}
 		WHERE id = #{id}
 	</update>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_space_config(article_pagesize,comment_config)
-		VALUES(#{articlePageSize},#{commentConfig.id})
+		INSERT INTO blog_space_config(article_pagesize)
+		VALUES(#{articlePageSize})
 	</insert>
 	
 </mapper>

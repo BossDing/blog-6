@@ -23,13 +23,6 @@
 					break;
 				}
 			})
-			$("#doCommentConfig").click(function(){
-				var check = $(this).prop('checked');
-				if(check)
-					$("#commentConfigContainer").show();
-				else
-					$("#commentConfigContainer").hide();
-			})
 			$('.form_datetime').datetimepicker({
 		        language:  'zh-CN',
 		        weekStart: 1,
@@ -93,6 +86,7 @@
     				article.level = $("#level").val();
     			}
     			article.isPrivate = $("#private").prop("checked");
+    			article.allowComment = $("#allowComment").prop("checked");
     			article.hidden = $("#hidden").prop("checked");
     			article.tags = tags;
     			article.summary = $("#summary").val();
@@ -102,18 +96,6 @@
     				article.lockId = $("#lockId").val();
     			}
     			article.alias = $("#alias").val();
-    			if($("#doCommentConfig").is(':checked')){
-    				var commentConfig = {};
-        			commentConfig.allowComment = $("#allowComment").prop("checked");
-        			commentConfig.commentMode = $("#commentMode").val();
-        			commentConfig.asc = $("#commentSort").val();
-        			commentConfig.allowHtml = $("#allowHtml").prop("checked");
-        			commentConfig.limitSec = $("#limitSec").val();
-        			commentConfig.limitCount = $("#limitCount").val();
-        			commentConfig.check = $("#check").prop("checked");
-    				commentConfig.pageSize = $("#pageSize").val();
-        			article.commentConfig = commentConfig;
-    			}
     			me.prop("disabled",true);
     			var url = basePath+"/mgr/article/write?autoDraft=false";
     			if($("#id").val() != ""){
@@ -253,6 +235,7 @@
 				article.level = $("#level").val();
 			}
 			article.isPrivate = $("#private").prop("checked");
+			article.allowComment = $("#allowComment").prop("checked");
 			article.hidden = $("#hidden").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
@@ -263,24 +246,6 @@
 			}
 			article.alias = $("#alias").val();
 			
-			if($("#doCommentConfig").is(':checked')){
-				var commentConfig = {};
-				commentConfig.allowComment = $("#allowComment").prop("checked");
-				commentConfig.commentMode = $("#commentMode").val();
-				commentConfig.asc = $("#commentSort").val();
-				commentConfig.allowHtml = $("#allowHtml").prop("checked");
-				commentConfig.limitSec = $("#limitSec").val();
-				commentConfig.limitCount = $("#limitCount").val();
-				commentConfig.pageSize = $("#pageSize").val();
-				if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
-					commentConfig.limitSec = 60;
-				}
-				if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
-					commentConfig.limitCount = 10;
-				}
-				commentConfig.check = $("#check").prop("checked");
-				article.commentConfig = commentConfig;
-			}
 			var url = basePath+"/mgr/article/write?autoDraft=true";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();

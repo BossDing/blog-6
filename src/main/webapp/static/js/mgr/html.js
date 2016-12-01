@@ -3,13 +3,6 @@ var publishing = false;
 var tags = [];
 var init = false;
 $(document).ready(function(){
-	$("#doCommentConfig").click(function(){
-		var check = $(this).prop('checked');
-		if(check)
-			$("#commentConfigContainer").show();
-		else
-			$("#commentConfigContainer").hide();
-	})
 	CKEDITOR.plugins.addExternal( 'codemirror', basePath+'/static/editor/ckeditor/plugins/codemirror/' );
 	CKEDITOR.plugins.addExternal( 'prettifycode', basePath+'/static/editor/ckeditor/plugins/prettifycode/','plugin.js' );
 	editor = CKEDITOR.replace('editor', {
@@ -104,6 +97,7 @@ $(document).ready(function(){
 			article.level = $("#level").val();
 		}
 		article.isPrivate = $("#private").prop("checked");
+		article.allowComment = $("#allowComment").prop("checked");
 		article.hidden = $("#hidden").prop("checked");
 		article.tags = tags;
 		article.summary = $("#summary").val();
@@ -113,20 +107,6 @@ $(document).ready(function(){
 			article.lockId = $("#lockId").val();
 		}
 		article.alias = $("#alias").val();
-		
-		
-		if($("#doCommentConfig").is(':checked')){
-			var commentConfig = {};
-			commentConfig.allowComment = $("#allowComment").prop("checked");
-			commentConfig.commentMode = $("#commentMode").val();
-			commentConfig.asc = $("#commentSort").val();
-			commentConfig.allowHtml = $("#allowHtml").prop("checked");
-			commentConfig.limitSec = $("#limitSec").val();
-			commentConfig.limitCount = $("#limitCount").val();
-			commentConfig.check = $("#check").prop("checked");
-			commentConfig.pageSize = $("#pageSize").val();
-			article.commentConfig = commentConfig;
-		}
 		
 		me.prop("disabled",true);
 		var url = basePath+"/mgr/article/write?autoDraft=false";
@@ -345,6 +325,7 @@ function changeEditorCss(csses,style){
 				article.level = $("#level").val();
 			}
 			article.isPrivate = $("#private").prop("checked");
+			article.allowComment = $("#allowComment").prop("checked");
 			article.hidden = $("#hidden").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
@@ -354,25 +335,6 @@ function changeEditorCss(csses,style){
 				article.lockId = $("#lockId").val();
 			}
 			article.alias = $("#alias").val();
-			
-			if($("#doCommentConfig").is(':checked')){
-				var commentConfig = {};
-				commentConfig.allowComment = $("#allowComment").prop("checked");
-				commentConfig.commentMode = $("#commentMode").val();
-				commentConfig.asc = $("#commentSort").val();
-				commentConfig.allowHtml = $("#allowHtml").prop("checked");
-				commentConfig.limitSec = $("#limitSec").val();
-				commentConfig.limitCount = $("#limitCount").val();
-				commentConfig.check = $("#check").prop("checked");
-				commentConfig.pageSize = $("#pageSize").val();
-				if(commentConfig.limitSec < 1 || commentConfig.limitSec > 300){
-					commentConfig.limitSec = 60;
-				}
-				if(commentConfig.limitCount <1 || commentConfig.limitCount>100){
-					commentConfig.limitCount = 10;
-				}
-				article.commentConfig = commentConfig;
-			}
 			
 			var url = basePath+"/mgr/article/write?autoDraft=true";
 			if($("#id").val() != ""){

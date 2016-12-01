@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.config;
-
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+package me.qyh.blog.comment;
 
 /**
- * 系统常量
+ * 评论事件处理器
  * 
  * @author Administrator
  *
  */
-public class Constants {
+public interface CommentHandler {
 
-	public static final String USER_SESSION_KEY = "user";
-	public static final String VALIDATE_CODE_SESSION_KEY = com.google.code.kaptcha.Constants.KAPTCHA_SESSION_KEY;
-	public static final Charset CHARSET = StandardCharsets.UTF_8;
-	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
-	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
-
-	private Constants() {
-
-	}
+	/**
+	 * 处理评论
+	 * 
+	 * @param comment
+	 *            评论
+	 */
+	void handle(Comment comment);
 
 }

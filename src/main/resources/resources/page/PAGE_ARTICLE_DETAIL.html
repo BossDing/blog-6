@@ -28,36 +28,6 @@
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<fragment name="文章详情"></fragment>
 				<fragment name="上一篇下一篇"></fragment>
-				<div th:if="${article.commentConfig.allowComment}">
-					<div class="media">
-						<a class="media-left" href="#"> <img class="media-object"
-							th:src="${session.oauth == null ? urls.url+'/static/img/guest.png' : session.oauth.avatar}"
-							style="width: 64px; height: 64px;">
-						</a>
-						<div class="media-body">
-							<textarea class="form-control" style="height: 150px"
-								id="comment-box"></textarea>
-						</div>
-					</div>
-					<div>
-						<div class="form-group" style="margin-top:10px">
-                        	<label for="exampleInputEmail1">邮箱(非必填，如果需要接收管理员回复后的邮件通知，则请填写该项)</label>
-                       		<input type="text" class="form-control" th:value="${session.oauth != null ? session.oauth.email : ''}" id="comment-email" placeholder=""/>
-                      	</div>
-                      	<input type="hidden" class="form-control" th:value="${session.oauth != null ? session.oauth.email : ''}" id="oauthEmail"/>
-						<label>社交账号登录</label>:<a th:href="${urls.url}+'/oauth2/qq/login'"><img
-							th:src="@{/static/img/qq.png}"
-							style="width: 32px; height: 32px; margin-top: 10px" title="QQ登录"
-							alt="QQ登录" /></a> <a th:href="${urls.url}+'/oauth2/sina/login'"><img
-							th:src="@{/static/img/sina.png}"
-							style="width: 32px; height: 32px; margin-top: 10px" title="新浪登录"
-							alt="新浪登录" /></a>
-						<button class="btn btn-primary pull-right"
-							style="margin-top: 10px" id="add-comment-btn"
-							th:attr="disabled=${session.oauth != null ? null : 'disabled'}"
-							th:text="${session.oauth != null ? '提交' : '请登录后再评论'}"></button>
-					</div>
-				</div>
 				<div id="comments-container" style="margin-top: 10px"></div>
 				<div id="page-bar" style="margin-top: 10px"></div>
 			</div>
@@ -70,14 +40,10 @@
 	<input type="hidden" id="articleId" th:value="${article.id}" />
 	<input type="hidden" id="login" th:value="${user != null}" />
 	<input type="hidden" id="urlPrefix" th:value="${urls.currentUrl}" />
-	<input type="hidden" id="oauthLogin"
-		th:value="${session.oauth != null}" />
-	<input type="hidden" id="commentMode"
-		th:value="${article.commentConfig.commentMode.name()}" />
-
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/comment.js}"></script>
 
 	<data name="文章详情" />
 	<data name="上一篇下一篇" />

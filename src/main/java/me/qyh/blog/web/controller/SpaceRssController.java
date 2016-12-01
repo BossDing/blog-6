@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.Collections;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -45,18 +43,14 @@ public class SpaceRssController {
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setCurrentPage(1);
 		Space space = SpaceContext.get();
-		if (space.hasLock()) {
-			model.addAttribute("page", new PageResult<Article>(param, 0, Collections.emptyList()));
-		} else {
-			param.setStatus(ArticleStatus.PUBLISHED);
-			param.setSpace(space);
-			param.setIgnoreLevel(true);
-			param.setHasLock(false);
-			param.setQueryPrivate(false);
-			param.setSort(null);
-			PageResult<Article> page = articleService.queryArticle(param);
-			model.addAttribute("page", page);
-		}
+		param.setStatus(ArticleStatus.PUBLISHED);
+		param.setSpace(space);
+		param.setIgnoreLevel(true);
+		param.setHasLock(false);
+		param.setQueryPrivate(false);
+		param.setSort(null);
+		PageResult<Article> page = articleService.queryArticle(param);
+		model.addAttribute("page", page);
 		return rssView;
 	}
 
