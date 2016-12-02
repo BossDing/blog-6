@@ -13,7 +13,7 @@
 * lucene搜索
 * CKEDITOR|markdown
 * 空间和文章锁保护
-* 基于oauth的评论系统，评论|回复邮件通知
+* 评论服务，评论|回复邮件通知
 * RSS订阅
 * 文件管理，七牛云存储，实时缩略图服务
 * metaweblog api支持
