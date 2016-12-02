@@ -18,7 +18,6 @@ package me.qyh.blog.service;
 import java.util.List;
 
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 
@@ -78,28 +77,5 @@ public interface SpaceService {
 	 * 
 	 */
 	Space getSpace(Integer id);
-
-	/**
-	 * 更新|插入空间配置
-	 * 
-	 * @param spaceId
-	 *            空间id
-	 * @param config
-	 *            配置
-	 * @throws LogicException
-	 *             更新配置过程中发生逻辑异常
-	 * 
-	 */
-	void updateConfig(Integer spaceId, SpaceConfig config) throws LogicException;
-
-	/**
-	 * 删除空间配置
-	 * 
-	 * @param spaceId
-	 *            空间id
-	 * @throws LogicException
-	 *             删除过程中发生逻辑异常
-	 */
-	void deleteConfig(Integer spaceId) throws LogicException;
 
 }

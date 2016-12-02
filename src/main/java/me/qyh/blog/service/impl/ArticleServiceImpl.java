@@ -41,11 +41,11 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.comment.CommentDao;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
+import me.qyh.blog.comment.CommentDao;
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
@@ -55,7 +55,6 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
@@ -384,8 +383,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				param.setPageSize(globalConfig.getArticlePageSize());
 				return new PageResult<>(param, 0, Collections.emptyList());
 			} else {
-				SpaceConfig config = space.getConfig();
-				param.setPageSize(config == null ? globalConfig.getArticlePageSize() : config.getArticlePageSize());
+				param.setPageSize(space.getArticlePageSize());
 			}
 		}
 		PageResult<Article> page = null;

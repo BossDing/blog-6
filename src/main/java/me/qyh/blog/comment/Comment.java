@@ -80,11 +80,6 @@ public class Comment extends BaseEntity {
 		}
 	}
 
-	@JsonIgnore
-	public String getSubPath() {
-		return "/" + getId();
-	}
-
 	public Comment getParent() {
 		return parent;
 	}

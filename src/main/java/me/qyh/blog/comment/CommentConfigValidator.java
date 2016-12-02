@@ -54,6 +54,10 @@ public class CommentConfigValidator implements Validator {
 			return;
 		}
 		Integer limitCount = config.getLimitCount();
+		if (limitCount == null) {
+			errors.reject("commentConfig.limitCount.blank", "限制评论数不能为空");
+			return;
+		}
 		if (limitCount < LIMIT_COUNT_RANGE[0] || limitCount > LIMIT_COUNT_RANGE[1]) {
 			errors.reject("commentConfig.limitCount.invalid",
 					new Object[] { LIMIT_COUNT_RANGE[0], LIMIT_COUNT_RANGE[1] },
@@ -62,6 +66,10 @@ public class CommentConfigValidator implements Validator {
 		}
 
 		Integer limitSec = config.getLimitSec();
+		if (limitSec == null) {
+			errors.reject("commentConfig.limitSec.blank", "限制评论时间不能为空");
+			return;
+		}
 		if (limitSec < LIMIT_SECOND_RANGE[0] || limitSec > LIMIT_SECOND_RANGE[1]) {
 			errors.reject("commentConfig.limitSec.invalid",
 					new Object[] { LIMIT_SECOND_RANGE[0], LIMIT_SECOND_RANGE[1] },

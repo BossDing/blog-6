@@ -15,13 +15,11 @@
  */
 package me.qyh.blog.web.controller.form;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.util.Validators;
 
 @Component
@@ -29,9 +27,7 @@ public class SpaceValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_ALIAS_LENGTH = 20;
-
-	@Autowired
-	private SpaceConfigValidator spaceConfigValidator;
+	private static final int[] ARTICLE_PAGE_SIZE_RANGE = GlobalConfigValidator.ARTICLE_PAGE_SIZE_RANGE;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -83,9 +79,22 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 
-		SpaceConfig spaceConfig = space.getConfig();
-		if (spaceConfig != null)
-			spaceConfigValidator.validate(spaceConfig, errors);
+		Integer articlePageSize = space.getArticlePageSize();
+		if (articlePageSize == null) {
+			errors.reject("space.articlePageSize.blank", "文章每页显示数量不能为空");
+			return;
+		}
+		if (articlePageSize < ARTICLE_PAGE_SIZE_RANGE[0]) {
+			errors.reject("space.articlePageSize.toosmall", new Object[] { ARTICLE_PAGE_SIZE_RANGE[0] },
+					"文章每页数量不能小于" + ARTICLE_PAGE_SIZE_RANGE[0]);
+			return;
+		}
+
+		if (articlePageSize > ARTICLE_PAGE_SIZE_RANGE[1]) {
+			errors.reject("space.articlePageSize.toobig", new Object[] { ARTICLE_PAGE_SIZE_RANGE[1] },
+					"文章每页数量不能大于" + ARTICLE_PAGE_SIZE_RANGE[1]);
+			return;
+		}
 	}
 
 	/**

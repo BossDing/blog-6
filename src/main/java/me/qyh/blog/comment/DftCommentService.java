@@ -18,8 +18,6 @@ package me.qyh.blog.comment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +30,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -42,9 +38,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
@@ -62,6 +58,7 @@ import me.qyh.blog.input.HtmlClean;
 import me.qyh.blog.pageparam.PageQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
+import me.qyh.blog.security.InvalidCountMonitor;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
@@ -75,11 +72,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	private ArticleCache articleCache;
 	@Autowired
 	private CommentDao commentDao;
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	private CommentContentChecker commentContentChecker;
-	private CommentEmailChecker commentEmailChecker;
+	private CommentUserChecker commentEmailChecker;
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	private final CommentComparator ascCommentComparator = new CommentComparator();
@@ -91,26 +86,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		}
 	};
 
-	private InvalidCountMap invalidCountMap = new InvalidCountMap();
-	private InvalidIpMap invalidIpMap = new InvalidIpMap();
-
-	/**
-	 * 非法点击：当用户达到单位时间内的限制评论数之后的点击<br>
-	 * 如果在invalidLimitSecond中再次非法点击invalidLimitCount次，那么将会被放入invalidUserMap中,有效期为invalidSecond
-	 */
-	private static final int INVALID_LIMIT_COUNT = 3;
-	private static final int INVALID_LIMIT_SECOND = 10;
-	private static final int INVALID_SECOND = 300;
-
-	/**
-	 * 每隔invaliClearSecond就清除map中过期的对象
-	 */
-	private static final int INVALID_CLEAR_SECOND = 10 * 60;
-
-	private int invalidLimitCount = INVALID_LIMIT_COUNT;
-	private int invalidLimitSecond = INVALID_LIMIT_SECOND;
-	private int invalidSecond = INVALID_SECOND;
-	private int invalidClearSecond = INVALID_CLEAR_SECOND;
+	private InvalidCountMonitor<String> invalidIpMonitor;
 
 	/**
 	 * 为了保证一个树结构，这里采用 path来纪录层次结构
@@ -232,7 +208,8 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 			long start = now - limit.getUnit().toMillis(limit.getTime());
 			int count = commentDao.selectCountByIpAndDatePeriod(new Timestamp(start), new Timestamp(now), ip) + 1;
 			if (count > limit.getCount()) {
-				invalidCountMap.increase(ip, now);
+				if (invalidIpMonitor != null)
+					invalidIpMonitor.increase(ip, now);
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}
 		}
@@ -265,9 +242,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		if (UserContext.get() == null) {
 			String email = comment.getEmail();
 			if (email != null) {
-				commentEmailChecker.doCheck(email);
+				commentEmailChecker.doCheck(comment.getNickname(), email);
 				// set gravatar md5
-				comment.setGravatar(getGravatarMD5(email));
+				comment.setGravatar(DigestUtils.md5DigestAsHex(email.getBytes(Constants.CHARSET)));
 			}
 			comment.setAdmin(false);
 
@@ -288,6 +265,8 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 
 		comment.setParent(parent);
 		comment.setArticle(article);// 用来获取文章链接
+
+		completeComment(comment);
 
 		applicationEventPublisher.publishEvent(new CommentEvent(this, comment));
 		return comment;
@@ -323,7 +302,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");
 		}
-		commentDao.deleteByPath(comment.getSubPath());
+		commentDao.deleteByPath(comment.getParentPath() + comment.getId());
 		commentDao.deleteById(id);
 	}
 
@@ -355,7 +334,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit) {
-		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null);
+		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null, space != null);
 		for (Comment comment : comments)
 			completeComment(comment);
 		return comments;
@@ -461,16 +440,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		loadConfig();
 	}
 
-	private String getGravatarMD5(String email) {
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			md.update(email.getBytes(Constants.CHARSET));
-			return new BigInteger(1, md.digest()).toString(16);
-		} catch (Exception e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
-
 	protected List<Comment> handlerTree(List<Comment> comments, CommentConfig config) {
 		if (comments.isEmpty()) {
 			return comments;
@@ -558,58 +527,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		root.setChildren(children);
 	}
 
-	private final class InvalidCount {
-		private long start;
-		private AtomicInteger count;
-
-		public InvalidCount(long start) {
-			this.start = start;
-			this.count = new AtomicInteger(0);
-		}
-
-		public boolean overtime(long now) {
-			return (now - start) > (invalidLimitSecond * 1000L);
-		}
-
-		public int increase() {
-			return count.incrementAndGet();
-		}
-
-		public InvalidCount(long start, int count) {
-			this.start = start;
-			this.count = new AtomicInteger(count);
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result + (int) (start ^ (start >>> 32));
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			InvalidCount other = (InvalidCount) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
-			if (start != other.start)
-				return false;
-			return true;
-		}
-
-		private DftCommentService getOuterType() {
-			return DftCommentService.this;
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (htmlClean == null) {
@@ -625,19 +542,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		if (commentContentChecker == null)
 			commentContentChecker = new DefaultCommentContentChecker();
 		if (commentEmailChecker == null)
-			commentEmailChecker = new DefaultEmailChecker();
-		if (invalidLimitCount < 0 || invalidLimitSecond < 0 || invalidSecond < 0) {
-			invalidLimitCount = INVALID_LIMIT_COUNT;
-			invalidLimitSecond = INVALID_LIMIT_SECOND;
-			invalidSecond = INVALID_SECOND;
-		}
-		if (invalidClearSecond < 0) {
-			invalidClearSecond = INVALID_CLEAR_SECOND;
-		}
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			invalidIpMap.removeOvertimes();
-			invalidCountMap.removeOvertimes();
-		}, invalidClearSecond * 1000L);
+			commentEmailChecker = new DefaultCommentUserChecker();
 	}
 
 	private void loadConfig() {
@@ -656,103 +561,39 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	}
 
 	private void completeComment(Comment comment) {
-		if (!comment.getAdmin())
+		Comment p = comment.getParent();
+		if (p != null)
+			completeComment(p);
+		if (comment.getAdmin() == null || !comment.getAdmin())
 			return;
 		User user = UserConfig.get();
 		comment.setNickname(user.getName());
 		String email = user.getEmail();
 		comment.setEmail(email);
-		if (email != null)
-			comment.setGravatar(getGravatarMD5(email));
+		comment.setGravatar(user.getGravatar());
 	}
 
 	private boolean isInvalidIp(String ip) {
 		if (UserContext.get() != null) {
 			return false;
 		}
-		Long start = invalidIpMap.get(ip);
-		if (start != null && (System.currentTimeMillis() - start) <= (invalidSecond * 1000L)) {
-			return true;
-		}
-		return false;
-	}
-
-	private final class InvalidIpMap {
-		private final ConcurrentHashMap<String, Long> map;
-
-		public InvalidIpMap() {
-			map = new ConcurrentHashMap<>();
-		}
-
-		public void put(String ip, long time) {
-			map.computeIfAbsent(ip, k -> time);
-		}
-
-		public void removeOvertimes() {
-			map.values().removeIf(x -> (x != null && ((System.currentTimeMillis() - x) > invalidSecond * 1000L)));
-		}
-
-		public Long get(String ip) {
-			return map.get(ip);
-		}
-	}
-
-	private final class InvalidCountMap {
-		private final ConcurrentHashMap<String, InvalidCount> map;
-
-		public InvalidCountMap() {
-			map = new ConcurrentHashMap<>();
-		}
-
-		public void put(String ip, InvalidCount count) {
-			map.computeIfAbsent(ip, k -> count);
-		}
-
-		public void remove(String ip) {
-			map.remove(ip);
-		}
-
-		public void increase(String ip, long now) {
-			InvalidCount oldCount = map.computeIfAbsent(ip, k -> new InvalidCount(now));
-			int count = oldCount.increase();
-			if (!oldCount.overtime(now) && (count >= invalidLimitCount)) {
-				invalidIpMap.put(ip, now);
-				invalidCountMap.remove(ip);
-			} else if (oldCount.overtime(now))
-				invalidCountMap.put(ip, new InvalidCount(now, 1));
-		}
-
-		public void removeOvertimes() {
-			map.values().removeIf(x -> (x != null && x.overtime(System.currentTimeMillis())));
-		}
+		return invalidIpMonitor != null && invalidIpMonitor.isInvalid(ip);
 	}
 
 	protected String buildLastCommentsCacheKey(Space space) {
 		return "last-comments" + (space == null ? "" : "-space-" + space.getId());
 	}
 
-	public void setInvalidLimitCount(int invalidLimitCount) {
-		this.invalidLimitCount = invalidLimitCount;
-	}
-
-	public void setInvalidLimitSecond(int invalidLimitSecond) {
-		this.invalidLimitSecond = invalidLimitSecond;
-	}
-
-	public void setInvalidSecond(int invalidSecond) {
-		this.invalidSecond = invalidSecond;
-	}
-
-	public void setInvalidClearSecond(int invalidClearSecond) {
-		this.invalidClearSecond = invalidClearSecond;
-	}
-
 	public void setHtmlClean(HtmlClean htmlClean) {
 		this.htmlClean = htmlClean;
 	}
 
-	public void setCommentEmailChecker(CommentEmailChecker commentEmailChecker) {
+	public void setCommentEmailChecker(CommentUserChecker commentEmailChecker) {
 		this.commentEmailChecker = commentEmailChecker;
+	}
+
+	public void setInvalidIpMonitor(InvalidCountMonitor<String> invalidIpMonitor) {
+		this.invalidIpMonitor = invalidIpMonitor;
 	}
 
 	private final class DefaultCommentContentChecker implements CommentContentChecker {
@@ -764,10 +605,10 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 
 	}
 
-	private final class DefaultEmailChecker extends CommentEmailChecker {
+	private final class DefaultCommentUserChecker extends CommentUserChecker {
 
 		@Override
-		protected void checkMore(final String email) throws LogicException {
+		protected void checkMore(final String name, final String email) throws LogicException {
 		}
 
 	}
@@ -783,7 +624,5 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		public CommentConfig getCommentConfig() {
 			return commentConfig;
 		}
-
 	}
-
 }

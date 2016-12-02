@@ -47,7 +47,7 @@ public class ArticleStatisticsDataTagProcessor extends DataTagProcessor<ArticleS
 
 	@Override
 	protected ArticleStatistics query(Space space, Params params, Attributes attributes) throws LogicException {
-		return articleService.queryArticleStatistics(space,false);
+		return articleService.queryArticleStatistics(space, space != null);
 	}
 
 }

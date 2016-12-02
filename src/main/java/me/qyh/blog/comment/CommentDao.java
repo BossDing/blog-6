@@ -137,7 +137,7 @@ public interface CommentDao {
 	 * @return 评论集
 	 */
 	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit,
-			@Param("queryPrivate") boolean queryPrivate);
+			@Param("queryPrivate") boolean queryPrivate, @Param("queryHidden") boolean queryHidden);
 
 	/**
 	 * 更具文章和ip删除评论

@@ -13,8 +13,7 @@
 	 http://www.springframework.org/schema/aop 
 	 http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
 
-	<context:property-placeholder
-		location="classpath:resources/app.properties" />
+	<context:property-placeholder location="classpath:resources/app.properties" />
 
 	<mvc:view-controller path="/error" view-name="error/500" />
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
@@ -82,16 +81,26 @@
 		<property name="prefix" value="/WEB-INF/templates/" />
 		<property name="suffix" value=".html" />
 		<property name="templateMode" value="HTML" />
-		<property name="characterEncoding" value="utf-8"/>
+		<property name="characterEncoding" value="utf-8" />
 	</bean>
 
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
-	<bean class="me.qyh.blog.metaweblog.MetaweblogController" />
-	
-	
+	<bean class="me.qyh.blog.metaweblog.MetaweblogController">
+		<property name="invalidIpMonitor">
+			<bean class="me.qyh.blog.security.InvalidCountMonitor">
+				<constructor-arg index="0" value="20" />
+				<constructor-arg index="1" value="5" />
+				<constructor-arg index="2" value="300" />
+				<constructor-arg index="3" value="600" />
+				<constructor-arg index="4" value="600" />
+			</bean>
+		</property>
+	</bean>
+
+
 	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.CommentController"/>
-	<bean class="me.qyh.blog.comment.CommentMgrController"/>
+	<bean class="me.qyh.blog.comment.CommentController" />
+	<bean class="me.qyh.blog.comment.CommentMgrController" />
 </beans>

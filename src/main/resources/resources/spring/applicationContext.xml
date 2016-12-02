@@ -166,14 +166,18 @@
 
 	<!-- 默认评论服务 -->
 	<bean class="me.qyh.blog.comment.DftCommentService">
-		<!-- 如果10秒内增加了2次非法评论，加入暂屏蔽名单，屏蔽时间为300秒，同时每隔600秒清理过期点击数和过期的非法用户 -->
-		<property name="invalidLimitCount" value="5" />
-		<property name="invalidLimitSecond" value="20" />
-		<property name="invalidSecond" value="300" />
-		<property name="invalidClearSecond" value="600" />
 		<!-- html内容清理器 -->
 		<property name="htmlClean">
 			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
+		</property>
+		<property name="invalidIpMonitor">
+			<bean class="me.qyh.blog.security.InvalidCountMonitor">
+				<constructor-arg index="0" value="20"/>
+				<constructor-arg index="1" value="5"/>
+				<constructor-arg index="2" value="300"/>
+				<constructor-arg index="3" value="600"/>
+				<constructor-arg index="4" value="600"/>
+			</bean>
 		</property>
 	</bean>
 

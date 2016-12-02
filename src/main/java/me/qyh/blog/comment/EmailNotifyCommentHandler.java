@@ -129,7 +129,8 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		context.setVariable("urls", urlHelper.getUrls());
 		context.setVariable("comments", comments);
 		context.setVariable("messages", messages);
-		MessageBean mb = new MessageBean(mailSubject, true, mailTemplateEngine.process(mailTemplate, context));
+		String text = mailTemplateEngine.process(mailTemplate, context);
+		MessageBean mb = new MessageBean(mailSubject, true, text);
 		if (to != null)
 			mb.setTo(to);
 		mailSender.send(mb);
@@ -227,9 +228,9 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		}
 		// 如果父评论不是管理员的评论
 		// 如果回复是管理员
-		if (parent != null && !parent.getAdmin() && comment.getAdmin()) {
+		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
 			// 直接邮件通知被回复对象
-			sendMail(Arrays.asList(comment), comment.getEmail());
+			sendMail(Arrays.asList(comment), comment.getParent().getEmail());
 		}
 	}
 

@@ -33,6 +33,11 @@ public class User implements Serializable {
 	private String password;
 	private String email;
 
+	/**
+	 * gravatar头像 值为email的md5值，如果email为空，那么gravatar也为空
+	 */
+	private String gravatar;
+
 	public String getName() {
 		return name;
 	}
@@ -57,10 +62,19 @@ public class User implements Serializable {
 		this.email = email;
 	}
 
+	public String getGravatar() {
+		return gravatar;
+	}
+
+	public void setGravatar(String gravatar) {
+		this.gravatar = gravatar;
+	}
+
 	public User(User source) {
-		this.name = source.getName();
-		this.password = source.getPassword();
-		this.email = source.getEmail();
+		this.name = source.name;
+		this.password = source.password;
+		this.email = source.email;
+		this.gravatar = source.gravatar;
 	}
 
 	public User() {

@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.util.DigestUtils;
 
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
@@ -79,6 +80,8 @@ public final class UserConfig {
 		user.setEmail(email);
 		user.setName(username);
 		user.setPassword(password);
+		if (!Validators.isEmptyOrNull(email, true))
+			user.setGravatar(DigestUtils.md5DigestAsHex(email.getBytes(Constants.CHARSET)));
 	}
 
 	public static User get() {

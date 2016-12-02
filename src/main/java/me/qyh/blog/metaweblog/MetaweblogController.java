@@ -20,28 +20,22 @@ import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.metaweblog.RequestXmlParser.MethodCaller;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
+import me.qyh.blog.security.InvalidCountMonitor;
 import me.qyh.blog.web.controller.BaseController;
 import me.qyh.blog.web.controller.Webs;
 
@@ -53,37 +47,18 @@ import me.qyh.blog.web.controller.Webs;
  */
 @Controller
 @RequestMapping("apis")
-public class MetaweblogController extends BaseController implements InitializingBean {
+public class MetaweblogController extends BaseController {
 
 	private static final Logger logger = LoggerFactory.getLogger(MetaweblogController.class);
 
 	private RequestXmlParser parser = RequestXmlParser.getParser();
-	private Map<String, FailInfo> authFailMap = new ConcurrentHashMap<String, FailInfo>();
-
-	// 60s内失败5次
-	private static final int DEFAULT_SEC = 60;
-	private static final int DEFAILT_COUNT = 5;
-	private static final int DEFAULT_INVALID_SEC = 300;
-	private static final int DEFAULT_INVALID_IP_CLEAR_SEC = 5;
-	private static final int DEFAULT_FAIL_CLEAR_SEC = 100;
-
 	private static final Message BAD_REQUEST = new Message("metaweblog.400", "错误的请求");
 	private static final Message HANDLE_ERROR = new Message("metaweblog.500", "系统异常");
 
-	private Map<String, Long> invalidIpMap = new ConcurrentHashMap<String, Long>();
-
-	private int sec = DEFAULT_SEC;
-	private int count = DEFAILT_COUNT;
-	private int invalidSec = DEFAULT_INVALID_SEC;
-	private int invalidIpClearSec = DEFAULT_INVALID_IP_CLEAR_SEC;
-	private int failClearSec = DEFAULT_FAIL_CLEAR_SEC;
-
-	private Limit limit;
-
 	@Autowired
 	private MetaweblogHandler handler;
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+
+	private InvalidCountMonitor<String> invalidIpMonitor;
 
 	/**
 	 * 处理用户发送的xml报文
@@ -99,7 +74,8 @@ public class MetaweblogController extends BaseController implements Initializing
 	public String handle(HttpServletRequest request) throws FaultException {
 		long now = System.currentTimeMillis();
 		String ip = Webs.getIp(request);
-		invalidIpCheck(ip, now);
+		if (invalidIpMonitor != null && invalidIpMonitor.isInvalid(ip))
+			throw new FaultException(Constants.AUTH_ERROR, new Message("metaweblog.user.forbidden", "用户暂时被禁止访问"));
 		MethodCaller mc = parseFromRequest(request);
 		try {
 			Object object = invokeMethod(mc);
@@ -109,8 +85,8 @@ public class MetaweblogController extends BaseController implements Initializing
 			if (undeclaredThrowable != null) {
 				if (undeclaredThrowable instanceof FaultException) {
 					FaultException fe = (FaultException) undeclaredThrowable;
-					if (Constants.AUTH_ERROR.equals(fe.getCode()))
-						increase(ip, now);
+					if (Constants.AUTH_ERROR.equals(fe.getCode()) && invalidIpMonitor != null)
+						invalidIpMonitor.increase(ip, now);
 					throw fe;
 				}
 				if (undeclaredThrowable instanceof ParseException)
@@ -152,75 +128,8 @@ public class MetaweblogController extends BaseController implements Initializing
 		}
 	}
 
-	private void invalidIpCheck(String ip, long now) throws FaultException {
-		Long time = invalidIpMap.get(ip);
-		if (time != null && ((now - time) <= invalidSec * 1000L))
-			throw new FaultException(Constants.AUTH_ERROR, new Message("metaweblog.user.forbidden", "用户暂时被禁止访问"));
-	}
-
-	private final class FailInfo {
-		private long timestamp;
-		private AtomicInteger count;
-
-		public FailInfo(long timestamp) {
-			this(timestamp, 0);
-		}
-
-		public FailInfo(long timestamp, int count) {
-			this.timestamp = timestamp;
-			this.count = new AtomicInteger(count);
-		}
-
-		boolean overtime(long now) {
-			return now - timestamp > limit.toMill();
-		}
-
-		int increase() {
-			return count.incrementAndGet();
-		}
-	}
-
-	private void increase(String ip, long now) {
-		FailInfo fi = authFailMap.computeIfAbsent(ip, k -> new FailInfo(now));
-		int currentCount = fi.increase();
-		if (!fi.overtime(now) && (currentCount >= limit.getCount())) {
-			invalidIpMap.computeIfAbsent(ip, k -> now);
-			authFailMap.remove(ip);
-		} else if (fi.overtime(now)) {
-			authFailMap.computeIfAbsent(ip, k -> new FailInfo(now, 1));
-		}
-	}
-
-	public void setSec(int sec) {
-		this.sec = sec;
-	}
-
-	public void setCount(int count) {
-		this.count = count;
-	}
-
-	public void setInvalidSec(int invalidSec) {
-		this.invalidSec = invalidSec;
-	}
-
-	public void setInvalidIpClearSec(int invalidIpClearSec) {
-		this.invalidIpClearSec = invalidIpClearSec;
-	}
-
-	public void setFailClearSec(int failClearSec) {
-		this.failClearSec = failClearSec;
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		this.limit = new Limit(count, sec, TimeUnit.SECONDS);
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			invalidIpMap.values().removeIf(x -> (System.currentTimeMillis() - x) > invalidSec * 1000L);
-		}, invalidIpClearSec * 1000L);
-
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
-		}, failClearSec * 1000L);
+	public void setInvalidIpMonitor(InvalidCountMonitor<String> invalidIpMonitor) {
+		this.invalidIpMonitor = invalidIpMonitor;
 	}
 
 }

@@ -11,11 +11,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="space_name" property="name"/>
 		<result column="space_lock" property="lockId"/>
 		<result column="space_art_hidden" property="articleHidden"/>
+		<result column="art_pagesize" property="articlePageSize"/>
 		<result column="is_default" property="isDefault"/>
-		<association property="config" javaType="SpaceConfig">
-			<id column="space_config_id" property="id"/>
-			<result column="article_pagesize" property="articlePageSize"/>
-		</association>
 	</resultMap>
 	
 	<update id="resetDefault">
@@ -41,8 +38,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 
 	<insert id="insert">
-		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,space_art_hidden,is_default)
-		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{articleHidden},#{isDefault})
+		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,space_art_hidden,is_default,art_pagesize)
+		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{articleHidden},#{isDefault},#{articlePageSize})
 	</insert>
 
 	<update id="update">
@@ -60,10 +57,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="isPrivate != null">
 				is_private = #{isPrivate},
 			</if>
+			<if test="articlePageSize != null">
+				art_pagesize = #{articlePageSize},
+			</if>
 			<if test="isDefault != null">
 				is_default = #{isDefault},
 			</if>
-			space_config = #{config.id},
 			space_lock = #{lockId}
 		</set>
 		WHERE id = #{id}
@@ -105,10 +104,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			space_lock,
 			is_default,
 			space_art_hidden,
-			bsc.id AS space_config_id,
-			article_pagesize
+			art_pagesize
 		FROM
 			blog_space bs
-		LEFT OUTER JOIN blog_space_config bsc ON bs.space_config = bsc.id
 	</sql>
 </mapper>

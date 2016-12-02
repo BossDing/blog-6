@@ -411,7 +411,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
-			SUM(hits) AS totalHits,
+			COALESCE(SUM(hits),0) AS totalHits,
 			MAX(lastModifyDate) AS lastModifyDate,
 			MAX(pubDate) AS lastPubDate
 		FROM

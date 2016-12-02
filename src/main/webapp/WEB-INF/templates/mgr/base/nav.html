@@ -69,6 +69,9 @@
 							<li><a
 								th:class="${tag == 'config-metaweblogConfig'}? active:''"
 								th:href="@{/mgr/config/metaweblogConfig/index}">mateweblog配置</a></li>
+								
+								<li><a th:class="${tag == 'config-comment'}? active:''"
+								th:href="@{/mgr/comment/updateConfig}">评论配置</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 				</ul>
 			</div>

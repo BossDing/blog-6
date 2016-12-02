@@ -14,6 +14,7 @@ $(document).ready(function() {
 				data = data.data;
 				modal.find('.modal-body input[name="name"]').val(data.name);
 				modal.find('.modal-body input[name="alias"]').val(data.alias);
+				modal.find('.modal-body input[name="articlePageSize"]').val(data.articlePageSize);
 				modal.find('.modal-body input[name="isPrivate"]').prop("checked",data.isPrivate);
 				modal.find('.modal-body input[name="isDefault"]').prop("checked",data.isDefault);
 				modal.find('.modal-body input[name="articleHidden"]').prop("checked",data.articleHidden);
@@ -108,77 +109,5 @@ $(document).ready(function() {
 			}
 		});
 	});
-	$("button[data-cc-action]").click(function(){
-		var action = $(this).attr('data-cc-action');
-		switch(action){
-		case 'add':
-		case 'update':
-			var spaceConfig = {};
-			spaceConfig.articlePageSize = $("#articlePageSize").val();
-			$.ajax({
-				type : "post",
-				url : basePath+'/mgr/space/config/update?spaceId='+$("#spaceId").val(),
-	            contentType:"application/json",
-				data : JSON.stringify(spaceConfig),
-				success : function(data){
-					if(data.success){
-						success(data.message);
-						setTimeout(function(){
-							window.location.reload();
-						},500);
-					} else {
-						error(data.message);
-					}
-				},
-				complete:function(){
-				}
-			});
-			break;
-		case "delete":
-			$.ajax({
-				type : "post",
-				url : basePath+'/mgr/space/config/delete?spaceId='+$("#spaceId").val(),
-	            contentType:"application/json",
-				data : {},
-				success : function(data){
-					if(data.success){
-						success(data.message);
-						setTimeout(function(){
-							window.location.reload();
-						},500);
-					} else {
-						error(data.message);
-					}
-				},
-				complete:function(){
-				}
-			});
-
-			break;
-		}
-	})
+	
 });
-function editConfig(id){
-	clearTip();
-	$("#spaceId").val(id);
-	$("#editConfigForm")[0].reset();
-	var modal = $(this);
-	$.get(basePath+'/mgr/space/get/'+id,{},function(data){
-		if(data.success){
-			data = data.data;
-			if(!data.config){
-				//没有配置评论
-				$("button[data-cc-action]").hide();
-				$("button[data-cc-action='add']").show();
-			}else{
-				$("#articlePageSize").val(data.config.articlePageSize);
-				$("button[data-cc-action]").hide();
-				$("button[data-cc-action='delete']").show();
-				$("button[data-cc-action='update']").show();
-			}
-			$("#editConfigModal").modal('show');
-		}else{
-			bootbox.alert(data.message);
-		}
-	});
-}

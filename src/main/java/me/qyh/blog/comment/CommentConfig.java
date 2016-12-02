@@ -18,6 +18,7 @@ package me.qyh.blog.comment;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
@@ -103,7 +104,8 @@ public class CommentConfig {
 	public Integer getLimitSec() {
 		return limitSec;
 	}
-
+	
+	@JsonProperty
 	public void setLimitSec(Integer limitSec) {
 		this.limitSec = limitSec;
 	}
@@ -113,6 +115,7 @@ public class CommentConfig {
 		return limitCount;
 	}
 
+	@JsonProperty
 	public void setLimitCount(Integer limitCount) {
 		this.limitCount = limitCount;
 	}

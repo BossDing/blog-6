@@ -26,10 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.dao.SpaceConfigDao;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.SpaceConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
@@ -48,8 +46,6 @@ public class SpaceServiceImpl implements SpaceService {
 	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired
-	private SpaceConfigDao spaceConfigDao;
-	@Autowired
 	private LockManager lockManager;
 
 	@Override
@@ -65,43 +61,9 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		space.setConfig(null);
 		if (space.getIsDefault())
 			spaceDao.resetDefault();
 		spaceDao.insert(space);
-	}
-
-	@Override
-	@ArticleIndexRebuild
-	public void updateConfig(Integer spaceId, SpaceConfig config) throws LogicException {
-		Space db = spaceDao.selectById(spaceId);
-		if (db == null)
-			throw new LogicException("space.notExists", "空间不存在");
-		SpaceConfig dbConfig = db.getConfig();
-		if (dbConfig == null) {
-			spaceConfigDao.insert(config);
-		} else {
-			spaceConfigDao.update(config);
-		}
-		db.setConfig(config);
-		spaceDao.update(db);
-		spaceCache.evit(db);
-	}
-
-	@Override
-	@ArticleIndexRebuild
-	public void deleteConfig(Integer spaceId) throws LogicException {
-		Space db = spaceDao.selectById(spaceId);
-		if (db == null)
-			throw new LogicException("space.notExists", "空间不存在");
-		SpaceConfig config = db.getConfig();
-		if (config != null) {
-			// 删除空间配置
-			db.setConfig(null);
-			spaceDao.update(db);
-			spaceConfigDao.deleteById(config.getId());
-			spaceCache.evit(db);
-		}
 	}
 
 	@Override
@@ -133,7 +95,6 @@ public class SpaceServiceImpl implements SpaceService {
 		if (space.getIsDefault())
 			spaceDao.resetDefault();
 
-		space.setConfig(db.getConfig());
 		spaceDao.update(space);
 		spaceCache.evit(db);
 	}

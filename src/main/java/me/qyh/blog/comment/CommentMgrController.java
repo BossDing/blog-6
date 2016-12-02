@@ -18,6 +18,11 @@ package me.qyh.blog.comment;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -34,6 +39,13 @@ public class CommentMgrController extends BaseMgrController {
 
 	@Autowired
 	private DftCommentService commentService;
+	@Autowired
+	private CommentConfigValidator commentConfigValidator;
+
+	@InitBinder(value = "commentConfig")
+	protected void initCommentConfigBinder(WebDataBinder binder) {
+		binder.setValidator(commentConfigValidator);
+	}
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "id" })
 	@ResponseBody
@@ -42,7 +54,7 @@ public class CommentMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "userId", "articleId" })
+	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "ip", "articleId" })
 	@ResponseBody
 	public JsonResult remove(@RequestParam("ip") String ip, @Param("articleId") Integer articleId)
 			throws LogicException {
@@ -55,6 +67,19 @@ public class CommentMgrController extends BaseMgrController {
 	public JsonResult check(@RequestParam("id") Integer id) throws LogicException {
 		commentService.checkComment(id);
 		return new JsonResult(true, new Message("comment.check.success", "审核成功"));
+	}
+
+	@RequestMapping(value = "updateConfig", method = RequestMethod.GET)
+	public String update(ModelMap model) {
+		model.addAttribute("config", commentService.getCommentConfig());
+		return "mgr/config/commentConfig";
+	}
+
+	@RequestMapping(value = "updateConfig", method = RequestMethod.POST)
+	@ResponseBody
+	public JsonResult update(@RequestBody @Validated CommentConfig commentConfig) {
+		commentService.updateCommentConfig(commentConfig);
+		return new JsonResult(true, new Message("comment.config.update.success", "更新成功"));
 	}
 
 }

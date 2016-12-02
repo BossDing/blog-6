@@ -40,9 +40,8 @@ public class Space extends BaseLockResource {
 	private Boolean isPrivate;
 
 	private Boolean articleHidden;
-	private SpaceConfig config;
-
 	private Boolean isDefault;
+	private Integer articlePageSize;
 
 	/**
 	 * default
@@ -105,14 +104,6 @@ public class Space extends BaseLockResource {
 		this.articleHidden = articleHidden;
 	}
 
-	public SpaceConfig getConfig() {
-		return config;
-	}
-
-	public void setConfig(SpaceConfig config) {
-		this.config = config;
-	}
-
 	public Boolean getIsDefault() {
 		return isDefault;
 	}
@@ -122,14 +113,16 @@ public class Space extends BaseLockResource {
 	}
 
 	@Override
-	public String toString() {
-		return "Space [name=" + name + ", alias=" + alias + ", createDate=" + createDate + ", isPrivate=" + isPrivate
-				+ ", articleHidden=" + articleHidden + ", config=" + config + ", isDefault=" + isDefault + "]";
-	}
-
-	@Override
 	public int hashCode() {
 		return new HashCodeBuilder().append(id).build();
+	}
+
+	public Integer getArticlePageSize() {
+		return articlePageSize;
+	}
+
+	public void setArticlePageSize(Integer articlePageSize) {
+		this.articlePageSize = articlePageSize;
 	}
 
 	@Override
