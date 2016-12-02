@@ -3,6 +3,8 @@
 
 ## www.qyh.me
 
+**不会对任何IE内核浏览器(包括Edge)作任何支持，如果你是IE的忠实拥趸，那么这并不适合你**
+
 一个**单用户**博客，特性如下：
 * 采用 spring4&mybaits&thymeleaf开发，运行环境**jre8**
 * 放弃了博客文章的分类属性，采用了space替代，一个space代表了一种分类，space可以被独立的子域名所访问
@@ -11,7 +13,7 @@
 * lucene搜索
 * CKEDITOR|markdown
 * 空间和文章锁保护
-* 基于oauth的评论系统，评论|回复邮件通知
+* 评论服务，评论|回复邮件通知
 * RSS订阅
 * 文件管理，七牛云存储，实时缩略图服务
 * metaweblog api支持
