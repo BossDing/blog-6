@@ -17,10 +17,11 @@ package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.collect.Sets;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
@@ -73,7 +74,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 		article.setStatus(ArticleStatus.PUBLISHED);
 		article.setSummary("这是预览内容");
 		article.setTitle("预览内容");
-		Set<Tag> tags = new HashSet<Tag>();
+		Set<Tag> tags = Sets.newHashSet();
 		tags.add(new Tag("预览标签"));
 
 		article.setTags(tags);

@@ -16,7 +16,6 @@
 package me.qyh.blog.ui.page;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,15 +23,17 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.collect.Maps;
+
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
-import me.qyh.util.Validators;
 
 public class ExpandedPageServer {
 
 	private static final int NAME_MAX_LENGTH = 20;
 
-	private Map<Integer, ExpandedPageHandler> handlers = new HashMap<>();
+	private Map<Integer, ExpandedPageHandler> handlers = Maps.newHashMap();
 
 	public ExpandedPageHandler getPageHandler(HttpServletRequest request) {
 		for (ExpandedPageHandler handler : handlers.values()) {

@@ -15,13 +15,14 @@
  */
 package me.qyh.blog.ui.data;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.Params;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 public abstract class DataTagProcessor<T> {
 
@@ -32,7 +33,7 @@ public abstract class DataTagProcessor<T> {
 	private static final String DATA_NAME = "dataName";
 
 	private String name;// 数据名，唯一
-	private String dataName;// 默认数据绑定名，页面唯一
+	private String dataName;// 默认数据绑定名，唯一
 
 	/**
 	 * 构造器
@@ -49,7 +50,7 @@ public abstract class DataTagProcessor<T> {
 
 	public final DataBind<T> getData(Space space, Params params, Map<String, String> attributes) throws LogicException {
 		if (attributes == null)
-			attributes = new HashMap<>();
+			attributes = Maps.newHashMap();
 		T result = null;
 		Attributes atts = new Attributes(attributes);
 		try {
@@ -88,7 +89,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	public final DataBind<T> previewData(Map<String, String> attributes) {
 		if (attributes == null)
-			attributes = new HashMap<>();
+			attributes = Maps.newHashMap();
 		Attributes atts = new Attributes(attributes);
 		T result = buildPreviewData(atts);
 		DataBind<T> bind = new DataBind<>();
@@ -120,7 +121,7 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	protected final class Attributes {
-		private Map<String, String> attMap = new HashMap<>();
+		private Map<String, String> attMap = Maps.newHashMap();
 
 		public String get(String key) {
 			return attMap.get(key.toLowerCase());

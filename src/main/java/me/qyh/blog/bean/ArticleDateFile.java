@@ -17,8 +17,6 @@ package me.qyh.blog.bean;
 
 import java.util.Date;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
-
 /**
  * 文档日期归档
  * 
@@ -53,12 +51,6 @@ public class ArticleDateFile {
 
 	public void setCount(int count) {
 		this.count = count;
-	}
-
-	@Override
-	public String toString() {
-		return "ArticleFile [begin=" + DateFormatUtils.format(begin, "yyyy-MM-dd") + ", end="
-				+ DateFormatUtils.format(end, "yyy-MM-dd") + ", count=" + count + "]";
 	}
 
 }

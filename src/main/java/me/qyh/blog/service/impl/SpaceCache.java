@@ -1,10 +1,11 @@
 package me.qyh.blog.service.impl;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
@@ -13,8 +14,8 @@ import me.qyh.blog.lock.LockProtected;
 @Component
 public class SpaceCache {
 
-	private final Map<String, Space> aliasCache = new ConcurrentHashMap<>();
-	private final Map<Integer, Space> idCache = new ConcurrentHashMap<>();
+	private final Map<String, Space> aliasCache = Maps.newConcurrentMap();
+	private final Map<Integer, Space> idCache = Maps.newConcurrentMap();
 
 	@Autowired
 	private SpaceDao spaceDao;

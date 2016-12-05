@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.input;
+package me.qyh.blog.security.input;
+
+import java.util.List;
+
+import com.google.common.collect.Lists;
 
 /**
  * 
  * @author Administrator
  *
  */
-public class Attribute {
+public class Tag {
+
 	private String name;
-	private String protocols;
-	private String enforce;
+	private List<Attribute> attributes = Lists.newArrayList();
 
 	public String getName() {
 		return name;
@@ -33,20 +37,22 @@ public class Attribute {
 		this.name = name;
 	}
 
-	public String getProtocols() {
-		return protocols;
+	public List<Attribute> getAttributes() {
+		return attributes;
 	}
 
-	public void setProtocols(String protocols) {
-		this.protocols = protocols;
+	public void setAttributes(List<Attribute> attributes) {
+		this.attributes = attributes;
 	}
 
-	public String getEnforce() {
-		return enforce;
-	}
-
-	public void setEnforce(String enforce) {
-		this.enforce = enforce;
+	/**
+	 * 添加属性
+	 * 
+	 * @param att
+	 *            属性
+	 */
+	public void addAttribute(Attribute att) {
+		this.attributes.add(att);
 	}
 
 }

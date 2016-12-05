@@ -15,20 +15,25 @@
  */
 package me.qyh.blog.comment;
 
-import java.util.Collections;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.DigestUtils;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
+import me.qyh.blog.comment.DftCommentService.CommentPageResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
-public class CommentsDataTagProcessor extends DataTagProcessor<PageResult<Comment>> {
+public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired
 	private DftCommentService commentService;
 
@@ -37,28 +42,49 @@ public class CommentsDataTagProcessor extends DataTagProcessor<PageResult<Commen
 	}
 
 	@Override
-	protected PageResult<Comment> buildPreviewData(Attributes attributes) {
-		return new PageResult<>(parseParam(attributes), 0, Collections.emptyList());
+	protected CommentPageResult buildPreviewData(Attributes attributes) {
+		List<Comment> comments = Lists.newArrayList();
+		Comment comment = new Comment();
+		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
+		comment.setContent("测试内容");
+		comment.setNickname("测试");
+		comment.setEmail("test@test.com");
+		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
+		comment.setAdmin(true);
+		comment.setIp("127.0.0.1");
+		Article article = new Article();
+		article.setId(1);
+		comment.setArticle(article);
+		comment.setId(-1);
+		comment.setStatus(CommentStatus.NORMAL);
+		comments.add(comment);
+		CommentQueryParam param = new CommentQueryParam();
+		param.setCurrentPage(1);
+		CommentConfig config = commentService.getCommentConfig();
+		param.setPageSize(config.getPageSize());
+		return new CommentPageResult(param, config.getPageSize() + 1, comments, config);
 	}
 
 	@Override
-	protected PageResult<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
-		CommentQueryParam param = parseParam(attributes);
-		if (param.getArticle() == null || !param.getArticle().hasId())
-			return new PageResult<>(param, 0, Collections.emptyList());
+	protected CommentPageResult query(Space space, Params params, Attributes attributes) throws LogicException {
+		CommentQueryParam param = parseParam(params, attributes);
 		return commentService.queryComment(param);
 	}
 
-	private CommentQueryParam parseParam(Attributes attributes) {
+	private CommentQueryParam parseParam(Params params, Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		String articleStr = attributes.get("article");
-		if (articleStr != null) {
-			try {
-				param.setArticle(new Article(Integer.parseInt(articleStr)));
-			} catch (Exception e) {
+		Article article = params.get("article", Article.class);
+		if (article == null) {
+			String articleStr = attributes.get("article");
+			if (articleStr != null) {
+				try {
+					article = new Article(Integer.parseInt(articleStr));
+				} catch (Exception e) {
+				}
 			}
 		}
+		param.setArticle(article);
 		String currentPageStr = attributes.get("currentPage");
 		if (currentPageStr != null) {
 			try {

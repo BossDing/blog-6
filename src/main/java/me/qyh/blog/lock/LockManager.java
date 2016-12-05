@@ -15,10 +15,7 @@
  */
 package me.qyh.blog.lock;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +23,10 @@ import java.util.Set;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * 锁管理器
@@ -38,7 +39,7 @@ public class LockManager implements InitializingBean {
 	private SysLockProvider sysLockProvider;
 	private ExpandedLockProvider expandedLockProvider;
 
-	private List<String> allTypes = new ArrayList<>();
+	private List<String> allTypes = Lists.newArrayList();
 
 	/**
 	 * 根据id获取锁
@@ -58,13 +59,13 @@ public class LockManager implements InitializingBean {
 	 * @return 所有的锁
 	 */
 	public List<Lock> allLock() {
-		Map<String, Lock> idsMap = new LinkedHashMap<String, Lock>();
+		Map<String, Lock> idsMap = Maps.newLinkedHashMap();
 		for (Lock lock : expandedLockProvider.allLock())
 			idsMap.put(lock.getId(), lock);
 		for (Lock lock : sysLockProvider.allLock())
 			if (!idsMap.containsKey(lock.getId()))
 				idsMap.put(lock.getId(), lock);
-		return Collections.unmodifiableList(new ArrayList<>(idsMap.values()));
+		return Collections.unmodifiableList(Lists.newArrayList(idsMap.values()));
 	}
 
 	/**
@@ -107,7 +108,7 @@ public class LockManager implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		if (expandedLockProvider == null)
 			expandedLockProvider = new ExpandedLockProvider();
-		Set<String> types = new LinkedHashSet<String>();
+		Set<String> types = Sets.newLinkedHashSet();
 		for (String type : expandedLockProvider.getLockTypes())
 			types.add(type);
 		for (String type : sysLockProvider.getLockTypes())

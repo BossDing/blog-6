@@ -16,10 +16,8 @@
 package me.qyh.blog.web.controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +49,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.ExportReq;
 import me.qyh.blog.bean.ImportError;
@@ -75,9 +74,9 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.Page.PageType;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
-import me.qyh.util.Jsons;
-import me.qyh.util.Validators;
 
 @Controller
 @RequestMapping("mgr/tpl")
@@ -158,7 +157,7 @@ public class TplMgrController extends BaseMgrController {
 		session.removeAttribute(PARSERS);
 		String tpl = null;
 		try {
-			tpl = IOUtils.toString(file.getBytes(), Constants.CHARSET.name());
+			tpl = new String(file.getBytes(), Constants.CHARSET.name());
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
 			ra.addFlashAttribute(ERROR, new Message("tpl.upload.fail", "模板文件上传失败"));
@@ -191,14 +190,14 @@ public class TplMgrController extends BaseMgrController {
 		if (session == null || session.getAttribute(PARSERS) == null) {
 			return new JsonResult(false, new Message("tpl.import.miss", "数据已经过期，请重新上传"));
 		}
-		List<ImportError> errors = new ArrayList<>();
+		List<ImportError> errors = Lists.newArrayList();
 		Space space = req.getSpace();
 		if (space != null && !space.hasId()) {
 			space = null;
 			req.setSpace(null);
 		}
 		Map<Integer, ImportPageWrapper> parses = (Map<Integer, ImportPageWrapper>) session.getAttribute(PARSERS);
-		List<ImportPageWrapper> toImport = new ArrayList<>();
+		List<ImportPageWrapper> toImport = Lists.newArrayList();
 		for (int id : req.getIds()) {
 			ImportPageWrapper wrapper = parses.get(id);
 			if (wrapper == null) {
@@ -236,7 +235,7 @@ public class TplMgrController extends BaseMgrController {
 	}
 
 	private HashMap<Integer, ImportPageWrapper> parse(ObjectReader reader, JsonNode node) {
-		HashMap<Integer, ImportPageWrapper> wrappers = new LinkedHashMap<>();
+		HashMap<Integer, ImportPageWrapper> wrappers = Maps.newLinkedHashMap();
 		for (int i = 0; i < node.size(); i++) {
 			JsonNode epNode = node.get(i);
 			if (epNode == null) {

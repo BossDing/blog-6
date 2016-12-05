@@ -19,10 +19,7 @@
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
 
 	<bean id="multipartResolver"
-		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
-		<property name="maxUploadSize" value="${app.uploadLimitSize}" />
-		<property name="maxInMemorySize" value="1024" />
-	</bean>
+		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 
 	<mvc:resources location="/static/" mapping="/static/**"
 		cache-period="31556926" />
@@ -43,7 +40,7 @@
 		<mvc:message-converters register-defaults="true">
 			<bean
 				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
-				<property name="objectMapper" value="#{T(me.qyh.util.Jsons).getMapper()}" />
+				<property name="objectMapper" value="#{T(me.qyh.blog.util.Jsons).getMapper()}" />
 			</bean>
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
@@ -87,17 +84,7 @@
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
-	<bean class="me.qyh.blog.metaweblog.MetaweblogController">
-		<property name="invalidIpMonitor">
-			<bean class="me.qyh.blog.security.InvalidCountMonitor">
-				<constructor-arg index="0" value="20" />
-				<constructor-arg index="1" value="5" />
-				<constructor-arg index="2" value="300" />
-				<constructor-arg index="3" value="600" />
-				<constructor-arg index="4" value="600" />
-			</bean>
-		</property>
-	</bean>
+	<bean class="me.qyh.blog.metaweblog.MetaweblogController" />
 
 
 	<!-- 默认评论服务 -->

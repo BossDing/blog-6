@@ -15,35 +15,43 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.MediaType;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Jsons;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Validators;
 
 public class Webs {
+
+	private static String[] HEADERS_TO_TRY = { "REMOTE_ADDR", "X-Forwarded-For", "X-Real-IP" };
 	private static final AntPathMatcher apm = new AntPathMatcher();
 
 	public static boolean matchValidateCode(String code, HttpSession session) {
-		if (session == null) {
+		if (code == null)
 			return false;
-		}
+		if (session == null)
+			return false;
 		String sessionValidateCode = (String) session.getAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
-		if (sessionValidateCode == null) {
+		if (sessionValidateCode == null)
 			return false;
-		}
+		// remove
+		session.removeAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
 		return sessionValidateCode.equals(code);
 	}
 
@@ -57,15 +65,11 @@ public class Webs {
 
 	public static void writeInfo(HttpServletResponse response, JsonResult result) throws IOException {
 		response.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-		// JsonGenerator jsonGenerator =
-		// objectWriter.getFactory().createGenerator(response.getOutputStream(),
-		// JsonEncoding.UTF8);
 		Jsons.write(response.getOutputStream(), result);
 	}
 
 	public static boolean isAction(HttpServletRequest request) {
-		String extension = FilenameUtils.getExtension(request.getRequestURL().toString());
-		return extension.trim().isEmpty();
+		return com.google.common.io.Files.getFileExtension(request.getRequestURI()).trim().isEmpty();
 	}
 
 	public static String decode(String toDecode) {
@@ -87,8 +91,12 @@ public class Webs {
 		return apm.match("/apis/**", path);
 	}
 
-	private static String[] HEADERS_TO_TRY = { "REMOTE_ADDR", "X-Forwarded-For", "X-Real-IP" };
-
+	/**
+	 * 从请求中获取IP地址
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public static String getIp(HttpServletRequest request) {
 		for (String header : HEADERS_TO_TRY) {
 			String ip = request.getHeader(header);
@@ -97,5 +105,21 @@ public class Webs {
 			}
 		}
 		return request.getRemoteAddr();
+	}
+
+	/**
+	 * 保存上传的文件<br>
+	 * <b>保存StandardMultipartFile.transferTo时存在异常</b>
+	 * 
+	 * @param mf
+	 *            上传的文件
+	 * @param file
+	 *            保存的位置
+	 * @throws IOException
+	 */
+	public static void save(MultipartFile mf, File file) throws IOException {
+		try (InputStream is = mf.getInputStream()) {
+			Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }

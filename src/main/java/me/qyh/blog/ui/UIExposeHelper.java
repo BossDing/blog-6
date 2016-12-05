@@ -15,9 +15,7 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -27,6 +25,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
@@ -44,7 +45,7 @@ public class UIExposeHelper {
 	private final _Nums nums = new _Nums();
 
 	public Map<String, Object> getHelpers(HttpServletRequest request) {
-		Map<String, Object> helpers = new HashMap<>();
+		Map<String, Object> helpers = Maps.newHashMap();
 		helpers.put("urls", urlHelper.getUrls(request));
 		helpers.put("user", UserContext.get());
 		helpers.put("messages", messages);
@@ -98,7 +99,7 @@ public class UIExposeHelper {
 		 * @return
 		 */
 		public List<?> shuffle(List<?> list, boolean clone) {
-			List<?> toShuffle = clone ? new ArrayList<>(list) : list;
+			List<?> toShuffle = clone ? Lists.newArrayList(list) : list;
 			Collections.shuffle(toShuffle, new Random(System.nanoTime()));
 			return toShuffle;
 		}

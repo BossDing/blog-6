@@ -16,9 +16,11 @@
 package me.qyh.blog.ui.page;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
+
+import com.google.common.io.CharStreams;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
@@ -30,8 +32,9 @@ public abstract class AbstractExpandedPageHandler implements ExpandedPageHandler
 	private String name;
 
 	public AbstractExpandedPageHandler(int id, String name, Resource template) {
-		try (InputStream is = template.getInputStream()) {
-			_template = IOUtils.toString(is, Constants.CHARSET);
+		try (InputStream is = template.getInputStream();
+				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
+			_template = CharStreams.toString(ir);
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
 		}

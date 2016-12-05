@@ -15,20 +15,21 @@
  */
 package me.qyh.blog.comment;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.ApplicationListener;
 
+import com.google.common.collect.Lists;
+
 /**
- * 评论监听器 
+ * 评论监听器
  * 
  * @author Administrator
  *
  */
 public class CommentEventListener implements ApplicationListener<CommentEvent> {
 
-	private List<CommentHandler> handlers = new ArrayList<>();
+	private List<CommentHandler> handlers = Lists.newArrayList();
 
 	@Override
 	public final void onApplicationEvent(CommentEvent event) {

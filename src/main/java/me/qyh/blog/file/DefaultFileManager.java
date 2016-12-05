@@ -16,12 +16,13 @@
 package me.qyh.blog.file;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -34,7 +35,7 @@ import me.qyh.blog.exception.SystemException;
 public class DefaultFileManager implements FileManager, InitializingBean {
 
 	private List<FileServer> servers;
-	private Map<Integer, FileServer> serverMap = new HashMap<>();
+	private Map<Integer, FileServer> serverMap = Maps.newHashMap();
 
 	public void setServers(List<FileServer> servers) {
 		this.servers = servers;

@@ -22,19 +22,19 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.config.UrlHelper;
@@ -53,9 +53,9 @@ import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 import me.qyh.blog.web.controller.form.BlogFileUploadValidator;
-import me.qyh.util.Validators;
 
 /**
  * http://www.oschina.net/uploads/doc/MetaWeblog.html
@@ -77,8 +77,6 @@ public class MetaweblogHandler {
 	private ArticleService articleService;
 	@Autowired
 	private FileService fileService;
-	@Value("${app.uploadLimitSize}")
-	private long uploadLimitSize;
 
 	private Object execute(String username, String password, Execute execute) throws FaultException, ParseException {
 		login(username, password);
@@ -109,7 +107,7 @@ public class MetaweblogHandler {
 
 	public Object getUsersBlogs(String key, String username, String password) throws FaultException, ParseException {
 		return execute(username, password, () -> {
-			Map<String, String> map = new HashMap<>();
+			Map<String, String> map = Maps.newHashMap();
 			map.put("blogid", "1");
 			map.put("blogName", username);
 			map.put("url", urlHelper.getUrl());
@@ -120,9 +118,9 @@ public class MetaweblogHandler {
 	public Object getCategories(String blogid, String username, String password) throws FaultException, ParseException {
 		return execute(username, password, () -> {
 			List<Space> spaces = spaceService.querySpace(new SpaceQueryParam());
-			List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
+			List<Map<?, ?>> result = Lists.newArrayList();
 			for (Space space : spaces) {
-				Map<String, String> map = new HashMap<>();
+				Map<String, String> map = Maps.newHashMap();
 				map.put("description", "");
 				map.put("htmlUrl", urlHelper.getUrls().getUrl(space));
 				map.put("rssUrl", urlHelper.getUrls().getUrl(space) + "/rss");
@@ -142,7 +140,7 @@ public class MetaweblogHandler {
 			throw new ParseException("最近文章数量限制必须为大于0的整数");
 		return execute(username, password, () -> {
 			List<Article> articles = articleService.queryRecentArticles(limit);
-			List<Map<?, ?>> result = new ArrayList<Map<?, ?>>();
+			List<Map<?, ?>> result = Lists.newArrayList();
 			for (Article art : articles)
 				result.add(articleToMap(art));
 			return result;
@@ -190,7 +188,7 @@ public class MetaweblogHandler {
 			if (res.hasError())
 				throw new LogicException(res.getError());
 			else {
-				Map<String, String> urlMap = new HashMap<>();
+				Map<String, String> urlMap = Maps.newHashMap();
 				urlMap.put("url", res.getThumbnailUrl().getMiddle());
 				return urlMap;
 			}
@@ -213,8 +211,6 @@ public class MetaweblogHandler {
 		byte[] bits = struct.getBase64("bits");
 		if (bits == null)
 			throw new LogicException("file.content.blank");
-		if (bits.length > uploadLimitSize)
-			throw new LogicException("upload.overlimitsize", uploadLimitSize);
 		return new MetaweblogFile(bits, name);
 	}
 
@@ -231,7 +227,7 @@ public class MetaweblogHandler {
 
 		@Override
 		public void transferTo(File dest) throws IOException, IllegalStateException {
-			FileUtils.writeByteArrayToFile(dest, bits);
+			Files.write(bits, dest);
 		}
 
 		@Override
@@ -320,7 +316,7 @@ public class MetaweblogHandler {
 	}
 
 	private Map<String, Object> articleToMap(Article art) {
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> map = Maps.newHashMap();
 		map.put("dateCreated", art.getPubDate());
 		map.put("title", art.getTitle());
 		map.put("categories", Arrays.asList(art.getSpace().getName()));

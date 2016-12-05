@@ -15,11 +15,11 @@
  */
 package me.qyh.blog.config;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
@@ -29,7 +29,7 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.BCrypts;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 public final class UserConfig {
 
@@ -60,7 +60,7 @@ public final class UserConfig {
 			pros.setProperty(PASSWORD, BCrypts.encode(user.getPassword()));
 		pros.setProperty(USERNAME, user.getName());
 		pros.setProperty(EMAIL, user.getEmail() == null ? "" : user.getEmail());
-		try (OutputStream os = FileUtils.openOutputStream(userRes.getResource().getFile())) {
+		try (OutputStream os = new FileOutputStream(userRes.getResource().getFile())) {
 			pros.store(os, "");
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);

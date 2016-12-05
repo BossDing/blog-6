@@ -18,22 +18,23 @@ package me.qyh.blog.file.oss;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.io.Files;
+
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
-import me.qyh.blog.file.FileHelper;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.web.controller.Webs;
 
 /**
  * oss文件存储抽象类
@@ -55,10 +56,10 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	@Override
 	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
 		String originalFilename = multipartFile.getOriginalFilename();
-		String extension = FilenameUtils.getExtension(originalFilename);
-		File tmp = FileHelper.temp(extension);
+		String extension = Files.getFileExtension(originalFilename);
+		File tmp = FileUtils.temp(extension);
 		try {
-			multipartFile.transferTo(tmp);
+			Webs.save(multipartFile, tmp);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
@@ -100,7 +101,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			if (backupDir != null) {
 				backup = new File(backupDir, key);
 				FileUtils.forceMkdir(backup.getParentFile());
-				FileUtils.copyFile(tmp, backup);
+				Files.copy(tmp, backup);
 			}
 			upload(key, tmp);
 		} catch (IOException e) {
@@ -114,7 +115,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	protected abstract void upload(String key, File file) throws IOException;
 
 	protected boolean image(String key) {
-		return imageHelper.supportFormat(FilenameUtils.getExtension(key));
+		return imageHelper.supportFormat(Files.getFileExtension(key));
 	}
 
 	@Override

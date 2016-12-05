@@ -24,7 +24,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.BCrypts;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * 密码锁

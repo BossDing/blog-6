@@ -21,12 +21,12 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.util.Validators;
 
 @Component
 public class PageValidator implements Validator {

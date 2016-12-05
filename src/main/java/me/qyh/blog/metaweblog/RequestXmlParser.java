@@ -18,10 +18,8 @@ package me.qyh.blog.metaweblog;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +28,11 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import me.qyh.blog.security.Base64;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * xmlrpc xml解析器
@@ -85,7 +86,7 @@ public class RequestXmlParser {
 		List<?> paramsNodes = root.getChildren("params");
 		if (paramsNodes.size() > 1)
 			throw new ParseException("解析失败，存在多个params节点");
-		List<Object> arguments = new ArrayList<>();
+		List<Object> arguments = Lists.newArrayList();
 		if (!paramsNodes.isEmpty()) {
 			List<?> params = ((Element) paramsNodes.get(0)).getChildren("param");
 			if (!params.isEmpty()) {
@@ -140,7 +141,7 @@ public class RequestXmlParser {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<methodResponse>");
 		sb.append("<fault>");
-		Map<String, String> map = new HashMap<>();
+		Map<String, String> map = Maps.newHashMap();
 		map.put("faultCode", code);
 		map.put("faultString", desc);
 		sb.append(buildVXml(map));
@@ -258,7 +259,7 @@ public class RequestXmlParser {
 			List<?> memberNodes = ve.getChild("struct").getChildren("member");
 			if (CollectionUtils.isEmpty(memberNodes))
 				throw new ParseException("解析失败，struct节点不存在:member节点");
-			Map<String, Object> map = new HashMap<>();
+			Map<String, Object> map = Maps.newHashMap();
 			for (Object memberNode : memberNodes) {
 				Element memberEle = (Element) memberNode;
 				List<?> memberNameNodes = memberEle.getChildren("name");
@@ -277,7 +278,7 @@ public class RequestXmlParser {
 			List<?> dataNodes = ve.getChild("array").getChildren("data");
 			if (dataNodes.size() != 1)
 				throw new ParseException("解析失败，array节点下存在:" + dataNodes.size() + "个data节点");
-			List<Object> results = new ArrayList<>();
+			List<Object> results = Lists.newArrayList();
 			for (Object vNode : ((Element) dataNodes.get(0)).getChildren("value")) {
 				Element dataVe = (Element) vNode;
 				results.add(parseValueElement(dataVe));
@@ -335,7 +336,7 @@ public class RequestXmlParser {
 	}
 
 	final class Struct {
-		private Map<String, Object> data = new HashMap<>();
+		private Map<String, Object> data = Maps.newHashMap();
 
 		Struct(Map<String, Object> data) {
 			this.data = data;
@@ -449,8 +450,8 @@ public class RequestXmlParser {
 		public <T> List<T> getArray(String key, Class<T> t) throws ParseException {
 			List<Object> list = getArray(key);
 			if (list == null)
-				return new ArrayList<>();
-			List<T> rest = new ArrayList<>(list.size());
+				return Lists.newArrayList();
+			List<T> rest = Lists.newArrayList();
 			for (Object o : list) {
 				if (o != null && !t.isInstance(o))
 					throw new ParseException(o.getClass() + "不是" + t.getName() + "类型");

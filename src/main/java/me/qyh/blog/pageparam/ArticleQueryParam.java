@@ -21,8 +21,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.entity.Space;
-import me.qyh.util.Validators;
 
 public class ArticleQueryParam extends PageQueryParam {
 

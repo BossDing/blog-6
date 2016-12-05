@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -13,12 +14,11 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-
+import com.google.common.io.Files;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.util.FileUtils;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.Thumbnails.Builder;
 
@@ -32,18 +32,18 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected void doResize(Resize resize, File src, File dest) throws IOException {
-		String ext = FilenameUtils.getExtension(src.getName());
+		String ext = Files.getFileExtension(src.getName());
 		File todo = src;
 		File tmp = null;
 		try {
 			if (isGIF(ext)) {
 				// 获取封面
-				tmp = FileHelper.temp(PNG);
+				tmp = FileUtils.temp(PNG);
 				doGetGifCover(src, tmp);
 				todo = tmp;
 			}
 			BufferedImage bi = doWithThumbnailator(todo, dest, resize);
-			writeImg(bi, FilenameUtils.getExtension(dest.getName()), dest);
+			writeImg(bi, Files.getFileExtension(dest.getName()), dest);
 		} finally {
 			FileUtils.deleteQuietly(tmp);
 		}
@@ -51,7 +51,7 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected ImageInfo doRead(File file) throws IOException {
-		String ext = FilenameUtils.getExtension(file.getName());
+		String ext = Files.getFileExtension(file.getName());
 		if (isGIF(ext)) {
 			return readGif(file);
 		} else {
@@ -60,7 +60,7 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	private ImageInfo readGif(File file) throws IOException {
-		try (InputStream is = FileHelper.openStream(file)) {
+		try (InputStream is = new FileInputStream(file)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
@@ -71,7 +71,7 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	private ImageInfo readOtherImage(File file) throws IOException {
-		try (InputStream is = FileHelper.openStream(file)) {
+		try (InputStream is = new FileInputStream(file)) {
 			try (ImageInputStream iis = ImageIO.createImageInputStream(is)) {
 				Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
 				while (imageReaders.hasNext()) {
@@ -89,19 +89,19 @@ public class JavaImageHelper extends ImageHelper {
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
 		File png = null;
-		try (InputStream is = FileHelper.openStream(gif)) {
+		try (InputStream is = new FileInputStream(gif)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
 				throw new IOException(gif + "文件无法读取");
 			BufferedImage bi = gd.getFrame(0);
-			png = FileHelper.temp(PNG);
+			png = FileUtils.temp(PNG);
 			writeImg(bi, PNG, png);
-			String destExt = FilenameUtils.getExtension(dest.getName());
+			String destExt = Files.getFileExtension(dest.getName());
 			if (isPNG(destExt))
 				try {
 					FileUtils.deleteQuietly(dest);
-					FileUtils.moveFile(png, dest);
+					Files.move(png, dest);
 					return;
 				} catch (IOException e) {
 					throw new SystemException(e.getMessage(), e);
@@ -121,11 +121,11 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected void doFormat(File src, File dest) throws IOException {
-		String ext = FilenameUtils.getExtension(src.getName());
-		String destExt = FilenameUtils.getExtension(dest.getName());
+		String ext = Files.getFileExtension(src.getName());
+		String destExt = Files.getFileExtension(dest.getName());
 		if (sameFormat(ext, destExt))
 			try {
-				FileUtils.copyFile(src, dest);
+				Files.copy(src, dest);
 			} catch (IOException e) {
 				throw new SystemException(e.getMessage(), e);
 			}
@@ -176,7 +176,7 @@ public class JavaImageHelper extends ImageHelper {
 				resizeHeight = (resize.getHeight() > height) ? height : resize.getHeight();
 			}
 		}
-		String destExt = FilenameUtils.getExtension(dest.getName());
+		String destExt = Files.getFileExtension(dest.getName());
 		Builder<BufferedImage> builder = Thumbnails.of(originalImage);
 		if (!maybeTransparentBg(destExt))
 			// 防止红色背景

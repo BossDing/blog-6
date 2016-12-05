@@ -34,9 +34,9 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.SpaceQueryParamValidator;
 import me.qyh.blog.web.controller.form.SpaceValidator;
-import me.qyh.util.Validators;
 
 @Controller
 @RequestMapping("mgr/space")

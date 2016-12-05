@@ -15,10 +15,11 @@
  */
 package me.qyh.blog.evt;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.ApplicationListener;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.evt.handler.ArticlePublishedHandler;
 
@@ -30,7 +31,7 @@ import me.qyh.blog.evt.handler.ArticlePublishedHandler;
  */
 public class ArticlePublishedEventListener implements ApplicationListener<ArticlePublishedEvent> {
 
-	private List<ArticlePublishedHandler> handlers = new ArrayList<>();
+	private List<ArticlePublishedHandler> handlers = Lists.newArrayList();
 
 	@Override
 	public final void onApplicationEvent(ArticlePublishedEvent event) {

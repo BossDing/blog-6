@@ -17,27 +17,29 @@ package me.qyh.blog.ui.fragment;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
+
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserFragmentValidator;
-import me.qyh.util.Validators;
 
 public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
-	private Map<String, Resource> tplMap = new HashMap<>();
+	private Map<String, Resource> tplMap = Maps.newHashMap();
 
 	@Override
 	public List<Fragment> getObject() throws Exception {
-		List<Fragment> fragments = new ArrayList<>(tplMap.size());
+		List<Fragment> fragments = Lists.newArrayList();
 		for (Map.Entry<String, Resource> it : tplMap.entrySet()) {
 			String tpl = getTpl(it.getValue());
 			if (tpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
@@ -56,8 +58,9 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
 	private String getTpl(Resource resource) throws IOException {
 		String tpl = null;
-		try (InputStream is = resource.getInputStream()) {
-			tpl = IOUtils.toString(is, Constants.CHARSET);
+		try (InputStream is = resource.getInputStream();
+				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
+			tpl = CharStreams.toString(ir);
 		}
 		return tpl;
 	}

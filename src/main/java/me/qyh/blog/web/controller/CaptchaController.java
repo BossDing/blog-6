@@ -18,18 +18,19 @@ package me.qyh.blog.web.controller;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.code.kaptcha.Producer;
+import com.github.cage.Cage;
+import com.github.cage.token.RandomTokenGenerator;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
@@ -37,15 +38,16 @@ import me.qyh.blog.exception.SystemException;
 @Controller
 public class CaptchaController {
 
-	@Autowired
-	private Producer captchaProducer;
+	private static final Random random = new Random(System.nanoTime());
+	private static final Cage cage = new Cage(null, null, null, null, Cage.DEFAULT_COMPRESS_RATIO,
+			new RandomTokenGenerator(random, 4, 2), random);
 
 	@ResponseBody
 	@RequestMapping(value = "/captcha", method = RequestMethod.GET, produces = MediaType.IMAGE_JPEG_VALUE)
 	public byte[] draw(HttpSession session) {
-		String capText = captchaProducer.createText();
+		String capText = cage.getTokenGenerator().next();
 		session.setAttribute(Constants.VALIDATE_CODE_SESSION_KEY, capText);
-		BufferedImage bi = captchaProducer.createImage(capText);
+		BufferedImage bi = cage.drawImage(capText);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
 			ImageIO.write(bi, "jpg", baos);

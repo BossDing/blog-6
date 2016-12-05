@@ -47,32 +47,21 @@
 	<tx:annotation-driven transaction-manager="txManager" />
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="me.qyh.blog.dao,me.qyh.blog.lock.support,me.qyh.blog.comment" />
+		<property name="basePackage"
+			value="me.qyh.blog.dao,me.qyh.blog.lock.support,me.qyh.blog.comment" />
 	</bean>
 
 	<import resource="file.xml" />
-	<context:component-scan base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment" />
+	<context:component-scan
+		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
-	<!-- 验证码服务 -->
-	<bean class="com.google.code.kaptcha.impl.DefaultKaptcha">
-		<property name="config">
-			<bean class="com.google.code.kaptcha.util.Config">
-				<constructor-arg type="java.util.Properties">
-					<props>
-						<prop key="kaptcha.image.width">300</prop>
-						<prop key="kaptcha.image.height">50</prop>
-						<prop key="kaptcha.textproducer.char.length">5</prop>
-					</props>
-				</constructor-arg>
-			</bean>
-		</property>
-	</bean>
 
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager"
-		class="org.springframework.cache.concurrent.ConcurrentMapCacheManager" />
+	<bean id="cacheManager" class="org.springframework.cache.guava.GuavaCacheManager">
+		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m"/>
+	</bean>
 
 	<!-- 锁 -->
 	<bean class="me.qyh.blog.lock.LockManager">
@@ -168,16 +157,7 @@
 	<bean class="me.qyh.blog.comment.DftCommentService">
 		<!-- html内容清理器 -->
 		<property name="htmlClean">
-			<bean class="me.qyh.blog.input.DefaultHtmlClean" />
-		</property>
-		<property name="invalidIpMonitor">
-			<bean class="me.qyh.blog.security.InvalidCountMonitor">
-				<constructor-arg index="0" value="20"/>
-				<constructor-arg index="1" value="5"/>
-				<constructor-arg index="2" value="300"/>
-				<constructor-arg index="3" value="600"/>
-				<constructor-arg index="4" value="600"/>
-			</bean>
+			<bean class="me.qyh.blog.security.input.DefaultHtmlClean" />
 		</property>
 	</bean>
 

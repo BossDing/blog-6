@@ -17,11 +17,14 @@ package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.DigestUtils;
 
+import com.google.common.collect.Lists;
+
+import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
@@ -44,19 +47,21 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 
 	@Override
 	protected List<Comment> buildPreviewData(Attributes attributes) {
-		List<Comment> comments = new ArrayList<Comment>();
+		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
 		comment.setContent("测试内容");
 		comment.setNickname("测试");
 		comment.setEmail("test@test.com");
+		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
 		comment.setAdmin(true);
 		comment.setIp("127.0.0.1");
 		Article article = new Article();
-		article.setId(1);
+		article.setId(-1);
 		article.setTitle("测试文章标题");
 		comment.setArticle(article);
-		comment.setId(1);
+		comment.setId(-1);
+		comment.setStatus(CommentStatus.NORMAL);
 		comments.add(comment);
 		return comments;
 	}

@@ -15,9 +15,7 @@
  */
 package me.qyh.blog.lock;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +23,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * 拓展锁提供器
@@ -40,11 +41,11 @@ public class ExpandedLockProvider implements InitializingBean {
 	private static final int MAX_TYPE_LENGTH = 20;
 	private static final int MAX_NAME_LENGTH = 20;
 
-	private List<Lock> expandedLocks = new ArrayList<>();
+	private List<Lock> expandedLocks = Lists.newArrayList();
 
-	private Map<String, List<Lock>> typesMap = new LinkedHashMap<>();
-	private Map<String, Lock> idsMap = new LinkedHashMap<>();
-	private Map<String, Resource> defaultTplResource = new LinkedHashMap<String, Resource>();
+	private Map<String, List<Lock>> typesMap = Maps.newLinkedHashMap();
+	private Map<String, Lock> idsMap = Maps.newLinkedHashMap();
+	private Map<String, Resource> defaultTplResource = Maps.newLinkedHashMap();
 
 	/**
 	 * 根据id查询对应的锁
@@ -67,7 +68,7 @@ public class ExpandedLockProvider implements InitializingBean {
 				String type = lock.getLockType().trim();
 				List<Lock> types = typesMap.get(type);
 				if (types == null)
-					types = new ArrayList<>();
+					types = Lists.newArrayList();
 				types.add(lock);
 				typesMap.put(type, types);
 			}
@@ -121,7 +122,7 @@ public class ExpandedLockProvider implements InitializingBean {
 	 * @return 所有的锁
 	 */
 	public List<Lock> allLock() {
-		return Collections.unmodifiableList(new ArrayList<>(idsMap.values()));
+		return Collections.unmodifiableList(Lists.newArrayList(idsMap.values()));
 	}
 
 	/**

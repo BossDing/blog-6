@@ -20,8 +20,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserValidator;
-import me.qyh.util.Validators;
 
 @Component
 public class CommentValidator implements Validator {

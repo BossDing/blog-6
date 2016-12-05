@@ -17,13 +17,10 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,16 +29,20 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
+
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.DefaultResizeValidator;
-import me.qyh.blog.file.FileHelper;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.web.controller.Webs;
 
 /**
  * 本地图片存储，图片访问
@@ -52,7 +53,7 @@ import me.qyh.blog.file.ThumbnailUrl;
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
 	private static final Logger imageResourceStoreLogger = LoggerFactory.getLogger(ImageResourceStore.class);
-	private static final Set<String> errorThumbPaths = new HashSet<>();// 当缩略图制作失败时存放路径，防止下次再次读取
+	private static final Set<String> errorThumbPaths = Sets.newHashSet();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
 	private static final String JPEG_EXT = ".jpeg";
@@ -87,9 +88,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		checkFileStoreable(dest);
 		// 先写入临时文件
 		String originalFilename = mf.getOriginalFilename();
-		File tmp = FileHelper.temp(FilenameUtils.getExtension(originalFilename));
+		File tmp = FileUtils.temp(Files.getFileExtension(originalFilename));
 		try {
-			mf.transferTo(tmp);
+			Webs.save(mf, tmp);
 		} catch (IOException e1) {
 			throw new SystemException(e1.getMessage(), e1);
 		}
@@ -97,13 +98,13 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		ImageInfo ii = readImage(tmp);
 		String extension = ii.getExtension();
 		if (ImageHelper.isWEBP(extension)) {
-			finalFile = FileHelper.temp(ImageHelper.JPEG);
+			finalFile = FileUtils.temp(ImageHelper.JPEG);
 			webpFormat(tmp, finalFile);
 			extension = ImageHelper.JPEG;
 		}
 		try {
 			FileUtils.forceMkdir(dest.getParentFile());
-			FileUtils.moveFile(finalFile, dest);
+			Files.move(finalFile, dest);
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
 			cf.setSize(mf.getSize());
@@ -158,7 +159,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		// 从链接中获取缩放信息
 		Resize resize = getResizeFromPath(path);
 		if (sourceProtected && resize == null) {
-			String ext = FilenameUtils.getExtension(path);
+			String ext = Files.getFileExtension(path);
 			// 如果是GIF图片,直接输出原图
 			if (!ImageHelper.isGIF(ext)) {
 				return null;
@@ -166,7 +167,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 		boolean detectSupportWebp = supportWebp(request);
 		if (resize != null) {
-			String ext = FilenameUtils.getExtension(getSourcePathByResizePath(path));
+			String ext = Files.getFileExtension(getSourcePathByResizePath(path));
 			String thumbPath = path + (detectSupportWebp ? WEBP_EXT
 					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
 			// 缩略图是否已经存在
@@ -181,12 +182,11 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				// 如果原图存在，进行缩放
 				if (errorThumbPaths.contains(thumbPath))
 					return detectSupportWebp ? null : new PathResource(local.toPath());
-				if (imageHelper.supportFormat(FilenameUtils.getExtension(local.getName()))) {
+				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))) {
 					synchronized (this) {
 						File check = findThumbByPath(thumbPath);
-						if (check.exists()) {
+						if (check.exists())
 							return new PathResource(check.toPath());
-						}
 						try {
 							return new PathResource(doResize(local, resize, check, sourcePath).toPath());
 						} catch (IOException e) {
@@ -226,13 +226,13 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		return imageHelper.supportFormat(FilenameUtils.getExtension(multipartFile.getOriginalFilename()));
+		return imageHelper.supportFormat(Files.getFileExtension(multipartFile.getOriginalFilename()));
 	}
 
 	@Override
 	public String getUrl(String key) {
 		if (sourceProtected) {
-			if (ImageHelper.isGIF(FilenameUtils.getExtension(key))) {
+			if (ImageHelper.isGIF(Files.getFileExtension(key))) {
 				return super.getUrl(key);
 			}
 			Resize resize = largeResize == null ? (middleResize == null ? smallResize : middleResize) : largeResize;
@@ -264,11 +264,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			throw new SystemException("缩略图存储路径不能为null");
 		}
 		thumbAbsFolder = new File(thumbAbsPath);
-		try {
-			FileUtils.forceMkdir(thumbAbsFolder);
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+		FileUtils.forceMkdir(thumbAbsFolder);
 
 		if (resizeValidator == null) {
 			resizeValidator = new DefaultResizeValidator();
@@ -295,32 +291,24 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private File findThumbByPath(String path) {
 		String southPath = getSourcePathByResizePath(path);
 		File thumbDir = new File(thumbAbsFolder, southPath);
-		String name = FilenameUtils.getName(path);
+		String name = new File(path).getName();
 		return new File(thumbDir, name);
 	}
 
 	protected File doResize(File local, Resize resize, File thumb, String key) throws IOException {
 		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
-		String ext = FilenameUtils.getExtension(local.getName());
-		File cover = new File(thumbAbsFolder, key + File.separator + FilenameUtils.getBaseName(key)
+		String ext = Files.getFileExtension(local.getName());
+		File cover = new File(thumbAbsFolder, key + File.separator + Files.getNameWithoutExtension(key)
 				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
 		if (!cover.exists()) {
-			try {
-				FileUtils.forceMkdir(cover.getParentFile());
-			} catch (IOException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-			if (ImageHelper.isGIF(FilenameUtils.getExtension(local.getName()))) {
+			FileUtils.forceMkdir(cover.getParentFile());
+			if (ImageHelper.isGIF(Files.getFileExtension(local.getName()))) {
 				imageHelper.getGifCover(local, cover);
 			} else {
 				imageHelper.format(local, cover);
 			}
 		}
-		try {
-			FileUtils.forceMkdir(thumb.getParentFile());
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+		FileUtils.forceMkdir(thumb.getParentFile());
 		// 基于封面缩放
 		imageHelper.resize(resize, cover, thumb);
 		return thumb;
@@ -348,12 +336,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected Resize getResizeFromPath(String path) {
-		String extension = FilenameUtils.getExtension(path);
+		String extension = Files.getFileExtension(path);
 		if (extension != null && !extension.isEmpty()) {
 			return null;
 		}
 		Resize resize = null;
-		String baseName = FilenameUtils.getBaseName(path);
+		String baseName = Files.getNameWithoutExtension(path);
 		try {
 			if (baseName.indexOf(CONCAT_CHAR) != -1) {
 				boolean keepRatio = true;
@@ -420,7 +408,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 */
 	private boolean inThumbDir(File dest) {
 		try {
-			return FileUtils.directoryContains(thumbAbsFolder, dest);
+			String canonicalP = thumbAbsFolder.getCanonicalPath();
+			String canonicalC = dest.getCanonicalPath();
+			return canonicalP.equals(canonicalC)
+					|| canonicalC.regionMatches(false, 0, canonicalP, 0, canonicalP.length());
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}

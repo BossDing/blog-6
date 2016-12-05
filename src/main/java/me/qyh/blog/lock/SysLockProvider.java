@@ -35,7 +35,7 @@ import me.qyh.blog.lock.support.SysLock;
 import me.qyh.blog.lock.support.SysLock.SysLockType;
 import me.qyh.blog.lock.support.SysLockDao;
 import me.qyh.blog.security.BCrypts;
-import me.qyh.util.UUIDs;
+import me.qyh.blog.util.UUIDs;
 
 /**
  * 系统锁管理

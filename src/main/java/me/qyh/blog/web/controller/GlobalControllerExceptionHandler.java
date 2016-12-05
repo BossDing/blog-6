@@ -16,12 +16,12 @@
 package me.qyh.blog.web.controller;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
@@ -63,7 +63,7 @@ import me.qyh.blog.metaweblog.FaultException;
 import me.qyh.blog.metaweblog.RequestXmlParser;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
-import me.qyh.util.UrlUtils;
+import me.qyh.blog.util.UrlUtils;
 
 /**
  * 无法处理页面渲染时的异常。
@@ -103,7 +103,8 @@ public class GlobalControllerExceptionHandler {
 		byte[] bits = RequestXmlParser.getParser().createFailXml(ex.getCode(), messages.getMessage(ex.getDesc()))
 				.getBytes();
 		resp.setContentLength(bits.length);
-		IOUtils.write(bits, resp.getOutputStream());
+		OutputStream os = resp.getOutputStream();
+		os.write(bits);
 		resp.flushBuffer();
 		return null;
 	}

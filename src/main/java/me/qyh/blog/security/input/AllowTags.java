@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.input;
+package me.qyh.blog.security.input;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import me.qyh.util.Validators;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -28,7 +30,7 @@ import me.qyh.util.Validators;
 public class AllowTags {
 
 	private String simpleTags;
-	private List<Tag> tags = new ArrayList<>();
+	private List<Tag> tags = Lists.newArrayList();
 
 	public void setSimpleTags(String simpleTags) {
 		this.simpleTags = simpleTags;
@@ -36,8 +38,7 @@ public class AllowTags {
 
 	public List<Tag> getTags() {
 		if (!Validators.isEmptyOrNull(simpleTags, true)) {
-			String[] names = this.simpleTags.split(",");
-			for (String name : names) {
+			for (String name : Splitter.on(',').split(simpleTags)) {
 				if (name.isEmpty()) {
 					continue;
 				}

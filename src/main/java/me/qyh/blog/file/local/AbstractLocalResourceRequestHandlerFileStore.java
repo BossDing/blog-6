@@ -22,8 +22,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +33,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
+import com.google.common.io.Files;
+
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.ThumbnailUrl;
-import me.qyh.util.UrlUtils;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.controller.Webs;
 
 /**
  * 将资源存储和资源访问结合起来
@@ -86,12 +88,12 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		String originalFilename = mf.getOriginalFilename();
 		try {
 			FileUtils.forceMkdir(dest.getParentFile());
-			mf.transferTo(dest);
+			Webs.save(mf, dest);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
 		CommonFile cf = new CommonFile();
-		cf.setExtension(FilenameUtils.getExtension(originalFilename));
+		cf.setExtension(Files.getFileExtension(originalFilename));
 		cf.setSize(mf.getSize());
 		cf.setStore(id);
 		cf.setOriginalFilename(originalFilename);
@@ -263,7 +265,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			response.setHeader("Content-Disposition",
 					"attachment; filename=" + new String(file.getName().getBytes(Constants.CHARSET), "iso-8859-1"));
 			try {
-				FileUtils.copyFile(file, response.getOutputStream());
+				Files.copy(file, response.getOutputStream());
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 			}

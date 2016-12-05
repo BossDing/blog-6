@@ -17,9 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.ExpandedCommonFile;
@@ -54,8 +56,8 @@ import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
-import me.qyh.util.Validators;
 
 /**
  * {@link http://mikehillyer.com/articles/managing-hierarchical-data-in-mysql}
@@ -122,7 +124,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		synchronized (this) {
 			deleteImmediatelyIfNeed(folderKey);
 		}
-		List<UploadedFile> uploadedFiles = new ArrayList<>();
+		List<UploadedFile> uploadedFiles = Lists.newArrayList();
 		for (MultipartFile file : upload.getFiles()) {
 			try {
 				UploadedFile uf = storeMultipartFile(file, parent, folderKey, fs);
@@ -174,7 +176,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private void deleteImmediatelyIfNeed(String key) throws LogicException {
 		if (key.isEmpty())
 			return;
-		String rootKey = key.split(SPLIT_CHAR)[0];
+		String rootKey = Splitter.on(SPLIT_CHAR).split(key).iterator().next();
 		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
 		if (children.isEmpty())
 			return;
@@ -261,9 +263,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
 				return createFolder(root, path);
 			} else {
-				String[] pathArray = path.split(FileService.SPLIT_CHAR);
 				BlogFile parent = root;
-				for (String _path : pathArray)
+				for (String _path : Splitter.on(SPLIT_CHAR).split(path))
 					parent = createFolder(parent, _path);
 				return parent;
 			}
@@ -328,7 +329,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (file == null) {
 			throw new LogicException(NOT_EXISTS);
 		}
-		Map<String, Object> proMap = new HashMap<>();
+		Map<String, Object> proMap = Maps.newHashMap();
 		if (file.isDir()) {
 			proMap.put("counts", blogFileDao.selectSubBlogFileCount(file));
 			proMap.put("totalSize", blogFileDao.selectSubBlogFileSize(file));

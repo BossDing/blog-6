@@ -40,8 +40,8 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.QALock;
 import me.qyh.blog.lock.support.SysLock;
-import me.qyh.util.Jsons;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Validators;
 
 /**
  * 锁属性赋值器
@@ -171,7 +171,6 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 				errors.reject("lock.answers.toolong", "答案不能超过" + MAX_ANSWERS_LENGTH + "个字符");
 				return;
 			}
-
 			String[] answerArray = answers.split(",");
 			if (answerArray.length > MAX_ANSWERS_SIZE) {
 				errors.reject("lock.answers.oversize", "答案不能超过" + MAX_ANSWERS_SIZE + "个");

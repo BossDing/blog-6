@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * 用于基本的路径配置<br>
@@ -109,5 +109,4 @@ public class UrlConfig implements InitializingBean {
 			contextPath = "/" + contextPath;
 		}
 	}
-
 }

@@ -15,10 +15,10 @@
  */
 package me.qyh.blog.bean;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageListSerializer;
@@ -32,7 +32,7 @@ public class ImportSuccess {
 
 	private int index;
 	@JsonSerialize(using = MessageListSerializer.class)
-	private List<Message> warnings = new ArrayList<>();
+	private List<Message> warnings = Lists.newArrayList();
 
 	/**
 	 * default

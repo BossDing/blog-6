@@ -15,11 +15,11 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -27,8 +27,8 @@ import me.qyh.blog.ui.page.Page;
 
 public class RenderedPage {
 	private Page page;
-	private List<DataBind<?>> binds = new ArrayList<>();
-	private Map<String, Fragment> fragmentMap = new LinkedHashMap<>();
+	private List<DataBind<?>> binds = Lists.newArrayList();
+	private Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
 
 	public RenderedPage(Page page, List<DataBind<?>> binds, Map<String, Fragment> fragmentMap) {
 		this.page = page;
@@ -37,7 +37,7 @@ public class RenderedPage {
 	}
 
 	public Map<String, Object> getDatas() {
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> map = Maps.newHashMap();
 		for (DataBind<?> bind : binds) {
 			map.put(bind.getDataName(), bind.getData());
 		}

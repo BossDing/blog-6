@@ -25,8 +25,6 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
@@ -36,10 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
+import com.google.common.io.Files;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Validators;
 
 /**
  * 图片处理类，基于{@link http://www.graphicsmagick.org/}，可以用来处理PNG,JPEG,GIF,WEBP等多种格式
@@ -79,8 +79,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		IMOperation op = new IMOperation();
 		op.addImage();
 		setResize(resize, op);
-		String ext = FilenameUtils.getExtension(dest.getName());
-		String srcExt = FilenameUtils.getExtension(src.getName());
+		String ext = Files.getFileExtension(dest.getName());
+		String srcExt = Files.getFileExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
 			setWhiteBg(op);
 		op.strip();
@@ -139,8 +139,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
-		String ext = FilenameUtils.getExtension(dest.getName());
-		File png = FileHelper.temp(PNG);
+		String ext = Files.getFileExtension(dest.getName());
+		File png = FileUtils.temp(PNG);
 		try {
 			IMOperation op = new IMOperation();
 			op.addImage();
@@ -152,6 +152,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			logger.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
 			getGifCoverUseJava(gif, png);
 		}
+		if (Files.getFileExtension(dest.getName()).equalsIgnoreCase(PNG))
+			return;
 		// png to dest
 		IMOperation op = new IMOperation();
 		op.addImage();
@@ -165,8 +167,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		} catch (Exception e1) {
 			throw new SystemException(e1.getMessage(), e1);
 		} finally {
-			if (png != null && png.exists() && !FileUtils.deleteQuietly(png))
-				png.deleteOnExit();
+			if (png != null && png.exists())
+				FileUtils.deleteQuietly(png);
 		}
 	}
 
@@ -174,8 +176,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	protected void doFormat(File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
-		String ext = FilenameUtils.getExtension(dest.getName());
-		String srcExt = FilenameUtils.getExtension(src.getName());
+		String ext = Files.getFileExtension(dest.getName());
+		String srcExt = Files.getFileExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
 			setWhiteBg(op);
 		op.strip();
@@ -210,7 +212,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	private boolean interlace(File dest) {
 		if (!doInterlace)
 			return false;
-		String ext = FilenameUtils.getExtension(dest.getName());
+		String ext = Files.getFileExtension(dest.getName());
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 

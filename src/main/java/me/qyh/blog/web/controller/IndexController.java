@@ -17,7 +17,6 @@ package me.qyh.blog.web.controller;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
@@ -79,7 +80,7 @@ public class IndexController {
 		if (pjax) {
 			Page page = new Page();
 			page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), null));
-			Map<String, Fragment> frMap = new HashMap<>();
+			Map<String, Fragment> frMap = Maps.newHashMap();
 			frMap.put(fr.getName(), fr);
 			RenderedPage rp = new RenderedPage(page, result == null ? Collections.emptyList() : Arrays.asList(result),
 					frMap);
@@ -103,7 +104,7 @@ public class IndexController {
 			return new JsonResult(true);
 		Page page = new Page();
 		page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), allRequestParams));
-		Map<String, Fragment> frMap = new HashMap<>();
+		Map<String, Fragment> frMap = Maps.newHashMap();
 		frMap.put(fr.getName(), fr);
 		RenderedPage rp = new RenderedPage(page, Collections.emptyList(), frMap);
 		try {

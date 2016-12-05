@@ -13,45 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.input;
+package me.qyh.blog.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 /**
  * 
  * @author Administrator
  *
  */
-public class Tag {
+public class UUIDs {
 
-	private String name;
-	private List<Attribute> attributes = new ArrayList<>();
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<Attribute> getAttributes() {
-		return attributes;
-	}
-
-	public void setAttributes(List<Attribute> attributes) {
-		this.attributes = attributes;
+	/**
+	 * private
+	 */
+	private UUIDs() {
+		super();
 	}
 
 	/**
-	 * 添加属性
+	 * 获取uuid字符串
 	 * 
-	 * @param att
-	 *            属性
+	 * @return uuid
 	 */
-	public void addAttribute(Attribute att) {
-		this.attributes.add(att);
+	public static String uuid() {
+		return UUID.randomUUID().toString().replace("-", "");
 	}
 
 }

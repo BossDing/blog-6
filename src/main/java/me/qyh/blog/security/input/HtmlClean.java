@@ -13,31 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.util;
-
-import java.util.UUID;
+package me.qyh.blog.security.input;
 
 /**
+ * html文本清理
  * 
  * @author Administrator
  *
  */
-public class UUIDs {
+public interface HtmlClean {
 
 	/**
-	 * private
-	 */
-	private UUIDs() {
-		super();
-	}
-
-	/**
-	 * 获取uuid字符串
+	 * 清理文本
 	 * 
-	 * @return uuid
+	 * @param html
+	 *            待清理的html文本
+	 * @return 清理后的html文本
 	 */
-	public static String uuid() {
-		return UUID.randomUUID().toString().replace("-", "");
-	}
+	String clean(String html);
 
 }

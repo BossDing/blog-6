@@ -20,7 +20,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class UserFragmentQueryParamValidator implements Validator {

@@ -15,14 +15,15 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 
 public class Params {
 
-	private Map<String, Object> datas = new HashMap<>();
+	private Map<String, Object> datas = Maps.newHashMap();
 
 	public Params add(String key, Object data) {
 		datas.put(key, data);

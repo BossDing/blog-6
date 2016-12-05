@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.mail.internet.MimeMessage;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.config.UserConfig;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Validators;
 
 /**
  * 邮件发送服务

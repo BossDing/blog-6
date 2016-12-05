@@ -18,7 +18,7 @@ package me.qyh.blog.file;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FilenameUtils;
+import com.google.common.io.Files;
 
 /**
  * 图片辅助类，用来处理图片格式的转化，缩放以及图片的读取
@@ -236,7 +236,7 @@ public abstract class ImageHelper {
 	}
 
 	private void formatCheck(File file) throws IOException {
-		String extension = FilenameUtils.getExtension(file.getName());
+		String extension = Files.getFileExtension(file.getName());
 		if (!supportFormat(extension))
 			throw new IOException("文件格式" + extension + "不被支持");
 	}

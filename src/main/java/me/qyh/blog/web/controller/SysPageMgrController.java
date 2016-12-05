@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +22,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FilenameUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,6 +39,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
+
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Space;
@@ -54,8 +55,8 @@ import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
+import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.PageValidator;
 
@@ -147,8 +148,8 @@ public class SysPageMgrController extends BaseMgrController {
 	 */
 	@RequestMapping(value = "getStyles", method = RequestMethod.GET)
 	@ResponseBody
-	public JsonResult getStyles(@RequestParam("id") Integer id, HttpServletRequest request, HttpServletResponse response)
-			throws LogicException {
+	public JsonResult getStyles(@RequestParam("id") Integer id, HttpServletRequest request,
+			HttpServletResponse response) throws LogicException {
 		RenderedPage page = uiService.renderPreviewPage(new Space(id), PageTarget.ARTICLE_DETAIL);
 		try {
 			String rendered = tplRender.tryRender(page, request, response);
@@ -158,7 +159,7 @@ public class SysPageMgrController extends BaseMgrController {
 			if (!eles.isEmpty()) {
 				style = eles.first().data();
 			}
-			Set<String> csses = new LinkedHashSet<String>();
+			Set<String> csses = Sets.newLinkedHashSet();
 			Elements imports = doc.select("link[href]");
 			for (Element ele : imports) {
 				String link = ele.attr("href");
@@ -166,7 +167,7 @@ public class SysPageMgrController extends BaseMgrController {
 					csses.add(link);
 				}
 			}
-			Map<String, Object> resultMap = new HashMap<>();
+			Map<String, Object> resultMap = Maps.newHashMap();
 			resultMap.put("csses", csses);
 			if (style != null)
 				resultMap.put("style", style.trim());
@@ -177,7 +178,7 @@ public class SysPageMgrController extends BaseMgrController {
 	}
 
 	private static boolean isCss(String link) {
-		String ext = FilenameUtils.getExtension(link);
+		String ext = Files.getFileExtension(link);
 		if (ext.equalsIgnoreCase("css")) {
 			return true;
 		} else {

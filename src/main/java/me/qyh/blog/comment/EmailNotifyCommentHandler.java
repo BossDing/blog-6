@@ -19,15 +19,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +38,9 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.CharStreams;
+
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.SystemException;
@@ -47,6 +48,7 @@ import me.qyh.blog.mail.MailSender;
 import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.util.FileUtils;
 
 /**
  * 用来向管理员发送评论|回复通知邮件
@@ -61,7 +63,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 
 	private static final Logger logger = LoggerFactory.getLogger(EmailNotifyCommentHandler.class);
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
-	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
+	private List<Comment> toSend = Collections.synchronizedList(Lists.newArrayList());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
 	private Resource mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
 	private String mailTemplate;
@@ -107,7 +109,7 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	public void shutdown() {
 		if (!toSend.isEmpty()) {
 			try {
-				SerializationUtils.serialize(new ArrayList<>(toSend), new FileOutputStream(toSendSdfile));
+				SerializationUtils.serialize(Lists.newArrayList(toSend), new FileOutputStream(toSendSdfile));
 			} catch (Exception e) {
 				logger.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
 			}
@@ -147,8 +149,9 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}
-		try (InputStream is = mailTemplateResource.getInputStream()) {
-			mailTemplate = IOUtils.toString(is, Constants.CHARSET);
+		try (InputStream is = mailTemplateResource.getInputStream();
+				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
+			mailTemplate = CharStreams.toString(ir);
 		}
 		if (messageProcessPeriodSec <= 0)
 			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;

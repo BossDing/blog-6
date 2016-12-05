@@ -16,7 +16,6 @@
 package me.qyh.blog.ui;
 
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.thymeleaf.context.IEngineContext;
@@ -29,6 +28,8 @@ import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.ui.fragment.Fragment;
 
@@ -127,7 +128,7 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 	}
 
 	protected class Attributes {
-		private Map<String, String> map = new HashMap<>();
+		private Map<String, String> map = Maps.newHashMap();
 
 		public String get(String key) {
 			return map.get(key);

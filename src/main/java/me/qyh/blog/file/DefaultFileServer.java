@@ -15,15 +15,16 @@
  */
 package me.qyh.blog.file;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -40,7 +41,7 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	private int id;
 	private String name;
 	protected List<T> stores;// 注意顺序
-	private Map<Integer, T> storeMap = new HashMap<>();
+	private Map<Integer, T> storeMap = Maps.newHashMap();
 
 	@Override
 	public CommonFile store(String key, MultipartFile file) throws LogicException {
@@ -78,7 +79,7 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 
 	@Override
 	public List<FileStore> allStore() {
-		List<FileStore> results = new ArrayList<>();
+		List<FileStore> results = Lists.newArrayList();
 		for (T t : this.stores)
 			results.add(t);
 		return Collections.unmodifiableList(results);

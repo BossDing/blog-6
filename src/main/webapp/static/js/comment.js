@@ -37,6 +37,13 @@ function getCommentFormHtml() {
 		html += '<input type="email" class="form-control"  placeholder="" value="'
 				+ user.email + '" id="comment-email">';
 		html += '</div>';
+		html += '<div class="form-group">';
+		html += '<label for="captcha">验证码</label>';
+		html += '<div style="margin-bottom: 10px">';
+		html += '<img src="'+rootPath+'/captcha" class="img-responsive" id="comment-validateImg" />';
+		html += '</div>';
+		html += '<input type="text" class="form-control" id="comment-validateCode" placeholder="验证码">';
+		html += '</div>';
 	}
 	html += '<div class="form-group">';
 	html += '  <label >评论内容(必填)</label>';
@@ -62,6 +69,13 @@ function getReplyFormHtml() {
 		reply_html += '<input type="email" class="form-control"  value="'
 				+ user.email + '" placeholder="" id="reply-email">';
 		reply_html += '</div>';
+		reply_html += '<div class="form-group">';
+		reply_html += '<label for="captcha">验证码</label>';
+		reply_html += '<div style="margin-bottom: 10px">';
+		reply_html += '<img src="'+rootPath+'/captcha?time='+$.now()+'" class="img-responsive" id="reply-validateImg" />';
+		reply_html += '</div>';
+		reply_html += '<input type="text" class="form-control" id="reply-validateCode" placeholder="验证码">';
+		reply_html += '</div>';
 	}
 	reply_html += '<div class="form-group">';
 	reply_html += '  <label >评论内容(必填)</label>';
@@ -80,11 +94,12 @@ $(document).ready(
 						if (flag) {
 							return;
 						}
+						var validateCode = $("#comment-validateCode").length>0?$("#comment-validateCode").val():""
 						flag = true;
 						$.ajax({
 							type : "post",
 							url : actPath + "/article/" + $("#articleId").val()
-									+ "/addComment",
+									+ "/addComment?validateCode="+validateCode,
 							data : JSON.stringify({
 								"content" : $('#comment-content').val(),
 								"email" : $("#comment-email").val(),
@@ -103,13 +118,18 @@ $(document).ready(
 												$("#comment-email").val());
 									}
 									storeUserinfo($("#comment-nickname").val(),
-											$("#comment-email").val(), '')
+											$("#comment-email").val(), '');
+									if($("#comment-validateCode").length>0)
+										$("#comment-validateCode").val("");
 								} else {
 									bootbox.alert(data.message);
 								}
 							},
 							complete : function() {
 								flag = false;
+								if($("#comment-validateCode").length>0){
+									$("#comment-validateImg").attr('src',rootPath+'/captcha?time='+$.now())
+								}
 							}
 						});
 					})
@@ -138,9 +158,21 @@ function queryComments(page) {
 		}
 	});
 }
+$(document).on("click", "#comment-validateImg", function (e) {
+	$(this).attr('src',rootPath+'/captcha?time='+$.now());
+});
+$(document).on("click", "#reply-validateImg", function (e) {
+	$(this).attr('src',rootPath+'/captcha?time='+$.now());
+});
+$(document).on("hide.bs.modal", ".bootbox.modal", function (e) {
+	if($("#comment-validateCode").length>0 && $("#reply-validateCode").length>0){
+		$("#comment-validateImg").attr('src',rootPath+'/captcha?time='+$.now())
+	}
+});
 function toReply(parent) {
 	bootbox.dialog({
 		title : '回复一个评论',
+		id:"12321",
 		message : getReplyFormHtml(),
 		buttons : {
 			success : {
@@ -160,10 +192,11 @@ function toReply(parent) {
 					$("#reply-tip").html('')
 					flag = true;
 					var sign = false;
+					var validateCode = $("#reply-validateCode").length>0?$("#reply-validateCode").val():""
 					$.ajax({
 						type : "post",
 						url : actPath + "/article/" + $("#articleId").val()
-								+ "/addComment",
+								+ "/addComment?validateCode="+validateCode,
 						data : JSON.stringify(data),
 						async : false,
 						dataType : "json",
@@ -184,6 +217,15 @@ function toReply(parent) {
 							flag = false;
 						}
 					});
+					if(sign){
+						if($("#comment-validateCode").length>0){
+							$("#comment-validateImg").attr('src',rootPath+'/captcha?time='+$.now())
+						}
+					}else{
+						if($("#reply-validateCode").length>0){
+							$("#reply-validateImg").attr('src',rootPath+'/captcha?time='+$.now())
+						}
+					}
 					return sign;
 				}
 			}

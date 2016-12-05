@@ -16,7 +16,6 @@
 package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -24,6 +23,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.BaseEntity;
@@ -47,9 +48,9 @@ public class Comment extends BaseEntity {
 	private String content;
 	@JsonIgnore
 	private Article article;// 文章
-	private List<Integer> parents = new ArrayList<>();
+	private List<Integer> parents = Lists.newArrayList();
 	private Timestamp commentDate;
-	private List<Comment> children = new ArrayList<>();
+	private List<Comment> children = Lists.newArrayList();
 	private CommentStatus status;
 
 	private String website;
@@ -94,8 +95,7 @@ public class Comment extends BaseEntity {
 
 	public void setParentPath(String parentPath) {
 		if (!"/".equals(parentPath)) {
-			String[] parentArray = parentPath.split("/");
-			for (String p : parentArray) {
+			for (String p : Splitter.on('/').split(parentPath)) {
 				if (!p.isEmpty()) {
 					this.parents.add(Integer.parseInt(p));
 				}

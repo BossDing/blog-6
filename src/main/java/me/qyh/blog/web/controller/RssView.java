@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.view.feed.AbstractRssFeedView;
 
+import com.google.common.collect.Lists;
 import com.sun.syndication.feed.rss.Channel;
 import com.sun.syndication.feed.rss.Content;
 import com.sun.syndication.feed.rss.Item;
@@ -48,7 +48,7 @@ public class RssView extends AbstractRssFeedView {
 			HttpServletResponse response) throws Exception {
 		@SuppressWarnings("unchecked")
 		PageResult<Article> page = (PageResult<Article>) model.get("page");
-		List<Item> items = new ArrayList<Item>();
+		List<Item> items = Lists.newArrayList();
 		if (page.hasResult()) {
 			for (Article article : page.getDatas()) {
 				Item item = new Item();

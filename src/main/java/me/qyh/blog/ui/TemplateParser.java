@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.jsoup.Jsoup;
@@ -27,6 +25,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.data.DataBind;
@@ -88,7 +89,7 @@ public final class TemplateParser {
 		Document doc = Jsoup.parse(tpl);
 		clean(doc);
 		Elements dataEles = doc.getElementsByTag(DATA_TAG);
-		Map<DataTag, DataBind<?>> cache = new LinkedHashMap<DataTag, DataBind<?>>();
+		Map<DataTag, DataBind<?>> cache = Maps.newLinkedHashMap();
 		for (Element dataEle : dataEles) {
 			String name = dataEle.attr(NAME_ATTR);
 			DataTag tag = new DataTag(name);
@@ -118,7 +119,7 @@ public final class TemplateParser {
 				result.putFragment(name, fragment);
 			}
 		}
-		result.setBinds(new ArrayList<>(cache.values()));
+		result.setBinds(Lists.newArrayList(cache.values()));
 		return result;
 	}
 

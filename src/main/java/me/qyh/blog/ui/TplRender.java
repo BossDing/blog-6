@@ -17,7 +17,6 @@ package me.qyh.blog.ui;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
+
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -56,7 +57,7 @@ public class TplRender {
 			Map<String, Object> datas) throws TplRenderException {
 		// 清除模板缓存
 		try {
-			Map<String, Object> templateDatas = new HashMap<>();
+			Map<String, Object> templateDatas = Maps.newHashMap();
 			if (datas != null)
 				templateDatas.putAll(datas);
 			templateDatas.putAll(uiExposeHelper.getHelpers(request));

@@ -21,7 +21,7 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.service.FileService;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class UploadConfigValidator implements Validator {

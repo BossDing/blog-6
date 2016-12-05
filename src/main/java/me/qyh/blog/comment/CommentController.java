@@ -16,6 +16,7 @@
 package me.qyh.blog.comment;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -26,11 +27,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.message.Message;
+import me.qyh.blog.security.UserContext;
 import me.qyh.blog.web.controller.BaseController;
 import me.qyh.blog.web.controller.Webs;
 
@@ -55,8 +59,14 @@ public class CommentController extends BaseController {
 
 	@RequestMapping(value = "space/{alias}/article/{id}/addComment", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult addComment(@RequestBody @Validated Comment comment, @PathVariable("id") Integer articleId,
-			HttpServletRequest req) throws LogicException {
+	public JsonResult addComment(@RequestParam(value = "validateCode", required = false) String validateCode,
+			@RequestBody @Validated Comment comment, @PathVariable("id") Integer articleId, HttpServletRequest req)
+			throws LogicException {
+		if (UserContext.get() == null) {
+			HttpSession session = req.getSession(false);
+			if (!Webs.matchValidateCode(validateCode, session))
+				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		}
 		comment.setArticle(new Article(articleId));
 		comment.setIp(Webs.getIp(req));
 		return new JsonResult(true, commentService.insertComment(comment));

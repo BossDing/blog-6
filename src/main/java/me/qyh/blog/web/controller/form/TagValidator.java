@@ -22,7 +22,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.entity.Tag;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class TagValidator implements Validator {

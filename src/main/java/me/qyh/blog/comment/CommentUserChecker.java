@@ -18,7 +18,7 @@ package me.qyh.blog.comment;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 public abstract class CommentUserChecker {
 

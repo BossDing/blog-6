@@ -20,15 +20,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
+
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -56,9 +58,8 @@ public class TagsTypeHandler extends BaseTypeHandler<Set<Tag>> {
 		if (Validators.isEmptyOrNull(str, true)) {
 			return Collections.emptySet();
 		}
-		String[] tagArray = str.split(",");
-		Set<Tag> tags = new LinkedHashSet<Tag>();
-		for (String tagStr : tagArray) {
+		Set<Tag> tags = Sets.newLinkedHashSet();
+		for (String tagStr : Splitter.on(',').split(str)) {
 			Tag tag = new Tag();
 			tag.setName(tagStr);
 			tags.add(tag);

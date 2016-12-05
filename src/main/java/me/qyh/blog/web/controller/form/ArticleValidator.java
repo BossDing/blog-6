@@ -34,7 +34,7 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class ArticleValidator implements Validator {

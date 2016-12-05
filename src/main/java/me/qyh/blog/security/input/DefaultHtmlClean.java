@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.input;
+package me.qyh.blog.security.input;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -27,14 +26,18 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.common.base.Splitter;
+import com.google.common.io.CharStreams;
+
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
-import me.qyh.util.Jsons;
-import me.qyh.util.UrlUtils;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -87,8 +90,9 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (tags == null && (whitelistJsonResource != null)) {
-			try (InputStream is = whitelistJsonResource.getInputStream()) {
-				tags = Jsons.readValue(AllowTags.class, IOUtils.toString(is, Constants.CHARSET));
+			try (InputStream is = whitelistJsonResource.getInputStream();
+					InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
+				tags = Jsons.readValue(AllowTags.class, CharStreams.toString(ir));
 			}
 		}
 		if (tags == null) {
@@ -111,7 +115,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 					addAttributes(tag.getName(), att.getName());
 					if (!Validators.isEmptyOrNull(att.getProtocols(), true)) {
 						String protocols = att.getProtocols().trim();
-						for (String protocol : protocols.split(",")) {
+						for (String protocol : Splitter.on(',').split(protocols)) {
 							addProtocols(tag.getName(), att.getName(), protocol);
 						}
 					}

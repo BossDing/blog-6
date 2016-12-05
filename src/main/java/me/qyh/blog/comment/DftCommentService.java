@@ -15,23 +15,20 @@
  */
 package me.qyh.blog.comment;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,6 +39,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.util.HtmlUtils;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.comment.CommentConfig.CommentMode;
@@ -54,16 +55,15 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.input.HtmlClean;
 import me.qyh.blog.pageparam.PageQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.security.InvalidCountMonitor;
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.interceptor.SpaceContext;
-import me.qyh.util.Validators;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class DftCommentService implements CommentServer, InitializingBean, ApplicationEventPublisherAware {
@@ -85,8 +85,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 			return -ascCommentComparator.compare(o1, o2);
 		}
 	};
-
-	private InvalidCountMonitor<String> invalidIpMonitor;
 
 	/**
 	 * 为了保证一个树结构，这里采用 path来纪录层次结构
@@ -128,8 +126,10 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	 */
 	@Transactional(readOnly = true)
 	public CommentPageResult queryComment(CommentQueryParam param) {
-		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
 		param.setPageSize(config.getPageSize());
+		if (param.getArticle() == null)
+			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
+		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
@@ -189,9 +189,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	public Comment insertComment(Comment comment) throws LogicException {
 		long now = System.currentTimeMillis();
 		String ip = comment.getIp();
-		if (isInvalidIp(ip))
-			throw new LogicException("comment.ip.invalid", "该ip暂时被禁止评论");
-
 		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
 		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished())
@@ -208,8 +205,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 			long start = now - limit.getUnit().toMillis(limit.getTime());
 			int count = commentDao.selectCountByIpAndDatePeriod(new Timestamp(start), new Timestamp(now), ip) + 1;
 			if (count > limit.getCount()) {
-				if (invalidIpMonitor != null)
-					invalidIpMonitor.increase(ip, now);
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}
 		}
@@ -374,7 +369,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		if (comment.getParents().isEmpty()) {
 			return Arrays.asList(comment);
 		}
-		List<Comment> comments = new ArrayList<>();
+		List<Comment> comments = Lists.newArrayList();
 		for (Integer pid : comment.getParents()) {
 			Comment p = commentDao.selectById(pid);
 			completeComment(p);
@@ -407,7 +402,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	@Override
 	public Map<Integer, Integer> queryArticlesCommentCount(List<Integer> ids) {
 		List<ArticleComments> results = commentDao.selectArticlesCommentCount(ids);
-		Map<Integer, Integer> map = new HashMap<>(results.size());
+		Map<Integer, Integer> map = Maps.newHashMap();
 		for (ArticleComments result : results)
 			map.put(result.getId(), result.getComments());
 		return map;
@@ -432,7 +427,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		pros.setProperty(COMMENT_LIMIT_SEC, config.getLimitSec().toString());
 		pros.setProperty(COMMENT_MODE, config.getCommentMode().name());
 		pros.setProperty(COMMENT_PAGESIZE, config.getPageSize() + "");
-		try (OutputStream os = FileUtils.openOutputStream(configResource.getFile())) {
+		try (OutputStream os = new FileOutputStream(configResource.getFile())) {
 			pros.store(os, "");
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
@@ -444,14 +439,13 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		if (comments.isEmpty()) {
 			return comments;
 		}
-		Map<Comment, List<Comment>> treeMap = new HashMap<>();
-
+		Map<Comment, List<Comment>> treeMap = Maps.newHashMap();
 		for (Comment comment : comments) {
 			if (comment.isRoot()) {
 				if (treeMap.containsKey(comment)) {
 					treeMap.put(comment, treeMap.get(comment));
 				} else {
-					treeMap.put(comment, new ArrayList<Comment>());
+					treeMap.put(comment, Lists.newArrayList());
 				}
 			} else {
 				Comment parent = new Comment();
@@ -459,15 +453,15 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 				if (treeMap.containsKey(parent)) {
 					treeMap.get(parent).add(comment);
 				} else {
-					List<Comment> _comments = new ArrayList<Comment>();
+					List<Comment> _comments = Lists.newArrayList();
 					_comments.add(comment);
 					treeMap.put(parent, _comments);
 				}
 			}
 		}
-		SortedSet<Comment> keys = new TreeSet<Comment>(config.getAsc() ? ascCommentComparator : descCommentComparator);
+		SortedSet<Comment> keys = Sets.newTreeSet(config.getAsc() ? ascCommentComparator : descCommentComparator);
 		keys.addAll(treeMap.keySet());
-		List<Comment> sorted = new ArrayList<Comment>();
+		List<Comment> sorted = Lists.newArrayList();
 		for (Comment root : keys) {
 			build(root, treeMap.get(root));
 			sorted.add(root);
@@ -496,7 +490,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	}
 
 	private List<Comment> findChildren(Comment root, List<Comment> comments) {
-		List<Comment> children = new ArrayList<>();
+		List<Comment> children = Lists.newArrayList();
 		for (Comment comment : comments) {
 			if (root.equals(comment.getParent())) {
 				comment.setParent(null);// 防止json死循环
@@ -573,13 +567,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		comment.setGravatar(user.getGravatar());
 	}
 
-	private boolean isInvalidIp(String ip) {
-		if (UserContext.get() != null) {
-			return false;
-		}
-		return invalidIpMonitor != null && invalidIpMonitor.isInvalid(ip);
-	}
-
 	protected String buildLastCommentsCacheKey(Space space) {
 		return "last-comments" + (space == null ? "" : "-space-" + space.getId());
 	}
@@ -590,10 +577,6 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 
 	public void setCommentEmailChecker(CommentUserChecker commentEmailChecker) {
 		this.commentEmailChecker = commentEmailChecker;
-	}
-
-	public void setInvalidIpMonitor(InvalidCountMonitor<String> invalidIpMonitor) {
-		this.invalidIpMonitor = invalidIpMonitor;
 	}
 
 	private final class DefaultCommentContentChecker implements CommentContentChecker {
@@ -613,7 +596,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 
 	}
 
-	public final class CommentPageResult extends PageResult<Comment> {
+	public static final class CommentPageResult extends PageResult<Comment> {
 		private final CommentConfig commentConfig;
 
 		public CommentPageResult(PageQueryParam param, int totalRow, List<Comment> datas, CommentConfig commentConfig) {

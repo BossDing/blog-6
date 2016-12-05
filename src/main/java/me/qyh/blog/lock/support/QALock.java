@@ -18,12 +18,13 @@ package me.qyh.blog.lock.support;
 import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.base.Splitter;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.input.JsonHtmlXssSerializer;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.security.input.JsonHtmlXssSerializer;
 
 /**
  * 问答锁
@@ -90,7 +91,7 @@ public class QALock extends SysLock {
 		if (answers == null) {
 			throw new SystemException("问答锁答案不能为空");
 		}
-		for (String corretAnswer : answers.split(",")) {
+		for (String corretAnswer : Splitter.on(',').split(answers)) {
 			if (corretAnswer.equals(answer)) {
 				return true;
 			}

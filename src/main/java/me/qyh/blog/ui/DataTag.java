@@ -15,13 +15,14 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 public class DataTag {
 
 	private String name;
-	private Map<String, String> attrs = new HashMap<>();
+	private Map<String, String> attrs = Maps.newHashMap();
 
 	public String getName() {
 		return name;

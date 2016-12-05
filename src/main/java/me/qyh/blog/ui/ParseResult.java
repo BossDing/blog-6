@@ -15,22 +15,23 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
 
 public class ParseResult {
 
-	private List<DataBind<?>> binds = new ArrayList<DataBind<?>>();
-	private Map<String, Fragment> fragments = new HashMap<>();
-	private Set<DataTag> unkownDatas = new LinkedHashSet<DataTag>();
-	private Set<String> unkownFragments = new LinkedHashSet<String>();
+	private List<DataBind<?>> binds = Lists.newArrayList();
+	private Map<String, Fragment> fragments = Maps.newHashMap();
+	private Set<DataTag> unkownDatas = Sets.newLinkedHashSet();
+	private Set<String> unkownFragments = Sets.newLinkedHashSet();
 
 	public List<DataBind<?>> getBinds() {
 		return binds;

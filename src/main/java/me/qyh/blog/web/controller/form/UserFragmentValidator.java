@@ -20,7 +20,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.ui.fragment.UserFragment;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class UserFragmentValidator implements Validator {

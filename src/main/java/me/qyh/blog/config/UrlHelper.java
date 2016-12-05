@@ -30,6 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.google.common.base.Splitter;
+
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
@@ -37,7 +39,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.util.Validators;
+import me.qyh.blog.util.Validators;
 
 /**
  * 取消了博客的分类，用空间来替代，一个博客可以设置多个空间<br/>
@@ -98,10 +100,8 @@ public class UrlHelper implements InitializingBean {
 				return null;
 			}
 			int hostPCount = StringUtils.countOccurrencesOf(host, ".");
-			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
-				String[] hosts = host.split("\\.");
-				return hosts[0];
-			}
+			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1))
+				return Splitter.on('.').split(host).iterator().next();
 			// not a space domain request
 		}
 		return null;

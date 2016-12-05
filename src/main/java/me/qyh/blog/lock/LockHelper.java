@@ -21,6 +21,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import com.google.common.collect.Maps;
+
 /**
  * 锁辅助类
  * 
@@ -94,7 +96,7 @@ public final class LockHelper {
 	public static void addKey(HttpServletRequest request, LockKey key, String resourceId) {
 		HashMap<String, LockKey> keysMap = (HashMap<String, LockKey>) getKeysMap(request);
 		if (keysMap == null) {
-			keysMap = new HashMap<>();
+			keysMap = Maps.newHashMap();
 		}
 		keysMap.put(resourceId, key);
 		request.getSession().setAttribute(LOCKKEY_SESSION_KEY, keysMap);

@@ -17,7 +17,6 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +36,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles;
@@ -103,7 +104,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 
-	private List<ArticleContentHandler> articleContentHandlers = new ArrayList<>();
+	private List<ArticleContentHandler> articleContentHandlers = Lists.newArrayList();
 
 	@Override
 	@Transactional(readOnly = true)
@@ -389,7 +390,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		PageResult<Article> page = null;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
-				return CollectionUtils.isEmpty(articleIds) ? new ArrayList<Article>() : selectByIds(articleIds);
+				return CollectionUtils.isEmpty(articleIds) ? Lists.newArrayList() : selectByIds(articleIds);
 			});
 		} else {
 			int count = articleDao.selectCount(param);
@@ -399,7 +400,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// query comments
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
-			List<Integer> ids = new ArrayList<>(datas.size());
+			List<Integer> ids = Lists.newArrayList(datas.size());
 			for (Article article : datas)
 				ids.add(article.getId());
 			Map<Integer, Integer> countsMap = commentServer.queryArticlesCommentCount(ids);
@@ -415,7 +416,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// mysql can use order by field
 		// but h2 can not
 		List<Article> articles = articleDao.selectByIds(ids);
-		List<Article> ordered = new ArrayList<>();
+		List<Article> ordered = Lists.newArrayList();
 		Article art;
 		for (Integer id : ids) {
 			art = new Article(id);

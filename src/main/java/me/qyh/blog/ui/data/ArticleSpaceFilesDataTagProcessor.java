@@ -15,10 +15,11 @@
  */
 package me.qyh.blog.ui.data;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.entity.Space;
@@ -37,7 +38,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 
 	@Override
 	protected List<ArticleSpaceFile> buildPreviewData(Attributes attributes) {
-		List<ArticleSpaceFile> files = new ArrayList<ArticleSpaceFile>();
+		List<ArticleSpaceFile> files = Lists.newArrayList();
 		Space space = new Space();
 		space.setAlias("test");
 		space.setName("测试");

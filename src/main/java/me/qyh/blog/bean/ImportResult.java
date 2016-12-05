@@ -15,9 +15,10 @@
  */
 package me.qyh.blog.bean;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.ui.ExportPage;
 
@@ -30,11 +31,11 @@ import me.qyh.blog.ui.ExportPage;
 public class ImportResult {
 
 	// 原始页面，用于恢复
-	private List<ExportPage> oldPages = new ArrayList<>();
+	private List<ExportPage> oldPages = Lists.newArrayList();
 	// 导入过程中出错
-	private List<ImportError> errors = new ArrayList<>();
+	private List<ImportError> errors = Lists.newArrayList();
 	// 导入成功的页面序号
-	private List<ImportSuccess> successes = new ArrayList<>();
+	private List<ImportSuccess> successes = Lists.newArrayList();
 
 	public List<ExportPage> getOldPages() {
 		return oldPages;

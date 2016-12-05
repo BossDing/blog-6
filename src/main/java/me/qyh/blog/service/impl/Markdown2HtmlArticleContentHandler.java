@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,6 +29,8 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.collect.Lists;
+
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Editor;
 import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
@@ -43,7 +44,7 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
  */
 public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler, Markdown2Html, InitializingBean {
 
-	private List<Extension> extensions = new ArrayList<Extension>();
+	private List<Extension> extensions = Lists.newArrayList();
 
 	/**
 	 * singleton?
@@ -73,7 +74,7 @@ public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		List<Extension> extensions = new ArrayList<>(BASE_EXTENSIONS);
+		List<Extension> extensions = Lists.newArrayList(BASE_EXTENSIONS);
 		if (!CollectionUtils.isEmpty(this.extensions))
 			extensions.addAll(this.extensions);
 		parser = Parser.builder().extensions(extensions).build();

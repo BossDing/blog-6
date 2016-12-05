@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package me.qyh.util;
+package me.qyh.blog.util;
 
 import java.util.regex.Pattern;
 

@@ -15,8 +15,9 @@
  */
 package me.qyh.blog.bean;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Space;
 
@@ -31,7 +32,7 @@ public class ImportReq {
 	private boolean insertNotExistsFragment;
 	private boolean updateExistsFragment;
 	private Space space;
-	private List<Integer> ids = new ArrayList<>();
+	private List<Integer> ids = Lists.newArrayList();
 
 	public boolean isInsertNotExistsFragment() {
 		return insertNotExistsFragment;
