@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -138,7 +137,7 @@ public class MetaweblogController extends BaseController implements Initializing
 			paramClassList.add(arg.getClass());
 		String methodName = mc.getName();
 		if (methodName.indexOf('.') != -1)
-			methodName = Splitter.on('.').split(methodName).iterator().next();
+			methodName = methodName.split("\\.")[1];
 		Method method = ReflectionUtils.findMethod(MetaweblogHandler.class, methodName,
 				paramClassList.toArray(new Class<?>[paramClassList.size()]));
 		try {

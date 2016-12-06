@@ -244,13 +244,15 @@ public class UrlHelper implements InitializingBean {
 		 */
 		public String getArticlesUrl(ArticleQueryParam param, String sortStr) {
 			ArticleQueryParam cloned = SerializationUtils.clone(param);
-			Sort sort = null;
-			try {
-				sort = Sort.valueOf(sortStr);
-			} catch (Exception e) {
-				logger.debug("无效的ArticleQueryParam.Sort:" + sortStr, e);
+			if (sortStr != null) {
+				Sort sort = null;
+				try {
+					sort = Sort.valueOf(sortStr);
+				} catch (Exception e) {
+					logger.debug("无效的ArticleQueryParam.Sort:" + sortStr, e);
+				}
+				cloned.setSort(sort);
 			}
-			cloned.setSort(sort);
 			return getArticlesUrl(cloned, 1);
 		}
 

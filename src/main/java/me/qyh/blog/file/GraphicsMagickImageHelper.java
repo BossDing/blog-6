@@ -140,20 +140,23 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
 		String ext = Files.getFileExtension(dest.getName());
-		File png = FileUtils.temp(PNG);
+		File _gif = FileUtils.temp(GIF);
 		try {
 			IMOperation op = new IMOperation();
 			op.addImage();
 			op.strip();
 			op.p_profile("*");
 			op.addImage();
-			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", png.getAbsolutePath());
+			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", _gif.getAbsolutePath());
 		} catch (Exception e) {
 			logger.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
-			getGifCoverUseJava(gif, png);
+			getGifCoverUseJava(gif, _gif);
 		}
-		if (Files.getFileExtension(dest.getName()).equalsIgnoreCase(PNG))
+		if (Files.getFileExtension(dest.getName()).equalsIgnoreCase(GIF)) {
+			// copy
+			Files.copy(_gif, dest);
 			return;
+		}
 		// png to dest
 		IMOperation op = new IMOperation();
 		op.addImage();
@@ -163,12 +166,12 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.p_profile("*");
 		op.addImage();
 		try {
-			getConvertCmd().run(op, png.getAbsolutePath(), dest.getAbsolutePath());
+			getConvertCmd().run(op, _gif.getAbsolutePath(), dest.getAbsolutePath());
 		} catch (Exception e1) {
 			throw new SystemException(e1.getMessage(), e1);
 		} finally {
-			if (png != null && png.exists())
-				FileUtils.deleteQuietly(png);
+			if (_gif != null && _gif.exists())
+				FileUtils.deleteQuietly(_gif);
 		}
 	}
 
@@ -216,14 +219,14 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 
-	private void getGifCoverUseJava(File gif, File png) throws IOException {
+	private void getGifCoverUseJava(File gif, File _gif) throws IOException {
 		GifDecoder gd = new GifDecoder();
 		try (InputStream is = new FileInputStream(gif)) {
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK)
 				throw new IOException(gif + "文件无法获取封面");
 			BufferedImage bi = gd.getFrame(0);
-			ImageIO.write(bi, PNG, png);
+			ImageIO.write(bi, GIF, _gif);
 		}
 	}
 

@@ -84,6 +84,13 @@
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
+	<!-- captcha -->
+	<bean class="me.qyh.blog.security.CaptchaController">
+		<property name="num" value="4" />
+		<property name="delta" value="0" />
+	</bean>
+
+	<!-- metaweblog -->
 	<bean class="me.qyh.blog.metaweblog.MetaweblogController" />
 
 

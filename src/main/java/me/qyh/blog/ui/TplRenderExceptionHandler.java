@@ -158,7 +158,7 @@ public class TplRenderExceptionHandler {
 
 	}
 
-	public static TplRenderExceptionHandler getHandler(){
+	public static TplRenderExceptionHandler getHandler() {
 		return INSTANCE;
 	}
 }
