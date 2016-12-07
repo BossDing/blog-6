@@ -252,6 +252,8 @@ public class UrlHelper implements InitializingBean {
 					logger.debug("无效的ArticleQueryParam.Sort:" + sortStr, e);
 				}
 				cloned.setSort(sort);
+			} else {
+				cloned.setSort(null);
 			}
 			return getArticlesUrl(cloned, 1);
 		}

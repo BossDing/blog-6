@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.ui;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -22,8 +23,12 @@ import com.google.common.collect.Lists;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
 
-public class ExportPage {
+public class ExportPage implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Page page;
 	private List<Fragment> fragments = Lists.newArrayList();
 

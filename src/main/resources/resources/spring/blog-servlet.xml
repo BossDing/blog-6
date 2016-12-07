@@ -28,12 +28,14 @@
 	<context:component-scan base-package="me.qyh.blog.web.controller" />
 
 	<bean class="me.qyh.blog.ui.TplRender" />
+	
+	<bean class="me.qyh.blog.ui.UIThymeleafView"/>
 
-	<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
+	<!-- <bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver"> -->
+	<bean class="me.qyh.blog.ui.UIViewResolver">
 		<property name="contentType" value="text/html" />
 		<property name="characterEncoding" value="utf-8" />
 		<property name="templateEngine" ref="templateEngine" />
-		<property name="viewClass" value="me.qyh.blog.ui._ThymeleafView" />
 	</bean>
 
 	<mvc:annotation-driven>

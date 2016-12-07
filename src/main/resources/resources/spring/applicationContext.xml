@@ -138,7 +138,7 @@
 	<bean id="taskScheduler"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
 		destroy-method="destroy">
-		<property name="poolSize" value="20" />
+		<property name="poolSize" value="5" />
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>
 

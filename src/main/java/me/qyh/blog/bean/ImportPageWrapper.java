@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.bean;
 
+import java.io.Serializable;
+
 import me.qyh.blog.ui.ExportPage;
 
 /**
@@ -23,8 +25,12 @@ import me.qyh.blog.ui.ExportPage;
  * @author Administrator
  *
  */
-public class ImportPageWrapper {
+public class ImportPageWrapper implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private int index;// 页面序号
 	private ExportPage page;// 页面
 
