@@ -39,6 +39,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
@@ -52,7 +53,7 @@ public class SpaceLockController extends BaseController {
 
 	@RequestMapping(value = "unlock", method = RequestMethod.GET)
 	public String unlock(Model model, HttpServletRequest request) throws LogicException {
-		LockBean lockBean = LockHelper.getRequiredLockBean(request);
+		LockBean lockBean = LockHelper.getLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
 		try {
 			RenderedPage rp = uiService.renderLockPage(SpaceContext.get(), lockBean.getLock().getLockType());
@@ -70,7 +71,7 @@ public class SpaceLockController extends BaseController {
 	@RequestMapping(value = "unlock", method = RequestMethod.POST)
 	public String unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request,
 			RedirectAttributes ra) {
-		LockBean lockBean = LockHelper.getRequiredLockBean(request);
+		LockBean lockBean = LockHelper.getLockBean(request);
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session)) {
@@ -93,7 +94,7 @@ public class SpaceLockController extends BaseController {
 	@ResponseBody
 	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
 			throws LogicException {
-		LockBean lockBean = LockHelper.getRequiredLockBean(request);
+		LockBean lockBean = LockHelper.getLockBean(request);
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session))

@@ -21,10 +21,9 @@ import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.BaseEntity;
@@ -43,10 +42,9 @@ public class Comment extends BaseEntity {
 	private static final long serialVersionUID = 1L;
 
 	private Comment parent;// 如果为null,则为评论，否则为回复
-	@JsonIgnore
 	private String parentPath;// 路径，最多支持255个字符(索引原因)
 	private String content;
-	@JsonIgnore
+	@Expose(serialize = false, deserialize = false)
 	private Article article;// 文章
 	private List<Integer> parents = Lists.newArrayList();
 	private Timestamp commentDate;
@@ -55,7 +53,9 @@ public class Comment extends BaseEntity {
 
 	private String website;
 	private String nickname;
+	@Expose(serialize = false, deserialize = true)
 	private String email;
+	@Expose(serialize = false, deserialize = true)
 	private String ip;
 	private Boolean admin;// 是否是管理员
 
@@ -164,17 +164,14 @@ public class Comment extends BaseEntity {
 		this.nickname = nickname;
 	}
 
-	@JsonIgnore
 	public String getEmail() {
 		return email;
 	}
 
-	@JsonProperty
 	public void setEmail(String email) {
 		this.email = email;
 	}
 
-	@JsonIgnore
 	public String getIp() {
 		return ip;
 	}

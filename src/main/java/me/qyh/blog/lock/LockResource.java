@@ -17,8 +17,6 @@ package me.qyh.blog.lock;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * 
  * @author Administrator
@@ -31,7 +29,6 @@ public interface LockResource extends Serializable {
 	 * 
 	 * @return 锁资源id
 	 */
-	@JsonIgnore
 	String getResourceId();
 
 	/**

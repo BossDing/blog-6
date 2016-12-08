@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class LockKeyContext {
 
-	private static final ThreadLocal<Map<String, LockKey>> keysLocal = new ThreadLocal<Map<String, LockKey>>();
+	private static final ThreadLocal<Map<String, LockKey>> keysLocal = new ThreadLocal<>();
 
 	private LockKeyContext() {
 		super();

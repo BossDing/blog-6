@@ -42,7 +42,7 @@ import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.Webs;
 
 /**
  * 本地图片存储，图片访问

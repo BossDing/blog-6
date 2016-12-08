@@ -15,15 +15,15 @@
  */
 package me.qyh.blog.message;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-import org.springframework.web.util.HtmlUtils;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 /**
  * 对对象的string类型属性进行标签转化
@@ -31,27 +31,18 @@ import com.fasterxml.jackson.databind.SerializerProvider;
  * @author mhlx
  *
  */
-public class MessageSerializer extends JsonSerializer<Message> {
+public class MessageSerializer implements JsonSerializer<Message> {
 
-	@Autowired
+	@Autowired(required = false)
 	private Messages messages;
 
-	/**
-	 * default
-	 */
-	public MessageSerializer() {
-		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
-	}
-
 	@Override
-	public Class<Message> handledType() {
-		return Message.class;
-	}
-
-	@Override
-	public void serialize(Message value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-		String message = HtmlUtils.htmlEscape(messages.getMessage(value));
-		gen.writeString(message);
+	public JsonElement serialize(Message src, Type typeOfSrc, JsonSerializationContext context) {
+		if (messages == null)
+			// 如果没有注入messages,那么尝试注入
+			SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
+		// 如果不是在spring环境中，那么尝试使用code来输出
+		return messages == null ? new JsonPrimitive(src.getCodes()[0]) : new JsonPrimitive(messages.getMessage(src));
 	}
 
 }

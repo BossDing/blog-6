@@ -34,7 +34,7 @@ import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.Webs;
 
 /**
  * oss文件存储抽象类

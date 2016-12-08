@@ -102,7 +102,7 @@ public class RememberMe {
 					return user;
 				}
 			} catch (InvalidCookieException e) {
-				logger.warn(e.getMessage(), e);
+				logger.debug(e.getMessage(), e);
 				remove(request, response);
 			}
 		}

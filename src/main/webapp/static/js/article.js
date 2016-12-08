@@ -1,4 +1,5 @@
 $(document).ready(function(){
+	var login = $("#login").val() == 'true';
 	if(window.sessionStorage && !login){
 		var articleId = "article-"+$("#articleId").val();
 		var item = window.sessionStorage.getItem(articleId);

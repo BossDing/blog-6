@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web.controller;
+package me.qyh.blog.web;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.view.feed.AbstractRssFeedView;
 
 import com.google.common.collect.Lists;
@@ -37,7 +36,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-@Component
 public class RssView extends AbstractRssFeedView {
 
 	@Autowired

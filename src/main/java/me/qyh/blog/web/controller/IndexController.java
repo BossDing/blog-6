@@ -45,6 +45,7 @@ import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
+import me.qyh.blog.web.Webs;
 
 @Controller
 public class IndexController {

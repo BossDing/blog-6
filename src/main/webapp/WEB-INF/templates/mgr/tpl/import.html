@@ -71,73 +71,83 @@
 					<div class="alert alert-info">
 						模板解析完成，共有<span th:text="${parses.size()}"></span>个页面可选择导入
 						<p class="text text-warning">如果存在个人页面和拓展页面，可能由于系统中不存在这些页面而不会导入，但不会影响总体导入</p>
-						<p class="text text-warning"><b>导入操作将会耗费巨大的资源，请慎重</b></p>
+						<p class="text text-warning">
+							<b>导入操作将会耗费巨大的资源，请慎重</b>
+						</p>
 					</div>
 					<div class="form-group">
-							<label>选择要导入的空间</label> <select class="form-control" id="spaceId">
-								<option value="">无</option>
-								<option th:each="space : ${spaces}" th:text="${space.name}"
-									th:value="${space.id}"></option>
-							</select>
-						</div>
-						<div class="checkbox">
-							<label> <input type="checkbox" id="updateExistsFragment"/>是否更新模板片段(如果存在)
-							</label>
-						</div>
-						<div class="checkbox">
-							<label> <input type="checkbox" id="insertNotExistsFragment"/>是否新增模板片段(如果不存在)
-							</label>
-						</div>
+						<label>选择要导入的空间</label> <select class="form-control" id="spaceId">
+							<option value="">无</option>
+							<option th:each="space : ${spaces}" th:text="${space.name}"
+								th:value="${space.id}"></option>
+						</select>
+					</div>
+					<div class="checkbox">
+						<label> <input type="checkbox" id="updateExistsFragment" />是否更新模板片段(如果存在)
+						</label>
+					</div>
+					<div class="checkbox">
+						<label> <input type="checkbox"
+							id="insertNotExistsFragment" />是否新增模板片段(如果不存在)
+						</label>
+					</div>
 					<div class="table-responsive">
 						<table class="table">
-							<tr >
+							<tr>
 								<th>序号</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
-								<th><input
-									type="checkbox" /></th>
-									<th>&nbsp;</th>
+								<th><input type="checkbox" /></th>
+								<th>&nbsp;</th>
 							</tr>
 							<it th:remove="tag" th:each="parse : ${parses}"
 								th:switch="${parse.page.page.type.name()}">
 							<tr th:case="SYSTEM">
 								<td th:text="${parse.index}"></td>
-								<td >系统页面</td>
-								<td th:text="${messages.getMessage(parse.page.page.target.message)}"></td>
+								<td>系统页面</td>
+								<td
+									th:text="${messages.getMessage(parse.page.page.target.message)}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
-									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+									type="checkbox" th:value="${parse.index}" /></td>
+								<td><pre style="display: none"
+										th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="ERROR">
 								<td th:text="${parse.index}"></td>
 								<td>错误页面</td>
-								<td th:text="${messages.getMessage(parse.page.page.errorCode.message)}"></td>
+								<td
+									th:text="${messages.getMessage(parse.page.page.errorCode.message)}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
-									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+									type="checkbox" th:value="${parse.index}" /></td>
+								<td><pre style="display: none"
+										th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="USER">
 								<td th:text="${parse.index}"></td>
 								<td>用户页面</td>
 								<td th:text="'别名:'+${parse.page.page.alias}">&nbsp;</td>
-								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
+									type="checkbox" th:value="${parse.index}" /></td>
+								<td><pre style="display: none"
+										th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="EXPANDED">
 								<td th:text="${parse.index}"></td>
 								<td>拓展页面</td>
 								<td th:text="'ID:'+${parse.page.page.id}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
-									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+									type="checkbox" th:value="${parse.index}" /></td>
+								<td><pre style="display: none"
+										th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							<tr th:case="LOCK">
 								<td th:text="${parse.index}"></td>
 								<td>解锁页面</td>
 								<td th:text="'锁类型:'+${parse.page.page.lockType}"></td>
 								<td><a href="###" onclick="viewTpl($(this))">查看模板</a>&nbsp;&nbsp;&nbsp;<input
-									type="checkbox" th:value="${parse.index}"/></td>
-								<td><pre style="display:none" th:text="${parse.page.page.tpl}"></pre></td>
+									type="checkbox" th:value="${parse.index}" /></td>
+								<td><pre style="display: none"
+										th:text="${parse.page.page.tpl}"></pre></td>
 							</tr>
 							</it>
 						</table>
@@ -145,19 +155,25 @@
 					</div>
 				</div>
 			</div>
-			<div class="row" style="margin-top:10px" th:unless="${#lists.isEmpty(session.oldPages)}" id="lastDownloadContainer">
+			<div class="row" style="margin-top: 10px"
+				th:unless="${#lists.isEmpty(session.oldPages)}"
+				id="lastDownloadContainer">
 				<div class="col-md-8 col-md-offset-2">
-					<div class="alert alert-info"><a href="###" onclick="downloadLast()">下载最近一次导入的备份文件</a>
+					<div class="alert alert-info">
+						<a href="###" onclick="downloadLast()">下载最近一次导入的备份文件</a>
 					</div>
 				</div>
 			</div>
-			<div class="row" style="margin-top:10px">
+			<div class="row" style="margin-top: 10px">
 				<div class="col-md-8 col-md-offset-2" id="result"></div>
 			</div>
 		</div>
 	</div>
-	<form th:action="@{/mgr/tpl/lastImportPageBackUp}" method="post" style="display:none" id="df"><input type="hidden"
-								th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /></form>
+	<form th:action="@{/mgr/tpl/lastImportPageBackUp}" method="post"
+		style="display: none" id="df">
+		<input type="hidden" th:name="${_csrf.parameterName}"
+			th:value="${_csrf.token}" />
+	</form>
 	<div th:replace="base/foot_source"></div>
 	<div class="modal" id="tplFragmentModal" tabindex="-1" role="dialog"
 		aria-labelledby="tplFragmentModalLabel" data-backdrop="static">
@@ -177,8 +193,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="modal fade " data-backdrop="static"
-		id="processing-box">
+	<div class="modal fade " data-backdrop="static" id="processing-box">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -189,130 +204,195 @@
 		</div>
 	</div>
 	<script type="text/javascript">
-	$(document).ready(function(){
-		$(document).on('change','.btn-file :file',function() {
-			var input = $(this), numFiles = input.get(0).files ? input
-					.get(0).files.length : 1, label = input.val()
-					.replace(/\\/g, '/').replace(/.*\//, '');
-			$("#file-label").val(label);
-		});
-		$("table").find('tr').eq(0).find("input[type=checkbox]").click(function(){
-			$('table input[type=checkbox]').prop("checked",$(this).prop("checked"))
-		})
-		$("#upload").click(function() {
-			var input = $('input[type=file]');
-			var len = input.get(0).files.length;
-			if (len == 0) {
-				bootbox.alert("请上传文件");
-			}else{
-				var name = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-				var ext = name.split('.').pop().toLowerCase();
-				if (ext != "json") {
-					bootbox.alert("请上传json文件");
-					return;
-				}
-			}
-			$('#uploadForm').submit();
-		});
-		$("#import-btn").click(function(){
-			var ids = [];
-			$('input[type=checkbox]').each(function(i){
-				if(i > 2){
-					if($(this).prop("checked")){
-						var v=  $(this).val();
-						if(v != ''){
-							ids.push(v);
-						}
-					}
-				}
-			})
-			if(ids.length == 0){
-				bootbox.alert("请至少选择一个需要导入的模板");
-			} else {
-				$("#processing-box").modal('show');
-				$("#result").html("");
-				var data = {"ids":ids,"updateExistsFragment":$("#updateExistsFragment").prop("checked"),"insertNotExistsFragment":$("#insertNotExistsFragment").prop("checked")};
-				var spaceId = $("#spaceId").val();
-				if(spaceId != ''){
-					data.space = {"id":spaceId};
-				}
-				$.ajax({
-					type : "post",
-					url : basePath+'/mgr/tpl/import',
-		            contentType:"application/json",
-					data : JSON.stringify(data),
-					success : function(data){
-						if(data.success){
-							var successes = data.data.successes;
-							var errors = data.data.errors;
-							var html = '';
-							if(successes.length > 0){
-								$("#lastDownloadContainer").hide();
-								var st = '<div class="table-responsive">';
-								st += '<table class="table">';
-								st += '<caption>导入成功(<a href="###" onclick="downloadLast()">下载此次备份文件(<span class="text text-warning">如果导入成功了1个页面，那么只会备份这个导入成功的页面，连续导入将会覆盖备份文件</span>)</a>)</caption>';
-								st += '<tr>';
-								st += '<th>序号</th>';
-								st += '<th>警告</th>';
-								st += '</tr>';
-								for(var i=0;i<successes.length;i++){
-									var success = successes[i];
-									st += '<tr>';
-									st += '<td>'+success.index+'</td>';
-									var tip = '';
-									if(success.warnings.length > 0){
-										for(var j=0;j<success.warnings.length;j++){
-											var warning = success.warnings[j];
-											tip += '<p class="text text-warning">'+warning+'</p>';
+		$(document)
+				.ready(
+						function() {
+							$(document)
+									.on(
+											'change',
+											'.btn-file :file',
+											function() {
+												var input = $(this), numFiles = input
+														.get(0).files ? input
+														.get(0).files.length
+														: 1, label = input
+														.val().replace(/\\/g,
+																'/').replace(
+																/.*\//, '');
+												$("#file-label").val(label);
+											});
+							$("table").find('tr').eq(0).find(
+									"input[type=checkbox]").click(
+									function() {
+										$('table input[type=checkbox]').prop(
+												"checked",
+												$(this).prop("checked"))
+									})
+							$("#upload").click(
+									function() {
+										var input = $('input[type=file]');
+										var len = input.get(0).files.length;
+										if (len == 0) {
+											bootbox.alert("请上传文件");
+										} else {
+											var name = input.val().replace(
+													/\\/g, '/').replace(/.*\//,
+													'');
+											var ext = name.split('.').pop()
+													.toLowerCase();
+											if (ext != "json") {
+												bootbox.alert("请上传json文件");
+												return;
+											}
 										}
-									}else{
-										tip = '无';
-									}
-									st += '<td>'+tip+'</td>';
-									st += '</tr>';
-								}
-								st += '</table>';
-								st += '</div>';
-								html += st;
-							}
-							if(errors.length > 0){
-								var st = '<div class="table-responsive">';
-								st += '<table class="table">';
-								st += '<caption>导入失败</caption>';
-								st += '<tr>';
-								st += '<th>序号</th>';
-								st += '<th>原因</th>';
-								st += '</tr>';
-								for(var i=0;i<errors.length;i++){
-									var error = errors[i];
-									st += '<tr>';
-									st += '<td>'+error.index+'</td>';
-									st += '<td><span class="text text-danger">'+error.message+'</span></td>';
-									st += '</tr>';
-								}
-								st += '</table>';
-								st += '</div>';
-								html += st;
-							}
-							$("#result").html(html);
-						}else{
-							bootbox.alert(data.message);
-						}
-						$("#processing-box").modal('hide')
-					}
-				});
-			}
-		})
-	})
-	function downloadLast(){
-		$("#df").submit()
-	}
-	function viewTpl(o){
-		var pre = o.parent().next().find('pre').eq(0).clone().addClass("pre-scrollable");
-		$("#tplFragmentModal").find(".modal-body").html(pre);
-		pre.show();
-		$("#tplFragmentModal").modal("show");
-	}
+										$('#uploadForm').submit();
+									});
+							$("#import-btn")
+									.click(
+											function() {
+												var ids = [];
+												$('input[type=checkbox]')
+														.each(
+																function(i) {
+																	if (i > 2) {
+																		if ($(
+																				this)
+																				.prop(
+																						"checked")) {
+																			var v = $(
+																					this)
+																					.val();
+																			if (v != '') {
+																				ids
+																						.push(v);
+																			}
+																		}
+																	}
+																})
+												if (ids.length == 0) {
+													bootbox
+															.alert("请至少选择一个需要导入的模板");
+												} else {
+													$("#processing-box").modal(
+															'show');
+													$("#result").html("");
+													var data = {
+														"ids" : ids,
+														"updateExistsFragment" : $(
+																"#updateExistsFragment")
+																.prop("checked"),
+														"insertNotExistsFragment" : $(
+																"#insertNotExistsFragment")
+																.prop("checked")
+													};
+													var spaceId = $("#spaceId")
+															.val();
+													if (spaceId != '') {
+														data.space = {
+															"id" : spaceId
+														};
+													}
+													$
+															.ajax({
+																type : "post",
+																url : basePath
+																		+ '/mgr/tpl/import',
+																contentType : "application/json",
+																data : JSON
+																		.stringify(data),
+																success : function(
+																		data) {
+																	if (data.success) {
+																		var successes = data.data.successes;
+																		var errors = data.data.errors;
+																		var html = '';
+																		if (successes.length > 0) {
+																			$(
+																					"#lastDownloadContainer")
+																					.hide();
+																			var st = '<div class="table-responsive">';
+																			st += '<table class="table">';
+																			st += '<caption>导入成功(<a href="###" onclick="downloadLast()">下载此次备份文件(<span class="text text-warning">如果导入成功了1个页面，那么只会备份这个导入成功的页面，连续导入将会覆盖备份文件</span>)</a>)</caption>';
+																			st += '<tr>';
+																			st += '<th>序号</th>';
+																			st += '<th>警告</th>';
+																			st += '</tr>';
+																			for (var i = 0; i < successes.length; i++) {
+																				var success = successes[i];
+																				st += '<tr>';
+																				st += '<td>'
+																						+ success.index
+																						+ '</td>';
+																				var tip = '';
+																				if (success.warnings.length > 0) {
+																					for (var j = 0; j < success.warnings.length; j++) {
+																						var warning = success.warnings[j];
+																						tip += '<p class="text text-warning">'
+																								+ warning
+																								+ '</p>';
+																					}
+																				} else {
+																					tip = '无';
+																				}
+																				st += '<td>'
+																						+ tip
+																						+ '</td>';
+																				st += '</tr>';
+																			}
+																			st += '</table>';
+																			st += '</div>';
+																			html += st;
+																		}
+																		if (errors.length > 0) {
+																			var st = '<div class="table-responsive">';
+																			st += '<table class="table">';
+																			st += '<caption>导入失败</caption>';
+																			st += '<tr>';
+																			st += '<th>序号</th>';
+																			st += '<th>原因</th>';
+																			st += '</tr>';
+																			for (var i = 0; i < errors.length; i++) {
+																				var error = errors[i];
+																				st += '<tr>';
+																				st += '<td>'
+																						+ error.index
+																						+ '</td>';
+																				st += '<td><span class="text text-danger">'
+																						+ error.message
+																						+ '</span></td>';
+																				st += '</tr>';
+																			}
+																			st += '</table>';
+																			st += '</div>';
+																			html += st;
+																		}
+																		$(
+																				"#result")
+																				.html(
+																						html);
+																	} else {
+																		bootbox
+																				.alert(data.message);
+																	}
+																	$(
+																			"#processing-box")
+																			.modal(
+																					'hide')
+																}
+															});
+												}
+											})
+						})
+		function downloadLast() {
+			$("#df").submit()
+		}
+		function viewTpl(o) {
+			var pre = o.parent().next().find('pre').eq(0).clone().addClass(
+					"pre-scrollable");
+			$("#tplFragmentModal").find(".modal-body").html(pre);
+			pre.show();
+			$("#tplFragmentModal").modal("show");
+		}
 	</script>
 </body>
 </html>

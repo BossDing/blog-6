@@ -35,7 +35,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.Webs;
 
 public class CORSFilter extends OncePerRequestFilter {
 

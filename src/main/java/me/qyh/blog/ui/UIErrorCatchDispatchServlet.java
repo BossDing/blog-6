@@ -33,14 +33,16 @@ public class UIErrorCatchDispatchServlet extends DispatcherServlet {
 
 	@Override
 	protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		try {
-			super.doService(request, response);
-		} catch (TplRenderException e) {
-			Throwable ori = e.getOriginal();
-			logger.error(ori.getMessage(), ori);
-			if (!response.isCommitted()) {
-				request.setAttribute("description", e.getRenderErrorDescription());
-				request.getRequestDispatcher("/error/ui").forward(request, response);
+		if (!response.isCommitted()) {
+			try {
+				super.doService(request, response);
+			} catch (TplRenderException e) {
+				Throwable ori = e.getOriginal();
+				logger.error(ori.getMessage(), ori);
+				if (!response.isCommitted()) {
+					request.setAttribute("description", e.getRenderErrorDescription());
+					request.getRequestDispatcher("/error/ui").forward(request, response);
+				}
 			}
 		}
 	}

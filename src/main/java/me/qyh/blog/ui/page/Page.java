@@ -15,17 +15,10 @@
  */
 package me.qyh.blog.ui.page;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Page extends BaseEntity implements Cloneable {
 
 	/**
@@ -67,7 +60,6 @@ public class Page extends BaseEntity implements Cloneable {
 		this.type = type;
 	}
 
-	@JsonIgnore
 	public String getTemplateName() {
 		return PREFIX + getId() + "-" + getType();
 	}
@@ -102,25 +94,5 @@ public class Page extends BaseEntity implements Cloneable {
 		} catch (CloneNotSupportedException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		Page rhs = (Page) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

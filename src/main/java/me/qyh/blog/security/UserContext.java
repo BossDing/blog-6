@@ -19,7 +19,7 @@ import me.qyh.blog.entity.User;
 
 public class UserContext {
 
-	private static final ThreadLocal<User> userLocal = new ThreadLocal<User>();
+	private static final ThreadLocal<User> userLocal = new ThreadLocal<>();
 
 	public static void set(User user) {
 		userLocal.set(user);

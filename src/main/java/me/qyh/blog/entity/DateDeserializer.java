@@ -15,17 +15,17 @@
  */
 package me.qyh.blog.entity;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.ParseException;
 
 import org.apache.commons.lang3.time.DateParser;
 import org.apache.commons.lang3.time.FastDateFormat;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
 /**
  * JsonFormat annotation可以解决同样的问题，但只能局限一种格式？
@@ -33,16 +33,16 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
  * @author Administrator
  *
  */
-public class DateDeserializer extends JsonDeserializer<Timestamp> {
+public class DateDeserializer implements JsonDeserializer<Timestamp> {
 
 	private static final DateParser[] PARSERS = { FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss"),
 			FastDateFormat.getInstance("yyyy-MM-dd HH:mm"), FastDateFormat.getInstance("yyyy-MM-dd HH"),
 			FastDateFormat.getInstance("yyyy-MM-dd") };
 
 	@Override
-	public Timestamp deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException {
-		return parse(p.getText().trim());
+	public Timestamp deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+			throws JsonParseException {
+		return parse(json.getAsString().trim());
 	}
 
 	private Timestamp parse(String str) throws DateParseProcessingException {
@@ -55,7 +55,7 @@ public class DateDeserializer extends JsonDeserializer<Timestamp> {
 		throw new DateParseProcessingException(str + "无法转化为符合格式的日期");
 	}
 
-	private final class DateParseProcessingException extends JsonProcessingException {
+	private final class DateParseProcessingException extends JsonParseException {
 
 		/**
 		 * 

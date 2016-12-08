@@ -17,14 +17,13 @@ package me.qyh.blog.lock.support;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Splitter;
+import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.security.input.JsonHtmlXssSerializer;
 
 /**
  * 问答锁
@@ -41,9 +40,8 @@ public class QALock extends SysLock {
 
 	private static final String ANSWER_PARAMETER = "answers";
 
-	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String question;
-	@JsonSerialize(using = JsonHtmlXssSerializer.class)
+	@Expose(serialize = false, deserialize = true)
 	private String answers;
 
 	/**

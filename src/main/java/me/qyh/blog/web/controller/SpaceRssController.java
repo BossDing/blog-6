@@ -27,6 +27,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.web.RssView;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller

@@ -15,11 +15,8 @@
  */
 package me.qyh.blog.bean;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.message.MessageSerializer;
 
 /**
  * 文件上传结果
@@ -28,7 +25,6 @@ import me.qyh.blog.message.MessageSerializer;
  *
  */
 public class UploadedFile {
-	@JsonSerialize(using = MessageSerializer.class)
 	private Message error;
 	private long size;// 上传文件大小
 	private String name;// 上传文件名称

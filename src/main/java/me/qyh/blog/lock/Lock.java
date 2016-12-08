@@ -19,10 +19,7 @@ import java.io.Serializable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.input.JsonHtmlXssSerializer;
 
 /**
  * 锁，如果用户为对象设置了锁，那么访问的时候需要解锁才能访问(非登录用户)
@@ -37,7 +34,6 @@ public abstract class Lock implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	private String id;
-	@JsonSerialize(using = JsonHtmlXssSerializer.class)
 	private String name;
 
 	/**

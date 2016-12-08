@@ -15,8 +15,8 @@
  */
 package me.qyh.blog.lock;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,10 +32,9 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
+import com.google.common.io.CharStreams;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.QALock;
@@ -85,19 +84,10 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 		return lock;
 	}
 
-	private SysLock getLockFromRequest(HttpServletRequest request) throws IOException {
+	private SysLock getLockFromRequest(HttpServletRequest request) throws Exception {
 		InputStream is = request.getInputStream();
-		ObjectReader reader = Jsons.reader();
-		JsonParser jp = reader.getFactory().createParser(is);
-		JsonNode node = Jsons.reader().readTree(jp);
-		JsonNode typeNode = node.get("type");
-		if (typeNode != null && typeNode.textValue() != null) {
-			String type = typeNode.textValue();
-			if (type != null)
-				return "PASSWORD".equals(type) ? reader.treeToValue(node, PasswordLock.class)
-						: reader.treeToValue(node, QALock.class);
-		}
-		return null;
+		InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET);
+		return Jsons.readValue(SysLock.class, CharStreams.toString(ir));
 	}
 
 	private final class SysLockValidator implements Validator {

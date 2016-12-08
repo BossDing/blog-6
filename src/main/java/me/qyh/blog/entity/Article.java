@@ -23,7 +23,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.util.CollectionUtils;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Sets;
 
 import me.qyh.blog.message.Message;
@@ -44,7 +43,6 @@ public class Article extends BaseLockResource {
 	private String title;// 标题
 	private String content;// 博客原始内容
 	private Set<Tag> tags = Sets.newLinkedHashSet();// 博客标签
-	@JsonDeserialize(using = DateDeserializer.class)
 	private Timestamp pubDate;// 撰写日期
 	private Timestamp lastModifyDate;// 最后修改日期
 	private Boolean isPrivate;// 是否是私人博客

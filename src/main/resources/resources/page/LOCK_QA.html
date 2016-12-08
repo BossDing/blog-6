@@ -7,7 +7,7 @@
 			<div class="col-md-8">
 				<div class="alert alert-danger" th:unless="${error == null}"
 					th:text="${messages.getMessage(error)}"></div>
-				<div th:utext="${lock.question}"></div>
+				<div th:if="${lock != null}" th:utext="${lock.question}"></div>
 				<form th:action="@{/unlock}" method="post">
 					<div class="form-group">
 						<label for="password">答案</label> <input type="text"

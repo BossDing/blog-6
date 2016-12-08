@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web.controller;
+package me.qyh.blog.web;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,6 +49,8 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.config.UrlHelper.RequestUrls;
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SpaceNotFoundException;
 import me.qyh.blog.exception.SystemException;
@@ -64,6 +66,7 @@ import me.qyh.blog.metaweblog.RequestXmlParser;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.web.controller.BaseController;
 
 /**
  * 无法处理页面渲染时的异常。
@@ -142,11 +145,18 @@ public class GlobalControllerExceptionHandler {
 	public String handleLockException(HttpServletRequest request, LockException ex) throws IOException {
 		Lock lock = ex.getLock();
 		String redirectUrl = getFullUrl(request);
-		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl));
 		Message error = ex.getError();
 		if (error != null)
 			RequestContextUtils.getOutputFlashMap(request).put("error", error);
-		return "redirect:/unlock";
+		RequestUrls urls = urlHelper.getUrls(request);
+		// 获取空间别名
+		String alias = urls.getSpace();
+		if (alias != null) {
+			LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
+			return "redirect:" + urls.getUrl(new Space(alias)) + "/unlock";
+		} else
+			// 不可能会存在
+			return "redirect:" + urls.getUrl();
 	}
 
 	@ExceptionHandler(LogicException.class)
@@ -156,7 +166,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, ex.getLogicMessage()));
 			return null;
 		} else {
-			RequestContextUtils.getOutputFlashMap(request).put(BaseMgrController.ERROR, ex.getLogicMessage());
+			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, ex.getLogicMessage());
 			return getErrorRedirect(request, 200);
 		}
 	}

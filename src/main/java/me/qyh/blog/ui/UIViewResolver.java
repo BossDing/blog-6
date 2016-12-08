@@ -12,14 +12,9 @@ public class UIViewResolver extends ThymeleafViewResolver {
 	private UIThymeleafView uiThymeleafView;
 
 	@Override
-	protected View loadView(String viewName, Locale locale) throws Exception {
-		return super.loadView(viewName, locale);
-	}
-
-	@Override
 	public View resolveViewName(String viewName, Locale locale) throws Exception {
 		RenderedPage page = UIContext.get();
-		if (page != null) {
+		if (page != null && page.getTemplateName().equals(viewName)) {
 			return uiThymeleafView;
 		} else {
 			return super.resolveViewName(viewName, locale);

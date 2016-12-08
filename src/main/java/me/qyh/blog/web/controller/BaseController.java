@@ -17,8 +17,8 @@ package me.qyh.blog.web.controller;
 
 public abstract class BaseController {
 
-	protected static final String ERROR = "error";
-	protected static final String SUCCESS = "success";
-	protected static final String EMPTY = "empty";
+	public static final String ERROR = "error";
+	public static final String SUCCESS = "success";
+	public static final String EMPTY = "empty";
 
 }

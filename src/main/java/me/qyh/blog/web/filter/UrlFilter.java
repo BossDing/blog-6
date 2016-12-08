@@ -29,7 +29,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.Webs;
 
 /**
  * 配置多域名访问时，用来将space.abc.com请求转发至abc.com/space

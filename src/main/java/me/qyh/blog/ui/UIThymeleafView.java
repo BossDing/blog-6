@@ -27,14 +27,13 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.thymeleaf.spring4.view.ThymeleafView;
 import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.config.Constants;
 
-public class UIThymeleafView extends ThymeleafView implements InitializingBean, ApplicationContextAware {
+public class UIThymeleafView extends ThymeleafView implements InitializingBean {
 
 	@Autowired
 	private UITemplateEngine templateEngine;

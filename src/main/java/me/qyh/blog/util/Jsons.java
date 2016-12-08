@@ -15,16 +15,25 @@
  */
 package me.qyh.blog.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
+import java.io.Reader;
+import java.io.Writer;
+import java.lang.reflect.Type;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.annotations.Expose;
+
+import me.qyh.blog.entity.DateDeserializer;
+import me.qyh.blog.message.Message;
+import me.qyh.blog.message.MessageSerializer;
+import me.qyh.blog.ui.PageSerializer;
+import me.qyh.blog.ui.page.Page;
 
 /**
  * json处理工具类
@@ -33,108 +42,140 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
  *
  */
 public class Jsons {
+	private static final Gson gson = new GsonBuilder().setPrettyPrinting()
+			.addSerializationExclusionStrategy(new ExclusionStrategy() {
 
-	private static final ObjectMapper mapper = new ObjectMapper();
+				@Override
+				public boolean shouldSkipField(FieldAttributes f) {
+					Expose expose = f.getAnnotation(Expose.class);
+					if (expose != null)
+						return !expose.serialize();
+					return false;
+				}
 
-	/**
-	 * private
-	 */
+				@Override
+				public boolean shouldSkipClass(Class<?> clazz) {
+					return false;
+				}
+			}).addDeserializationExclusionStrategy(new ExclusionStrategy() {
+
+				@Override
+				public boolean shouldSkipField(FieldAttributes f) {
+					Expose expose = f.getAnnotation(Expose.class);
+					if (expose != null)
+						return !expose.deserialize();
+					return false;
+				}
+
+				@Override
+				public boolean shouldSkipClass(Class<?> clazz) {
+					return false;
+				}
+			}).registerTypeAdapter(Message.class, new MessageSerializer())
+			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
+			.registerTypeAdapter(Page.class, new PageSerializer()).create();
+
 	private Jsons() {
 		super();
 	}
 
-	static {
-		mapper.setFilters(new SimpleFilterProvider().setFailOnUnknownId(false));
-		mapper.setSerializationInclusion(Include.NON_NULL);
-	}
-
 	/**
-	 * 获取ObjectMapper
-	 * 
-	 * @return ObjectMapper
-	 */
-	public static ObjectMapper getMapper() {
-		return mapper;
-	}
-
-	/**
-	 * 将json转为对应的对象
+	 * 将json tree转化为指定对象
 	 * 
 	 * @param t
-	 *            对象class
+	 *            目标类型
 	 * @param json
-	 *            json文本
-	 * @return 对象
-	 * @throws IOException
-	 *             转化异常
+	 *            jsontree
+	 * @return
 	 */
-	public static <T> T readValue(Class<T> t, String json) throws IOException {
-		ObjectReader reader = mapper.reader(t);
-		return reader.readValue(json);
+	public static <T> T readValue(Class<T> t, JsonElement json) {
+		return gson.fromJson(json, t);
 	}
 
 	/**
-	 * 将json流转化为对应的对象
+	 * 将json tree转化为指定对象
+	 * 
+	 * @param type
+	 *            目标类型
+	 * @param json
+	 *            jsontree
+	 * @return
+	 */
+	public static <T> T readValue(Type type, JsonElement json) {
+		return gson.fromJson(json, type);
+	}
+
+	/**
+	 * 将Reader转化为指定对象
+	 * 
+	 * @param type
+	 *            目标类型
+	 * @param reader
+	 *            输入流
+	 * @return
+	 */
+	public static <T> T readValue(Type type, Reader reader) {
+		return gson.fromJson(reader, type);
+	}
+
+	/**
+	 * 将json字符串转化为目标对象
 	 * 
 	 * @param t
-	 *            对象class
-	 * @param is
-	 *            流
-	 * @return 对象
-	 * @throws IOException
-	 *             转换失败
+	 *            目标类型
+	 * @param json
+	 *            json字符串
+	 * @return
 	 */
-	public static <T> T readValue(Class<T> t, InputStream is) throws IOException {
-		ObjectReader reader = mapper.reader(t);
-		return reader.readValue(is);
+	public static <T> T readValue(Class<T> t, String json) {
+		return gson.fromJson(json, t);
 	}
 
 	/**
-	 * 从链接中读取json信息，转化为对应的对象
+	 * 将对象输出成jsontree
 	 * 
-	 * @param t
-	 *            对象class
-	 * @param url
-	 *            链接
-	 * @return 对象
-	 * @throws IOException
-	 *             转换失败
+	 * @param object
+	 *            对象
+	 * @return
 	 */
-	public static <T> T readValue(Class<T> t, URL url) throws IOException {
-		ObjectReader reader = mapper.reader(t);
-		return reader.readValue(url);
+	public static JsonElement readTree(Object object) {
+		return gson.toJsonTree(object);
 	}
 
 	/**
-	 * 获取json读操作对象
-	 *
-	 * @return ObjectReader
-	 */
-	public static ObjectReader reader() {
-		return mapper.reader();
-	}
-
-	/**
-	 * 获取json写操作对象
+	 * 将json字符串转化为ArrayList集合
 	 * 
-	 * @return ObjectWriter
+	 * @param clazz
+	 *            目标Array类型
+	 * @param json
+	 *            json字符串
+	 * @return
 	 */
-	public static ObjectWriter writer() {
-		return mapper.writer();
+	public static <T> List<T> readList(Class<T[]> clazz, String json) {
+		final T[] jsonToObject = gson.fromJson(json, clazz);
+		return Arrays.asList(jsonToObject);
 	}
 
 	/**
-	 * 将对象的json数据写入流中
+	 * 将对象输出为json文本
 	 * 
-	 * @param os
-	 *            输出流
 	 * @param toWrite
-	 *            代写入的对象
-	 * @throws IOException
-	 *             写入失败
+	 *            对象
+	 * @return
 	 */
-	public static void write(OutputStream os, Object toWrite) throws IOException {
-		writer().writeValue(os, toWrite);
+	public static String write(Object toWrite) {
+		return gson.toJson(toWrite);
 	}
 
+	/**
+	 * 将对象输出到writer
+	 * 
+	 * @param toWrite
+	 *            对象
+	 * @param writer
+	 *            输出流
+	 */
+	public static void write(Object toWrite, Writer writer) {
+		gson.toJson(toWrite, writer);
+	}
 }

@@ -19,8 +19,6 @@ import java.sql.Timestamp;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.Lock;
@@ -32,7 +30,6 @@ import me.qyh.blog.lock.LockKey;
  * @author Administrator
  *
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class SysLock extends Lock {
 
 	/**

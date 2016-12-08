@@ -15,10 +15,7 @@
  */
 package me.qyh.blog.bean;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import me.qyh.blog.message.Message;
-import me.qyh.blog.message.MessageSerializer;
 
 /**
  * 用于Json结果的返回
@@ -31,7 +28,6 @@ public class JsonResult {
 	private boolean success;
 	private Object data;
 
-	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;
 
 	/**
@@ -88,6 +84,11 @@ public class JsonResult {
 
 	public void setMessage(Message message) {
 		this.message = message;
+	}
+
+	@Override
+	public String toString() {
+		return "JsonResult [success=" + success + ", data=" + data + ", message=" + message + "]";
 	}
 
 }

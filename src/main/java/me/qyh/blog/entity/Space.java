@@ -59,6 +59,15 @@ public class Space extends BaseLockResource {
 		super(id);
 	}
 
+	/**
+	 * 
+	 * @param alias
+	 *            空间alias
+	 */
+	public Space(String alias) {
+		this.alias = alias;
+	}
+
 	public String getAlias() {
 		return alias;
 	}

@@ -17,7 +17,7 @@ package me.qyh.blog.ui;
 
 public class UIContext {
 
-	private static ThreadLocal<RenderedPage> pageLocal = new ThreadLocal<RenderedPage>();
+	private static ThreadLocal<RenderedPage> pageLocal = new ThreadLocal<>();
 
 	public static void set(RenderedPage page) {
 		pageLocal.set(page);

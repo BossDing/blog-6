@@ -79,13 +79,12 @@
 		</dependency>
 
 
-		<!-- kaptcha验证码 -->
+		<!-- captcha -->
 		<dependency>
 			<groupId>com.github.cage</groupId>
 			<artifactId>cage</artifactId>
 			<version>1.0</version>
 		</dependency>
-
 		<!-- mail -->
 		<dependency>
 			<groupId>com.sun.mail</groupId>
@@ -98,22 +97,14 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.9.2</version>
 		</dependency>
-		<!-- jackson -->
+		<!-- gson -->
+		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-			<version>2.5.1</version>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>2.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.5.1</version>
-		</dependency>
+
 		<!-- log4j -->
 		<dependency>
 			<groupId>commons-logging</groupId>
@@ -136,28 +127,17 @@
 			<version>1.1.2</version>
 		</dependency>
 
+		<!-- GraphcisMagick -->
 		<dependency>
 			<groupId>org.im4java</groupId>
 			<artifactId>im4java</artifactId>
 			<version>1.4.0</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>jstl</artifactId>
-			<version>1.2</version>
-		</dependency>
-
 		<!-- lucene -->
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
-			<version>6.1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-analyzers-common</artifactId>
 			<version>6.1.0</version>
 		</dependency>
 		<dependency>
@@ -170,7 +150,6 @@
 			<artifactId>lucene-highlighter</artifactId>
 			<version>6.1.0</version>
 		</dependency>
-
 
 		<dependency>
 			<groupId>org.lionsoul</groupId>
@@ -185,6 +164,7 @@
 		</dependency>
 
 
+		<!-- Gif -->
 		<dependency>
 			<groupId>com.madgag</groupId>
 			<artifactId>animated-gif-lib</artifactId>
@@ -215,33 +195,30 @@
 		<!-- <dependency> <groupId>com.qiniu</groupId> <artifactId>qiniu-java-sdk</artifactId> 
 			<version>7.0.0</version> </dependency> -->
 
+		<!-- Java Image Handle -->
+		<!-- -->
 		<dependency>
 			<groupId>net.coobird</groupId>
 			<artifactId>thumbnailator</artifactId>
 			<version>0.4.8</version>
 		</dependency>
+		<!-- markdown -->
 
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
 			<version>0.7.1</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark-ext-autolink -->
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark-ext-autolink</artifactId>
 			<version>0.7.1</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark-ext-gfm-tables -->
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark-ext-gfm-tables</artifactId>
 			<version>0.7.1</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark-ext-gfm-strikethrough -->
 		<dependency>
 			<groupId>com.atlassian.commonmark</groupId>
 			<artifactId>commonmark-ext-gfm-strikethrough</artifactId>
@@ -260,10 +237,11 @@
 			<version>${h2.version}</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>19.0</version>
+			<version>20.0</version>
 		</dependency>
 
 
@@ -280,7 +258,6 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 </project>

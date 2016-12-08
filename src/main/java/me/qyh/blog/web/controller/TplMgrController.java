@@ -16,7 +16,6 @@
 package me.qyh.blog.web.controller;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,10 +44,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.TemplateEngine;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -77,6 +72,7 @@ import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
+import me.qyh.blog.web.controller.form.UserFragmentValidator;
 
 @Controller
 @RequestMapping("mgr/tpl")
@@ -113,7 +109,7 @@ public class TplMgrController extends BaseMgrController {
 	}
 
 	@RequestMapping(value = "export", method = RequestMethod.POST)
-	public ResponseEntity<byte[]> export(ExportReq req) throws LogicException, JsonProcessingException {
+	public ResponseEntity<byte[]> export(ExportReq req) throws LogicException {
 		Space space = req.getSpace();
 		if (space != null && !space.hasId()) {
 			req.setSpace(null);
@@ -123,8 +119,7 @@ public class TplMgrController extends BaseMgrController {
 	}
 
 	@RequestMapping(value = "lastImportPageBackUp", method = RequestMethod.POST)
-	public Object downloadLastImportPageBackUp(HttpSession session, RedirectAttributes ra)
-			throws JsonProcessingException {
+	public Object downloadLastImportPageBackUp(HttpSession session, RedirectAttributes ra) {
 		@SuppressWarnings("unchecked")
 		List<ExportPage> oldPages = (List<ExportPage>) session.getAttribute(OLD_PAGES);
 		if (CollectionUtils.isEmpty(oldPages)) {
@@ -134,13 +129,12 @@ public class TplMgrController extends BaseMgrController {
 		return download(oldPages);
 	}
 
-	private ResponseEntity<byte[]> download(List<ExportPage> pages) throws JsonProcessingException {
+	private ResponseEntity<byte[]> download(List<ExportPage> pages) {
 		HttpHeaders header = new HttpHeaders();
 		header.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		header.set("Content-Disposition", "attachment; filename=template-"
 				+ DateFormatUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss") + ".json");
-		return new ResponseEntity<>(Jsons.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(pages),
-				header, HttpStatus.OK);
+		return new ResponseEntity<>(Jsons.write(pages).getBytes(Constants.CHARSET), header, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "import", method = RequestMethod.GET)
@@ -163,16 +157,19 @@ public class TplMgrController extends BaseMgrController {
 			ra.addFlashAttribute(ERROR, new Message("tpl.upload.fail", "模板文件上传失败"));
 			return "redirect:/mgr/tpl/import";
 		}
-		ObjectReader reader = Jsons.reader();
-		JsonNode node = null;
+		List<ExportPage> eps = null;
 		try {
-			node = reader.readTree(tpl);
+			eps = Jsons.readList(ExportPage[].class, tpl);
 		} catch (Exception e) {
 			logger.debug(e.getMessage(), e);
 			ra.addFlashAttribute(ERROR, new Message("tpl.parse.fail", "模板解析失败"));
 			return "redirect:/mgr/tpl/import";
 		}
-		HashMap<Integer, ImportPageWrapper> parses = parse(reader, node);
+		HashMap<Integer, ImportPageWrapper> parses = doValid(eps);
+		if (parses.isEmpty()) {
+			ra.addFlashAttribute(ERROR, new Message("tpl.parse.empty", "没有可供导入的数据"));
+			return "redirect:/mgr/tpl/import";
+		}
 		ra.addFlashAttribute(PARSERS, parses.values());
 		session.setAttribute(PARSERS, parses);
 		return "redirect:/mgr/tpl/import";
@@ -234,134 +231,62 @@ public class TplMgrController extends BaseMgrController {
 		return new JsonResult(true, uiService.queryDataTags());
 	}
 
-	private HashMap<Integer, ImportPageWrapper> parse(ObjectReader reader, JsonNode node) {
+	private HashMap<Integer, ImportPageWrapper> doValid(List<ExportPage> eps) {
 		HashMap<Integer, ImportPageWrapper> wrappers = Maps.newLinkedHashMap();
-		for (int i = 0; i < node.size(); i++) {
-			JsonNode epNode = node.get(i);
-			if (epNode == null) {
+		int i = 0;
+		label: for (ExportPage ep : eps) {
+			Page page = ep.getPage();
+			if (page == null)
 				continue;
-			}
-			JsonNode pageNode = epNode.get("page");
-			// 无法获取到页面节点
-			if (pageNode == null) {
+			List<Fragment> fragments = ep.getFragments();
+			if (fragments == null)
 				continue;
-			}
-			JsonNode fragmentsNode = epNode.get("fragments");
-			if (fragmentsNode == null) {
+			PageType type = page.getType();
+			if (type == null)
 				continue;
-			}
-			JsonNode typeNode = pageNode.get("type");
-			// 无法获取节点类型
-			if (typeNode == null) {
-				continue;
-			}
-			PageType type = null;
-			try {
-				type = PageType.valueOf(typeNode.textValue());
-			} catch (Exception e) {
-				// 无法解析节点类型
-				logger.debug("序号:" + i + ":无法解析节点类型，节点内容为" + typeNode.textValue() + ",错误信息为：" + e.getMessage());
-				continue;
-			}
-			Page parsed = null;
 			switch (type) {
 			case ERROR:
-				ErrorPage page = null;
-				try {
-					page = reader.treeToValue(pageNode, ErrorPage.class);
-				} catch (Exception e) {
-					// 无法转换为对应页面
-					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为错误页面:" + e.getMessage());
+				ErrorPage errorPage = (ErrorPage) page;
+				if (errorPage.getErrorCode() == null)
 					continue;
-				}
-				if (page.getErrorCode() == null) {
-					logger.debug("序号:" + i + ":错误页面缺少ErrorCode参数");
-					continue;
-				}
-				parsed = page;
 				break;
 			case SYSTEM:
-				SysPage sysPage = null;
-				try {
-					sysPage = reader.treeToValue(pageNode, SysPage.class);
-				} catch (Exception e) {
-					// 无法转换为对应页面
-					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为系统页面:" + e.getMessage());
+				SysPage sysPage = (SysPage) page;
+				if (sysPage.getTarget() == null)
 					continue;
-				}
-				if (sysPage.getTarget() == null) {
-					logger.debug("序号:" + i + ":系统页面缺少PageTarget参数");
-					continue;
-				}
-				parsed = sysPage;
 				break;
 			case EXPANDED:
-				ExpandedPage ep = null;
-				try {
-					ep = reader.treeToValue(pageNode, ExpandedPage.class);
-				} catch (Exception e) {
-					// 无法转换为对应页面
-					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为拓展页面:" + e.getMessage());
+				ExpandedPage expandedPage = (ExpandedPage) page;
+				if (expandedPage.getId() == null)
 					continue;
-				}
-				if (ep.getId() == null) {
-					logger.debug("序号:" + i + ":拓展页面缺少ID参数");
-					continue;
-				}
-				parsed = ep;
 				break;
 			case USER:
-				UserPage up = null;
-				try {
-					up = reader.treeToValue(pageNode, UserPage.class);
-				} catch (Exception e) {
-					// 无法转换为对应页面
-					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为个人页面:" + e.getMessage());
+				UserPage up = (UserPage) page;
+				if (up.getAlias() == null)
 					continue;
-				}
-				if (up.getAlias() == null) {
-					logger.debug("序号:" + i + ":个人页面缺少alias参数");
-					continue;
-				}
-				parsed = up;
 				break;
 			case LOCK:
-				LockPage lockPage = null;
-				try {
-					lockPage = reader.treeToValue(pageNode, LockPage.class);
-				} catch (Exception e) {
-					// 无法转换为对应页面
-					logger.debug("序号:" + i + ":无法将" + pageNode + "转化为解锁页面:" + e.getMessage());
+				LockPage lockPage = (LockPage) page;
+				if (Validators.isEmptyOrNull(lockPage.getLockType(), true))
 					continue;
-				}
-				if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
-					logger.debug("序号:" + i + ":解锁页面缺少lockType参数");
-					continue;
-				}
-				parsed = lockPage;
 				break;
 			}
-			if (parsed == null) {
+			String pageTplStr = page.getTpl();
+			if (Validators.isEmptyOrNull(pageTplStr, true))
 				continue;
-			}
-			String pageTplStr = parsed.getTpl();
-			if (Validators.isEmptyOrNull(pageTplStr, true)) {
-				logger.debug("序号:" + i + ":页面模板内容不能为空");
+			if (pageTplStr.length() > PageValidator.PAGE_TPL_MAX_LENGTH)
 				continue;
+			for (Fragment fragment : fragments) {
+				if (Validators.isEmptyOrNull(fragment.getName(), true))
+					continue label;
+				String fragmentTpl = fragment.getTpl();
+				if (Validators.isEmptyOrNull(fragmentTpl, true))
+					continue label;
+				if (fragmentTpl.length() > UserFragmentValidator.MAX_TPL_LENGTH)
+					continue label;
 			}
-			if (pageTplStr.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-				logger.debug("序号:" + i + ":页面模板内容不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-				continue;
-			}
-			Fragment[] fArray = null;
-			try {
-				fArray = reader.forType(Fragment[].class).readValue(fragmentsNode);
-			} catch (Exception e) {
-				logger.debug("序号:" + i + ":模板片段解析失败：" + e.getMessage());
-				continue;
-			}
-			List<Fragment> fragments = Arrays.asList(fArray);
-			wrappers.put(i, new ImportPageWrapper(i, new ExportPage(parsed, fragments)));
+			wrappers.put(i, new ImportPageWrapper(i, ep));
+			i++;
 		}
 		return wrappers;
 	}

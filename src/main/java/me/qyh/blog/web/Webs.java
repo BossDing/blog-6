@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web.controller;
+package me.qyh.blog.web;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +65,8 @@ public class Webs {
 
 	public static void writeInfo(HttpServletResponse response, JsonResult result) throws IOException {
 		response.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-		Jsons.write(response.getOutputStream(), result);
+		response.setCharacterEncoding(Constants.CHARSET.name());
+		Jsons.write(result, response.getWriter());
 	}
 
 	public static boolean isAction(HttpServletRequest request) {

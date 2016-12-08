@@ -44,7 +44,7 @@ import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.Webs;
 
 /**
  * 将资源存储和资源访问结合起来

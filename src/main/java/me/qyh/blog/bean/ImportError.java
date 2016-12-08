@@ -15,10 +15,7 @@
  */
 package me.qyh.blog.bean;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import me.qyh.blog.message.Message;
-import me.qyh.blog.message.MessageSerializer;
 
 /**
  * 导入失败信息
@@ -29,7 +26,6 @@ import me.qyh.blog.message.MessageSerializer;
 public class ImportError implements Comparable<ImportError> {
 
 	private int index;
-	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;
 
 	/**

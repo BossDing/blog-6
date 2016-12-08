@@ -17,8 +17,7 @@ package me.qyh.blog.lock.support;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockKey;
@@ -41,6 +40,7 @@ public class PasswordLock extends SysLock {
 
 	private static final String PASSWORD_PARAMETER = "password";
 
+	@Expose(serialize = false, deserialize = true)
 	private String password;
 
 	/**
@@ -81,12 +81,10 @@ public class PasswordLock extends SysLock {
 		throw new LogicException(new Message("lock.password.unlock.fail", "密码验证失败"));
 	}
 
-	@JsonIgnore
 	public String getPassword() {
 		return password;
 	}
 
-	@JsonProperty
 	public void setPassword(String password) {
 		this.password = password;
 	}

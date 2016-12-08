@@ -21,11 +21,9 @@ import java.util.List;
 
 import org.springframework.util.CollectionUtils;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.message.Message;
-import me.qyh.blog.message.MessageSerializer;
 
 public class TplRenderErrorDescription implements Serializable {
 
@@ -38,7 +36,6 @@ public class TplRenderErrorDescription implements Serializable {
 	private Integer col;// 列号
 	private ArrayList<String> templateNames = Lists.newArrayList();// 模板名
 	private String expression;// 表达式
-	@JsonSerialize(using = MessageSerializer.class)
 	private Message message;// 错误信息
 
 	public TplRenderErrorDescription() {

@@ -58,8 +58,8 @@ import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.UIExposeHelper;
 import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
-import me.qyh.blog.web.controller.Webs;
+import me.qyh.blog.web.GlobalControllerExceptionHandler;
+import me.qyh.blog.web.Webs;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 

@@ -7,12 +7,10 @@
 		   					 http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 	<!-- 图片处理 -->
-	<bean class="me.qyh.blog.file.GraphicsMagickImageHelper">
-		<property name="magickPath" value="e:/GraphicsMagick-1.3.23-Q8" />
-	</bean>
-	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ <bean class="me.qyh.blog.file.JavaImageHelper" 
-		/> -->
-
+	<!-- <bean class="me.qyh.blog.file.GraphicsMagickImageHelper"> <property 
+		name="magickPath" value="e:/GraphicsMagick-1.3.23-Q8" /> </bean> -->
+	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ -->
+	<bean class="me.qyh.blog.file.JavaImageHelper" />
 	<!-- 文件服务 -->
 	<bean class="me.qyh.blog.file.DefaultFileManager">
 		<property name="servers">

@@ -31,6 +31,7 @@ public class LockBean implements Serializable {
 	private final Lock lock;
 	private final String redirectUrl;
 	private final LockResource lockResource;
+	private final String spaceAlias;
 
 	/**
 	 * 
@@ -41,10 +42,11 @@ public class LockBean implements Serializable {
 	 * @param redirectUrl
 	 *            访问地址
 	 */
-	public LockBean(Lock lock, LockResource lockResource, String redirectUrl) {
+	public LockBean(Lock lock, LockResource lockResource, String redirectUrl, String spaceAlias) {
 		this.lock = lock;
 		this.redirectUrl = redirectUrl;
 		this.lockResource = lockResource;
+		this.spaceAlias = spaceAlias;
 	}
 
 	public Lock getLock() {
@@ -57,6 +59,10 @@ public class LockBean implements Serializable {
 
 	public LockResource getLockResource() {
 		return lockResource;
+	}
+
+	public String getSpaceAlias() {
+		return spaceAlias;
 	}
 
 }

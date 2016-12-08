@@ -26,6 +26,7 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.web.RssView;
 
 @Controller
 public class RssController {

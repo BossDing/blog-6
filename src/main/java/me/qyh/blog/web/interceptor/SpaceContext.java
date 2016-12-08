@@ -19,7 +19,7 @@ import me.qyh.blog.entity.Space;
 
 public class SpaceContext {
 
-	private static final ThreadLocal<Space> spaceLocal = new ThreadLocal<Space>();
+	private static final ThreadLocal<Space> spaceLocal = new ThreadLocal<>();
 
 	public static void set(Space space) {
 		spaceLocal.set(space);

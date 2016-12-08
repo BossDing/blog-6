@@ -17,8 +17,7 @@ package me.qyh.blog.comment;
 
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
@@ -33,7 +32,9 @@ public class CommentConfig {
 	private Boolean allowHtml;
 	private Boolean asc;
 	private CommentMode commentMode;
+	@Expose(serialize = false, deserialize = true)
 	private Integer limitCount;
+	@Expose(serialize = false, deserialize = true)
 	private Integer limitSec;
 	private Boolean check;// 审核
 	private Integer pageSize;// 每页显示数量
@@ -100,27 +101,22 @@ public class CommentConfig {
 		this.commentMode = commentMode;
 	}
 
-	@JsonIgnore
 	public Integer getLimitSec() {
 		return limitSec;
 	}
-	
-	@JsonProperty
+
 	public void setLimitSec(Integer limitSec) {
 		this.limitSec = limitSec;
 	}
 
-	@JsonIgnore
 	public Integer getLimitCount() {
 		return limitCount;
 	}
 
-	@JsonProperty
 	public void setLimitCount(Integer limitCount) {
 		this.limitCount = limitCount;
 	}
 
-	@JsonIgnore
 	public Limit getLimit() {
 		return new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 	}

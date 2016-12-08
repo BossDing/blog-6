@@ -17,11 +17,15 @@ package me.qyh.blog.lock;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.google.common.collect.Maps;
+
+import me.qyh.blog.entity.Space;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 /**
  * 锁辅助类
@@ -39,32 +43,25 @@ public final class LockHelper {
 	}
 
 	/**
-	 * 从请求中获取访问失败的锁资源对象
+	 * 获取最后一次锁，如果锁不存在，抛出MissLockException
 	 * 
 	 * @param request
-	 *            当前请求
-	 * @return 访问失败的锁资源对象，可能为null
+	 *            请求
+	 * @return
 	 */
 	public static LockBean getLockBean(HttpServletRequest request) {
-		LockBean lockBean = null;
 		HttpSession session = request.getSession(false);
 		if (session != null) {
-			lockBean = (LockBean) session.getAttribute(LAST_LOCK_SESSION_KEY);
+			LockBean lockBean = (LockBean) session.getAttribute(LAST_LOCK_SESSION_KEY);
+			if (lockBean == null)
+				throw new MissLockException();
+			String alias = lockBean.getSpaceAlias();
+			Space current = SpaceContext.get();
+			if (!Objects.equals(alias, current == null ? null : current.getAlias()))
+				throw new MissLockException();
+			return lockBean;
 		}
-		return lockBean;
-	}
-
-	/**
-	 * 从请求中获取访问失败的锁资源对象
-	 * 
-	 * @param request
-	 *            当前请求
-	 * @return 如果为null，将会抛出MissLockException
-	 */
-	public static LockBean getRequiredLockBean(HttpServletRequest request) {
-		LockBean lockBean = getLockBean(request);
-		checkLockBean(lockBean);
-		return lockBean;
+		throw new MissLockException();
 	}
 
 	/**
@@ -111,7 +108,8 @@ public final class LockHelper {
 	 *            解锁失败后的所对象
 	 */
 	public static void storeLockBean(HttpServletRequest request, LockBean lockBean) {
-		request.getSession().setAttribute(LAST_LOCK_SESSION_KEY, lockBean);
+		HttpSession session = request.getSession();
+		session.setAttribute(LAST_LOCK_SESSION_KEY, lockBean);
 	}
 
 	/**
@@ -126,21 +124,4 @@ public final class LockHelper {
 			session.removeAttribute(LAST_LOCK_SESSION_KEY);
 		}
 	}
-
-	/**
-	 * 检查LockBean是否存在，如果不存在将会抛出MissLockException
-	 * 
-	 * @param request
-	 *            当前请求
-	 */
-	public static void checkLockBean(HttpServletRequest request) {
-		getRequiredLockBean(request);
-	}
-
-	private static void checkLockBean(LockBean lockBean) {
-		if (lockBean == null) {
-			throw new MissLockException();
-		}
-	}
-
 }

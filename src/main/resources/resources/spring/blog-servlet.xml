@@ -24,12 +24,18 @@
 	<mvc:resources location="/static/" mapping="/static/**"
 		cache-period="31556926" />
 
+
+	<!-- 错误处理 -->
+	<bean class="me.qyh.blog.web.GlobalControllerExceptionHandler" />
+	<!-- rss viewe -->
+	<bean class="me.qyh.blog.web.RssView" />
+
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web.controller" />
 
 	<bean class="me.qyh.blog.ui.TplRender" />
-	
-	<bean class="me.qyh.blog.ui.UIThymeleafView"/>
+
+	<bean class="me.qyh.blog.ui.UIThymeleafView" />
 
 	<!-- <bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver"> -->
 	<bean class="me.qyh.blog.ui.UIViewResolver">
@@ -40,10 +46,7 @@
 
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
-			<bean
-				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
-				<property name="objectMapper" value="#{T(me.qyh.blog.util.Jsons).getMapper()}" />
-			</bean>
+			<bean class="me.qyh.blog.web.GsonHttpMessageConverter" />
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
 			<bean class="me.qyh.blog.lock.LockArgumentResolver" />

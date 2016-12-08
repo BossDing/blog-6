@@ -17,8 +17,8 @@ package me.qyh.blog.ui.page;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.web.GlobalControllerExceptionHandler;
 import me.qyh.blog.web.controller.ErrorController;
-import me.qyh.blog.web.controller.GlobalControllerExceptionHandler;
 
 /**
  * 用来自定义一些异常页面
