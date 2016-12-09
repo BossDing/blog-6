@@ -134,24 +134,27 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	@Override
 	public final boolean deleteBatch(String key) {
 		boolean flag = doDeleteBatch(key);
-		if (flag)
+		if (flag) {
 			flag = deleteBackup(key);
+		}
 		return flag;
 	}
 
 	@Override
 	public final boolean delete(String key) {
 		boolean flag = doDelete(key);
-		if (flag)
+		if (flag) {
 			flag = deleteBackup(key);
+		}
 		return flag;
 	}
 
 	private boolean deleteBackup(String key) {
 		if (backupDir != null) {
 			File backup = new File(backupDir, key);
-			if (backup.exists())
+			if (backup.exists()) {
 				return FileUtils.deleteQuietly(backup);
+			}
 		}
 		return false;
 	}

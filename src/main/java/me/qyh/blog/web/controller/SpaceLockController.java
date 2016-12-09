@@ -60,10 +60,11 @@ public class SpaceLockController extends BaseController {
 			UIContext.set(rp);
 			return rp.getTemplateName();
 		} catch (Throwable e) {
-			if (e instanceof LogicException)
+			if (e instanceof LogicException) {
 				logger.error("渲染页面解锁页面的时候发生逻辑异常，可能由于data标签使用不当引起的，系统无法再显示这个页面，因为这可能会导致无限循环");
-			else
+			} else {
 				logger.error("渲染页面解锁页面的时候发生异常:" + e.getMessage() + "，系统无法再显示这个页面，因为这可能会导致无限循环", e);
+			}
 			return "error/500";
 		}
 	}
@@ -97,8 +98,9 @@ public class SpaceLockController extends BaseController {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session))
+		if (!Webs.matchValidateCode(validateCode, session)) {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		}
 		LockKey key = lock.getKeyFromRequest(request);
 		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
 		lock.tryOpen(key);

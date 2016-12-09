@@ -144,9 +144,11 @@ public class SysLockProvider {
 	 * @return 存在：true，不存在：false
 	 */
 	public boolean checkLockTypeExists(String lockType) {
-		for (String _lockType : LOCK_TYPES)
-			if (_lockType.equals(lockType))
+		for (String _lockType : LOCK_TYPES) {
+			if (_lockType.equals(lockType)) {
 				return true;
+			}
+		}
 		return false;
 	}
 

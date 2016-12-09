@@ -21,20 +21,17 @@
 	<context:property-placeholder
 		location="classpath:resources/mybatis/db.properties,classpath:resources/app.properties,classpath:resources/mail.properties" />
 
-	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
 		destroy-method="close">
-		<property name="driverClass" value="${jdbc.driverClass}" />
 		<property name="jdbcUrl" value="${jdbc.jdbcUrl}" />
-		<property name="user" value="${jdbc.user}" />
+		<property name="driverClassName" value="${jdbc.driverClass}" />
+		<property name="username" value="${jdbc.user}" />
 		<property name="password" value="${jdbc.password}" />
-		<property name="minPoolSize" value="${jdbc.miniPoolSize}" />
-		<property name="maxPoolSize" value="${jdbc.maxPoolSize}" />
-		<property name="initialPoolSize" value="${jdbc.initialPoolSize}" />
-		<property name="maxIdleTime" value="${jdbc.maxIdleTime}" />
-		<property name="checkoutTimeout" value="${jdbc.checkoutTimeout}" />
-		<property name="automaticTestTable" value="${jdbc.automaticTestTable}" />
-		<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}" />
+		<property name="poolName" value="blogCP" />
+		<property name="connectionTestQuery" value="SELECT 1" />
+		<property name="maximumPoolSize" value="${jdbc.maxPoolSize}" />
 	</bean>
+
 	<!-- 配置SqlSessionFactory -->
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
@@ -60,20 +57,11 @@
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
 	<bean id="cacheManager" class="org.springframework.cache.guava.GuavaCacheManager">
-		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m"/>
+		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 
 	<!-- 锁 -->
-	<bean class="me.qyh.blog.lock.LockManager">
-		<!-- <property name="expandedLockProvider"> <bean class="me.qyh.blog.lock.ExpandedLockProvider"> 
-			<property name="expandedLocks"> <list> <bean class="me.qyh.blog.lock.support.PictureQALock"> 
-			<property name="lockType" value="PictureQA" /> <property name="picture" value="http://img.static.qyh.me/article/life/4512f9b6503ceea6.jpg/900" 
-			/> <property name="question" value="which game ?" /> <property name="answers" 
-			value="WOW,wow,魔兽世界" /> <property name="id" value="expandedLock1"></property> 
-			<property name="name" value="魔兽" /> </bean> </list> </property> <property 
-			name="defaultTplResource"> <map> <entry key="PictureQA" value="classpath:me/qyh/blog/ui/page/PictureQALock.html" 
-			/> </map> </property> </bean> </property> -->
-	</bean>
+	<bean class="me.qyh.blog.lock.LockManager" />
 	<bean class="me.qyh.blog.lock.SysLockProvider" />
 	<bean class="me.qyh.blog.lock.LockAspect" />
 

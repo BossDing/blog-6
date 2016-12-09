@@ -56,8 +56,9 @@ public final class UserConfig {
 	}
 
 	private synchronized static void save(User user) {
-		if (!Validators.isEmptyOrNull(user.getPassword(), true))
+		if (!Validators.isEmptyOrNull(user.getPassword(), true)) {
 			pros.setProperty(PASSWORD, BCrypts.encode(user.getPassword()));
+		}
 		pros.setProperty(USERNAME, user.getName());
 		pros.setProperty(EMAIL, user.getEmail() == null ? "" : user.getEmail());
 		try (OutputStream os = new FileOutputStream(userRes.getResource().getFile())) {
@@ -72,16 +73,19 @@ public final class UserConfig {
 		String username = pros.getProperty(USERNAME);
 		String password = pros.getProperty(PASSWORD);
 		String email = pros.getProperty(EMAIL, "");
-		if (Validators.isEmptyOrNull(username, true))
+		if (Validators.isEmptyOrNull(username, true)) {
 			username = "admin";
-		if (Validators.isEmptyOrNull(password, true))
+		}
+		if (Validators.isEmptyOrNull(password, true)) {
 			password = BCrypts.encode("admin");
+		}
 		user = new User();
 		user.setEmail(email);
 		user.setName(username);
 		user.setPassword(password);
-		if (!Validators.isEmptyOrNull(email, true))
+		if (!Validators.isEmptyOrNull(email, true)) {
 			user.setGravatar(DigestUtils.md5DigestAsHex(email.getBytes(Constants.CHARSET)));
+		}
 	}
 
 	public static User get() {

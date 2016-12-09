@@ -66,8 +66,9 @@ public class BlogFileValidator implements Validator {
 	static boolean checkPath(String path) {
 		char[] chars = path.toCharArray();
 		for (char ch : chars) {
-			if (!isAllowLetter(ch))
+			if (!isAllowLetter(ch)) {
 				return false;
+			}
 		}
 		return true;
 	}

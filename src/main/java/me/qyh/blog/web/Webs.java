@@ -43,13 +43,16 @@ public class Webs {
 	private static final AntPathMatcher apm = new AntPathMatcher();
 
 	public static boolean matchValidateCode(String code, HttpSession session) {
-		if (code == null)
+		if (code == null) {
 			return false;
-		if (session == null)
+		}
+		if (session == null) {
 			return false;
+		}
 		String sessionValidateCode = (String) session.getAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
-		if (sessionValidateCode == null)
+		if (sessionValidateCode == null) {
 			return false;
+		}
 		// remove
 		session.removeAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
 		return sessionValidateCode.equals(code);

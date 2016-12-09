@@ -25,6 +25,19 @@ public class LockPage extends Page {
 	private static final long serialVersionUID = 1L;
 	private String lockType;
 
+	public LockPage() {
+		super();
+	}
+
+	public LockPage(Space space) {
+		super(space);
+	}
+
+	public LockPage(Space space, String lockType) {
+		super(space);
+		this.lockType = lockType;
+	}
+
 	public String getLockType() {
 		return lockType;
 	}
@@ -44,18 +57,6 @@ public class LockPage extends Page {
 		return PageType.LOCK;
 	}
 
-	public LockPage() {
-	}
-
-	public LockPage(Space space) {
-		super(space);
-	}
-
-	public LockPage(Space space, String lockType) {
-		super(space);
-		this.lockType = lockType;
-	}
-	
 	public Page toExportPage() {
 		LockPage page = new LockPage();
 		page.setTpl(getTpl());

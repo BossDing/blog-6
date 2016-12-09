@@ -16,8 +16,10 @@
 package me.qyh.blog.ui.fragment;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import me.qyh.blog.ui.data.DataTagProcessor;
+import me.qyh.blog.util.Validators;
 
 /**
  * 片段，用来展现数据
@@ -56,27 +58,16 @@ public class Fragment implements Serializable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hash(this.name);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Fragment other = (Fragment) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+		if (Validators.baseEquals(this, obj)) {
+			Fragment other = (Fragment) obj;
+			return Objects.equals(this.name, other.name);
+		}
+		return false;
 	}
 
 	public final Fragment toExportFragment() {

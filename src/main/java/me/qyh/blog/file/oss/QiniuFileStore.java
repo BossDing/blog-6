@@ -92,8 +92,9 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		UploadManager uploadManager = new UploadManager();
 		try {
 			Response resp = uploadManager.put(file, key, getUpToken());
-			if (!resp.isOK())
+			if (!resp.isOK()) {
 				throw new IOException("七牛云上传失败，异常信息:" + resp.toString() + ",响应信息:" + resp.bodyString());
+			}
 		} catch (QiniuException e) {
 			Response r = e.response;
 			try {
@@ -130,10 +131,12 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	@Override
 	public String getUrl(String key) {
 		String url = urlPrefix + key;
-		if (secret)
+		if (secret) {
 			return auth.privateDownloadUrl(url);
-		if (image(key) && sourceProtected)
+		}
+		if (image(key) && sourceProtected) {
 			return url + styleSplitChar + style;
+		}
 		return url;
 	}
 
@@ -179,15 +182,17 @@ public class QiniuFileStore extends AbstractOssFileStore {
 			do {
 				FileInfo[] items = fileListing.items;
 				if (items != null && items.length > 0) {
-					for (FileInfo fileInfo : items)
+					for (FileInfo fileInfo : items) {
 						keys.add(fileInfo.key);
+					}
 				}
 				fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, fileListing.marker,
 						RECOMMEND_LIMIT, null);
 			} while (!fileListing.isEOF());
 
-			if (keys.isEmpty())
+			if (keys.isEmpty()) {
 				return true;
+			}
 
 			Batch batch = new Batch();
 			batch.delete(bucket, keys.toArray(new String[] {}));
@@ -201,9 +206,11 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	}
 
 	private boolean allowStyleSplitChar(char schar) {
-		for (char ch : ALLOW_STYLE_SPLIT_CHARS)
-			if (ch == schar)
+		for (char ch : ALLOW_STYLE_SPLIT_CHARS) {
+			if (ch == schar) {
 				return true;
+			}
+		}
 		return false;
 
 	}
@@ -237,14 +244,17 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		}
 
 		if (sourceProtected) {
-			if (style == null)
+			if (style == null) {
 				throw new SystemException("开启了原图保护之后请指定一个默认的样式名");
-			if (styleSplitChar == null)
+			}
+			if (styleSplitChar == null) {
 				styleSplitChar = ALLOW_STYLE_SPLIT_CHARS[0];
+			}
 			if (!allowStyleSplitChar(styleSplitChar)) {
 				StringBuilder sb = new StringBuilder();
-				for (char ch : ALLOW_STYLE_SPLIT_CHARS)
+				for (char ch : ALLOW_STYLE_SPLIT_CHARS) {
 					sb.append(ch).append(',');
+				}
 				sb.deleteCharAt(sb.length() - 1);
 				throw new SystemException("样式分隔符不被接受，样式分割符必须为以下字符:" + sb.toString());
 			}

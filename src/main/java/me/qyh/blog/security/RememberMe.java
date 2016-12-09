@@ -70,8 +70,9 @@ public class RememberMe {
 		String rememberMeCookie = extractRememberMeCookie(request);
 		if (rememberMeCookie != null) {
 			try {
-				if (rememberMeCookie.length() == 0)
+				if (rememberMeCookie.length() == 0) {
 					throw new InvalidCookieException("Cookie值为空");
+				}
 				String[] cookieTokens = decodeCookie(rememberMeCookie);
 				if (cookieTokens != null) {
 					if (cookieTokens.length != 3) {
@@ -213,8 +214,9 @@ public class RememberMe {
 	}
 
 	private static byte[] bytesUtf8(String s) {
-		if (s == null)
+		if (s == null) {
 			return new byte[0];
+		}
 		try {
 			ByteBuffer bytes = Constants.CHARSET.newEncoder().encode(CharBuffer.wrap(s));
 			byte[] bytesCopy = new byte[bytes.limit()];

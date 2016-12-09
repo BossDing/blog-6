@@ -18,6 +18,7 @@ package me.qyh.blog.web.interceptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,6 +59,7 @@ import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.UIExposeHelper;
 import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
 import me.qyh.blog.web.Webs;
 
@@ -239,8 +241,9 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			return;
 		}
 		// metaweblog等放行
-		if (Webs.apisRequest(request))
+		if (Webs.apisRequest(request)) {
 			return;
+		}
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}
@@ -299,27 +302,16 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((delegate == null) ? 0 : delegate.hashCode());
-			return result;
+			return Objects.hash(delegate);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			SaveOnAccessCsrfToken other = (SaveOnAccessCsrfToken) obj;
-			if (delegate == null) {
-				if (other.delegate != null)
-					return false;
-			} else if (!delegate.equals(other.delegate))
-				return false;
-			return true;
+			if (Validators.baseEquals(this, obj)) {
+				SaveOnAccessCsrfToken other = (SaveOnAccessCsrfToken) obj;
+				return Objects.equals(this.delegate, other.delegate);
+			}
+			return false;
 		}
 
 		private void saveTokenIfNecessary() {

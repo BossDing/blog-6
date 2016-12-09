@@ -71,15 +71,17 @@ public class UIExposeHelper {
 
 		public int max(List<Integer> numList) {
 			int[] nums = new int[numList.size()];
-			for (int i = 0; i < numList.size(); i++)
+			for (int i = 0; i < numList.size(); i++) {
 				nums[i] = numList.get(i);
+			}
 			return NumberUtils.max(nums);
 		}
 
 		public int min(List<Integer> numList) {
 			int[] nums = new int[numList.size()];
-			for (int i = 0; i < numList.size(); i++)
+			for (int i = 0; i < numList.size(); i++) {
 				nums[i] = numList.get(i);
+			}
 			return NumberUtils.min(nums);
 		}
 

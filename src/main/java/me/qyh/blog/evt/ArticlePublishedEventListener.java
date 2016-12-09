@@ -35,8 +35,9 @@ public class ArticlePublishedEventListener implements ApplicationListener<Articl
 
 	@Override
 	public final void onApplicationEvent(ArticlePublishedEvent event) {
-		for (ArticlePublishedHandler handle : handlers)
+		for (ArticlePublishedHandler handle : handlers) {
 			handle.handle(event.getArticles(), event.getOp());
+		}
 	}
 
 	public void setHandlers(List<ArticlePublishedHandler> handlers) {

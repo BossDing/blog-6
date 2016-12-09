@@ -54,8 +54,9 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 
 	@Override
 	protected List<ArticleSpaceFile> query(Space space, Params params, Attributes attributes) throws LogicException {
-		if (space == null)
+		if (space == null) {
 			return articleService.queryArticleSpaceFiles();
+		}
 		return null;
 	}
 

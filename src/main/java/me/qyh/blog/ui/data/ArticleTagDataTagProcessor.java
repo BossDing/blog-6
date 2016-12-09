@@ -73,11 +73,12 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 		}
 		boolean hasLock = true;
 		String hasLockStr = attributes.get("hasLock");
-		if (hasLockStr != null)
+		if (hasLockStr != null) {
 			try {
 				hasLock = Boolean.parseBoolean(hasLockStr);
 			} catch (Exception e) {
 			}
+		}
 		return articleService.queryTags(space, hasLock, queryPrivate);
 	}
 

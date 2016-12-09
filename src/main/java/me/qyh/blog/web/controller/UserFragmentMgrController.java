@@ -88,8 +88,9 @@ public class UserFragmentMgrController extends BaseMgrController {
 	@RequestMapping(value = "create", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult create(@RequestBody @Validated final UserFragment userFragment) throws LogicException {
-		if (userFragment.isGlobal())
+		if (userFragment.isGlobal()) {
 			userFragment.setSpace(null);
+		}
 		uiService.insertUserFragment(userFragment);
 		return new JsonResult(true, new Message("fragment.user.create.success", "创建成功"));
 	}
@@ -104,8 +105,9 @@ public class UserFragmentMgrController extends BaseMgrController {
 	@RequestMapping(value = "update", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult update(@RequestBody @Validated final UserFragment userFragment) throws LogicException {
-		if (userFragment.isGlobal())
+		if (userFragment.isGlobal()) {
 			userFragment.setSpace(null);
+		}
 		uiService.updateUserFragment(userFragment);
 		return new JsonResult(true, new Message("fragment.user.update.success", "更新成功"));
 	}

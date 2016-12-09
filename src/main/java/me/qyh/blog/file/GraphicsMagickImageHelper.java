@@ -81,12 +81,14 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		setResize(resize, op);
 		String ext = Files.getFileExtension(dest.getName());
 		String srcExt = Files.getFileExtension(src.getName());
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
 			setWhiteBg(op);
+		}
 		op.strip();
 		op.p_profile("*");
-		if (interlace(dest))
+		if (interlace(dest)) {
 			op.interlace("Line");
+		}
 		op.addImage();
 		try {
 			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
@@ -160,8 +162,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		// png to dest
 		IMOperation op = new IMOperation();
 		op.addImage();
-		if (!maybeTransparentBg(ext))
+		if (!maybeTransparentBg(ext)) {
 			setWhiteBg(op);
+		}
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
@@ -170,8 +173,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		} catch (Exception e1) {
 			throw new SystemException(e1.getMessage(), e1);
 		} finally {
-			if (_gif != null && _gif.exists())
+			if (_gif != null && _gif.exists()) {
 				FileUtils.deleteQuietly(_gif);
+			}
 		}
 	}
 
@@ -181,8 +185,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.addImage();
 		String ext = Files.getFileExtension(dest.getName());
 		String srcExt = Files.getFileExtension(src.getName());
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt))
+		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
 			setWhiteBg(op);
+		}
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
@@ -199,8 +204,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	@Override
 	public boolean supportFormat(String extension) {
 		for (String ext : IMG_EXTENSIONS) {
-			if (ext.equalsIgnoreCase(extension))
+			if (ext.equalsIgnoreCase(extension)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -213,8 +219,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	private boolean interlace(File dest) {
-		if (!doInterlace)
+		if (!doInterlace) {
 			return false;
+		}
 		String ext = Files.getFileExtension(dest.getName());
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
@@ -223,8 +230,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		GifDecoder gd = new GifDecoder();
 		try (InputStream is = new FileInputStream(gif)) {
 			int flag = gd.read(is);
-			if (flag != GifDecoder.STATUS_OK)
+			if (flag != GifDecoder.STATUS_OK) {
 				throw new IOException(gif + "文件无法获取封面");
+			}
 			BufferedImage bi = gd.getFrame(0);
 			ImageIO.write(bi, GIF, _gif);
 		}

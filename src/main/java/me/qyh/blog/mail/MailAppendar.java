@@ -156,14 +156,16 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 			String subjectStr = "Undefined subject";
 			if (subjectLayout != null) {
 				subjectStr = subjectLayout.doLayout(lastEventObject);
-				if (subjectStr == null)
+				if (subjectStr == null) {
 					throw new SystemException("邮件发送标题不能为null");
+				}
 				// The subject must not contain new-line characters, which cause
 				// an SMTP error (LOGBACK-865). Truncate the string at the first
 				// new-line character.
 				int newLinePos = subjectStr.indexOf('\n');
-				if (newLinePos > -1)
+				if (newLinePos > -1) {
 					subjectStr = subjectStr.substring(0, newLinePos);
+				}
 			}
 			String contentType = layout.getContentType();
 			MessageBean mb = new MessageBean(subjectStr, !ContentTypeUtil.isTextual(contentType), sbuf.toString());
@@ -210,8 +212,9 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 
 	private boolean eventMarksEndOfLife(ILoggingEvent eventObject) {
 		Marker marker = eventObject.getMarker();
-		if (marker == null)
+		if (marker == null) {
 			return false;
+		}
 
 		return marker.contains(ClassicConstants.FINALIZE_SESSION_MARKER);
 	}

@@ -45,8 +45,9 @@ public class TplRender {
 		try {
 			Map<String, Object> templateDatas = Maps.newHashMap();
 			Map<String, Object> datas = page.getDatas();
-			if (datas != null)
+			if (datas != null) {
 				templateDatas.putAll(datas);
+			}
 			templateDatas.putAll(uiExposeHelper.getHelpers(request));
 			// 调用view来渲染模板，获取response中的数据
 			ResponseWrapper wrapper = new ResponseWrapper(response);
@@ -54,8 +55,9 @@ public class TplRender {
 			uiThymeleafView.render(templateDatas, request, wrapper);
 			return wrapper.getRendered();
 		} catch (Exception e) {
-			if (e instanceof TplRenderException)
+			if (e instanceof TplRenderException) {
 				throw (TplRenderException) e;
+			}
 			throw new SystemException(e.getMessage(), e);
 		}
 	}

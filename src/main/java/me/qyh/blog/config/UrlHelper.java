@@ -100,9 +100,9 @@ public class UrlHelper implements InitializingBean {
 				return null;
 			}
 			int hostPCount = StringUtils.countOccurrencesOf(host, ".");
-			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1))
+			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
 				return Splitter.on('.').split(host).iterator().next();
-			// not a space domain request
+			}
 		}
 		return null;
 	}
@@ -291,8 +291,9 @@ public class UrlHelper implements InitializingBean {
 			if (param.getSort() != null) {
 				sb.append("&sort=").append(param.getSort().name());
 			}
-			if (param.hasQuery())
+			if (param.hasQuery()) {
 				sb.append("&highlight=").append(param.isHighlight() ? "true" : "false");
+			}
 			return sb.toString();
 		}
 
@@ -396,8 +397,9 @@ public class UrlHelper implements InitializingBean {
 			}
 			sb.append(contextPath);
 			String buildUrl = sb.toString();
-			if (buildUrl.endsWith("/"))
+			if (buildUrl.endsWith("/")) {
 				buildUrl = buildUrl.substring(0, buildUrl.length() - 1);
+			}
 			return buildUrl;
 		}
 	}

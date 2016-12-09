@@ -61,8 +61,9 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		space.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		if (space.getIsDefault())
+		if (space.getIsDefault()) {
 			spaceDao.resetDefault();
+		}
 		spaceDao.insert(space);
 	}
 
@@ -87,13 +88,15 @@ public class SpaceServiceImpl implements SpaceService {
 					new Message("space.name.exists", "名称为" + space.getName() + "的空间已经存在了", space.getName()));
 		}
 		// 如果空间是私有的，那么无法加锁
-		if (space.getIsPrivate())
+		if (space.getIsPrivate()) {
 			space.setLockId(null);
-		else
+		} else {
 			checkLock(space.getLockId());
+		}
 
-		if (space.getIsDefault())
+		if (space.getIsDefault()) {
 			spaceDao.resetDefault();
+		}
 
 		spaceDao.update(space);
 		spaceCache.evit(db);

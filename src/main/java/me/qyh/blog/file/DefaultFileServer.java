@@ -80,8 +80,9 @@ public class DefaultFileServer<T extends FileStore> implements FileServer, Initi
 	@Override
 	public List<FileStore> allStore() {
 		List<FileStore> results = Lists.newArrayList();
-		for (T t : this.stores)
+		for (T t : this.stores) {
 			results.add(t);
+		}
 		return Collections.unmodifiableList(results);
 	}
 

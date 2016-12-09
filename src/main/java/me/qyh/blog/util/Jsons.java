@@ -48,8 +48,9 @@ public class Jsons {
 				@Override
 				public boolean shouldSkipField(FieldAttributes f) {
 					Expose expose = f.getAnnotation(Expose.class);
-					if (expose != null)
+					if (expose != null) {
 						return !expose.serialize();
+					}
 					return false;
 				}
 
@@ -62,8 +63,9 @@ public class Jsons {
 				@Override
 				public boolean shouldSkipField(FieldAttributes f) {
 					Expose expose = f.getAnnotation(Expose.class);
-					if (expose != null)
+					if (expose != null) {
 						return !expose.deserialize();
+					}
 					return false;
 				}
 

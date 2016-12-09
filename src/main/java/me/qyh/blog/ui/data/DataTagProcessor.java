@@ -49,8 +49,9 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	public final DataBind<T> getData(Space space, Params params, Map<String, String> attributes) throws LogicException {
-		if (attributes == null)
+		if (attributes == null) {
 			attributes = Maps.newHashMap();
+		}
 		T result = null;
 		Attributes atts = new Attributes(attributes);
 		try {
@@ -73,11 +74,12 @@ public abstract class DataTagProcessor<T> {
 
 	private boolean ignoreLogicException(Map<String, String> attributes) {
 		String v = attributes.get(IGNORE_LOGIC_EXCEPTION);
-		if (v != null)
+		if (v != null) {
 			try {
 				return Boolean.parseBoolean(v);
 			} catch (Exception e) {
 			}
+		}
 		return false;
 	}
 
@@ -88,8 +90,9 @@ public abstract class DataTagProcessor<T> {
 	 * @return
 	 */
 	public final DataBind<T> previewData(Map<String, String> attributes) {
-		if (attributes == null)
+		if (attributes == null) {
 			attributes = Maps.newHashMap();
+		}
 		Attributes atts = new Attributes(attributes);
 		T result = buildPreviewData(atts);
 		DataBind<T> bind = new DataBind<>();

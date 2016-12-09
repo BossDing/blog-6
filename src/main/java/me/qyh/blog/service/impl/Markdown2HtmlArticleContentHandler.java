@@ -66,8 +66,9 @@ public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler
 
 	@Override
 	public String toHtml(String markdown) {
-		if (markdown == null)
+		if (markdown == null) {
 			return "";
+		}
 		Node document = parser.parse(markdown);
 		return renderer.render(document);
 	}
@@ -75,8 +76,9 @@ public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		List<Extension> extensions = Lists.newArrayList(BASE_EXTENSIONS);
-		if (!CollectionUtils.isEmpty(this.extensions))
+		if (!CollectionUtils.isEmpty(this.extensions)) {
 			extensions.addAll(this.extensions);
+		}
 		parser = Parser.builder().extensions(extensions).build();
 		renderer = HtmlRenderer.builder().extensions(extensions).build();
 	}

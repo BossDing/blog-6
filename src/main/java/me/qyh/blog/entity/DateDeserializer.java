@@ -46,12 +46,13 @@ public class DateDeserializer implements JsonDeserializer<Timestamp> {
 	}
 
 	private Timestamp parse(String str) throws DateParseProcessingException {
-		for (DateParser dp : PARSERS)
+		for (DateParser dp : PARSERS) {
 			try {
 				return new Timestamp(dp.parse(str).getTime());
 			} catch (ParseException e) {
 				continue;
 			}
+		}
 		throw new DateParseProcessingException(str + "无法转化为符合格式的日期");
 	}
 

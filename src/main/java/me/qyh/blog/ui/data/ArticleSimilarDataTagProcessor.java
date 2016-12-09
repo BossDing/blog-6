@@ -49,11 +49,13 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 		Article article = params.get("article", Article.class);
 		if (article == null) {
 			String idOrAlias = attributes.get("article");
-			if (idOrAlias != null)
+			if (idOrAlias != null) {
 				return articleService.findSimilar(idOrAlias, limit);
+			}
 		}
-		if (article != null && space.getAlias().equals(article.getSpace().getAlias()))
+		if (article != null && space.getAlias().equals(article.getSpace().getAlias())) {
 			return articleService.findSimilar(article, limit);
+		}
 		return Lists.newArrayList();
 	}
 

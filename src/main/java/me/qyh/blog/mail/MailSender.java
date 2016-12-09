@@ -97,9 +97,9 @@ public class MailSender implements InitializingBean {
 
 	private synchronized boolean doSend(MessageBean mb, boolean pull, MailSendCallBack callBack) {
 		long current = System.currentTimeMillis();
-		if (timeCount == null)
+		if (timeCount == null) {
 			timeCount = new TimeCount(current, 1);
-		else {
+		} else {
 			timeCount.count++;
 			if (timeCount.exceed(current)) {
 				if (pull) {
@@ -108,8 +108,9 @@ public class MailSender implements InitializingBean {
 				}
 				return false;
 			}
-			if (timeCount.reset(current))
+			if (timeCount.reset(current)) {
 				this.timeCount = new TimeCount(current, 1);
+			}
 		}
 		sendMail(mb, callBack);
 		return true;
@@ -119,8 +120,9 @@ public class MailSender implements InitializingBean {
 		executor.execute(() -> {
 			try {
 				String email = mb.to;
-				if (Validators.isEmptyOrNull(email, true))
+				if (Validators.isEmptyOrNull(email, true)) {
 					email = UserConfig.get().getEmail();
+				}
 				if (Validators.isEmptyOrNull(email, true)) {
 					logger.error("接受人邮箱为空，无法发送邮件");
 					return;
@@ -137,12 +139,14 @@ public class MailSender implements InitializingBean {
 						mimeMessage.setFrom();
 					}
 				});
-				if (callBack != null)
+				if (callBack != null) {
 					callBack.callBack(mb, true);
+				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
-				if (callBack != null)
+				if (callBack != null) {
 					callBack.callBack(mb, false);
+				}
 			}
 		});
 	}
@@ -168,22 +172,26 @@ public class MailSender implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (limitSec < 0)
+		if (limitSec < 0) {
 			limitSec = LIMIT_SEC;
-		if (limitCount < 0)
+		}
+		if (limitCount < 0) {
 			limitCount = LIMIT_COUNT;
+		}
 		limit = new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 		if (sdfile.exists()) {
 			logger.debug("发现序列化文件，执行反序列化操作");
 			queue = SerializationUtils.deserialize(new FileInputStream(sdfile));
-			if (!FileUtils.deleteQuietly(sdfile))
+			if (!FileUtils.deleteQuietly(sdfile)) {
 				logger.warn("删除序列文件失败");
+			}
 		}
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
 			for (Iterator<MessageBean> iterator = queue.iterator(); iterator.hasNext();) {
 				MessageBean mb = iterator.next();
-				if (!doSend(mb, false, null))
+				if (!doSend(mb, false, null)) {
 					break;
+				}
 				iterator.remove();
 			}
 		}, 1000);

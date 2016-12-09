@@ -68,10 +68,11 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	public UploadConfig getMetaweblogConfig() {
 		UploadConfig uploadConfig = new UploadConfig();
 		String path = config.getProperty(METAWEBLOG_UPLOAD_PATH);
-		if (path == null)
+		if (path == null) {
 			uploadConfig.setPath("");
-		else
+		} else {
 			uploadConfig.setPath(path);
+		}
 		uploadConfig.setServer(getInt(METAWEBLOG_UPLOAD_SERVER, null));
 		return uploadConfig;
 	}
@@ -79,10 +80,12 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	@Override
 	@CachePut(key = "'mateweblogUploadConfig'", value = "configCache")
 	public UploadConfig updateMetaweblogConfig(UploadConfig uploadConfig) throws LogicException {
-		if (uploadConfig.getPath() != null)
+		if (uploadConfig.getPath() != null) {
 			config.setProperty(METAWEBLOG_UPLOAD_PATH, uploadConfig.getPath());
-		if (uploadConfig.getServer() != null)
+		}
+		if (uploadConfig.getServer() != null) {
 			config.setProperty(METAWEBLOG_UPLOAD_SERVER, uploadConfig.getServer().toString());
+		}
 		store();
 		return uploadConfig;
 	}

@@ -75,17 +75,21 @@ public class RequestXmlParser {
 			throw new ParseException(e.getMessage(), e);
 		}
 		Element root = doc.getRootElement();
-		if (!"methodCall".equals(root.getName()))
+		if (!"methodCall".equals(root.getName())) {
 			throw new ParseException("解析失败，无法匹配:methodCall根节点");
+		}
 		List<?> mnNodes = root.getChildren("methodName");
-		if (mnNodes.size() != 1)
+		if (mnNodes.size() != 1) {
 			throw new ParseException("解析失败，存在:" + mnNodes.size() + "个methodName节点");
+		}
 		Element mnEle = (Element) mnNodes.get(0);
-		if (Validators.isEmptyOrNull(mnEle.getTextTrim(), false))
+		if (Validators.isEmptyOrNull(mnEle.getTextTrim(), false)) {
 			throw new ParseException("解析失败，节点:methodName没有对应的值");
+		}
 		List<?> paramsNodes = root.getChildren("params");
-		if (paramsNodes.size() > 1)
+		if (paramsNodes.size() > 1) {
 			throw new ParseException("解析失败，存在多个params节点");
+		}
 		List<Object> arguments = Lists.newArrayList();
 		if (!paramsNodes.isEmpty()) {
 			List<?> params = ((Element) paramsNodes.get(0)).getChildren("param");
@@ -93,8 +97,9 @@ public class RequestXmlParser {
 				for (Object paramNode : params) {
 					Element paramEle = (Element) paramNode;
 					List<?> valueNodes = paramEle.getChildren("value");
-					if (valueNodes.size() != 1)
+					if (valueNodes.size() != 1) {
 						throw new ParseException("解析失败，param节点下存在:" + valueNodes.size() + "个value节点");
+					}
 					Element valueEle = (Element) valueNodes.get(0);
 					arguments.add(parseValueElement(valueEle));
 				}
@@ -152,20 +157,20 @@ public class RequestXmlParser {
 
 	private String buildVXml(Object v) {
 		StringBuilder sb = new StringBuilder("<value>");
-		if (v instanceof Integer || v instanceof Short)
+		if (v instanceof Integer || v instanceof Short) {
 			sb.append("<int>").append(v).append("</int>");
-		else if (v instanceof Boolean)
+		} else if (v instanceof Boolean) {
 			sb.append("<boolean>").append((Boolean) v ? "1" : "0").append("</boolean>");
-		else if (v instanceof String)
+		} else if (v instanceof String) {
 			sb.append("<string>").append("<![CDATA[").append(v).append("]]>").append("</string>");
-		else if (v instanceof Double || v instanceof Float)
+		} else if (v instanceof Double || v instanceof Float) {
 			sb.append("<double>").append(v).append("</double>");
-		else if (v instanceof Date)
+		} else if (v instanceof Date) {
 			sb.append("<dateTime.iso8601>").append(ISO8601_FORMAT.format((Date) v)).append("</dateTime.iso8601>");
-		else if (v instanceof byte[])
+		} else if (v instanceof byte[]) {
 			sb.append("<base64>").append("<![CDATA[").append(new String(Base64.encode((byte[]) v))).append("]]>")
 					.append("</base64>");
-		else if (v instanceof Collection<?>) {
+		} else if (v instanceof Collection<?>) {
 			sb.append("<array>");
 			sb.append("<data>");
 			for (Object _v : (Collection<?>) v)
@@ -199,17 +204,19 @@ public class RequestXmlParser {
 		for (String v : VALUES) {
 			List<?> cvNodes = ve.getChildren(v);
 			if (!cvNodes.isEmpty()) {
-				if (vNodes != null && !vNodes.isEmpty())
+				if (vNodes != null && !vNodes.isEmpty()) {
 					throw new ParseException("解析失败，value节点下存在多个可被解析的值");
-				else {
+				} else {
 					vNodes = cvNodes;
 				}
 			}
 		}
-		if (CollectionUtils.isEmpty(vNodes))
+		if (CollectionUtils.isEmpty(vNodes)) {
 			throw new ParseException("解析失败，value节点下不存在可被解析的值");
-		if (vNodes.size() != 1)
+		}
+		if (vNodes.size() != 1) {
 			throw new ParseException("解析失败，value节点下存在多个可被解析的值");
+		}
 		Element ele = (Element) vNodes.get(0);
 		return parseValueElement(ve, ele.getName(), ele.getTextTrim());
 	}
@@ -218,26 +225,31 @@ public class RequestXmlParser {
 		switch (type) {
 		case "i4":
 		case "int":
-			if (v.isEmpty())
+			if (v.isEmpty()) {
 				return null;
+			}
 			try {
 				return Integer.parseInt(v);
 			} catch (NumberFormatException e) {
 				throw new ParseException("解析失败:" + e.getMessage(), e);
 			}
 		case "boolean":
-			if (v.isEmpty())
+			if (v.isEmpty()) {
 				return null;
-			if ("0".equals(v))
+			}
+			if ("0".equals(v)) {
 				return false;
-			if ("1".equals(v))
+			}
+			if ("1".equals(v)) {
 				return true;
+			}
 			throw new ParseException("解析失败:如果节点为boolean值，那么值必须为0或1");
 		case "string":
 			return v;
 		case "double":
-			if (v.isEmpty())
+			if (v.isEmpty()) {
 				return null;
+			}
 			try {
 				return Double.parseDouble(v);
 			} catch (NumberFormatException e) {
@@ -257,27 +269,32 @@ public class RequestXmlParser {
 			}
 		case "struct":
 			List<?> memberNodes = ve.getChild("struct").getChildren("member");
-			if (CollectionUtils.isEmpty(memberNodes))
+			if (CollectionUtils.isEmpty(memberNodes)) {
 				throw new ParseException("解析失败，struct节点不存在:member节点");
+			}
 			Map<String, Object> map = Maps.newHashMap();
 			for (Object memberNode : memberNodes) {
 				Element memberEle = (Element) memberNode;
 				List<?> memberNameNodes = memberEle.getChildren("name");
-				if (memberNameNodes.size() != 1)
+				if (memberNameNodes.size() != 1) {
 					throw new ParseException("解析失败，member节点下存在:" + memberNameNodes.size() + "个name节点");
+				}
 				List<?> memberValueNodes = memberEle.getChildren("value");
-				if (memberValueNodes.size() != 1)
+				if (memberValueNodes.size() != 1) {
 					throw new ParseException("解析失败，member节点下存在:" + memberValueNodes.size() + "个value节点");
+				}
 				String name = ((Element) memberNameNodes.get(0)).getTextTrim();
-				if (name.isEmpty())
+				if (name.isEmpty()) {
 					throw new ParseException("解析失败，name节点不能为空");
+				}
 				map.put(name, parseValueElement((Element) memberValueNodes.get(0)));
 			}
 			return new Struct(map);
 		case "array":
 			List<?> dataNodes = ve.getChild("array").getChildren("data");
-			if (dataNodes.size() != 1)
+			if (dataNodes.size() != 1) {
 				throw new ParseException("解析失败，array节点下存在:" + dataNodes.size() + "个data节点");
+			}
 			List<Object> results = Lists.newArrayList();
 			for (Object vNode : ((Element) dataNodes.get(0)).getChildren("value")) {
 				Element dataVe = (Element) vNode;
@@ -449,12 +466,14 @@ public class RequestXmlParser {
 		@SuppressWarnings("unchecked")
 		public <T> List<T> getArray(String key, Class<T> t) throws ParseException {
 			List<Object> list = getArray(key);
-			if (list == null)
+			if (list == null) {
 				return Lists.newArrayList();
+			}
 			List<T> rest = Lists.newArrayList();
 			for (Object o : list) {
-				if (o != null && !t.isInstance(o))
+				if (o != null && !t.isInstance(o)) {
 					throw new ParseException(o.getClass() + "不是" + t.getName() + "类型");
+				}
 				rest.add((T) o);
 			}
 			return rest;

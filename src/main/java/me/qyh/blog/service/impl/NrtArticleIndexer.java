@@ -191,9 +191,11 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.YES));
 		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.YES));
 		Set<Tag> tags = article.getTags();
-		if (!CollectionUtils.isEmpty(tags))
-			for (Tag tag : tags)
+		if (!CollectionUtils.isEmpty(tags)) {
+			for (Tag tag : tags) {
 				doc.add(new TextField(TAG, tag.getName().toLowerCase(), Field.Store.YES));
+			}
+		}
 		doc.add(new StringField(SPACE_ID, article.getSpace().getId().toString(), Field.Store.NO));
 		doc.add(new StringField(PRIVATE, article.isPrivate().toString(), Field.Store.NO));
 		doc.add(new StringField(STATUS, article.getStatus().name().toLowerCase(), Field.Store.NO));
@@ -269,8 +271,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			searcher = searcherManager.acquire();
 
 			Query likeQuery = buildLikeQuery(article, searcher);
-			if (likeQuery == null)
+			if (likeQuery == null) {
 				return Collections.emptyList();
+			}
 			Builder builder = new Builder();
 			builder.add(likeQuery, Occur.MUST);
 			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
@@ -280,15 +283,18 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				Document aSimilar = searcher.doc(scoreDoc.doc);
 				datas.add(Integer.parseInt(aSimilar.get(ID)));
 			}
-			if (datas.isEmpty())
+			if (datas.isEmpty()) {
 				return Lists.newArrayList();
+			}
 			List<Article> articles = dquery.query(datas);
-			if (!articles.isEmpty())
+			if (!articles.isEmpty()) {
 				Collections.sort(articles, COMPARATOR);
+			}
 			List<Article> results = Lists.newArrayList();
 			for (Article art : articles) {
-				if (!art.equals(article))
+				if (!art.equals(article)) {
 					results.add(art);
+				}
 			}
 			int size = results.size();
 			int max = Math.min(limit, size);
@@ -297,8 +303,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			try {
-				if (searcher != null)
+				if (searcher != null) {
 					searcherManager.release(searcher);
+				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
@@ -373,8 +380,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			Query multiFieldQuery = null;
 			if (param.hasQuery()) {
 				multiFieldQuery = buildMultiFieldQuery(param.getQuery());
-				if (multiFieldQuery != null)
+				if (multiFieldQuery != null) {
 					builder.add(multiFieldQuery, Occur.MUST);
+				}
 			}
 			Query query = builder.build();
 			logger.debug(query.toString());
@@ -404,8 +412,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			try {
-				if (searcher != null)
+				if (searcher != null) {
 					searcherManager.release(searcher);
+				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
@@ -428,12 +437,13 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	protected Sort buildSort(ArticleQueryParam param) {
 		List<SortField> fields = Lists.newArrayList();
-		if (!param.isIgnoreLevel())
+		if (!param.isIgnoreLevel()) {
 			fields.add(new SortField(LEVEL, Type.INT, true));
+		}
 		ArticleQueryParam.Sort psort = param.getSort();
-		if (psort == null)
+		if (psort == null) {
 			fields.add(SortField.FIELD_SCORE);
-		else {
+		} else {
 			switch (param.getSort()) {
 			case HITS:
 				fields.add(new SortField(HITS, Type.INT, true));
@@ -459,23 +469,26 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	protected void doHightlight(Article article, String content, Query query) {
 		String titleHL = getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE,
 				article.getTitle());
-		if (titleHL != null)
+		if (titleHL != null) {
 			article.setTitle(titleHL);
+		}
 		String summaryHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
 				clean(article.getSummary()));
-		if (summaryHL != null)
+		if (summaryHL != null) {
 			article.setSummary(summaryHL);
-		else {
+		} else {
 			String contentHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT,
 					clean(content));
-			if (contentHL != null)
+			if (contentHL != null) {
 				article.setSummary(contentHL);
+			}
 		}
 		if (!CollectionUtils.isEmpty(article.getTags())) {
 			for (Tag tag : article.getTags()) {
 				String tagHL = getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag.getName());
-				if (tagHL != null)
+				if (tagHL != null) {
 					tag.setName(tagHL);
+				}
 			}
 		}
 
@@ -522,19 +535,23 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (titleFormatter == null)
+		if (titleFormatter == null) {
 			titleFormatter = new DefaultFormatter("lucene-highlight-title");
-		if (tagFormatter == null)
+		}
+		if (tagFormatter == null) {
 			tagFormatter = new DefaultFormatter("lucene-highlight-tag");
-		if (summaryFormatter == null)
+		}
+		if (summaryFormatter == null) {
 			summaryFormatter = new DefaultFormatter("lucene-highlight-summary");
+		}
 		qboostMap.put(TAG, boostMap.getOrDefault(TAG, 20F));
 		qboostMap.put(ALIAS, boostMap.getOrDefault(ALIAS, 10F));
 		qboostMap.put(TITLE, boostMap.getOrDefault(TITLE, 7F));
 		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
-		if (commitPeriod <= 0)
+		if (commitPeriod <= 0) {
 			commitPeriod = DEFAULT_COMMIT_PERIOD;
+		}
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
 			try {
 				oriWriter.commit();
@@ -576,8 +593,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		@Override
 		public int compare(Article o1, Article o2) {
 			int compare = -(o1.getPubDate().compareTo(o2.getPubDate()));
-			if (compare == 0)
+			if (compare == 0) {
 				compare = -o1.getId().compareTo(o2.getId());
+			}
 			return compare;
 		}
 	}

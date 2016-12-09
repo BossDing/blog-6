@@ -60,11 +60,14 @@ public class LockManager implements InitializingBean {
 	 */
 	public List<Lock> allLock() {
 		Map<String, Lock> idsMap = Maps.newLinkedHashMap();
-		for (Lock lock : expandedLockProvider.allLock())
+		for (Lock lock : expandedLockProvider.allLock()) {
 			idsMap.put(lock.getId(), lock);
-		for (Lock lock : sysLockProvider.allLock())
-			if (!idsMap.containsKey(lock.getId()))
+		}
+		for (Lock lock : sysLockProvider.allLock()) {
+			if (!idsMap.containsKey(lock.getId())) {
 				idsMap.put(lock.getId(), lock);
+			}
+		}
 		return Collections.unmodifiableList(Lists.newArrayList(idsMap.values()));
 	}
 
@@ -106,13 +109,16 @@ public class LockManager implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (expandedLockProvider == null)
+		if (expandedLockProvider == null) {
 			expandedLockProvider = new ExpandedLockProvider();
+		}
 		Set<String> types = Sets.newLinkedHashSet();
-		for (String type : expandedLockProvider.getLockTypes())
+		for (String type : expandedLockProvider.getLockTypes()) {
 			types.add(type);
-		for (String type : sysLockProvider.getLockTypes())
+		}
+		for (String type : sysLockProvider.getLockTypes()) {
 			types.add(type);
+		}
 		allTypes.addAll(types);
 	}
 }

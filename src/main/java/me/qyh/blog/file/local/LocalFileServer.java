@@ -33,8 +33,9 @@ public class LocalFileServer extends DefaultFileServer<LocalFileStore> {
 	@Override
 	public CommonFile store(String key, MultipartFile file) throws LogicException {
 		for (LocalFileStore store : stores) {
-			if (store.canStore(file))
+			if (store.canStore(file)) {
 				return store.store(key, file);
+			}
 		}
 		throw new SystemException("储存失败:" + file + "，没有找到符合条件的存储器");
 	}

@@ -53,12 +53,14 @@ public final class LockHelper {
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			LockBean lockBean = (LockBean) session.getAttribute(LAST_LOCK_SESSION_KEY);
-			if (lockBean == null)
+			if (lockBean == null) {
 				throw new MissLockException();
+			}
 			String alias = lockBean.getSpaceAlias();
 			Space current = SpaceContext.get();
-			if (!Objects.equals(alias, current == null ? null : current.getAlias()))
+			if (!Objects.equals(alias, current == null ? null : current.getAlias())) {
 				throw new MissLockException();
+			}
 			return lockBean;
 		}
 		throw new MissLockException();

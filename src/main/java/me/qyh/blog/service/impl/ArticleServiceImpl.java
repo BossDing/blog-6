@@ -122,15 +122,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					throw new AuthencationException();
 				}
 				// 如果文章不在目标空间下
-				if (!Objects.equals(SpaceContext.get(), article.getSpace()))
+				if (!Objects.equals(SpaceContext.get(), article.getSpace())) {
 					return null;
+				}
 
 				Article clone = new Article(article);
 				clone.setComments(commentServer.queryArticleCommentCount(article.getId()));
 
-				if (!CollectionUtils.isEmpty(articleContentHandlers))
-					for (ArticleContentHandler handler : articleContentHandlers)
+				if (!CollectionUtils.isEmpty(articleContentHandlers)) {
+					for (ArticleContentHandler handler : articleContentHandlers) {
 						handler.handle(clone);
+					}
+				}
 				return clone;
 			}
 		}
@@ -170,8 +173,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	public Article writeArticle(MetaweblogArticle mba) throws LogicException {
 		Space space = mba.getSpace() == null ? spaceDao.selectDefault() : spaceDao.selectByName(mba.getSpace());
-		if (space == null)
+		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
+		}
 		Article article = null;
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (mba.hasId()) {
@@ -233,14 +237,16 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		if (space.getArticleHidden())
+		if (space.getArticleHidden()) {
 			article.setHidden(null);
+		}
 		article.setSpace(space);
 		// 如果文章是私有的，无法设置锁
-		if (article.isPrivate())
+		if (article.isPrivate()) {
 			article.setLockId(null);
-		else
+		} else {
 			checkLock(article.getLockId());
+		}
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (article.hasId()) {
 			Article articleDb = articleDao.selectById(article.getId());
@@ -277,8 +283,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
-				if (!autoDraft)// 自动草稿不推事件
+				if (!autoDraft) {
+					// 自动草稿不推事件
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
+				}
 			}
 		} else {
 			if (article.getAlias() != null) {
@@ -300,8 +308,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
 				articleIndexer.addOrUpdateDocument(updated);
-				if (!autoDraft)
+				if (!autoDraft) {
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
+				}
 			}
 		}
 		return article;
@@ -349,8 +358,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				}
 				articleTagDao.insert(articleTag);
 			}
-			if (rebuildIndex)
+			if (rebuildIndex) {
 				rebuildIndex(true);// 新增了标签，重新建立索引
+			}
 		}
 	}
 
@@ -401,8 +411,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
 			List<Integer> ids = Lists.newArrayList(datas.size());
-			for (Article article : datas)
+			for (Article article : datas) {
 				ids.add(article.getId());
+			}
 			Map<Integer, Integer> countsMap = commentServer.queryArticlesCommentCount(ids);
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
@@ -421,8 +432,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		for (Integer id : ids) {
 			art = new Article(id);
 			int index = articles.indexOf(art);
-			if (index != -1)
+			if (index != -1) {
 				ordered.add(articles.get(index));
+			}
 		}
 		return ordered;
 	}
@@ -463,8 +475,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		article.setStatus(status);
 		articleDao.update(article);
-		if (article.isPublished())
+		if (article.isPublished()) {
 			articleIndexer.addOrUpdateDocument(article);
+		}
 	}
 
 	@Override
@@ -495,8 +508,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleDao.update(article);
 			articleIndexer.addOrUpdateDocument(article);
 		}
-		if (!articles.isEmpty())
+		if (!articles.isEmpty()) {
 			applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
+		}
 		return articles.size();
 	}
 
@@ -535,8 +549,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public ArticleNav getArticleNav(String idOrAlias) {
 		Article article = getArticleForView(idOrAlias);
-		if (article != null)
+		if (article != null) {
 			return getArticleNav(article);
+		}
 		return null;
 	}
 
@@ -572,8 +587,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public List<Article> findSimilar(Article article, int limit) throws LogicException {
-		if (article == null)
+		if (article == null) {
 			return Collections.emptyList();
+		}
 		return articleIndexer.querySimilar(article, (List<Integer> articleIds) -> {
 			return articleDao.selectByIds(articleIds);
 		}, limit);

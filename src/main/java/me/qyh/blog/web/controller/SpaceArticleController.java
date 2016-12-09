@@ -78,8 +78,9 @@ public class SpaceArticleController extends BaseController {
 		try {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(referer).build();
 			if (!apm.match("/space/" + SpaceContext.get().getAlias() + "/article/*", uc.getPath())
-					&& !apm.match("/article/*", uc.getPath()))
+					&& !apm.match("/article/*", uc.getPath())) {
 				return new JsonResult(false);
+			}
 		} catch (Exception e) {
 			return new JsonResult(false);
 		}

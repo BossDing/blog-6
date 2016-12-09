@@ -114,12 +114,13 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 				logger.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
 			}
 		}
-		if (!toProcesses.isEmpty())
+		if (!toProcesses.isEmpty()) {
 			try {
 				SerializationUtils.serialize(toProcesses, new FileOutputStream(toProcessesSdfile));
 			} catch (Exception e) {
 				logger.error("序列化待处理列表时发生错误：" + e.getMessage(), e);
 			}
+		}
 	}
 
 	private void add(Comment comment) {
@@ -133,8 +134,9 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		context.setVariable("messages", messages);
 		String text = mailTemplateEngine.process(mailTemplate, context);
 		MessageBean mb = new MessageBean(mailSubject, true, text);
-		if (to != null)
+		if (to != null) {
 			mb.setTo(to);
+		}
 		mailSender.send(mb);
 	}
 
@@ -153,24 +155,29 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
 			mailTemplate = CharStreams.toString(ir);
 		}
-		if (messageProcessPeriodSec <= 0)
+		if (messageProcessPeriodSec <= 0) {
 			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
-		if (messageProcessSec <= 0)
+		}
+		if (messageProcessSec <= 0) {
 			messageProcessSec = MESSAGE_PROCESS_SEC;
-		if (messageTipCount <= 0)
+		}
+		if (messageTipCount <= 0) {
 			messageTipCount = MESSAGE_TIP_COUNT;
+		}
 
 		if (toSendSdfile.exists()) {
 			List<Comment> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
 			this.toSend = Collections.synchronizedList(comments);
-			if (!FileUtils.deleteQuietly(toSendSdfile))
+			if (!FileUtils.deleteQuietly(toSendSdfile)) {
 				logger.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+			}
 		}
 
 		if (toProcessesSdfile.exists()) {
 			this.toProcesses = SerializationUtils.deserialize(new FileInputStream(toProcessesSdfile));
-			if (!FileUtils.deleteQuietly(toProcessesSdfile))
+			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
 				logger.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+			}
 		}
 
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {

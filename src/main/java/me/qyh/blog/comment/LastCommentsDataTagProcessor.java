@@ -74,15 +74,18 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	private int getLimit(Attributes attributes) {
 		int limit = DEFAULT_LIMIT;
 		String v = attributes.get(LIMIT);
-		if (v != null)
+		if (v != null) {
 			try {
 				limit = Integer.parseInt(v);
 			} catch (Exception e) {
 			}
-		if (limit <= 0)
+		}
+		if (limit <= 0) {
 			limit = DEFAULT_LIMIT;
-		if (limit > MAX_LIMIT)
+		}
+		if (limit > MAX_LIMIT) {
 			limit = MAX_LIMIT;
+		}
 		return limit;
 	}
 

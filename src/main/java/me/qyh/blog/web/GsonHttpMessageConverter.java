@@ -150,8 +150,9 @@ public class GsonHttpMessageConverter extends AbstractHttpMessageConverter<Objec
 	protected void writeInternal(Object o, HttpOutputMessage outputMessage)
 			throws IOException, HttpMessageNotWritableException {
 		try (OutputStreamWriter writer = new OutputStreamWriter(outputMessage.getBody(), Constants.CHARSET)) {
-			if (this.jsonPrefix != null)
+			if (this.jsonPrefix != null) {
 				writer.append(this.jsonPrefix);
+			}
 			Jsons.write(o, writer);
 		} catch (JsonIOException ex) {
 			throw new HttpMessageNotWritableException("Could not write JSON: " + ex.getMessage(), ex);

@@ -22,8 +22,9 @@ public class SpaceCache {
 
 	@LockProtected
 	public Space getSpaceWithLockCheck(String alias) {
-		if (alias == null)
+		if (alias == null) {
 			return null;
+		}
 		Space space = aliasCache.get(alias);
 		if (space == null) {
 			space = spaceDao.selectByAlias(alias);
@@ -40,8 +41,9 @@ public class SpaceCache {
 	}
 
 	public Space getSpace(Integer id) {
-		if (id == null)
+		if (id == null) {
 			return null;
+		}
 		Space space = idCache.get(id);
 		if (space == null) {
 			space = spaceDao.selectById(id);

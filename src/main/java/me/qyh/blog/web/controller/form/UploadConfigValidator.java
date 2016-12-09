@@ -52,8 +52,9 @@ public class UploadConfigValidator implements Validator {
 					_path = _path.trim();
 					if (!_path.isEmpty()) {
 						validatePath(_path, errors);
-						if (errors.hasErrors())
+						if (errors.hasErrors()) {
 							return;
+						}
 						sb.append(_path).append(FileService.SPLIT_CHAR);
 					}
 				}

@@ -133,7 +133,7 @@ public class PageValidator implements Validator {
 
 		if (page instanceof LockPage) {
 			LockPage lockPage = (LockPage) page;
-			if(Validators.isEmptyOrNull(lockPage.getLockType(), true)){
+			if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
 				errors.reject("page.locktype.empty", "页面锁类型不能为空");
 				return;
 			}

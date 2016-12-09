@@ -126,9 +126,11 @@ public final class TemplateParser {
 	public static String buildFragmentTag(String name, Map<String, String> atts) {
 		Tag tag = Tag.valueOf(FRAGEMENT);
 		Attributes attributes = new Attributes();
-		if (!CollectionUtils.isEmpty(atts))
-			for (Map.Entry<String, String> it : atts.entrySet())
+		if (!CollectionUtils.isEmpty(atts)) {
+			for (Map.Entry<String, String> it : atts.entrySet()) {
 				attributes.put(it.getKey(), it.getValue());
+			}
+		}
 		attributes.put(NAME_ATTR, name);
 		Element ele = new Element(tag, "", attributes);
 		return ele.toString();

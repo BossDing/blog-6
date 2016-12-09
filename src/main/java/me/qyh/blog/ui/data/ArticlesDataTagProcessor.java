@@ -129,8 +129,9 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 		String query = attributes.get("query");
-		if (query != null)
+		if (query != null) {
 			param.setQuery(query);
+		}
 
 		String fromStr = attributes.get("from");
 		if (fromStr != null) {
@@ -142,8 +143,9 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		}
 
 		String tag = attributes.get("tag");
-		if (tag != null)
+		if (tag != null) {
 			param.setTag(tag);
+		}
 
 		String sortStr = attributes.get("sort");
 		if (sortStr != null) {
@@ -165,16 +167,19 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 
 		if (UserContext.get() != null) {
 			String ignoreLevelStr = attributes.get("ignoreLevel");
-			if (ignoreLevelStr != null)
+			if (ignoreLevelStr != null) {
 				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
+			}
 
 			String queryPrivateStr = attributes.get("queryPrivate");
-			if (queryPrivateStr != null)
+			if (queryPrivateStr != null) {
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
+			}
 
 			String hasLockStr = attributes.get("hasLock");
-			if (hasLockStr != null)
+			if (hasLockStr != null) {
 				param.setHasLock(Boolean.parseBoolean(hasLockStr));
+			}
 		}
 
 		ArticleQueryParamValidator.validate(param);

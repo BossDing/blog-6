@@ -27,6 +27,15 @@ public abstract class PageQueryParam implements Serializable {
 	private int currentPage;
 	private int pageSize;
 
+	public PageQueryParam() {
+		super();
+	}
+
+	public PageQueryParam(int currentPage, int pageSize) {
+		this.currentPage = currentPage;
+		this.pageSize = pageSize;
+	}
+
 	public int getOffset() {
 		return PageResult.countOffset(currentPage, pageSize);
 	}
@@ -45,13 +54,5 @@ public abstract class PageQueryParam implements Serializable {
 
 	public int getCurrentPage() {
 		return currentPage;
-	}
-
-	public PageQueryParam() {
-	}
-
-	public PageQueryParam(int currentPage, int pageSize) {
-		this.currentPage = currentPage;
-		this.pageSize = pageSize;
 	}
 }

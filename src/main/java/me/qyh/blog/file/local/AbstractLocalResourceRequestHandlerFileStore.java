@@ -189,8 +189,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		}
 
 		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
-		if (enableDownloadHandler)
+		if (enableDownloadHandler) {
 			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
+		}
 	}
 
 	@Override

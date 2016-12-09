@@ -146,17 +146,19 @@ public class GlobalControllerExceptionHandler {
 		Lock lock = ex.getLock();
 		String redirectUrl = getFullUrl(request);
 		Message error = ex.getError();
-		if (error != null)
+		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put("error", error);
+		}
 		RequestUrls urls = urlHelper.getUrls(request);
 		// 获取空间别名
 		String alias = urls.getSpace();
 		if (alias != null) {
 			LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
 			return "redirect:" + urls.getUrl(new Space(alias)) + "/unlock";
-		} else
+		} else {
 			// 不可能会存在
 			return "redirect:" + urls.getUrl();
+		}
 	}
 
 	@ExceptionHandler(LogicException.class)

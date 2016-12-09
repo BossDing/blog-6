@@ -33,8 +33,9 @@ public class CommentEventListener implements ApplicationListener<CommentEvent> {
 
 	@Override
 	public final void onApplicationEvent(CommentEvent event) {
-		for (CommentHandler handle : handlers)
+		for (CommentHandler handle : handlers) {
 			handle.handle(event.getComment());
+		}
 	}
 
 	public void setHandlers(List<CommentHandler> handlers) {

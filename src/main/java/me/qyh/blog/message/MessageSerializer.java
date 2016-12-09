@@ -38,9 +38,10 @@ public class MessageSerializer implements JsonSerializer<Message> {
 
 	@Override
 	public JsonElement serialize(Message src, Type typeOfSrc, JsonSerializationContext context) {
-		if (messages == null)
+		if (messages == null) {
 			// 如果没有注入messages,那么尝试注入
 			SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
+		}
 		// 如果不是在spring环境中，那么尝试使用code来输出
 		return messages == null ? new JsonPrimitive(src.getCodes()[0]) : new JsonPrimitive(messages.getMessage(src));
 	}

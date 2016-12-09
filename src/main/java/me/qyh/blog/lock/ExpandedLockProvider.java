@@ -67,14 +67,16 @@ public class ExpandedLockProvider implements InitializingBean {
 				idsMap.put(id, lock);
 				String type = lock.getLockType().trim();
 				List<Lock> types = typesMap.get(type);
-				if (types == null)
+				if (types == null) {
 					types = Lists.newArrayList();
+				}
 				types.add(lock);
 				typesMap.put(type, types);
 			}
 			for (String type : typesMap.keySet()) {
-				if (defaultTplResource.get(type) == null)
+				if (defaultTplResource.get(type) == null) {
 					throw new SystemException("锁类型" + type + "对应的基本模板没有被设置");
+				}
 			}
 		}
 	}
@@ -82,33 +84,42 @@ public class ExpandedLockProvider implements InitializingBean {
 	private boolean valid(String str) {
 		char[] chars = str.toCharArray();
 		for (char ch : chars) {
-			if (!isAllowLetter(ch))
+			if (!isAllowLetter(ch)) {
 				return false;
+			}
 		}
 		return true;
 	}
 
 	private void validLock(Lock lock) {
-		if (Validators.isEmptyOrNull(lock.getId(), true))
+		if (Validators.isEmptyOrNull(lock.getId(), true)) {
 			throw new SystemException("锁ID不能为空");
+		}
 		String id = lock.getId().trim();
-		if (id.length() > MAX_ID_LENGTH)
+		if (id.length() > MAX_ID_LENGTH) {
 			throw new SystemException("ID" + lock.getId() + "不能超过" + MAX_ID_LENGTH + "个字符");
-		if (!valid(id))
+		}
+		if (!valid(id)) {
 			throw new SystemException("ID只能包含英文字母和数字");
+		}
 		lock.setId(id);
-		if (Validators.isEmptyOrNull(lock.getLockType(), true))
+		if (Validators.isEmptyOrNull(lock.getLockType(), true)) {
 			throw new SystemException("锁类型不能为空");
+		}
 		String type = lock.getLockType().trim();
-		if (type.length() > MAX_TYPE_LENGTH)
+		if (type.length() > MAX_TYPE_LENGTH) {
 			throw new SystemException("锁类型" + lock.getLockType() + "不能超过" + MAX_TYPE_LENGTH + "个字符");
-		if (!valid(type))
+		}
+		if (!valid(type)) {
 			throw new SystemException("锁类型只能包含英文字母和数字");
-		if (Validators.isEmptyOrNull(lock.getName(), true))
+		}
+		if (Validators.isEmptyOrNull(lock.getName(), true)) {
 			throw new SystemException("锁名称不能为空");
+		}
 		String name = lock.getName().trim();
-		if (name.length() > MAX_NAME_LENGTH)
+		if (name.length() > MAX_NAME_LENGTH) {
 			throw new SystemException("锁名称" + lock.getName() + "不能超过" + MAX_NAME_LENGTH + "个字符");
+		}
 		lock.setName(name);
 	}
 

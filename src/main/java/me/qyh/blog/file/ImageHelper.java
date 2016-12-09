@@ -66,8 +66,9 @@ public abstract class ImageHelper {
 	public final ImageInfo read(File file) throws IOException {
 		formatCheck(file);
 		ImageInfo ii = doRead(file);
-		if (!supportFormat(ii.getExtension()))
+		if (!supportFormat(ii.getExtension())) {
 			throw new IOException("文件格式" + ii.extension + "不被支持");
+		}
 		return ii;
 
 	}
@@ -219,8 +220,9 @@ public abstract class ImageHelper {
 	 * @return 是: true ,否:false
 	 */
 	public static boolean sameFormat(String ext1, String ext2) {
-		if (ext1.equalsIgnoreCase(ext2))
+		if (ext1.equalsIgnoreCase(ext2)) {
 			return true;
+		}
 		return isJPEG(ext1) && isJPEG(ext2);
 	}
 
@@ -237,7 +239,8 @@ public abstract class ImageHelper {
 
 	private void formatCheck(File file) throws IOException {
 		String extension = Files.getFileExtension(file.getName());
-		if (!supportFormat(extension))
+		if (!supportFormat(extension)) {
 			throw new IOException("文件格式" + extension + "不被支持");
+		}
 	}
 }

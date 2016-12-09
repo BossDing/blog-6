@@ -17,9 +17,7 @@ package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
 import java.util.List;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import java.util.Objects;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -28,6 +26,7 @@ import com.google.gson.annotations.Expose;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -206,21 +205,15 @@ public class Comment extends BaseEntity {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
+		return Objects.hash(this.id);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		if (Validators.baseEquals(this, obj)) {
+			Comment rhs = (Comment) obj;
+			return Objects.equals(this.id, rhs.id);
 		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		Comment rhs = (Comment) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
+		return false;
 	}
 }

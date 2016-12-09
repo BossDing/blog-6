@@ -57,8 +57,9 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setSpace(Space space) {
 		this.space = space;
-		if (space != null)
+		if (space != null) {
 			this.queryHidden = true;
+		}
 	}
 
 	public Date getBegin() {

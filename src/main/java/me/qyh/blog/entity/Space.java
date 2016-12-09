@@ -16,9 +16,9 @@
 package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -121,11 +121,6 @@ public class Space extends BaseLockResource {
 		this.isDefault = isDefault;
 	}
 
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
-	}
-
 	public Integer getArticlePageSize() {
 		return articlePageSize;
 	}
@@ -135,18 +130,17 @@ public class Space extends BaseLockResource {
 	}
 
 	@Override
+	public int hashCode() {
+		return Objects.hash(this.id);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		if (Validators.baseEquals(this, obj)) {
+			Space rhs = (Space) obj;
+			return Objects.equals(this.id, rhs.id);
 		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		Space rhs = (Space) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
+		return false;
 	}
 
 }

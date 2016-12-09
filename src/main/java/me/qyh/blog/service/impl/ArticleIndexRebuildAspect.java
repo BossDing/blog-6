@@ -67,8 +67,9 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 			throw new SystemException(e.getMessage(), e);
 		}
 		ArticleIndexRebuild ann = AnnotationUtils.findAnnotation(method, ArticleIndexRebuild.class);
-		if (!ann.readOnly())
+		if (!ann.readOnly()) {
 			TransactionSynchronizationManager.registerSynchronization(this);
+		}
 		String conditionForWait = ann.conditionForWait();
 		boolean wait = false;
 		if ("true".equalsIgnoreCase(conditionForWait)) {
@@ -79,8 +80,9 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 			Expression waitExpression = parser.parseExpression(conditionForWait);
 			wait = waitExpression.getValue(buildStandardEvaluationContext(method, joinPoint.getArgs()), Boolean.class);
 		}
-		if (wait)
+		if (wait) {
 			waitWhileRebuilding();
+		}
 	}
 
 	@AfterThrowing(pointcut = "@annotation(ArticleIndexRebuild)", throwing = "e")
@@ -102,7 +104,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		try {
 			if (status == STATUS_ROLLED_BACK) {
 				if (!noReload()) {
-					threadPoolTaskExecutor.execute(()->{
+					threadPoolTaskExecutor.execute(() -> {
 						rebuild();
 					});
 				}

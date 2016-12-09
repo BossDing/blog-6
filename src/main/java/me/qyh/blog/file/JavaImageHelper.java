@@ -63,8 +63,9 @@ public class JavaImageHelper extends ImageHelper {
 		try (InputStream is = new FileInputStream(file)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
-			if (flag != GifDecoder.STATUS_OK)
+			if (flag != GifDecoder.STATUS_OK) {
 				throw new IOException(file + "文件无法读取");
+			}
 			Dimension dim = gd.getFrameSize();
 			return new ImageInfo(dim.width, dim.height, GIF);
 		}
@@ -92,13 +93,14 @@ public class JavaImageHelper extends ImageHelper {
 		try (InputStream is = new FileInputStream(gif)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
-			if (flag != GifDecoder.STATUS_OK)
+			if (flag != GifDecoder.STATUS_OK) {
 				throw new IOException(gif + "文件无法读取");
+			}
 			BufferedImage bi = gd.getFrame(0);
 			png = FileUtils.temp(PNG);
 			writeImg(bi, PNG, png);
 			String destExt = Files.getFileExtension(dest.getName());
-			if (isPNG(destExt))
+			if (isPNG(destExt)) {
 				try {
 					FileUtils.deleteQuietly(dest);
 					Files.move(png, dest);
@@ -106,6 +108,7 @@ public class JavaImageHelper extends ImageHelper {
 				} catch (IOException e) {
 					throw new SystemException(e.getMessage(), e);
 				}
+			}
 			// PNG to Other Format
 			BufferedImage readed = ImageIO.read(png);
 			BufferedImage newBufferedImage = new BufferedImage(readed.getWidth(), readed.getHeight(),
@@ -123,15 +126,16 @@ public class JavaImageHelper extends ImageHelper {
 	protected void doFormat(File src, File dest) throws IOException {
 		String ext = Files.getFileExtension(src.getName());
 		String destExt = Files.getFileExtension(dest.getName());
-		if (sameFormat(ext, destExt))
+		if (sameFormat(ext, destExt)) {
 			try {
 				Files.copy(src, dest);
 			} catch (IOException e) {
 				throw new SystemException(e.getMessage(), e);
 			}
-		if (isGIF(ext))
+		}
+		if (isGIF(ext)) {
 			doGetGifCover(src, dest);
-		else {
+		} else {
 			BufferedImage readed = ImageIO.read(src);
 			BufferedImage newBufferedImage = new BufferedImage(readed.getWidth(), readed.getHeight(),
 					BufferedImage.TYPE_INT_RGB);
@@ -178,9 +182,10 @@ public class JavaImageHelper extends ImageHelper {
 		}
 		String destExt = Files.getFileExtension(dest.getName());
 		Builder<BufferedImage> builder = Thumbnails.of(originalImage);
-		if (!maybeTransparentBg(destExt))
+		if (!maybeTransparentBg(destExt)) {
 			// 防止红色背景
 			builder = builder.imageType(BufferedImage.TYPE_INT_RGB);
+		}
 		return builder.size(resizeWidth, resizeHeight).asBufferedImage();
 	}
 }

@@ -16,9 +16,9 @@
 package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -64,24 +64,18 @@ public class Tag extends BaseEntity {
 	public void setCreate(Timestamp create) {
 		this.create = create;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(name).build();
+		return Objects.hash(this.name);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		if (Validators.baseEquals(this, obj)) {
+			Tag rhs = (Tag) obj;
+			return Objects.equals(this.name, rhs.name);
 		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		Tag rhs = (Tag) obj;
-		return new EqualsBuilder().append(name, rhs.name).isEquals();
+		return false;
 	}
 }

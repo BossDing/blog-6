@@ -35,10 +35,12 @@ public abstract class CommentUserChecker {
 	public final void doCheck(final String name, final String email) throws LogicException {
 		User user = UserConfig.get();
 		String emailOrAdmin = user.getEmail();
-		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email))
+		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email)) {
 			throw new LogicException("comment.email.invalid", "邮件不被允许");
-		if (user.getName().equalsIgnoreCase(name))
+		}
+		if (user.getName().equalsIgnoreCase(name)) {
 			throw new LogicException("comment.nickname.invalid", "昵称不被允许");
+		}
 		checkMore(name, email);
 	}
 

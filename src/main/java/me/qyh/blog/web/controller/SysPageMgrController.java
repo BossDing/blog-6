@@ -169,8 +169,9 @@ public class SysPageMgrController extends BaseMgrController {
 			}
 			Map<String, Object> resultMap = Maps.newHashMap();
 			resultMap.put("csses", csses);
-			if (style != null)
+			if (style != null) {
 				resultMap.put("style", style.trim());
+			}
 			return new JsonResult(true, resultMap);
 		} catch (TplRenderException e) {
 			return new JsonResult(false);

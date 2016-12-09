@@ -63,11 +63,12 @@ public class CaptchaController implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (num > 0 && delta >= 0)
+		if (num > 0 && delta >= 0) {
 			cage = new Cage(null, null, null, null, Cage.DEFAULT_COMPRESS_RATIO,
 					new RandomTokenGenerator(random, num, delta), random);
-		else
+		} else {
 			cage = new GCage();
+		}
 	}
 
 	public void setNum(int num) {

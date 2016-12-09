@@ -55,8 +55,9 @@ public class ArticleCache {
 	public void evit(Article article) {
 		Cache cache = cacheManager.getCache(CACHE_NAME);
 		if (cache != null) {
-			if (article.getAlias() != null)
+			if (article.getAlias() != null) {
 				cache.evict("article-" + article.getAlias());
+			}
 			cache.evict("article-" + article.getId());
 		}
 	}

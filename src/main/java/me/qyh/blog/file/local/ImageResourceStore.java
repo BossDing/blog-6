@@ -144,8 +144,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	private void webpFormat(File src, File dest) throws LogicException {
-		if (!supportWebp)
+		if (!supportWebp) {
 			throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
+		}
 		// 如果是webp的图片，需要转化为jpeg格式
 		try {
 			imageHelper.format(src, dest);
@@ -176,17 +177,20 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				String sourcePath = getSourcePathByResizePath(path);
 				// 缩略图不存在，寻找原图
 				File local = super.findByKey(sourcePath);
-				if (local == null)
+				if (local == null) {
 					// 返回null
 					return null;
+				}
 				// 如果原图存在，进行缩放
-				if (errorThumbPaths.contains(thumbPath))
+				if (errorThumbPaths.contains(thumbPath)) {
 					return detectSupportWebp ? null : new PathResource(local.toPath());
+				}
 				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))) {
 					synchronized (this) {
 						File check = findThumbByPath(thumbPath);
-						if (check.exists())
+						if (check.exists()) {
 							return new PathResource(check.toPath());
+						}
 						try {
 							return new PathResource(doResize(local, resize, check, sourcePath).toPath());
 						} catch (IOException e) {
@@ -202,8 +206,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 		// 寻找源文件
 		File local = super.findByKey(path);
-		if (local != null)
+		if (local != null) {
 			return new PathResource(local.toPath());
+		}
 		return null;
 	}
 
@@ -250,11 +255,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	private String buildResizePath(Resize resize, String key) {
 		String path = key;
-		if (!key.startsWith("/"))
+		if (!key.startsWith("/")) {
 			path = "/" + key;
-		if (resize == null)
+		}
+		if (resize == null) {
 			return getUrl(path);
-
+		}
 		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(resize, path));
 	}
 
@@ -284,8 +290,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	private void validateResize(Resize resize) {
-		if (resize != null && !resizeValidator.valid(resize))
+		if (resize != null && !resizeValidator.valid(resize)) {
 			throw new SystemException("默认缩放尺寸：" + resize + "无法被接受！请调整ResizeUrlParser");
+		}
 	}
 
 	private File findThumbByPath(String path) {
@@ -315,10 +322,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
-		if (!supportWebp)
+		if (!supportWebp) {
 			return false;
-		if (request.getParameter(NO_WEBP) != null)
+		}
+		if (request.getParameter(NO_WEBP) != null) {
 			return false;
+		}
 		String accept = request.getHeader("Accept");
 		if (accept != null && accept.indexOf(WEBP_ACCEPT) != -1) {
 			return true;
@@ -395,8 +404,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	protected String getSourcePathByResizePath(String path) {
 		int idOf = path.lastIndexOf('/');
-		if (idOf != -1)
+		if (idOf != -1) {
 			return path.substring(0, path.lastIndexOf('/'));
+		}
 		return path;
 	}
 

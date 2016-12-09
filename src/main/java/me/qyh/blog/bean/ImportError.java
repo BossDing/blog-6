@@ -15,7 +15,10 @@
  */
 package me.qyh.blog.bean;
 
+import java.util.Objects;
+
 import me.qyh.blog.message.Message;
+import me.qyh.blog.util.Validators;
 
 /**
  * 导入失败信息
@@ -71,24 +74,15 @@ public class ImportError implements Comparable<ImportError> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + index;
-		return result;
+		return Objects.hash(this.index);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ImportError other = (ImportError) obj;
-		if (index != other.index)
-			return false;
-		return true;
+		if (Validators.baseEquals(this, obj)) {
+			ImportError other = (ImportError) obj;
+			return Objects.equals(this.index, other.index);
+		}
+		return false;
 	}
-
 }

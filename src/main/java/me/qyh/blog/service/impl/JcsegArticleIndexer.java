@@ -47,8 +47,9 @@ public class JcsegArticleIndexer extends NRTArticleIndexer {
 	@Override
 	public synchronized void removeTag(String... tags) {
 		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
-		for (String tag : tags)
+		for (String tag : tags) {
 			dict.remove(ILexicon.CJK_WORD, tag);
+		}
 	}
 
 	@Override

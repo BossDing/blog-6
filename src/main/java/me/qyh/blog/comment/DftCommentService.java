@@ -127,8 +127,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	@Transactional(readOnly = true)
 	public CommentPageResult queryComment(CommentQueryParam param) {
 		param.setPageSize(config.getPageSize());
-		if (param.getArticle() == null)
+		if (param.getArticle() == null) {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
+		}
 		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
@@ -166,14 +167,16 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		switch (config.getCommentMode()) {
 		case TREE:
 			datas = commentDao.selectPageWithTree(param);
-			for (Comment comment : datas)
+			for (Comment comment : datas) {
 				completeComment(comment);
+			}
 			datas = handlerTree(datas, config);
 			break;
 		default:
 			datas = commentDao.selectPageWithList(param);
-			for (Comment comment : datas)
+			for (Comment comment : datas) {
 				completeComment(comment);
+			}
 			break;
 		}
 		return new CommentPageResult(param, count, datas, new CommentConfig(config));
@@ -191,14 +194,16 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		String ip = comment.getIp();
 		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
-		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished())
+		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
+		}
 		// 如果私人文章并且没有登录
-		if (article.isPrivate() && UserContext.get() == null)
+		if (article.isPrivate() && UserContext.get() == null) {
 			throw new AuthencationException();
-
-		if (!article.getAllowComment() && UserContext.get() == null)
+		}
+		if (!article.getAllowComment() && UserContext.get() == null) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
+		}
 		if (UserContext.get() == null) {
 			// 检查频率
 			Limit limit = config.getLimit();
@@ -227,12 +232,14 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 			}
 			parentPath = parent.getParentPath() + parent.getId() + "/";
 		}
-		if (parentPath.length() > PATH_MAX_LENGTH)
+		if (parentPath.length() > PATH_MAX_LENGTH) {
 			throw new LogicException("comment.path.toolong", "该评论不能再被回复了");
+		}
 
 		Comment last = commentDao.selectLast(comment);
-		if (last != null && last.getContent().equals(comment.getContent()))
+		if (last != null && last.getContent().equals(comment.getContent())) {
 			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
+		}
 
 		if (UserContext.get() == null) {
 			String email = comment.getEmail();
@@ -330,8 +337,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit) {
 		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null, space != null);
-		for (Comment comment : comments)
+		for (Comment comment : comments) {
 			completeComment(comment);
+		}
 		return comments;
 	}
 
@@ -348,8 +356,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	@Transactional(readOnly = true)
 	public List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException {
 		Article article = articleCache.getArticleWithLockCheck(articleId);
-		if (article == null)
+		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
+		}
 		if (!article.isPublished()) {
 			return Collections.emptyList();
 		}
@@ -403,8 +412,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	public Map<Integer, Integer> queryArticlesCommentCount(List<Integer> ids) {
 		List<ArticleComments> results = commentDao.selectArticlesCommentCount(ids);
 		Map<Integer, Integer> map = Maps.newHashMap();
-		for (ArticleComments result : results)
+		for (ArticleComments result : results) {
 			map.put(result.getId(), result.getComments());
+		}
 		return map;
 	}
 
@@ -505,8 +515,9 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		@Override
 		public int compare(Comment o1, Comment o2) {
 			int compare = o1.getCommentDate().compareTo(o2.getCommentDate());
-			if (compare == 0)
+			if (compare == 0) {
 				return o1.getId().compareTo(o2.getId());
+			}
 			return compare;
 		}
 	}
@@ -533,10 +544,12 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 			loadConfig();
 		}
 
-		if (commentContentChecker == null)
+		if (commentContentChecker == null) {
 			commentContentChecker = new DefaultCommentContentChecker();
-		if (commentEmailChecker == null)
+		}
+		if (commentEmailChecker == null) {
 			commentEmailChecker = new DefaultCommentUserChecker();
+		}
 	}
 
 	private void loadConfig() {
@@ -545,10 +558,11 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 		config.setAsc(Boolean.parseBoolean(pros.getProperty(COMMENT_ASC, "true")));
 		config.setCheck(Boolean.parseBoolean(pros.getProperty(COMMENT_CHECK, "false")));
 		String commentMode = pros.getProperty(COMMENT_MODE);
-		if (commentMode == null)
+		if (commentMode == null) {
 			config.setCommentMode(CommentMode.LIST);
-		else
+		} else {
 			config.setCommentMode(CommentMode.valueOf(commentMode));
+		}
 		config.setLimitCount(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_COUNT, "10")));
 		config.setLimitSec(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_SEC, "60")));
 		config.setPageSize(Integer.parseInt(pros.getProperty(COMMENT_PAGESIZE, "10")));
@@ -556,10 +570,12 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 
 	private void completeComment(Comment comment) {
 		Comment p = comment.getParent();
-		if (p != null)
+		if (p != null) {
 			completeComment(p);
-		if (comment.getAdmin() == null || !comment.getAdmin())
+		}
+		if (comment.getAdmin() == null || !comment.getAdmin()) {
 			return;
+		}
 		User user = UserConfig.get();
 		comment.setNickname(user.getName());
 		String email = user.getEmail();

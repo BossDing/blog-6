@@ -492,7 +492,7 @@
 				var data = datas[i];
 				html += '<div class="col-xs-6 col-md-4">';
 				html += '<div class="thumbnail text-center">';
-				if(data.dir){
+				if(data.type == 'DIRECTORY'){
 					html += '<a href="###" data-page="1" data-parent="'+data.id+'" "><img src="'+basePath+'/static/fileicon/folder.png" class="img-responsive" style="height:100px"/></a>';
 				} else {
 					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;

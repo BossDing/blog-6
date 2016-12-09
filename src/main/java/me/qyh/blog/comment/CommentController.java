@@ -64,8 +64,9 @@ public class CommentController extends BaseController {
 			throws LogicException {
 		if (UserContext.get() == null) {
 			HttpSession session = req.getSession(false);
-			if (!Webs.matchValidateCode(validateCode, session))
+			if (!Webs.matchValidateCode(validateCode, session)) {
 				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+			}
 		}
 		comment.setArticle(new Article(articleId));
 		comment.setIp(Webs.getIp(req));

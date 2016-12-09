@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -130,8 +128,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		@Override
 		public DataBind<?> query(DataTag dataTag) throws LogicException {
 			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-			if (processor != null)
+			if (processor != null) {
 				return processor.previewData(dataTag.getAttrs());
+			}
 			return null;
 		}
 	};
@@ -147,8 +146,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null)
+		if (space != null && spaceCache.getSpace(space.getId()) == null) {
 			throw new LogicException(SPACE_NOT_EXISTS);
+		}
 		UserFragment db;
 		if (userFragment.isGlobal()) {
 			db = userFragmentDao.selectGlobalByName(userFragment.getName());
@@ -181,8 +181,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null)
+		if (space != null && spaceCache.getSpace(space.getId()) == null) {
 			throw new LogicException(SPACE_NOT_EXISTS);
+		}
 		UserFragment old = userFragmentDao.selectById(userFragment.getId());
 		if (old == null) {
 			throw new LogicException("fragment.user.notExists", "挂件不存在");
@@ -334,7 +335,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(db.getSpace(), alias);
-			if (aliasPage != null && !aliasPage.equals(db)) {
+			if (aliasPage != null && !aliasPage.getId().equals(db.getId())) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 			userPage.setId(db.getId());
@@ -473,8 +474,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	private void checkLockType(String lockType) throws LogicException {
-		if (!lockManager.checkLockTypeExists(lockType))
+		if (!lockManager.checkLockTypeExists(lockType)) {
 			throw new LogicException("page.lock.locktype.notexists", "锁类型：" + lockType + "不存在", lockType);
+		}
 	}
 
 	@Override
@@ -522,8 +524,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public List<ExportPage> export(ExportReq req) throws LogicException {
 		Space space = req.getSpace();
 		final Space sp = space == null ? null : spaceCache.getSpace(space.getId());
-		if (space != null && sp == null)
+		if (space != null && sp == null) {
 			throw new LogicException(SPACE_NOT_EXISTS);
+		}
 		List<ExportPage> pages = Lists.newArrayList();
 		// 系统页面
 		for (PageTarget target : PageTarget.values()) {
@@ -724,8 +727,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Transactional(readOnly = true)
 	public DataBind<?> queryData(DataTag dataTag) throws LogicException {
 		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-		if (processor != null)
+		if (processor != null) {
 			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs());
+		}
 		return null;
 	}
 
@@ -739,8 +743,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		for (PageTarget target : PageTarget.values()) {
 			Resource resource = sysPageDefaultTpls.get(target);
-			if (resource == null)
+			if (resource == null) {
 				resource = new ClassPathResource("resources/page/PAGE_" + target.name() + ".html");
+			}
 			String tpl = fromResource(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
@@ -752,8 +757,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		for (ErrorCode code : ErrorCode.values()) {
 			Resource resource = errorPageDefaultTpls.get(code);
-			if (resource == null)
+			if (resource == null) {
 				resource = new ClassPathResource("resources/page/" + code.name() + ".html");
+			}
 			String tpl = fromResource(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
@@ -765,8 +771,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		for (String lockType : lockManager.allTypes()) {
 			Resource resource = lockManager.getDefaultTemplateResource(lockType);
-			if (resource == null)
+			if (resource == null) {
 				throw new SystemException("没有指定LockType:" + lockType + "的默认模板");
+			}
 			String tpl = fromResource(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("解锁页面：" + lockType + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
@@ -809,8 +816,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		Space space = page.getSpace();
 		if (space != null) {
 			space = spaceCache.getSpace(space.getId());
-			if (space == null)
+			if (space == null) {
 				throw new LogicException(SPACE_NOT_EXISTS);
+			}
 			page.setSpace(space);
 		}
 	}
@@ -835,8 +843,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				return cache.get(loader);
 			} catch (ExecutionException e) {
 				Throwable cause = e.getCause();
-				if (cause instanceof LogicException)
+				if (cause instanceof LogicException) {
 					throw (LogicException) cause;
+				}
 				throw new SystemException(e.getMessage(), e);
 			}
 		}
@@ -953,19 +962,16 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(target).append(space).build();
+			return Objects.hash(this.target, this.space);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			SysPageLoader other = (SysPageLoader) obj;
-			return new EqualsBuilder().append(target, other.target).append(space, other.space).build();
+			if (Validators.baseEquals(this, obj)) {
+				SysPageLoader other = (SysPageLoader) obj;
+				return Objects.equals(this.target, other.target) && Objects.equals(this.space, other.space);
+			}
+			return false;
 		}
 	}
 
@@ -985,21 +991,17 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(errorCode).append(space).build();
+			return Objects.hash(this.errorCode, this.space);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			ErrorPageLoader other = (ErrorPageLoader) obj;
-			return new EqualsBuilder().append(errorCode, other.errorCode).append(space, other.space).build();
+			if (Validators.baseEquals(this, obj)) {
+				ErrorPageLoader other = (ErrorPageLoader) obj;
+				return Objects.equals(this.errorCode, other.errorCode) && Objects.equals(this.space, other.space);
+			}
+			return false;
 		}
-
 	}
 
 	private final class LockPageLoader implements PageLoader {
@@ -1018,19 +1020,16 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(lockType).append(space).build();
+			return Objects.hash(this.lockType, this.space);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			LockPageLoader other = (LockPageLoader) obj;
-			return new EqualsBuilder().append(lockType, other.lockType).append(space, other.space).build();
+			if (Validators.baseEquals(this, obj)) {
+				LockPageLoader other = (LockPageLoader) obj;
+				return Objects.equals(this.lockType, other.lockType) && Objects.equals(this.space, other.space);
+			}
+			return false;
 		}
 	}
 
@@ -1047,26 +1046,24 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		@Override
 		public Page loadFromDb() throws LogicException {
 			UserPage db = userPageDao.selectBySpaceAndAlias(space, alias);
-			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace()))
+			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace())) {
 				throw new LogicException(USER_PAGE_NOT_EXISTS);
+			}
 			return db;
 		}
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(alias).append(space).build();
+			return Objects.hash(this.alias, this.space);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			UserPageLoader other = (UserPageLoader) obj;
-			return new EqualsBuilder().append(alias, other.alias).append(space, other.space).build();
+			if (Validators.baseEquals(this, obj)) {
+				UserPageLoader other = (UserPageLoader) obj;
+				return Objects.equals(this.alias, other.alias) && Objects.equals(this.space, other.space);
+			}
+			return false;
 		}
 	}
 
@@ -1086,19 +1083,16 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(id).build();
+			return Objects.hash(this.id);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			ExpandedPageLoader other = (ExpandedPageLoader) obj;
-			return new EqualsBuilder().append(id, other.id).build();
+			if (Validators.baseEquals(this, obj)) {
+				ExpandedPageLoader other = (ExpandedPageLoader) obj;
+				return Objects.equals(this.id, other.id);
+			}
+			return false;
 		}
 	}
 
@@ -1114,11 +1108,13 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				// 查找全局
 				userFragment = userFragmentDao.selectGlobalByName(name);
 			}
-			if (userFragment != null)
+			if (userFragment != null) {
 				return userFragment;
+			}
 			for (Fragment fragment : fragments) {
-				if (fragment.getName().equals(name))
+				if (fragment.getName().equals(name)) {
 					return fragment;
+				}
 			}
 			return null;
 		}

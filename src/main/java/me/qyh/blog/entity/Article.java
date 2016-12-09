@@ -16,16 +16,16 @@
 package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Sets;
 
 import me.qyh.blog.message.Message;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -376,21 +376,15 @@ public class Article extends BaseLockResource {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
+		return Objects.hash(this.id);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		if (Validators.baseEquals(this, obj)) {
+			Article rhs = (Article) obj;
+			return Objects.equals(this.id, rhs.id);
 		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		Article rhs = (Article) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
+		return false;
 	}
 }

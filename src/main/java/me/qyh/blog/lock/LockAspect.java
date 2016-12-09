@@ -57,8 +57,9 @@ public class LockAspect {
 			Lock lock = lockManager.findLock(lockResource.getLockId());
 			if (lock != null) {
 				LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
-				if (key == null)
+				if (key == null) {
 					throw new LockException(lock, lockResource, null);
+				}
 				try {
 					lock.tryOpen(key);
 				} catch (LogicException e) {

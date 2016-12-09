@@ -116,10 +116,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		FileServer fs;
 		if (server != null) {
 			fs = fileManager.getFileServer(upload.getServer());
-			if (fs == null)
+			if (fs == null) {
 				throw new LogicException("file.server.notexists", "文件存储服务不存在");
-		} else
+			}
+		} else {
 			fs = fileManager.getFileServer();
+		}
 		String folderKey = getFilePath(parent);
 		synchronized (this) {
 			deleteImmediatelyIfNeed(folderKey);
@@ -140,8 +142,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throws LogicException {
 		BlogFile blogFile;
 		String originalFilename = file.getOriginalFilename();
-		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null)
+		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null) {
 			throw new LogicException("file.path.exists", "文件已经存在");
+		}
 		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
 		CommonFile cf = null;
 		synchronized (fs) {
@@ -174,16 +177,19 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	private void deleteImmediatelyIfNeed(String key) throws LogicException {
-		if (key.isEmpty())
+		if (key.isEmpty()) {
 			return;
+		}
 		String rootKey = Splitter.on(SPLIT_CHAR).split(key).iterator().next();
 		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
-		if (children.isEmpty())
+		if (children.isEmpty()) {
 			return;
+		}
 		for (FileDelete child : children) {
 			String ckey = child.getKey();
-			if (key.startsWith(ckey))
+			if (key.startsWith(ckey)) {
 				deleteFile(child);
+			}
 		}
 	}
 
@@ -199,9 +205,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		String key = fd.getKey();
 		for (FileServer fs : fileManager.getAllServers()) {
 			for (FileStore store : fs.allStore()) {
-				if (!store.deleteBatch(key))
+				if (!store.deleteBatch(key)) {
 					throw new LogicException("file.batchDelete.fail", "存储器" + store.id() + "无法删除目录" + key + "下的文件",
 							store.id(), key);
+				}
 			}
 		}
 		fileDeleteDao.deleteById(fd.getId());
@@ -221,9 +228,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			fileDeleteDao.deleteById(fd.getId());
 			return;
 		}
-		if (!fs.delete(key))
+		if (!fs.delete(key)) {
 			throw new LogicException("file.delete.fail", "文件删除失败，无法删除存储器" + fs.id() + "下" + key + "对应的文件", fs.id(),
 					key);
+		}
 		fileDeleteDao.deleteById(fd.getId());
 	}
 
@@ -243,8 +251,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			parent = blogFileDao.selectRoot();
 		}
 
-		if (blogFileDao.selectByParentAndPath(parent, toCreate.getPath()) != null)
+		if (blogFileDao.selectByParentAndPath(parent, toCreate.getPath()) != null) {
 			throw new LogicException("folder.path.exists", "文件已经存在");
+		}
 
 		toCreate.setLft(parent.getLft() + 1);
 		toCreate.setRgt(parent.getLft() + 2);
@@ -264,8 +273,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 				return createFolder(root, path);
 			} else {
 				BlogFile parent = root;
-				for (String _path : Splitter.on(SPLIT_CHAR).split(path))
+				for (String _path : Splitter.on(SPLIT_CHAR).split(path)) {
 					parent = createFolder(parent, _path);
+				}
 				return parent;
 			}
 		}
@@ -273,8 +283,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private BlogFile createFolder(BlogFile parent, String folder) {
 		BlogFile check = blogFileDao.selectByParentAndPath(parent, folder);
-		if (check != null)
+		if (check != null) {
 			return check;
+		}
 		BlogFile bf = new BlogFile();
 		bf.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		bf.setLft(parent.getLft() + 1);
@@ -389,11 +400,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		FileDelete fd = new FileDelete();
 		if (db.isFile()) {
 			FileServer server = fileManager.getFileServer(db.getCf().getServer());
-			if (server == null)
+			if (server == null) {
 				return;
+			}
 			FileStore store = server.getFileStore(db.getCf().getStore());
-			if (store == null)
+			if (store == null) {
 				return;
+			}
 			fd.setServer(server.id());
 			fd.setStore(store.id());
 		} else {
@@ -408,12 +421,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	public void clearDeletedCommonFile() {
 		List<FileDelete> all = fileDeleteDao.selectAll();
-		for (FileDelete fd : all)
+		for (FileDelete fd : all) {
 			try {
 				deleteFile(fd);
 			} catch (LogicException e) {
 				continue;
 			}
+		}
 
 		blogFileDao.deleteUnassociateCommonFile();
 	}
@@ -448,12 +462,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		List<BlogFile> files = blogFileDao.selectPath(bf);
 		StringBuilder path = new StringBuilder();
 		for (BlogFile file : files) {
-			if (file.getPath().isEmpty())
+			if (file.getPath().isEmpty()) {
 				continue;
+			}
 			path.append(file.getPath()).append(SPLIT_CHAR);
 		}
-		if (path.length() > 0)
+		if (path.length() > 0) {
 			path.deleteCharAt(path.length() - 1);
+		}
 		return path.toString();
 	}
 

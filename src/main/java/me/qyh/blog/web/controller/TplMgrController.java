@@ -236,54 +236,67 @@ public class TplMgrController extends BaseMgrController {
 		int i = 0;
 		label: for (ExportPage ep : eps) {
 			Page page = ep.getPage();
-			if (page == null)
+			if (page == null) {
 				continue;
+			}
 			List<Fragment> fragments = ep.getFragments();
-			if (fragments == null)
+			if (fragments == null) {
 				continue;
+			}
 			PageType type = page.getType();
-			if (type == null)
+			if (type == null) {
 				continue;
+			}
 			switch (type) {
 			case ERROR:
 				ErrorPage errorPage = (ErrorPage) page;
-				if (errorPage.getErrorCode() == null)
+				if (errorPage.getErrorCode() == null) {
 					continue;
+				}
 				break;
 			case SYSTEM:
 				SysPage sysPage = (SysPage) page;
-				if (sysPage.getTarget() == null)
+				if (sysPage.getTarget() == null) {
 					continue;
+				}
 				break;
 			case EXPANDED:
 				ExpandedPage expandedPage = (ExpandedPage) page;
-				if (expandedPage.getId() == null)
+				if (expandedPage.getId() == null) {
 					continue;
+				}
 				break;
 			case USER:
 				UserPage up = (UserPage) page;
-				if (up.getAlias() == null)
+				if (up.getAlias() == null) {
 					continue;
+				}
 				break;
 			case LOCK:
 				LockPage lockPage = (LockPage) page;
-				if (Validators.isEmptyOrNull(lockPage.getLockType(), true))
+				if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
 					continue;
+				}
 				break;
 			}
 			String pageTplStr = page.getTpl();
-			if (Validators.isEmptyOrNull(pageTplStr, true))
+			if (Validators.isEmptyOrNull(pageTplStr, true)) {
 				continue;
-			if (pageTplStr.length() > PageValidator.PAGE_TPL_MAX_LENGTH)
+			}
+			if (pageTplStr.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				continue;
+			}
 			for (Fragment fragment : fragments) {
-				if (Validators.isEmptyOrNull(fragment.getName(), true))
+				if (Validators.isEmptyOrNull(fragment.getName(), true)) {
 					continue label;
+				}
 				String fragmentTpl = fragment.getTpl();
-				if (Validators.isEmptyOrNull(fragmentTpl, true))
+				if (Validators.isEmptyOrNull(fragmentTpl, true)) {
 					continue label;
-				if (fragmentTpl.length() > UserFragmentValidator.MAX_TPL_LENGTH)
+				}
+				if (fragmentTpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
 					continue label;
+				}
 			}
 			wrappers.put(i, new ImportPageWrapper(i, ep));
 			i++;

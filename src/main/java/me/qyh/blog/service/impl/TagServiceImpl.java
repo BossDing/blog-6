@@ -103,7 +103,8 @@ public class TagServiceImpl implements TagService, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		for (Tag tag : tagDao.selectAll())
+		for (Tag tag : tagDao.selectAll()) {
 			articleIndexer.addTags(tag.getName());
+		}
 	}
 }

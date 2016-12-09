@@ -108,12 +108,14 @@ public class MetaweblogController extends BaseController implements Initializing
 			if (undeclaredThrowable != null) {
 				if (undeclaredThrowable instanceof FaultException) {
 					FaultException fe = (FaultException) undeclaredThrowable;
-					if (Constants.AUTH_ERROR.equals(fe.getCode()))
+					if (Constants.AUTH_ERROR.equals(fe.getCode())) {
 						increase(ip, now);
+					}
 					throw fe;
 				}
-				if (undeclaredThrowable instanceof ParseException)
+				if (undeclaredThrowable instanceof ParseException) {
 					throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
+				}
 			}
 			logger.error(e.getMessage(), e);
 			throw new FaultException(Constants.SYS_ERROR, HANDLE_ERROR);
@@ -133,18 +135,21 @@ public class MetaweblogController extends BaseController implements Initializing
 
 	private Object invokeMethod(MethodCaller mc) throws FaultException {
 		List<Class<?>> paramClassList = Lists.newArrayList();
-		for (Object arg : mc.getArguments())
+		for (Object arg : mc.getArguments()) {
 			paramClassList.add(arg.getClass());
+		}
 		String methodName = mc.getName();
-		if (methodName.indexOf('.') != -1)
+		if (methodName.indexOf('.') != -1) {
 			methodName = methodName.split("\\.")[1];
+		}
 		Method method = ReflectionUtils.findMethod(MetaweblogHandler.class, methodName,
 				paramClassList.toArray(new Class<?>[paramClassList.size()]));
 		try {
-			if (method != null)
+			if (method != null) {
 				return ReflectionUtils.invokeMethod(method, handler, mc.getArguments());
-			else
+			} else {
 				throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
+			}
 		} catch (SecurityException e) {
 			logger.debug(e.getMessage(), e);
 			throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
@@ -154,10 +159,11 @@ public class MetaweblogController extends BaseController implements Initializing
 	private void invalidIpCheck(String ip, long now) throws FaultException {
 		Long time = invalidIpMap.get(ip);
 		if (time != null) {
-			if ((now - time) <= invalidSec * 1000L)
+			if ((now - time) <= invalidSec * 1000L) {
 				throw new FaultException(Constants.AUTH_ERROR, new Message("metaweblog.user.forbidden", "用户暂时被禁止访问"));
-			else
+			} else {
 				invalidIpMap.remove(ip);
+			}
 		}
 	}
 

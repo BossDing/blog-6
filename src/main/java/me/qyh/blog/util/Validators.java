@@ -61,4 +61,28 @@ public final class Validators {
 		return trim ? str.trim().isEmpty() : str.isEmpty();
 	}
 
+	/**
+	 * 判断两个对象是否是相同的类型，如果两个对象任意一个为null，那么返回false
+	 * 
+	 * @param a
+	 *            对象a
+	 * @param b
+	 *            对象b
+	 * @return
+	 */
+	public static boolean baseEquals(Object a, Object b) {
+		if (a == null) {
+			return false;
+		}
+		if (b == null) {
+			return false;
+		}
+		if (a == b) {
+			return true;
+		}
+		if (a.getClass() != b.getClass()) {
+			return false;
+		}
+		return true;
+	}
 }

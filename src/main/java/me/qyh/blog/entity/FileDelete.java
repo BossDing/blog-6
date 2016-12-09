@@ -15,9 +15,6 @@
  */
 package me.qyh.blog.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import me.qyh.blog.entity.BlogFile.BlogFileType;
 
 /**
@@ -66,26 +63,6 @@ public class FileDelete extends BaseEntity {
 
 	public void setServer(Integer server) {
 		this.server = server;
-	}
-	
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		FileDelete rhs = (FileDelete) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 
 }

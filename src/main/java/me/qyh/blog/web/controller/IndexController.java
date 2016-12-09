@@ -70,8 +70,9 @@ public class IndexController {
 		Fragment fr = null;
 		if (pjax) {
 			fr = uiService.queryFragment(Webs.decode(fragment));
-			if (fr == null)
+			if (fr == null) {
 				return new JsonResult(true);
+			}
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName));
 		for (Map.Entry<String, String> it : allRequestParams.entrySet()) {
@@ -101,8 +102,9 @@ public class IndexController {
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		Fragment fr = uiService.queryFragment(Webs.decode(fragment));
-		if (fr == null)
+		if (fr == null) {
 			return new JsonResult(true);
+		}
 		Page page = new Page();
 		page.setTpl(TemplateParser.buildFragmentTag(fr.getName(), allRequestParams));
 		Map<String, Fragment> frMap = Maps.newHashMap();

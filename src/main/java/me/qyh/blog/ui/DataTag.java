@@ -16,8 +16,11 @@
 package me.qyh.blog.ui;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.common.collect.Maps;
+
+import me.qyh.blog.util.Validators;
 
 public class DataTag {
 
@@ -50,33 +53,15 @@ public class DataTag {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((attrs == null) ? 0 : attrs.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hash(attrs, name);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		DataTag other = (DataTag) obj;
-		if (attrs == null) {
-			if (other.attrs != null)
-				return false;
-		} else if (!attrs.equals(other.attrs))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+		if (Validators.baseEquals(this, obj)) {
+			DataTag other = (DataTag) obj;
+			return Objects.equals(this.attrs, other.attrs) && Objects.equals(this.name, other.name);
+		}
+		return false;
 	}
-
 }

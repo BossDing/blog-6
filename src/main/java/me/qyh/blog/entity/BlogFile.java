@@ -17,9 +17,6 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import me.qyh.blog.file.CommonFile;
 
 /**
@@ -151,25 +148,5 @@ public class BlogFile extends BaseEntity {
 
 	public void setPath(String path) {
 		this.path = path;
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		BlogFile rhs = (BlogFile) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

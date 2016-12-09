@@ -73,8 +73,9 @@ public class LoginController extends BaseController {
 	public JsonResult login(@RequestParam("validateCode") String validateCode,
 			@RequestBody @Validated LoginBean loginBean, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session))
+		if (!Webs.matchValidateCode(validateCode, session)) {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		}
 		try {
 			login(loginBean, request, response);
 			return new JsonResult(true, new Message("login.success", "登录成功"));
@@ -122,8 +123,9 @@ public class LoginController extends BaseController {
 		if (user.getName().equals(loginBean.getUsername())) {
 			String encrptPwd = user.getPassword();
 			if (BCrypts.matches(loginBean.getPassword(), encrptPwd)) {
-				if (loginBean.isRememberMe())
+				if (loginBean.isRememberMe()) {
 					rememberMe.save(user, request, response);
+				}
 
 				putInSession(user, request.getSession());
 

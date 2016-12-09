@@ -15,9 +15,6 @@
  */
 package me.qyh.blog.file;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import me.qyh.blog.entity.BaseEntity;
 
 /**
@@ -101,25 +98,5 @@ public class CommonFile extends BaseEntity {
 
 	public void setServer(int server) {
 		this.server = server;
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(id).build();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		if (obj.getClass() != getClass()) {
-			return false;
-		}
-		CommonFile rhs = (CommonFile) obj;
-		return new EqualsBuilder().append(id, rhs.id).isEquals();
 	}
 }

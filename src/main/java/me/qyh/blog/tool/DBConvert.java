@@ -84,10 +84,12 @@ public class DBConvert {
 	}
 
 	public DBConvert(DBType from, DBType to) throws IOException, SQLException {
-		if (from == null)
+		if (from == null) {
 			throw new IllegalArgumentException("源数据库不能为空");
-		if (to == null)
+		}
+		if (to == null) {
 			throw new IllegalArgumentException("目标数据库不能为空");
+		}
 		this.from = from;
 		this.to = to;
 		initDataSource();
@@ -121,8 +123,9 @@ public class DBConvert {
 				try (Connection h2Conn = tds.getConnection()) {
 					PreparedStatement h2Ps = h2Conn.prepareStatement(insertSql);
 					while (rs.next()) {
-						for (int i = 1; i <= rsmd.getColumnCount(); i++)
+						for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 							h2Ps.setObject(i, rs.getObject(i), rsmd.getColumnType(i));
+						}
 						h2Ps.addBatch();
 					}
 					h2Ps.executeBatch();
@@ -142,8 +145,9 @@ public class DBConvert {
 		}
 		sb.deleteCharAt(sb.length() - 1).append(") ");
 		sb.append("VALUES(");
-		for (int i = 1; i <= rsmd.getColumnCount(); i++)
+		for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 			sb.append("?").append(",");
+		}
 		sb.deleteCharAt(sb.length() - 1);
 		sb.append(")");
 		return sb.toString();

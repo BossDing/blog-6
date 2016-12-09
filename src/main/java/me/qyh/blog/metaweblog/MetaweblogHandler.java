@@ -134,15 +134,18 @@ public class MetaweblogHandler {
 
 	public Object getRecentPosts(String blogid, String username, String password, final Integer limit)
 			throws FaultException, ParseException {
-		if (limit == null)
+		if (limit == null) {
 			throw new ParseException("最近文章数量限制不能为空");
-		if (limit <= 0)
+		}
+		if (limit <= 0) {
 			throw new ParseException("最近文章数量限制必须为大于0的整数");
+		}
 		return execute(username, password, () -> {
 			List<Article> articles = articleService.queryRecentArticles(limit);
 			List<Map<?, ?>> result = Lists.newArrayList();
-			for (Article art : articles)
+			for (Article art : articles) {
 				result.add(articleToMap(art));
+			}
 			return result;
 		});
 	}
@@ -185,9 +188,9 @@ public class MetaweblogHandler {
 			throws FaultException, ParseException {
 		return execute(username, password, () -> {
 			UploadedFile res = fileService.uploadMetaweblogFile(structToFile(struct));
-			if (res.hasError())
+			if (res.hasError()) {
 				throw new LogicException(res.getError());
-			else {
+			} else {
 				Map<String, String> urlMap = Maps.newHashMap();
 				urlMap.put("url", res.getThumbnailUrl().getMiddle());
 				return urlMap;
@@ -201,16 +204,20 @@ public class MetaweblogHandler {
 
 	private MultipartFile structToFile(final Struct struct) throws LogicException, ParseException {
 		String name = struct.getString("name");
-		if (Validators.isEmptyOrNull(name, true))
+		if (Validators.isEmptyOrNull(name, true)) {
 			throw new LogicException("file.uploadfiles.blank");
+		}
 		name = StringUtils.cleanPath(name);
-		if (name.indexOf('/') != -1)
+		if (name.indexOf('/') != -1) {
 			name = name.substring(name.lastIndexOf('/') + 1, name.length());
-		if (name.length() > BlogFileUploadValidator.MAX_FILE_NAME_LENGTH)
+		}
+		if (name.length() > BlogFileUploadValidator.MAX_FILE_NAME_LENGTH) {
 			throw new LogicException("file.name.toolong", BlogFileUploadValidator.MAX_FILE_NAME_LENGTH);
+		}
 		byte[] bits = struct.getBase64("bits");
-		if (bits == null)
+		if (bits == null) {
 			throw new LogicException("file.content.blank");
+		}
 		return new MetaweblogFile(bits, name);
 	}
 
@@ -270,24 +277,29 @@ public class MetaweblogHandler {
 		MetaweblogArticle article = new MetaweblogArticle();
 		List<String> categories = struct.getArray("categories", String.class);
 		if (!CollectionUtils.isEmpty(categories)) {
-			for (String category : categories)
+			for (String category : categories) {
 				if (!Validators.isEmptyOrNull(category, true)) {
 					article.setSpace(category.trim());
 					break;
 				}
+			}
 		}
 		String title = struct.getString("title");
-		if (Validators.isEmptyOrNull(title, true))
+		if (Validators.isEmptyOrNull(title, true)) {
 			throw new LogicException("article.title.blank");
-		if (title.length() > ArticleValidator.MAX_TITLE_LENGTH)
+		}
+		if (title.length() > ArticleValidator.MAX_TITLE_LENGTH) {
 			throw new LogicException("article.title.toolong");
+		}
 		article.setTitle(title);
 
 		String content = struct.getString("description");
-		if (Validators.isEmptyOrNull(content, true))
+		if (Validators.isEmptyOrNull(content, true)) {
 			throw new LogicException("article.content.blank");
-		if (content.length() > ArticleValidator.MAX_CONTENT_LENGTH)
+		}
+		if (content.length() > ArticleValidator.MAX_CONTENT_LENGTH) {
 			throw new LogicException("article.content.toolong");
+		}
 		article.setContent(content);
 
 		try {
@@ -304,10 +316,11 @@ public class MetaweblogHandler {
 				article.setStatus(ArticleStatus.PUBLISHED);
 				article.setPubDate(now);
 			} else {
-				if (pubDate.after(now))
+				if (pubDate.after(now)) {
 					article.setStatus(ArticleStatus.SCHEDULED);
-				else
+				} else {
 					article.setStatus(ArticleStatus.PUBLISHED);
+				}
 			}
 		} else {
 			article.setStatus(ArticleStatus.DRAFT);
@@ -324,8 +337,9 @@ public class MetaweblogHandler {
 		map.put("permalink", map.get("link"));
 		map.put("postid", art.getId());
 		String content = art.getContent();
-		if (content != null)
+		if (content != null) {
 			map.put("description", art.getContent());
+		}
 		return map;
 	}
 }

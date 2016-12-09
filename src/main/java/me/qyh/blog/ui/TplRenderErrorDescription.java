@@ -39,6 +39,7 @@ public class TplRenderErrorDescription implements Serializable {
 	private Message message;// 错误信息
 
 	public TplRenderErrorDescription() {
+		super();
 	}
 
 	public void addTemplateName(String templateName) {

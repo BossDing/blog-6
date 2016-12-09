@@ -170,9 +170,9 @@ public class ArticleValidator implements Validator {
 		String alias = article.getAlias();
 		if (alias != null) {
 			alias = alias.trim().toLowerCase();
-			if (alias.isEmpty())
+			if (alias.isEmpty()) {
 				article.setAlias(null);
-			else {
+			} else {
 				try {
 					try {
 						Integer.parseInt(alias);
