@@ -21,5 +21,4 @@
 ## Executable War http://www.qyh.me/page/executable-war
 
 
-## doc: http://doc.qyh.me
 
