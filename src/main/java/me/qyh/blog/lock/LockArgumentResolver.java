@@ -17,6 +17,7 @@ package me.qyh.blog.lock;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -33,12 +34,18 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.google.common.io.CharStreams;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.QALock;
 import me.qyh.blog.lock.support.SysLock;
+import me.qyh.blog.lock.support.SysLock.SysLockType;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Validators;
 
@@ -88,6 +95,28 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 		InputStream is = request.getInputStream();
 		InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET);
 		return Jsons.readValue(SysLock.class, CharStreams.toString(ir));
+	}
+
+	public static final class SysLockDeserializer implements JsonDeserializer<SysLock> {
+
+		@Override
+		public SysLock deserialize(JsonElement element, Type t, JsonDeserializationContext context)
+				throws JsonParseException {
+			if (element.isJsonObject()) {
+				JsonObject obj = element.getAsJsonObject();
+				SysLockType type = SysLockType.valueOf(obj.get("type").getAsString());
+				switch (type) {
+				case QA:
+					return Jsons.readValue(QALock.class, element);
+				case PASSWORD:
+					return Jsons.readValue(PasswordLock.class, element);
+				default:
+					throw new HttpMessageNotReadableException("未知的锁对象:" + type);
+				}
+			}
+			throw new HttpMessageNotReadableException("无法将" + element + "转换为锁对象");
+		}
+
 	}
 
 	private final class SysLockValidator implements Validator {

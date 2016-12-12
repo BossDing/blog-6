@@ -86,25 +86,21 @@ public class UrlHelper implements InitializingBean {
 	}
 
 	/**
-	 * 从当前请求中获取空间alias，如果没有开启多域名支持，则返回null
+	 * 判斷訪問域名是否為space域名
 	 * 
 	 * @param request
-	 *            当前请求
-	 * @return 当前请求空间别名，可能为null
+	 * @return
 	 */
-	public String getSpaceIfSpaceDomainRequest(HttpServletRequest request) {
-		if (urlConfig.isEnableSpaceDomain()) {
-			String host = request.getServerName();
-			if (!host.endsWith(urlConfig.getRootDomain())) {
-				logger.debug("访问域名为" + host + ",所需域名为" + urlConfig.getRootDomain());
-				return null;
-			}
-			int hostPCount = StringUtils.countOccurrencesOf(host, ".");
-			if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
-				return Splitter.on('.').split(host).iterator().next();
-			}
+	public boolean maybeSpaceDomain(HttpServletRequest request) {
+		String host = request.getServerName();
+		if (!host.endsWith(urlConfig.getRootDomain())) {
+			return false;
 		}
-		return null;
+		int hostPCount = StringUtils.countOccurrencesOf(host, ".");
+		if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -320,8 +316,8 @@ public class UrlHelper implements InitializingBean {
 			this.env = new Env();
 			// 如果开启了空间域名
 			String space = null;
-			if (urlConfig.isEnableSpaceDomain()) {
-				space = getSpaceIfSpaceDomainRequest(request);
+			if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
+				space = Splitter.on('.').split(request.getServerName()).iterator().next();
 			}
 			String requestUri = request.getRequestURI();
 			if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
@@ -380,7 +376,7 @@ public class UrlHelper implements InitializingBean {
 
 		private boolean isDefaultPort() {
 			if ("https".equalsIgnoreCase(scheme)) {
-				return 403 == port;
+				return 443 == port;
 			}
 			if ("http".equalsIgnoreCase(scheme)) {
 				return 80 == port;

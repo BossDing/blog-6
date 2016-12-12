@@ -279,7 +279,7 @@ public class GlobalControllerExceptionHandler {
 
 	private String getFullUrl(HttpServletRequest request) {
 		String url = UrlUtils.buildFullRequestUrl(request);
-		if (urlHelper.getSpaceIfSpaceDomainRequest(request) != null) {
+		if (urlHelper.maybeSpaceDomain(request)) {
 			url = UrlUtils.getUrlBeforeForward(request);
 		}
 		return url;

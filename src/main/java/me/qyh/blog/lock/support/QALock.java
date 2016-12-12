@@ -18,7 +18,6 @@ package me.qyh.blog.lock.support;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.base.Splitter;
-import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -41,7 +40,6 @@ public class QALock extends SysLock {
 	private static final String ANSWER_PARAMETER = "answers";
 
 	private String question;
-	@Expose(serialize = false, deserialize = true)
 	private String answers;
 
 	/**

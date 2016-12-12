@@ -22,11 +22,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.View;
 
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.web.RssView;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 public class RssController {
@@ -40,14 +42,18 @@ public class RssController {
 		return rssView;
 	}
 
-	@RequestMapping("rss")
+	@RequestMapping(value = {"rss","space/{alias}/rss"})
 	public View rss(ModelMap model) {
+		
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setCurrentPage(1);
+		Space space = SpaceContext.get();
 		param.setStatus(ArticleStatus.PUBLISHED);
+		param.setSpace(space);
 		param.setIgnoreLevel(true);
 		param.setHasLock(false);
 		param.setQueryPrivate(false);
+		param.setQueryHidden(space != null);
 		param.setSort(null);
 		PageResult<Article> page = articleService.queryArticle(param);
 		model.addAttribute("page", page);

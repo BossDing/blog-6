@@ -339,7 +339,7 @@ function queryConversations(id) {
 
 function getAvatar(c) {
 	if (c.gravatar) {
-		return 'http://cn.gravatar.com/avatar/' + c.gravatar;
+		return 'https://cn.gravatar.com/avatar/' + c.gravatar;
 	}
 	return rootPath + '/static/img/guest.png';
 }

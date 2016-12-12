@@ -453,6 +453,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		UPDATE blog_article SET  art_lock = NULL WHERE art_lock = #{lockId}
 	</update>
 	
+	<select id="selectMinimumScheduleDate" resultType="java.sql.Timestamp">
+		SELECT MIN(pubDate) FROM blog_article WHERE art_status = 1<!-- SCHEDULED -->
+	</select>
+	
 	<sql id="articleDetailSql">
 		SELECT
 			art.id AS art_id,

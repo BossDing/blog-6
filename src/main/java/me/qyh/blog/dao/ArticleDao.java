@@ -207,4 +207,11 @@ public interface ArticleDao {
 	 */
 	void deleteLock(String lockId);
 
+	/**
+	 * 查询最小的待发表文章的发布日期
+	 * 
+	 * @return 如果当前没有任何带发表文章，那么返回null
+	 */
+	Timestamp selectMinimumScheduleDate();
+
 }

@@ -82,6 +82,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize middleResize;
 	private Resize largeResize;
 
+	public ImageResourceStore() {
+		super("image");
+	}
+
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		File dest = new File(absFolder, key);

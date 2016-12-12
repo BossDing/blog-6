@@ -16,6 +16,7 @@
 package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +76,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
+	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
@@ -102,9 +104,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private boolean rebuildIndex = true;
 
-	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
-
 	private List<ArticleContentHandler> articleContentHandlers = Lists.newArrayList();
+	private final ScheduleManager scheduleManager = new ScheduleManager();
 
 	@Override
 	@Transactional(readOnly = true)
@@ -313,6 +314,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				}
 			}
 		}
+		scheduleManager.update();
 		return article;
 	}
 
@@ -502,16 +504,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
 			@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0") })
 	public int pushScheduled() {
-		List<Article> articles = articleDao.selectScheduled(Timestamp.valueOf(LocalDateTime.now()));
-		for (Article article : articles) {
-			article.setStatus(ArticleStatus.PUBLISHED);
-			articleDao.update(article);
-			articleIndexer.addOrUpdateDocument(article);
-		}
-		if (!articles.isEmpty()) {
-			applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
-		}
-		return articles.size();
+		return scheduleManager.push();
 	}
 
 	@Transactional(readOnly = true)
@@ -600,6 +593,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (rebuildIndex) {
 			rebuildIndex();
 		}
+		scheduleManager.update();
 	}
 
 	private void checkLock(String lockId) throws LogicException {
@@ -640,4 +634,39 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		this.articleContentHandlers = articleContentHandlers;
 	}
 
+	private final class ScheduleManager {
+		private Timestamp start;
+
+		public int push() {
+			if (start == null) {
+				logger.debug("没有待发布的文章");
+				return 0;
+			}
+			long now = System.currentTimeMillis();
+			if (now < start.getTime()) {
+				logger.debug("没有到发布日期：" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
+				return 0;
+			} else {
+				logger.debug("开始查询发布文章");
+				List<Article> articles = articleDao.selectScheduled(new Timestamp(now));
+				if (!articles.isEmpty()) {
+					for (Article article : articles) {
+						article.setStatus(ArticleStatus.PUBLISHED);
+						articleDao.update(article);
+						articleIndexer.addOrUpdateDocument(article);
+					}
+					logger.debug("发布了" + articles.size() + "篇文章");
+					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
+				}
+				start = articleDao.selectMinimumScheduleDate();
+				return articles.size();
+			}
+		}
+
+		public void update() {
+			start = articleDao.selectMinimumScheduleDate();
+			logger.debug(start == null ? "没有发现待发布文章"
+					: "发现待发布文章最小日期:" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
+		}
+	}
 }

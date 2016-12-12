@@ -27,6 +27,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -46,6 +47,7 @@ import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 public class IndexController {
@@ -55,12 +57,12 @@ public class IndexController {
 	@Autowired
 	private TplRender render;
 
-	@RequestMapping(value = { "/", "" })
+	@RequestMapping(value = { "/", "space/{alias}/","","space/{alias}" })
 	public RenderedPage index() throws LogicException {
-		return uiService.renderSysPage(null, PageTarget.INDEX, new Params());
+		return uiService.renderSysPage(SpaceContext.get(), PageTarget.INDEX, new Params());
 	}
-
-	@RequestMapping("data/{tagName}")
+	
+	@RequestMapping(value = {"data/{tagName}","space/{alias}/data/{tagName}"} , method = RequestMethod.GET)
 	@ResponseBody
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams,
@@ -96,7 +98,7 @@ public class IndexController {
 		}
 	}
 
-	@RequestMapping("fragment/{fragment}")
+	@RequestMapping(value = {"fragment/{fragment}","space/{alias}/fragment/{fragment}"},method = RequestMethod.GET)
 	@ResponseBody
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,

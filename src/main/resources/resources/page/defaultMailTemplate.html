@@ -63,7 +63,7 @@
 		<div class="panel-body">
 			<div class="media" th:each="comment : ${comments}">
 				<a class="media-left" th:href="${urls.getUrl(comment.article)}">
-					<img th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : 'http://cn.gravatar.com/avatar/'+comment.gravatar}"
+					<img th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : 'https://cn.gravatar.com/avatar/'+comment.gravatar}"
 					style="width: 64px; height: 64px" alt="...">
 				</a>
 				<div class="media-body">

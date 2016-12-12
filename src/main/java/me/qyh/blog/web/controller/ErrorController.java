@@ -25,9 +25,10 @@ import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
-@RequestMapping("error")
+@RequestMapping(value = { "error", "space/{alias}/error" })
 public class ErrorController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ErrorController.class);
@@ -72,7 +73,7 @@ public class ErrorController {
 
 	private String handlerError(int error) {
 		try {
-			RenderedPage page = uiService.renderErrorPage(null, ErrorCode.valueOf("ERROR_" + error));
+			RenderedPage page = uiService.renderErrorPage(SpaceContext.get(), ErrorCode.valueOf("ERROR_" + error));
 			UIContext.set(page);
 			return page.getTemplateName();
 		} catch (Throwable e) {

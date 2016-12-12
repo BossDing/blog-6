@@ -383,7 +383,7 @@
 
 					var altAttr = (alt !== "") ? " \"" + alt + "\"" : "";
 
-                if (link === "" || link === "http://")
+                if (link === "" || link === "http://" || link === "https://")
                 {
                 	editor.replaceSelection("![" + alt + "](" + url + altAttr + ")")
                 }
@@ -407,7 +407,7 @@
 				  var url  = $("#linkModal").find("input").eq(0).val();
                 var title  = $("#linkModal").find("input").eq(1).val();
 
-                if (url === "http://" || url === "")
+                if (url === "http://" || url === "https://" || url === "")
                 {
               	  $("#linkModal").modal("hide");return;
                 }

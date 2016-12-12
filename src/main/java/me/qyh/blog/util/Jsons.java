@@ -30,6 +30,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.entity.DateDeserializer;
+import me.qyh.blog.lock.LockArgumentResolver.SysLockDeserializer;
+import me.qyh.blog.lock.support.SysLock;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageSerializer;
 import me.qyh.blog.ui.PageSerializer;
@@ -75,6 +77,7 @@ public class Jsons {
 				}
 			}).registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
+			.registerTypeAdapter(SysLock.class,new SysLockDeserializer())
 			.registerTypeAdapter(Page.class, new PageSerializer()).create();
 
 	private Jsons() {

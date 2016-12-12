@@ -83,14 +83,16 @@ public class UrlConfig implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (isEnableSpaceDomain()) {
-			if (Validators.isEmptyOrNull(domain, true)) {
-				throw new SystemException("开了博客分类域名后必须提供一个访问域名");
-			}
-			domain = domain.toLowerCase();
-			if (domain.indexOf('.') == -1) {
+		if (Validators.isEmptyOrNull(domain, true)) {
+			domain = "localhost";
+		}
+		domain = domain.toLowerCase();
+		if (domain.indexOf('.') == -1) {
+			if(enableSpaceDomain){
 				throw new SystemException("错误的域名:" + domain);
 			}
+			rootDomain = domain;
+		} else {
 			String[] splitResult = domain.split("\\.");
 			String last = splitResult[splitResult.length - 1];
 			if (!StringUtils.isAlpha(last)) {
@@ -101,6 +103,8 @@ public class UrlConfig implements InitializingBean {
 			// abc.com
 			if (domain.startsWith("www.") && splitResult.length == 3) {
 				rootDomain = splitResult[1] + "." + splitResult[2];
+			} else {
+				rootDomain = domain;
 			}
 		}
 		contextPath = contextPath.trim();

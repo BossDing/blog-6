@@ -66,12 +66,17 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	protected String urlPrefix;
 	protected File absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
-	private String handlerPrefix;
+	private final String handlerPrefix;
 	private String urlPatternPrefix;
 	private boolean enableDownloadHandler = true;
 
 	@Autowired
 	protected UrlHelper urlHelper;
+
+	public AbstractLocalResourceRequestHandlerFileStore(String handlerPrefix) {
+		super();
+		this.handlerPrefix = handlerPrefix;
+	}
 
 	@Override
 	public int id() {
@@ -170,23 +175,15 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		absFolder = new File(absPath);
 		FileUtils.forceMkdir(absFolder);
 
-		if (urlPrefix == null) {
-			throw new SystemException("访问前缀不能为空");
+		if (Validators.isEmptyOrNull(handlerPrefix, true)) {
+			throw new SystemException("处理器路径不能为空");
 		}
 
-		if (!UrlUtils.isAbsoluteUrl(urlPrefix)) {
-			urlPrefix = urlHelper.getUrl() + (urlPrefix.startsWith("/") ? urlPrefix : "/" + urlPrefix);
+		if (urlPrefix == null || !UrlUtils.isAbsoluteUrl(urlPrefix)) {
+			urlPrefix = urlHelper.getUrl() + "/" + handlerPrefix;
 		}
 
-		// 另外一个域名
-		if (!urlPrefix.startsWith(urlHelper.getUrl())) {
-			if (Validators.isEmptyOrNull(handlerPrefix, true)) {
-				throw new SystemException("处理器路径不能为空");
-			}
-			urlPatternPrefix = handlerPrefix.startsWith("/") ? handlerPrefix : "/" + handlerPrefix;
-		} else {
-			urlPatternPrefix = urlPrefix.substring(urlPrefix.lastIndexOf('/'), urlPrefix.length());
-		}
+		urlPatternPrefix = handlerPrefix.startsWith("/") ? handlerPrefix : "/" + handlerPrefix;
 
 		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler) {
@@ -287,10 +284,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	public void setRequestMatcher(RequestMatcher requestMatcher) {
 		this.requestMatcher = requestMatcher;
-	}
-
-	public void setHandlerPrefix(String handlerPrefix) {
-		this.handlerPrefix = handlerPrefix;
 	}
 
 	public void setEnableDownloadHandler(boolean enableDownloadHandler) {

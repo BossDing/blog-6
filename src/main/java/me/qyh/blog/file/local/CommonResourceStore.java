@@ -31,6 +31,10 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public class CommonResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
+	public CommonResourceStore() {
+		super("file");
+	}
+
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
 		return true;

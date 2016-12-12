@@ -8,7 +8,7 @@
 		th:id="'comment'+${comment.id}" class="media"
 		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
 		<a class="pull-left"> <img class="media-object"
-			th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : 'http://cn.gravatar.com/avatar/'+comment.gravatar}" data-holder-rendered="true"
+			th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : 'https://cn.gravatar.com/avatar/'+comment.gravatar}" data-holder-rendered="true"
 			style="width: 64px; height: 64px;">
 		</a>
 		<div class="media-body">

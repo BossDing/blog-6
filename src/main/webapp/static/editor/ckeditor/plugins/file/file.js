@@ -498,7 +498,7 @@
 					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;
 					html += '<a href="###" data-extension="'+data.cf.extension+'"  data-url="'+url+'" data-description="'+data.cf.originalFilename+'">'
 					if(data.cf.thumbnailUrl){
-						html += '<img  src="'+data.cf.thumbnailUrl.small+'" data-middle="'+data.cf.thumbnail.middle+'" class="img-responsive" style="height:100px"/>';
+						html += '<img  src="'+data.cf.thumbnailUrl.small+'" data-middle="'+data.cf.thumbnailUrl.middle+'" class="img-responsive" style="height:100px"/>';
 					} else {
 						html += '<img src="'+basePath+'/static/fileicon/file.png" class="img-responsive" style="height:100px"/>';
 					}

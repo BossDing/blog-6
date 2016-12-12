@@ -27,12 +27,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.google.common.base.Splitter;
+
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.Webs;
 
 /**
- * 配置多域名访问时，用来将space.abc.com请求转发至abc.com/space
+ * 配置多域名访问时，用来将space.abc.com请求转发至abc.com/space<br>
+ * 没有配置多域名时候，用来将space.ab.com重定向至abc.com/space
  * 
  * @author Administrator
  *
@@ -47,13 +50,42 @@ public class UrlFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain fc)
 			throws ServletException, IOException {
 		if (Webs.isAction(req)) {
-			String space = urlHelper.getSpaceIfSpaceDomainRequest(req);
-			if (space != null) {
+			String host = req.getServerName();
+			if (urlHelper.maybeSpaceDomain(req)) {
+				String space = Splitter.on('.').split(host).iterator().next();
 				logger.debug("从空间域名请求中获取空间名:" + space);
-				String requestUrl = buildForwardUrl(req, space);
-				logger.debug(UrlUtils.buildFullRequestUrl(req) + "转发请求到:" + requestUrl);
-				req.getRequestDispatcher(requestUrl).forward(req, resp);
-				return;
+				// 如果开启了域名
+				if (urlHelper.isEnableSpaceDomain()) {
+					String requestUrl = buildForwardUrl(req, space);
+					logger.debug(UrlUtils.buildFullRequestUrl(req) + "转发请求到:" + requestUrl);
+					req.getRequestDispatcher(requestUrl).forward(req, resp);
+					return;
+				} else {
+					String requestURI = req.getRequestURI();
+					String queryString = req.getQueryString();
+					StringBuilder sb = new StringBuilder();
+					sb.append(urlHelper.getUrl()).append("/space/").append(space).append(requestURI);
+					if (queryString != null) {
+						sb.append("?").append(queryString);
+					}
+					resp.sendRedirect(sb.toString());
+					return;
+				}
+			} else {
+				// 如果采用rootdomain访问，自动跳转至domain
+				String domain = urlHelper.getUrlConfig().getDomain();
+				String rootDomain = urlHelper.getUrlConfig().getRootDomain();
+				if (host.equalsIgnoreCase(rootDomain) && !host.equalsIgnoreCase(domain)) {
+					String requestURI = req.getRequestURI();
+					String queryString = req.getQueryString();
+					StringBuilder sb = new StringBuilder();
+					sb.append(urlHelper.getUrl()).append(requestURI);
+					if (queryString != null) {
+						sb.append("?").append(queryString);
+					}
+					resp.sendRedirect(sb.toString());
+					return;
+				}
 			}
 		}
 		fc.doFilter(req, resp);
