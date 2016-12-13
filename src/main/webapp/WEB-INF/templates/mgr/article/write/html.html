@@ -3,20 +3,25 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link
-	href="https://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"
-	rel="stylesheet">
+<link rel="stylesheet"
+	th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
 <link rel="stylesheet"
 	th:href="@{/static/bootstrap-timepicker/css/bootstrap-datetimepicker.min.css}" />
 <link rel="stylesheet"
-	href="//cdn.bootcss.com/blueimp-file-upload/9.12.5/css/jquery.fileupload.css">
+	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css}">
 <link rel="stylesheet"
-	href="//cdn.bootcss.com/startbootstrap-sb-admin-2/3.3.7+1/css/sb-admin-2.css">
+	th:href="@{/static/css/sb-admin-2.css}">
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
+
+
+<link th:href="@{/static/css/blog.css}" rel="stylesheet">
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
-  <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-  <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
+	  <script th:src="@{/static/js/respond.min.js}"></script>
+	<![endif]-->
+
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <title>博客撰写</title>
@@ -40,19 +45,18 @@
 					</div>
 					<div class="form-group">
 						<label>别名</label><input type="text" class="form-control"
-							placeholder="博客别名(1-50个字符，不能为村数字以及包含'<'、'>','='和空格等字符)" maxlength="50" id="alias"
-							th:value="${article.alias}" />
+							placeholder="博客别名(1-50个字符，不能为村数字以及包含'<'、'>','='和空格等字符)"
+							maxlength="50" id="alias" th:value="${article.alias}" />
 					</div>
 					<div class="form-group">
-						<label>摘要
-						</label>
+						<label>摘要 </label>
 						<textarea class="form-control" cols="8" rows="8"
 							placeholder="(0~500字符)" id="summary" th:text="${article.summary}"></textarea>
 					</div>
 					<div class="form-group">
-						<label>标签
-						</label> <input type="text" id="tags-input" class="form-control"
-							placeholder="标签(1-20个字符)，按空格键确认" maxlength="20" />
+						<label>标签 </label> <input type="text" id="tags-input"
+							class="form-control" placeholder="标签(1-20个字符)，按空格键确认"
+							maxlength="20" />
 						<div id="tags-container" class="well" style="margin-top: 5px"></div>
 					</div>
 					<div class="form-group">
@@ -87,7 +91,8 @@
 						</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
 							type="checkbox" id="private" checked="checked" />私人博客 </label>
 					</div>
-					<div class="checkbox" th:if="${article.space == null || (article.space != null && !article.space.articleHidden)}">
+					<div class="checkbox"
+						th:if="${article.space == null || (article.space != null && !article.space.articleHidden)}">
 						<label th:if="${article.hidden == null || !article.hidden}">
 							<input type="checkbox" id="hidden" />空间私有
 						</label> <label th:if="${article.hidden != null && article.hidden}"><input
@@ -97,8 +102,8 @@
 					<div class="form-group"
 						th:style="${article.isSchedule() ? '' : 'display: none'}"
 						id="scheduleContainer">
-						<label>计划发表日期</label>
-						<input type="text" class="form-control" id="scheduleDate"
+						<label>计划发表日期</label> <input type="text" class="form-control"
+							id="scheduleDate"
 							th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm') : #dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"><br>
 					</div>
 					<div class="form-group">
@@ -107,9 +112,11 @@
 							th:value="${article.level}" />
 					</div>
 					<div class="checkbox">
-						<label th:if="${article.allowComment == null || !article.allowComment}">
+						<label
+							th:if="${article.allowComment == null || !article.allowComment}">
 							<input type="checkbox" id="allowComment" />是否允许评论
-						</label> <label th:if="${article.allowComment != null && article.allowComment}"><input
+						</label> <label
+							th:if="${article.allowComment != null && article.allowComment}"><input
 							type="checkbox" id="allowComment" checked="checked" />是否允许评论 </label>
 					</div>
 					<div class="form-group" style="text-align: center">
@@ -162,7 +169,7 @@
 	</div>
 
 	<div th:replace="base/foot_source"></div>
-	<script src="//cdn.bootcss.com/ckeditor/4.5.11/ckeditor.js"></script>
+	<script th:src="@{/static/ckeditor/ckeditor.js}"></script>
 	<script type="text/javascript"
 		th:src="@{/static/bootstrap-timepicker/js/bootstrap-datetimepicker.js}"
 		charset="UTF-8"></script>
@@ -173,25 +180,25 @@
 	<script type="text/javascript"
 		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
 	<script type="text/javascript"
-		src="//cdn.bootcss.com/javascript-canvas-to-blob/3.3.0/js/canvas-to-blob.min.js"></script>
+		th:src="@{/static/js/canvas-to-blob.min.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/vendor/jquery.ui.widget.js"></script>
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.iframe-transport.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
 	<script
 		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-process.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-image.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-audio.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-video.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.4/js/jquery.fileupload-validate.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
 	<script type="text/javascript"
 		th:src="@{/static/editor/ckeditor/plugins/file/file.js}"></script>
 </body>

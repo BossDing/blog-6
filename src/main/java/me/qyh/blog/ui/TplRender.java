@@ -48,7 +48,7 @@ public class TplRender {
 			if (datas != null) {
 				templateDatas.putAll(datas);
 			}
-			templateDatas.putAll(uiExposeHelper.getHelpers(request));
+			uiExposeHelper.addVariables(request);
 			// 调用view来渲染模板，获取response中的数据
 			ResponseWrapper wrapper = new ResponseWrapper(response);
 			UIContext.set(page);

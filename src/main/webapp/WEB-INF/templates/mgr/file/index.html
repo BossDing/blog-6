@@ -69,7 +69,9 @@
 													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}" th:data-path="${file.path}" th:data-type="${file.type.name()}"><span
+													th:data-id="${file.id}" th:data-name="${file.name}"
+													th:data-path="${file.path}"
+													th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="属性" data-action="property"
@@ -79,8 +81,8 @@
 										</div>
 										<div th:case="FILE" class="thumbnail text-center">
 											<img th:src="${file.cf.thumbnailUrl.small}"
-												th:if="${file.cf.thumbnailUrl != null}" class="img-responsive"
-												style="height: 80px" /> <img
+												th:if="${file.cf.thumbnailUrl != null}"
+												class="img-responsive" style="height: 80px" /> <img
 												th:src="@{/static/fileicon/file.png}" class="img-responsive"
 												style="height: 80px" th:if="${file.cf.thumbnailUrl == null}" />
 											<div class="caption">
@@ -100,7 +102,9 @@
 													class="glyphicon glyphicon-move" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}" th:data-path="${file.path}" th:data-type="${file.type.name()}"><span
+													th:data-id="${file.id}" th:data-name="${file.name}"
+													th:data-path="${file.path}"
+													th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" th:href="${file.cf.url}"
 													target="_blank" data-toggle="tooltip"
@@ -223,8 +227,8 @@
 							<label for="name" class="control-label">名称(1~20个字符):</label> <input
 								type="text" class="form-control" name="name">
 						</div>
-						 <input
-								type="hidden" value="DIRECTORY" class="form-control" name="type">
+						<input type="hidden" value="DIRECTORY" class="form-control"
+							name="type">
 						<div class="form-group">
 							<label for="name" class="control-label">路径(1~30个字符，只能包含大小写英文字符和数字，一旦创建将无法修改！):</label>
 							<input type="text" class="form-control" name="path">
@@ -258,8 +262,7 @@
 							<label for="name" class="control-label">名称(1~20个字符):</label> <input
 								type="text" class="form-control" name="name">
 						</div>
-						<input
-								type="hidden" value="" class="form-control" name="type">
+						<input type="hidden" value="" class="form-control" name="type">
 						<div class="form-group">
 							<label for="name" class="control-label">路径:</label> <input
 								type="text" class="form-control" name="path" readonly="readonly">
@@ -297,25 +300,25 @@
 	<script type="text/javascript"
 		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
 	<script type="text/javascript"
-		src="//cdn.bootcss.com/javascript-canvas-to-blob/3.3.0/js/canvas-to-blob.min.js"></script>
+		th:src="@{/static/js/canvas-to-blob.min.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/vendor/jquery.ui.widget.js"></script>
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.iframe-transport.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
 	<script
 		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-process.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-image.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-audio.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.5/js/jquery.fileupload-video.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
 	<script
-		src="//cdn.bootcss.com/blueimp-file-upload/9.12.4/js/jquery.fileupload-validate.min.js"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/file.js}"></script>
 </body>
 </html>

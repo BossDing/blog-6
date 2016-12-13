@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet"
-	href="https://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+	th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 <!--[if lt IE 9]>
-	  <script src="https://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-	  <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
+	  <script th:src="@{/static/js/respond.min.js}"></script>
 	<![endif]-->
+
 <title>文章列表</title>
 </head>
 <body>
@@ -31,9 +32,9 @@
 	</div>
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<fragment name="底部" />
-	<data name="文章列表"/>
-	<data name="文章日期归档"/>
-	<data name="文章空间归档"/>
-	<data name="热门标签"/>
+	<data name="文章列表" />
+	<data name="文章日期归档" />
+	<data name="文章空间归档" />
+	<data name="热门标签" />
 </body>
 </html>

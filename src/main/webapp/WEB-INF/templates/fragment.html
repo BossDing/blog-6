@@ -2,8 +2,8 @@
 	<div th:id="'comment'+${comment.id}" class="media"
 		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
 		<a class="pull-left"> <img class="media-object"
-			th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : 'https://cn.gravatar.com/avatar/'+comment.gravatar}" data-holder-rendered="true"
-			style="width: 64px; height: 64px;">
+			th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : gravatarPrefix+comment.gravatar}"
+			data-holder-rendered="true" style="width: 64px; height: 64px;">
 		</a>
 		<div class="media-body">
 			<h5 class="media-heading">
@@ -17,12 +17,11 @@
 					th:text="${parent.nickname}"></span>
 				</span>
 			</h5>
-			<p style="word-break:break-all" th:text="${comment.content}"></p>
+			<p style="word-break: break-all" th:text="${comment.content}"></p>
 			<h5>
 				<span
 					th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm')}"></span>&nbsp;&nbsp;&nbsp;
-				 <a
-					href="###" th:if="${user != null}"
+				<a href="###" th:if="${user != null}"
 					th:onclick="'removeComment(\''+${comment.id}+'\')'"
 					style="margin-right: 8px"><span
 					class="glyphicon glyphicon-remove" aria-hidden="true"></span></a> <a

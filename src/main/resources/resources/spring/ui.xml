@@ -79,7 +79,13 @@
 			</bean>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.ui.UIExposeHelper" />
+	<bean class="me.qyh.blog.ui.UIExposeHelper">
+		<property name="pros">
+			<map>
+				<entry key="gravatarPrefix" value="//cn.gravatar.com/avatar/" />
+			</map>
+		</property>
+	</bean>
 
 	<!-- 用来增加拓展页面 -->
 	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />

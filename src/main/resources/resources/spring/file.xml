@@ -7,10 +7,11 @@
 		   					 http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 	<!-- 图片处理 -->
-	<!-- <bean class="me.qyh.blog.file.GraphicsMagickImageHelper"> <property 
-		name="magickPath" value="e:/GraphicsMagick-1.3.23-Q8" /> </bean> -->
+	<bean class="me.qyh.blog.file.GraphicsMagickImageHelper">
+		<property name="magickPath" value="e:/GraphicsMagick-1.3.23-Q8" />
+	</bean>
 	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ -->
-	<bean class="me.qyh.blog.file.JavaImageHelper" />
+	<!-- <bean class="me.qyh.blog.file.JavaImageHelper" /> -->
 	<!-- 文件服务 -->
 	<bean class="me.qyh.blog.file.DefaultFileManager">
 		<property name="servers">
@@ -19,11 +20,9 @@
 					<property name="stores">
 						<list>
 							<bean class="me.qyh.blog.file.local.ImageResourceStore">
-								<property name="absPath" value="/web/nginx/html/blog_file/image" />
+								<property name="absPath" value="/web/file/blog_image/" />
 								<property name="id" value="1" />
-								<property name="urlPrefix" value="image" />
-								<property name="thumbAbsPath" value="/web/nginx/html/blog_file/image/thumb" />
-								<property name="handlerPrefix" value="image" />
+								<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />
 								<property name="cacheSeconds" value="31556926" />
 								<property name="sourceProtected" value="true" />
 								<property name="smallResize">
@@ -58,10 +57,8 @@
 								</property>
 							</bean>
 							<bean class="me.qyh.blog.file.local.CommonResourceStore">
-								<property name="handlerPrefix" value="file" />
-								<property name="absPath" value="/web/nginx/html/blog_file/file" />
+								<property name="absPath" value="/web/file/blog_file" />
 								<property name="id" value="2" />
-								<property name="urlPrefix" value="file" />
 								<property name="cacheSeconds" value="31556926" />
 							</bean>
 						</list>

@@ -48,7 +48,7 @@ public class DBConvert {
 				InputStreamReader reader = new InputStreamReader(is, Constants.CHARSET);
 				Connection conn = tds.getConnection()) {
 			RunScript.execute(conn, reader);
-			System.out.println("初始化mysql完毕");
+			System.out.println("初始化" + to.name() + "完毕");
 		}
 	}
 
@@ -112,6 +112,7 @@ public class DBConvert {
 		copyTable("blog_page_error");
 		copyTable("blog_page_expanded");
 		copyTable("blog_page_sys");
+		System.out.println("转换完毕");
 	}
 
 	private void copyTable(String table) throws SQLException {

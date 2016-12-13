@@ -1,3 +1,5 @@
 src/main/resources/resources/app.properties
 src/main/resources/resources/mail.properties
 src/main/resources/resources/mybatis/db.properties
+src/main/java/me/qyh/blog/tool/db.properties
+src/main/java/me/qyh/blog/tool/db.properties

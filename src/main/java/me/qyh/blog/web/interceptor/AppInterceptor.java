@@ -193,7 +193,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				modelAndView.addAllObjects(page.getDatas());
 			}
 			logger.debug("将用户和路径处理器放入model中");
-			modelAndView.addAllObjects(uiExposeHelper.getHelpers(request));
+			uiExposeHelper.addVariables(request);
 		}
 	}
 
