@@ -407,7 +407,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		} else {
 			int count = articleDao.selectCount(param);
 			List<Article> datas = articleDao.selectPage(param);
-			page = new PageResult<Article>(param, count, datas);
+			page = new PageResult<>(param, count, datas);
 		}
 		// query comments
 		List<Article> datas = page.getDatas();

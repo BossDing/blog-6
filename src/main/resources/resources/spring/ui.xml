@@ -82,7 +82,7 @@
 	<bean class="me.qyh.blog.ui.UIExposeHelper">
 		<property name="pros">
 			<map>
-				<entry key="gravatarPrefix" value="//cn.gravatar.com/avatar/" />
+				<entry key="gravatarPrefix" value="http://cn.gravatar.com/avatar/" />
 			</map>
 		</property>
 	</bean>

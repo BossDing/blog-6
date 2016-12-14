@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -68,8 +70,6 @@ import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.ParseResult;
 import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TemplateParser;
-import me.qyh.blog.ui.TemplateParser.DataQuery;
-import me.qyh.blog.ui.TemplateParser.FragmentQuery;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.data.DataTagProcessor;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -123,18 +123,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	private final TemplateParser templateParser = new TemplateParser();
 
-	private final DataQuery previewDataQuery = new DataQuery() {
-
-		@Override
-		public DataBind<?> query(DataTag dataTag) throws LogicException {
-			DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-			if (processor != null) {
-				return processor.previewData(dataTag.getAttrs());
-			}
-			return null;
-		}
-	};
-
 	private static final Message SPACE_NOT_EXISTS = new Message("space.notExists", "空间不存在");
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
@@ -164,7 +152,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		userFragment.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		userFragmentDao.insert(userFragment);
 
-		uiCacheRender.evit(userFragment);
+		uiCacheRender.evit(userFragment.getName());
 	}
 
 	@Override
@@ -175,7 +163,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userFragmentDao.deleteById(id);
 
-		uiCacheRender.evit(userFragment);
+		uiCacheRender.evit(userFragment.getName());
 	}
 
 	@Override
@@ -202,7 +190,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userFragmentDao.update(userFragment);
 
-		uiCacheRender.evit(old, userFragment);
+		uiCacheRender.evit(old.getName(), userFragment.getName());
 	}
 
 	@Override
@@ -211,7 +199,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		param.setPageSize(configService.getGlobalConfig().getUserFragmentPageSize());
 		int count = userFragmentDao.selectCount(param);
 		List<UserFragment> datas = userFragmentDao.selectPage(param);
-		return new PageResult<UserFragment>(param, count, datas);
+		return new PageResult<>(param, count, datas);
 	}
 
 	@Override
@@ -238,7 +226,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		param.setPageSize(configService.getGlobalConfig().getUserPagePageSize());
 		int count = userPageDao.selectCount(param);
 		List<UserPage> datas = userPageDao.selectPage(param);
-		return new PageResult<UserPage>(param, count, datas);
+		return new PageResult<>(param, count, datas);
 	}
 
 	@Override
@@ -290,9 +278,27 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public RenderedPage renderPreviewPage(Page page) throws LogicException {
-		ParseResult result = templateParser.parse(page.getTpl(), previewDataQuery,
-				new FragmentQueryImpl(page.getSpace()));
-		return new RenderedPage(page, result.getBinds(), result.getFragments());
+		ParseResult result = templateParser.parse(page.getTpl());
+		Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
+		List<DataBind<?>> dataBinds = Lists.newArrayList();
+		Space space = page.getSpace();
+		if (result.hasFragment()) {
+			for (String fragmentName : result.getFragments()) {
+				Fragment fragment = queryFragment(space, fragmentName);
+				if (fragment != null) {
+					fragmentMap.put(fragmentName, fragment);
+				}
+			}
+		}
+		if (result.hasDataTag()) {
+			for (DataTag tag : result.getDataTags()) {
+				DataTagProcessor<?> processor = geTagProcessor(tag.getName());
+				if (processor != null) {
+					dataBinds.add(processor.previewData(tag.getAttrs()));
+				}
+			}
+		}
+		return new RenderedPage(page, dataBinds, fragmentMap);
 	}
 
 	@Override
@@ -736,7 +742,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public Fragment queryFragment(String name) {
-		return new FragmentQueryImpl(SpaceContext.get()).query(name);
+		return queryFragment(SpaceContext.get(), name);
 	}
 
 	@Override
@@ -823,6 +829,23 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
+	private Fragment queryFragment(Space space, String name) {
+		// 首先查找用户自定义fragment
+		UserFragment userFragment = userFragmentDao.selectBySpaceAndName(space, name);
+		if (userFragment == null) { // 查找全局
+			userFragment = userFragmentDao.selectGlobalByName(name);
+		}
+		if (userFragment != null) {
+			return userFragment;
+		}
+		for (Fragment fragment : fragments) {
+			if (fragment.getName().equals(name)) {
+				return fragment;
+			}
+		}
+		return null;
+	}
+
 	private final class UICacheRender {
 
 		private final LoadingCache<PageLoader, ParseResultWrapper> cache = CacheBuilder.newBuilder()
@@ -831,9 +854,17 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					@Override
 					public ParseResultWrapper load(PageLoader loader) throws Exception {
 						final Page db = loader.loadFromDb();
-						ParseResult parseResult = templateParser.parse(db.getTpl(), noDataQuery,
-								new FragmentQueryImpl(db.getSpace()));
+						ParseResult parseResult = templateParser.parse(db.getTpl());
 						return new ParseResultWrapper(parseResult, db);
+					}
+				});
+
+		private final LoadingCache<FragmentKey, Optional<Fragment>> fragmentCache = CacheBuilder.newBuilder()
+				.build(new CacheLoader<FragmentKey, Optional<Fragment>>() {
+
+					@Override
+					public Optional<Fragment> load(FragmentKey key) throws Exception {
+						return Optional.fromNullable(queryFragment(key.space, key.name));
 					}
 
 				});
@@ -851,44 +882,76 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 
 		public RenderedPage render(Page db) throws LogicException {
-			ParseResult result = templateParser.parse(db.getTpl(), noDataQuery, new FragmentQueryImpl(db.getSpace()));
+			ParseResult result = templateParser.parse(db.getTpl());
 			List<DataBind<?>> binds = Lists.newArrayList();
-			for (DataTag unkownData : result.getUnkownDatas()) {
-				//
-				DataTagProcessor<?> processor = geTagProcessor(unkownData.getName());
-				if (processor != null) {
-					binds.add(processor.previewData(unkownData.getAttrs()));
+			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
+			if (result.hasDataTag()) {
+				for (DataTag dataTag : result.getDataTags()) {
+					//
+					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+					if (processor != null) {
+						binds.add(processor.previewData(dataTag.getAttrs()));
+					}
 				}
 			}
-			return new RenderedPage(db, binds, result.getFragments());
+			Space space = db.getSpace();
+			if (result.hasFragment()) {
+				fragmentMap.putAll(loadFragments(space, result.getFragments()));
+			}
+			return new RenderedPage(db, binds, fragmentMap);
 		}
 
 		public RenderedPage renderPreview(PageLoader loader) throws LogicException {
 			ParseResultWrapper cached = get(loader);
 			ParseResult result = cached.parseResult;
 			List<DataBind<?>> binds = Lists.newArrayList();
-			for (DataTag unkownData : result.getUnkownDatas()) {
-				//
-				DataTagProcessor<?> processor = geTagProcessor(unkownData.getName());
-				if (processor != null) {
-					binds.add(processor.previewData(unkownData.getAttrs()));
+			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
+			Space space = cached.page.getSpace();
+			if (result.hasDataTag()) {
+				for (DataTag dataTag : result.getDataTags()) {
+					//
+					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+					if (processor != null) {
+						binds.add(processor.previewData(dataTag.getAttrs()));
+					}
 				}
 			}
-			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragments());
+			if (result.hasFragment()) {
+				fragmentMap.putAll(loadFragments(space, result.getFragments()));
+			}
+			return new RenderedPage((Page) cached.page.clone(), binds, fragmentMap);
 		}
 
 		public RenderedPage render(PageLoader loader, Params params) throws LogicException {
 			ParseResultWrapper cached = get(loader);
 			ParseResult result = cached.parseResult;
 			List<DataBind<?>> binds = Lists.newArrayList();
-			for (DataTag unkownData : result.getUnkownDatas()) {
-				//
-				DataTagProcessor<?> processor = geTagProcessor(unkownData.getName());
-				if (processor != null) {
-					binds.add(processor.getData(cached.page.getSpace(), params, unkownData.getAttrs()));
+			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
+			Space space = cached.page.getSpace();
+			if (result.hasDataTag()) {
+				for (DataTag dataTag : result.getDataTags()) {
+					//
+					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+					if (processor != null) {
+						binds.add(processor.getData(space, params, dataTag.getAttrs()));
+					}
 				}
 			}
-			return new RenderedPage((Page) cached.page.clone(), binds, result.getFragments());
+			if (result.hasFragment()) {
+				fragmentMap.putAll(loadFragments(space, result.getFragments()));
+			}
+			return new RenderedPage((Page) cached.page.clone(), binds, fragmentMap);
+		}
+
+		private Map<String, Fragment> loadFragments(Space space, Set<String> names) {
+			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
+			for (String fragmentName : names) {
+				Optional<Fragment> optionalFragment = fragmentCache.getUnchecked(new FragmentKey(space, fragmentName));
+				if (optionalFragment.isPresent()) {
+					fragmentMap.put(fragmentName, optionalFragment.get());
+				}
+			}
+			return fragmentMap;
 		}
 
 		public void evit(PageLoader key) {
@@ -899,26 +962,42 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			cache.invalidateAll();
 		}
 
-		public void evit(Fragment... fragments) {
-			for (Map.Entry<PageLoader, ParseResultWrapper> it : cache.asMap().entrySet()) {
-				ParseResultWrapper st = it.getValue();
-				Map<String, Fragment> currentFMap = st.parseResult.getFragments();
-				labe1: for (Fragment currentF : currentFMap.values()) {
-					for (Fragment fragment : fragments) {
-						if (fragment.getName().equals(currentF.getName())) {
-							cache.invalidate(it.getKey());
-							break labe1;
-						}
+		public void evit(String... fragments) {
+			if (fragments == null || fragments.length == 0) {
+				return;
+			}
+			fragmentCache.asMap().keySet().removeIf(x -> {
+				for (String name : fragments) {
+					if (x.name.equals(name)) {
+						return true;
 					}
 				}
-				label2: for (String name : st.parseResult.getUnkownFragments()) {
-					for (Fragment fragment : fragments) {
-						if (name.equals(fragment.getName())) {
-							cache.invalidate(it.getKey());
-							break label2;
-						}
-					}
+				return false;
+			});
+		}
+
+		private final class FragmentKey {
+			private final Space space;
+			private final String name;
+
+			private FragmentKey(Space space, String name) {
+				super();
+				this.space = space;
+				this.name = name;
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(this.space, this.name);
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (Validators.baseEquals(this, obj)) {
+					FragmentKey other = (FragmentKey) obj;
+					return Objects.equals(this.space, other.space) && Objects.equals(this.name, other.name);
 				}
+				return false;
 			}
 		}
 
@@ -931,14 +1010,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				this.page = page;
 			}
 		}
-
-		private final DataQuery noDataQuery = new DataQuery() {
-
-			@Override
-			public DataBind<?> query(DataTag dataTag) throws LogicException {
-				return null;
-			}
-		};
 	}
 
 	private interface PageLoader {
@@ -1096,35 +1167,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
-	private final class FragmentQueryImpl implements FragmentQuery {
-
-		private Space space;
-
-		@Override
-		public Fragment query(String name) {
-			// 首先查找用户自定义fragment
-			UserFragment userFragment = userFragmentDao.selectBySpaceAndName(space, name);
-			if (userFragment == null) {
-				// 查找全局
-				userFragment = userFragmentDao.selectGlobalByName(name);
-			}
-			if (userFragment != null) {
-				return userFragment;
-			}
-			for (Fragment fragment : fragments) {
-				if (fragment.getName().equals(name)) {
-					return fragment;
-				}
-			}
-			return null;
-		}
-
-		public FragmentQueryImpl(Space space) {
-			this.space = space;
-		}
-
-	}
-
 	public void setProcessors(List<DataTagProcessor<?>> processors) {
 		this.processors = processors;
 	}
@@ -1132,5 +1174,4 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	public void setFragments(List<Fragment> fragments) {
 		this.fragments = fragments;
 	}
-
 }

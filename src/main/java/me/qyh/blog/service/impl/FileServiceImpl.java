@@ -323,7 +323,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			setExpandedCommonFile(file);
 		}
 
-		PageResult<BlogFile> page = new PageResult<BlogFile>(param, count, datas);
+		PageResult<BlogFile> page = new PageResult<>(param, count, datas);
 		BlogFilePageResult result = new BlogFilePageResult();
 		result.setPage(page);
 		if (paths != null) {

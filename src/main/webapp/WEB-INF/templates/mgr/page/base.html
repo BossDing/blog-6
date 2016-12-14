@@ -1,10 +1,7 @@
 <div id="page-wrapper" style="padding: 10px">
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-md-12">
-				<textarea rows="" cols="" class="form-control" style="display: none"
-					th:text="${page.tpl}" id="editor"></textarea>
-			</div>
+			<div th:replace="mgr/page/editor :: editor(${page.tpl})"></div>
 			<div class="col-md-12 " style="margin-top: 10px; text-align: center">
 				<button class="btn btn-primary" type="button" onclick="lookup()">查询</button>
 				<button class="btn btn-primary" type="button" onclick="preview()">预览</button>

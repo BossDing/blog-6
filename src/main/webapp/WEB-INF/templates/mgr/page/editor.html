@@ -1,0 +1,11 @@
+<div class="col-md-12" th:fragment="editor(content)">
+	<div class="md-header btn-toolbar">
+		<div class="btn-group">
+			<button class="btn-default btn-sm btn" type="button"
+				data-handler="file">文件</button>
+			<button class="btn-default btn-sm btn" type="button"
+				data-handler="format">格式化</button>
+		</div>
+	</div>
+	<textarea style="display: none;" th:text="${content}" id="editor"></textarea>
+</div>

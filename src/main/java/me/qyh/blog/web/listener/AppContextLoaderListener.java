@@ -30,7 +30,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.config.UrlConfig;
 import me.qyh.blog.web.filter.CORSFilter;
-import me.qyh.blog.web.filter.UrlFilter;
 
 public class AppContextLoaderListener extends ContextLoaderListener {
 
@@ -43,9 +42,6 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		UrlConfig helper = ctx.getBean(UrlConfig.class);
 		String domain = helper.getRootDomain();
 		ServletContext sc = event.getServletContext();
-		Class<? extends Filter> urlFilter = UrlFilter.class;
-		sc.addFilter(urlFilter.getName(), urlFilter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true,
-				"/*");
 		if (helper.isEnableSpaceDomain()) {
 			logger.debug("开启了多域名支持，添加UrlFilter以转发请求,添加CORSFilter以处理跨域");
 			Class<? extends Filter> corsFilter = CORSFilter.class;

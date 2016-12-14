@@ -1,6 +1,7 @@
 var editor;
 var fragments = [];
 var _tpls = [];
+file_mode = "HTML";
 	$(document).ready(function() {
 		var mixedMode = {
 		        name: "htmlmixed",
@@ -27,6 +28,21 @@ var _tpls = [];
 		});
 		$("#lookupModal").on("show.bs.modal", function() {
 			showDataTags();
+		});
+		$('[data-handler]').click(function(){
+			var m = $(this).attr("data-handler");
+			switch(m){
+			case 'file':
+				fileSelectPageQuery(1,'');
+	        	$("#fileSelectModal").modal("show");
+				break;
+			case 'format':
+			      CodeMirror.commands["selectAll"](editor);
+			      autoFormatSelection()
+				break;
+			default:
+				break;
+			}
 		})
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			var html = '';
@@ -58,6 +74,21 @@ var _tpls = [];
 			}
 		})
 	});
+	 $(document).keydown(function(e) {
+	    if (e.ctrlKey && e.shiftKey && e.which === 70) {
+	        autoFormatSelection()
+	        return false;
+	    }
+	    return true;
+	 });
+	function getSelectedRange() {
+	    return { from: editor.getCursor(true), to: editor.getCursor(false) };
+	  }
+	  
+	  function autoFormatSelection() {
+	    var range = getSelectedRange();
+	    editor.autoFormatRange(range.from, range.to);
+	  }
 	
 	function addDataTag(name){
 		editor.replaceSelection('<data name="'+name+'"/>');

@@ -59,7 +59,7 @@ public class TagServiceImpl implements TagService, InitializingBean {
 		param.setPageSize(configSerivce.getGlobalConfig().getTagPageSize());
 		int count = tagDao.selectCount(param);
 		List<Tag> datas = tagDao.selectPage(param);
-		return new PageResult<Tag>(param, count, datas);
+		return new PageResult<>(param, count, datas);
 	}
 
 	@Override

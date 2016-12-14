@@ -68,14 +68,14 @@ public class UrlFilter extends OncePerRequestFilter {
 					if (queryString != null) {
 						sb.append("?").append(queryString);
 					}
-					resp.sendRedirect(sb.toString());
+					resp.setStatus(301);
+					resp.setHeader("Location", sb.toString());
+					resp.setHeader("Connection", "close");
 					return;
 				}
 			} else {
-				// 如果采用rootdomain访问，自动跳转至domain
-				String domain = urlHelper.getUrlConfig().getDomain();
-				String rootDomain = urlHelper.getUrlConfig().getRootDomain();
-				if (host.equalsIgnoreCase(rootDomain) && !host.equalsIgnoreCase(domain)) {
+				String url = UrlUtils.buildFullRequestUrl(req);
+				if (!url.startsWith(urlHelper.getUrl())) {
 					String requestURI = req.getRequestURI();
 					String queryString = req.getQueryString();
 					StringBuilder sb = new StringBuilder();
@@ -83,7 +83,9 @@ public class UrlFilter extends OncePerRequestFilter {
 					if (queryString != null) {
 						sb.append("?").append(queryString);
 					}
-					resp.sendRedirect(sb.toString());
+					resp.setStatus(301);
+					resp.setHeader("Location", sb.toString());
+					resp.setHeader("Connection", "close");
 					return;
 				}
 			}

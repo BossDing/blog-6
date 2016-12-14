@@ -15,54 +15,44 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
-import me.qyh.blog.ui.data.DataBind;
-import me.qyh.blog.ui.fragment.Fragment;
 
 public class ParseResult {
 
-	private List<DataBind<?>> binds = Lists.newArrayList();
-	private Map<String, Fragment> fragments = Maps.newHashMap();
-	private Set<DataTag> unkownDatas = Sets.newLinkedHashSet();
-	private Set<String> unkownFragments = Sets.newLinkedHashSet();
+	private Set<String> fragments = Sets.newLinkedHashSet();
+	private Set<DataTag> dataTags = Sets.newLinkedHashSet();
 
-	public List<DataBind<?>> getBinds() {
-		return binds;
+	public boolean hasFragment() {
+		return !fragments.isEmpty();
 	}
 
-	public void setBinds(List<DataBind<?>> binds) {
-		this.binds = binds;
+	public boolean hasDataTag() {
+		return !dataTags.isEmpty();
 	}
 
-	public Set<DataTag> getUnkownDatas() {
-		return unkownDatas;
+	public Set<DataTag> getDataTags() {
+		return dataTags;
 	}
 
-	public Set<String> getUnkownFragments() {
-		return unkownFragments;
+	public void setDataTags(Set<DataTag> dataTags) {
+		this.dataTags = dataTags;
 	}
 
-	public void addUnkownData(DataTag tag) {
-		unkownDatas.add(tag);
-	}
-
-	public void addUnkownFragment(String name) {
-		unkownFragments.add(name);
-	}
-
-	public Map<String, Fragment> getFragments() {
+	public Set<String> getFragments() {
 		return fragments;
 	}
 
-	public void putFragment(String key, Fragment v) {
-		fragments.put(key, v);
+	public void setFragments(Set<String> fragments) {
+		this.fragments = fragments;
 	}
 
+	public void addFragment(String fragment) {
+		this.fragments.add(fragment);
+	}
+
+	public void addDataTag(DataTag tag) {
+		this.dataTags.add(tag);
+	}
 }
