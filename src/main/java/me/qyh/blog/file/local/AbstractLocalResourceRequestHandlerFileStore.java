@@ -136,7 +136,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			if (!key.startsWith("/")) {
 				path = "/" + key;
 			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "/download/" + path);
+			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "_download/" + path);
 		} else {
 			return getUrl(key);
 		}
@@ -187,7 +187,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler) {
-			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/download/**", new DownloadHandler());
+			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "_download/**", new DownloadHandler());
 		}
 	}
 

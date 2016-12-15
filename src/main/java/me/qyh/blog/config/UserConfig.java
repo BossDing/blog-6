@@ -39,6 +39,11 @@ public final class UserConfig {
 	private static final String PASSWORD = "password";
 	private static final String EMAIL = "email";
 
+	/**
+	 * admin，防止user.properties文件为空时自动登陆失败
+	 */
+	private static final String DEFAULT_PASSWORD = "$2a$10$DZ/KQVvyKGQrI8rlRmE95uIBAPj6RcfThGTxXOhRDpFMA5zAvHeq.";
+
 	private static Properties pros;
 	private static User user;
 
@@ -77,7 +82,7 @@ public final class UserConfig {
 			username = "admin";
 		}
 		if (Validators.isEmptyOrNull(password, true)) {
-			password = BCrypts.encode("admin");
+			password = DEFAULT_PASSWORD;
 		}
 		user = new User();
 		user.setEmail(email);

@@ -29,6 +29,8 @@ public class UserFragmentValidator implements Validator {
 	private static final int MAX_DESCRIPTION_LENGTH = 500;
 	public static final int MAX_TPL_LENGTH = 20000;
 
+	private static final String NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5-]+$";
+
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return UserFragment.class.isAssignableFrom(clazz);
@@ -45,6 +47,10 @@ public class UserFragmentValidator implements Validator {
 		if (name.length() > MAX_NAME_LENGTH) {
 			errors.reject("fragment.user.name.toolong", new Object[] { MAX_NAME_LENGTH },
 					"模板片段名长度不能超过" + MAX_NAME_LENGTH + "个字符");
+			return;
+		}
+		if (!name.matches(NAME_PATTERN)) {
+			errors.reject("fragment.user.name.invalid", "模板片段名称校验失败");
 			return;
 		}
 		String description = userFragment.getDescription();
@@ -68,5 +74,4 @@ public class UserFragmentValidator implements Validator {
 			return;
 		}
 	}
-
 }
