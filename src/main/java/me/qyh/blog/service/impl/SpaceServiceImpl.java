@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
@@ -50,7 +49,7 @@ public class SpaceServiceImpl implements SpaceService {
 
 	@Override
 	public void addSpace(Space space) throws LogicException {
-		checkLock(space.getLockId());
+		lockManager.ensureLockvailable(space.getLockId());
 
 		if (spaceDao.selectByAlias(space.getAlias()) != null) {
 			throw new LogicException(
@@ -91,7 +90,7 @@ public class SpaceServiceImpl implements SpaceService {
 		if (space.getIsPrivate()) {
 			space.setLockId(null);
 		} else {
-			checkLock(space.getLockId());
+			lockManager.ensureLockvailable(space.getLockId());
 		}
 
 		if (space.getIsDefault()) {
@@ -124,15 +123,6 @@ public class SpaceServiceImpl implements SpaceService {
 	@Transactional(readOnly = true)
 	public List<Space> querySpace(SpaceQueryParam param) {
 		return spaceDao.selectByParam(param);
-	}
-
-	private void checkLock(String id) throws LogicException {
-		if (id != null) {
-			Lock lock = lockManager.findLock(id);
-			if (lock == null) {
-				throw new LogicException("lock.notexists", "锁不存在");
-			}
-		}
 	}
 
 }

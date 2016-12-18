@@ -58,6 +58,8 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
+import me.qyh.blog.lock.LockProtected;
+import me.qyh.blog.lock.LockResource;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
@@ -310,12 +312,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
+	@LockProtected
 	public RenderedPage renderUserPage(String alias) throws LogicException {
-		return uiCacheRender.render(new UserPageLoader(SpaceContext.get(), alias), new Params());
+		return new UserRenderedPage(uiCacheRender.render(new UserPageLoader(SpaceContext.get(), alias), new Params()));
 	}
 
 	@Override
 	public void buildTpl(SysPage sysPage) throws LogicException {
+		checkPageTarget(sysPage);
 		checkSpace(sysPage);
 		SysPage db = sysPageDao.selectBySpaceAndPageTarget(sysPage.getSpace(), sysPage.getTarget());
 		boolean update = db != null;
@@ -331,6 +335,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	public void buildTpl(UserPage userPage) throws LogicException {
 		checkSpace(userPage);
+		lockManager.ensureLockvailable(userPage.getLockId());
 		String alias = userPage.getAlias();
 		userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		boolean update = userPage.hasId();
@@ -437,6 +442,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	public void buildTpl(LockPage lockPage) throws LogicException {
+		checkPageTarget(lockPage);
 		checkLockType(lockPage.getLockType());
 		checkSpace(lockPage);
 		LockPage db = lockPageDao.selectBySpaceAndLockType(lockPage.getSpace(), lockPage.getLockType());
@@ -846,6 +852,25 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		return null;
 	}
 
+	/*
+	 * 默认空间无法配置解锁页面和文章详情页
+	 */
+	private void checkPageTarget(Page page) throws LogicException {
+		if (page.getSpace() == null) {
+			switch (page.getType()) {
+			case SYSTEM:
+				SysPage sysPage = (SysPage) page;
+				if (PageTarget.ARTICLE_DETAIL.equals(sysPage.getTarget())) {
+					// 默认空间无法配置解锁页面和文章详情页
+					throw new LogicException("page.noneed", "这个页面无需配置");
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
 	private final class UICacheRender {
 
 		private final LoadingCache<PageLoader, ParseResultWrapper> cache = CacheBuilder.newBuilder()
@@ -1173,5 +1198,33 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	public void setFragments(List<Fragment> fragments) {
 		this.fragments = fragments;
+	}
+
+	/**
+	 * 实现了LockResource的用户自定义渲染页面，用于解锁
+	 * 
+	 * @author mhlx
+	 *
+	 */
+	public final class UserRenderedPage extends RenderedPage implements LockResource {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		private UserRenderedPage(RenderedPage source) {
+			super(source);
+		}
+
+		@Override
+		public String getResourceId() {
+			return ((UserPage) getPage()).getResourceId();
+		}
+
+		@Override
+		public String getLockId() {
+			return ((UserPage) getPage()).getLockId();
+		}
 	}
 }

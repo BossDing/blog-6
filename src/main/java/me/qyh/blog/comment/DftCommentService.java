@@ -409,6 +409,7 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Map<Integer, Integer> queryArticlesCommentCount(List<Integer> ids) {
 		List<ArticleComments> results = commentDao.selectArticlesCommentCount(ids);
 		Map<Integer, Integer> map = Maps.newHashMap();
@@ -419,8 +420,14 @@ public class DftCommentService implements CommentServer, InitializingBean, Appli
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public int queryArticleCommentCount(Integer id) {
 		return commentDao.selectArticleCommentCount(id);
+	}
+
+	@Override
+	public void deleteComments(Article article) {
+		commentDao.deleteByArticle(article);
 	}
 
 	/**

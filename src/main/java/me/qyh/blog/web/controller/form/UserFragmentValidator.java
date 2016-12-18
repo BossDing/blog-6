@@ -29,7 +29,7 @@ public class UserFragmentValidator implements Validator {
 	private static final int MAX_DESCRIPTION_LENGTH = 500;
 	public static final int MAX_TPL_LENGTH = 20000;
 
-	private static final String NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5-]+$";
+	private static final String NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5-_]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {

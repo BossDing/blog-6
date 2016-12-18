@@ -152,12 +152,11 @@ public class GlobalControllerExceptionHandler {
 		RequestUrls urls = urlHelper.getUrls(request);
 		// 获取空间别名
 		String alias = urls.getSpace();
+		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
 		if (alias != null) {
-			LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
 			return "redirect:" + urls.getUrl(new Space(alias)) + "/unlock";
 		} else {
-			// 不可能会存在
-			return "redirect:" + urls.getUrl();
+			return "redirect:" + urls.getUrl() + "/unlock";
 		}
 	}
 

@@ -1,3 +1,34 @@
+$(document).ready(function(){
+	$.get(basePath + '/mgr/lock/all',{},function(data){
+		var oldLock = $("#oldLock").val();
+		if(data.success){
+			var locks = data.data;
+			if(locks.length > 0){
+				var html = '<div class="row"><div style="margin-top: 10px"><div class="col-md-2">';
+				html += '<label for="lockId" class="control-label">锁:</label> ';
+				html += '</div>';
+				html += '<div class="col-md-10">';
+				html += '<select id="lockId" class="form-control">';
+				html += '<option value="">无</option>';
+				for(var i=0;i<locks.length;i++){
+					var lock = locks[i];
+					if(lock.id == oldLock){
+						html += '<option value="'+lock.id+'" selected="selected">'+lock.name+'</option>';
+					}else{
+						html += '<option value="'+lock.id+'">'+lock.name+'</option>';
+					}
+				}
+				html += '</select>';
+				html += '</div>';
+				html += '</div></div>'
+				$("#lock_container").html(html);
+				$("#lockId").val($("#pageLockId").val());
+			}
+		}else{
+			console.log(data.data);
+		}
+	});
+})
 function preview() {
 		var page = {"tpl":editor.getValue()};
 		page.tpls = fragments;
@@ -44,6 +75,9 @@ function preview() {
 		}
 		if($.trim($("#alias").val()) != ''){
 			page.alias = $.trim($("#alias").val());
+		}
+		if($("#lockId").val() != ""){
+			page.lockId = $("#lockId").val();
 		}
 		page.name=$("#name").val();
 		page.description=$("#description").val();

@@ -3,6 +3,7 @@ package me.qyh.blog.service;
 import java.util.List;
 import java.util.Map;
 
+import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 
 public interface CommentServer {
@@ -36,5 +37,13 @@ public interface CommentServer {
 	 * @return
 	 */
 	int queryArticlesTotalCommentCount(Space space, boolean queryPrivate, boolean queryHidden);
-	
+
+	/**
+	 * 根据文章删除评论
+	 * 
+	 * @param article
+	 *            文章
+	 */
+	void deleteComments(Article article);
+
 }

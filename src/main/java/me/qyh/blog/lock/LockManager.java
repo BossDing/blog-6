@@ -28,6 +28,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import me.qyh.blog.exception.LogicException;
+
 /**
  * 锁管理器
  * 
@@ -51,6 +53,22 @@ public class LockManager implements InitializingBean {
 	public Lock findLock(String id) {
 		Lock lock = expandedLockProvider.findLock(id);
 		return lock == null ? sysLockProvider.findLock(id) : lock;
+	}
+
+	/**
+	 * 确保锁可用
+	 * 
+	 * @param lockId
+	 *            锁id
+	 * @throws LogicException
+	 *             锁不可用(不存在)
+	 */
+	public void ensureLockvailable(String lockId) throws LogicException {
+		if (lockId != null) {
+			if (findLock(lockId) == null) {
+				throw new LogicException("lock.notexists", "锁不存在");
+			}
+		}
 	}
 
 	/**

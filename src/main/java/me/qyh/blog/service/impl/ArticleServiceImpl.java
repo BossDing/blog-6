@@ -47,7 +47,6 @@ import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
-import me.qyh.blog.comment.CommentDao;
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.ArticleTagDao;
@@ -61,7 +60,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.metaweblog.MetaweblogArticle;
 import me.qyh.blog.pageparam.ArticleQueryParam;
@@ -79,8 +77,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
 	private ArticleDao articleDao;
-	@Autowired
-	private CommentDao commentDao;
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
@@ -246,7 +242,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (article.isPrivate()) {
 			article.setLockId(null);
 		} else {
-			checkLock(article.getLockId());
+			lockManager.ensureLockvailable(article.getLockId());
 		}
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (article.hasId()) {
@@ -495,7 +491,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
 		// 删除博客所有的评论
-		commentDao.deleteByArticle(article);
+		commentServer.deleteComments(article);
 		articleDao.deleteById(id);
 	}
 
@@ -594,15 +590,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			rebuildIndex();
 		}
 		scheduleManager.update();
-	}
-
-	private void checkLock(String lockId) throws LogicException {
-		if (lockId != null) {
-			Lock lock = lockManager.findLock(lockId);
-			if (lock == null) {
-				throw new LogicException("lock.notexists", "锁不存在");
-			}
-		}
 	}
 
 	/**

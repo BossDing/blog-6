@@ -36,6 +36,12 @@ public class RenderedPage {
 		this.fragmentMap = fragmentMap;
 	}
 
+	public RenderedPage(RenderedPage source) {
+		this.page = source.page;
+		this.binds = source.binds;
+		this.fragmentMap = source.fragmentMap;
+	}
+
 	public Map<String, Object> getDatas() {
 		Map<String, Object> map = Maps.newHashMap();
 		for (DataBind<?> bind : binds) {

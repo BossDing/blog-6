@@ -44,6 +44,7 @@ import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
 
@@ -91,6 +92,9 @@ public class UserPageMgrController extends BaseMgrController {
 			tplRender.tryRender(page, request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
+		}
+		if (Validators.isEmptyOrNull(userPage.getLockId(), true)) {
+			userPage.setLockId(null);
 		}
 		uiService.buildTpl(userPage);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));

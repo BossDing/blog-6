@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.SpaceDao;
+import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.SysLock;
@@ -51,6 +52,8 @@ public class SysLockProvider {
 	private SpaceDao spaceDao;
 	@Autowired
 	private ArticleDao articleDao;
+	@Autowired
+	private UserPageDao userPageDao;
 
 	private static final String[] LOCK_TYPES = { SysLockType.PASSWORD.name(), SysLockType.QA.name() };
 
@@ -66,6 +69,7 @@ public class SysLockProvider {
 		sysLockDao.delete(id);
 		articleDao.deleteLock(id);
 		spaceDao.deleteLock(id);
+		userPageDao.deleteLock(id);
 	}
 
 	/**

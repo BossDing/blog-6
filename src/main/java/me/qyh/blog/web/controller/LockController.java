@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.bean.JsonResult;
+import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.Lock;
 import me.qyh.blog.lock.LockBean;
@@ -43,15 +45,17 @@ import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
-@RequestMapping("space/{alias}")
-public class SpaceLockController extends BaseController {
+public class LockController extends BaseController {
 
-	private static final Logger logger = LoggerFactory.getLogger(SpaceLockController.class);
+	private static final Logger logger = LoggerFactory.getLogger(LockController.class);
 
 	@Autowired
 	private UIService uiService;
 
-	@RequestMapping(value = "unlock", method = RequestMethod.GET)
+	@Autowired
+	private UrlHelper urlHelper;
+
+	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.GET)
 	public String unlock(Model model, HttpServletRequest request) throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
@@ -69,7 +73,7 @@ public class SpaceLockController extends BaseController {
 		}
 	}
 
-	@RequestMapping(value = "unlock", method = RequestMethod.POST)
+	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)
 	public String unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request,
 			RedirectAttributes ra) {
 		LockBean lockBean = LockHelper.getLockBean(request);
@@ -77,18 +81,26 @@ public class SpaceLockController extends BaseController {
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session)) {
 			ra.addFlashAttribute(ERROR, new Message("validateCode.error", "验证码错误"));
-			return "redirect:/unlock";
+			return buildLockUrl(lockBean.getSpaceAlias());
 		}
 		LockKey key = null;
 		try {
 			key = lock.getKeyFromRequest(request);
 		} catch (LogicException e) {
 			ra.addFlashAttribute(ERROR, e.getMessage());
-			return "redirect:/unlock";
+			return buildLockUrl(lockBean.getSpaceAlias());
 		}
 		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
 		LockHelper.clearLockBean(request);
 		return "redirect:" + lockBean.getRedirectUrl();
+	}
+
+	private String buildLockUrl(String alias) {
+		if (alias == null) {
+			return "redirect:" + urlHelper.getUrl() + "/unlock";
+		} else {
+			return "redirect:" + urlHelper.getUrls().getUrl(new Space(alias)) + "/unlock";
+		}
 	}
 
 	@RequestMapping(value = "unlock", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")

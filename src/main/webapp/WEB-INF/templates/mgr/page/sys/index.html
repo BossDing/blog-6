@@ -29,14 +29,14 @@
 							<div class="table-responsive">
 								<table class="table">
 									<tbody>
-										<tr th:each="pageTarget : ${pageTargets}">
+										<tr th:each="pageTarget : ${pageTargets}" th:style="${pageTarget.name() == 'ARTICLE_DETAIL' ? 'display:none':null}">
 											<td th:text="${messages.getMessage(pageTarget.message)}"></td>
 											<td><a href="###" data-action="revert"
 												data-type="sysPage" th:data-target="${pageTarget}"
 												style="margin-right: 10px;"><span
 													class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>
 												&nbsp;&nbsp; <a href="###" data-action="edit"
-												data-type="sysPage" th:data-target="${pageTarget}"><span
+												data-type="sysPage" th:data-target="${pageTarget}" ><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
 										</tr>
 									</tbody>
@@ -89,6 +89,9 @@
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript">
 		$(document).ready(function() {
+			$("#space").change(function(){
+				pageCheck()
+			})
 			$("a[data-action='revert']").click(function() {
 				var me = $(this);
 				var target = me.attr("data-target");
@@ -161,6 +164,14 @@
 				window.location.href = url;
 			})
 		})
+		
+		function pageCheck(){
+			if($("#space").val() == ""){
+				$("#mainPage").find('tr').eq(2).hide();
+			} else {
+				$("#mainPage").find('tr').eq(2).show();
+			}
+		}
 	</script>
 </body>
 </html>
