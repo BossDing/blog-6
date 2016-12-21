@@ -65,6 +65,10 @@ public class UploadConfigValidator implements Validator {
 				validatePath(path, errors);
 			}
 		}
+		if (config.getStore() == null) {
+			errors.reject("file.uploadstore.blank", "文件存储器为空");
+			return;
+		}
 	}
 
 	private void validatePath(String path, Errors errors) {

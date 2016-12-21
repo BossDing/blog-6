@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.google.common.collect.Lists;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
@@ -62,6 +64,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	private Character styleSplitChar;// 样式分隔符
 	private boolean sourceProtected;// 原图保护
 	private String style;// 样式
+	private String name;
 
 	/**
 	 * 所允许的样式分割符号
@@ -343,6 +346,21 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	public void setStyle(String style) {
 		this.style = style;
+	}
+
+	@Override
+	public boolean canStore(MultipartFile multipartFile) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String name() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

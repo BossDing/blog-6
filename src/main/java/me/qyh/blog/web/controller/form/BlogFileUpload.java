@@ -23,7 +23,7 @@ public class BlogFileUpload {
 
 	private List<MultipartFile> files;
 	private Integer parent;
-	private Integer server;
+	private Integer store;
 
 	public List<MultipartFile> getFiles() {
 		return files;
@@ -41,17 +41,12 @@ public class BlogFileUpload {
 		this.parent = parent;
 	}
 
-	public Integer getServer() {
-		return server;
+	public Integer getStore() {
+		return store;
 	}
 
-	public void setServer(Integer server) {
-		this.server = server;
-	}
-
-	@Override
-	public String toString() {
-		return "BlogFileUpload [files=" + files + ", parent=" + parent + ", server=" + server + "]";
+	public void setStore(Integer store) {
+		this.store = store;
 	}
 
 }

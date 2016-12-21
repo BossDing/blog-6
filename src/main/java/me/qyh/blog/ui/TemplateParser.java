@@ -30,6 +30,8 @@ import me.qyh.blog.exception.LogicException;
 
 /**
  * 
+ * @see DataTagProcessor
+ * @see FragmentTagProcessor
  * @author Administrator
  *
  */
@@ -39,13 +41,24 @@ public final class TemplateParser {
 	private static final String FRAGEMENT = "fragment";
 	private static final String NAME_ATTR = "name";
 
-	public ParseResult parse(String tpl) throws LogicException {
+	/**
+	 * 如果data标签拥有该属性，则在页面加载时候获取，依赖该属性的fragment必须放在该属性标签之后！！！
+	 */
+	private static final String DATA_DYNAMIC_ATT = "dynamic";
+
+	public static ParseResult parse(String tpl) throws LogicException {
 		ParseResult result = new ParseResult();
 		Document doc = Jsoup.parse(tpl);
 		clean(doc);
 		Elements dataEles = doc.getElementsByTag(DATA_TAG);
 		for (Element dataEle : dataEles) {
 			String name = dataEle.attr(NAME_ATTR);
+			String dynamicAtt = dataEle.attr(DATA_DYNAMIC_ATT);
+			boolean dynamic = Boolean.parseBoolean(dynamicAtt);
+			// 不解析动态的，利用DataTagProcessor解析
+			if (dynamic) {
+				continue;
+			}
 			DataTag tag = new DataTag(name);
 			Attributes attributes = dataEle.attributes();
 			if (attributes != null) {
@@ -76,7 +89,7 @@ public final class TemplateParser {
 		return ele.toString();
 	}
 
-	private void clean(Document doc) {
+	private static void clean(Document doc) {
 		// 删除包含挂件自标签的挂件标签
 		doc.select("data:has(data)").remove();
 		doc.select("fragment:has(fragment)").remove();

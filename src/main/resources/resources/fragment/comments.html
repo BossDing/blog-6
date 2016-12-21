@@ -5,7 +5,7 @@
 	<div  th:remove="tag">
 		<div class="panel-body">
 			<div class="media" th:each="comment : ${comments}">
-				<a class="media-left" th:href="${urls.getUrl(comment.article)}"> <img
+				<a class="media-left" th:href="${comment.url}"> <img
 					th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : gravatarPrefix+comment.gravatar}"
 					style="width: 64px; height: 64px" alt="...">
 				</a>

@@ -78,7 +78,12 @@ public class LoginController extends BaseController {
 		}
 		try {
 			login(loginBean, request, response);
-			return new JsonResult(true, new Message("login.success", "登录成功"));
+
+			String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+			if (lastAuthencationFailUrl != null) {
+				session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+			}
+			return new JsonResult(true, lastAuthencationFailUrl);
 		} catch (LogicException e) {
 			rememberMe.remove(request, response);
 			return new JsonResult(false, new Message("user.loginFail", "登录失败"));

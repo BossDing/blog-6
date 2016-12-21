@@ -156,15 +156,15 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 	
 	
 	if($("#uploadModal").length == 0){
-		var servers = [];
+		var stores = [];
 		$.ajax({
 			type : "get",
-			url : basePath+"/mgr/file/servers",
+			url : basePath+"/mgr/file/stores",
             contentType:"application/json",
             async: false,
 			data : {},
 			success : function(data){
-				servers = data;
+				stores = data;
 			},
 			complete:function(){
 			}
@@ -188,10 +188,10 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 		uploadModal += ' action="'+basePath+'/mgr/file/upload" method="POST"';
 		uploadModal += 'enctype="multipart/form-data">';
 		uploadModal += '<div class="col-md-12" style="margin-bottom: 20px">';
-		uploadModal += '<label class="control-label">存储服务：</label> <select';
-		uploadModal += ' class="form-control" name="server">';
-		for(var i=0;i<servers.length;i++){
-			uploadModal += '<option value="'+servers[i].id+'">'+servers[i].name+'</option>';
+		uploadModal += '<label class="control-label">存储器：</label> <select';
+		uploadModal += ' class="form-control" name="store">';
+		for(var i=0;i<stores.length;i++){
+			uploadModal += '<option value="'+stores[i].id+'">'+stores[i].name+'</option>';
 		}
 		uploadModal += '</select>';
 		uploadModal += '</div>';

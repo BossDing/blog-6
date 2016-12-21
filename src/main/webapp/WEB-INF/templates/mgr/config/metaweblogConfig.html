@@ -12,8 +12,8 @@
 						<div class="form-group">
 							<label>上传路径</label><input type="text" class="form-control" name="path" th:value="${config.path}"/>
 						</div>
-						<input type="hidden" th:if="${config.server != null}" th:value="${config.server}" id="server"/>
-						<div class="form-group" id="servers" style="display:none">
+						<input type="hidden" th:if="${config.store != null}" th:value="${config.store}" id="store"/>
+						<div class="form-group" id="stores" style="display:none">
 							
 						</div>
 						<button type="button" id="update" class="btn btn-default">修改配置</button>
@@ -24,23 +24,23 @@
 	</div>
 	<div th:replace="base/foot_source"></div>
 	<script>
-	var servers = [];
+	var stores = [];
 	$.ajax({
 		type : "get",
-		url : basePath+"/mgr/file/servers",
+		url : basePath+"/mgr/file/stores",
         contentType:"application/json",
 		data : {},
 		success : function(data){
 			var html = "";
-			html += ('<select name="server" id="servers-select" class="form-control">');
+			html += ('<select name="store" id="stores-select" class="form-control">');
 			for(var i=0;i<data.length;i++){
 				html += ('<option  value="'+data[i].id+'">'+data[i].name+'</option>');
 			}
 			html += ('</select>');
-			$("#servers").html(html).show();
-			if($("#server").length > 0){
-				var server = $("#server").val();
-				$('#servers-select').val(server);
+			$("#stores").html(html).show();
+			if($("#store").length > 0){
+				var store = $("#store").val();
+				$('#stores-select').val(store);
 			}
 		},
 		complete:function(){

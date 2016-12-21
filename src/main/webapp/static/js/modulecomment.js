@@ -3,22 +3,7 @@ var cp = 0;
 var login = $("#login").val() == 'true';
 var flag = false;
 var asc = false;
-var config;
-$.ajax({
-	type : "get",
-	url : rootPath + '/comment/config',
-	data : {},
-	async : false,
-	success : function(data) {
-		if (data.success) {
-			config = data.data;
-		} else {
-			console.log("查询评论配置异常:" + data.message);
-		}
-	},
-	complete : function() {
-	}
-});
+var module = $("#module").val();
 // 评论表单html
 
 function getCommentFormHtml() {
@@ -108,7 +93,7 @@ $(document).ready(
 						flag = true;
 						$.ajax({
 							type : "post",
-							url : actPath + "/article/" + $("#articleId").val()
+							url : rootPath + "/module/" + module
 									+ "/addComment?validateCode="+validateCode,
 							data : JSON.stringify({
 								"content" : $('#comment-content').val(),
@@ -149,15 +134,15 @@ function queryComments(page) {
 	cp = page;
 	$.ajax({
 		type : 'get',
-		url : actPath + '/data/评论',
+		url : actPath + '/data/模块评论',
 		data : {
 			"currentPage" : page,
-			"article" : $("#articleId").val()
+			"module" : module
 		},
 		dataType : "json",
 		contentType : 'application/json',
 		beforeSend : function(xhr) {
-			xhr.setRequestHeader("X-Fragment", encodeURI("评论"));
+			xhr.setRequestHeader("X-Fragment", encodeURI("模块评论"));
 		},
 		success : function(result) {
 			if (!result.success) {
@@ -200,14 +185,14 @@ function toReply(parent) {
 					data.email = $("#reply-email").val();
 					data.nickname = $("#reply-nickname").val();
 					data.content = $('#reply-content').val();
-					data.website=$('#reply-website').val();
+					data.website = $('#reply-website').val();
 					$("#reply-tip").html('')
 					flag = true;
 					var sign = false;
 					var validateCode = $("#reply-validateCode").length>0?$("#reply-validateCode").val():""
 					$.ajax({
 						type : "post",
-						url : actPath + "/article/" + $("#articleId").val()
+						url : rootPath + "/module/" + module
 								+ "/addComment?validateCode="+validateCode,
 						data : JSON.stringify(data),
 						async : false,
@@ -286,7 +271,7 @@ function loadUserinfo() {
 function queryConversations(id) {
 	$
 			.get(
-					actPath + '/article/' + $("#articleId").val() + '/comment/'
+					actPath + '/module/' + module + '/comment/'
 							+ id + '/conversations',
 					{},
 					function(data) {
@@ -375,7 +360,7 @@ function removeComment(id) {
 		if (result) {
 			$.ajax({
 				type : "post",
-				url : rootPath + "/mgr/comment/delete?id=" + id,
+				url : rootPath + "/mgr/moduleComment/delete?id=" + id,
 				contentType : "application/json",
 				data : {},
 				xhrFields : {
@@ -401,7 +386,7 @@ function checkComment(id) {
 		if (result) {
 			$.ajax({
 				type : "post",
-				url : rootPath + "/mgr/comment/check?id=" + id,
+				url : rootPath + "/mgr/moduleComment/check?id=" + id,
 				data : {
 					id : id
 				},

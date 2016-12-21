@@ -13,52 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.bean;
+package me.qyh.blog.comment.article;
 
-import me.qyh.blog.file.FileServer;
+import me.qyh.blog.comment.base.BaseCommentQueryParam;
+import me.qyh.blog.entity.Article;
 
-/**
- * 文件服务描述
- * 
- * @author Administrator
- *
- */
-public class FileServerBean {
-
-	private int id;
-	private String name;
+public class CommentQueryParam extends BaseCommentQueryParam {
 
 	/**
-	 * default
-	 */
-	public FileServerBean() {
-		super();
-	}
-
-	/**
-	 * 文件服务描述构造器
 	 * 
-	 * @param server
-	 *            文件服务
 	 */
-	public FileServerBean(FileServer server) {
-		this.id = server.id();
-		this.name = server.name();
+	private static final long serialVersionUID = 1L;
+
+	private Article article;
+
+	public Article getArticle() {
+		return article;
 	}
 
-	public int getId() {
-		return id;
+	public void setArticle(Article article) {
+		this.article = article;
 	}
 
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
 }

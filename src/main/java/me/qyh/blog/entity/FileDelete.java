@@ -31,7 +31,6 @@ public class FileDelete extends BaseEntity {
 	private String key;
 	private BlogFileType type;
 	private Integer store;
-	private Integer server;
 
 	public String getKey() {
 		return key;
@@ -55,14 +54,6 @@ public class FileDelete extends BaseEntity {
 
 	public void setStore(Integer store) {
 		this.store = store;
-	}
-
-	public Integer getServer() {
-		return server;
-	}
-
-	public void setServer(Integer server) {
-		this.server = server;
 	}
 
 }

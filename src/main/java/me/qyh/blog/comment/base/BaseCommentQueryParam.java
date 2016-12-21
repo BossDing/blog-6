@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.entity.Article;
+import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.pageparam.PageQueryParam;
 
-public class CommentQueryParam extends PageQueryParam {
+public class BaseCommentQueryParam extends PageQueryParam {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Article article;
-	private boolean asc;
 	private CommentStatus status;
+	private boolean asc;
 
-	public Article getArticle() {
-		return article;
+	public CommentStatus getStatus() {
+		return status;
 	}
 
-	public void setArticle(Article article) {
-		this.article = article;
+	public void setStatus(CommentStatus status) {
+		this.status = status;
 	}
 
 	public boolean isAsc() {
@@ -44,14 +42,6 @@ public class CommentQueryParam extends PageQueryParam {
 
 	public void setAsc(boolean asc) {
 		this.asc = asc;
-	}
-
-	public CommentStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(CommentStatus status) {
-		this.status = status;
 	}
 
 }

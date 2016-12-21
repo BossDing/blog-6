@@ -157,9 +157,9 @@
 								enctype="multipart/form-data">
 								<div class="col-md-12" style="margin-bottom: 20px">
 									<label class="control-label">存储服务：</label> <select
-										class="form-control" name="server">
-										<option th:each="server : ${servers}"
-											th:value="${server.id()}" th:text="${server.name()}"></option>
+										class="form-control" name="store">
+										<option th:each="store : ${stores}"
+											th:value="${store.id()}" th:text="${store.name()}"></option>
 									</select> <span th:remove="tag" th:if="${param.parent != null}"><input
 										type="hidden" th:value="${param.parent}" name="parent"></span>
 								</div>

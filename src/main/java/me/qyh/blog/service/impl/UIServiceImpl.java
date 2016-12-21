@@ -123,8 +123,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private Map<String, String> lockPageDefaultTpls = Maps.newHashMap();
 	private List<DataTagProcessor<?>> processors = Lists.newArrayList();
 
-	private final TemplateParser templateParser = new TemplateParser();
-
 	private static final Message SPACE_NOT_EXISTS = new Message("space.notExists", "空间不存在");
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
@@ -280,7 +278,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public RenderedPage renderPreviewPage(Page page) throws LogicException {
-		ParseResult result = templateParser.parse(page.getTpl());
+		ParseResult result = TemplateParser.parse(page.getTpl());
 		Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
 		List<DataBind<?>> dataBinds = Lists.newArrayList();
 		Space space = page.getSpace();
@@ -879,7 +877,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					@Override
 					public ParseResultWrapper load(PageLoader loader) throws Exception {
 						final Page db = loader.loadFromDb();
-						ParseResult parseResult = templateParser.parse(db.getTpl());
+						ParseResult parseResult = TemplateParser.parse(db.getTpl());
 						return new ParseResultWrapper(parseResult, db);
 					}
 				});
@@ -907,65 +905,41 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 
 		public RenderedPage render(Page db) throws LogicException {
-			ParseResult result = templateParser.parse(db.getTpl());
-			List<DataBind<?>> binds = Lists.newArrayList();
-			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-			if (result.hasDataTag()) {
-				for (DataTag dataTag : result.getDataTags()) {
-					//
-					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-					if (processor != null) {
-						binds.add(processor.previewData(dataTag.getAttrs()));
-					}
-				}
-			}
-			Space space = db.getSpace();
-			if (result.hasFragment()) {
-				fragmentMap.putAll(loadFragments(space, result.getFragments()));
-			}
-			return new RenderedPage(db, binds, fragmentMap);
+			ParseResult result = TemplateParser.parse(db.getTpl());
+			return render(db, result, null, true);
 		}
 
 		public RenderedPage renderPreview(PageLoader loader) throws LogicException {
 			ParseResultWrapper cached = get(loader);
 			ParseResult result = cached.parseResult;
-			List<DataBind<?>> binds = Lists.newArrayList();
-			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-			Space space = cached.page.getSpace();
-			if (result.hasDataTag()) {
-				for (DataTag dataTag : result.getDataTags()) {
-					//
-					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-					if (processor != null) {
-						binds.add(processor.previewData(dataTag.getAttrs()));
-					}
-				}
-			}
-			if (result.hasFragment()) {
-				fragmentMap.putAll(loadFragments(space, result.getFragments()));
-			}
-			return new RenderedPage((Page) cached.page.clone(), binds, fragmentMap);
+			return render(cached.page, result, null, true);
 		}
 
 		public RenderedPage render(PageLoader loader, Params params) throws LogicException {
 			ParseResultWrapper cached = get(loader);
 			ParseResult result = cached.parseResult;
+			return render(cached.page, result, params, false);
+		}
+
+		private RenderedPage render(Page page, ParseResult result, Params params, boolean preview)
+				throws LogicException {
 			List<DataBind<?>> binds = Lists.newArrayList();
 			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-			Space space = cached.page.getSpace();
+			Space space = page.getSpace();
 			if (result.hasDataTag()) {
 				for (DataTag dataTag : result.getDataTags()) {
 					//
 					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
 					if (processor != null) {
-						binds.add(processor.getData(space, params, dataTag.getAttrs()));
+						binds.add(preview ? processor.previewData(dataTag.getAttrs())
+								: processor.getData(space, params, dataTag.getAttrs()));
 					}
 				}
 			}
 			if (result.hasFragment()) {
 				fragmentMap.putAll(loadFragments(space, result.getFragments()));
 			}
-			return new RenderedPage((Page) cached.page.clone(), binds, fragmentMap);
+			return new RenderedPage((Page) page.clone(), binds, fragmentMap);
 		}
 
 		private Map<String, Fragment> loadFragments(Space space, Set<String> names) {

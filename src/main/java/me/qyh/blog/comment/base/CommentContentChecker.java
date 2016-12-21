@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
-/**
- * 评论事件处理器
- * 
- * @author Administrator
- *
- */
-public interface CommentHandler {
+import me.qyh.blog.exception.LogicException;
 
+public interface CommentContentChecker {
 	/**
-	 * 处理评论
+	 * 检查评论内容
 	 * 
-	 * @param comment
-	 *            评论
+	 * @param content
+	 *            内容
+	 * @param html
+	 *            是否是html文本
+	 * @throws LogicException
+	 *             检查未通过
 	 */
-	void handle(Comment comment);
-
+	void doCheck(final String content, boolean html) throws LogicException;
 }

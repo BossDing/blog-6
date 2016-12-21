@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
@@ -32,7 +32,7 @@ public abstract class CommentUserChecker {
 	 * @throws LogicException
 	 *             检查未通过
 	 */
-	public final void doCheck(final String name, final String email) throws LogicException {
+	public final void doCheck(final String name, final String email, final String website) throws LogicException {
 		User user = UserConfig.get();
 		String emailOrAdmin = user.getEmail();
 		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email)) {
@@ -41,8 +41,9 @@ public abstract class CommentUserChecker {
 		if (user.getName().equalsIgnoreCase(name)) {
 			throw new LogicException("comment.nickname.invalid", "昵称不被允许");
 		}
-		checkMore(name, email);
+		checkMore(name, email, website);
 	}
 
-	protected abstract void checkMore(final String name, final String email) throws LogicException;
+	protected abstract void checkMore(final String name, final String email, final String website)
+			throws LogicException;
 }

@@ -64,4 +64,8 @@ public class DataTag {
 		}
 		return false;
 	}
+
+	public boolean hasKey(String key) {
+		return attrs.containsKey(key);
+	}
 }

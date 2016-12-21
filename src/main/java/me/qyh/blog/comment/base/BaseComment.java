@@ -1,19 +1,4 @@
-/*
- * Copyright 2016 qyh.me
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -23,31 +8,22 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
 
-/**
- * 
- * @author Administrator
- *
- */
-public class Comment extends BaseEntity {
-
+public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Comment parent;// 如果为null,则为评论，否则为回复
+	private T parent;// 如果为null,则为评论，否则为回复
 	private String parentPath;// 路径，最多支持255个字符(索引原因)
 	private String content;
-	@Expose(serialize = false, deserialize = false)
-	private Article article;// 文章
 	private List<Integer> parents = Lists.newArrayList();
 	private Timestamp commentDate;
-	private List<Comment> children = Lists.newArrayList();
+	private List<T> children = Lists.newArrayList();
 	private CommentStatus status;
 
 	private String website;
@@ -59,6 +35,7 @@ public class Comment extends BaseEntity {
 	private Boolean admin;// 是否是管理员
 
 	private String gravatar;
+	private String url;
 
 	/**
 	 * 评论状态
@@ -80,11 +57,11 @@ public class Comment extends BaseEntity {
 		}
 	}
 
-	public Comment getParent() {
+	public T getParent() {
 		return parent;
 	}
 
-	public void setParent(Comment parent) {
+	public void setParent(T parent) {
 		this.parent = parent;
 	}
 
@@ -111,14 +88,6 @@ public class Comment extends BaseEntity {
 		this.content = content;
 	}
 
-	public Article getArticle() {
-		return article;
-	}
-
-	public void setArticle(Article article) {
-		this.article = article;
-	}
-
 	public boolean isRoot() {
 		return parent == null;
 	}
@@ -135,11 +104,11 @@ public class Comment extends BaseEntity {
 		this.commentDate = commentDate;
 	}
 
-	public List<Comment> getChildren() {
+	public List<T> getChildren() {
 		return children;
 	}
 
-	public void setChildren(List<Comment> children) {
+	public void setChildren(List<T> children) {
 		this.children = children;
 	}
 
@@ -211,9 +180,29 @@ public class Comment extends BaseEntity {
 	@Override
 	public boolean equals(Object obj) {
 		if (Validators.baseEquals(this, obj)) {
-			Comment rhs = (Comment) obj;
+			BaseComment<?> rhs = (BaseComment<?>) obj;
 			return Objects.equals(this.id, rhs.id);
 		}
 		return false;
+	}
+
+	public boolean matchParent(T parent) {
+		return this.parent != null && this.parent.equals(parent);
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	@Override
+	public String toString() {
+		return "BaseComment [parent=" + parent + ", parentPath=" + parentPath + ", content=" + content + ", parents="
+				+ parents + ", commentDate=" + commentDate + ", children=" + children + ", status=" + status
+				+ ", website=" + website + ", nickname=" + nickname + ", email=" + email + ", ip=" + ip + ", admin="
+				+ admin + ", gravatar=" + gravatar + "]";
 	}
 }

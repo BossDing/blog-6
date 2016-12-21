@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.module;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,31 +24,35 @@ import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.entity.Article;
+import me.qyh.blog.comment.base.BaseComment.CommentStatus;
+import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
-public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
+public class LastModuleCommentsDataTagProcessor extends DataTagProcessor<List<ModuleComment>> {
 
 	private static final Integer DEFAULT_LIMIT = 10;
 	private static final String LIMIT = "limit";
+	private static final String QUERY_ADMIN = "queryAdmin";
+	private static final String MODULE = "module";
 
 	private static final int MAX_LIMIT = 50;
 
 	@Autowired
-	private DftCommentService commentService;
+	private ModuleCommentService commentService;
+	@Autowired
+	private UrlHelper urlHelper;
 
-	public LastCommentsDataTagProcessor(String name, String dataName) {
+	public LastModuleCommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected List<Comment> buildPreviewData(Attributes attributes) {
-		List<Comment> comments = Lists.newArrayList();
-		Comment comment = new Comment();
+	protected List<ModuleComment> buildPreviewData(Attributes attributes) {
+		List<ModuleComment> comments = Lists.newArrayList();
+		ModuleComment comment = new ModuleComment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
 		comment.setContent("测试内容");
 		comment.setNickname("测试");
@@ -56,10 +60,11 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
 		comment.setAdmin(true);
 		comment.setIp("127.0.0.1");
-		Article article = new Article();
-		article.setId(-1);
-		article.setTitle("测试文章标题");
-		comment.setArticle(article);
+		CommentModule module = new CommentModule();
+		module.setId(-1);
+		module.setName("test");
+		module.setUrl(urlHelper.getUrl());
+		comment.setModule(module);
 		comment.setId(-1);
 		comment.setStatus(CommentStatus.NORMAL);
 		comments.add(comment);
@@ -67,8 +72,13 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
-		return commentService.queryLastComments(space, getLimit(attributes));
+	protected List<ModuleComment> query(Space space, Params params, Attributes attributes) throws LogicException {
+		return commentService.queryLastComments(attributes.get(MODULE), getLimit(attributes),
+				getQueryAdmin(attributes));
+	}
+
+	private boolean getQueryAdmin(Attributes attributes) {
+		return Boolean.parseBoolean(attributes.get(QUERY_ADMIN));
 	}
 
 	private int getLimit(Attributes attributes) {

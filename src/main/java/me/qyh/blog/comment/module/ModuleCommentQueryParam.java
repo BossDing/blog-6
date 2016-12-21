@@ -13,38 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.module;
 
-import org.springframework.context.ApplicationEvent;
+import com.google.gson.annotations.Expose;
 
-/**
- * 用户评论后触发
- * 
- * @author Administrator
- *
- */
-public class CommentEvent extends ApplicationEvent {
+import me.qyh.blog.comment.base.BaseCommentQueryParam;
+
+public class ModuleCommentQueryParam extends BaseCommentQueryParam {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final Comment comment;
+	@Expose(serialize = false, deserialize = true)
+	private CommentModule module;
 
-	/**
-	 * 
-	 * @param source
-	 *            操作对象
-	 * @param comment
-	 *            评论
-	 */
-	public CommentEvent(Object source, Comment comment) {
-		super(source);
-		this.comment = comment;
+	public CommentModule getModule() {
+		return module;
 	}
 
-	public Comment getComment() {
-		return comment;
+	public void setModule(CommentModule module) {
+		this.module = module;
 	}
+
 }

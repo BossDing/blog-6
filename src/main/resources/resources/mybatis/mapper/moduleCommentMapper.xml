@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.comment.module.ModuleCommentDao">
+	
+	<resultMap type="ModuleComment" id="ModuleCommentDetail" extends="me.qyh.blog.comment.article.CommentDao.BaseCommentDetail">
+		<association property="module" javaType="me.qyh.blog.comment.module.CommentModule">
+			<result column="module_id" property="id"/>
+		</association>
+		<association property="parent" javaType="ModuleComment">
+			<result column="parent_id" property="id"/>
+			<result column="p_comment_nickname" property="nickname"/>
+			<result column="p_comment_email" property="email"/>
+			<result column="p_comment_ip" property="ip"/>
+			<result column="p_comment_admin" property="admin"/>
+			<result column="p_comment_gravatar" property="gravatar"/>
+		</association>
+	</resultMap>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+		INSERT INTO blog_comment_module(parent_id,parent_path,content,module_id,comment_date,comment_status,comment_nickname,comment_email,comment_ip,comment_admin,comment_gravatar,comment_website)
+		VALUES(#{parent.id},#{parentPath},#{content},#{module.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler},#{nickname},#{email},#{ip},#{admin},#{gravatar},#{website})
+	</insert>
+	
+	<select id="selectCountByIpAndDatePeriod" resultType="int">
+		SELECT COUNT(id) FROM blog_comment_module WHERE comment_ip = #{ip} AND comment_date BETWEEN #{begin} AND #{end} 
+	</select>
+	
+	<select id="selectCountWithTree" resultType="int">
+		SELECT COUNT(id) FROM blog_comment_module WHERE module_id = #{module.id} AND parent_path = '/'
+		<if test="status != null">
+		   AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		</if>
+	</select>
+	
+	<select id="selectCountWithList" resultType="int">
+		SELECT COUNT(id) FROM blog_comment_module WHERE module_id = #{module.id}
+		<if test="status != null">
+		   AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		</if>
+	</select>
+	
+	<select id="selectPageWithTree" resultMap="ModuleCommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.module_id,a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website
+		FROM 
+		  blog_comment_module a JOIN 
+		  (SELECT id, parent_path 
+		    FROM blog_comment_module 
+		    WHERE parent_path = '/'
+		    AND module_id = #{module.id}
+		    <if test="status != null">
+		    AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
+		    <choose>
+		    	<when test="asc">
+		    		 ORDER BY comment_date ,id
+		    	</when>
+		    	<otherwise>
+		    		 ORDER BY comment_date DESC,id DESC
+		    	</otherwise>
+		    </choose>
+		  LIMIT #{offset},#{pageSize}) roots
+		  ON (a.parent_path LIKE CONCAT('/',roots.id,'/%') OR a.id=roots.id)
+		   <if test="status != null">
+		    WHERE a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
+	</select>
+	
+	<select id="selectPageWithList" resultMap="ModuleCommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.module_id,
+		  a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,
+		  p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar
+		FROM 
+		  blog_comment_module a 
+		LEFT OUTER JOIN blog_comment_module p ON a.parent_id = p.id
+		WHERE a.module_id = #{module.id}
+		<if test="status != null">
+		  	AND a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
+		    </if>
+		 <choose>
+	    	<when test="asc">
+	    		 ORDER BY a.comment_date ,id
+	    	</when>
+	    	<otherwise>
+	    		 ORDER BY a.comment_date DESC,id DESC
+	    	</otherwise>
+	    </choose>
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<delete id="deleteByPath">
+		DELETE FROM blog_comment_module  WHERE (parent_path LIKE CONCAT('', #{path},'%'))
+	</delete>
+	
+	<delete id="deleteById">
+		DELETE FROM blog_comment_module WHERE id = #{id}
+	</delete>
+	
+	<select id="selectById" resultMap="ModuleCommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content,a.module_id,a.comment_date,comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website
+		 FROM blog_comment_module a 
+		 WHERE a.id = #{id}
+	</select>
+	
+	<select id="selectLast" resultMap="ModuleCommentDetail">
+		 SELECT 
+		  a.id,a.parent_id,a.parent_path,a.content
+		 FROM blog_comment_module a 
+		 WHERE a.module_id = #{module.id}
+		 AND a.comment_ip = #{ip}
+		 <choose>
+		 	<when test="parent == null">
+		 		AND parent_path = '/'
+		 	</when>
+		 	<otherwise>
+		 		AND parent_id = #{parent.id}
+		 	</otherwise>
+		 </choose>
+		 ORDER BY a.comment_date DESC,id DESC
+		 LIMIT 0,1
+	</select>
+	
+	<update id="updateStatusToNormal">
+		UPDATE blog_comment_module SET comment_status = 0 WHERE id = #{id}
+	</update>
+	
+	<select id="selectLastComments" resultMap="ModuleCommentDetail">
+		SELECT 
+		a.id,a.parent_id,a.parent_path,a.content,a.module_id,a.comment_date,
+		 a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,
+		  p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar,
+		a.comment_status
+		FROM blog_comment_module a
+		LEFT OUTER JOIN blog_comment_module p ON a.parent_id = p.id
+		WHERE  a.comment_status = 0<!-- NORMAL -->
+		<if test="module != null">
+			AND a.module_id = #{module.id} 
+		</if>
+		<if test="!queryAdmin">
+			AND a.comment_admin = FALSE
+		</if>
+		ORDER BY a.comment_date DESC ,a.id DESC
+		LIMIT 0,#{limit}
+	</select>
+</mapper>

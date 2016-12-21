@@ -111,6 +111,23 @@ public class UrlHelper implements InitializingBean {
 	 */
 	public class Urls {
 
+		/**
+		 * 判断能否从目标文章中拼接访问地址
+		 * 
+		 * @param article
+		 * @return
+		 */
+		public boolean detectArticleUrl(Article article) {
+			Space space = article.getSpace();
+			if (space == null || space.getAlias() == null) {
+				return false;
+			}
+			if (article.getAlias() == null && article.getId() == null) {
+				return false;
+			}
+			return true;
+		}
+
 		public String getDomain() {
 			return urlConfig.getDomain();
 		}

@@ -13,25 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.file.local;
-
-import org.springframework.web.multipart.MultipartFile;
+package me.qyh.blog.bean;
 
 import me.qyh.blog.file.FileStore;
 
 /**
- * 本地文件存储器
+ * 文件服务描述
  * 
  * @author Administrator
  *
  */
-public interface LocalFileStore extends FileStore {
-	/**
-	 * 是否能够存储该文件(方便将不同资源的文件存储在不同的位置)
-	 * 
-	 * @param multipartFile
-	 * @return
-	 */
-	boolean canStore(MultipartFile multipartFile);
+public class FileStoreBean {
 
+	private int id;
+	private String name;
+
+	/**
+	 * default
+	 */
+	public FileStoreBean() {
+		super();
+	}
+
+	/**
+	 * 文件服务描述构造器
+	 * 
+	 * @param server
+	 *            文件服务
+	 */
+	public FileStoreBean(FileStore store) {
+		this.id = store.id();
+		this.name = store.name();
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

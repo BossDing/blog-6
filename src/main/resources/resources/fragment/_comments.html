@@ -7,7 +7,9 @@
 	<div th:if="${commentPage.commentConfig.commentMode.name() == 'LIST'}"
 		th:id="'comment'+${comment.id}" class="media"
 		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
-		<a class="pull-left"> <img class="media-object"
+		<a class="pull-left"
+			th:attr="target=${comment.website == null ? null : '_blank'},href=${comment.website == null ? null : comment.website},rel=${(comment.admin || comment.website == null) ? null : 'external nofollow'}">
+			<img class="media-object"
 			th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : gravatarPrefix+comment.gravatar}"
 			data-holder-rendered="true" style="width: 64px; height: 64px;">
 		</a>

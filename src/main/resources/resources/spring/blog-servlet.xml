@@ -84,6 +84,7 @@
 		<property name="suffix" value=".html" />
 		<property name="templateMode" value="HTML" />
 		<property name="characterEncoding" value="utf-8" />
+		<property name="cacheable" value="false" />
 	</bean>
 
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
@@ -100,6 +101,8 @@
 
 
 	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.CommentController" />
-	<bean class="me.qyh.blog.comment.CommentMgrController" />
+	<bean class="me.qyh.blog.comment.article.CommentController" />
+	<bean class="me.qyh.blog.comment.article.CommentMgrController" />
+	<bean class="me.qyh.blog.comment.module.ModuleCommentController" />
+	<bean class="me.qyh.blog.comment.module.ModuleCommentMgrController" />
 </beans>

@@ -98,6 +98,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private CommentServer commentServer;
 
+	private ApplicationEventPublisher applicationEventPublisher;
+
 	private boolean rebuildIndex = true;
 
 	private List<ArticleContentHandler> articleContentHandlers = Lists.newArrayList();
@@ -606,13 +608,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		this.rebuildIndex = rebuildIndex;
 	}
 
-	private ApplicationEventPublisher applicationEventPublisher;
-
-	@Override
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		this.applicationEventPublisher = applicationEventPublisher;
-	}
-
 	public interface ArticleContentHandler {
 		void handle(Article article);
 	}
@@ -655,5 +650,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			logger.debug(start == null ? "没有发现待发布文章"
 					: "发现待发布文章最小日期:" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
 		}
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

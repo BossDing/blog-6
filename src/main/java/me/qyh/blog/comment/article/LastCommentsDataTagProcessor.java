@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.article;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,25 +24,30 @@ import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.comment.DftCommentService.CommentPageResult;
+import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
-public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
-	@Autowired
-	private DftCommentService commentService;
+public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 
-	public CommentsDataTagProcessor(String name, String dataName) {
+	private static final Integer DEFAULT_LIMIT = 10;
+	private static final String LIMIT = "limit";
+	private static final String QUERY_ADMIN = "queryAdmin";
+
+	private static final int MAX_LIMIT = 50;
+
+	@Autowired
+	private CommentService commentService;
+
+	public LastCommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected CommentPageResult buildPreviewData(Attributes attributes) {
+	protected List<Comment> buildPreviewData(Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -53,50 +58,40 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 		comment.setAdmin(true);
 		comment.setIp("127.0.0.1");
 		Article article = new Article();
-		article.setId(1);
+		article.setId(-1);
+		article.setTitle("测试文章标题");
 		comment.setArticle(article);
 		comment.setId(-1);
 		comment.setStatus(CommentStatus.NORMAL);
 		comments.add(comment);
-		CommentQueryParam param = new CommentQueryParam();
-		param.setCurrentPage(1);
-		CommentConfig config = commentService.getCommentConfig();
-		param.setPageSize(config.getPageSize());
-		return new CommentPageResult(param, config.getPageSize() + 1, comments, config);
+		return comments;
 	}
 
 	@Override
-	protected CommentPageResult query(Space space, Params params, Attributes attributes) throws LogicException {
-		CommentQueryParam param = parseParam(params, attributes);
-		return commentService.queryComment(param);
+	protected List<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
+		return commentService.queryLastComments(space, getLimit(attributes), getQueryAdmin(attributes));
 	}
 
-	private CommentQueryParam parseParam(Params params, Attributes attributes) {
-		CommentQueryParam param = new CommentQueryParam();
-		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		Article article = params.get("article", Article.class);
-		if (article == null) {
-			String articleStr = attributes.get("article");
-			if (articleStr != null) {
-				try {
-					article = new Article(Integer.parseInt(articleStr));
-				} catch (Exception e) {
-				}
-			}
-		}
-		param.setArticle(article);
-		String currentPageStr = attributes.get("currentPage");
-		if (currentPageStr != null) {
+	private boolean getQueryAdmin(Attributes attributes) {
+		return Boolean.parseBoolean(attributes.get(QUERY_ADMIN));
+	}
+
+	private int getLimit(Attributes attributes) {
+		int limit = DEFAULT_LIMIT;
+		String v = attributes.get(LIMIT);
+		if (v != null) {
 			try {
-				param.setCurrentPage(Integer.parseInt(currentPageStr));
+				limit = Integer.parseInt(v);
 			} catch (Exception e) {
 			}
 		}
-		if (param.getCurrentPage() < 1) {
-			param.setCurrentPage(1);
+		if (limit <= 0) {
+			limit = DEFAULT_LIMIT;
 		}
-
-		return param;
+		if (limit > MAX_LIMIT) {
+			limit = MAX_LIMIT;
+		}
+		return limit;
 	}
 
 }

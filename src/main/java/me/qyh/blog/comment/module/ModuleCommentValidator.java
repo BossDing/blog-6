@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.module;
 
-import me.qyh.blog.exception.LogicException;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
 
-public interface CommentContentChecker {
-	/**
-	 * 检查评论内容
-	 * 
-	 * @param content
-	 *            内容
-	 * @param html
-	 *            是否是html文本
-	 * @throws LogicException
-	 *             检查未通过
-	 */
-	void doCheck(final String content, boolean html) throws LogicException;
+import me.qyh.blog.comment.base.BaseCommentValidator;
+
+@Component
+public class ModuleCommentValidator extends BaseCommentValidator {
+
+	@Override
+	public boolean supports(Class<?> clazz) {
+		return ModuleComment.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public void validate(Object target, Errors errors) {
+		super.validate(target, errors);
+	}
+
 }

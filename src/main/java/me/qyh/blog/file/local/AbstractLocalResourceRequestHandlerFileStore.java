@@ -40,6 +40,7 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
+import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
@@ -56,12 +57,12 @@ import me.qyh.blog.web.Webs;
  * @author mhlx
  *
  */
-abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
-		implements LocalFileStore {
+abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler implements FileStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractLocalResourceRequestHandlerFileStore.class);
 
 	protected int id;
+	private String name;
 	protected String absPath;
 	protected String urlPrefix;
 	protected File absFolder;
@@ -200,6 +201,11 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return type;
 	}
 
+	@Override
+	public String name() {
+		return name;
+	}
+
 	protected void moreAfterPropertiesSet() {
 
 	}
@@ -289,4 +295,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	public void setEnableDownloadHandler(boolean enableDownloadHandler) {
 		this.enableDownloadHandler = enableDownloadHandler;
 	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 }

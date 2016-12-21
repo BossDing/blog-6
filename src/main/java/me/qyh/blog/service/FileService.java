@@ -24,7 +24,6 @@ import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.file.FileServer;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
@@ -86,7 +85,7 @@ public interface FileService {
 	 * 
 	 * @return 文件服务列表
 	 */
-	List<FileServer> allServers();
+	List<FileStore> allStores();
 
 	/**
 	 * 更新文件

@@ -93,4 +93,19 @@ public interface FileStore {
 	 */
 	ThumbnailUrl getThumbnailUrl(String key);
 
+	/**
+	 * 是否能够存储该文件
+	 * 
+	 * @param multipartFile
+	 * @return
+	 */
+	boolean canStore(MultipartFile multipartFile);
+
+	/**
+	 * 存储器名称
+	 * 
+	 * @return
+	 */
+	String name();
+
 }

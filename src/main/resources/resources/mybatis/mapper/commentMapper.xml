@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="me.qyh.blog.comment.CommentDao">
+<mapper namespace="me.qyh.blog.comment.article.CommentDao">
 	
-	<resultMap type="Comment" id="CommentDetail">
+	<resultMap type="BaseComment" id="BaseCommentDetail">
 		<id property="id" column="id"/>
 		<result column="parent_path" property="parentPath"/>
 		<result column="content" property="content"/>
@@ -15,6 +15,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="comment_ip" property="ip"/>
 		<result column="comment_admin" property="admin"/>
 		<result column="comment_gravatar" property="gravatar"/>
+		<result column="comment_website" property="website"/>
+	</resultMap>
+	
+	<resultMap type="Comment" id="CommentDetail" extends="BaseCommentDetail">
 		<association property="article" javaType="Article">
 			<result column="article_id" property="id"/>
 			<result column="art_title" property="title"/>
@@ -33,15 +37,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 	
-	<resultMap type="me.qyh.blog.comment.CommentDao$ArticleComments" id="ArticleCommentsDetail">
+	<resultMap type="me.qyh.blog.comment.article.CommentDao$ArticleComments" id="ArticleCommentsDetail">
 		<id column="article_id"/>
 		<result column="article_id" property="id"/>
 		<result column="comments" property="comments"/>
 	</resultMap>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_comment(parent_id,parent_path,content,article_id,comment_date,comment_status,comment_nickname,comment_email,comment_ip,comment_admin,comment_gravatar)
-		VALUES(#{parent.id},#{parentPath},#{content},#{article.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler},#{nickname},#{email},#{ip},#{admin},#{gravatar})
+		INSERT INTO blog_comment(parent_id,parent_path,content,article_id,comment_date,comment_status,comment_nickname,comment_email,comment_ip,comment_admin,comment_gravatar,comment_website)
+		VALUES(#{parent.id},#{parentPath},#{content},#{article.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler},#{nickname},#{email},#{ip},#{admin},#{gravatar},#{website})
 	</insert>
 	
 	<select id="selectCountByIpAndDatePeriod" resultType="int">
@@ -64,7 +68,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectPageWithTree" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.article_id,a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar
+		  a.id,a.parent_id,a.parent_path,a.content,a.article_id,a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website
 		FROM 
 		  blog_comment a JOIN 
 		  (SELECT id, parent_path 
@@ -92,7 +96,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectPageWithList" resultMap="CommentDetail">
 		 SELECT 
 		  a.id,a.parent_id,a.parent_path,a.content,a.article_id,
-		  a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,
+		  a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,
 		  p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar
 		FROM 
 		  blog_comment a 
@@ -122,7 +126,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectById" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.article_id,a.comment_date,comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar
+		  a.id,a.parent_id,a.parent_path,a.content,a.article_id,a.comment_date,comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website
 		 FROM blog_comment a 
 		 WHERE a.id = #{id}
 	</select>
@@ -160,11 +164,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectLastComments" resultMap="CommentDetail">
 		SELECT 
 		a.id,a.parent_id,a.parent_path,a.content,a.article_id,a.comment_date,
-		 a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,
+		 a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,
 		  p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar,
 		ba.title AS art_title,space_alias,a.comment_status,art_alias
 		FROM blog_comment a
-		LEFT OUTER JOIN blog_comment b ON a.parent_id = b.id
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
 		LEFT OUTER JOIN blog_article ba ON a.article_id = ba.id
 		LEFT OUTER JOIN blog_space bs ON ba.space_id  = bs.id
@@ -182,6 +185,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND bs.is_private = FALSE
 			AND ba.art_lock IS NULL
 			AND bs.space_lock IS NULL
+		</if>
+		<if test="!queryAdmin">
+			AND a.comment_admin = FALSE
 		</if>
 		ORDER BY a.comment_date DESC ,a.id DESC
 		LIMIT 0,#{limit}

@@ -52,8 +52,8 @@ public class BlogFileUploadValidator implements Validator {
 				return;
 			}
 		}
-		if (upload.getServer() == null) {
-			errors.reject("file.uploadserver.blank", "文件上传服务为空");
+		if (upload.getStore() == null) {
+			errors.reject("file.uploadstore.blank", "文件存储器为空");
 			return;
 		}
 	}

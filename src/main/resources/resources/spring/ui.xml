@@ -42,13 +42,21 @@
 
 
 
-				<bean class="me.qyh.blog.comment.LastCommentsDataTagProcessor">
+				<bean class="me.qyh.blog.comment.article.LastCommentsDataTagProcessor">
 					<constructor-arg index="0" value="最近评论" />
 					<constructor-arg index="1" value="comments" />
 				</bean>
-				<bean class="me.qyh.blog.comment.CommentsDataTagProcessor">
+				<bean class="me.qyh.blog.comment.article.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
+				</bean>
+				<bean class="me.qyh.blog.comment.module.ModuleCommentsDataTagProcessor">
+					<constructor-arg index="0" value="模块评论" />
+					<constructor-arg index="1" value="moduleCommentPage" />
+				</bean>
+				<bean class="me.qyh.blog.comment.module.LastModuleCommentsDataTagProcessor">
+					<constructor-arg index="0" value="最近模块评论" />
+					<constructor-arg index="1" value="moduleComments" />
 				</bean>
 			</list>
 		</property>
@@ -74,6 +82,7 @@
 
 						<entry key="最近评论" value="classpath:resources/fragment/comments.html" />
 						<entry key="评论" value="classpath:resources/fragment/_comments.html" />
+						<entry key="模块评论" value="classpath:resources/fragment/moduleComments.html" />
 					</map>
 				</property>
 			</bean>
@@ -82,7 +91,7 @@
 	<bean class="me.qyh.blog.ui.UIExposeHelper">
 		<property name="pros">
 			<map>
-				<entry key="gravatarPrefix" value="http://cn.gravatar.com/avatar/" />
+				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
 			</map>
 		</property>
 	</bean>

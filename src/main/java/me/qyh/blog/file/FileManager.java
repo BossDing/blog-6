@@ -30,7 +30,7 @@ public interface FileManager {
 	 * 
 	 * @return
 	 */
-	List<FileServer> getAllServers();
+	List<FileStore> getAllStores();
 
 	/**
 	 * 根据id查询文件服务
@@ -39,13 +39,6 @@ public interface FileManager {
 	 *            服务id
 	 * @return 如果不存在，返回null
 	 */
-	FileServer getFileServer(int id);
-
-	/**
-	 * 获取文件服务
-	 * 
-	 * @return 如果没有任何文件服务，返回null
-	 */
-	FileServer getFileServer();
+	FileStore getFileStore(int id);
 
 }

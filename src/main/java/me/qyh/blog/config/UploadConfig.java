@@ -30,9 +30,9 @@ public class UploadConfig {
 	private String path;
 
 	/**
-	 * 存储服务，如果为空，则由FileService来选择存储服务
+	 * 存储服务，不能为空
 	 */
-	private Integer server;
+	private Integer store;
 
 	public String getPath() {
 		return path;
@@ -42,12 +42,12 @@ public class UploadConfig {
 		this.path = path;
 	}
 
-	public Integer getServer() {
-		return server;
+	public Integer getStore() {
+		return store;
 	}
 
-	public void setServer(Integer server) {
-		this.server = server;
+	public void setStore(Integer store) {
+		this.store = store;
 	}
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.thymeleaf.TemplateEngine;
@@ -47,8 +46,8 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.mail.MailSender;
 import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.message.Messages;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Validators;
 
 /**
  * 用来向管理员发送评论|回复通知邮件
@@ -59,18 +58,21 @@ import me.qyh.blog.util.FileUtils;
  * @author Administrator
  *
  */
-public class EmailNotifyCommentHandler implements CommentHandler, InitializingBean {
+public class CommentEmailNotifySupport<T extends BaseComment<T>> implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(EmailNotifyCommentHandler.class);
-	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
-	private List<Comment> toSend = Collections.synchronizedList(Lists.newArrayList());
+	private static final Logger logger = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
+	private ConcurrentLinkedQueue<T> toProcesses = new ConcurrentLinkedQueue<>();
+	private List<T> toSend = Collections.synchronizedList(Lists.newArrayList());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
-	private Resource mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
+	private Resource mailTemplateResource;
 	private String mailTemplate;
 	private String mailSubject;
 
-	private static final File toSendSdfile = new File("comment_toSend_shutdown.dat");
-	private static final File toProcessesSdfile = new File("comment_toProcesses_shutdown.dat");
+	private String toSendSdfilePath;
+	private String toProcessesSdfilePath;
+
+	private File toSendSdfile;
+	private File toProcessesSdfile;
 
 	/**
 	 * 每隔5秒从评论队列中获取评论放入待发送列表
@@ -106,15 +108,15 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	/**
 	 * 系统关闭时序列化待发送列表和待处理列表
 	 */
-	public void shutdown() {
-		if (!toSend.isEmpty()) {
+	public final void shutdown() {
+		if (!toSend.isEmpty() && toSendSdfile != null) {
 			try {
 				SerializationUtils.serialize(Lists.newArrayList(toSend), new FileOutputStream(toSendSdfile));
 			} catch (Exception e) {
 				logger.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
 			}
 		}
-		if (!toProcesses.isEmpty()) {
+		if (!toProcesses.isEmpty() && toProcessesSdfile != null) {
 			try {
 				SerializationUtils.serialize(toProcesses, new FileOutputStream(toProcessesSdfile));
 			} catch (Exception e) {
@@ -123,11 +125,11 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		}
 	}
 
-	private void add(Comment comment) {
+	protected final void add(T comment) {
 		toProcesses.add(comment);
 	}
 
-	private void sendMail(List<Comment> comments, String to) {
+	protected final void sendMail(List<T> comments, String to) {
 		Context context = new Context();
 		context.setVariable("urls", urlHelper.getUrls());
 		context.setVariable("comments", comments);
@@ -147,10 +149,20 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 	}
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public final void afterPropertiesSet() throws Exception {
+		if (!Validators.isEmptyOrNull(toSendSdfilePath, true)) {
+			toSendSdfile = new File(toSendSdfilePath);
+		}
+		if (!Validators.isEmptyOrNull(toProcessesSdfilePath, true)) {
+			toProcessesSdfile = new File(toProcessesSdfilePath);
+		}
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}
+		if (mailTemplateResource == null) {
+			throw new SystemException("邮件模板不能为空");
+		}
+
 		try (InputStream is = mailTemplateResource.getInputStream();
 				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
 			mailTemplate = CharStreams.toString(ir);
@@ -165,15 +177,15 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 			messageTipCount = MESSAGE_TIP_COUNT;
 		}
 
-		if (toSendSdfile.exists()) {
-			List<Comment> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
+		if (toSendSdfile != null && toSendSdfile.exists()) {
+			List<T> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
 			this.toSend = Collections.synchronizedList(comments);
 			if (!FileUtils.deleteQuietly(toSendSdfile)) {
 				logger.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 			}
 		}
 
-		if (toProcessesSdfile.exists()) {
+		if (toProcessesSdfile != null && toProcessesSdfile.exists()) {
 			this.toProcesses = SerializationUtils.deserialize(new FileInputStream(toProcessesSdfile));
 			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
 				logger.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
@@ -183,8 +195,8 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
 			synchronized (toSend) {
 				int size = toSend.size();
-				for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
-					Comment toProcess = iterator.next();
+				for (Iterator<T> iterator = toProcesses.iterator(); iterator.hasNext();) {
+					T toProcess = iterator.next();
 					toSend.add(toProcess);
 					size++;
 					iterator.remove();
@@ -229,11 +241,19 @@ public class EmailNotifyCommentHandler implements CommentHandler, InitializingBe
 		this.messageTipCount = messageTipCount;
 	}
 
-	@Override
-	public void handle(Comment comment) {
-		Comment parent = comment.getParent();
+	public void setToSendSdfilePath(String toSendSdfilePath) {
+		this.toSendSdfilePath = toSendSdfilePath;
+	}
+
+	public void setToProcessesSdfilePath(String toProcessesSdfilePath) {
+		this.toProcessesSdfilePath = toProcessesSdfilePath;
+	}
+
+	public void handle(T comment) {
+		T parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
-		if (UserContext.get() == null) {
+		// 如果回复了管理员
+		if (!comment.getAdmin() && (parent == null || parent.getAdmin())) {
 			add(comment);
 		}
 		// 如果父评论不是管理员的评论

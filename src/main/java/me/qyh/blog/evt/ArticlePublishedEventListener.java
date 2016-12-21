@@ -15,13 +15,7 @@
  */
 package me.qyh.blog.evt;
 
-import java.util.List;
-
 import org.springframework.context.ApplicationListener;
-
-import com.google.common.collect.Lists;
-
-import me.qyh.blog.evt.handler.ArticlePublishedHandler;
 
 /**
  * 文章发布事件监听器
@@ -31,17 +25,8 @@ import me.qyh.blog.evt.handler.ArticlePublishedHandler;
  */
 public class ArticlePublishedEventListener implements ApplicationListener<ArticlePublishedEvent> {
 
-	private List<ArticlePublishedHandler> handlers = Lists.newArrayList();
-
 	@Override
-	public final void onApplicationEvent(ArticlePublishedEvent event) {
-		for (ArticlePublishedHandler handle : handlers) {
-			handle.handle(event.getArticles(), event.getOp());
-		}
-	}
-
-	public void setHandlers(List<ArticlePublishedHandler> handlers) {
-		this.handlers = handlers;
+	public void onApplicationEvent(ArticlePublishedEvent event) {
 	}
 
 }

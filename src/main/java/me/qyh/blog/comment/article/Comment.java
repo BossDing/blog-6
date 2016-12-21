@@ -13,30 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.file.local;
+package me.qyh.blog.comment.article;
 
-import org.springframework.web.multipart.MultipartFile;
+import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.file.CommonFile;
-import me.qyh.blog.file.DefaultFileServer;
+import me.qyh.blog.comment.base.BaseComment;
+import me.qyh.blog.entity.Article;
 
 /**
- * 本地文件存储服务
  * 
  * @author Administrator
  *
  */
-public class LocalFileServer extends DefaultFileServer<LocalFileStore> {
+public class Comment extends BaseComment<Comment> {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	@Expose(serialize = false, deserialize = false)
+	private Article article;// 文章
+
+	public Article getArticle() {
+		return article;
+	}
+
+	public void setArticle(Article article) {
+		this.article = article;
+	}
 
 	@Override
-	public CommonFile store(String key, MultipartFile file) throws LogicException {
-		for (LocalFileStore store : stores) {
-			if (store.canStore(file)) {
-				return store.store(key, file);
-			}
-		}
-		throw new SystemException("储存失败:" + file + "，没有找到符合条件的存储器");
+	public boolean matchParent(Comment parent) {
+		return super.matchParent(parent) && (article.equals(parent.getArticle()));
 	}
+
 }

@@ -34,13 +34,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.bean.FileServerBean;
+import me.qyh.blog.bean.FileStoreBean;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.entity.BlogFile.BlogFileType;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.file.FileServer;
+import me.qyh.blog.file.FileStore;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.service.FileService;
@@ -85,20 +85,20 @@ public class FileMgrController extends BaseMgrController {
 		}
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
-			model.addAttribute("servers", fileService.allServers());
+			model.addAttribute("stores", fileService.allStores());
 		} catch (LogicException e) {
 			model.addAttribute(ERROR, e.getLogicMessage());
 		}
 		return "mgr/file/index";
 	}
 
-	@RequestMapping("servers")
+	@RequestMapping("stores")
 	@ResponseBody
-	public List<FileServerBean> allServers() {
-		List<FileServer> servers = fileService.allServers();
-		List<FileServerBean> beans = Lists.newArrayList();
-		for (FileServer server : servers) {
-			beans.add(new FileServerBean(server));
+	public List<FileStoreBean> allServers() {
+		List<FileStore> stores = fileService.allStores();
+		List<FileStoreBean> beans = Lists.newArrayList();
+		for (FileStore store : stores) {
+			beans.add(new FileStoreBean(store));
 		}
 		return beans;
 	}

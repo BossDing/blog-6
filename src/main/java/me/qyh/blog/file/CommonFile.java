@@ -31,7 +31,6 @@ public class CommonFile extends BaseEntity {
 	private long size;// 文件大小，该大小仅仅是本服务上的文件大小，并不代表其他存储服务上的文件大小
 	private String extension;// 后缀名
 	private int store;
-	private int server;
 	private String originalFilename;// 原始文件名
 
 	private Integer width;// 图片等文件
@@ -90,13 +89,5 @@ public class CommonFile extends BaseEntity {
 
 	public void setStore(int store) {
 		this.store = store;
-	}
-
-	public int getServer() {
-		return server;
-	}
-
-	public void setServer(int server) {
-		this.server = server;
 	}
 }

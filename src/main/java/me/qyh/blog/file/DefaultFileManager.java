@@ -34,35 +34,30 @@ import me.qyh.blog.exception.SystemException;
  */
 public class DefaultFileManager implements FileManager, InitializingBean {
 
-	private List<FileServer> servers;
-	private Map<Integer, FileServer> serverMap = Maps.newHashMap();
-
-	public void setServers(List<FileServer> servers) {
-		this.servers = servers;
-	}
+	private List<FileStore> stores;
+	private Map<Integer, FileStore> storeMap = Maps.newHashMap();
 
 	@Override
-	public FileServer getFileServer(int id) {
-		return serverMap.get(id);
+	public FileStore getFileStore(int id) {
+		return storeMap.get(id);
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (CollectionUtils.isEmpty(servers)) {
-			throw new SystemException("文件服务不能为空");
+		if (CollectionUtils.isEmpty(stores)) {
+			throw new SystemException("文件存储器不能为空");
 		}
-		for (FileServer server : servers) {
-			serverMap.put(server.id(), server);
+		for (FileStore store : stores) {
+			storeMap.put(store.id(), store);
 		}
 	}
 
 	@Override
-	public List<FileServer> getAllServers() {
-		return Collections.unmodifiableList(servers);
+	public List<FileStore> getAllStores() {
+		return Collections.unmodifiableList(stores);
 	}
 
-	@Override
-	public FileServer getFileServer() {
-		return servers.get(0);
+	public void setStores(List<FileStore> stores) {
+		this.stores = stores;
 	}
 }

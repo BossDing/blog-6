@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.module;
 
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,32 +27,17 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.web.controller.BaseMgrController;
 
-@RequestMapping("mgr/comment")
+@RequestMapping("mgr/moduleComment")
 @Controller
-public class CommentMgrController extends BaseMgrController {
+public class ModuleCommentMgrController extends BaseMgrController {
 
 	@Autowired
-	private DftCommentService commentService;
-	@Autowired
-	private CommentConfigValidator commentConfigValidator;
-
-	@InitBinder(value = "commentConfig")
-	protected void initCommentConfigBinder(WebDataBinder binder) {
-		binder.setValidator(commentConfigValidator);
-	}
+	private ModuleCommentService commentService;
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "id" })
 	@ResponseBody
 	public JsonResult remove(@RequestParam("id") Integer id) throws LogicException {
 		commentService.deleteComment(id);
-		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
-	}
-
-	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "ip", "articleId" })
-	@ResponseBody
-	public JsonResult remove(@RequestParam("ip") String ip, @Param("articleId") Integer articleId)
-			throws LogicException {
-		commentService.deleteComment(ip, articleId);
 		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
 	}
 
@@ -68,18 +47,4 @@ public class CommentMgrController extends BaseMgrController {
 		commentService.checkComment(id);
 		return new JsonResult(true, new Message("comment.check.success", "审核成功"));
 	}
-
-	@RequestMapping(value = "updateConfig", method = RequestMethod.GET)
-	public String update(ModelMap model) {
-		model.addAttribute("config", commentService.getCommentConfig());
-		return "mgr/config/commentConfig";
-	}
-
-	@RequestMapping(value = "updateConfig", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult update(@RequestBody @Validated CommentConfig commentConfig) {
-		commentService.updateCommentConfig(commentConfig);
-		return new JsonResult(true, new Message("comment.config.update.success", "更新成功"));
-	}
-
 }

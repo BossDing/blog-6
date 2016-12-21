@@ -131,7 +131,9 @@ public abstract class DataTagProcessor<T> {
 		}
 
 		public Attributes(Map<String, String> attMap) {
-			this.attMap = attMap;
+			for (Map.Entry<String, String> att : attMap.entrySet()) {
+				this.attMap.put(att.getKey().toLowerCase(), att.getValue());
+			}
 		}
 
 		@Override

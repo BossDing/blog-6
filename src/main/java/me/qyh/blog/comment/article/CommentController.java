@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.article;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -42,7 +42,7 @@ import me.qyh.blog.web.controller.BaseController;
 public class CommentController extends BaseController {
 
 	@Autowired
-	private DftCommentService commentService;
+	private CommentService commentService;
 	@Autowired
 	private CommentValidator commentValidator;
 

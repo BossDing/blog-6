@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.ExpandedCommonFile;
@@ -49,7 +50,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.FileManager;
-import me.qyh.blog.file.FileServer;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
@@ -97,7 +97,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		BlogFileUpload bfu = new BlogFileUpload();
 		bfu.setFiles(Arrays.asList(file));
 		bfu.setParent(parent.getId());
-		bfu.setServer(config.getServer());
+		bfu.setStore(config.getStore());
 		return upload(bfu).get(0);
 	}
 
@@ -112,33 +112,39 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		} else {
 			parent = root;
 		}
-		Integer server = upload.getServer();
-		FileServer fs;
-		if (server != null) {
-			fs = fileManager.getFileServer(upload.getServer());
-			if (fs == null) {
-				throw new LogicException("file.server.notexists", "文件存储服务不存在");
-			}
-		} else {
-			fs = fileManager.getFileServer();
-		}
+
 		String folderKey = getFilePath(parent);
 		synchronized (this) {
 			deleteImmediatelyIfNeed(folderKey);
 		}
+		Integer storeId = upload.getStore();
+		if (storeId == null) {
+			throw new LogicException("file.store.notexists", "文件存储器不存在");
+		}
+		FileStore store = fileManager.getFileStore(upload.getStore());
+		if (store == null) {
+			throw new LogicException("file.store.notexists", "文件存储器不存在");
+		}
 		List<UploadedFile> uploadedFiles = Lists.newArrayList();
 		for (MultipartFile file : upload.getFiles()) {
-			try {
-				UploadedFile uf = storeMultipartFile(file, parent, folderKey, fs);
-				uploadedFiles.add(uf);
-			} catch (LogicException e) {
-				uploadedFiles.add(new UploadedFile(file.getOriginalFilename(), e.getLogicMessage()));
+			String originalFilename = file.getOriginalFilename();
+			if (store.canStore(file)) {
+				try {
+					UploadedFile uf = storeMultipartFile(file, parent, folderKey, store);
+					uploadedFiles.add(uf);
+				} catch (LogicException e) {
+					uploadedFiles.add(new UploadedFile(originalFilename, e.getLogicMessage()));
+				}
+			} else {
+				String extension = Files.getFileExtension(originalFilename);
+				uploadedFiles.add(new UploadedFile(originalFilename,
+						new Message("file.store.unsupportformat", "存储器不支持存储" + extension + "文件", extension)));
 			}
 		}
 		return uploadedFiles;
 	}
 
-	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileServer fs)
+	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileStore store)
 			throws LogicException {
 		BlogFile blogFile;
 		String originalFilename = file.getOriginalFilename();
@@ -147,13 +153,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
 		CommonFile cf = null;
-		synchronized (fs) {
+		synchronized (this) {
 			deleteImmediatelyIfNeed(key);
-			cf = fs.store(key, file);
+			cf = store.store(key, file);
 		}
-		FileStore store = fs.getFileStore(cf.getStore());
 		try {
-			cf.setServer(fs.id());
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();
 			blogFile.setCf(cf);
@@ -203,12 +207,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private void deleteDirectory(FileDelete fd) throws LogicException {
 		String key = fd.getKey();
-		for (FileServer fs : fileManager.getAllServers()) {
-			for (FileStore store : fs.allStore()) {
-				if (!store.deleteBatch(key)) {
-					throw new LogicException("file.batchDelete.fail", "存储器" + store.id() + "无法删除目录" + key + "下的文件",
-							store.id(), key);
-				}
+		for (FileStore store : fileManager.getAllStores()) {
+			if (!store.deleteBatch(key)) {
+				throw new LogicException("file.batchDelete.fail", "存储器" + store.id() + "无法删除目录" + key + "下的文件",
+						store.id(), key);
 			}
 		}
 		fileDeleteDao.deleteById(fd.getId());
@@ -216,15 +218,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private void deleteOne(FileDelete fd) throws LogicException {
 		String key = fd.getKey();
-		FileServer server = fileManager.getFileServer(fd.getServer());
-		if (server == null) {
-			logger.warn("无法找到id为" + server + "的存储服务");
-			fileDeleteDao.deleteById(fd.getId());
-			return;
-		}
-		FileStore fs = server.getFileStore(fd.getStore());
+		FileStore fs = fileManager.getFileStore(fd.getStore());
 		if (fs == null) {
-			logger.warn("无法在存储器" + fd.getServer() + "找到id为" + fd.getStore() + "的存储器");
+			logger.warn("无法找到id为" + fd.getStore() + "的存储器");
 			fileDeleteDao.deleteById(fd.getId());
 			return;
 		}
@@ -366,8 +362,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	@Override
-	public List<FileServer> allServers() {
-		return fileManager.getAllServers();
+	public List<FileStore> allStores() {
+		return fileManager.getAllStores();
 	}
 
 	@Override
@@ -399,15 +395,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 		FileDelete fd = new FileDelete();
 		if (db.isFile()) {
-			FileServer server = fileManager.getFileServer(db.getCf().getServer());
-			if (server == null) {
-				return;
-			}
-			FileStore store = server.getFileStore(db.getCf().getStore());
+			FileStore store = fileManager.getFileStore(db.getCf().getStore());
 			if (store == null) {
 				return;
 			}
-			fd.setServer(server.id());
 			fd.setStore(store.id());
 		} else {
 			fileDeleteDao.deleteChildren(key);
@@ -447,11 +438,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	private FileStore getFileStore(CommonFile cf) {
-		FileServer server = fileManager.getFileServer(cf.getServer());
-		if (server == null) {
-			throw new SystemException("没有找到ID为:" + cf.getServer() + "的文件服务");
-		}
-		FileStore fs = server.getFileStore(cf.getStore());
+		FileStore fs = fileManager.getFileStore(cf.getStore());
 		if (fs == null) {
 			throw new SystemException("没有找到ID为:" + cf.getStore() + "的存储器");
 		}

@@ -13,30 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.comment.base;
 
-import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserValidator;
 
-@Component
-public class CommentValidator implements Validator {
+public class BaseCommentValidator implements Validator {
 
 	public static final int MAX_COMMENT_LENGTH = 500;
 	private static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_WEBSITE_LENGTH = 50;
+
+	private static final String NAME_PATTERN = "^[\u4e00-\u9fa5a-zA-Z0-9]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return Comment.class.isAssignableFrom(clazz);
+		return BaseComment.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		Comment comment = (Comment) target;
+		BaseComment<?> comment = (BaseComment<?>) target;
 		if (comment == null) {
 			errors.reject("comment.blank", "评论不能为空");
 			return;
@@ -62,7 +64,7 @@ public class CommentValidator implements Validator {
 						return;
 					}
 					if (!UserValidator.EMAIL_PATTERN.matcher(email).matches()) {
-						errors.reject("comment.email.invalid", "邮箱不是正确的格式");
+						errors.reject("comment.email.invalid", "邮箱不被允许");
 						return;
 					}
 				} else {
@@ -73,7 +75,7 @@ public class CommentValidator implements Validator {
 
 			String name = comment.getNickname();
 			if (Validators.isEmptyOrNull(name, true)) {
-				errors.reject("comment.nickname.blank", "邮箱不是正确的格式");
+				errors.reject("comment.nickname.blank", "昵称不能为空");
 				return;
 			}
 			if (name.length() > MAX_NAME_LENGTH) {
@@ -81,8 +83,37 @@ public class CommentValidator implements Validator {
 						"昵称不能超过" + MAX_NAME_LENGTH + "位");
 				return;
 			}
+			if (!name.matches(NAME_PATTERN)) {
+				errors.reject("comment.nickname.invalid", "昵称不被允许");
+				return;
+			}
 			comment.setNickname(name.trim());
+
+			String website = comment.getWebsite();
+			if (!Validators.isEmptyOrNull(website, true)) {
+				if (website.length() > MAX_WEBSITE_LENGTH) {
+					errors.reject("comment.website.toolong", new Object[] { MAX_WEBSITE_LENGTH },
+							"网址不能超过" + MAX_WEBSITE_LENGTH + "位");
+					return;
+				}
+				website = website.trim();
+				if (!validWebsite(website)) {
+					errors.reject("comment.website.invalid", "网址不被允许");
+					return;
+				}
+				comment.setWebsite(website);
+			} else {
+				comment.setWebsite(null);
+			}
 		}
 	}
 
+	private boolean validWebsite(String website) {
+		try {
+			UriComponentsBuilder.fromHttpUrl(website).build();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }

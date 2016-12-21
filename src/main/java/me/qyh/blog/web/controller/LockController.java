@@ -103,7 +103,8 @@ public class LockController extends BaseController {
 		}
 	}
 
-	@RequestMapping(value = "unlock", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
+	@RequestMapping(value = { "space/{alias}/unlock",
+			"/unlock" }, method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
 			throws LogicException {

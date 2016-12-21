@@ -138,25 +138,67 @@
 			cron="0/5 * * * * ?" />
 	</task:scheduled-tasks>
 
+	<task:annotation-driven executor="taskExecutor"
+		scheduler="taskScheduler" proxy-target-class="true" />
 
-
-
-	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.DftCommentService">
-		<!-- html内容清理器 -->
-		<property name="htmlClean">
-			<bean class="me.qyh.blog.security.input.DefaultHtmlClean" />
+	<bean id="htmlClean" class="me.qyh.blog.security.input.DefaultHtmlClean" />
+	<bean id="simpleCommentUserChecker" class="me.qyh.blog.comment.base.SimpleCommentUserChecker">
+		<property name="disallowUsernamePatterns">
+			<array>
+				<value>qyh</value>
+				<value>mhlx</value>
+				<value>梦海澜心</value>
+				<value>钱宇豪</value>
+			</array>
+		</property>
+		<property name="disallowEmailPatterns">
+			<array>
+				<value>*@qyh.me</value>
+				<value>1187500344@qq.com</value>
+			</array>
 		</property>
 	</bean>
-
-	<bean class="me.qyh.blog.comment.CommentEventListener">
-		<property name="handlers">
+	<!-- 默认评论服务 -->
+	<bean class="me.qyh.blog.comment.article.CommentService">
+		<!-- html内容清理器 -->
+		<property name="htmlClean" ref="htmlClean" />
+		<property name="commentDao" ref="commentDao" />
+		<property name="commentUserChecker" ref="simpleCommentUserChecker"></property>
+		<property name="emailSupport">
+			<bean class="me.qyh.blog.comment.base.CommentEmailNotifySupport"
+				destroy-method="shutdown">
+				<property name="mailTemplateResource"
+					value="classpath:resources/page/defaultMailTemplate.html" />
+				<property name="mailSubject" value="您有新的评论" />
+				<property name="toSendSdfilePath" value="/web/art_comment_tosend.dat" />
+				<property name="toProcessesSdfilePath" value="/web/art_comment_toprocess.dat" />
+			</bean>
+		</property>
+	</bean>
+	<!-- 默认评论服务 -->
+	<bean class="me.qyh.blog.comment.module.ModuleCommentService">
+		<!-- html内容清理器 -->
+		<property name="htmlClean" ref="htmlClean" />
+		<property name="commentDao" ref="moduleCommentDao" />
+		<property name="commentUserChecker" ref="simpleCommentUserChecker"></property>
+		<property name="modules">
 			<list>
-				<bean class="me.qyh.blog.comment.EmailNotifyCommentHandler"
-					destroy-method="shutdown">
-					<property name="mailSubject" value="您有新的评论" />
+				<bean class="me.qyh.blog.comment.module.CommentModule">
+					<property name="id" value="1" />
+					<property name="name" value="guestbook" />
+					<property name="url" value="page/guestbook" />
 				</bean>
 			</list>
+		</property>
+		<property name="emailSupport">
+			<bean class="me.qyh.blog.comment.base.CommentEmailNotifySupport"
+				destroy-method="shutdown">
+				<property name="mailTemplateResource"
+					value="classpath:resources/page/defaultModuleMailTemplate.html" />
+				<property name="mailSubject" value="您有新的评论" />
+				<property name="toSendSdfilePath" value="/web/module_comment_tosend.dat" />
+				<property name="toProcessesSdfilePath" value="/web/module_comment_toprocess.dat" />
+			</bean>
 		</property>
 	</bean>
 

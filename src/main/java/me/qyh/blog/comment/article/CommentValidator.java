@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.evt.handler;
+package me.qyh.blog.comment.article;
 
-import java.util.List;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
 
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.evt.ArticlePublishedEvent.OP;
+import me.qyh.blog.comment.base.BaseCommentValidator;
 
-/**
- * 文章发布事件处理器
- * 
- * @author Administrator
- *
- */
-public interface ArticlePublishedHandler {
+@Component
+public class CommentValidator extends BaseCommentValidator {
 
-	/**
-	 * 处理文章的发布
-	 * 
-	 * @param articles
-	 *            发布的文章集合
-	 * @param op
-	 *            操作方式
-	 */
-	void handle(List<Article> articles, OP op);
+	@Override
+	public boolean supports(Class<?> clazz) {
+		return Comment.class.isAssignableFrom(clazz);
+	}
+
+	@Override
+	public void validate(Object target, Errors errors) {
+		super.validate(target, errors);
+	}
 
 }

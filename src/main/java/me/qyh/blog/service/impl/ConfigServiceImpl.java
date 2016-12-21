@@ -73,7 +73,7 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		} else {
 			uploadConfig.setPath(path);
 		}
-		uploadConfig.setServer(getInt(METAWEBLOG_UPLOAD_SERVER, null));
+		uploadConfig.setStore(getInt(METAWEBLOG_UPLOAD_STORE, null));
 		return uploadConfig;
 	}
 
@@ -83,8 +83,8 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		if (uploadConfig.getPath() != null) {
 			config.setProperty(METAWEBLOG_UPLOAD_PATH, uploadConfig.getPath());
 		}
-		if (uploadConfig.getServer() != null) {
-			config.setProperty(METAWEBLOG_UPLOAD_SERVER, uploadConfig.getServer().toString());
+		if (uploadConfig.getStore() != null) {
+			config.setProperty(METAWEBLOG_UPLOAD_STORE, uploadConfig.getStore().toString());
 		}
 		store();
 		return uploadConfig;
@@ -119,6 +119,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
 
 	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
-	private static final String METAWEBLOG_UPLOAD_SERVER = "metaweblog.upload.server";
+	private static final String METAWEBLOG_UPLOAD_STORE = "metaweblog.upload.store";
 
 }

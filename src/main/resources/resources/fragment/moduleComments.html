@@ -1,5 +1,14 @@
-<div th:fragment="treeComment(parent,comment,max)">
-	<div th:id="'comment'+${comment.id}" class="media"
+<div th:unless="${#lists.isEmpty(moduleCommentPage.datas)}">
+	<iterator th:remove="tag"
+		th:each="comment : ${moduleCommentPage.datas}">
+	<div
+		th:if="${moduleCommentPage.commentConfig.commentMode.name() == 'TREE'}">
+		<div
+			th:replace="fragment :: treeComment(${comment.parent},${comment},3)"></div>
+	</div>
+	<div
+		th:if="${moduleCommentPage.commentConfig.commentMode.name() == 'LIST'}"
+		th:id="'comment'+${comment.id}" class="media"
 		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
 		<a class="pull-left"
 			th:attr="target=${comment.website == null ? null : '_blank'},href=${comment.website == null ? null : comment.website},rel=${(comment.admin || comment.website == null) ? null : 'external nofollow'}">
@@ -12,14 +21,14 @@
 				<strong><span class="glyphicon glyphicon-user"
 					style="color: red" title="管理员" th:if="${comment.admin}"></span><span
 					th:text="${comment.nickname}"></span></strong>&nbsp;&nbsp;&nbsp;<span
-					th:if="${parent != null}" th:remove="tag"> <span
+					th:if="${comment.parent != null}" th:remove="tag"> <span
 					class="glyphicon glyphicon-share-alt" aria-hidden="true"></span>&nbsp;&nbsp;
 					<span class="glyphicon glyphicon-user" style="color: red"
-					title="管理员" th:if="${parent.admin}"></span><span
-					th:text="${parent.nickname}"></span>
+					title="管理员" th:if="${comment.parent.admin}"></span><span
+					th:text="${comment.parent.nickname}"></span>
 				</span>
 			</h5>
-			<p style="word-break: break-all" th:text="${comment.content}"></p>
+			<p th:text="${comment.content}"></p>
 			<h5>
 				<span
 					th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm')}"></span>&nbsp;&nbsp;&nbsp;
@@ -37,16 +46,15 @@
 					href="###" th:unless="${#lists.isEmpty(comment.parents)}"
 					th:onclick="'queryConversations(\''+${comment.id}+'\')'">查看对话</a>
 			</h5>
-			<iterator
-				th:if="${comment.parents.size() < (max-1) && comment.children.size() > 0}"
-				th:remove="tag" th:each="child : ${comment.children}">
-			<div th:replace="fragment :: treeComment(${comment},${child},${max})"></div>
-			</iterator>
 		</div>
-		<iterator
-			th:if="${comment.parents.size() >= (max-1) && comment.children.size() > 0}"
-			th:remove="tag" th:each="child : ${comment.children}">
-		<div th:replace="fragment :: treeComment(${comment},${child},${max})"></div>
-		</iterator>
 	</div>
+	</iterator>
+</div>
+<div th:if="${moduleCommentPage.totalPage > 1}">
+	<ul class="pagination">
+		<li
+			th:each=" i : ${#numbers.sequence(moduleCommentPage.listbegin, moduleCommentPage.listend-1)}"
+			th:class="${(i == moduleCommentPage.param.currentPage) ? 'active' : ''}"><a
+			href="###" th:data-comment-page="${i}" th:text="${i}"></a>
+	</ul>
 </div>
