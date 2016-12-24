@@ -107,14 +107,6 @@ public interface ArticleService {
 	Article writeArticle(Article article, boolean autoDraft) throws LogicException;
 
 	/**
-	 * 重建索引
-	 * 
-	 * @param async
-	 *            是否异步
-	 */
-	void rebuildIndex(boolean async);
-
-	/**
 	 * 将博客放入回收站
 	 * 
 	 * @param id
@@ -244,4 +236,5 @@ public interface ArticleService {
 	 * @throws LogicException
 	 */
 	List<Article> findSimilar(Article article, int limit) throws LogicException;
+
 }

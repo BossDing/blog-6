@@ -13,7 +13,6 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.Page.PageType;
@@ -37,8 +36,6 @@ public class PageSerializer implements JsonDeserializer<Page>, JsonSerializer<Pa
 			switch (type) {
 			case ERROR:
 				return Jsons.readValue(ErrorPage.class, json);
-			case EXPANDED:
-				return Jsons.readValue(ExpandedPage.class, json);
 			case LOCK:
 				return Jsons.readValue(LockPage.class, json);
 			case SYSTEM:
@@ -59,7 +56,6 @@ public class PageSerializer implements JsonDeserializer<Page>, JsonSerializer<Pa
 				JsonObject obj = new JsonObject();
 				obj.add("space", context.serialize(src.getSpace()));
 				obj.addProperty("tpl", src.getTpl());
-				obj.addProperty("templateName", src.getTemplateName());
 				obj.addProperty("id", src.getId());
 				PageType type = src.getType();
 				obj.add("type", type == null ? JsonNull.INSTANCE : new JsonPrimitive(type.name()));

@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,40 +23,42 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.ui.UIThymeleafView.ResponseWrapper;
+import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.ui.page.DisposiblePage;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 /**
- * 用来校验用户的自定义模板<br/>
+ * 用于渲染一次性页面等
  * 
  * @author Administrator
  *
  */
-public class TplRender {
+public class UIRender extends RenderedSupport {
 
 	@Autowired
-	private UIExposeHelper uiExposeHelper;
-	@Autowired
-	private UIThymeleafView uiThymeleafView;
+	private SpaceService spaceService;
 
-	public String tryRender(RenderedPage page, HttpServletRequest request, HttpServletResponse response)
+	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response)
 			throws TplRenderException {
+		// set space
+		if (SpaceContext.get() == null && page.getSpace() != null) {
+			SpaceContext.set(spaceService.getSpace(page.getSpace().getId()));
+		}
 		try {
-			Map<String, Object> templateDatas = Maps.newHashMap();
-			Map<String, Object> datas = page.getDatas();
-			if (datas != null) {
-				templateDatas.putAll(datas);
-			}
-			uiExposeHelper.addVariables(request);
-			// 调用view来渲染模板，获取response中的数据
-			ResponseWrapper wrapper = new ResponseWrapper(response);
-			UIContext.set(page);
-			uiThymeleafView.render(templateDatas, request, wrapper);
-			return wrapper.getRendered();
+			DisposablePageContext.set(page);
+			return super.render(TemplateUtils.getTemplateName(page), Maps.newHashMap(), request, response);
 		} catch (Exception e) {
 			if (e instanceof TplRenderException) {
 				throw (TplRenderException) e;
 			}
+			if (e instanceof RuntimeException) {
+				throw (RuntimeException) e;
+			}
 			throw new SystemException(e.getMessage(), e);
+		} finally {
+			DisposablePageContext.clear();
 		}
+
 	}
+
 }

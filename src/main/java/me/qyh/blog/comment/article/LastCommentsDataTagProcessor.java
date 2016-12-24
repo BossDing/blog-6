@@ -18,6 +18,7 @@ package me.qyh.blog.comment.article;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
@@ -28,7 +29,6 @@ import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
@@ -47,7 +47,7 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> buildPreviewData(Attributes attributes) {
+	protected List<Comment> buildPreviewData(Space space, Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -68,7 +68,8 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
+	protected List<Comment> query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
 		return commentService.queryLastComments(space, getLimit(attributes), getQueryAdmin(attributes));
 	}
 

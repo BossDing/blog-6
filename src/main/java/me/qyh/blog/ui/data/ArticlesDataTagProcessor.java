@@ -18,6 +18,7 @@ package me.qyh.blog.ui.data;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.time.DateUtils;
@@ -39,7 +40,6 @@ import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.Params;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 /**
@@ -55,7 +55,6 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	@Autowired
 	private ArticleService articleService;
 
-	public static final String PARAMETER_KEY = "articleQueryParam";
 	private static final String[] TIME_PATTERNS = new String[] { "yyyy-MM-dd", "yyyy-MM", "yyyy-MM-dd HH:mm:ss" };
 
 	/**
@@ -71,7 +70,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> buildPreviewData(Attributes attributes) {
+	protected PageResult<Article> buildPreviewData(Space space, Attributes attributes) {
 		List<Article> articles = Lists.newArrayList();
 		Article article = new Article();
 		article.setComments(0);
@@ -80,11 +79,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		article.setId(1);
 		article.setIsPrivate(false);
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
-		Space space = new Space();
-		space.setId(1);
-		space.setAlias("preview");
-		space.setName("preview");
-		article.setSpace(space);
+		article.setSpace(getSpace());
 		article.setSummary("这是预览内容");
 		article.setTitle("预览内容");
 		Set<Tag> tags = Sets.newHashSet();
@@ -93,15 +88,16 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		articles.add(article);
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setCurrentPage(1);
-		param.setSpace(space);
+		param.setSpace(getSpace());
 		param.setPageSize(5);
 		param.setStatus(ArticleStatus.PUBLISHED);
 		return new PageResult<>(param, 6, articles);
 	}
 
 	@Override
-	protected PageResult<Article> query(Space space, Params params, Attributes attributes) throws LogicException {
-		ArticleQueryParam param = params.get(PARAMETER_KEY, ArticleQueryParam.class);
+	protected PageResult<Article> query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
+		ArticleQueryParam param = (ArticleQueryParam) variables.get(ArticleQueryParam.class.getName());
 		if (param == null) {
 			param = parseParam(space, attributes);
 		}

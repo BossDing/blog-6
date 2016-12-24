@@ -18,8 +18,6 @@ package me.qyh.blog.web.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,39 +36,21 @@ import me.qyh.blog.lock.LockBean;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.UIContext;
+import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 public class LockController extends BaseController {
 
-	private static final Logger logger = LoggerFactory.getLogger(LockController.class);
-
-	@Autowired
-	private UIService uiService;
-
 	@Autowired
 	private UrlHelper urlHelper;
 
 	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.GET)
-	public String unlock(Model model, HttpServletRequest request) throws LogicException {
+	public LockPage unlock(Model model, HttpServletRequest request) throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
-		try {
-			RenderedPage rp = uiService.renderLockPage(SpaceContext.get(), lockBean.getLock().getLockType());
-			UIContext.set(rp);
-			return rp.getTemplateName();
-		} catch (Throwable e) {
-			if (e instanceof LogicException) {
-				logger.error("渲染页面解锁页面的时候发生逻辑异常，可能由于data标签使用不当引起的，系统无法再显示这个页面，因为这可能会导致无限循环");
-			} else {
-				logger.error("渲染页面解锁页面的时候发生异常:" + e.getMessage() + "，系统无法再显示这个页面，因为这可能会导致无限循环", e);
-			}
-			return "error/500";
-		}
+		return new LockPage(SpaceContext.get(), lockBean.getLock().getLockType());
 	}
 
 	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)

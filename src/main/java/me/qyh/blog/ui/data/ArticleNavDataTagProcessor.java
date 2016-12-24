@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.ui.data;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.bean.ArticleNav;
@@ -22,7 +24,6 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.Params;
 
 public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 
@@ -34,25 +35,23 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav buildPreviewData(Attributes attributes) {
+	protected ArticleNav buildPreviewData(Space space, Attributes attributes) {
 		Article previous = new Article(-1);
 		previous.setTitle("预览博客-前一篇");
 		Article next = new Article(-2);
 		next.setTitle("预览博客-后一篇");
-		Space space = new Space();
-		space.setAlias("test");
-		space.setName("预览");
-		previous.setSpace(space);
-		next.setSpace(space);
+		previous.setSpace(getSpace());
+		next.setSpace(getSpace());
 
 		return new ArticleNav(previous, next);
 	}
 
 	@Override
-	protected ArticleNav query(Space space, Params params, Attributes attributes) throws LogicException {
-		Article article = params.get("article", Article.class);
+	protected ArticleNav query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
+		Article article = (Article) variables.get("article");
 		if (article == null) {
-			String idOrAlias = attributes.get("article");
+			String idOrAlias = attributes.get("idOrAlias");
 			if (idOrAlias != null) {
 				return articleService.getArticleNav(idOrAlias);
 			}

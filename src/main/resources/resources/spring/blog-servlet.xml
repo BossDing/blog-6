@@ -33,17 +33,6 @@
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web.controller" />
 
-	<bean class="me.qyh.blog.ui.TplRender" />
-
-	<bean class="me.qyh.blog.ui.UIThymeleafView" />
-
-	<!-- <bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver"> -->
-	<bean class="me.qyh.blog.ui.UIViewResolver">
-		<property name="contentType" value="text/html" />
-		<property name="characterEncoding" value="utf-8" />
-		<property name="templateEngine" ref="templateEngine" />
-	</bean>
-
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
 			<bean class="me.qyh.blog.web.GsonHttpMessageConverter" />
@@ -51,8 +40,8 @@
 		<mvc:argument-resolvers>
 			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
-		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.web.controller.PageReturnMethodReturnValueHandler" />
+		<mvc:return-value-handlers >
+			<bean class="me.qyh.blog.ui.PageReturnHandler" ></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 
@@ -74,22 +63,28 @@
 		</mvc:interceptor>
 	</mvc:interceptors>
 
-	<!-- 页面拓展 -->
-	<bean class="me.qyh.blog.ui.page.ExpanedPageHandlerMapping" />
-	<bean class="me.qyh.blog.ui.page.ExpandedPageRequestController" />
-
 
 	<bean id="templateResolver" class="me.qyh.blog.ui.TplResolver">
 		<property name="prefix" value="/WEB-INF/templates/" />
 		<property name="suffix" value=".html" />
 		<property name="templateMode" value="HTML" />
 		<property name="characterEncoding" value="utf-8" />
-		<property name="cacheable" value="false" />
 	</bean>
 
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
 	</bean>
+
+
+	<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
+		<property name="contentType" value="text/html" />
+		<property name="characterEncoding" value="utf-8" />
+		<property name="templateEngine" ref="templateEngine" />
+	</bean>
+	
+	<bean class="me.qyh.blog.ui.UIRender"/>
+
+
 	<!-- captcha -->
 	<bean class="me.qyh.blog.security.CaptchaController">
 		<property name="num" value="4" />

@@ -42,7 +42,6 @@
 		<typeAlias type="me.qyh.blog.ui.page.ErrorPage" alias="ErrorPage" />
 		<typeAlias type="me.qyh.blog.ui.page.ErrorPage$ErrorCode"
 			alias="ErrorCode" />
-		<typeAlias type="me.qyh.blog.ui.page.ExpandedPage" alias="ExpandedPage" />
 		<typeAlias type="me.qyh.blog.ui.page.LockPage" alias="LockPage" />
 		<typeAlias type="me.qyh.blog.ui.fragment.UserFragment"
 			alias="UserFragment" />
@@ -77,7 +76,6 @@
 		<mapper resource="resources/mybatis/mapper/sysPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/errorPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/expandedPageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/lockPageMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />

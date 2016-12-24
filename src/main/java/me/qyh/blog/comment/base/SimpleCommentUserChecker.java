@@ -32,14 +32,17 @@ public class SimpleCommentUserChecker extends CommentUserChecker {
 				&& PatternMatchUtils.simpleMatch(disallowEmailPatterns, email.trim())) {
 			throw new LogicException("comment.email.invalid", "邮件不被允许");
 		}
-		try {
-			UriComponents uc = UriComponentsBuilder.fromHttpUrl(website).build();
-			String host = uc.getHost();
-			if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())) {
+		if (website != null) {
+			try {
+
+				UriComponents uc = UriComponentsBuilder.fromHttpUrl(website).build();
+				String host = uc.getHost();
+				if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())) {
+					throw new LogicException("comment.website.invalid", "网址不被允许");
+				}
+			} catch (Exception e) {
 				throw new LogicException("comment.website.invalid", "网址不被允许");
 			}
-		} catch (Exception e) {
-			throw new LogicException("comment.website.invalid", "网址不被允许");
 		}
 	}
 

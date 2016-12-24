@@ -38,18 +38,22 @@ public class LockPage extends Page {
 		this.lockType = lockType;
 	}
 
+	public LockPage(String lockType) {
+		super();
+		this.lockType = lockType;
+	}
+
+	public LockPage(LockPage page) {
+		super(page);
+		this.lockType = page.lockType;
+	}
+
 	public String getLockType() {
 		return lockType;
 	}
 
 	public void setLockType(String lockType) {
 		this.lockType = lockType;
-	}
-
-	@Override
-	public String getTemplateName() {
-		Space space = getSpace();
-		return PREFIX + "LockPage:" + (space == null ? lockType : space.getAlias() + "-" + lockType);
 	}
 
 	@Override

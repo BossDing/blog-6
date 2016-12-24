@@ -19,6 +19,10 @@
 <body>
 	<fragment name="顶部导航" />
 	<div class="container">
+		<data name="文章列表" />
+		<data name="文章日期归档" />
+		<data name="文章空间归档" />
+		<data name="热门标签" />
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<fragment name="文章列表" data-sort-lab="true" />
@@ -32,9 +36,5 @@
 	</div>
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<fragment name="底部" />
-	<data name="文章列表" />
-	<data name="文章日期归档" />
-	<data name="文章空间归档" />
-	<data name="热门标签" />
 </body>
 </html>

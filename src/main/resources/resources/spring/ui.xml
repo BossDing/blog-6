@@ -28,7 +28,7 @@
 					<constructor-arg index="1" value="articleNav" />
 				</bean>
 				<bean class="me.qyh.blog.ui.data.ArticleTagDataTagProcessor">
-					<constructor-arg index="0" value="标签集-文章" />
+					<constructor-arg index="0" value="标签集" />
 					<constructor-arg index="1" value="articleTags" />
 				</bean>
 				<bean class="me.qyh.blog.ui.data.ArticleStatisticsDataTagProcessor">
@@ -54,7 +54,8 @@
 					<constructor-arg index="0" value="模块评论" />
 					<constructor-arg index="1" value="moduleCommentPage" />
 				</bean>
-				<bean class="me.qyh.blog.comment.module.LastModuleCommentsDataTagProcessor">
+				<bean
+					class="me.qyh.blog.comment.module.LastModuleCommentsDataTagProcessor">
 					<constructor-arg index="0" value="最近模块评论" />
 					<constructor-arg index="1" value="moduleComments" />
 				</bean>
@@ -71,7 +72,7 @@
 						<entry key="文章日期归档"
 							value="classpath:resources/fragment/articleDateFiles.html" />
 						<entry key="上一篇下一篇" value="classpath:resources/fragment/articleNav.html" />
-						<entry key="标签集-文章" value="classpath:resources/fragment/articleTags.html" />
+						<entry key="标签集" value="classpath:resources/fragment/articleTags.html" />
 						<entry key="文章统计"
 							value="classpath:resources/fragment/articleStatistics.html" />
 						<entry key="顶部导航" value="classpath:resources/fragment/nav.html" />
@@ -82,7 +83,8 @@
 
 						<entry key="最近评论" value="classpath:resources/fragment/comments.html" />
 						<entry key="评论" value="classpath:resources/fragment/_comments.html" />
-						<entry key="模块评论" value="classpath:resources/fragment/moduleComments.html" />
+						<entry key="模块评论"
+							value="classpath:resources/fragment/moduleComments.html" />
 					</map>
 				</property>
 			</bean>
@@ -95,7 +97,4 @@
 			</map>
 		</property>
 	</bean>
-
-	<!-- 用来增加拓展页面 -->
-	<bean class="me.qyh.blog.ui.page.ExpandedPageServer" />
 </beans>      

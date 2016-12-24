@@ -36,9 +36,10 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.TemplateUtils;
+import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -50,7 +51,7 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@Autowired
 	private UIService uiService;
 	@Autowired
-	private TplRender tplRender;
+	private UIRender uiRender;
 
 	@Autowired
 	private PageValidator pageValidator;
@@ -62,8 +63,9 @@ public class ErrorPageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("errorCode") ErrorCode code,
-			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) {
-		model.addAttribute("page", uiService.queryErrorPage(spaceId == null ? null : new Space(spaceId), code));
+			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
+		model.addAttribute("page", uiService.queryPage(
+				TemplateUtils.getTemplateName(new ErrorPage(spaceId == null ? null : new Space(spaceId), code))));
 		return "mgr/page/error/build";
 	}
 
@@ -71,15 +73,6 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(errorPage);
-		if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
-			request.setAttribute("error", new Message("error.200", "200"));
-		}
-		try {
-			tplRender.tryRender(page, request, response);
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
-		}
 		uiService.buildTpl(errorPage);
 		return new JsonResult(true, new Message("page.error.build.success", "保存成功"));
 	}
@@ -88,12 +81,12 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated ErrorPage errorPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
+		if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
+			request.setAttribute("error", new Message("error.200", "200"));
+		}
+		String rendered;
 		try {
-			RenderedPage page = uiService.renderPreviewPage(errorPage);
-			if (ErrorCode.ERROR_200.equals(errorPage.getErrorCode())) {
-				request.setAttribute("error", new Message("error.200", "200"));
-			}
-			String rendered = tplRender.tryRender(page, request, response);
+			rendered = uiRender.render(new DisposiblePage(errorPage), request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

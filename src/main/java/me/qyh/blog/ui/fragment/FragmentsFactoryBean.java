@@ -41,6 +41,13 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 	public List<Fragment> getObject() throws Exception {
 		List<Fragment> fragments = Lists.newArrayList();
 		for (Map.Entry<String, Resource> it : tplMap.entrySet()) {
+			String name = it.getKey();
+			if (Validators.isEmptyOrNull(name, true)) {
+				throw new SystemException("模板片段名称不能为空");
+			}
+			if (!name.matches(UserFragmentValidator.NAME_PATTERN)) {
+				throw new SystemException("模板片段名称只能为数字或者中英文");
+			}
 			String tpl = getTpl(it.getValue());
 			if (tpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
 				throw new SystemException("模板片段长度不能超过" + UserFragmentValidator.MAX_TPL_LENGTH + "个字符");

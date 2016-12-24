@@ -34,8 +34,11 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Lists;
@@ -60,6 +63,7 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.metaweblog.MetaweblogArticle;
 import me.qyh.blog.pageparam.ArticleQueryParam;
@@ -71,7 +75,6 @@ import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
@@ -86,8 +89,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private TagDao tagDao;
 	@Autowired
-	private NRTArticleIndexer articleIndexer;
-	@Autowired
 	private LockManager lockManager;
 	@Autowired
 	private ArticleCache articleCache;
@@ -97,6 +98,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 	@Autowired
 	private CommentServer commentServer;
+	@Autowired
+	private ArticleIndexer articleIndexer;
+	@Autowired
+	private TransactionTemplate transactionTemplate;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -106,7 +111,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
 	@Override
-	@Transactional(readOnly = true)
 	public Article getArticleForView(String idOrAlias) {
 		Article article = null;
 		try {
@@ -151,6 +155,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public Article hit(Integer id) {
 		Article article = articleCache.getArticleWithLockCheck(id);
 		if (article != null) {
@@ -158,7 +163,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					&& article.getSpace().equals(SpaceContext.get()) && !article.getIsPrivate());
 			if (hit) {
 				articleDao.updateHits(id, 1);
-				articleIndexer.addOrUpdateDocument(article);
+				articleIndexer.getIndexer().addOrUpdateDocument(article);
 				article.addHits();
 				return article;
 			}
@@ -170,6 +175,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public Article writeArticle(MetaweblogArticle mba) throws LogicException {
 		Space space = mba.getSpace() == null ? spaceDao.selectDefault() : spaceDao.selectByName(mba.getSpace());
 		if (space == null) {
@@ -199,11 +205,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 			article.setLastModifyDate(now);
 			articleDao.update(article);
-			articleIndexer.deleteDocument(article.getId());
+			articleIndexer.getIndexer().deleteDocument(article.getId());
 			articleCache.evit(articleDb);
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addOrUpdateDocument(updated);
+				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 				applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
 			}
 		} else {
@@ -220,7 +226,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleDao.insert(article);
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addOrUpdateDocument(updated);
+				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 				applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
 			}
 		}
@@ -231,6 +237,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public Article writeArticle(Article article, boolean autoDraft) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
@@ -276,12 +283,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleDao.update(article);
 
 			insertTags(article);
-			articleIndexer.deleteDocument(article.getId());
+			articleIndexer.getIndexer().deleteDocument(article.getId());
 			// 由于alias的存在，硬编码删除cache
 			articleCache.evit(articleDb);
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addOrUpdateDocument(updated);
+				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 				if (!autoDraft) {
 					// 自动草稿不推事件
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.UPDATE));
@@ -306,7 +313,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			insertTags(article);
 			if (article.isPublished()) {
 				Article updated = articleDao.selectById(article.getId());
-				articleIndexer.addOrUpdateDocument(updated);
+				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 				if (!autoDraft) {
 					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, updated, OP.INSERT));
 				}
@@ -320,6 +327,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -332,7 +340,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
 		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(article);
+			articleIndexer.getIndexer().addOrUpdateDocument(article);
 			applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, article, OP.UPDATE));
 		}
 	}
@@ -351,7 +359,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					tag.setName(tag.getName().trim());
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
-					articleIndexer.addTags(tag.getName());
+					articleIndexer.getIndexer().addTags(tag.getName());
 					rebuildIndex = true;
 				} else {
 					articleTag.setTag(tagDb);
@@ -359,7 +367,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				articleTagDao.insert(articleTag);
 			}
 			if (rebuildIndex) {
-				rebuildIndex(true);// 新增了标签，重新建立索引
+				rebuildIndexbackground();
 			}
 		}
 	}
@@ -383,7 +391,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@ArticleIndexRebuild(readOnly = true, conditionForWait = "#param.hasQuery()")
+	@ArticleIndexRebuild
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		GlobalConfig globalConfig = configService.getGlobalConfig();
 		if (param.getSpace() == null) {
@@ -399,7 +407,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		PageResult<Article> page = null;
 		if (param.hasQuery()) {
-			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
+			page = articleIndexer.getIndexer().query(param, (List<Integer> articleIds) -> {
 				return CollectionUtils.isEmpty(articleIds) ? Lists.newArrayList() : selectByIds(articleIds);
 			});
 		} else {
@@ -443,6 +451,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -454,13 +463,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
 		articleCache.evit(article);
-		articleIndexer.deleteDocument(id);
+		articleIndexer.getIndexer().deleteDocument(id);
 	}
 
 	@Override
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -476,12 +486,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(status);
 		articleDao.update(article);
 		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(article);
+			articleIndexer.getIndexer().addOrUpdateDocument(article);
 		}
 	}
 
 	@Override
 	@ArticleIndexRebuild
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
@@ -498,33 +509,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
 			@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0") })
+	@ArticleIndexRebuild
 	public int pushScheduled() {
 		return scheduleManager.push();
-	}
-
-	@Transactional(readOnly = true)
-	public synchronized void rebuildIndex(boolean async) {
-		if (async) {
-			threadPoolTaskExecutor.execute(() -> {
-				rebuildIndex();
-			});
-		} else {
-			rebuildIndex();
-		}
-	}
-
-	private void rebuildIndex() {
-		long begin = System.currentTimeMillis();
-		articleIndexer.deleteAll();
-		List<Article> articles = articleDao.selectPublished(null);
-		for (Article article : articles) {
-			articleIndexer.addOrUpdateDocument(article);
-		}
-		long end = System.currentTimeMillis();
-		logger.debug("重建博客索引成功，共耗时" + (end - begin));
 	}
 
 	@Override
@@ -581,7 +570,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (article == null) {
 			return Collections.emptyList();
 		}
-		return articleIndexer.querySimilar(article, (List<Integer> articleIds) -> {
+		return articleIndexer.getIndexer().querySimilar(article, (List<Integer> articleIds) -> {
 			return articleDao.selectByIds(articleIds);
 		}, limit);
 	}
@@ -589,7 +578,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (rebuildIndex) {
-			rebuildIndex();
+			articleIndexer.rebuildIndex();
 		}
 		scheduleManager.update();
 	}
@@ -630,18 +619,35 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				return 0;
 			} else {
 				logger.debug("开始查询发布文章");
-				List<Article> articles = articleDao.selectScheduled(new Timestamp(now));
-				if (!articles.isEmpty()) {
-					for (Article article : articles) {
-						article.setStatus(ArticleStatus.PUBLISHED);
-						articleDao.update(article);
-						articleIndexer.addOrUpdateDocument(article);
+				Timestamp startCopy = new Timestamp(start.getTime());
+				return transactionTemplate.execute(new TransactionCallback<Integer>() {
+
+					@Override
+					public Integer doInTransaction(TransactionStatus status) {
+						try {
+							List<Article> articles = articleDao.selectScheduled(new Timestamp(now));
+							if (!articles.isEmpty()) {
+								for (Article article : articles) {
+									article.setStatus(ArticleStatus.PUBLISHED);
+									articleDao.update(article);
+									articleIndexer.getIndexer().addOrUpdateDocument(article);
+								}
+								logger.debug("发布了" + articles.size() + "篇文章");
+								applicationEventPublisher
+										.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
+							}
+							start = articleDao.selectMinimumScheduleDate();
+							return articles.size();
+						} catch (Exception e) {
+							start = startCopy;
+							status.setRollbackOnly();
+
+							rebuildIndexbackground();
+
+							throw new SystemException(e.getMessage(), e);
+						}
 					}
-					logger.debug("发布了" + articles.size() + "篇文章");
-					applicationEventPublisher.publishEvent(new ArticlePublishedEvent(this, articles, OP.UPDATE));
-				}
-				start = articleDao.selectMinimumScheduleDate();
-				return articles.size();
+				});
 			}
 		}
 
@@ -650,6 +656,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			logger.debug(start == null ? "没有发现待发布文章"
 					: "发现待发布文章最小日期:" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
 		}
+	}
+
+	private void rebuildIndexbackground() {
+		threadPoolTaskExecutor.execute(() -> {
+			articleIndexer.rebuildIndex();
+		});
 	}
 
 	@Override

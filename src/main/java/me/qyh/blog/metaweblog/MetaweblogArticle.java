@@ -113,6 +113,8 @@ public class MetaweblogArticle {
 		article.setEditor(Editor.HTML);
 		article.setFrom(ArticleFrom.ORIGINAL);
 		article.setSummary("");
+		article.setAllowComment(true);
+		article.setHidden(false);
 		article.setContent(content);
 		return article;
 	}

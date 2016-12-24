@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.SystemException;
 
 /**
  * 锁管理器
@@ -42,6 +43,8 @@ public class LockManager implements InitializingBean {
 	private ExpandedLockProvider expandedLockProvider;
 
 	private List<String> allTypes = Lists.newArrayList();
+
+	private static final String TYPE_PATTERN = "^[A-Za-z0-9]+$";
 
 	/**
 	 * 根据id获取锁
@@ -132,6 +135,9 @@ public class LockManager implements InitializingBean {
 		}
 		Set<String> types = Sets.newLinkedHashSet();
 		for (String type : expandedLockProvider.getLockTypes()) {
+			if (!type.matches(TYPE_PATTERN)) {
+				throw new SystemException("锁类型只能为英文字母或者数字");
+			}
 			types.add(type);
 		}
 		for (String type : sysLockProvider.getLockTypes()) {

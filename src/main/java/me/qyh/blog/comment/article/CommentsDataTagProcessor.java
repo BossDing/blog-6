@@ -18,20 +18,20 @@ package me.qyh.blog.comment.article;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.comment.base.CommentConfig;
 import me.qyh.blog.comment.base.BaseComment.CommentStatus;
+import me.qyh.blog.comment.base.CommentConfig;
 import me.qyh.blog.comment.base.CommentSupport.CommentPageResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
-import me.qyh.blog.ui.Params;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult<Comment>> {
@@ -43,7 +43,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult<Comment> buildPreviewData(Attributes attributes) {
+	protected CommentPageResult<Comment> buildPreviewData(Space space, Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -67,15 +67,16 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult<Comment> query(Space space, Params params, Attributes attributes) throws LogicException {
-		CommentQueryParam param = parseParam(params, attributes);
+	protected CommentPageResult<Comment> query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
+		CommentQueryParam param = parseParam(variables, attributes);
 		return commentService.queryComment(param);
 	}
 
-	private CommentQueryParam parseParam(Params params, Attributes attributes) {
+	private CommentQueryParam parseParam(Map<String, Object> variables, Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		Article article = params.get("article", Article.class);
+		Article article = (Article) variables.get("article");
 		if (article == null) {
 			String articleStr = attributes.get("article");
 			if (articleStr != null) {

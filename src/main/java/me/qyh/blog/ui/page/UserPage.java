@@ -17,6 +17,7 @@ package me.qyh.blog.ui.page;
 
 import java.sql.Timestamp;
 
+import me.qyh.blog.entity.Space;
 import me.qyh.blog.lock.LockResource;
 
 public class UserPage extends Page implements LockResource {
@@ -42,6 +43,20 @@ public class UserPage extends Page implements LockResource {
 
 	public UserPage(String alias) {
 		this.alias = alias;
+	}
+
+	public UserPage(Space space, String alias) {
+		super(space);
+		this.alias = alias;
+	}
+
+	public UserPage(UserPage page) {
+		super(page);
+		this.name = page.name;
+		this.description = page.description;
+		this.createDate = page.createDate;
+		this.alias = page.alias;
+		this.lockId = page.lockId;
 	}
 
 	@Override
@@ -89,11 +104,6 @@ public class UserPage extends Page implements LockResource {
 	@Override
 	public final PageType getType() {
 		return PageType.USER;
-	}
-
-	@Override
-	public final String getTemplateName() {
-		return PREFIX + "UserPage:" + alias;
 	}
 
 	public void setLockId(String lockId) {

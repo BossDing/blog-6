@@ -24,25 +24,23 @@
 				<h1 style="text-align: center; font-size: 48px">页面渲染异常</h1>
 			</div>
 			<div class="col-md-8 col-md-offset-2" th:if="${description != null}">
-				<p>
-					异常模板:<span
-						th:text="${description.templateName == null ? '未知' : description.templateName}"></span>
-				</p>
-				<p>
-					行号:<span
-						th:text="${description.line == null ? '未知' : description.line}"></span>
-				</p>
-				<p>
-					列号:<span
-						th:text="${description.col == null ? '未知' : description.col}"></span>
-				</p>
-				<p>
-					表达式:<span
-						th:text="${description.expression == null ? '未知' : description.expression}"></span>
-				</p>
-				<p>
-					错误信息:<span
-						th:text="${description.message == null ? '未知' : messages.getMessage(description.message)}"></span>
+				<div th:unless="${#lists.isEmpty(description.templateErrorInfos)}"
+					class="table-responsive">
+					<table class="table">
+						<tr>
+							<th>模板名</th>
+							<th>行号</th>
+							<th>列号</th>
+						</tr>
+						<tr th:each="info : ${description.templateErrorInfos}">
+							<td th:text="${info.templateName}"></td>
+							<td th:text="${info.line}"></td>
+							<td th:text="${info.col}"></td>
+						</tr>
+					</table>
+				</div>
+				<p th:if="${description.expression != null}">
+					表达式:<span th:text="${description.expression}"></span>
 				</p>
 			</div>
 		</div>

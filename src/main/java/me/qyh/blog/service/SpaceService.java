@@ -53,11 +53,17 @@ public interface SpaceService {
 	 * 
 	 * @param alias
 	 *            空间别名
-	 * @param lockCheck
-	 *            是否进行锁检查
 	 * @return 空间，如果不存在，返回null
 	 */
-	Space selectSpaceByAlias(String alias, boolean lockCheck);
+	Space selectSpaceByAlias(String alias);
+
+	/**
+	 * 查询空间，并且进行锁检查
+	 * 
+	 * @param alias
+	 * @return
+	 */
+	Space selectSpaceByAliasWithLockCheck(String alias);
 
 	/**
 	 * 查询空间

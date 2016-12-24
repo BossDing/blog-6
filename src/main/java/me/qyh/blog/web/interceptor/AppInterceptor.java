@@ -54,10 +54,7 @@ import me.qyh.blog.security.csrf.CsrfTokenRepository;
 import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
 import me.qyh.blog.security.csrf.MissingCsrfTokenException;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.UIContext;
 import me.qyh.blog.ui.UIExposeHelper;
-import me.qyh.blog.ui.page.ExpandedPageRequestController;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
@@ -187,11 +184,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		// static res request
 		// then mv is null
 		if (modelAndView != null) {
-			RenderedPage page = UIContext.get();
-			if (page != null) {
-				logger.debug("将模板数据放入model中");
-				modelAndView.addAllObjects(page.getDatas());
-			}
 			logger.debug("将用户和路径处理器放入model中");
 			uiExposeHelper.addVariables(request);
 		}
@@ -212,7 +204,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	private void removeContext() {
-		UIContext.remove();
 		UserContext.remove();
 		LockKeyContext.remove();
 		SpaceContext.remove();
@@ -220,7 +211,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
 		boolean needLockProtected = !Webs.unlockRequest(request);
-		Space space = spaceService.selectSpaceByAlias(spaceAlias, needLockProtected);
+		Space space = needLockProtected ? spaceService.selectSpaceByAliasWithLockCheck(spaceAlias)
+				: spaceService.selectSpaceByAlias(spaceAlias);
 		if (space == null) {
 			throw new SpaceNotFoundException(spaceAlias);
 		}
@@ -347,8 +339,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	private boolean executeHandler(Object handler) {
-		return handler instanceof HandlerMethod
-				// 拓展页面
-				|| handler instanceof ExpandedPageRequestController;
+		return handler instanceof HandlerMethod;
 	}
 }

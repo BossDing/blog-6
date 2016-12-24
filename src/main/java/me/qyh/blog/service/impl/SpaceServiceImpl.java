@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,24 +31,27 @@ import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
+import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.SpaceService;
 
 @Service
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class SpaceServiceImpl implements SpaceService {
 
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
+	private LockManager lockManager;
+	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired
-	private LockManager lockManager;
+	private ArticleIndexer articleIndexer;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void addSpace(Space space) throws LogicException {
 		lockManager.ensureLockvailable(space.getLockId());
 
@@ -70,6 +74,7 @@ public class SpaceServiceImpl implements SpaceService {
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
@@ -99,22 +104,24 @@ public class SpaceServiceImpl implements SpaceService {
 
 		spaceDao.update(space);
 		spaceCache.evit(db);
+
+		threadPoolTaskExecutor.execute(() -> {
+			articleIndexer.rebuildIndex();
+		});
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public Space selectSpaceByAlias(String alias, boolean lockCheck) {
-		Space space = lockCheck ? spaceCache.getSpaceWithLockCheck(alias) : spaceCache.getSpaceWithoutLockCheck(alias);
-		if (space != null) {
-			if (space.getIsPrivate() && UserContext.get() == null) {
-				throw new AuthencationException();
-			}
-		}
-		return space;
+	public Space selectSpaceByAlias(String alias) {
+		return spaceCache.getSpace(alias);
 	}
 
 	@Override
-	@Transactional(readOnly = true)
+	@LockProtected
+	public Space selectSpaceByAliasWithLockCheck(String alias) {
+		return spaceCache.getSpace(alias);
+	}
+
+	@Override
 	public Space getSpace(Integer id) {
 		return spaceCache.getSpace(id);
 	}

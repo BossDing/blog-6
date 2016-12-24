@@ -29,7 +29,7 @@
 		<property name="password" value="${jdbc.password}" />
 		<property name="poolName" value="blogCP" />
 		<property name="connectionTestQuery" value="SELECT 1" />
-		<property name="maximumPoolSize" value="${jdbc.maxPoolSize}" />
+		<property name="maximumPoolSize" value="1" />
 	</bean>
 
 	<!-- 配置SqlSessionFactory -->
@@ -42,6 +42,17 @@
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
 		p:dataSource-ref="dataSource" />
 	<tx:annotation-driven transaction-manager="txManager" />
+
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<constructor-arg index="0" ref="txManager" />
+	</bean>
+
+	<bean id="readOnlyTransactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<constructor-arg index="0" ref="txManager" />
+		<property name="readOnly" value="true" />
+	</bean>
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"

@@ -52,9 +52,10 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.TemplateUtils;
+import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
@@ -69,9 +70,9 @@ public class SysPageMgrController extends BaseMgrController {
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
-	private TplRender tplRender;
-	@Autowired
 	private LockManager lockManager;
+	@Autowired
+	private UIRender uiRender;
 
 	@Autowired
 	private PageValidator pageValidator;
@@ -94,8 +95,9 @@ public class SysPageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("target") PageTarget target,
-			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) {
-		model.addAttribute("page", uiService.querySysPage(spaceId == null ? null : new Space(spaceId), target));
+			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
+		model.addAttribute("page", uiService.queryPage(
+				TemplateUtils.getTemplateName(new SysPage(spaceId == null ? null : new Space(spaceId), target))));
 		return "mgr/page/sys/build";
 	}
 
@@ -103,12 +105,6 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated SysPage sysPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(sysPage);
-		try {
-			tplRender.tryRender(page, request, response);
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
-		}
 		uiService.buildTpl(sysPage);
 		return new JsonResult(true, new Message("page.sys.build.success", "保存成功"));
 	}
@@ -117,9 +113,9 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated SysPage sysPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
+		String rendered;
 		try {
-			RenderedPage page = uiService.renderPreviewPage(sysPage);
-			String rendered = tplRender.tryRender(page, request, response);
+			rendered = uiRender.render(new DisposiblePage(sysPage), request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {
@@ -150,32 +146,35 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult getStyles(@RequestParam("id") Integer id, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(new Space(id), PageTarget.ARTICLE_DETAIL);
+		String rendered;
 		try {
-			String rendered = tplRender.tryRender(page, request, response);
-			Document doc = Jsoup.parse(rendered);
-			String style = null;
-			Elements eles = doc.select("style");
-			if (!eles.isEmpty()) {
-				style = eles.first().data();
-			}
-			Set<String> csses = Sets.newLinkedHashSet();
-			Elements imports = doc.select("link[href]");
-			for (Element ele : imports) {
-				String link = ele.attr("href");
-				if (isCss(link)) {
-					csses.add(link);
-				}
-			}
-			Map<String, Object> resultMap = Maps.newHashMap();
-			resultMap.put("csses", csses);
-			if (style != null) {
-				resultMap.put("style", style.trim());
-			}
-			return new JsonResult(true, resultMap);
+			rendered = uiRender.render(
+					new DisposiblePage(uiService.queryPage(TemplateUtils
+							.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL)))),
+					request, response);
 		} catch (TplRenderException e) {
-			return new JsonResult(false);
+			return new JsonResult(false, e.getRenderErrorDescription());
 		}
+		Document doc = Jsoup.parse(rendered);
+		String style = null;
+		Elements eles = doc.select("style");
+		if (!eles.isEmpty()) {
+			style = eles.first().data();
+		}
+		Set<String> csses = Sets.newLinkedHashSet();
+		Elements imports = doc.select("link[href]");
+		for (Element ele : imports) {
+			String link = ele.attr("href");
+			if (isCss(link)) {
+				csses.add(link);
+			}
+		}
+		Map<String, Object> resultMap = Maps.newHashMap();
+		resultMap.put("csses", csses);
+		if (style != null) {
+			resultMap.put("style", style.trim());
+		}
+		return new JsonResult(true, resultMap);
 	}
 
 	private static boolean isCss(String link) {

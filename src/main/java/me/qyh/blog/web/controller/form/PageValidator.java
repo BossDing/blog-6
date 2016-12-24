@@ -22,7 +22,6 @@ import org.springframework.validation.Validator;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -100,24 +99,6 @@ public class PageValidator implements Validator {
 			}
 			if (!validateUserPageAlias(alias)) {
 				errors.reject("page.alias.invalid", "页面别名不被允许");
-				return;
-			}
-		}
-
-		if (page instanceof ExpandedPage) {
-			ExpandedPage expandedPage = (ExpandedPage) page;
-			if (!page.hasId()) {
-				errors.reject("page.id.blank", "页面ID不能为空");
-				return;
-			}
-			String name = expandedPage.getName();
-			if (Validators.isEmptyOrNull(name, true)) {
-				errors.reject("page.name.blank", "页面名称不能为空");
-				return;
-			}
-			if (name.length() > PAGE_NAME_MAX_LENGTH) {
-				errors.reject("page.name.toolong", new Object[] { PAGE_NAME_MAX_LENGTH },
-						"页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
 				return;
 			}
 		}

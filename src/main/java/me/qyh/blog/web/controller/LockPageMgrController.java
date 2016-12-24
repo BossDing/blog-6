@@ -36,9 +36,10 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.TemplateUtils;
+import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.web.controller.form.PageValidator;
 
@@ -49,7 +50,7 @@ public class LockPageMgrController extends BaseMgrController {
 	@Autowired
 	private UIService uiService;
 	@Autowired
-	private TplRender tplRender;
+	private UIRender uiRender;
 
 	@Autowired
 	private PageValidator pageValidator;
@@ -62,7 +63,8 @@ public class LockPageMgrController extends BaseMgrController {
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("lockType") String lockType,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
-		model.addAttribute("page", uiService.queryLockPage(spaceId == null ? null : new Space(spaceId), lockType));
+		model.addAttribute("page", uiService.queryPage(TemplateUtils
+				.getTemplateName(new LockPage(spaceId == null ? null : new Space(spaceId), lockType))));
 		return "mgr/page/lock/build";
 	}
 
@@ -70,23 +72,17 @@ public class LockPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated LockPage lockPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(lockPage);
-		try {
-			tplRender.tryRender(page, request, response);
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
-		}
 		uiService.buildTpl(lockPage);
 		return new JsonResult(true, new Message("page.lock.build.success", "保存成功"));
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult preview(@RequestBody @Validated LockPage sysPage, HttpServletRequest request,
+	public JsonResult preview(@RequestBody @Validated LockPage lockPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
+		String rendered;
 		try {
-			RenderedPage page = uiService.renderPreviewPage(sysPage);
-			String rendered = tplRender.tryRender(page, request, response);
+			rendered = uiRender.render(new DisposiblePage(lockPage), request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

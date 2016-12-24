@@ -13,41 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.ui.page;
+package me.qyh.blog.ui;
 
-public class ExpandedPage extends Page {
+public class NoCacheUITemplateEngine extends UITemplateEngine {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-	private String name;
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	@Override
-	public final PageType getType() {
-		return PageType.EXPANDED;
-	}
-
-	@Override
-	public final String getTemplateName() {
-		return PREFIX + "ExpandedPage:" + getId();
-	}
-
-	public ExpandedPage() {
+	public NoCacheUITemplateEngine() {
 		super();
-	}
-
-	public ExpandedPage(Integer id) {
-		super(id);
+		setCacheManager(null);
 	}
 
 }

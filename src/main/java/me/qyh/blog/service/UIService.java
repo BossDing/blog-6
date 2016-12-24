@@ -16,26 +16,19 @@
 package me.qyh.blog.service;
 
 import java.util.List;
+import java.util.Map;
 
-import me.qyh.blog.bean.ExportReq;
-import me.qyh.blog.bean.ImportPageWrapper;
-import me.qyh.blog.bean.ImportReq;
-import me.qyh.blog.bean.ImportResult;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.ui.DataTag;
-import me.qyh.blog.ui.ExportPage;
-import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.RenderedPage;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
-import me.qyh.blog.ui.page.ExpandedPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -101,24 +94,6 @@ public interface UIService {
 	UserPage queryUserPage(Integer id);
 
 	/**
-	 * 根据alias查询用户页面
-	 * 
-	 * @param alias
-	 *            页面别名
-	 * @return
-	 */
-	UserPage queryUserPage(String alias);
-
-	/**
-	 * 查询系统页面模板
-	 * 
-	 * @param space
-	 * @param target
-	 * @return
-	 */
-	SysPage querySysPage(Space space, PageTarget target);
-
-	/**
 	 * 分页查询用户自定义页面
 	 * 
 	 * @param param
@@ -133,16 +108,6 @@ public interface UIService {
 	 * @throws LogicException
 	 */
 	void deleteUserPage(Integer id) throws LogicException;
-
-	/**
-	 * 渲染预览页面
-	 * 
-	 * @param space
-	 * @param target
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderPreviewPage(Space space, PageTarget target) throws LogicException;
 
 	/**
 	 * 保存页面模板
@@ -161,28 +126,6 @@ public interface UIService {
 	void buildTpl(UserPage userPage) throws LogicException;
 
 	/**
-	 * 渲染页面
-	 * 
-	 * @param space
-	 * @param pageTarget
-	 * @param params
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderSysPage(Space space, PageTarget pageTarget, Params params) throws LogicException;
-
-	/**
-	 * 渲染用户自定义页面
-	 * 
-	 * @param alias
-	 *            别名
-	 * @return 不会为null
-	 * @throws LogicException
-	 *             如果页面不存在，数据渲染异常等
-	 */
-	RenderedPage renderUserPage(String alias) throws LogicException;
-
-	/**
 	 * 删除系统挂件模板
 	 * 
 	 * @param space
@@ -190,51 +133,6 @@ public interface UIService {
 	 * @throws LogicException
 	 */
 	void deleteSysPage(Space space, PageTarget target) throws LogicException;
-
-	/**
-	 * 渲染拓展页面
-	 * 
-	 * @param id
-	 *            拓展页面id
-	 * @param params
-	 *            参数
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderExpandedPage(Integer id, Params params) throws LogicException;
-
-	/**
-	 * 查询所有的拓展页面
-	 * 
-	 * @return
-	 */
-	List<ExpandedPage> queryExpandedPage();
-
-	/**
-	 * 还原用户拓展页面
-	 * 
-	 * @param id
-	 *            页面id
-	 * @throws LogicException
-	 */
-	void deleteExpandedPage(Integer id) throws LogicException;
-
-	/**
-	 * 查询用户拓展页面
-	 * 
-	 * @param id
-	 * @return
-	 * @throws LogicException
-	 */
-	ExpandedPage queryExpandedPage(Integer id) throws LogicException;
-
-	/**
-	 * 保存/更新拓展页面模板
-	 * 
-	 * @param page
-	 * @throws LogicException
-	 */
-	void buildTpl(ExpandedPage page) throws LogicException;
 
 	/**
 	 * 保存更新错误页面模板
@@ -254,63 +152,22 @@ public interface UIService {
 	void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException;
 
 	/**
-	 * 查询错误页面
-	 * 
-	 * @param space
-	 * @param code
-	 * @return
-	 */
-	ErrorPage queryErrorPage(Space space, ErrorCode code);
-
-	/**
-	 * 渲染错误页面
-	 * 
-	 * @param space
-	 * @param code
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderErrorPage(Space space, ErrorCode code) throws LogicException;
-
-	/**
-	 * 导出某个空间下的所有页面模板
-	 * <p>
-	 * <strong>无法导出拓展页面的模板！</strong>
-	 * </p>
-	 * 
-	 * @param req
-	 * @return
-	 * @throws LogicException
-	 */
-	List<ExportPage> export(ExportReq req) throws LogicException;
-
-	/**
-	 * 导入空间下的模板
-	 * 
-	 * @param pages
-	 * @param req
-	 * @return 该空间下以前所有的模板
-	 * @throws LogicException
-	 */
-	ImportResult importTemplate(List<ImportPageWrapper> pages, ImportReq req) throws LogicException;
-
-	/**
-	 * 预览页面
-	 * 
-	 * @param page
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderPreviewPage(Page page) throws LogicException;
-
-	/**
 	 * 通过DATA_TAG标签查询数据
 	 * 
 	 * @param dataTagStr
 	 * @return
 	 * @throws LogicException
 	 */
-	DataBind<?> queryData(DataTag dataTag) throws LogicException;
+	DataBind<?> queryData(DataTag dataTag, Map<String, Object> variables) throws LogicException;
+
+	/**
+	 * 通过DATA_TAG标签查询预览数据
+	 * 
+	 * @param dataTagStr
+	 * @return
+	 * @throws LogicException
+	 */
+	DataBind<?> queryData(DataTag dataTag);
 
 	/**
 	 * 查询系统数据
@@ -352,23 +209,13 @@ public interface UIService {
 	void deleteLockPage(Space space, String lockType) throws LogicException;
 
 	/**
-	 * 查询解锁页面模板
+	 * 根据模板名查询页面
 	 * 
-	 * @param space
-	 * @param lockType
+	 * @param templateName
+	 *            模板页面
 	 * @return
 	 * @throws LogicException
 	 */
-	LockPage queryLockPage(Space space, String lockType) throws LogicException;
-
-	/**
-	 * 渲染解锁页面
-	 * 
-	 * @param space
-	 * @param lockType
-	 * @return
-	 * @throws LogicException
-	 */
-	RenderedPage renderLockPage(Space space, String lockType) throws LogicException;
+	Page queryPage(String templateName) throws LogicException;
 
 }

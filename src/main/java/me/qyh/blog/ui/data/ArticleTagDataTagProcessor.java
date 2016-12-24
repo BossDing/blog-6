@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,7 +29,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.Params;
 
 public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>> {
 
@@ -40,7 +40,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> buildPreviewData(Attributes attributes) {
+	protected List<TagCount> buildPreviewData(Space space, Attributes attributes) {
 		TagCount count1 = new TagCount();
 		Tag tag1 = new Tag();
 		tag1.setCreate(Timestamp.valueOf(LocalDateTime.now()));
@@ -60,7 +60,8 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> query(Space space, Params params, Attributes attributes) throws LogicException {
+	protected List<TagCount> query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
 		boolean queryPrivate = UserContext.get() != null;
 		if (queryPrivate) {
 			String queryPrivateStr = attributes.get("queryPrivate");

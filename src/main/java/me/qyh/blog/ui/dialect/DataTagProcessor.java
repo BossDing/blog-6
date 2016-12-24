@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.ui;
+package me.qyh.blog.ui.dialect;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,16 +32,18 @@ import org.thymeleaf.standard.expression.IStandardExpressionParser;
 import org.thymeleaf.standard.expression.StandardExpressions;
 import org.thymeleaf.templatemode.TemplateMode;
 
+import com.google.common.collect.ImmutableMap;
+
+import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.DataTag;
+import me.qyh.blog.ui.DisposablePageContext;
 import me.qyh.blog.ui.data.DataBind;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
- * <p>
- * <h1>当data属性dynamic设置为true的时候，无法使用Params中的数据，并且会忽略查询过程中的一切异常</h1>
- * </p>
  * 
- * @see TemplateParser
  * @author mhlx
  *
  */
@@ -51,7 +53,6 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME_ATTR = "name";
 	private static final String DYNAMIC_ATT_PREFIX = "dt:";
-	private static final String DYMAMIC_ATT = "dynamic";
 
 	private UIService uiService;
 
@@ -80,12 +81,19 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 			}
 
 			DataBind<?> bind = null;
-			try {
+			if (DisposablePageContext.get() != null && DisposablePageContext.get().isPreview()) {
 				bind = uiService.queryData(dataTag);
-			} catch (Exception e) {
-				// ignore;
+			} else {
+				ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+				for (String name : context.getVariableNames()) {
+					builder.put(name, context.getVariable(name));
+				}
+				try {
+					bind = uiService.queryData(dataTag, builder.build());
+				} catch (LogicException e) {
+					throw new RuntimeLogicException(e);
+				}
 			}
-
 			if (bind != null) {
 				IWebContext webContext = (IWebContext) context;
 				HttpServletRequest request = webContext.getRequest();
@@ -147,18 +155,19 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 
 		if (uiService == null) {
 			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
-			uiService = ctx.getBean(UIService.class);
+			if (ctx != null) {
+				uiService = ctx.getBean(UIService.class);
+			}
 		}
 		if (uiService == null) {
 			// 不在spring环境中使用。。
 			return false;
 		}
 		// 如果不是没有name属性和dynamic属性
-		if (!tag.hasAttribute(NAME_ATTR) || !tag.hasAttribute(DYMAMIC_ATT)) {
+		if (!tag.hasAttribute(NAME_ATTR)) {
 			return false;
 		}
 
-		String dynamicAtt = tag.getAttributeValue(DYMAMIC_ATT);
-		return Boolean.parseBoolean(dynamicAtt);
+		return true;
 	}
 }

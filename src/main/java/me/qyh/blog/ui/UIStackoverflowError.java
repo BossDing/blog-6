@@ -15,31 +15,40 @@
  */
 package me.qyh.blog.ui;
 
-import java.util.Map;
+/**
+ * 用来处理StackoverflowError
+ * 
+ * @author Administrator
+ *
+ */
+public class UIStackoverflowError extends Error {
 
-import com.google.common.collect.Maps;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-import me.qyh.blog.exception.SystemException;
+	private final Integer col;
+	private final String templateName;
+	private final Integer line;
 
-public class Params {
-
-	private Map<String, Object> datas = Maps.newHashMap();
-
-	public Params add(String key, Object data) {
-		datas.put(key, data);
-		return this;
+	public UIStackoverflowError(String templateName, Integer col, Integer line, Throwable e) {
+		super(e);
+		this.col = col;
+		this.templateName = templateName;
+		this.line = line;
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T get(String key, Class<T> t) {
-		Object v = datas.get(key);
-		if (v != null && !t.isInstance(v)) {
-			throw new SystemException("对象:" + v + "无法转化为:" + t.getName());
-		}
-		return (T) v;
+	public Integer getCol() {
+		return col;
 	}
 
-	public boolean has(String key) {
-		return datas.containsKey(key);
+	public String getTemplateName() {
+		return templateName;
 	}
+
+	public Integer getLine() {
+		return line;
+	}
+
 }

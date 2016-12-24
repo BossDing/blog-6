@@ -1,3 +1,4 @@
+<data name="文章详情" />
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,13 +28,18 @@
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<fragment name="文章详情"></fragment>
+				<data name="上一篇下一篇" />
 				<fragment name="上一篇下一篇"></fragment>
 				<div id="comments-container" style="margin-top: 10px"></div>
 				<div id="page-bar" style="margin-top: 10px"></div>
 			</div>
 			<div class="col-lg-4 col-md-4 col-sm-4 text hidden-xs">
-				<fragment name="文章日期归档"></fragment>
-				<fragment name="文章空间归档"></fragment>
+				<data name="文章日期归档" />
+				<fragment name="文章日期归档" />
+				<data name="文章空间归档" />
+				<fragment name="文章空间归档" />
+				<data name="相似文章" />
+				<fragment name="相似文章" />
 			</div>
 		</div>
 	</div>
@@ -44,10 +50,5 @@
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/comment.js}"></script>
-
-	<data name="文章详情" />
-	<data name="上一篇下一篇" />
-	<data name="文章日期归档" />
-	<data name="文章空间归档" />
 </body>
 </html>

@@ -16,14 +16,9 @@
 package me.qyh.blog.ui;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.util.CollectionUtils;
-
 import com.google.common.collect.Lists;
-
-import me.qyh.blog.message.Message;
 
 public class TplRenderErrorDescription implements Serializable {
 
@@ -32,70 +27,53 @@ public class TplRenderErrorDescription implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Integer line;// 行号
-	private Integer col;// 列号
-	private ArrayList<String> templateNames = Lists.newArrayList();// 模板名
+	private List<TemplateErrorInfo> templateErrorInfos = Lists.newArrayList();
 	private String expression;// 表达式
-	private Message message;// 错误信息
 
 	public TplRenderErrorDescription() {
 		super();
 	}
 
-	public void addTemplateName(String templateName) {
-		templateNames.add(templateName);
+	public List<TemplateErrorInfo> getTemplateErrorInfos() {
+		return templateErrorInfos;
 	}
 
-	public List<String> getTemplateNames() {
-		return templateNames;
+	public void addTemplateErrorInfos(TemplateErrorInfo templateErrorInfo) {
+		this.templateErrorInfos.add(templateErrorInfo);
 	}
 
 	public String getExpression() {
 		return expression;
 	}
 
-	public void setLine(int line) {
-		this.line = line;
-	}
-
 	public void setExpression(String expression) {
 		this.expression = expression;
 	}
 
-	public Integer getLine() {
-		return line;
-	}
+	public static class TemplateErrorInfo {
+		private final String templateName;
+		private final Integer line;
+		private final Integer col;
 
-	public void setLine(Integer line) {
-		this.line = line;
-	}
-
-	public Integer getCol() {
-		return col;
-	}
-
-	public void setCol(Integer col) {
-		this.col = col;
-	}
-
-	public Message getMessage() {
-		return message;
-	}
-
-	public void setMessage(Message message) {
-		this.message = message;
-	}
-
-	public String getTemplateName() {
-		if (!CollectionUtils.isEmpty(templateNames)) {
-			StringBuilder sb = new StringBuilder();
-			for (String templateName : templateNames) {
-				sb.append(templateName).append("->");
-			}
-			sb.delete(sb.length() - 2, sb.length());
-			return sb.toString();
+		public TemplateErrorInfo(String templateName, Integer line, Integer col) {
+			super();
+			this.templateName = templateName;
+			this.line = line;
+			this.col = col;
 		}
-		return null;
+
+		public String getTemplateName() {
+			return templateName;
+		}
+
+		public Integer getLine() {
+			return line;
+		}
+
+		public Integer getCol() {
+			return col;
+		}
+
 	}
 
 }

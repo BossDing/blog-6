@@ -20,6 +20,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
@@ -37,12 +38,14 @@ public class ArticleCache {
 
 	@LockProtected
 	@Cacheable(value = CACHE_NAME, key = "'article-'+#id", unless = "#result == null || !#result.isPublished()")
+	@Transactional(readOnly = true)
 	public Article getArticleWithLockCheck(Integer id) {
 		return articleDao.selectById(id);
 	}
 
 	@LockProtected
 	@Cacheable(value = CACHE_NAME, key = "'article-'+#alias", unless = "#result == null || !#result.isPublished()")
+	@Transactional(readOnly = true)
 	public Article getArticleWithLockCheck(String alias) {
 		return articleDao.selectByAlias(alias);
 	}

@@ -47,25 +47,6 @@ public class SysPage extends Page {
 
 	private PageTarget target;
 
-	public PageTarget getTarget() {
-		return target;
-	}
-
-	public void setTarget(PageTarget target) {
-		this.target = target;
-	}
-
-	@Override
-	public final PageType getType() {
-		return PageType.SYSTEM;
-	}
-
-	@Override
-	public String getTemplateName() {
-		Space space = getSpace();
-		return PREFIX + "SysPage:" + (space == null ? target.name() : space.getAlias() + "-" + target.name());
-	}
-
 	public SysPage() {
 		super();
 	}
@@ -77,6 +58,28 @@ public class SysPage extends Page {
 	public SysPage(Space space, PageTarget target) {
 		super(space);
 		this.target = target;
+	}
+
+	public SysPage(PageTarget target) {
+		this.target = target;
+	}
+
+	public SysPage(SysPage page) {
+		super(page);
+		this.target = page.target;
+	}
+
+	public PageTarget getTarget() {
+		return target;
+	}
+
+	public void setTarget(PageTarget target) {
+		this.target = target;
+	}
+
+	@Override
+	public final PageType getType() {
+		return PageType.SYSTEM;
 	}
 
 	public Page toExportPage() {

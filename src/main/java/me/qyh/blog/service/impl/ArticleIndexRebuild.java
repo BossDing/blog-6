@@ -27,9 +27,4 @@ import java.lang.annotation.Target;
 @Inherited
 @Documented
 public @interface ArticleIndexRebuild {
-
-	abstract boolean readOnly() default false;
-
-	abstract String conditionForWait() default "true";
-
 }

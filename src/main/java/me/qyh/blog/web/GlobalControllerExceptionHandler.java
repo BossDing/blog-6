@@ -22,6 +22,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.catalina.connector.ClientAbortException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
@@ -52,6 +54,7 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UrlHelper.RequestUrls;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.exception.SpaceNotFoundException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.Lock;
@@ -65,6 +68,7 @@ import me.qyh.blog.metaweblog.FaultException;
 import me.qyh.blog.metaweblog.RequestXmlParser;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
+import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.controller.BaseController;
 
@@ -95,6 +99,20 @@ public class GlobalControllerExceptionHandler {
 				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
 			}
 			return getErrorRedirect(request, 403);
+		}
+	}
+
+	@ResponseStatus(HttpStatus.OK) // 403
+	@ExceptionHandler(TplRenderException.class)
+	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TplRenderException e)
+			throws IOException {
+		logger.error(e.getMessage(), e);
+		if (Webs.isAjaxRequest(request)) {
+			Webs.writeInfo(resp, new JsonResult(false, e.getRenderErrorDescription()));
+			return null;
+		} else {
+			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
+			return "redirect:" + urlHelper.getUrl() + "/error/ui";
 		}
 	}
 
@@ -170,6 +188,12 @@ public class GlobalControllerExceptionHandler {
 			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, ex.getLogicMessage());
 			return getErrorRedirect(request, 200);
 		}
+	}
+
+	@ExceptionHandler(RuntimeLogicException.class)
+	public String handleRuntimeLogicException(HttpServletRequest request, HttpServletResponse resp,
+			RuntimeLogicException ex) throws IOException {
+		return handleLogicException(request, resp, ex.getLogicException());
 	}
 
 	/**
@@ -256,7 +280,9 @@ public class GlobalControllerExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
-		logger.error(e.getMessage(), e);
+		if (ExceptionUtils.indexOfThrowable(e, ClientAbortException.class) == -1) {
+			logger.error(e.getMessage(), e);
+		}
 		if (resp.isCommitted()) {
 			return null;
 		}

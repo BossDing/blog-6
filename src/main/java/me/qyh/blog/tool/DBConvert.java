@@ -103,6 +103,7 @@ public class DBConvert {
 		copyTable("blog_article");
 		copyTable("blog_article_tag");
 		copyTable("blog_comment");
+		copyTable("blog_comment_module");
 		copyTable("blog_common_file");
 		copyTable("blog_file");
 		copyTable("blog_file_delete");
@@ -155,7 +156,7 @@ public class DBConvert {
 	}
 
 	public static void main(String[] args) throws IOException, SQLException {
-		DBConvert tool = new DBConvert(DBType.MYSQL, DBType.H2);
+		DBConvert tool = new DBConvert(DBType.H2, DBType.MYSQL);
 		tool.convert();
 	}
 

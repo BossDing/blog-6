@@ -34,11 +34,21 @@ public class Fragment implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
 	/**
 	 * 片段名，全局唯一
 	 */
 	private String name;
 	private String tpl;
+
+	public Fragment() {
+		super();
+	}
+
+	public Fragment(Fragment fragment) {
+		this.name = fragment.name;
+		this.tpl = fragment.tpl;
+	}
 
 	public String getTpl() {
 		return tpl;
@@ -76,5 +86,4 @@ public class Fragment implements Serializable {
 		f.setTpl(tpl);
 		return f;
 	}
-
 }

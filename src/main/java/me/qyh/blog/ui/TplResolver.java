@@ -20,6 +20,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.cache.AlwaysValidCacheEntryValidity;
 import org.thymeleaf.cache.ICacheEntryValidity;
@@ -27,9 +28,18 @@ import org.thymeleaf.cache.NonCacheableCacheEntryValidity;
 import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templateresource.ITemplateResource;
 
+import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.RuntimeLogicException;
+import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.Page;
 
 public class TplResolver extends SpringResourceTemplateResolver {
+
+	@Autowired
+	private UIService uiService;
 
 	private static final String EMPTY = "empty";
 
@@ -37,22 +47,41 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	protected String computeResourceName(IEngineConfiguration configuration, String ownerTemplate, String template,
 			String prefix, String suffix, Map<String, String> templateAliases,
 			Map<String, Object> templateResolutionAttributes) {
-		RenderedPage page = UIContext.get();
-		if (page != null && page.getTemplateName().equals(template)) {
+		if (TemplateUtils.isPageTemplate(template) || TemplateUtils.isFragmentTemplate(template)) {
 			return template;
 		}
 		// 如果挂件不存在，返回空页面
-		return super.computeResourceName(configuration, ownerTemplate, isTpl(template) ? EMPTY : template, prefix,
-				suffix, templateAliases, templateResolutionAttributes);
+		return super.computeResourceName(configuration, ownerTemplate, template, prefix, suffix, templateAliases,
+				templateResolutionAttributes);
 	}
 
 	@Override
 	protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate,
 			String template, String resourceName, String characterEncoding,
 			Map<String, Object> templateResolutionAttributes) {
-		RenderedPage page = UIContext.get();
-		if (page != null && page.getTemplateName().equals(template)) {
-			return new PageResource(page.getPage());
+		if (TemplateUtils.isDisposablePageTemplate(template)) {
+			DisposiblePage page = DisposablePageContext.get();
+			if (page == null) {
+				throw new SystemException("DisposiblePage没有在一个上下文中");
+			}
+			return new PageResource(page);
+		}
+		if (TemplateUtils.isPageTemplate(template)) {
+			try {
+				Page page = uiService.queryPage(template);
+				return new PageResource(page);
+			} catch (LogicException e) {
+				throw new RuntimeLogicException(e);
+			}
+		}
+		if (TemplateUtils.isFragmentTemplate(template)) {
+			// 这里实际上是重复查询了，但这里必定会走缓存
+			Fragment fragment = uiService.queryFragment(TemplateUtils.getFragmentName(template));
+			if (fragment == null) {
+				template = EMPTY;
+			} else {
+				return new FragmentResource(fragment);
+			}
 		}
 		return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding,
 				templateResolutionAttributes);
@@ -61,17 +90,46 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	@Override
 	protected ICacheEntryValidity computeValidity(IEngineConfiguration configuration, String ownerTemplate,
 			String template, Map<String, Object> templateResolutionAttributes) {
-		if (isTpl(template)) {
-			/**
-			 * 系统模板不必缓存
-			 */
+		if (TemplateUtils.isDisposablePageTemplate(template)) {
 			return NonCacheableCacheEntryValidity.INSTANCE;
 		}
 		return AlwaysValidCacheEntryValidity.INSTANCE;
 	}
 
-	private boolean isTpl(String templateName) {
-		return Page.isTpl(templateName);
+	private final class FragmentResource implements ITemplateResource {
+
+		private final Fragment fragment;
+
+		public FragmentResource(Fragment fragment) {
+			super();
+			this.fragment = fragment;
+		}
+
+		@Override
+		public String getDescription() {
+			return "";
+		}
+
+		@Override
+		public String getBaseName() {
+			return null;
+		}
+
+		@Override
+		public boolean exists() {
+			return true;
+		}
+
+		@Override
+		public Reader reader() throws IOException {
+			return new StringReader(fragment.getTpl());
+		}
+
+		@Override
+		public ITemplateResource relative(String relativeLocation) {
+			throw new SystemException("un support");
+		}
+
 	}
 
 	private final class PageResource implements ITemplateResource {
@@ -84,12 +142,12 @@ public class TplResolver extends SpringResourceTemplateResolver {
 
 		@Override
 		public String getDescription() {
-			return page.getTemplateName();
+			return "";
 		}
 
 		@Override
 		public String getBaseName() {
-			return page.getTemplateName();
+			return null;
 		}
 
 		@Override
@@ -104,9 +162,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 
 		@Override
 		public ITemplateResource relative(String relativeLocation) {
-			return null;
+			throw new SystemException("un support");
 		}
-
 	}
-
 }

@@ -22,38 +22,24 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.ObjectUtils;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.service.ArticleService;
 
 @Aspect
-public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter implements ApplicationContextAware {
-
+public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter {
 	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
-	private boolean rebuilding;
-	private final ExpressionParser parser = new SpelExpressionParser();
-	private final ParameterNameDiscoverer paramNameDiscoverer = new DefaultParameterNameDiscoverer();
 
 	@Autowired
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+	@Autowired
+	private ArticleIndexer articleIndexer;
 
 	@Before("@annotation(ArticleIndexRebuild)")
 	public void before(JoinPoint joinPoint) throws InterruptedException {
@@ -66,37 +52,14 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-		ArticleIndexRebuild ann = AnnotationUtils.findAnnotation(method, ArticleIndexRebuild.class);
-		if (!ann.readOnly()) {
+		if (TransactionSynchronizationManager.isSynchronizationActive()
+				&& !TransactionSynchronizationManager.isCurrentTransactionReadOnly())
 			TransactionSynchronizationManager.registerSynchronization(this);
-		}
-		String conditionForWait = ann.conditionForWait();
-		boolean wait = false;
-		if ("true".equalsIgnoreCase(conditionForWait)) {
-			wait = true;
-		} else if ("false".equalsIgnoreCase(conditionForWait)) {
-			wait = false;
-		} else {
-			Expression waitExpression = parser.parseExpression(conditionForWait);
-			wait = waitExpression.getValue(buildStandardEvaluationContext(method, joinPoint.getArgs()), Boolean.class);
-		}
-		if (wait) {
-			waitWhileRebuilding();
-		}
 	}
 
 	@AfterThrowing(pointcut = "@annotation(ArticleIndexRebuild)", throwing = "e")
 	public void afterThrow(Throwable e) {
 		throwableLocal.set(e);
-	}
-
-	private synchronized void rebuild() {
-		rebuilding = true;
-		try {
-			ctx.getBean(ArticleService.class).rebuildIndex(false);
-		} finally {
-			rebuilding = false;
-		}
 	}
 
 	@Override
@@ -105,7 +68,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 			if (status == STATUS_ROLLED_BACK) {
 				if (!noReload()) {
 					threadPoolTaskExecutor.execute(() -> {
-						rebuild();
+						articleIndexer.rebuildIndex();
 					});
 				}
 			}
@@ -118,39 +81,5 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		Throwable e = throwableLocal.get();
 		return e != null
 				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException);
-	}
-
-	private void waitWhileRebuilding() throws InterruptedException {
-		while (rebuilding) {
-			Thread.sleep(100);
-		}
-	}
-
-	/**
-	 * 根据方法参数提供一个简单的spel上下文
-	 * 
-	 * @param method
-	 * @param args
-	 * @return
-	 */
-	private StandardEvaluationContext buildStandardEvaluationContext(Method method, Object[] args) {
-		StandardEvaluationContext standardEvaluationContext = new StandardEvaluationContext();
-		if (ObjectUtils.isEmpty(args)) {
-			return standardEvaluationContext;
-		}
-		String[] parameterNames = paramNameDiscoverer.getParameterNames(method);
-		if (parameterNames != null) {
-			for (int i = 0; i < parameterNames.length; i++) {
-				standardEvaluationContext.setVariable(parameterNames[i], args[i]);
-			}
-		}
-		return standardEvaluationContext;
-	}
-
-	private ApplicationContext ctx = null;
-
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		ctx = applicationContext;
 	}
 }

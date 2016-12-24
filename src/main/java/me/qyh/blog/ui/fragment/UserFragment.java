@@ -32,6 +32,19 @@ public class UserFragment extends Fragment {
 	private Space space;
 	private boolean global;
 
+	public UserFragment() {
+		super();
+	}
+
+	public UserFragment(UserFragment fragment) {
+		super(fragment);
+		this.id = fragment.id;
+		this.description = fragment.description;
+		this.createDate = fragment.createDate;
+		this.space = fragment.space;
+		this.global = fragment.global;
+	}
+
 	public String getDescription() {
 		return description;
 	}
@@ -75,4 +88,5 @@ public class UserFragment extends Fragment {
 	public void setGlobal(boolean global) {
 		this.global = global;
 	}
+
 }

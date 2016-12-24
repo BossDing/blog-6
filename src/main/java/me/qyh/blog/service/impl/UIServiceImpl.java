@@ -22,44 +22,37 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
-import me.qyh.blog.bean.ExportReq;
-import me.qyh.blog.bean.ImportError;
-import me.qyh.blog.bean.ImportPageWrapper;
-import me.qyh.blog.bean.ImportReq;
-import me.qyh.blog.bean.ImportResult;
-import me.qyh.blog.bean.ImportSuccess;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
-import me.qyh.blog.dao.ExpandedPageDao;
 import me.qyh.blog.dao.LockPageDao;
 import me.qyh.blog.dao.SysPageDao;
 import me.qyh.blog.dao.UserFragmentDao;
 import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.LockProtected;
-import me.qyh.blog.lock.LockResource;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
@@ -67,20 +60,14 @@ import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.DataTag;
-import me.qyh.blog.ui.ExportPage;
-import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.ParseResult;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TemplateParser;
+import me.qyh.blog.ui.UICacheManager;
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.data.DataTagProcessor;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
-import me.qyh.blog.ui.page.ExpandedPage;
-import me.qyh.blog.ui.page.ExpandedPageHandler;
-import me.qyh.blog.ui.page.ExpandedPageServer;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -90,7 +77,6 @@ import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Autowired
@@ -106,15 +92,15 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired
-	private ExpandedPageDao expandedPageDao;
-	@Autowired
-	private ExpandedPageServer expandedPageServer;
-	@Autowired
 	private LockManager lockManager;
 	@Autowired
 	private ConfigService configService;
 
-	private UICacheRender uiCacheRender;
+	@Autowired
+	private TransactionTemplate readOnlyTransactionTemplate;
+
+	private static final String DATA_TAG_PROCESSOR_NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
+	private static final String DATA_TAG_PROCESSOR_DATA_NAME_PATTERN = "^[A-Za-z]+$";
 
 	private Map<PageTarget, Resource> sysPageDefaultTpls = Maps.newEnumMap(PageTarget.class);
 	private Map<PageTarget, String> sysPageDefaultParsedTpls = Maps.newEnumMap(PageTarget.class);
@@ -126,12 +112,82 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	private static final Message SPACE_NOT_EXISTS = new Message("space.notExists", "空间不存在");
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
+	private final LoadingCache<FragmentKey, Fragment> fragmentCache = CacheBuilder.newBuilder()
+			.build(new CacheLoader<FragmentKey, Fragment>() {
+
+				@Override
+				public Fragment load(FragmentKey key) throws Exception {
+					return readOnlyTransactionTemplate.execute(new TransactionCallback<Fragment>() {
+
+						@Override
+						public Fragment doInTransaction(TransactionStatus status) {
+							UserFragment userFragment = userFragmentDao.selectBySpaceAndName(key.space, key.name);
+							if (userFragment == null) { // 查找全局
+								userFragment = userFragmentDao.selectGlobalByName(key.name);
+							}
+							if (userFragment != null) {
+								return userFragment;
+							}
+							for (Fragment fragment : fragments) {
+								if (fragment.getName().equals(key.name)) {
+									return fragment;
+								}
+							}
+							throw new RuntimeLogicException(new Message("fragment.not.exists", "模板片段不存在"));
+						}
+
+					});
+				}
+			});
+
+	private final LoadingCache<String, Page> pageCache = CacheBuilder.newBuilder()
+			.build(new CacheLoader<String, Page>() {
+
+				@Override
+				public Page load(String templateName) throws Exception {
+					return readOnlyTransactionTemplate.execute(new TransactionCallback<Page>() {
+
+						@Override
+						public Page doInTransaction(TransactionStatus status) {
+							Page converted = TemplateUtils.convert(templateName);
+							switch (converted.getType()) {
+							case SYSTEM:
+								SysPage sysPage = (SysPage) converted;
+								return querySysPage(sysPage.getSpace(), sysPage.getTarget());
+							case ERROR:
+								ErrorPage errorPage = (ErrorPage) converted;
+								return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
+							case LOCK:
+								LockPage lockPage = (LockPage) converted;
+								try {
+									return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
+								} catch (LogicException e) {
+									throw new RuntimeLogicException(e);
+								}
+							case USER:
+								UserPage userPage = (UserPage) converted;
+								UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(),
+										userPage.getAlias());
+								if (db == null) {
+									throw new RuntimeLogicException(USER_PAGE_NOT_EXISTS);
+								}
+								return db;
+							default:
+								throw new SystemException("无法确定" + converted.getType() + "的页面类型");
+							}
+						}
+
+					});
+				}
+			});
+
 	/**
 	 * 系统默认片段
 	 */
 	private List<Fragment> fragments = Lists.newArrayList();
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
 		if (space != null && spaceCache.getSpace(space.getId()) == null) {
@@ -151,11 +207,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 		userFragment.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		userFragmentDao.insert(userFragment);
-
-		uiCacheRender.evit(userFragment.getName());
+		evitFragmentCache(userFragment.getName());
+		clearFragmentCache(userFragment);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteUserFragment(Integer id) throws LogicException {
 		UserFragment userFragment = userFragmentDao.selectById(id);
 		if (userFragment == null) {
@@ -163,10 +220,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userFragmentDao.deleteById(id);
 
-		uiCacheRender.evit(userFragment.getName());
+		evitFragmentCache(userFragment.getName());
+		clearFragmentCache(userFragment);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
 		if (space != null && spaceCache.getSpace(space.getId()) == null) {
@@ -190,7 +249,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userFragmentDao.update(userFragment);
 
-		uiCacheRender.evit(old.getName(), userFragment.getName());
+		evitFragmentCache(old.getName(), userFragment.getName());
+		clearFragmentCache(old);
+		clearFragmentCache(userFragment);
 	}
 
 	@Override
@@ -216,12 +277,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserPage queryUserPage(String alias) {
-		return userPageDao.selectBySpaceAndAlias(SpaceContext.get(), alias);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	public PageResult<UserPage> queryUserPage(UserPageQueryParam param) {
 		param.setPageSize(configService.getGlobalConfig().getUserPagePageSize());
 		int count = userPageDao.selectCount(param);
@@ -230,25 +285,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteUserPage(Integer id) throws LogicException {
 		UserPage db = userPageDao.selectById(id);
 		if (db == null) {
 			throw new LogicException(USER_PAGE_NOT_EXISTS);
 		}
 		userPageDao.deleteById(id);
-		uiCacheRender.evit(new UserPageLoader(db.getSpace(), db.getAlias()));
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public SysPage querySysPage(Space space, PageTarget target) {
-		SysPage sysPage = sysPageDao.selectBySpaceAndPageTarget(space, target);
-		if (sysPage == null) {
-			sysPage = new SysPage(space, target);
-			sysPage.setTpl(sysPageDefaultParsedTpls.get(target));
-		}
-		sysPage.setSpace(space);
-		return sysPage;
+		pageCache.invalidate(TemplateUtils.getTemplateName(db));
 	}
 
 	@Override
@@ -266,56 +310,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderPreviewPage(final Space space, PageTarget target) throws LogicException {
-		Space db = spaceCache.getSpace(space.getId());
-		if (db == null) {
-			throw new LogicException(SPACE_NOT_EXISTS);
-		}
-		return uiCacheRender.renderPreview(new SysPageLoader(target, db));
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderPreviewPage(Page page) throws LogicException {
-		ParseResult result = TemplateParser.parse(page.getTpl());
-		Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-		List<DataBind<?>> dataBinds = Lists.newArrayList();
-		Space space = page.getSpace();
-		if (result.hasFragment()) {
-			for (String fragmentName : result.getFragments()) {
-				Fragment fragment = queryFragment(space, fragmentName);
-				if (fragment != null) {
-					fragmentMap.put(fragmentName, fragment);
-				}
-			}
-		}
-		if (result.hasDataTag()) {
-			for (DataTag tag : result.getDataTags()) {
-				DataTagProcessor<?> processor = geTagProcessor(tag.getName());
-				if (processor != null) {
-					dataBinds.add(processor.previewData(tag.getAttrs()));
-				}
-			}
-		}
-		return new RenderedPage(page, dataBinds, fragmentMap);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderSysPage(final Space space, final PageTarget pageTarget, Params params)
-			throws LogicException {
-		return uiCacheRender.render(new SysPageLoader(pageTarget, space), params);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	@LockProtected
-	public RenderedPage renderUserPage(String alias) throws LogicException {
-		return new UserRenderedPage(uiCacheRender.render(new UserPageLoader(SpaceContext.get(), alias), new Params()));
-	}
-
-	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void buildTpl(SysPage sysPage) throws LogicException {
 		checkPageTarget(sysPage);
 		checkSpace(sysPage);
@@ -327,10 +322,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			sysPageDao.insert(sysPage);
 		}
-		uiCacheRender.evit(new SysPageLoader(sysPage.getTarget(), sysPage.getSpace()));
+		String templateName = TemplateUtils.getTemplateName(sysPage);
+
+		pageCache.invalidate(templateName);
+		UICacheManager.clearCachesFor(templateName);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void buildTpl(UserPage userPage) throws LogicException {
 		checkSpace(userPage);
 		lockManager.ensureLockvailable(userPage.getLockId());
@@ -349,7 +348,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
-			uiCacheRender.evit(new UserPageLoader(db.getSpace(), db.getAlias()));
+
+			String templateName = TemplateUtils.getTemplateName(db);
+			pageCache.invalidate(templateName);
+			UICacheManager.clearCachesFor(templateName);
 		} else {
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
@@ -360,85 +362,18 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteSysPage(Space space, PageTarget target) throws LogicException {
 		SysPage page = sysPageDao.selectBySpaceAndPageTarget(space, target);
 		if (page != null) {
 			sysPageDao.deleteById(page.getId());
-			uiCacheRender.evit(new SysPageLoader(target, space));
+
+			pageCache.invalidate(TemplateUtils.getTemplateName(page));
 		}
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderExpandedPage(final Integer id, Params params) throws LogicException {
-		return uiCacheRender.render(new ExpandedPageLoader(id), params);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<ExpandedPage> queryExpandedPage() {
-		List<ExpandedPage> pages = Lists.newArrayList();
-		if (!expandedPageServer.isEmpty()) {
-			List<ExpandedPage> dbs = expandedPageDao.selectAll();
-			for (ExpandedPageHandler handler : expandedPageServer.getHandlers()) {
-				ExpandedPage page = new ExpandedPage();
-				page.setId(handler.id());
-				page.setName(handler.name());
-				for (ExpandedPage db : dbs) {
-					if (page.getId().equals(db.getId())) {
-						page.setName(db.getName());
-						break;
-					}
-				}
-				pages.add(page);
-			}
-		}
-		return pages;
-	}
-
-	@Override
-	public void deleteExpandedPage(Integer id) throws LogicException {
-		ExpandedPage page = expandedPageDao.selectById(id);
-		if (page != null) {
-			expandedPageDao.deleteById(id);
-			uiCacheRender.evit(new ExpandedPageLoader(id));
-		}
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public ExpandedPage queryExpandedPage(Integer id) throws LogicException {
-		ExpandedPage page = expandedPageDao.selectById(id);
-		if (page == null) {
-			page = new ExpandedPage();
-			ExpandedPageHandler handler = expandedPageServer.get(id);
-			if (handler == null) {
-				throw new LogicException("page.expanded.notExists", "拓展页面不存在");
-			}
-			page.setId(id);
-			page.setName(handler.name());
-			page.setTpl(handler.getTemplate());
-		}
-		return page;
-	}
-
-	@Override
-	public void buildTpl(ExpandedPage page) throws LogicException {
-		if (!expandedPageServer.hasHandler(page.getId())) {
-			throw new LogicException("page.expanded.notExists", "拓展页面不存在");
-		}
-		ExpandedPage db = expandedPageDao.selectById(page.getId());
-		boolean update = db != null;
-		if (update) {
-			page.setId(db.getId());
-			expandedPageDao.update(page);
-		} else {
-			expandedPageDao.insert(page);
-		}
-		uiCacheRender.evit(new ExpandedPageLoader(page.getId()));
-	}
-
-	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void buildTpl(LockPage lockPage) throws LogicException {
 		checkPageTarget(lockPage);
 		checkLockType(lockPage.getLockType());
@@ -451,36 +386,19 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			lockPageDao.insert(lockPage);
 		}
-		uiCacheRender.evit(new LockPageLoader(lockPage.getLockType(), lockPage.getSpace()));
+		String templateName = TemplateUtils.getTemplateName(lockPage);
+		pageCache.invalidate(templateName);
+		UICacheManager.clearCachesFor(templateName);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteLockPage(Space space, String lockType) throws LogicException {
 		LockPage page = lockPageDao.selectBySpaceAndLockType(space, lockType);
 		if (page != null) {
 			lockPageDao.deleteById(page.getId());
-			uiCacheRender.evit(new LockPageLoader(lockType, space));
+			pageCache.invalidate(TemplateUtils.getTemplateName(page));
 		}
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public LockPage queryLockPage(Space space, String lockType) throws LogicException {
-		checkLockType(lockType);
-		LockPage lockPage = lockPageDao.selectBySpaceAndLockType(space, lockType);
-		if (lockPage == null) {
-			lockPage = new LockPage(space, lockType);
-			lockPage.setTpl(lockPageDefaultTpls.get(lockType));
-		}
-		lockPage.setSpace(space);
-		return lockPage;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderLockPage(final Space space, String lockType) throws LogicException {
-		checkLockType(lockType);
-		return uiCacheRender.render(new LockPageLoader(lockType, space), new Params());
 	}
 
 	private void checkLockType(String lockType) throws LogicException {
@@ -490,6 +408,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void buildTpl(ErrorPage errorPage) throws LogicException {
 		checkSpace(errorPage);
 		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(errorPage.getSpace(), errorPage.getErrorCode());
@@ -500,253 +419,71 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			errorPageDao.insert(errorPage);
 		}
-		uiCacheRender.evit(new ErrorPageLoader(errorPage.getErrorCode(), errorPage.getSpace()));
+
+		String templateName = TemplateUtils.getTemplateName(errorPage);
+		pageCache.invalidate(templateName);
+		UICacheManager.clearCachesFor(templateName);
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
 	public void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException {
 		ErrorPage page = errorPageDao.selectBySpaceAndErrorCode(space, errorCode);
 		if (page != null) {
 			errorPageDao.deleteById(page.getId());
-			uiCacheRender.evit(new ErrorPageLoader(errorCode, space));
+			pageCache.invalidate(TemplateUtils.getTemplateName(page));
 		}
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public ErrorPage queryErrorPage(Space space, ErrorCode code) {
-		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(space, code);
-		if (db == null) {
-			db = new ErrorPage(space, code);
-			db.setTpl(errorPageDefaultParsedTpls.get(code));
-		}
-		return db;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public RenderedPage renderErrorPage(final Space space, ErrorCode code) throws LogicException {
-		return uiCacheRender.render(new ErrorPageLoader(code, space), new Params());
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<ExportPage> export(ExportReq req) throws LogicException {
-		Space space = req.getSpace();
-		final Space sp = space == null ? null : spaceCache.getSpace(space.getId());
-		if (space != null && sp == null) {
-			throw new LogicException(SPACE_NOT_EXISTS);
-		}
-		List<ExportPage> pages = Lists.newArrayList();
-		// 系统页面
-		for (PageTarget target : PageTarget.values()) {
-			RenderedPage page = uiCacheRender.renderPreview(new SysPageLoader(target, sp));
-			ExportPage ep = new ExportPage();
-			ep.setPage(new SysPage(null, target));
-			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragments(Lists.newArrayList(page.getFragmentMap().values()));
-			pages.add(ep);
-		}
-		// 错误页面
-		for (ErrorCode errorCode : ErrorCode.values()) {
-			RenderedPage page = uiCacheRender.renderPreview(new ErrorPageLoader(errorCode, sp));
-			ExportPage ep = new ExportPage();
-			ep.setPage(new ErrorPage(null, errorCode));
-			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragments(Lists.newArrayList(page.getFragmentMap().values()));
-			pages.add(ep);
-		}
-		// 个人页面
-		for (UserPage up : userPageDao.selectBySpace(sp)) {
-			RenderedPage page = uiCacheRender.render(up);
-			ExportPage ep = new ExportPage();
-			ep.setPage(up);
-			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragments(Lists.newArrayList(page.getFragmentMap().values()));
-			pages.add(ep);
-		}
-		// 解锁
-		for (String lockType : lockManager.allTypes()) {
-			RenderedPage page = uiCacheRender.renderPreview(new LockPageLoader(lockType, sp));
-			ExportPage ep = new ExportPage();
-			ep.setPage(new LockPage(null, lockType));
-			ep.getPage().setTpl(page.getPage().getTpl());
-			ep.setFragments(Lists.newArrayList(page.getFragmentMap().values()));
-			pages.add(ep);
-		}
-		if (req.isExportExpandedPage()) {
-			for (ExpandedPage ep : expandedPageDao.selectAll()) {
-				RenderedPage page = uiCacheRender.renderPreview(new ExpandedPageLoader(ep.getId()));
-				ExportPage ep2 = new ExportPage();
-				ep2.setPage(new ExpandedPage(ep.getId()));
-				ep2.getPage().setTpl(page.getPage().getTpl());
-				ep2.setFragments(Lists.newArrayList(page.getFragmentMap().values()));
-				pages.add(ep2);
-			}
-		}
-		return pages;
-	}
-
-	@Override
-	public ImportResult importTemplate(List<ImportPageWrapper> wrappers, ImportReq req) throws LogicException {
-		Space space = req.getSpace();
-		if (space != null) {
-			space = spaceCache.getSpace(space.getId());
-			if (space == null)
-				throw new LogicException(SPACE_NOT_EXISTS);
-		}
-		ImportResult result = new ImportResult();
-		for (ImportPageWrapper ipw : wrappers) {
-			ExportPage ep = ipw.getPage();
-			Page page = ep.getPage();
-
-			Page db = null;
-			switch (ep.getPage().getType()) {
-			case USER:
-				db = userPageDao.selectBySpaceAndAlias(req.getSpace(), ((UserPage) page).getAlias());
-				break;
-			case SYSTEM:
-				db = querySysPage(space, ((SysPage) page).getTarget());
-				break;
-			case ERROR:
-				db = queryErrorPage(space, ((ErrorPage) page).getErrorCode());
-				break;
-			case EXPANDED:
-				db = expandedPageDao.selectById(page.getId());
-				if (db == null) {
-					db = new ExpandedPage();
-					ExpandedPageHandler handler = expandedPageServer.get(page.getId());
-					if (handler == null) {
-						continue;
-					}
-					db.setId(page.getId());
-					((ExpandedPage) db).setName(handler.name());
-					db.setTpl(handler.getTemplate());
-					expandedPageDao.insert((ExpandedPage) db);
-				}
-				break;
-			case LOCK:
-				try {
-					db = queryLockPage(space, ((LockPage) page).getLockType());
-				} catch (LogicException e) {
-					result.addError(new ImportError(ipw.getIndex(), e.getLogicMessage()));
-					continue;
-				}
-				break;
-			}
-			// 如果以前页面不存在了，直接跳过
-			if (db == null) {
-				String param = null;
-				switch (page.getType()) {
-				case USER:
-					param = ((UserPage) page).getAlias();
-					break;
-				case EXPANDED:
-					param = page.getId() + "";
-					break;
-				case SYSTEM:
-					param = ((SysPage) page).getTarget().name();
-					break;
-				case ERROR:
-					param = ((ErrorPage) page).getErrorCode().name();
-					break;
-				case LOCK:
-					param = ((LockPage) page).getLockType();
-					break;
-				}
-				result.addError(new ImportError(ipw.getIndex(), new Message("tpl.import.pageNotExists",
-						"页面[" + page.getType() + "," + param + "]不存在", page.getType(), param)));
-				continue;
-			}
-			ImportSuccess success = new ImportSuccess(ipw.getIndex());
-			// 渲染以前的页面模板用于保存
-			RenderedPage old = uiCacheRender.render(db);
-			result.addOldPage(new ExportPage(old.getPage(), Lists.newArrayList(old.getFragmentMap().values())));
-			// 更新页面模板
-			db.setTpl(page.getTpl());
-			switch (page.getType()) {
-			case USER:
-				userPageDao.update((UserPage) db);
-				break;
-			case SYSTEM:
-				// 系统模板可能从来没有被覆盖过，所以这里需要再次检查
-				if (db.hasId()) {
-					sysPageDao.update((SysPage) db);
-				} else {
-					sysPageDao.insert((SysPage) db);
-				}
-				break;
-			case ERROR:
-				if (db.hasId()) {
-					errorPageDao.update((ErrorPage) db);
-				} else {
-					errorPageDao.insert((ErrorPage) db);
-				}
-				break;
-			case EXPANDED:
-				expandedPageDao.update((ExpandedPage) db);
-				break;
-			case LOCK:
-				// 系统模板可能从来没有被覆盖过，所以这里需要再次检查
-				if (db.hasId()) {
-					lockPageDao.update((LockPage) db);
-				} else {
-					lockPageDao.insert((LockPage) db);
-				}
-				break;
-			}
-
-			List<Fragment> fragments = ep.getFragments();
-			if (!CollectionUtils.isEmpty(fragments)) {
-				label1: for (Fragment fragment : fragments) {
-					UserFragment uf = userFragmentDao.selectBySpaceAndName(space, fragment.getName());
-					if (uf != null) {
-						if (req.isUpdateExistsFragment()) {
-							uf.setTpl(fragment.getTpl());
-							userFragmentDao.update(uf);
-						}
-					} else {
-						// 查找全局挂件
-						for (Fragment glf : this.fragments) {
-							if (glf.equals(fragment)) {
-								if (glf.getTpl().equals(fragment.getTpl())) {
-									continue label1;
-								}
-							}
-						}
-						if (req.isInsertNotExistsFragment()) {
-							UserFragment newF = new UserFragment();
-							newF.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-							newF.setDescription("");
-							newF.setName(fragment.getName());
-							newF.setTpl(fragment.getTpl());
-							newF.setSpace(space);
-							userFragmentDao.insert(newF);
-						}
-					}
-				}
-			}
-
-			result.addSuccess(success);
-		}
-		uiCacheRender.clear();
-		return result;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public DataBind<?> queryData(DataTag dataTag) throws LogicException {
+	public DataBind<?> queryData(DataTag dataTag, Map<String, Object> variables) throws LogicException {
 		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
 		if (processor != null) {
-			return processor.getData(SpaceContext.get(), new Params(), dataTag.getAttrs());
+			return processor.getData(SpaceContext.get(), variables, dataTag.getAttrs());
 		}
 		return null;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
+	public DataBind<?> queryData(DataTag dataTag) {
+		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
+		if (processor != null) {
+			return processor.previewData(SpaceContext.get(), dataTag.getAttrs());
+		}
+		return null;
+	}
+
+	@Override
 	public Fragment queryFragment(String name) {
-		return queryFragment(SpaceContext.get(), name);
+		try {
+			Fragment fragment = fragmentCache.getUnchecked(new FragmentKey(SpaceContext.get(), name));
+			return TemplateUtils.clone(fragment);
+		} catch (UncheckedExecutionException e) {
+			if (e.getCause() instanceof RuntimeLogicException) {
+				return null;
+			}
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	@LockProtected
+	public Page queryPage(String templateName) throws LogicException {
+		try {
+			Page page = pageCache.getUnchecked(templateName);
+			if (page != null && (page instanceof UserPage) && !Objects.equals(page.getSpace(), SpaceContext.get())) {
+				throw new LogicException(USER_PAGE_NOT_EXISTS);
+			}
+			return TemplateUtils.clone(page);
+		} catch (UncheckedExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeLogicException) {
+				throw ((RuntimeLogicException) cause).getLogicException();
+			}
+			throw new SystemException(e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -793,7 +530,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			}
 			lockPageDefaultTpls.put(lockType, tpl);
 		}
-		this.uiCacheRender = new UICacheRender();
 	}
 
 	private String fromResource(Resource resource) {
@@ -833,21 +569,24 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
-	private Fragment queryFragment(Space space, String name) {
-		// 首先查找用户自定义fragment
-		UserFragment userFragment = userFragmentDao.selectBySpaceAndName(space, name);
-		if (userFragment == null) { // 查找全局
-			userFragment = userFragmentDao.selectGlobalByName(name);
-		}
-		if (userFragment != null) {
-			return userFragment;
-		}
-		for (Fragment fragment : fragments) {
-			if (fragment.getName().equals(name)) {
-				return fragment;
+	private void clearFragmentCache(Fragment fragment) {
+		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(fragment));
+		if (fragment instanceof UserFragment) {
+			UserFragment userFragment = (UserFragment) fragment;
+			// 如果不是全局的，清除可能存在的全局模板缓存
+			if (!userFragment.isGlobal()) {
+				UserFragment uf = new UserFragment();
+				uf.setGlobal(true);
+				uf.setName(userFragment.getName());
+				uf.setSpace(userFragment.getSpace());
+
+				UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(uf));
 			}
 		}
-		return null;
+		// 清除默认模板缓存
+		Fragment defaultFragment = new Fragment();
+		defaultFragment.setName(fragment.getName());
+		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(defaultFragment));
 	}
 
 	/*
@@ -869,304 +608,59 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 	}
 
-	private final class UICacheRender {
-
-		private final LoadingCache<PageLoader, ParseResultWrapper> cache = CacheBuilder.newBuilder()
-				.build(new CacheLoader<PageLoader, ParseResultWrapper>() {
-
-					@Override
-					public ParseResultWrapper load(PageLoader loader) throws Exception {
-						final Page db = loader.loadFromDb();
-						ParseResult parseResult = TemplateParser.parse(db.getTpl());
-						return new ParseResultWrapper(parseResult, db);
-					}
-				});
-
-		private final LoadingCache<FragmentKey, Optional<Fragment>> fragmentCache = CacheBuilder.newBuilder()
-				.build(new CacheLoader<FragmentKey, Optional<Fragment>>() {
-
-					@Override
-					public Optional<Fragment> load(FragmentKey key) throws Exception {
-						return Optional.fromNullable(queryFragment(key.space, key.name));
-					}
-
-				});
-
-		private ParseResultWrapper get(PageLoader loader) throws LogicException {
-			try {
-				return cache.get(loader);
-			} catch (ExecutionException e) {
-				Throwable cause = e.getCause();
-				if (cause instanceof LogicException) {
-					throw (LogicException) cause;
-				}
-				throw new SystemException(e.getMessage(), e);
-			}
+	private void evitFragmentCache(String... fragments) {
+		if (fragments == null || fragments.length == 0) {
+			return;
 		}
-
-		public RenderedPage render(Page db) throws LogicException {
-			ParseResult result = TemplateParser.parse(db.getTpl());
-			return render(db, result, null, true);
-		}
-
-		public RenderedPage renderPreview(PageLoader loader) throws LogicException {
-			ParseResultWrapper cached = get(loader);
-			ParseResult result = cached.parseResult;
-			return render(cached.page, result, null, true);
-		}
-
-		public RenderedPage render(PageLoader loader, Params params) throws LogicException {
-			ParseResultWrapper cached = get(loader);
-			ParseResult result = cached.parseResult;
-			return render(cached.page, result, params, false);
-		}
-
-		private RenderedPage render(Page page, ParseResult result, Params params, boolean preview)
-				throws LogicException {
-			List<DataBind<?>> binds = Lists.newArrayList();
-			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-			Space space = page.getSpace();
-			if (result.hasDataTag()) {
-				for (DataTag dataTag : result.getDataTags()) {
-					//
-					DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-					if (processor != null) {
-						binds.add(preview ? processor.previewData(dataTag.getAttrs())
-								: processor.getData(space, params, dataTag.getAttrs()));
-					}
+		fragmentCache.asMap().keySet().removeIf(x -> {
+			for (String name : fragments) {
+				if (x.name.equals(name)) {
+					return true;
 				}
 			}
-			if (result.hasFragment()) {
-				fragmentMap.putAll(loadFragments(space, result.getFragments()));
-			}
-			return new RenderedPage((Page) page.clone(), binds, fragmentMap);
-		}
-
-		private Map<String, Fragment> loadFragments(Space space, Set<String> names) {
-			Map<String, Fragment> fragmentMap = Maps.newLinkedHashMap();
-			for (String fragmentName : names) {
-				Optional<Fragment> optionalFragment = fragmentCache.getUnchecked(new FragmentKey(space, fragmentName));
-				if (optionalFragment.isPresent()) {
-					fragmentMap.put(fragmentName, optionalFragment.get());
-				}
-			}
-			return fragmentMap;
-		}
-
-		public void evit(PageLoader key) {
-			cache.invalidate(key);
-		}
-
-		public void clear() {
-			cache.invalidateAll();
-		}
-
-		public void evit(String... fragments) {
-			if (fragments == null || fragments.length == 0) {
-				return;
-			}
-			fragmentCache.asMap().keySet().removeIf(x -> {
-				for (String name : fragments) {
-					if (x.name.equals(name)) {
-						return true;
-					}
-				}
-				return false;
-			});
-		}
-
-		private final class FragmentKey {
-			private final Space space;
-			private final String name;
-
-			private FragmentKey(Space space, String name) {
-				super();
-				this.space = space;
-				this.name = name;
-			}
-
-			@Override
-			public int hashCode() {
-				return Objects.hash(this.space, this.name);
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				if (Validators.baseEquals(this, obj)) {
-					FragmentKey other = (FragmentKey) obj;
-					return Objects.equals(this.space, other.space) && Objects.equals(this.name, other.name);
-				}
-				return false;
-			}
-		}
-
-		private final class ParseResultWrapper {
-			private ParseResult parseResult;
-			private Page page;
-
-			public ParseResultWrapper(ParseResult parseResult, Page page) {
-				this.parseResult = parseResult;
-				this.page = page;
-			}
-		}
-	}
-
-	private interface PageLoader {
-		Page loadFromDb() throws LogicException;
-	}
-
-	private final class SysPageLoader implements PageLoader {
-		private final PageTarget target;
-		private final Space space;
-
-		public SysPageLoader(PageTarget target, Space space) {
-			super();
-			this.target = target;
-			this.space = space;
-		}
-
-		@Override
-		public Page loadFromDb() throws LogicException {
-			return querySysPage(space, target);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.target, this.space);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				SysPageLoader other = (SysPageLoader) obj;
-				return Objects.equals(this.target, other.target) && Objects.equals(this.space, other.space);
-			}
 			return false;
-		}
+		});
 	}
 
-	private final class ErrorPageLoader implements PageLoader {
-		private final ErrorCode errorCode;
-		private final Space space;
-
-		public ErrorPageLoader(ErrorCode errorCode, Space space) {
-			this.errorCode = errorCode;
-			this.space = space;
+	private SysPage querySysPage(Space space, PageTarget target) {
+		SysPage sysPage = sysPageDao.selectBySpaceAndPageTarget(space, target);
+		if (sysPage == null) {
+			sysPage = new SysPage(space, target);
+			sysPage.setTpl(sysPageDefaultParsedTpls.get(target));
 		}
-
-		@Override
-		public Page loadFromDb() throws LogicException {
-			return queryErrorPage(space, errorCode);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.errorCode, this.space);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				ErrorPageLoader other = (ErrorPageLoader) obj;
-				return Objects.equals(this.errorCode, other.errorCode) && Objects.equals(this.space, other.space);
-			}
-			return false;
-		}
+		sysPage.setSpace(space);
+		return sysPage;
 	}
 
-	private final class LockPageLoader implements PageLoader {
-		private final String lockType;
-		private final Space space;
-
-		public LockPageLoader(String lockType, Space space) {
-			this.lockType = lockType;
-			this.space = space;
+	private ErrorPage queryErrorPage(Space space, ErrorCode code) {
+		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(space, code);
+		if (db == null) {
+			db = new ErrorPage(space, code);
+			db.setTpl(errorPageDefaultParsedTpls.get(code));
 		}
-
-		@Override
-		public Page loadFromDb() throws LogicException {
-			return queryLockPage(space, lockType);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.lockType, this.space);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				LockPageLoader other = (LockPageLoader) obj;
-				return Objects.equals(this.lockType, other.lockType) && Objects.equals(this.space, other.space);
-			}
-			return false;
-		}
+		return db;
 	}
 
-	private final class UserPageLoader implements PageLoader {
-
-		private final String alias;
-		private final Space space;
-
-		public UserPageLoader(Space space, String alias) {
-			this.alias = alias;
-			this.space = space;
+	private LockPage queryLockPage(Space space, String lockType) throws LogicException {
+		checkLockType(lockType);
+		LockPage lockPage = lockPageDao.selectBySpaceAndLockType(space, lockType);
+		if (lockPage == null) {
+			lockPage = new LockPage(space, lockType);
+			lockPage.setTpl(lockPageDefaultTpls.get(lockType));
 		}
-
-		@Override
-		public Page loadFromDb() throws LogicException {
-			UserPage db = userPageDao.selectBySpaceAndAlias(space, alias);
-			if (db == null || !Objects.equals(SpaceContext.get(), db.getSpace())) {
-				throw new LogicException(USER_PAGE_NOT_EXISTS);
-			}
-			return db;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.alias, this.space);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				UserPageLoader other = (UserPageLoader) obj;
-				return Objects.equals(this.alias, other.alias) && Objects.equals(this.space, other.space);
-			}
-			return false;
-		}
-	}
-
-	private final class ExpandedPageLoader implements PageLoader {
-
-		private final Integer id;
-
-		public ExpandedPageLoader(Integer id) {
-			super();
-			this.id = id;
-		}
-
-		@Override
-		public Page loadFromDb() throws LogicException {
-			return queryExpandedPage(id);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.id);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				ExpandedPageLoader other = (ExpandedPageLoader) obj;
-				return Objects.equals(this.id, other.id);
-			}
-			return false;
-		}
+		lockPage.setSpace(space);
+		return lockPage;
 	}
 
 	public void setProcessors(List<DataTagProcessor<?>> processors) {
+		for (DataTagProcessor<?> processor : processors) {
+			if (!processor.getName().matches(DATA_TAG_PROCESSOR_NAME_PATTERN)) {
+				throw new SystemException("数据名之内为中英文或者数字");
+			}
+			if (!processor.getDataName().matches(DATA_TAG_PROCESSOR_DATA_NAME_PATTERN)) {
+				throw new SystemException("数据dataName只能为英文字母");
+			}
+		}
 		this.processors = processors;
 	}
 
@@ -1174,31 +668,29 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		this.fragments = fragments;
 	}
 
-	/**
-	 * 实现了LockResource的用户自定义渲染页面，用于解锁
-	 * 
-	 * @author mhlx
-	 *
-	 */
-	public final class UserRenderedPage extends RenderedPage implements LockResource {
+	private final class FragmentKey {
+		private final Space space;
+		private final String name;
 
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-		private UserRenderedPage(RenderedPage source) {
-			super(source);
+		private FragmentKey(Space space, String name) {
+			super();
+			this.space = space;
+			this.name = name;
 		}
 
 		@Override
-		public String getResourceId() {
-			return ((UserPage) getPage()).getResourceId();
+		public int hashCode() {
+			return Objects.hash(this.space, this.name);
 		}
 
 		@Override
-		public String getLockId() {
-			return ((UserPage) getPage()).getLockId();
+		public boolean equals(Object obj) {
+			if (Validators.baseEquals(this, obj)) {
+				FragmentKey other = (FragmentKey) obj;
+				return Objects.equals(this.space, other.space) && Objects.equals(this.name, other.name);
+			}
+			return false;
 		}
 	}
+
 }

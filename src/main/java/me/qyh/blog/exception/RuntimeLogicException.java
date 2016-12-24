@@ -13,47 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.bean;
+package me.qyh.blog.exception;
 
-import java.io.Serializable;
-
-import me.qyh.blog.ui.ExportPage;
+import me.qyh.blog.message.Message;
 
 /**
- * 导入页面封装
+ * 业务异常，这个异常不做任何的日志
  * 
  * @author Administrator
  *
  */
-public class ImportPageWrapper implements Serializable{
+public class RuntimeLogicException extends RuntimeException {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private int index;// 页面序号
-	private ExportPage page;// 页面
+
+	private final LogicException logicException;
 
 	/**
-	 * 构造器
-	 * 
-	 * @param index
-	 *            序号
-	 * @param page
-	 *            页面
+	 * @param message
+	 *            异常信息
 	 */
-	public ImportPageWrapper(int index, ExportPage page) {
-		super();
-		this.index = index;
-		this.page = page;
+	public RuntimeLogicException(LogicException logicException) {
+		this.logicException = logicException;
 	}
 
-	public int getIndex() {
-		return index;
+	public RuntimeLogicException(Message message) {
+		this.logicException = new LogicException(message);
 	}
 
-	public ExportPage getPage() {
-		return page;
+	public LogicException getLogicException() {
+		return logicException;
 	}
 
+	@Override
+	public Throwable fillInStackTrace() {
+		return this;
+	}
 }

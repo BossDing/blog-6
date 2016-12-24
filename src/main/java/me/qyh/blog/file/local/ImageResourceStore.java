@@ -265,7 +265,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (resize == null) {
 			return getUrl(path);
 		}
-		return StringUtils.cleanPath(urlPrefix + generateResizePathFromPath(resize, path));
+		return urlPrefix + cleanPath(generateResizePathFromPath(resize, path));
 	}
 
 	@Override

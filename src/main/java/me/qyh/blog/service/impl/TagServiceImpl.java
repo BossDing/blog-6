@@ -20,6 +20,7 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,6 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
-import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
@@ -43,15 +43,15 @@ public class TagServiceImpl implements TagService, InitializingBean {
 	@Autowired
 	private ArticleTagDao articleTagDao;
 	@Autowired
-	private NRTArticleIndexer articleIndexer;
-	@Autowired
 	private ConfigService configSerivce;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	/**
 	 * 用于重建文章索引
 	 */
 	@Autowired
-	private ArticleService articleService;
+	private ArticleIndexer articleIndexer;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -79,13 +79,16 @@ public class TagServiceImpl implements TagService, InitializingBean {
 			} else {
 				articleTagDao.merge(db, newTag);
 				tagDao.deleteById(db.getId());
-				articleIndexer.removeTag(db.getName());
+				articleIndexer.getIndexer().removeTag(db.getName());
 			}
 		} else {
 			tagDao.update(tag);
 		}
-		articleIndexer.addTags(tag.getName());
-		articleService.rebuildIndex(true);
+		articleIndexer.getIndexer().addTags(tag.getName());
+		threadPoolTaskExecutor.execute(() -> {
+			articleIndexer.rebuildIndex();
+		});
+
 	}
 
 	@Override
@@ -97,14 +100,16 @@ public class TagServiceImpl implements TagService, InitializingBean {
 		}
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
-		articleIndexer.removeTag(db.getName());
-		articleService.rebuildIndex(true);
+		articleIndexer.getIndexer().removeTag(db.getName());
+		threadPoolTaskExecutor.execute(() -> {
+			articleIndexer.rebuildIndex();
+		});
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		for (Tag tag : tagDao.selectAll()) {
-			articleIndexer.addTags(tag.getName());
+			articleIndexer.getIndexer().addTags(tag.getName());
 		}
 	}
 }

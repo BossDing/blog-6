@@ -44,6 +44,7 @@ import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
@@ -192,7 +193,12 @@ public class MetaweblogHandler {
 				throw new LogicException(res.getError());
 			} else {
 				Map<String, String> urlMap = Maps.newHashMap();
-				urlMap.put("url", res.getThumbnailUrl().getMiddle());
+				ThumbnailUrl url = res.getThumbnailUrl();
+				if (url != null) {
+					urlMap.put("url", url.getMiddle());
+				} else {
+					urlMap.put("url", res.getUrl());
+				}
 				return urlMap;
 			}
 		});

@@ -26,14 +26,31 @@ public class Page extends BaseEntity implements Cloneable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected static final String PREFIX = "Page:";
-
 	private Space space;// 所属空间
 	private String tpl;// 组织片段，用来将片段组织在一起
 	private PageType type;
 
 	public enum PageType {
-		SYSTEM, USER, EXPANDED, ERROR, LOCK
+		SYSTEM, USER, ERROR, LOCK, DISPOSIBLE
+	}
+
+	public Page() {
+		super();
+	}
+
+	public Page(Integer id) {
+		super(id);
+	}
+
+	public Page(Space space) {
+		this.space = space;
+	}
+
+	public Page(Page page) {
+		this.id = page.id;
+		this.space = page.space;
+		this.tpl = page.tpl;
+		this.type = page.type;
 	}
 
 	public Space getSpace() {
@@ -58,26 +75,6 @@ public class Page extends BaseEntity implements Cloneable {
 
 	public void setType(PageType type) {
 		this.type = type;
-	}
-
-	public String getTemplateName() {
-		return PREFIX + getId() + "-" + getType();
-	}
-
-	public Page() {
-		super();
-	}
-
-	public Page(Integer id) {
-		super(id);
-	}
-
-	public Page(Space space) {
-		this.space = space;
-	}
-
-	public static boolean isTpl(String templateName) {
-		return templateName.startsWith(PREFIX);
 	}
 
 	public Page toExportPage() {

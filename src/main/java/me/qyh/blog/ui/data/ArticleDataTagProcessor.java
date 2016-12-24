@@ -17,6 +17,7 @@ package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.Params;
 
 /**
  * 文章详情数据数据器
@@ -44,7 +44,6 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	@Autowired
 	private ArticleService articleService;
 
-	public static final String PARAMETER_KEY = "articleIdOrAlias";
 	private static final String ID_OR_ALIAS = "idOrAlias";
 
 	public ArticleDataTagProcessor(String name, String dataName) {
@@ -52,7 +51,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article buildPreviewData(Attributes attributes) {
+	protected Article buildPreviewData(Space space, Attributes attributes) {
 		Article article = new Article();
 		article.setComments(0);
 		article.setEditor(Editor.MD);
@@ -66,10 +65,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
 		article.setAllowComment(true);
 
-		Space space = new Space();
-		space.setId(1);
-		space.setAlias("preview");
-		article.setSpace(space);
+		article.setSpace(getSpace());
 
 		article.setStatus(ArticleStatus.PUBLISHED);
 		article.setSummary("这是预览内容");
@@ -82,8 +78,9 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article query(Space space, Params params, Attributes attributes) throws LogicException {
-		String idOrAlias = params.get(PARAMETER_KEY, String.class);
+	protected Article query(Space space, Map<String, Object> variables, Attributes attributes) throws LogicException {
+		Object variable = variables.get(ID_OR_ALIAS);
+		String idOrAlias = variable == null ? null : variable.toString();
 		if (idOrAlias == null) {
 			// 尝试从属性中获取ID
 			idOrAlias = attributes.get(ID_OR_ALIAS);
@@ -95,7 +92,6 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		params.add("article", article);
 		return article;
 	}
 

@@ -17,11 +17,16 @@ package me.qyh.blog.ui;
 
 import org.thymeleaf.spring4.SpringTemplateEngine;
 
+import me.qyh.blog.ui.dialect.PageDialect;
+import me.qyh.blog.ui.dialect.TransactionDialect;
+
 public class UITemplateEngine extends SpringTemplateEngine {
 
 	public UITemplateEngine() {
 		super();
 		addDialect(new PageDialect());
+		addDialect(new TransactionDialect());
+		setCacheManager(new UICacheManager());
 	}
 
 }

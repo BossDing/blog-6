@@ -18,6 +18,7 @@ package me.qyh.blog.ui.data;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.Params;
 
 public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Article>> {
 
@@ -45,10 +45,11 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> query(Space space, Params params, Attributes attributes) throws LogicException {
-		Article article = params.get("article", Article.class);
+	protected List<Article> query(Space space, Map<String, Object> variables, Attributes attributes)
+			throws LogicException {
+		Article article = (Article) variables.get("article");
 		if (article == null) {
-			String idOrAlias = attributes.get("article");
+			String idOrAlias = attributes.get("idOrAlias");
 			if (idOrAlias != null) {
 				return articleService.findSimilar(idOrAlias, limit);
 			}
@@ -60,7 +61,7 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> buildPreviewData(Attributes attributes) {
+	protected List<Article> buildPreviewData(Space space, Attributes attributes) {
 		List<Article> articles = Lists.newArrayList();
 		Article article = new Article();
 		article.setComments(0);
@@ -69,11 +70,7 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 		article.setId(1);
 		article.setIsPrivate(false);
 		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
-		Space space = new Space();
-		space.setId(1);
-		space.setAlias("preview");
-		space.setName("preview");
-		article.setSpace(space);
+		article.setSpace(getSpace());
 		article.setSummary("这是预览内容");
 		article.setTitle("预览内容");
 		Set<Tag> tags = Sets.newHashSet();

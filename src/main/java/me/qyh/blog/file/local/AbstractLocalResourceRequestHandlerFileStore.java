@@ -127,7 +127,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		if (!key.startsWith("/")) {
 			path = "/" + key;
 		}
-		return StringUtils.cleanPath(urlPrefix + path);
+		return urlPrefix + cleanPath(path);
 	}
 
 	@Override
@@ -137,7 +137,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			if (!key.startsWith("/")) {
 				path = "/" + key;
 			}
-			return StringUtils.cleanPath(urlHelper.getUrl() + urlPatternPrefix + "_download/" + path);
+			return urlHelper.getUrl() + cleanPath(urlPatternPrefix + "_download/" + path);
 		} else {
 			return getUrl(key);
 		}
@@ -298,6 +298,18 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	protected static String cleanPath(String path) {
+		String result = StringUtils.cleanPath(path);
+		do {
+			result = result.replace("//", "/");
+		} while (result.indexOf("//") != -1);
+		return result;
+	}
+
+	public static void main(String[] args) {
+		System.out.println(cleanPath("http://www.qyh.me/file//123.jpg"));
 	}
 
 }

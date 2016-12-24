@@ -13,24 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.ui;
+package me.qyh.blog.ui.dialect;
 
 import java.io.Writer;
 import java.util.Map;
 
+import org.springframework.context.ApplicationContext;
+import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.IEngineContext;
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.engine.TemplateModel;
+import org.thymeleaf.context.IWebContext;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IAttribute;
-import org.thymeleaf.model.IModel;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
+import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
 import com.google.common.collect.Maps;
 
+import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.TemplateUtils;
+import me.qyh.blog.ui.UIStackoverflowError;
 import me.qyh.blog.ui.fragment.Fragment;
 
 /**
@@ -45,7 +51,6 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 	private static final String ATTRIBUTES = "attributes";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME = "name";
-	private static final String TEMPLATE_NAME = "templateName";
 
 	public FragmentTagProcessor(String dialectPrefix) {
 		super(TemplateMode.HTML, // This processor will apply only to HTML mode
@@ -57,62 +62,55 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 				PRECEDENCE); // Precedence (inside dialect's own precedence)
 	}
 
+	private UIService uiService;
+
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		RenderedPage page = UIContext.get();
-		if (page != null) {
-			IAttribute nameAtt = tag.getAttribute(NAME);
-			if (nameAtt != null) {
-				String name = nameAtt.getValue();
-				Fragment fragment = page.getFragmentMap().get(name);
-				if (fragment != null) {
-					Attributes attributes = handleAttributes(tag);
-					if (attributes == null) {
-						attributes = new Attributes();
-					}
-					IEngineContext iEngineContext = (IEngineContext) context;
-					iEngineContext.setVariable(ATTRIBUTES, attributes);
-					iEngineContext.setVariable(TEMPLATE_NAME, page.getTemplateName());
-					IModel model = context.getModelFactory().parse(context.getTemplateData(), fragment.getTpl());
-					try (Writer writer = new FastStringWriter(200)) {
-						context.getConfiguration().getTemplateManager().process((TemplateModel) model, iEngineContext,
-								writer);
-						structureHandler.replaceWith(writer.toString(), false);
-					} catch (Throwable e) {
-						throw new FragmentTagParseException(e, name);
-					} finally {
-						iEngineContext.removeVariable(ATTRIBUTES);
-					}
-					return;
+		if (uiService == null) {
+			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
+			if (ctx != null) {
+				uiService = ctx.getBean(UIService.class);
+			}
+		}
+		if (uiService == null) {
+			structureHandler.removeElement();
+			return;
+		}
+		IAttribute nameAtt = tag.getAttribute(NAME);
+		if (nameAtt != null) {
+			String name = nameAtt.getValue();
+			Fragment fragment = uiService.queryFragment(name);
+			if (fragment != null) {
+				Attributes attributes = handleAttributes(tag);
+				if (attributes == null) {
+					attributes = new Attributes();
 				}
+				IWebContext iEngineContext = (IWebContext) context;
+				((IEngineContext) context).setVariable(ATTRIBUTES, attributes);
+				String templateName = TemplateUtils.getTemplateName(fragment);
+				Writer writer = new FastStringWriter(200);
+				try {
+					context.getConfiguration().getTemplateManager().parseAndProcess(
+							new TemplateSpec(templateName, null, TemplateMode.HTML, null), iEngineContext, writer);
+					structureHandler.replaceWith(writer.toString(), false);
+				} catch (Exception e) {
+					structureHandler.removeElement();
+					throw new TemplateProcessingException(e.getMessage(), e);
+				} catch (StackOverflowError e) {
+					structureHandler.removeElement();
+					if (tag.hasLocation()) {
+						throw new UIStackoverflowError(templateName, tag.getCol(), tag.getLine(), e);
+					} else {
+						throw new UIStackoverflowError(templateName, null, null, e);
+					}
+				} finally {
+					((IEngineContext) context).removeVariable(ATTRIBUTES);
+				}
+				return;
 			}
 		}
 		structureHandler.removeElement();
-	}
-
-	public static final class FragmentTagParseException extends RuntimeException {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private final Throwable originalThrowable;
-		private final String fragment;
-
-		public FragmentTagParseException(Throwable originalThrowable, String fragment) {
-			this.originalThrowable = originalThrowable;
-			this.fragment = fragment;
-		}
-
-		public Throwable getOriginalThrowable() {
-			return originalThrowable;
-		}
-
-		public String getFragment() {
-			return fragment;
-		}
-
 	}
 
 	protected Attributes handleAttributes(IProcessableElementTag tag) {

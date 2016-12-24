@@ -40,9 +40,9 @@ import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.TplRender;
 import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -59,9 +59,9 @@ public class UserPageMgrController extends BaseMgrController {
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
-	private TplRender tplRender;
-	@Autowired
 	private PageValidator pageValidator;
+	@Autowired
+	private UIRender uiRender;
 
 	@InitBinder(value = "userPage")
 	protected void initBinder(WebDataBinder binder) {
@@ -87,12 +87,6 @@ public class UserPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		RenderedPage page = uiService.renderPreviewPage(userPage);
-		try {
-			tplRender.tryRender(page, request, response);
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
-		}
 		if (Validators.isEmptyOrNull(userPage.getLockId(), true)) {
 			userPage.setLockId(null);
 		}
@@ -125,9 +119,9 @@ public class UserPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
+		String rendered;
 		try {
-			RenderedPage page = uiService.renderPreviewPage(userPage);
-			String rendered = tplRender.tryRender(page, request, response);
+			rendered = uiRender.render(new DisposiblePage(userPage), request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

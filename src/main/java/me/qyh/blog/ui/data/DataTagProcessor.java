@@ -15,14 +15,16 @@
  */
 package me.qyh.blog.ui.data;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.Params;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.interceptor.SpaceContext;
 
 public abstract class DataTagProcessor<T> {
 
@@ -34,6 +36,20 @@ public abstract class DataTagProcessor<T> {
 
 	private String name;// 数据名，唯一
 	private String dataName;// 默认数据绑定名，唯一
+
+	protected static final Space previewSpace = new Space();
+
+	static {
+		previewSpace.setAlias("preview");
+		previewSpace.setArticleHidden(false);
+		previewSpace.setArticlePageSize(10);
+		previewSpace.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+		previewSpace.setId(1);
+		previewSpace.setIsDefault(false);
+		previewSpace.setIsPrivate(false);
+		previewSpace.setName("Preview");
+		previewSpace.setLockId(null);
+	}
 
 	/**
 	 * 构造器
@@ -48,14 +64,15 @@ public abstract class DataTagProcessor<T> {
 		this.dataName = dataName;
 	}
 
-	public final DataBind<T> getData(Space space, Params params, Map<String, String> attributes) throws LogicException {
+	public final DataBind<T> getData(Space space, Map<String, Object> variables, Map<String, String> attributes)
+			throws LogicException {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
 		}
 		T result = null;
 		Attributes atts = new Attributes(attributes);
 		try {
-			result = query(space, params, atts);
+			result = query(space, variables, atts);
 		} catch (LogicException e) {
 			if (!ignoreLogicException(attributes)) {
 				throw e;
@@ -89,12 +106,12 @@ public abstract class DataTagProcessor<T> {
 	 * @param attributes
 	 * @return
 	 */
-	public final DataBind<T> previewData(Map<String, String> attributes) {
+	public final DataBind<T> previewData(Space space, Map<String, String> attributes) {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
 		}
 		Attributes atts = new Attributes(attributes);
-		T result = buildPreviewData(atts);
+		T result = buildPreviewData(space, atts);
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
@@ -111,9 +128,9 @@ public abstract class DataTagProcessor<T> {
 	 * 
 	 * @return
 	 */
-	protected abstract T buildPreviewData(Attributes attributes);
+	protected abstract T buildPreviewData(Space space, Attributes attributes);
 
-	protected abstract T query(Space space, Params params, Attributes attributes) throws LogicException;
+	protected abstract T query(Space space, Map<String, Object> variables, Attributes attributes) throws LogicException;
 
 	public String getName() {
 		return name;
@@ -121,6 +138,14 @@ public abstract class DataTagProcessor<T> {
 
 	public String getDataName() {
 		return dataName;
+	}
+
+	protected Space getSpace() {
+		Space current = SpaceContext.get();
+		if (current == null) {
+			return previewSpace;
+		}
+		return current;
 	}
 
 	protected final class Attributes {

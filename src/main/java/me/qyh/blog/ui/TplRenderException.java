@@ -23,19 +23,13 @@ public class TplRenderException extends Exception {
 	private static final long serialVersionUID = 1L;
 
 	private final TplRenderErrorDescription renderErrorDescription;
-	private final Throwable original;
 
-	public TplRenderException(TplRenderErrorDescription description, Throwable original) {
+	public TplRenderException(TplRenderErrorDescription description, Throwable ex) {
+		super(ex);
 		this.renderErrorDescription = description;
-		this.original = original;
 	}
 
 	public TplRenderErrorDescription getRenderErrorDescription() {
 		return renderErrorDescription;
 	}
-
-	public Throwable getOriginal() {
-		return original;
-	}
-
 }

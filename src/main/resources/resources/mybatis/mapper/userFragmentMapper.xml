@@ -38,6 +38,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			blog_fragment_user
 		WHERE 
 			fragment_name = #{name}
+			AND is_global = FALSE
 		<choose>
 			<when test="space == null">
 				AND space_id IS NULL

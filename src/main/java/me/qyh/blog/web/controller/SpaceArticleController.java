@@ -17,6 +17,7 @@ package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -38,11 +39,8 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.Params;
-import me.qyh.blog.ui.RenderedPage;
-import me.qyh.blog.ui.data.ArticleDataTagProcessor;
-import me.qyh.blog.ui.data.ArticlesDataTagProcessor;
+import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
@@ -53,8 +51,6 @@ public class SpaceArticleController extends BaseController {
 
 	@Autowired
 	private ArticleService articleService;
-	@Autowired
-	private UIService uiService;
 
 	private static final AntPathMatcher apm = new AntPathMatcher();
 
@@ -67,9 +63,8 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping("{idOrAlias}")
-	public RenderedPage article(@PathVariable(value = "idOrAlias") String idOrAlias) throws LogicException {
-		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL,
-				new Params().add(ArticleDataTagProcessor.PARAMETER_KEY, idOrAlias));
+	public Page article(@PathVariable(value = "idOrAlias") String idOrAlias) throws LogicException {
+		return new SysPage(SpaceContext.get(), PageTarget.ARTICLE_DETAIL);
 	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
@@ -90,15 +85,16 @@ public class SpaceArticleController extends BaseController {
 	}
 
 	@RequestMapping(value = "list")
-	public RenderedPage list(@Validated ArticleQueryParam articleQueryParam, BindingResult result)
+	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result, ModelMap model)
 			throws LogicException {
 		if (result.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
 			articleQueryParam.setCurrentPage(1);
 		}
 		setParam(articleQueryParam);
-		return uiService.renderSysPage(SpaceContext.get(), PageTarget.ARTICLE_LIST,
-				new Params().add(ArticlesDataTagProcessor.PARAMETER_KEY, articleQueryParam));
+		model.addAttribute(ArticleQueryParam.class.getName(), articleQueryParam);
+
+		return new SysPage(SpaceContext.get(), PageTarget.ARTICLE_LIST);
 	}
 
 	private void setParam(ArticleQueryParam articleQueryParam) {
