@@ -88,6 +88,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND is_global = #{global}
 			</if>
 		</where>
+		ORDER BY fragment_create_date DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
 	

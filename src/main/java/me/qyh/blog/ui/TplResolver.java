@@ -62,9 +62,11 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		if (TemplateUtils.isDisposablePageTemplate(template)) {
 			DisposiblePage page = DisposablePageContext.get();
 			if (page == null) {
-				throw new SystemException("DisposiblePage没有在一个上下文中");
+				// may be th:replace="Page:Disposable"?
+				template = EMPTY;
+			} else {
+				return new PageResource(page);
 			}
-			return new PageResource(page);
 		}
 		if (TemplateUtils.isPageTemplate(template)) {
 			try {

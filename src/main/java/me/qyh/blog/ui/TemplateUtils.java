@@ -301,5 +301,4 @@ public final class TemplateUtils {
 		}
 		return new Fragment(fragment);
 	}
-
 }

@@ -40,6 +40,9 @@ file_mode = "HTML";
 			      CodeMirror.commands["selectAll"](editor);
 			      autoFormatSelection()
 				break;
+			case 'lookup':
+				lookup();
+				break;
 			default:
 				break;
 			}
@@ -188,34 +191,35 @@ file_mode = "HTML";
 			return ;
 		}
 		data = data.data;
-		if (data.line) {
-			if(data.template && data.template.fragment){
-				var fragment = data.template.fragment;
-				if (data.expression) {
-					bootbox.alert(fragment+"第" + data.line + "行,"
-							+ data.col + "列，表达式：" + data.expression
-							+ "发生错误")
-				} else {
-					bootbox.alert(fragment+"第" + data.line + "行,"
-							+ data.col + "列发生错误")
-				}
-			} else {
-				var html = '';
-				if (data.templateName) {
-					html += '模板:' + data.templateName + ":"
-				}
-				if (data.expression) {
-					bootbox.alert(html + "第" + data.line + "行,"
-							+ data.col + "列，表达式：" + data.expression
-							+ "发生错误")
-				} else {
-					bootbox.alert(html + "第" + data.line + "行,"
-							+ data.col + "列发生错误")
-				}
-				if (data.tpl){
-					editor.setValue(fragment.tpl);
+		var infos = data.templateErrorInfos;
+		var html = '<div class="table-responsive">';
+		html += '<table class="table">';
+		html += '<tr>';
+		html += '<th>模板名</th>';
+		html += '<th>行号</th>';
+		html += '<th>列号</th>';
+		html += '</tr>';
+		for(var i=0;i<infos.length;i++){
+			var info = infos[i];
+			html += '<tr >';
+			html += '<td >'+info.templateName+'</td>';
+			html += '<td>'+(info.line ? info.line : '')+'</td>';
+			html += '<td>'+(info.col ? info.col : '')+'</td>';
+			html += '</tr>';
+		}
+		html += '</table>';
+		html += '</div>';
+		if(data.expression){
+			html += '<p>表达式:<span >'+data.expression+'</span></p>'
+		}
+		bootbox.dialog({
+			title : '渲染异常',
+			message : html,
+			buttons : {
+				success : {
+					label : "确定",
+					className : "btn-success"
 				}
 			}
-		}
-		
+		});
 	}

@@ -19,7 +19,7 @@ import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
 
-import me.qyh.blog.ui.dialect.TransactionContext;
+import me.qyh.blog.ui.ParseContext.ParseStatus;
 
 public class RenderedSupport {
 
@@ -40,12 +40,14 @@ public class RenderedSupport {
 			ResponseWrapper wrapper = new ResponseWrapper(response);
 			view.render(model, request, wrapper);
 			commit();
+			ParseContext.setStatus(ParseStatus.COMPLETE);
 			return wrapper.getRendered();
 		} catch (Throwable e) {
 			rollBack(e);
+			ParseContext.setStatus(ParseStatus.BREAK);
 			throw UIExceptionUtils.convert(templateName, e);
 		} finally {
-			TransactionContext.remove();
+			ParseContext.remove();
 		}
 	}
 
@@ -53,7 +55,7 @@ public class RenderedSupport {
 	 * @see TransactionTemplate#execute(org.springframework.transaction.support.TransactionCallback)
 	 */
 	private void rollBack(Throwable ex) {
-		TransactionStatus status = TransactionContext.get();
+		TransactionStatus status = ParseContext.getTransactionStatus();
 		if (status != null && !status.isCompleted()) {
 			try {
 				this.transactionManager.rollback(status);
@@ -72,7 +74,7 @@ public class RenderedSupport {
 	}
 
 	private void commit() {
-		TransactionStatus status = TransactionContext.get();
+		TransactionStatus status = ParseContext.getTransactionStatus();
 		if (status != null && !status.isCompleted()) {
 			transactionManager.commit(status);
 		}

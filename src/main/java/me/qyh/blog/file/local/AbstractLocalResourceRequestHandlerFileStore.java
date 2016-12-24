@@ -308,8 +308,4 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return result;
 	}
 
-	public static void main(String[] args) {
-		System.out.println(cleanPath("http://www.qyh.me/file//123.jpg"));
-	}
-
 }

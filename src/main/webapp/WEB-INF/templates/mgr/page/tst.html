@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/page/head :: head('自定义页面页面模板编辑')"></head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('tpl-user')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-8">
+					<div class="md-header btn-toolbar">
+						<div class="btn-group">
+							<button class="btn-default btn-sm btn" type="button"
+								data-handler="file">文件</button>
+							<button class="btn-default btn-sm btn" type="button"
+								data-handler="format">格式化</button>
+						</div>
+					</div>
+					<textarea style="display: none;" id="editor"></textarea>
+				</div>
+				<div class="col-md-4">
+					<ul id="myTab" class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a href="#dataTags"
+							id="data-tab" role="tab" data-toggle="tab" aria-controls="home"
+							aria-expanded="true">数据</a></li>
+						<li role="presentation"><a href="#fragment" role="tab"
+							id="fragment-tab" data-toggle="tab" aria-controls="profile">模板片段</a></li>
+					</ul>
+					<div class="tab-content">
+						<div role="tabpanel" class="tab-pane fade in active" id="dataTags"
+							aria-labelledby="data-tab"></div>
+						<div role="tabpanel" class="tab-pane fade" id="fragment"
+							aria-labelledby="fragment-tab">
+							<ul id="fragmentTab" class="nav nav-tabs" role="tablist"
+								style="margin-top: 10px">
+								<li role="presentation" class="active"><a href="#sys"
+									id="sys-tab" role="tab" data-toggle="tab" aria-controls="home"
+									aria-expanded="true">系统模板片段</a></li>
+								<li role="presentation"><a href="#user" role="tab"
+									id="user-tab" data-toggle="tab" aria-controls="profile">自定义模板片段</a></li>
+								<li role="presentation"><a href="#nf" role="tab"
+									id="nf-tab" data-toggle="tab" aria-controls="profile">新增模板片段</a></li>
+							</ul>
+							<div class="tab-content">
+								<div role="tabpanel" class="tab-pane fade in active" id="sys"
+									aria-labelledby="sys-tab"></div>
+								<div role="tabpanel" class="tab-pane fade in active" id="user"
+									aria-labelledby="user-tab"></div>
+								<div role="tabpanel" class="tab-pane fade in active" id="nf"
+									aria-labelledby="nf-tab">
+									<div style="margin-top: 10px">
+										<button class="btn btn-default" id="new-fragment-btn">新增</button>
+										<div id="newFragmentsContainr"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal " id="fragmentsModal" tabindex="-1" role="dialog"
+		aria-labelledby="fragmentsLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="fragmentsModalLabel">模板片段</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<div class="form-group">
+							<label for="name" class="control-label">名称(1~20个字符):</label> <input
+								type="text" class="form-control" name="name">
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">描述(0~500个字符):</label>
+							<textarea rows="8" cols="8" class="form-control"
+								name="description"></textarea>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" name="global" value="true" />全局
+							</label>
+						</div>
+						<div class="form-group">
+							<label for="description" class="control-label">模板(0~20000个字符):</label>
+							<textarea rows="8" cols="8" class="form-control" id="fragmentEditor"></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-info" id="add-fragment">新增</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<div th:replace="mgr/page/source"></div>
+	<script type="text/javascript"
+		th:src="@{/static/js/mgr/tplbuild_base.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/js/mgr/tplbuild_user.js}"></script>
+	<script type="text/javascript">
+		var fragmentEditor ;
+		//用来存放新增的fragment
+		var nfragments = [];
+		$(document).ready(function(){
+			$("#fragmentsModal").on("show.bs.modal", function() {
+				$("#fragmentsModal").find("form")[0].reset();
+				if(fragmentEditor)
+					fragmentEditor.setValue('');
+			}).on("shown.bs.modal",function(){
+				if(!fragmentEditor){
+					var mixedMode = {
+					        name: "htmlmixed",
+					        scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
+					                       mode: null},
+					                      {matches: /(text|application)\/(x-)?vb(a|script)/i,
+					                       mode: "vbscript"}]
+					      };
+					fragmentEditor = CodeMirror.fromTextArea(document.getElementById("fragmentEditor"), {
+				        mode: mixedMode,
+				        lineNumbers: true,
+				        autoCloseTags: true,
+				        extraKeys: {"Alt-/": "autocomplete"}
+				      });
+				}
+			}).on('hidden.bs.modal', function() {
+			});
+			$("#new-fragment-btn").click(function(){
+				$("#fragmentsModal").modal('show');
+			});
+			
+			$("#add-fragment").click(function(){
+				$(this).prop("disabled",true);
+				var data = $("#fragmentsModal").find("form").serializeObject();
+				data.global = $("#fragmentsModal").find("form").find("input[type=checkbox]").prop("checked");
+				data.tpl = fragmentEditor.getValue();
+				nfragments.push(data);
+				refreshFragmemt();
+				$(this).prop("disabled",false);
+			});
+		});
+		
+		function refreshFragmemt(){
+			if(nfragments.length > 0){
+				var html = '';
+				html += '<div class=" table-responsive" style="margin-top:10px">';
+				html += '<table class="table">';
+				for(var i=0;i<nfragments.length;i++){
+					var f = nfragments[i];
+					html += '<tr>';
+					html += '<td>'+f.name+'</td>';
+					html += '<td><a onclick="addFragment(\''+f.name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+					html += '</tr>';
+				}
+				html += '</table>';
+				html += '</div>';
+				console.log(html)
+				$("#newFragmentsContainer").html(html)
+			}else{
+				$("#newFragmentsContainer").html("");
+			}
+		}
+	</script>
+</body>
+</html>

@@ -21,6 +21,7 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.ui.DisposablePageContext;
+import me.qyh.blog.ui.ParseContext;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -49,8 +50,8 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			if (DisposablePageContext.get() == null && TransactionContext.get() == null) {
-				TransactionContext.set(getTransactionStatus(context));
+			if (DisposablePageContext.get() == null && ParseContext.getTransactionStatus() == null) {
+				ParseContext.setTransactionStatus(getTransactionStatus(context));
 			}
 		} finally {
 			structureHandler.removeElement();

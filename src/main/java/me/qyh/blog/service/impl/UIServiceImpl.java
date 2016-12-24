@@ -150,6 +150,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 						@Override
 						public Page doInTransaction(TransactionStatus status) {
 							Page converted = TemplateUtils.convert(templateName);
+							Space space = converted.getSpace();
+							if (space != null && spaceCache.getSpace(space.getId()) == null) {
+								throw new RuntimeLogicException(SPACE_NOT_EXISTS);
+							}
 							switch (converted.getType()) {
 							case SYSTEM:
 								SysPage sysPage = (SysPage) converted;
@@ -472,11 +476,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@LockProtected
 	public Page queryPage(String templateName) throws LogicException {
 		try {
-			Page page = pageCache.getUnchecked(templateName);
-			if (page != null && (page instanceof UserPage) && !Objects.equals(page.getSpace(), SpaceContext.get())) {
-				throw new LogicException(USER_PAGE_NOT_EXISTS);
-			}
-			return TemplateUtils.clone(page);
+			return TemplateUtils.clone(pageCache.getUnchecked(templateName));
 		} catch (UncheckedExecutionException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof RuntimeLogicException) {

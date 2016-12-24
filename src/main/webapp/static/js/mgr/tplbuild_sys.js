@@ -38,13 +38,28 @@
 		}
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/sys/build',
+			url : basePath + '/mgr/page/sys/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					bootbox.alert(data.message);
+					$.ajax({
+						type : "post",
+						url : basePath + '/mgr/page/sys/build',
+						data : JSON.stringify(page),
+						dataType : "json",
+						contentType : 'application/json',
+						success : function(data){
+							if (data.success) {
+								bootbox.alert(data.message);
+							} else {
+								showError(data);
+							}
+						},
+						complete:function(){
+						}
+					});
 				} else {
 					showError(data);
 				}

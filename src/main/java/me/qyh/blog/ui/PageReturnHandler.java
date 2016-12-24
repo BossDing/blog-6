@@ -19,7 +19,6 @@ import com.google.common.collect.Maps;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.dialect.TransactionContext;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.UserPage;
@@ -85,8 +84,6 @@ public class PageReturnHandler extends RenderedSupport implements HandlerMethodR
 			} else {
 				logger.error(e.getMessage(), e);
 			}
-		} finally {
-			TransactionContext.remove();
 		}
 	}
 

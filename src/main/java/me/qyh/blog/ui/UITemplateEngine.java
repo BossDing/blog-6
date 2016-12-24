@@ -15,8 +15,17 @@
  */
 package me.qyh.blog.ui;
 
-import org.thymeleaf.spring4.SpringTemplateEngine;
+import java.util.Set;
 
+import org.thymeleaf.dialect.IPreProcessorDialect;
+import org.thymeleaf.preprocessor.IPreProcessor;
+import org.thymeleaf.preprocessor.PreProcessor;
+import org.thymeleaf.spring4.SpringTemplateEngine;
+import org.thymeleaf.templatemode.TemplateMode;
+
+import com.google.common.collect.ImmutableSet;
+
+import me.qyh.blog.ui.dialect.PageCheckTemplateHandler;
 import me.qyh.blog.ui.dialect.PageDialect;
 import me.qyh.blog.ui.dialect.TransactionDialect;
 
@@ -26,7 +35,26 @@ public class UITemplateEngine extends SpringTemplateEngine {
 		super();
 		addDialect(new PageDialect());
 		addDialect(new TransactionDialect());
+		addDialect(new IPreProcessorDialect() {
+
+			@Override
+			public String getName() {
+				return "PageCheck";
+			}
+
+			@Override
+			public Set<IPreProcessor> getPreProcessors() {
+				return ImmutableSet.of(new PreProcessor(TemplateMode.HTML, PageCheckTemplateHandler.class, 1000));
+			}
+
+			@Override
+			public int getDialectPreProcessorPrecedence() {
+				return 1000;
+			}
+		});
+
 		setCacheManager(new UICacheManager());
+
 	}
 
 }

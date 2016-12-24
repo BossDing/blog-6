@@ -81,15 +81,31 @@ function preview() {
 		}
 		page.name=$("#name").val();
 		page.description=$("#description").val();
+		
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/user/build',
+			url : basePath + '/mgr/page/user/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					bootbox.alert(data.message);
+					$.ajax({
+						type : "post",
+						url : basePath + '/mgr/page/user/build',
+						data : JSON.stringify(page),
+						dataType : "json",
+						contentType : 'application/json',
+						success : function(data){
+							if (data.success) {
+								bootbox.alert(data.message);
+							} else {
+								showError(data);
+							}
+						},
+						complete:function(){
+						}
+					});
 				} else {
 					showError(data);
 				}

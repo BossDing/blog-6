@@ -21,6 +21,8 @@ import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
+import me.qyh.blog.ui.ParseContext;
+
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
  * 
@@ -49,7 +51,7 @@ public class TransactionEndTagProcessor extends TransactionSupport {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			TransactionStatus status = TransactionContext.get();
+			TransactionStatus status = ParseContext.getTransactionStatus();
 			if (status != null) {
 				getTransactionManager(context).commit(status);
 			}

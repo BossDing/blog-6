@@ -52,7 +52,6 @@ public class LockAspect {
 	 */
 	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "result")
 	public void after(Object result) {
-		System.out.println(result instanceof LockResource);
 		if (result != null && result instanceof LockResource) {
 			LockResource lockResource = (LockResource) result;
 
