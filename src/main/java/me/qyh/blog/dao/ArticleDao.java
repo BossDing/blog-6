@@ -174,12 +174,9 @@ public interface ArticleDao {
 	 *            空间，如果为空，则查询全部
 	 * @param queryPrivate
 	 *            是否查询私人文章
-	 * @param queryHidden
-	 *            是否查询隐藏的文章
 	 * @return 文章统计
 	 */
-	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,
-			@Param("queryHidden") boolean queryHidden);
+	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 根据文章的别名查询文章

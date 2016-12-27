@@ -126,7 +126,7 @@
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
 
-	<bean class="me.qyh.blog.metaweblog.MetaweblogHandler" />
+	<bean class="me.qyh.blog.api.metaweblog.MetaweblogHandler" />
 
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
@@ -210,6 +210,17 @@
 				<property name="toSendSdfilePath" value="/web/module_comment_tosend.dat" />
 				<property name="toProcessesSdfilePath" value="/web/module_comment_toprocess.dat" />
 			</bean>
+		</property>
+	</bean>
+
+
+	<bean class="me.qyh.blog.evt.ping.SimplePingManager">
+		<constructor-arg value="钱宇豪的个人博客" />
+		<property name="pingServices">
+			<list>
+				<bean class="me.qyh.blog.evt.ping.GoogleBlogPingService" />
+				<bean class="me.qyh.blog.evt.ping.BaiduBlogPingService" />
+			</list>
 		</property>
 	</bean>
 

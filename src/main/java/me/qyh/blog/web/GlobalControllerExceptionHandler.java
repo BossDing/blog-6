@@ -48,6 +48,8 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
+import me.qyh.blog.api.metaweblog.FaultException;
+import me.qyh.blog.api.metaweblog.RequestXmlParser;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
@@ -64,8 +66,6 @@ import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.MissLockException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.message.Messages;
-import me.qyh.blog.metaweblog.FaultException;
-import me.qyh.blog.metaweblog.RequestXmlParser;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.blog.ui.TplRenderException;
@@ -121,7 +121,7 @@ public class GlobalControllerExceptionHandler {
 	public String handleFaultException(HttpServletRequest request, HttpServletResponse resp, FaultException ex)
 			throws IOException {
 		resp.setContentType(MediaType.APPLICATION_XML_VALUE);
-		byte[] bits = RequestXmlParser.getParser().createFailXml(ex.getCode(), messages.getMessage(ex.getDesc()))
+		byte[] bits = RequestXmlParser.createFailXml(ex.getCode(), messages.getMessage(ex.getDesc()))
 				.getBytes();
 		resp.setContentLength(bits.length);
 		OutputStream os = resp.getOutputStream();
@@ -314,6 +314,6 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	private String getErrorRedirect(HttpServletRequest request, int error) {
-		return "redirect:/error/" + error;
+		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error/" + error;
 	}
 }

@@ -16,7 +16,6 @@
 package me.qyh.blog.ui.data;
 
 import java.util.Calendar;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,6 +25,7 @@ import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDateFiles> {
 
@@ -41,7 +41,7 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	@Override
 	protected ArticleDateFiles buildPreviewData(Space space, Attributes attributes) {
 		ArticleDateFiles files = new ArticleDateFiles();
-		files.setMode(getMode(attributes));
+		files.setMode(ArticleDateFileMode.YM);
 		Calendar cal = Calendar.getInstance();
 		ArticleDateFile file1 = new ArticleDateFile();
 		file1.setBegin(cal.getTime());
@@ -60,15 +60,18 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected ArticleDateFiles query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		ArticleDateFileMode mode = getMode(attributes);
+		ArticleDateFileMode mode = getMode(variables, attributes);
 		return articleService.queryArticleDateFiles(space, mode);
 	}
 
-	private ArticleDateFileMode getMode(Attributes attributes) {
+	private ArticleDateFileMode getMode(ContextVariables variables, Attributes attributes) {
 		ArticleDateFileMode mode = ArticleDateFileMode.YM;
 		String v = attributes.get(MODE);
+		if (v == null) {
+			v = variables.getParam(MODE);
+		}
 		if (v != null) {
 			try {
 				mode = ArticleDateFileMode.valueOf(v);

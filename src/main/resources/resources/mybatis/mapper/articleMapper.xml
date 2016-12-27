@@ -21,14 +21,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="alias" column="art_alias" />
-		<result property="hidden" column="art_hidden" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias"/>
 			<result column="space_name" property="name"/>
 			<result column="space_is_private" property="isPrivate"/>
 			<result column="space_lock" property="lockId"/>
-			<result column="space_art_hidden" property="articleHidden"/>
 		</association>
 	</resultMap>
 	
@@ -53,12 +51,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id column="space_id"/>
 		<result column="lastModifyDate" property="lastModifyDate"/>
 		<result column="totalHits" property="totalHits"/>
+		<result column="totalArticles" property="totalArticles"/>
 	</resultMap>
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,art_hidden,allowComment)
+		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,allowComment)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{hidden},#{allowComment})
+			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{allowComment})
 	</insert>
 	
 	<update id="update">
@@ -88,9 +87,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="space != null">
 				space_id = #{space.id},
-			</if>
-			<if test="hidden != null">
-				art_hidden = #{hidden},
 			</if>
 			<if test="allowComment != null">
 				allowComment = #{allowComment},
@@ -124,10 +120,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
-			</if>
-			<if test="!queryHidden">
-				AND IFNULL(art.art_hidden, false) = false
-				AND sp.space_art_hidden = false
 			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
@@ -172,14 +164,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.editor,
 			art.art_from,
 			art.space_id,
-			art.art_hidden,
 			art.art_lock,
 			art.art_alias,
 			sp.space_alias,
 			space_lock,
 			sp.is_private AS space_is_private,
 			sp.space_name,
-			sp.space_art_hidden,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 			blog_article art
@@ -190,10 +180,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
-			</if>
-			<if test="!queryHidden">
-				AND IFNULL(art.art_hidden, false) = false
-				AND sp.space_art_hidden = false
 			</if>
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
@@ -253,11 +239,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.space_id,
 			art.art_lock,
 			art.art_alias,
-			art.art_hidden,
 			sp.space_alias,
 			space_lock,
 			sp.space_name,
-			sp.space_art_hidden,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
@@ -283,10 +267,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<when test="space != null">
 				AND space_id = #{space.id}
 			</when>
-			<otherwise>
-				AND IFNULL(art.art_hidden, false) = false
-				AND sp.space_art_hidden = false
-			</otherwise>
 			</choose>
 		<choose>
 			<when test='mode.name() == "Y"'>
@@ -308,8 +288,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
-		AND IFNULL(art.art_hidden, false) = false
-		AND sp.space_art_hidden = false
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
@@ -366,10 +344,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<when test="article.space != null">
 			AND art.space_id = #{article.space.id}
 		</when>
-		<otherwise>
-			AND IFNULL(art.art_hidden, false) = false
-			AND sp.space_art_hidden = false
-		</otherwise>
 		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -396,10 +370,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<when test="article.space != null">
 			AND art.space_id = #{article.space.id}
 		</when>
-		<otherwise>
-			AND IFNULL(art.art_hidden, false) = false
-			AND sp.space_art_hidden = false
-		</otherwise>
 		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -412,6 +382,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
 			COALESCE(SUM(hits),0) AS totalHits,
+			COUNT(art.id) AS totalArticles,
 			MAX(lastModifyDate) AS lastModifyDate,
 			MAX(pubDate) AS lastPubDate
 		FROM
@@ -421,10 +392,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		WHERE art.art_status = 0
 		<if test="space != null">
 			AND art.space_id = #{space.id}
-		</if>
-		<if test="!queryHidden">
-			AND IFNULL(art.art_hidden, false) = false
-			AND sp.space_art_hidden = false
 		</if>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -474,11 +441,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			art.space_id,
 			art.art_lock,
 			art.art_alias,
-			art.art_hidden,
 			art.allowComment,
 			sp.space_alias,
 			sp.space_name,
-			sp.space_art_hidden,
 			space_lock,
 			sp.is_private AS space_is_private,
 			GROUP_CONCAT(bt.tag_name) AS tags

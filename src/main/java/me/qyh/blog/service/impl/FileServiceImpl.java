@@ -66,7 +66,7 @@ import me.qyh.blog.web.controller.form.BlogFileUpload;
  *
  */
 @Service
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class FileServiceImpl implements FileService, InitializingBean {
 
 	@Autowired

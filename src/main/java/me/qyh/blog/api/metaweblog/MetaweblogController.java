@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.metaweblog;
+package me.qyh.blog.api.metaweblog;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -38,10 +38,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import me.qyh.blog.api.metaweblog.RequestXmlParser.MethodCaller;
+import me.qyh.blog.api.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.metaweblog.RequestXmlParser.MethodCaller;
-import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.BaseController;
 
@@ -57,7 +57,6 @@ public class MetaweblogController extends BaseController implements Initializing
 
 	private static final Logger logger = LoggerFactory.getLogger(MetaweblogController.class);
 
-	private RequestXmlParser parser = RequestXmlParser.getParser();
 	private Map<String, FailInfo> authFailMap = Maps.newHashMap();
 	private Map<String, Long> invalidIpMap = Maps.newHashMap();
 
@@ -102,7 +101,7 @@ public class MetaweblogController extends BaseController implements Initializing
 		MethodCaller mc = parseFromRequest(request);
 		try {
 			Object object = invokeMethod(mc);
-			return parser.createResponseXml(object);
+			return RequestXmlParser.createResponseXml(object);
 		} catch (UndeclaredThrowableException e) {
 			Throwable undeclaredThrowable = e.getUndeclaredThrowable();
 			if (undeclaredThrowable != null) {
@@ -124,7 +123,7 @@ public class MetaweblogController extends BaseController implements Initializing
 
 	private MethodCaller parseFromRequest(HttpServletRequest request) throws FaultException {
 		try {
-			return parser.parse(request.getInputStream());
+			return RequestXmlParser.parse(request.getInputStream());
 		} catch (ParseException e) {
 			throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 		} catch (IOException e) {

@@ -15,31 +15,31 @@
  */
 package me.qyh.blog.ui.dialect;
 
+import java.util.Enumeration;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.context.ApplicationContext;
-import org.thymeleaf.IEngineConfiguration;
+import org.springframework.web.servlet.View;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
-import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IProcessableElementTag;
-import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.spring4.context.SpringContextUtils;
-import org.thymeleaf.standard.expression.IStandardExpression;
-import org.thymeleaf.standard.expression.IStandardExpressionParser;
-import org.thymeleaf.standard.expression.StandardExpressions;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.DisposablePageContext;
 import me.qyh.blog.ui.data.DataBind;
+import me.qyh.blog.util.Validators;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -47,12 +47,11 @@ import me.qyh.blog.ui.data.DataBind;
  * @author mhlx
  *
  */
-public class DataTagProcessor extends AbstractElementTagProcessor {
+public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private static final String TAG_NAME = "data";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME_ATTR = "name";
-	private static final String DYNAMIC_ATT_PREFIX = "dt:";
 
 	private UIService uiService;
 
@@ -70,32 +69,26 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-
-			if (!check(context, tag)) {
-				return;
-			}
+			check(context, tag);
 
 			DataTag dataTag = buildDataTag(context, tag);
+
 			if (dataTag == null) {
 				return;
 			}
 
 			DataBind<?> bind = null;
+			IWebContext webContext = (IWebContext) context;
 			if (DisposablePageContext.get() != null && DisposablePageContext.get().isPreview()) {
-				bind = uiService.queryData(dataTag);
+				bind = uiService.queryPreviewData(dataTag);
 			} else {
-				ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-				for (String name : context.getVariableNames()) {
-					builder.put(name, context.getVariable(name));
-				}
 				try {
-					bind = uiService.queryData(dataTag, builder.build());
+					bind = uiService.queryData(dataTag, buildContextVariables(webContext));
 				} catch (LogicException e) {
 					throw new RuntimeLogicException(e);
 				}
 			}
 			if (bind != null) {
-				IWebContext webContext = (IWebContext) context;
 				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
@@ -107,51 +100,33 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 		}
 	}
 
+	private ContextVariables buildContextVariables(IWebContext webContext) {
+		HttpServletRequest request = webContext.getRequest();
+		@SuppressWarnings("unchecked")
+		Map<String, Object> pathVariables = (Map<String, Object>) request.getAttribute(View.PATH_VARIABLES);
+		Map<String, String[]> paramsMap = request.getParameterMap();
+		Map<String, Object> attributes = Maps.newHashMap();
+		Enumeration<String> enAttr = request.getAttributeNames();
+		while (enAttr.hasMoreElements()) {
+			String attributeName = enAttr.nextElement();
+			attributes.put(attributeName, request.getAttribute(attributeName));
+		}
+		return new ContextVariables(attributes, paramsMap, pathVariables);
+	}
+
 	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
-		DataTag dataTag = new DataTag(tag.getAttributeValue(NAME_ATTR));
-		IAttribute[] atts = tag.getAllAttributes();
-		final IEngineConfiguration configuration = context.getConfiguration();
-		final IStandardExpressionParser parser = StandardExpressions.getExpressionParser(configuration);
-		for (IAttribute att : atts) {
-			String completeName = att.getAttributeCompleteName();
-			if (completeName.startsWith(DYNAMIC_ATT_PREFIX)) {
-				completeName = completeName.substring(3, completeName.length());
+		Map<String, String> attMap = Maps.newHashMap();
 
-				if (dataTag.hasKey(completeName)) {
-					continue;
-				}
+		processAttribute(context, tag, attMap);
 
-				// 动态属性
-				String expression = att.getValue();
-				IStandardExpression ex = parser.parseExpression(context, expression);
-				Object obj = ex.execute(context);
-				// 如果是dt:if标签并且解析值为true，返回null
-				if (completeName.equalsIgnoreCase("if")) {
-					if (parseBoolean(obj)) {
-						return null;
-					}
-				} else if (obj != null) {
-					dataTag.put(completeName, obj.toString());
-				}
-			} else {
-				dataTag.put(completeName, att.getValue());
-			}
+		String name = attMap.get(NAME_ATTR);
+		if (Validators.isEmptyOrNull(name, true)) {
+			return null;
 		}
-		return dataTag;
+		return new DataTag(name, attMap);
 	}
 
-	private boolean parseBoolean(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (obj instanceof Boolean) {
-			return (Boolean) obj;
-		}
-
-		return false;
-	}
-
-	private boolean check(ITemplateContext context, IProcessableElementTag tag) {
+	private void check(ITemplateContext context, IProcessableElementTag tag) {
 
 		if (uiService == null) {
 			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
@@ -160,14 +135,8 @@ public class DataTagProcessor extends AbstractElementTagProcessor {
 			}
 		}
 		if (uiService == null) {
-			// 不在spring环境中使用。。
-			return false;
+			throw new TemplateProcessingException("没有可用的UIService");
 		}
-		// 如果不是没有name属性和dynamic属性
-		if (!tag.hasAttribute(NAME_ATTR)) {
-			return false;
-		}
-
-		return true;
 	}
+
 }

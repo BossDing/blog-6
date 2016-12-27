@@ -23,7 +23,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class ModuleCommentService extends CommentSupport<ModuleComment, ModuleCommentDao> {
 
 	private static final String MODULE_PATTERN = "^[A-Za-z0-9]{0,20}$";

@@ -47,4 +47,8 @@ public class ParseContext {
 		return status != null && status.equals(ParseStatus.START);
 	}
 
+	public static void removeTransactionStatus() {
+		transactionLocal.remove();
+	}
+
 }

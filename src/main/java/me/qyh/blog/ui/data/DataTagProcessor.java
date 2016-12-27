@@ -19,10 +19,13 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
@@ -41,7 +44,6 @@ public abstract class DataTagProcessor<T> {
 
 	static {
 		previewSpace.setAlias("preview");
-		previewSpace.setArticleHidden(false);
 		previewSpace.setArticlePageSize(10);
 		previewSpace.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		previewSpace.setId(1);
@@ -64,7 +66,7 @@ public abstract class DataTagProcessor<T> {
 		this.dataName = dataName;
 	}
 
-	public final DataBind<T> getData(Space space, Map<String, Object> variables, Map<String, String> attributes)
+	public final DataBind<T> getData(Space space, ContextVariables variables, Map<String, String> attributes)
 			throws LogicException {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
@@ -130,7 +132,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	protected abstract T buildPreviewData(Space space, Attributes attributes);
 
-	protected abstract T query(Space space, Map<String, Object> variables, Attributes attributes) throws LogicException;
+	protected abstract T query(Space space, ContextVariables variables, Attributes attributes) throws LogicException;
 
 	public String getName() {
 		return name;
@@ -149,23 +151,45 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	protected final class Attributes {
-		private Map<String, String> attMap = Maps.newHashMap();
+		private final Map<String, String> attMap;
 
 		public String get(String key) {
-			return attMap.get(key.toLowerCase());
+			return attMap.get(key);
 		}
 
 		public Attributes(Map<String, String> attMap) {
+			ImmutableMap.Builder<String, String> builder = new Builder<>();
 			for (Map.Entry<String, String> att : attMap.entrySet()) {
-				this.attMap.put(att.getKey().toLowerCase(), att.getValue());
+				builder.put(att.getKey(), att.getValue());
 			}
+			this.attMap = builder.build();
 		}
 
 		@Override
 		public String toString() {
 			return "Attributes [attMap=" + attMap + "]";
 		}
+	}
 
+	/**
+	 * 依次从attributes，pathVariable,param中获取属性
+	 * 
+	 * @param variables
+	 * @param attributes
+	 * @return
+	 */
+	protected String getVariables(String name, ContextVariables variables, Attributes attributes) {
+		String result = attributes.get(name);
+		if (result == null) {
+			Object pathVariable = variables.getPathVariable(name);
+			if (pathVariable != null) {
+				result = pathVariable.toString();
+			}
+		}
+		if (result == null) {
+			result = variables.getParam(name);
+		}
+		return result;
 	}
 
 }

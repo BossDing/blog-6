@@ -18,7 +18,6 @@ package me.qyh.blog.ui.data;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Article>> {
 
@@ -45,11 +45,11 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected List<Article> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		Article article = (Article) variables.get("article");
+		Article article = (Article) variables.getAttribute("article");
 		if (article == null) {
-			String idOrAlias = attributes.get("idOrAlias");
+			String idOrAlias = super.getVariables("idOrAlias", variables, attributes);
 			if (idOrAlias != null) {
 				return articleService.findSimilar(idOrAlias, limit);
 			}

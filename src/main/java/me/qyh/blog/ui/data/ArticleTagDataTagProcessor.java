@@ -19,7 +19,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,6 +28,7 @@ import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>> {
 
@@ -60,11 +60,11 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected List<TagCount> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
 		boolean queryPrivate = UserContext.get() != null;
 		if (queryPrivate) {
-			String queryPrivateStr = attributes.get("queryPrivate");
+			String queryPrivateStr = super.getVariables("queryPrivate", variables, attributes);
 			if (queryPrivateStr != null) {
 				try {
 					queryPrivate = Boolean.parseBoolean(queryPrivateStr);
@@ -73,7 +73,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 			}
 		}
 		boolean hasLock = true;
-		String hasLockStr = attributes.get("hasLock");
+		String hasLockStr = super.getVariables("hasLock", variables, attributes);
 		if (hasLockStr != null) {
 			try {
 				hasLock = Boolean.parseBoolean(hasLockStr);

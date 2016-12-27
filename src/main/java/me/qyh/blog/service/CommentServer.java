@@ -32,11 +32,9 @@ public interface CommentServer {
 	 *            空间，如果为空则查询全部
 	 * @param queryPrivate
 	 *            是否查询私人博客
-	 * @param queryHidden
-	 *            是否查询隐藏博客
 	 * @return
 	 */
-	int queryArticlesTotalCommentCount(Space space, boolean queryPrivate, boolean queryHidden);
+	int queryArticlesTotalCommentCount(Space space, boolean queryPrivate);
 
 	/**
 	 * 根据文章删除评论

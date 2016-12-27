@@ -33,12 +33,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
@@ -87,11 +87,12 @@ public class IndexController {
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		DataTag tag = new DataTag(Webs.decode(tagName));
+		Map<String, String> attMap = Maps.newHashMap();
 		for (Map.Entry<String, String> it : allRequestParams.entrySet()) {
-			tag.put(it.getKey().toLowerCase(), it.getValue());
+			attMap.put(it.getKey(), it.getValue());
 		}
-		DataBind<?> result = uiService.queryData(tag, ImmutableMap.of());
+		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
+		DataBind<?> result = uiService.queryData(tag, new ContextVariables());
 		return new JsonResult(true, result != null ? result : null);
 	}
 

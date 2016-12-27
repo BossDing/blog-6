@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
@@ -30,6 +31,9 @@ public class UserPageController {
 
 	@RequestMapping(value = { "page/{alias}", "space/{alias}/page/{alias}" }, method = RequestMethod.GET)
 	public Page index(@PathVariable("alias") String alias) throws LogicException {
+		if (!PageValidator.validateUserPageAlias(alias)) {
+			throw new LogicException("page.user.notExists");
+		}
 		return new UserPage(SpaceContext.get(), alias);
 	}
 }

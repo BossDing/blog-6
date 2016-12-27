@@ -19,10 +19,12 @@
 <body>
 	<fragment name="顶部导航" />
 	<div class="container">
+		<transaction:begin />
 		<data name="文章列表" />
 		<data name="文章日期归档" />
 		<data name="文章空间归档" />
 		<data name="热门标签" />
+		<transaction:end/>
 		<div class="row">
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<fragment name="文章列表" data-sort-lab="true" />

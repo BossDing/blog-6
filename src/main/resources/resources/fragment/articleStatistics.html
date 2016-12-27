@@ -3,13 +3,21 @@
 		<h3 class="panel-title">文章统计</h3>
 	</div>
 	<ul class="list-group">
+		<li class="list-group-item" th:if="${space == null}"><strong>空间总数：</strong><span
+			th:text="${articleStatistics.totalSpaces}"></span></li>
+		<li class="list-group-item"><strong>文章总数：</strong><span
+			th:text="${articleStatistics.totalArticles}"></span></li>
+		<li class="list-group-item"><strong>标签总数：</strong><span
+			th:text="${articleStatistics.totalTags}"></span></li>
 		<li class="list-group-item"><strong>访问量：</strong><span
 			th:text="${articleStatistics.totalHits}"></span></li>
 		<li class="list-group-item"><strong>评论量：</strong><span
 			th:text="${articleStatistics.totalComments}"></span></li>
-		<li class="list-group-item" th:if="${articleStatistics.lastPubDate != null}"><strong>最后发布日期：</strong><span
+		<li class="list-group-item"
+			th:if="${articleStatistics.lastPubDate != null}"><strong>最后发布日期：</strong><span
 			th:text="${#dates.format(articleStatistics.lastPubDate, 'yyyy年MM月dd日 HH时mm分')}"></span></li>
-		<li class="list-group-item" th:if="${articleStatistics.lastModifyDate != null}"><strong>最后修改日期：</strong><span
+		<li class="list-group-item"
+			th:if="${articleStatistics.lastModifyDate != null}"><strong>最后修改日期：</strong><span
 			th:text="${#dates.format(articleStatistics.lastModifyDate, 'yyyy年MM月dd日 HH时mm分')}"></span></li>
 	</ul>
 </div>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.metaweblog;
+package me.qyh.blog.api.metaweblog;
 
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -44,18 +44,8 @@ import me.qyh.blog.util.Validators;
 public class RequestXmlParser {
 
 	private static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-	private static final RequestXmlParser INSTANCE = new RequestXmlParser();
-
 	private static final String[] VALUES = new String[] { "i4", "int", "boolean", "string", "double",
 			"dateTime.iso8601", "base64", "struct", "array" };
-
-	private RequestXmlParser() {
-		super();
-	}
-
-	public static RequestXmlParser getParser() {
-		return INSTANCE;
-	}
 
 	/**
 	 * 解析流获取方法和参数对象
@@ -66,7 +56,7 @@ public class RequestXmlParser {
 	 * @throws ParseException
 	 *             解析失败
 	 */
-	public MethodCaller parse(InputStream is) throws ParseException {
+	public static MethodCaller parse(InputStream is) throws ParseException {
 		SAXBuilder builder = new SAXBuilder();
 		Document doc = null;
 		try {
@@ -115,7 +105,7 @@ public class RequestXmlParser {
 	 *            参数
 	 * @return xml报文
 	 */
-	public String createResponseXml(Object... params) {
+	public static String createResponseXml(Object... params) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<methodResponse>");
@@ -141,7 +131,7 @@ public class RequestXmlParser {
 	 *            描述
 	 * @return xml报文
 	 */
-	public String createFailXml(String code, String desc) {
+	public static String createFailXml(String code, String desc) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<methodResponse>");
@@ -155,7 +145,7 @@ public class RequestXmlParser {
 		return sb.toString();
 	}
 
-	private String buildVXml(Object v) {
+	private static String buildVXml(Object v) {
 		StringBuilder sb = new StringBuilder("<value>");
 		if (v instanceof Integer || v instanceof Short) {
 			sb.append("<int>").append(v).append("</int>");
@@ -199,7 +189,7 @@ public class RequestXmlParser {
 		return sb.toString();
 	}
 
-	private Object parseValueElement(Element ve) throws ParseException {
+	private static Object parseValueElement(Element ve) throws ParseException {
 		List<?> vNodes = null;
 		for (String v : VALUES) {
 			List<?> cvNodes = ve.getChildren(v);
@@ -221,7 +211,7 @@ public class RequestXmlParser {
 		return parseValueElement(ve, ele.getName(), ele.getTextTrim());
 	}
 
-	private Object parseValueElement(Element ve, String type, String v) throws ParseException {
+	private static Object parseValueElement(Element ve, String type, String v) throws ParseException {
 		switch (type) {
 		case "i4":
 		case "int":
@@ -328,7 +318,7 @@ public class RequestXmlParser {
 	 * @author Administrator
 	 *
 	 */
-	public final class MethodCaller {
+	public static final class MethodCaller {
 		private final String name;
 		private final Object[] arguments;
 
@@ -352,7 +342,7 @@ public class RequestXmlParser {
 		}
 	}
 
-	final class Struct {
+	static final class Struct {
 		private Map<String, Object> data = Maps.newHashMap();
 
 		Struct(Map<String, Object> data) {

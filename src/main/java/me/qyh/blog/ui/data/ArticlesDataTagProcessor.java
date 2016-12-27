@@ -18,7 +18,6 @@ package me.qyh.blog.ui.data;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.time.DateUtils;
@@ -40,6 +39,7 @@ import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 /**
@@ -95,25 +95,25 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected PageResult<Article> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		ArticleQueryParam param = (ArticleQueryParam) variables.get(ArticleQueryParam.class.getName());
+		ArticleQueryParam param = (ArticleQueryParam) variables.getAttribute(ArticleQueryParam.class.getName());
 		if (param == null) {
-			param = parseParam(space, attributes);
+			param = parseParam(space, variables, attributes);
 		}
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setQueryPrivate(UserContext.get() != null);
 		return articleService.queryArticle(param);
 	}
 
-	private ArticleQueryParam parseParam(Space space, Attributes attributes) {
+	private ArticleQueryParam parseParam(Space space, ContextVariables variables, Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setSpace(space);
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setCurrentPage(1);
 
-		String beginStr = attributes.get("begin");
-		String endStr = attributes.get("end");
+		String beginStr = super.getVariables("begin", variables, attributes);
+		String endStr = super.getVariables("end", variables, attributes);
 		if (beginStr != null && endStr != null) {
 			try {
 				param.setBegin(DateUtils.parseDate(beginStr, TIME_PATTERNS));
@@ -124,12 +124,12 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 				param.setEnd(null);
 			}
 		}
-		String query = attributes.get("query");
+		String query = super.getVariables("query", variables, attributes);
 		if (query != null) {
 			param.setQuery(query);
 		}
 
-		String fromStr = attributes.get("from");
+		String fromStr = super.getVariables("from", variables, attributes);
 		if (fromStr != null) {
 			try {
 				param.setFrom(ArticleFrom.valueOf(fromStr.toUpperCase()));
@@ -138,12 +138,12 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		String tag = attributes.get("tag");
+		String tag = super.getVariables("tag", variables, attributes);
 		if (tag != null) {
 			param.setTag(tag);
 		}
 
-		String sortStr = attributes.get("sort");
+		String sortStr = super.getVariables("sort", variables, attributes);
 		if (sortStr != null) {
 			try {
 				param.setSort(Sort.valueOf(sortStr.toUpperCase()));
@@ -152,7 +152,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		String currentPageStr = attributes.get("currentPage");
+		String currentPageStr = super.getVariables("currentPage", variables, attributes);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));
@@ -162,17 +162,17 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		}
 
 		if (UserContext.get() != null) {
-			String ignoreLevelStr = attributes.get("ignoreLevel");
+			String ignoreLevelStr = super.getVariables("ignoreLevel", variables, attributes);
 			if (ignoreLevelStr != null) {
 				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
 			}
 
-			String queryPrivateStr = attributes.get("queryPrivate");
+			String queryPrivateStr = super.getVariables("queryPrivate", variables, attributes);
 			if (queryPrivateStr != null) {
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 			}
 
-			String hasLockStr = attributes.get("hasLock");
+			String hasLockStr = super.getVariables("hasLock", variables, attributes);
 			if (hasLockStr != null) {
 				param.setHasLock(Boolean.parseBoolean(hasLockStr));
 			}

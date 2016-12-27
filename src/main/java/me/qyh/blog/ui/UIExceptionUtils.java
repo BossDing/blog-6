@@ -24,15 +24,18 @@ public final class UIExceptionUtils {
 
 	public static Exception convert(String templateName, Throwable e) {
 		if (e instanceof TemplateProcessingException) {
-			Throwable cause = e.getCause();
-			if (cause instanceof RuntimeLogicException) {
-				return ((RuntimeLogicException) cause);
+			Throwable[] chains = ExceptionUtils.getThrowables(e);
+			int logicExceptionIndex = ExceptionUtils.indexOfThrowable(e, RuntimeLogicException.class);
+			if (logicExceptionIndex != -1) {
+				return ((RuntimeLogicException) chains[logicExceptionIndex]);
 			}
-			if (cause instanceof LockException) {
-				return (LockException) cause;
+			int lockExceptionIndex = ExceptionUtils.indexOfThrowable(e, LockException.class);
+			if (lockExceptionIndex != -1) {
+				return ((LockException) chains[lockExceptionIndex]);
 			}
-			if (cause instanceof AuthencationException) {
-				return (AuthencationException) cause;
+			int authencationExceptionIndex = ExceptionUtils.indexOfThrowable(e, AuthencationException.class);
+			if (authencationExceptionIndex != -1) {
+				return ((AuthencationException) chains[authencationExceptionIndex]);
 			}
 			return new TplRenderException(fromException((TemplateProcessingException) e, templateName), e);
 		}

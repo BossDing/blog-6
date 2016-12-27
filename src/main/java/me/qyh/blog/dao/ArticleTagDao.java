@@ -80,4 +80,18 @@ public interface ArticleTagDao {
 	List<TagCount> selectTags(@Param("space") Space space, @Param("hasLock") boolean hasLock,
 			@Param("queryPrivate") boolean queryPrivate);
 
+	/**
+	 * 查询标签总数
+	 * 
+	 * @param space
+	 *            空间
+	 * @param hasLock
+	 *            是否查询被锁的空间|文章
+	 * @param queryPrivate
+	 *            是否查询私有
+	 * @return
+	 */
+	int selectTagsCount(@Param("space") Space space, @Param("hasLock") boolean hasLock,
+			@Param("queryPrivate") boolean queryPrivate);
+
 }

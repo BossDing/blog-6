@@ -1,10 +1,13 @@
 package me.qyh.blog.service.impl;
 
+import java.util.List;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -13,34 +16,61 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.RuntimeLogicException;
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.pageparam.SpaceQueryParam;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class SpaceCache {
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
-	private TransactionTemplate readOnlyTransactionTemplate;
+	private PlatformTransactionManager transactionManager;
 
 	private final LoadingCache<String, Space> aliasCache = CacheBuilder.newBuilder()
 			.build(new CacheLoader<String, Space>() {
 
 				@Override
 				public Space load(String key) throws Exception {
-					return readOnlyTransactionTemplate.execute(new TransactionCallback<Space>() {
-
-						@Override
-						public Space doInTransaction(TransactionStatus status) {
-							Space space = spaceDao.selectByAlias(key);
-							if (space == null) {
-								throw new RuntimeLogicException(new Message("space.notExists", "空间不存在"));
-							}
-							return space;
+					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+					definition.setReadOnly(true);
+					TransactionStatus status = transactionManager.getTransaction(definition);
+					try {
+						Space space = spaceDao.selectByAlias(key);
+						if (space == null) {
+							throw new LogicException(new Message("space.notExists", "空间不存在"));
 						}
+						return space;
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
+					} finally {
+						transactionManager.commit(status);
+					}
+				}
 
-					});
+			});
+
+	private final LoadingCache<SpacesCacheKey, List<Space>> spacesCache = CacheBuilder.newBuilder()
+			.build(new CacheLoader<SpacesCacheKey, List<Space>>() {
+
+				@Override
+				public List<Space> load(SpacesCacheKey key) throws Exception {
+					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+					definition.setReadOnly(true);
+					TransactionStatus status = transactionManager.getTransaction(definition);
+					try {
+						SpaceQueryParam param = new SpaceQueryParam();
+						param.setQueryPrivate(key.queryPrivate);
+						return spaceDao.selectByParam(param);
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
+					} finally {
+						transactionManager.commit(status);
+					}
 				}
 
 			});
@@ -50,27 +80,34 @@ public class SpaceCache {
 
 				@Override
 				public Space load(Integer key) throws Exception {
-					return readOnlyTransactionTemplate.execute(new TransactionCallback<Space>() {
-
-						@Override
-						public Space doInTransaction(TransactionStatus status) {
-							Space space = spaceDao.selectById(key);
-							if (space == null) {
-								throw new RuntimeLogicException(new Message("space.notExists", "空间不存在"));
-							}
-							return space;
+					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+					definition.setReadOnly(true);
+					TransactionStatus status = transactionManager.getTransaction(definition);
+					try {
+						Space space = spaceDao.selectById(key);
+						if (space == null) {
+							throw new LogicException(new Message("space.notExists", "空间不存在"));
 						}
-
-					});
+						return space;
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
+					} finally {
+						transactionManager.commit(status);
+					}
 				}
 
 			});
+
+	public List<Space> getSpaces(SpacesCacheKey key) {
+		return spacesCache.getUnchecked(key);
+	}
 
 	public Space getSpace(String alias) {
 		try {
 			return aliasCache.getUnchecked(alias);
 		} catch (UncheckedExecutionException e) {
-			if (e.getCause() instanceof RuntimeLogicException) {
+			if (e.getCause() instanceof LogicException) {
 				return null;
 			}
 			throw new SystemException(e.getMessage(), e);
@@ -81,7 +118,7 @@ public class SpaceCache {
 		try {
 			return idCache.getUnchecked(id);
 		} catch (UncheckedExecutionException e) {
-			if (e.getCause() instanceof RuntimeLogicException) {
+			if (e.getCause() instanceof LogicException) {
 				return null;
 			}
 			throw new SystemException(e.getMessage(), e);
@@ -91,6 +128,43 @@ public class SpaceCache {
 	public void evit(Space db) {
 		idCache.invalidate(db.getId());
 		aliasCache.invalidate(db.getAlias());
+		spacesCache.invalidateAll();
+	}
+
+	public static final class SpacesCacheKey {
+		private boolean queryPrivate;
+
+		public SpacesCacheKey() {
+			super();
+		}
+
+		public SpacesCacheKey(boolean queryPrivate) {
+			super();
+			this.queryPrivate = queryPrivate;
+		}
+
+		public boolean isQueryPrivate() {
+			return queryPrivate;
+		}
+
+		public void setQueryPrivate(boolean queryPrivate) {
+			this.queryPrivate = queryPrivate;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.queryPrivate);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (Validators.baseEquals(this, obj)) {
+				SpacesCacheKey rhs = (SpacesCacheKey) obj;
+				return Objects.equals(this.queryPrivate, rhs.queryPrivate);
+			}
+			return false;
+		}
+
 	}
 
 }

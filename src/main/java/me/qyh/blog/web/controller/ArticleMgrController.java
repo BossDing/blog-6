@@ -88,7 +88,6 @@ public class ArticleMgrController extends BaseMgrController {
 			articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
 		}
 		articleQueryParam.setQueryPrivate(true);
-		articleQueryParam.setQueryHidden(true);
 		model.addAttribute("page", articleService.queryArticle(articleQueryParam));
 		return "mgr/article/index";
 	}

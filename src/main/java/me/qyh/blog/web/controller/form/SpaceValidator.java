@@ -69,11 +69,6 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 
-		if (space.getArticleHidden() == null) {
-			errors.reject("space.articleHidden.blank", "是否隐藏文章不能为空");
-			return;
-		}
-
 		if (space.getIsDefault() == null) {
 			errors.reject("space.isDefault.blank", "是否是默认空间不能为空");
 			return;

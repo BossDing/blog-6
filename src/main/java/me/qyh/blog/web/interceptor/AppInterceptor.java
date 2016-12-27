@@ -99,6 +99,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 				if (spaceAlias != null) {
 					Space space = getSpace(request, spaceAlias);
+
+					if (space.getIsPrivate() && user == null) {
+						throw new AuthencationException();
+					}
+
 					SpaceContext.set(space);
 				}
 

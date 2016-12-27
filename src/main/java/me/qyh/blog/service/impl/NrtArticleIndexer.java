@@ -112,7 +112,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	private static final String TAG = "tag";
 	private static final String LOCKED = "locked";
 	private static final String ALIAS = "alias";
-	private static final String HIDDEN = "spacePrivate";
 	private static final String SUMMARY = "summary";
 
 	protected Analyzer analyzer;
@@ -212,8 +211,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
 		doc.add(new StringField(PUB_DATE, pubDateStr, Field.Store.NO));
 		doc.add(new SortedDocValuesField(ID, new BytesRef(article.getId().toString())));
-		Boolean hidden = article.getHidden() == null ? article.getSpace().getArticleHidden() : article.getHidden();
-		doc.add(new StringField(HIDDEN, hidden.toString(), Field.Store.NO));
 		return doc;
 	}
 
@@ -365,9 +362,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			if (!param.isQueryPrivate()) {
 				builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
 				builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
-			}
-			if (!param.isQueryHidden()) {
-				builder.add(new TermQuery(new Term(HIDDEN, "false")), Occur.MUST);
 			}
 			ArticleFrom from = param.getFrom();
 			if (from != null) {

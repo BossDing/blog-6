@@ -49,7 +49,7 @@ import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class CommentService extends CommentSupport<Comment, CommentDao> implements CommentServer {
 
 	@Autowired
@@ -152,8 +152,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryAdmin) {
-		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null, space != null,
-				queryAdmin);
+		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null, queryAdmin);
 		for (Comment comment : comments) {
 			completeComment(comment);
 		}
@@ -216,8 +215,8 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	}
 
 	@Override
-	public int queryArticlesTotalCommentCount(Space space, boolean queryPrivate, boolean queryHidden) {
-		return commentDao.selectArticlesTotalCommentCount(space, queryPrivate, queryHidden);
+	public int queryArticlesTotalCommentCount(Space space, boolean queryPrivate) {
+		return commentDao.selectArticlesTotalCommentCount(space, queryPrivate);
 	}
 
 	@Override

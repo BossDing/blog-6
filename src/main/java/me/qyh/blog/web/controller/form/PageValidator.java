@@ -32,10 +32,9 @@ public class PageValidator implements Validator {
 
 	public static final int PAGE_TPL_MAX_LENGTH = 500000;
 
-	private static final int PAGE_NAME_MAX_LENGTH = 20;
-	private static final int PAGE_DESCRIPTION_MAX_LENGTH = 500;
-
-	private static final int PAGE_ALIAS_MAX_LENGTH = 30;
+	protected static final int PAGE_NAME_MAX_LENGTH = 20;
+	protected static final int PAGE_DESCRIPTION_MAX_LENGTH = 500;
+	protected static final int PAGE_ALIAS_MAX_LENGTH = 30;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -61,6 +60,23 @@ public class PageValidator implements Validator {
 			SysPage sysPage = (SysPage) page;
 			if (sysPage.getTarget() == null) {
 				errors.reject("page.target.blank", "页面目标不能为空");
+				return;
+			}
+		}
+
+		if (page instanceof ErrorPage) {
+			ErrorPage errorPage = (ErrorPage) page;
+			ErrorCode errorCode = errorPage.getErrorCode();
+			if (errorCode == null) {
+				errors.reject("page.errorcode.null", "页面错误码不能为空");
+				return;
+			}
+		}
+
+		if (page instanceof LockPage) {
+			LockPage lockPage = (LockPage) page;
+			if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
+				errors.reject("page.locktype.empty", "页面锁类型不能为空");
 				return;
 			}
 		}
@@ -103,25 +119,9 @@ public class PageValidator implements Validator {
 			}
 		}
 
-		if (page instanceof ErrorPage) {
-			ErrorPage errorPage = (ErrorPage) page;
-			ErrorCode errorCode = errorPage.getErrorCode();
-			if (errorCode == null) {
-				errors.reject("page.errorcode.null", "页面错误码不能为空");
-				return;
-			}
-		}
-
-		if (page instanceof LockPage) {
-			LockPage lockPage = (LockPage) page;
-			if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
-				errors.reject("page.locktype.empty", "页面锁类型不能为空");
-				return;
-			}
-		}
 	}
 
-	protected boolean validateUserPageAlias(String alias) {
+	public static boolean validateUserPageAlias(String alias) {
 		for (char ch : alias.toCharArray()) {
 			if (!allowChar(ch)) {
 				return false;
@@ -136,7 +136,7 @@ public class PageValidator implements Validator {
 		return true;
 	}
 
-	private boolean allowChar(char ch) {
+	private static boolean allowChar(char ch) {
 		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch)
 				|| ('_' == ch);
 	}

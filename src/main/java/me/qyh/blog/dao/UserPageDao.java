@@ -101,12 +101,4 @@ public interface UserPageDao {
 	 */
 	List<UserPage> selectBySpace(@Param("space") Space space);
 
-	/**
-	 * 删除锁
-	 * 
-	 * @param lockId
-	 *            锁id
-	 */
-	void deleteLock(String lockId);
-
 }

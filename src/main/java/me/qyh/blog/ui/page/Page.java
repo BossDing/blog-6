@@ -17,7 +17,6 @@ package me.qyh.blog.ui.page;
 
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.SystemException;
 
 public class Page extends BaseEntity implements Cloneable {
 
@@ -84,12 +83,4 @@ public class Page extends BaseEntity implements Cloneable {
 		return page;
 	}
 
-	@Override
-	public Object clone() {
-		try {
-			return super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
 }

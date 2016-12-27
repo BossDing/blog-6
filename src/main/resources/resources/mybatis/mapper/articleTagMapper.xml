@@ -54,4 +54,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP BY bt.id
 		ORDER BY counts DESC,tag_create_date DESC,bt.id DESC
 	</select>
+	
+	<select id="selectTagsCount" resultType="int">
+		SELECT COUNT(DISTINCT(bat.tag_id)) AS counts  
+		FROM blog_article_tag bat
+		LEFT OUTER JOIN blog_article ba ON bat.article_id = ba.id
+		LEFT OUTER JOIN blog_space bs ON ba.space_id = bs.id
+		WHERE ba.art_status = 0 
+		<if test="space != null">
+			AND ba.space_id = ${space.id}
+		</if>
+		<if test="!hasLock">
+			AND ba.art_lock IS NULL 
+			AND bs.space_lock IS NULL 
+		</if>
+		<if test="!queryPrivate">
+			AND ba.isPrivate = FALSE
+		</if>
+	</select>
 </mapper>

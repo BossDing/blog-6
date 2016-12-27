@@ -18,7 +18,6 @@ package me.qyh.blog.comment.module;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
@@ -32,6 +31,7 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 import me.qyh.blog.util.Validators;
 
@@ -71,16 +71,16 @@ public class ModuleCommentsDataTagProcessor extends DataTagProcessor<CommentPage
 	}
 
 	@Override
-	protected CommentPageResult<ModuleComment> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected CommentPageResult<ModuleComment> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		ModuleCommentQueryParam param = parseParam(attributes);
+		ModuleCommentQueryParam param = parseParam(variables, attributes);
 		return commentService.queryComment(param);
 	}
 
-	private ModuleCommentQueryParam parseParam(Attributes attributes) {
+	private ModuleCommentQueryParam parseParam(ContextVariables variables, Attributes attributes) {
 		ModuleCommentQueryParam param = new ModuleCommentQueryParam();
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		String moduleName = attributes.get("module");
+		String moduleName = super.getVariables("module", variables, attributes);
 		if (Validators.isEmptyOrNull(moduleName, true)) {
 			param.setModule(null);
 		} else {
@@ -88,7 +88,7 @@ public class ModuleCommentsDataTagProcessor extends DataTagProcessor<CommentPage
 			module.setName(moduleName);
 			param.setModule(module);
 		}
-		String currentPageStr = attributes.get("currentPage");
+		String currentPageStr = super.getVariables("currentPage", variables, attributes);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));

@@ -39,6 +39,10 @@
 					<constructor-arg index="0" value="相似文章" />
 					<constructor-arg index="1" value="similarArticles" />
 				</bean>
+				<bean class="me.qyh.blog.ui.data.SpacesDataTagProcessor">
+					<constructor-arg index="0" value="所有空间" />
+					<constructor-arg index="1" value="spaces" />
+				</bean>
 
 
 

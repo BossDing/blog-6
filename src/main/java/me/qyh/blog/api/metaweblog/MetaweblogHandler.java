@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.metaweblog;
+package me.qyh.blog.api.metaweblog;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -36,6 +36,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
+import me.qyh.blog.api.metaweblog.RequestXmlParser.ParseException;
+import me.qyh.blog.api.metaweblog.RequestXmlParser.Struct;
 import me.qyh.blog.bean.UploadedFile;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UserConfig;
@@ -46,8 +48,6 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.metaweblog.RequestXmlParser.ParseException;
-import me.qyh.blog.metaweblog.RequestXmlParser.Struct;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.BCrypts;
 import me.qyh.blog.security.UserContext;

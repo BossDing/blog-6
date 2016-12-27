@@ -8,13 +8,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.TransactionSystemException;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
@@ -30,8 +26,6 @@ public class RenderedSupport {
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 
-	private static final Logger logger = LoggerFactory.getLogger(RenderedSupport.class);
-
 	protected String render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
@@ -39,43 +33,35 @@ public class RenderedSupport {
 		try {
 			ResponseWrapper wrapper = new ResponseWrapper(response);
 			view.render(model, request, wrapper);
-			commit();
 			ParseContext.setStatus(ParseStatus.COMPLETE);
 			return wrapper.getRendered();
 		} catch (Throwable e) {
-			rollBack(e);
+			/**
+			 * 因为这里是readonly的事务，默认只在RuntimeException|Error中回滚
+			 * 
+			 * @see DefaultTransactionAttribute
+			 */
+			if (e instanceof RuntimeException | e instanceof Error) {
+				markRollBack();
+			}
 			ParseContext.setStatus(ParseStatus.BREAK);
 			throw UIExceptionUtils.convert(templateName, e);
 		} finally {
+			commit();
 			ParseContext.remove();
 		}
 	}
 
-	/**
-	 * @see TransactionTemplate#execute(org.springframework.transaction.support.TransactionCallback)
-	 */
-	private void rollBack(Throwable ex) {
+	private void markRollBack() {
 		TransactionStatus status = ParseContext.getTransactionStatus();
-		if (status != null && !status.isCompleted()) {
-			try {
-				this.transactionManager.rollback(status);
-			} catch (TransactionSystemException ex2) {
-				logger.error("Application exception overridden by rollback exception", ex);
-				ex2.initApplicationException(ex);
-				throw ex2;
-			} catch (RuntimeException ex2) {
-				logger.error("Application exception overridden by rollback exception", ex);
-				throw ex2;
-			} catch (Error err) {
-				logger.error("Application exception overridden by rollback error", ex);
-				throw err;
-			}
+		if (status != null) {
+			status.setRollbackOnly();
 		}
 	}
 
 	private void commit() {
 		TransactionStatus status = ParseContext.getTransactionStatus();
-		if (status != null && !status.isCompleted()) {
+		if (status != null) {
 			transactionManager.commit(status);
 		}
 	}

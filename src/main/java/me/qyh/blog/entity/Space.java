@@ -39,7 +39,6 @@ public class Space extends BaseLockResource {
 	private Timestamp createDate;// 创建时间
 	private Boolean isPrivate;
 
-	private Boolean articleHidden;
 	private Boolean isDefault;
 	private Integer articlePageSize;
 
@@ -103,14 +102,6 @@ public class Space extends BaseLockResource {
 
 	public void setIsPrivate(Boolean isPrivate) {
 		this.isPrivate = isPrivate;
-	}
-
-	public Boolean getArticleHidden() {
-		return articleHidden;
-	}
-
-	public void setArticleHidden(Boolean articleHidden) {
-		this.articleHidden = articleHidden;
 	}
 
 	public Boolean getIsDefault() {

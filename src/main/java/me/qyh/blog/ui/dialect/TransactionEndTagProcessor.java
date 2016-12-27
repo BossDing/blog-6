@@ -53,7 +53,11 @@ public class TransactionEndTagProcessor extends TransactionSupport {
 		try {
 			TransactionStatus status = ParseContext.getTransactionStatus();
 			if (status != null) {
-				getTransactionManager(context).commit(status);
+				try {
+					getTransactionManager(context).commit(status);
+				} finally {
+					ParseContext.removeTransactionStatus();
+				}
 			}
 		} finally {
 			structureHandler.removeElement();

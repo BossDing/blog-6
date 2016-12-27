@@ -18,7 +18,6 @@ package me.qyh.blog.comment.article;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
@@ -32,6 +31,7 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.UserContext;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult<Comment>> {
@@ -67,18 +67,18 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult<Comment> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected CommentPageResult<Comment> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
 		CommentQueryParam param = parseParam(variables, attributes);
 		return commentService.queryComment(param);
 	}
 
-	private CommentQueryParam parseParam(Map<String, Object> variables, Attributes attributes) {
+	private CommentQueryParam parseParam(ContextVariables variables, Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
-		Article article = (Article) variables.get("article");
+		Article article = (Article) variables.getAttribute("article");
 		if (article == null) {
-			String articleStr = attributes.get("article");
+			String articleStr = super.getVariables("article", variables, attributes);
 			if (articleStr != null) {
 				try {
 					article = new Article(Integer.parseInt(articleStr));
@@ -87,7 +87,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 			}
 		}
 		param.setArticle(article);
-		String currentPageStr = attributes.get("currentPage");
+		String currentPageStr = super.getVariables("currentPage", variables, attributes);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));

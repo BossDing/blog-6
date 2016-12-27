@@ -91,13 +91,6 @@
 						</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
 							type="checkbox" id="private" checked="checked" />私人博客 </label>
 					</div>
-					<div class="checkbox"
-						th:if="${article.space == null || (article.space != null && !article.space.articleHidden)}">
-						<label th:if="${article.hidden == null || !article.hidden}">
-							<input type="checkbox" id="hidden" />空间私有
-						</label> <label th:if="${article.hidden != null && article.hidden}"><input
-							type="checkbox" id="hidden" checked="checked" />空间私有 </label>
-					</div>
 
 					<div class="form-group"
 						th:style="${article.isSchedule() ? '' : 'display: none'}"

@@ -92,7 +92,7 @@
 	</bean>
 
 	<!-- metaweblog -->
-	<bean class="me.qyh.blog.metaweblog.MetaweblogController" />
+	<bean class="me.qyh.blog.api.metaweblog.MetaweblogController" />
 
 
 	<!-- 默认评论服务 -->

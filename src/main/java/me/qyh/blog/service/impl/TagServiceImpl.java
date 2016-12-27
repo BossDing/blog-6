@@ -35,7 +35,7 @@ import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
 @Service
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class TagServiceImpl implements TagService, InitializingBean {
 
 	@Autowired

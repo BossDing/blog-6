@@ -19,14 +19,18 @@
 	<fragment name="顶部导航" />
 	<div class="container">
 		<div class="row">
+			<transaction:begin />
 			<data name="文章列表" />
 			<data name="文章日期归档" />
 			<data name="文章空间归档" />
 			<data name="最近评论" />
 			<data name="热门标签" />
 			<data name="文章统计" />
+			<transaction:end />
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
-				<fragment name="文章列表" data-sort-lab="false" />
+				<div th:with="showSortLab=false">
+					<fragment name="文章列表" />
+				</div>
 			</div>
 
 			<div class="col-lg-4 col-md-4 col-sm-4 text hidden-xs">

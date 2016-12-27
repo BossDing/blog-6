@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.dao.SpaceDao;
-import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.SysLock;
@@ -52,8 +51,6 @@ public class SysLockProvider {
 	private SpaceDao spaceDao;
 	@Autowired
 	private ArticleDao articleDao;
-	@Autowired
-	private UserPageDao userPageDao;
 
 	private static final String[] LOCK_TYPES = { SysLockType.PASSWORD.name(), SysLockType.QA.name() };
 
@@ -63,13 +60,12 @@ public class SysLockProvider {
 	 * @param id
 	 *            锁id
 	 */
-	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#id")
 	public void removeLock(String id) {
 		sysLockDao.delete(id);
 		articleDao.deleteLock(id);
 		spaceDao.deleteLock(id);
-		userPageDao.deleteLock(id);
 	}
 
 	/**
@@ -101,7 +97,7 @@ public class SysLockProvider {
 	 * @param lock
 	 *            待新增的系统锁
 	 */
-	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	public void addLock(SysLock lock) {
 		lock.setId(UUIDs.uuid());
 		lock.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -117,7 +113,7 @@ public class SysLockProvider {
 	 * @throws LogicException
 	 *             逻辑异常：锁不存在|锁类型不匹配
 	 */
-	@Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#lock.id")
 	public void updateLock(SysLock lock) throws LogicException {
 		SysLock db = sysLockDao.selectById(lock.getId());

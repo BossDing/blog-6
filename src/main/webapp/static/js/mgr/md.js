@@ -87,7 +87,6 @@
     			}
     			article.isPrivate = $("#private").prop("checked");
     			article.allowComment = $("#allowComment").prop("checked");
-    			article.hidden = $("#hidden").prop("checked");
     			article.tags = tags;
     			article.summary = $("#summary").val();
     			article.space = {"id":$("#space").val()};
@@ -236,7 +235,6 @@
 			}
 			article.isPrivate = $("#private").prop("checked");
 			article.allowComment = $("#allowComment").prop("checked");
-			article.hidden = $("#hidden").prop("checked");
 			article.tags = tags;
 			article.summary = $("#summary").val();
 			article.space = {"id":$("#space").val()};

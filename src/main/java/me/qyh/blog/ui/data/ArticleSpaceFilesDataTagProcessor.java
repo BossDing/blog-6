@@ -16,7 +16,6 @@
 package me.qyh.blog.ui.data;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,6 +25,7 @@ import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<ArticleSpaceFile>> {
 
@@ -49,7 +49,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected List<ArticleSpaceFile> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
 		if (space == null) {
 			return articleService.queryArticleSpaceFiles();

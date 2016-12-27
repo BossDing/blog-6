@@ -17,7 +17,6 @@ $(document).ready(function() {
 				modal.find('.modal-body input[name="articlePageSize"]').val(data.articlePageSize);
 				modal.find('.modal-body input[name="isPrivate"]').prop("checked",data.isPrivate);
 				modal.find('.modal-body input[name="isDefault"]').prop("checked",data.isDefault);
-				modal.find('.modal-body input[name="articleHidden"]').prop("checked",data.articleHidden);
 				modal.find('.modal-body input[name="id"]').val(id);
 				if(data.lockId){
 					modal.find('.modal-body select[name="lockId"]').val(data.lockId)
@@ -57,7 +56,6 @@ $(document).ready(function() {
 		$("#create").prop("disabled",true);
 		var data = $("#spaceModal").find("form").serializeObject();
 		data.isPrivate = $("#spaceModal").find('input[name="isPrivate"]').is(":checked");
-		data.articleHidden = $("#spaceModal").find('input[name="articleHidden"]').is(":checked");
 		data.isDefault = $("#spaceModal").find('input[name="isDefault"]').is(":checked");
 		$.ajax({
 			type : "post",
@@ -86,7 +84,6 @@ $(document).ready(function() {
 		$("#update").prop("disabled",true);
 		var data = $("#editSpaceModal").find("form").serializeObject();
 		data.isPrivate = $("#editSpaceModal").find('input[name="isPrivate"]').is(":checked");
-		data.articleHidden = $("#editSpaceModal").find('input[name="articleHidden"]').is(":checked");
 		data.isDefault = $("#editSpaceModal").find('input[name="isDefault"]').is(":checked");
 		$.ajax({
 			type : "post",

@@ -18,21 +18,22 @@ package me.qyh.blog.ui;
 import java.util.Map;
 import java.util.Objects;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 
 import me.qyh.blog.util.Validators;
 
 public class DataTag {
 
 	private String name;
-	private Map<String, String> attrs = Maps.newHashMap();
+	private final Map<String, String> attrs;
 
 	public String getName() {
 		return name;
 	}
 
-	public DataTag(String name) {
+	public DataTag(String name, Map<String, String> attrs) {
 		this.name = name;
+		this.attrs = attrs == null ? ImmutableMap.of() : ImmutableMap.copyOf(attrs);
 	}
 
 	public Map<String, String> getAttrs() {
@@ -68,4 +69,5 @@ public class DataTag {
 	public boolean hasKey(String key) {
 		return attrs.containsKey(key);
 	}
+
 }

@@ -18,7 +18,6 @@ package me.qyh.blog.comment.article;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
@@ -29,6 +28,7 @@ import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
@@ -68,13 +68,13 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(Space space, Map<String, Object> variables, Attributes attributes)
+	protected List<Comment> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		return commentService.queryLastComments(space, getLimit(attributes), getQueryAdmin(attributes));
+		return commentService.queryLastComments(space, getLimit(attributes), getQueryAdmin(variables, attributes));
 	}
 
-	private boolean getQueryAdmin(Attributes attributes) {
-		return Boolean.parseBoolean(attributes.get(QUERY_ADMIN));
+	private boolean getQueryAdmin(ContextVariables variables, Attributes attributes) {
+		return Boolean.parseBoolean(super.getVariables(QUERY_ADMIN, variables, attributes));
 	}
 
 	private int getLimit(Attributes attributes) {

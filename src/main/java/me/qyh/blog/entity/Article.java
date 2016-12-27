@@ -59,12 +59,6 @@ public class Article extends BaseLockResource {
 	private AtomicInteger atomicHits;
 
 	/**
-	 * <b>设置该属性的文章不会被非该空间查询、统计到</b>
-	 * </p>
-	 */
-	private Boolean hidden;
-
-	/**
 	 * 文章来源
 	 * 
 	 * @author Administrator
@@ -151,7 +145,6 @@ public class Article extends BaseLockResource {
 		this.content = source.content;
 		this.editor = source.editor;
 		this.from = source.from;
-		this.hidden = source.hidden;
 		this.hits = source.hits;
 		this.isPrivate = source.isPrivate;
 		this.lastModifyDate = source.lastModifyDate;
@@ -356,14 +349,6 @@ public class Article extends BaseLockResource {
 
 	public void setAlias(String alias) {
 		this.alias = alias;
-	}
-
-	public Boolean getHidden() {
-		return hidden;
-	}
-
-	public void setHidden(Boolean hidden) {
-		this.hidden = hidden;
 	}
 
 	public Boolean getAllowComment() {

@@ -44,7 +44,6 @@ import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
 
@@ -87,9 +86,6 @@ public class UserPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		if (Validators.isEmptyOrNull(userPage.getLockId(), true)) {
-			userPage.setLockId(null);
-		}
 		uiService.buildTpl(userPage);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}

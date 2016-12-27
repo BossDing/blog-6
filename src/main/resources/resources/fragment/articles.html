@@ -1,5 +1,5 @@
 <ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px"
-	th:if="${attributes.getBoolean('data-sort-lab',true)}">
+	th:if="${showSortLab == null ? true : showSortLab}">
 	<li role="presentation"
 		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
 		th:href="${urls.getArticlesUrl(articlePage.param,null)}" >默认</a></li>

@@ -16,13 +16,10 @@
 package me.qyh.blog.ui.dialect;
 
 import java.io.Writer;
-import java.util.Map;
 
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.TemplateSpec;
-import org.thymeleaf.context.IEngineContext;
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IProcessableElementTag;
@@ -31,8 +28,6 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.TemplateUtils;
@@ -48,7 +43,6 @@ import me.qyh.blog.ui.fragment.Fragment;
 public class FragmentTagProcessor extends AbstractElementTagProcessor {
 
 	private static final String TAG_NAME = "fragment";
-	private static final String ATTRIBUTES = "attributes";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME = "name";
 
@@ -82,17 +76,11 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 			String name = nameAtt.getValue();
 			Fragment fragment = uiService.queryFragment(name);
 			if (fragment != null) {
-				Attributes attributes = handleAttributes(tag);
-				if (attributes == null) {
-					attributes = new Attributes();
-				}
-				IWebContext iEngineContext = (IWebContext) context;
-				((IEngineContext) context).setVariable(ATTRIBUTES, attributes);
 				String templateName = TemplateUtils.getTemplateName(fragment);
 				Writer writer = new FastStringWriter(200);
 				try {
 					context.getConfiguration().getTemplateManager().parseAndProcess(
-							new TemplateSpec(templateName, null, TemplateMode.HTML, null), iEngineContext, writer);
+							new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
 					structureHandler.replaceWith(writer.toString(), false);
 				} catch (Exception e) {
 					structureHandler.removeElement();
@@ -104,8 +92,9 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 					} else {
 						throw new UIStackoverflowError(templateName, null, null, e);
 					}
-				} finally {
-					((IEngineContext) context).removeVariable(ATTRIBUTES);
+				} catch (Throwable e) {
+					structureHandler.removeElement();
+					throw e;
 				}
 				return;
 			}
@@ -113,62 +102,4 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 		structureHandler.removeElement();
 	}
 
-	protected Attributes handleAttributes(IProcessableElementTag tag) {
-		Attributes attributes = new Attributes();
-		IAttribute[] attributArray = tag.getAllAttributes();
-		for (IAttribute attribute : attributArray) {
-			String v = attribute.getValue();
-			if (v != null) {
-				attributes.put(attribute.getAttributeCompleteName(), v);
-			}
-		}
-		return attributes;
-	}
-
-	protected class Attributes {
-		private Map<String, String> map = Maps.newHashMap();
-
-		public String get(String key) {
-			return map.get(key);
-		}
-
-		public double getDouble(String key, double defaultV) {
-			String v = get(key);
-			if (v != null) {
-				return Double.parseDouble(v);
-			}
-			return defaultV;
-		}
-
-		public long getLong(String key, long defaultV) {
-			String v = get(key);
-			if (v != null) {
-				return Long.parseLong(v);
-			}
-			return defaultV;
-		}
-
-		public int getInt(String key, int defaultV) {
-			String v = get(key);
-			if (v != null) {
-				return Integer.parseInt(v);
-			}
-			return defaultV;
-		}
-
-		public boolean getBoolean(String key, boolean defaultV) {
-			String v = get(key);
-			if (v != null) {
-				return Boolean.parseBoolean(v);
-			}
-			return defaultV;
-		}
-
-		public Attributes() {
-		}
-
-		private void put(String key, String v) {
-			map.put(key, v);
-		}
-	}
 }

@@ -32,7 +32,8 @@ public class PageDialect extends AbstractProcessorDialect {
 	}
 
 	public Set<IProcessor> getProcessors(final String dialectPrefix) {
-		return ImmutableSet.of(new DataTagProcessor(dialectPrefix), new FragmentTagProcessor(dialectPrefix));
+		return ImmutableSet.of(new DataTagProcessor(dialectPrefix), new FragmentTagProcessor(dialectPrefix),
+				new LockTagProcessor(dialectPrefix));
 	}
 
 }

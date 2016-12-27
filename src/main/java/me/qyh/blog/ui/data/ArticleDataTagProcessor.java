@@ -17,7 +17,6 @@ package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.ui.ContextVariables;
 
 /**
  * 文章详情数据数据器
@@ -78,12 +78,19 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article query(Space space, Map<String, Object> variables, Attributes attributes) throws LogicException {
-		Object variable = variables.get(ID_OR_ALIAS);
-		String idOrAlias = variable == null ? null : variable.toString();
+	protected Article query(Space space, ContextVariables variables, Attributes attributes) throws LogicException {
+		// 首先从属性中获取
+		String idOrAlias = attributes.get(ID_OR_ALIAS);
 		if (idOrAlias == null) {
-			// 尝试从属性中获取ID
-			idOrAlias = attributes.get(ID_OR_ALIAS);
+			// 从PathVariable中获取
+			Object variable = variables.getPathVariable(ID_OR_ALIAS);
+			if (variable != null) {
+				idOrAlias = variable.toString();
+			}
+		}
+		if (idOrAlias == null) {
+			// 从参数中获取
+			idOrAlias = variables.getParam(ID_OR_ALIAS);
 		}
 		if (idOrAlias == null) {
 			throw new LogicException("article.notExists", "文章不存在");

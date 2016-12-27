@@ -29,6 +29,9 @@ public class ArticleStatistics {
 	private Timestamp lastPubDate;
 	private int totalHits;// 点击总数
 	private int totalComments;// 评论总数
+	private int totalArticles;// 博客总数
+	private int totalSpaces;// 空间总数
+	private int totalTags;// 标签总数
 
 	public Timestamp getLastModifyDate() {
 		return lastModifyDate;
@@ -60,5 +63,29 @@ public class ArticleStatistics {
 
 	public void setLastPubDate(Timestamp lastPubDate) {
 		this.lastPubDate = lastPubDate;
+	}
+
+	public int getTotalArticles() {
+		return totalArticles;
+	}
+
+	public void setTotalArticles(int totalArticles) {
+		this.totalArticles = totalArticles;
+	}
+
+	public int getTotalSpaces() {
+		return totalSpaces;
+	}
+
+	public void setTotalSpaces(int totalSpaces) {
+		this.totalSpaces = totalSpaces;
+	}
+
+	public int getTotalTags() {
+		return totalTags;
+	}
+
+	public void setTotalTags(int totalTags) {
+		this.totalTags = totalTags;
 	}
 }

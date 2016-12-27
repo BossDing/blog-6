@@ -16,14 +16,16 @@
 package me.qyh.blog.service;
 
 import java.util.List;
-import java.util.Map;
 
+import me.qyh.blog.bean.ExportPage;
+import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
+import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -159,7 +161,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	DataBind<?> queryData(DataTag dataTag, Map<String, Object> variables) throws LogicException;
+	DataBind<?> queryData(DataTag dataTag, ContextVariables variables) throws LogicException;
 
 	/**
 	 * 通过DATA_TAG标签查询预览数据
@@ -168,7 +170,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	DataBind<?> queryData(DataTag dataTag);
+	DataBind<?> queryPreviewData(DataTag dataTag);
 
 	/**
 	 * 查询系统数据
@@ -221,5 +223,37 @@ public interface UIService {
 	 *             当页面受到锁保护时
 	 */
 	Page queryPage(String templateName) throws LogicException;
+
+	/**
+	 * 根据空间导出页面
+	 * 
+	 * @param space
+	 *            空间
+	 * @return
+	 * @throws LogicException
+	 */
+	List<ExportPage> exportPage(Space space) throws LogicException;
+
+	/**
+	 * 导出单个页面
+	 * 
+	 * @param templateName
+	 * @return
+	 * @throws LogicException
+	 */
+	ExportPage exportPage(String templateName) throws LogicException;
+
+	/**
+	 * 导入模板
+	 * 
+	 * @param space
+	 *            空间
+	 * @param exportPages
+	 *            要导入的页面
+	 * @param importOption
+	 *            操作选择
+	 * @throws LogicException
+	 */
+	void importPage(Space space, List<ExportPage> exportPages, ImportOption importOption) throws LogicException;
 
 }

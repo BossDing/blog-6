@@ -19,7 +19,7 @@ public class SpaceQueryParam {
 
 	private String alias;
 	private String name;
-	private Boolean isPrivate;
+	private boolean queryPrivate = true;
 
 	public String getAlias() {
 		return alias;
@@ -29,12 +29,12 @@ public class SpaceQueryParam {
 		this.alias = alias;
 	}
 
-	public Boolean getIsPrivate() {
-		return isPrivate;
+	public boolean getQueryPrivate() {
+		return queryPrivate;
 	}
 
-	public void setIsPrivate(Boolean isPrivate) {
-		this.isPrivate = isPrivate;
+	public void setQueryPrivate(boolean queryPrivate) {
+		this.queryPrivate = queryPrivate;
 	}
 
 	public String getName() {

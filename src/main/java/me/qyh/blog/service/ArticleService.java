@@ -17,6 +17,7 @@ package me.qyh.blog.service;
 
 import java.util.List;
 
+import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
@@ -26,7 +27,6 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.metaweblog.MetaweblogArticle;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.AuthencationException;
@@ -175,11 +175,9 @@ public interface ArticleService {
 	 * 
 	 * @param space
 	 *            空间
-	 * @param queryHidden
-	 *            是否查询隐藏的文章
 	 * @return 文章统计详情
 	 */
-	ArticleStatistics queryArticleStatistics(Space space, boolean queryHidden);
+	ArticleStatistics queryArticleStatistics(Space space);
 
 	/**
 	 * 查询被文章所引用的标签集

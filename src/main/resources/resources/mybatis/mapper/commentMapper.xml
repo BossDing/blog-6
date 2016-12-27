@@ -176,10 +176,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="space != null">
 			AND bs.id = #{space.id} 
 		</if>
-		<if test="!queryHidden">
-			AND IFNULL(ba.art_hidden, false) = false
-			AND bs.space_art_hidden = false
-		</if>
 		<if test="!queryPrivate">
 			AND ba.isPrivate = FALSE 
 			AND bs.is_private = FALSE
@@ -218,10 +214,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.art_status = 0<!-- published -->
 		<if test="space != null">
 			AND art.space_id = #{space.id}
-		</if>
-		<if test="!queryHidden">
-			AND IFNULL(art.art_hidden, false) = false
-			AND sp.space_art_hidden = false
 		</if>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false

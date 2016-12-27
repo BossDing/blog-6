@@ -35,6 +35,8 @@ import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
+import me.qyh.blog.util.Validators;
 
 @Service
 public class SpaceServiceImpl implements SpaceService {
@@ -51,7 +53,7 @@ public class SpaceServiceImpl implements SpaceService {
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void addSpace(Space space) throws LogicException {
 		lockManager.ensureLockvailable(space.getLockId());
 
@@ -74,7 +76,7 @@ public class SpaceServiceImpl implements SpaceService {
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
@@ -129,6 +131,9 @@ public class SpaceServiceImpl implements SpaceService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<Space> querySpace(SpaceQueryParam param) {
+		if (Validators.isEmptyOrNull(param.getAlias(), true) && Validators.isEmptyOrNull(param.getName(), true)) {
+			return spaceCache.getSpaces(new SpacesCacheKey(param.getQueryPrivate()));
+		}
 		return spaceDao.selectByParam(param);
 	}
 

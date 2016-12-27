@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.metaweblog;
+package me.qyh.blog.api.metaweblog;
 
 import java.sql.Timestamp;
 
@@ -114,7 +114,6 @@ public class MetaweblogArticle {
 		article.setFrom(ArticleFrom.ORIGINAL);
 		article.setSummary("");
 		article.setAllowComment(true);
-		article.setHidden(false);
 		article.setContent(content);
 		return article;
 	}

@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.metaweblog;
+package me.qyh.blog.evt.ping;
 
-/**
- * metaweblog常量
- * 
- * @author Administrator
- *
- */
-public class Constants {
+import org.springframework.beans.factory.annotation.Autowired;
 
-	public static final String AUTH_ERROR = "403";
-	public static final String LOGIC_ERROR = "200";
-	public static final String SYS_ERROR = "500";
-	public static final String REQ_ERROR = "400";
+import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.entity.Article;
 
-	private Constants() {
+public abstract class PingService {
 
-	}
+	@Autowired
+	protected UrlHelper urlHelper;
+
+	/**
+	 * ping
+	 * 
+	 * @param article
+	 *            文章
+	 * @param blogName
+	 *            博客名
+	 * @throws PingException
+	 *             ping异常
+	 * @throws Exception
+	 */
+	public abstract void ping(Article article, String blogName) throws Exception;
 
 }

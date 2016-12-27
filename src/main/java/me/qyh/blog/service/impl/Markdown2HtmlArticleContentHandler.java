@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.commonmark.Extension;
@@ -29,6 +28,7 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
@@ -52,7 +52,7 @@ public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler
 	private Parser parser;
 	private HtmlRenderer renderer;
 
-	private static final List<Extension> BASE_EXTENSIONS = Arrays.asList(AutolinkExtension.create(),
+	private static final List<Extension> BASE_EXTENSIONS = ImmutableList.of(AutolinkExtension.create(),
 			TablesExtension.create(), StrikethroughExtension.create(), HeadingAnchorExtension.create());
 
 	@Override

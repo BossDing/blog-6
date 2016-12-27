@@ -44,7 +44,6 @@ public class ArticleQueryParam extends PageQueryParam {
 	private String tag;
 	private Boolean hasLock;
 	private Sort sort;
-	private boolean queryHidden;
 	private boolean highlight = true;// 查询是否高亮显示
 
 	public enum Sort {
@@ -57,9 +56,6 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setSpace(Space space) {
 		this.space = space;
-		if (space != null) {
-			this.queryHidden = true;
-		}
 	}
 
 	public Date getBegin() {
@@ -144,14 +140,6 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public boolean hasQuery() {
 		return !Validators.isEmptyOrNull(query, true);
-	}
-
-	public boolean isQueryHidden() {
-		return queryHidden;
-	}
-
-	public void setQueryHidden(boolean queryHidden) {
-		this.queryHidden = queryHidden;
 	}
 
 	public boolean isHighlight() {

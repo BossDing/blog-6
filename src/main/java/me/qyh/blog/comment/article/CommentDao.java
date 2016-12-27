@@ -78,8 +78,7 @@ public interface CommentDao extends BaseCommentDao<Comment> {
 	 * @return 评论集
 	 */
 	List<Comment> selectLastComments(@Param("space") Space space, @Param("limit") int limit,
-			@Param("queryPrivate") boolean queryPrivate, @Param("queryHidden") boolean queryHidden,
-			@Param("queryAdmin") boolean queryAdmin);
+			@Param("queryPrivate") boolean queryPrivate, @Param("queryAdmin") boolean queryAdmin);
 
 	/**
 	 * 更具文章和ip删除评论
@@ -118,8 +117,7 @@ public interface CommentDao extends BaseCommentDao<Comment> {
 	 */
 	int selectArticleCommentCount(Integer id);
 
-	int selectArticlesTotalCommentCount(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,
-			@Param("queryHidden") boolean queryHidden);
+	int selectArticlesTotalCommentCount(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
 
 	public class ArticleComments {
 		private Integer id;

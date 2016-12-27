@@ -31,7 +31,6 @@
 											<th>别名</th>
 											<th>描述</th>
 											<th>空间</th>
-											<th>锁</th>
 											<th>创建日期</th>
 											<th>操作</th>
 										</tr>
@@ -51,7 +50,6 @@
 												<span th:if="${page.space == null}" th:text="无"></span>
 												<a href="###" data-toggle="tooltip" th:title="${page.space.name}" th:if="${page.space != null}" th:text="${#strings.length(page.space.name) > 10  ? #strings.substring(page.space.name,0,10)+'...' : page.space.name}"></a>
 											</td>
-											<td th:text="${page.lockId == null ? '否' : '是'}"></td>
 											<td
 												th:text="${#dates.format(page.createDate, 'yyyy-MM-dd HH:mm')}"></td>
 											<td><a href="###" style="margin-right: 10px"
