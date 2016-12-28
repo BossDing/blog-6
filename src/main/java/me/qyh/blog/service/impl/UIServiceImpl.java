@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +51,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
+import me.qyh.blog.bean.ImportRecord;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.LockPageDao;
@@ -511,124 +513,168 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void importPage(Space space, List<ExportPage> exportPages, ImportOption importOption) throws LogicException {
-		if (CollectionUtils.isEmpty(exportPages)) {
-			return;
-		}
-		if (space != null && spaceCache.getSpace(space.getId()) == null) {
-			throw new LogicException(SPACE_NOT_EXISTS);
-		}
-		if (importOption == null) {
-			importOption = new ImportOption();
-		}
-		Set<String> pageEvitKeySet = Sets.newHashSet();
-		Set<String> fragmentEvitKeySet = Sets.newHashSet();
-		for (ExportPage exportPage : exportPages) {
-			Page page = exportPage.getPage();
-			page.setSpace(space);
-			String templateName = TemplateUtils.getTemplateName(page);
-			Page current;
-			try {
-				current = queryPage(templateName);
-			} catch (LogicException e) {
-				if (USER_PAGE_NOT_EXISTS.getCodes().equals(e.getLogicMessage().getCodes())) {
-					if (importOption.isCreateUserPageIfNotExists()) {
-						UserPage userPage = (UserPage) page;
-						userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-						userPage.setDescription("");
-						userPage.setName(userPage.getAlias());
-						userPage.setSpace(space);
-						userPageDao.insert(userPage);
-						continue;
-					}
-				}
-				if (importOption.isContinueOnFailure()) {
-					continue;
-				}
-				throw e;
+	public List<ImportRecord> importPage(Space space, List<ExportPage> exportPages, ImportOption importOption) {
+		TransactionStatus ts = platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
+		try {
+			if (CollectionUtils.isEmpty(exportPages)) {
+				return Lists.newArrayList();
 			}
-			// 如果页面内容没有改变
-			if (current.getTpl().equals(page.getTpl())) {
-				continue;
+			// 空间不存在，直接退出
+			if (space != null && spaceCache.getSpace(space.getId()) == null) {
+				return Arrays.asList(new ImportRecord(false, SPACE_NOT_EXISTS));
 			}
-			current.setTpl(page.getTpl());
-			switch (page.getType()) {
-			case SYSTEM:
-				SysPage sysPage = (SysPage) current;
-				if (sysPage.hasId()) {
-					sysPageDao.update(sysPage);
-				} else {
-					sysPageDao.insert(sysPage);
-				}
-				break;
-			case ERROR:
-				ErrorPage errorPage = (ErrorPage) current;
-				if (errorPage.hasId()) {
-					errorPageDao.update(errorPage);
-				} else {
-					errorPageDao.insert(errorPage);
-				}
-				break;
-			case LOCK:
-				LockPage lockPage = (LockPage) current;
-				if (current.hasId()) {
-					lockPageDao.update(lockPage);
-				} else {
-					lockPageDao.insert(lockPage);
-				}
-				break;
-			case USER:
-				UserPage userPage = (UserPage) current;
-				userPageDao.update(userPage);
-				break;
-			default:
-				break;
+			if (importOption == null) {
+				importOption = new ImportOption();
 			}
-			pageEvitKeySet.add(templateName);
-
-			for (Fragment fragment : exportPage.getFragments()) {
-				if (fragmentEvitKeySet.contains(fragment.getName())) {
-					continue;
-				}
-				// 查询当前的fragment
-				Fragment currentFragment = queryFragment(fragment.getName());
-				if (currentFragment == null) {
-					insertUserFragmentWhenImport(space, fragment);
-				} else {
-					if (currentFragment.getTpl().equals(fragment.getTpl())) {
-						continue;
-					}
-					if (currentFragment instanceof UserFragment) {
-						UserFragment currentUserFragment = (UserFragment) currentFragment;
-						if (currentUserFragment.isGlobal()) {
-							insertUserFragmentWhenImport(space, fragment);
-						} else {
-							currentFragment.setTpl(fragment.getTpl());
-							userFragmentDao.update(currentUserFragment);
+			List<ImportRecord> records = Lists.newArrayList();
+			Set<String> pageEvitKeySet = Sets.newHashSet();
+			Set<String> fragmentEvitKeySet = Sets.newHashSet();
+			for (ExportPage exportPage : exportPages) {
+				Page page = exportPage.getPage();
+				page.setSpace(space);
+				String templateName = TemplateUtils.getTemplateName(page);
+				Page current;
+				try {
+					// 查询当前页面
+					current = queryPage(templateName);
+				} catch (LogicException e) {
+					// 如果用户页面不存在
+					if (USER_PAGE_NOT_EXISTS.getCodes()[0].equals(e.getLogicMessage().getCodes()[0])) {
+						// 如果插入用户页面
+						if (importOption.isCreateUserPageIfNotExists()) {
+							UserPage userPage = (UserPage) page;
+							userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+							userPage.setDescription("");
+							userPage.setName(userPage.getAlias());
+							userPage.setSpace(space);
+							userPageDao.insert(userPage);
+							records.add(new ImportRecord(true, new Message("import.insert.tpl.success",
+									"插入模板" + templateName + "成功", templateName)));
+							continue;
 						}
-					} else {
-						insertUserFragmentWhenImport(space, fragment);
 					}
+					records.add(new ImportRecord(false, e.getLogicMessage()));
+					// 如果忽略逻辑异常
+					if (importOption.isContinueOnFailure()) {
+						continue;
+					}
+					ts.setRollbackOnly();
+					return records;
 				}
-				fragmentEvitKeySet.add(fragment.getName());
-			}
-		}
-		for (String pageEvitKey : pageEvitKeySet) {
-			clearPageCache(pageEvitKey);
-		}
-		for (String fragmentEvitKey : fragmentEvitKeySet) {
+				// 如果页面内容没有改变
+				if (current.getTpl().equals(page.getTpl())) {
+					records.add(new ImportRecord(true,
+							new Message("import.tpl.nochange", "模板" + templateName + "内容没有发生变化，无需更新", templateName)));
+					continue;
+				}
+				current.setTpl(page.getTpl());
+				// 是否是更新操作
+				boolean update = false;
+				switch (page.getType()) {
+				case SYSTEM:
+					SysPage sysPage = (SysPage) current;
+					if (sysPage.hasId()) {
+						sysPageDao.update(sysPage);
+						update = true;
+					} else {
+						sysPageDao.insert(sysPage);
+					}
+					break;
+				case ERROR:
+					ErrorPage errorPage = (ErrorPage) current;
+					if (errorPage.hasId()) {
+						errorPageDao.update(errorPage);
+						update = true;
+					} else {
+						errorPageDao.insert(errorPage);
+					}
+					break;
+				case LOCK:
+					LockPage lockPage = (LockPage) current;
+					if (current.hasId()) {
+						lockPageDao.update(lockPage);
+						update = true;
+					} else {
+						lockPageDao.insert(lockPage);
+					}
+					break;
+				case USER:
+					UserPage userPage = (UserPage) current;
+					userPageDao.update(userPage);
+					update = true;
+					break;
+				default:
+					break;
+				}
 
-			UserFragment userFragment = new UserFragment();
-			userFragment.setGlobal(false);
-			userFragment.setName(fragmentEvitKey);
-			userFragment.setSpace(space);
-			
-			evitFragmentCache(userFragment);
+				if (update) {
+					records.add(new ImportRecord(true,
+							new Message("import.update.tpl.success", "模板" + templateName + "更新成功", templateName)));
+				} else {
+					records.add(new ImportRecord(true,
+							new Message("import.insert.tpl.success", "模板" + templateName + "插入成功", templateName)));
+				}
+
+				pageEvitKeySet.add(templateName);
+
+				for (Fragment fragment : exportPage.getFragments()) {
+					String fragmentName = fragment.getName();
+					if (fragmentEvitKeySet.contains(fragmentName)) {
+						continue;
+					}
+					// 查询当前的fragment
+					Fragment currentFragment = queryFragment(space, fragmentName);
+					if (currentFragment == null) {
+						// 插入fragment
+						insertUserFragmentWhenImport(space, fragment, records);
+					} else {
+						if (currentFragment.getTpl().equals(fragment.getTpl())) {
+							records.add(new ImportRecord(true, new Message("import.tpl.nochange",
+									"模板" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
+							continue;
+						}
+						if (currentFragment instanceof UserFragment) {
+							UserFragment currentUserFragment = (UserFragment) currentFragment;
+							// 如果用户存在同名的fragment，但是是global的，则插入space级别的
+							if (currentUserFragment.isGlobal()) {
+								insertUserFragmentWhenImport(space, fragment, records);
+							} else {
+								currentFragment.setTpl(fragment.getTpl());
+								userFragmentDao.update(currentUserFragment);
+								records.add(new ImportRecord(true, new Message("import.update.tpl.success",
+										"模板" + fragmentName + "更新成功", fragmentName)));
+							}
+						} else {
+							// 如果是系统fragment，则插入用户fragment
+							insertUserFragmentWhenImport(space, fragment, records);
+						}
+					}
+					fragmentEvitKeySet.add(fragment.getName());
+				}
+			}
+			// 清空缓存
+			for (String pageEvitKey : pageEvitKeySet) {
+				clearPageCache(pageEvitKey);
+			}
+			for (String fragmentEvitKey : fragmentEvitKeySet) {
+
+				UserFragment userFragment = new UserFragment();
+				userFragment.setGlobal(false);
+				userFragment.setName(fragmentEvitKey);
+				userFragment.setSpace(space);
+
+				evitFragmentCache(userFragment);
+			}
+			return records;
+		} catch (RuntimeException | Error e) {
+			ts.setRollbackOnly();
+			throw e;
+		} finally {
+			platformTransactionManager.commit(ts);
 		}
 	}
 
-	private void insertUserFragmentWhenImport(Space space, Fragment toImport) {
+	private void insertUserFragmentWhenImport(Space space, Fragment toImport, List<ImportRecord> records) {
 		UserFragment userFragment = new UserFragment();
 		userFragment.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		userFragment.setDescription("");
@@ -637,6 +683,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		userFragment.setSpace(space);
 		userFragment.setTpl(toImport.getTpl());
 		userFragmentDao.insert(userFragment);
+		records.add(new ImportRecord(true,
+				new Message("import.insert.tpl.success", "模板" + toImport.getName() + "插入成功", toImport.getName())));
 	}
 
 	@Override

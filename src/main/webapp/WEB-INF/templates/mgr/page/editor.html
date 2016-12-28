@@ -7,6 +7,8 @@
 				data-handler="format">格式化</button>
 			<button class="btn-default btn-sm btn" type="button"
 				data-handler="lookup">查询</button>
+			<button class="btn-default btn-sm btn" type="button"
+				data-handler="lock">锁</button>
 		</div>
 	</div>
 	<textarea style="display: none;" th:text="${content}" id="editor"></textarea>
@@ -46,6 +48,21 @@
 							</div>
 						</div>
 					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal" id="lockModal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">锁</h4>
+				</div>
+				<div class="modal-body" id="lockBody">
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>

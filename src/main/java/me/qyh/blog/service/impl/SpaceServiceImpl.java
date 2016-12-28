@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.LockProtected;
@@ -39,7 +41,7 @@ import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.util.Validators;
 
 @Service
-public class SpaceServiceImpl implements SpaceService {
+public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockDeleteEvent> {
 
 	@Autowired
 	private SpaceDao spaceDao;
@@ -70,6 +72,7 @@ public class SpaceServiceImpl implements SpaceService {
 			spaceDao.resetDefault();
 		}
 		spaceDao.insert(space);
+		spaceCache.evit(space);
 	}
 
 	@Override
@@ -137,4 +140,10 @@ public class SpaceServiceImpl implements SpaceService {
 		return spaceDao.selectByParam(param);
 	}
 
+	@Override
+	public void onApplicationEvent(LockDeleteEvent event) {
+		// synchronized
+		// do not worry about transaction
+		spaceDao.deleteLock(event.getLockId());
+	}
 }

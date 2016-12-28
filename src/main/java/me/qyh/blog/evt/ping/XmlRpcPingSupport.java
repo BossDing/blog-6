@@ -35,7 +35,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 
 	private final String pingUrl;
 
-	private static final Logger logger = LoggerFactory.getLogger(XmlRpcPingSupport.class);
+	protected static final Logger logger = LoggerFactory.getLogger(XmlRpcPingSupport.class);
 
 	public XmlRpcPingSupport(String pingUrl) {
 		super();

@@ -43,6 +43,9 @@ file_mode = "HTML";
 			case 'lookup':
 				lookup();
 				break;
+			case 'lock':
+				showLock();
+				break;
 			default:
 				break;
 			}
@@ -75,7 +78,8 @@ file_mode = "HTML";
 				});
 				break;
 			}
-		})
+		});
+		
 	});
 	 $(document).keydown(function(e) {
 	    if (e.ctrlKey && e.shiftKey && e.which === 70) {
@@ -100,6 +104,41 @@ file_mode = "HTML";
 	function addFragment(name){
 		editor.replaceSelection('<fragment name="'+name+'"/>');
 		$("#lookupModal").modal('hide')
+	}
+	
+	function showLock(){
+		$.get(basePath + '/mgr/lock/all',{},function(data){
+			var oldLock = $("#oldLock").val();
+			if(data.success){
+				var locks = data.data;
+				var html = '';
+				if(locks.length > 0){
+					html += '<div class="table-responsive">';
+					html += '<table class="table">';
+					for(var i=0;i<locks.length;i++){
+						html += '<tr>';
+						var lock = locks[i];
+						html += '<tr>';
+						html += '<td>'+lock.name+'</td>';
+						html += '<td><a href="###" onclick="addLock(\''+lock.id+'\')"><span class="glyphicon glyphicon-ok-sign"></span></a></td>';
+						html += '</tr>';
+					}
+					html += '</table>';
+					html += '</div>';
+					$("#lockBody").html(html);
+					$("#lockModal").modal('show')
+				} else {
+					bootbox.alert("当前没有任何锁");
+				}
+			}else{
+				console.log(data.data);
+			}
+		});
+	}
+	
+	function addLock(id){
+		editor.replaceSelection('<lock id="'+id+'"/>');
+		$("#lockModal").modal('hide')
 	}
 	
 	function lookup(){

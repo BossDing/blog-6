@@ -22,13 +22,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.dao.ArticleDao;
-import me.qyh.blog.dao.SpaceDao;
+import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.SysLock;
@@ -43,14 +44,12 @@ import me.qyh.blog.util.UUIDs;
  * @author Administrator
  *
  */
-public class SysLockProvider {
+public class SysLockProvider implements ApplicationEventPublisherAware {
 
 	@Autowired
 	private SysLockDao sysLockDao;
-	@Autowired
-	private SpaceDao spaceDao;
-	@Autowired
-	private ArticleDao articleDao;
+
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	private static final String[] LOCK_TYPES = { SysLockType.PASSWORD.name(), SysLockType.QA.name() };
 
@@ -64,8 +63,7 @@ public class SysLockProvider {
 	@CacheEvict(value = "lockCache", key = "'lock-'+#id")
 	public void removeLock(String id) {
 		sysLockDao.delete(id);
-		articleDao.deleteLock(id);
-		spaceDao.deleteLock(id);
+		applicationEventPublisher.publishEvent(new LockDeleteEvent(this, id));
 	}
 
 	/**
@@ -168,5 +166,10 @@ public class SysLockProvider {
 			PasswordLock plock = (PasswordLock) lock;
 			plock.setPassword(BCrypts.encode(plock.getPassword()));
 		}
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

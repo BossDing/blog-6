@@ -19,6 +19,7 @@ import java.util.List;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
+import me.qyh.blog.bean.ImportRecord;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockException;
@@ -252,8 +253,7 @@ public interface UIService {
 	 *            要导入的页面
 	 * @param importOption
 	 *            操作选择
-	 * @throws LogicException
 	 */
-	void importPage(Space space, List<ExportPage> exportPages, ImportOption importOption) throws LogicException;
+	List<ImportRecord> importPage(Space space, List<ExportPage> exportPages, ImportOption importOption);
 
 }

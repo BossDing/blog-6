@@ -33,6 +33,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -62,6 +63,7 @@ import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticlePublishedEvent;
+import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.evt.ArticlePublishedEvent.OP;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -76,7 +78,8 @@ import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.web.interceptor.SpaceContext;
 
-public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
+public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware,
+		ApplicationListener<LockDeleteEvent> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
@@ -573,6 +576,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return articleIndexer.getIndexer().querySimilar(article, (List<Integer> articleIds) -> {
 			return articleDao.selectByIds(articleIds);
 		}, limit);
+	}
+
+	@Override
+	public void onApplicationEvent(LockDeleteEvent event) {
+		// synchronized
+		// do not worry about transaction
+		articleDao.deleteLock(event.getLockId());
 	}
 
 	@Override
