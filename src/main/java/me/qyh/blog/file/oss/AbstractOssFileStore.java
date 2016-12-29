@@ -77,8 +77,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			}
 			return cf;
 		} finally {
-			if (!FileUtils.deleteQuietly(tmp) && tmp.exists()) {
-				tmp.deleteOnExit();
+			if (tmp.exists()) {
+				FileUtils.deleteQuietly(tmp);
 			}
 		}
 	}
@@ -105,8 +105,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			}
 			upload(key, tmp);
 		} catch (IOException e) {
-			if (backup != null && !FileUtils.deleteQuietly(backup) && backup.exists()) {
-				backup.deleteOnExit();
+			if (backup != null) {
+				FileUtils.deleteQuietly(backup);
 			}
 			throw new SystemException(e.getMessage(), e);
 		}

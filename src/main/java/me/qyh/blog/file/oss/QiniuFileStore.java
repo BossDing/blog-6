@@ -112,9 +112,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	protected boolean doDelete(String key) {
 		boolean flag = false;
 		BucketManager bucketManager = new BucketManager(auth);
-		// 要测试的空间和key，并且这个key在你空间中存在
 		try {
-			// 调用delete方法移动文件
 			bucketManager.delete(bucket, key);
 			flag = true;
 		} catch (QiniuException e) {
@@ -350,8 +348,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		// TODO Auto-generated method stub
-		return false;
+		return true;// can store every file
 	}
 
 	@Override
