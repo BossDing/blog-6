@@ -1,9 +1,9 @@
 /*
- * Copyright 2016 qyh.me
+ * CeventTypeyright 2016 qyh.me
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * You may obtain a ceventTypey of the License at
  * 
  *     http://www.apache.org/licenses/LICENSE-2.0
  * 
@@ -23,28 +23,32 @@ import org.springframework.context.ApplicationEvent;
 import me.qyh.blog.entity.Article;
 
 /**
- * 文章发布事件
+ * 文章事件 <b>文章更新点击次数时不会被推送</b>
  * 
  * @author Administrator
  *
  */
-public class ArticlePublishedEvent extends ApplicationEvent {
+public class ArticleEvent extends ApplicationEvent {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private List<Article> articles;
-	private OP op;
+	private final List<Article> articles;
+	private final EventType eventType;
 
 	/**
-	 * 操作方式
+	 * 事件类型
 	 * 
 	 * @author Administrator
 	 *
 	 */
-	public enum OP {
-		INSERT, UPDATE;
+	public enum EventType {
+		INSERT, // 插入
+		UPDATE, // 更新
+		DELETE, // 删除
+		HITS, // 点击
+		DRAFT// 自动草稿
 	}
 
 	/**
@@ -53,13 +57,13 @@ public class ArticlePublishedEvent extends ApplicationEvent {
 	 *            操作对象
 	 * @param article
 	 *            文章
-	 * @param op
+	 * @param eventType
 	 *            操作方式
 	 */
-	public ArticlePublishedEvent(Object source, Article article, OP op) {
+	public ArticleEvent(Object source, Article article, EventType eventType) {
 		super(source);
 		this.articles = Arrays.asList(article);
-		this.op = op;
+		this.eventType = eventType;
 	}
 
 	/**
@@ -68,21 +72,21 @@ public class ArticlePublishedEvent extends ApplicationEvent {
 	 *            操作对象
 	 * @param articles
 	 *            文章集合
-	 * @param op
+	 * @param eventType
 	 *            操作方式
 	 */
-	public ArticlePublishedEvent(Object source, List<Article> articles, OP op) {
+	public ArticleEvent(Object source, List<Article> articles, EventType eventType) {
 		super(source);
 		this.articles = articles;
-		this.op = op;
+		this.eventType = eventType;
 	}
 
 	public List<Article> getArticles() {
 		return articles;
 	}
 
-	public OP getOp() {
-		return op;
+	public EventType getEventType() {
+		return eventType;
 	}
 
 }

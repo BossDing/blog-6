@@ -25,7 +25,8 @@ import org.springframework.scheduling.annotation.Async;
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.evt.ArticlePublishedEvent;
+import me.qyh.blog.evt.ArticleEvent;
+import me.qyh.blog.evt.ArticleEvent.EventType;
 
 /**
  * 简单的ping管理器
@@ -33,7 +34,7 @@ import me.qyh.blog.evt.ArticlePublishedEvent;
  * @author Administrator
  *
  */
-public class SimplePingManager implements ApplicationListener<ArticlePublishedEvent> {
+public class SimplePingManager implements ApplicationListener<ArticleEvent> {
 
 	protected static final Logger logger = LoggerFactory.getLogger(SimplePingManager.class);
 
@@ -47,15 +48,19 @@ public class SimplePingManager implements ApplicationListener<ArticlePublishedEv
 
 	@Async
 	@Override
-	public void onApplicationEvent(ArticlePublishedEvent event) {
+	public void onApplicationEvent(ArticleEvent event) {
 		List<Article> articles = event.getArticles();
 		for (Article article : articles) {
-			// 如果文章被锁保护或者文章私人，放弃继续
-			if (article.hasLock() || article.isPrivate()) {
-				continue;
+			if (needPing(event.getEventType(), article)) {
+				ping(article);
 			}
-			ping(article);
 		}
+	}
+
+	private boolean needPing(EventType eventType, Article article) {
+		return ((EventType.INSERT.equals(eventType) || EventType.UPDATE.equals(eventType)) && article.isPublished()
+				&& !article.hasLock() && !article.isPrivate());
+
 	}
 
 	private void ping(Article article) {

@@ -156,6 +156,7 @@ public class Article extends BaseLockResource {
 		this.tags = source.tags;
 		this.title = source.title;
 		this.id = source.id;
+		this.allowComment = source.allowComment;
 	}
 
 	public Space getSpace() {

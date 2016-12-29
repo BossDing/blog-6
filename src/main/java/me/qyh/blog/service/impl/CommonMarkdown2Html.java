@@ -31,10 +31,6 @@ import org.springframework.util.CollectionUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Editor;
-import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
-
 /**
  * 用来将markdown文本转化成html后向前台输出<br>
  * {@link https://github.com/atlassian/commonmark-java}
@@ -42,7 +38,7 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
  * @author Administrator
  *
  */
-public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler, Markdown2Html, InitializingBean {
+public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
 
 	private List<Extension> extensions = Lists.newArrayList();
 
@@ -54,15 +50,6 @@ public class Markdown2HtmlArticleContentHandler implements ArticleContentHandler
 
 	private static final List<Extension> BASE_EXTENSIONS = ImmutableList.of(AutolinkExtension.create(),
 			TablesExtension.create(), StrikethroughExtension.create(), HeadingAnchorExtension.create());
-
-	@Override
-	public void handle(Article article) {
-		if (Editor.MD.equals(article.getEditor())) {
-			Node document = parser.parse(article.getContent());
-			String rendered = renderer.render(document);
-			article.setContent(rendered);
-		}
-	}
 
 	@Override
 	public String toHtml(String markdown) {

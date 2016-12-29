@@ -43,17 +43,6 @@
 		p:dataSource-ref="dataSource" />
 	<tx:annotation-driven transaction-manager="txManager" />
 
-	<bean id="transactionTemplate"
-		class="org.springframework.transaction.support.TransactionTemplate">
-		<constructor-arg index="0" ref="txManager" />
-	</bean>
-
-	<bean id="readOnlyTransactionTemplate"
-		class="org.springframework.transaction.support.TransactionTemplate">
-		<constructor-arg index="0" ref="txManager" />
-		<property name="readOnly" value="true" />
-	</bean>
-
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
 			value="me.qyh.blog.dao,me.qyh.blog.lock.support,me.qyh.blog.comment" />
@@ -116,12 +105,16 @@
 	</bean>
 
 
-	<bean class="me.qyh.blog.service.impl.Markdown2HtmlArticleContentHandler"
+	<bean class="me.qyh.blog.service.impl.CommonMarkdown2Html"
 		id="markdown2Html" />
 
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<!-- markdown2html handler -->
-		<property name="articleContentHandlers" ref="markdown2Html" />
+		<property name="articleContentHandlers">
+			<list>
+				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler"/>
+			</list>
+		</property>
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
@@ -212,7 +205,6 @@
 			</bean>
 		</property>
 	</bean>
-
 
 	<bean class="me.qyh.blog.evt.ping.SimplePingManager">
 		<constructor-arg value="钱宇豪的个人博客" />
