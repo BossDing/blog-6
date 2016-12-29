@@ -21,16 +21,12 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
 import me.qyh.blog.exception.SystemException;
 
 public class FileUtils {
-
-	private static Lock fsLock = new ReentrantLock();
 
 	private FileUtils() {
 
@@ -52,6 +48,9 @@ public class FileUtils {
 	}
 
 	public static boolean deleteQuietly(File file) {
+		if (file == null || !file.exists()) {
+			return true;
+		}
 		try {
 			java.nio.file.Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
 				@Override
@@ -72,10 +71,6 @@ public class FileUtils {
 		}
 	}
 
-	public static void main(String[] args) {
-		FileUtils.deleteQuietly(new File("f:/123456.jpeg"));
-	}
-
 	/**
 	 * 创建一个文件夹，如果失败，抛出异常
 	 * 
@@ -85,13 +80,10 @@ public class FileUtils {
 		if (dir.exists()) {
 			return;
 		}
-		fsLock.lock();
-		try {
-			if (!dir.exists() && !dir.mkdirs())
+		synchronized (FileUtils.class) {
+			if (!dir.exists() && !dir.mkdirs()) {
 				throw new SystemException("创建文件夹：" + dir.getAbsolutePath() + "失败");
-		} finally {
-			fsLock.unlock();
+			}
 		}
 	}
-
 }

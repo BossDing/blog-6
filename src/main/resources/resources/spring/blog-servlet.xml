@@ -34,14 +34,17 @@
 	<context:component-scan base-package="me.qyh.blog.web.controller" />
 
 	<mvc:annotation-driven>
-		<mvc:message-converters register-defaults="true">
-			<bean class="me.qyh.blog.web.GsonHttpMessageConverter" />
+		<mvc:message-converters>
+			<bean
+				class="org.springframework.http.converter.json.GsonHttpMessageConverter">
+				<property name="gson" value="#{T(me.qyh.blog.util.Jsons).getGson()}" />
+			</bean>
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
 			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
-		<mvc:return-value-handlers >
-			<bean class="me.qyh.blog.ui.PageReturnHandler" ></bean>
+		<mvc:return-value-handlers>
+			<bean class="me.qyh.blog.ui.PageReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 
@@ -73,6 +76,7 @@
 
 	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
 		<property name="templateResolver" ref="templateResolver" />
+		<property name="enableSpringELCompiler" value="true" />
 	</bean>
 
 
@@ -81,8 +85,8 @@
 		<property name="characterEncoding" value="utf-8" />
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
-	
-	<bean class="me.qyh.blog.ui.UIRender"/>
+
+	<bean class="me.qyh.blog.ui.UIRender" />
 
 
 	<!-- captcha -->

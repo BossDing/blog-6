@@ -167,6 +167,12 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public final void afterPropertiesSet() throws Exception {
+
+		/**
+		 * spring 4.3 fix
+		 */
+		super.afterPropertiesSet();
+
 		// 忽略location的警告
 		moreAfterPropertiesSet();
 
@@ -193,8 +199,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	protected MediaType getMediaType(Resource resource) {
-		MediaType type = super.getMediaType(resource);
+	protected MediaType getMediaType(HttpServletRequest request, Resource resource) {
+		MediaType type = super.getMediaType(request, resource);
 		if (type == null) {
 			type = MediaType.APPLICATION_OCTET_STREAM;
 		}

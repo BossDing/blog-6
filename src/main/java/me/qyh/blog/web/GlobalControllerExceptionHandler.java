@@ -42,7 +42,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -87,13 +86,13 @@ public class GlobalControllerExceptionHandler {
 	@Autowired
 	private Messages messages;
 
-	@ResponseStatus(HttpStatus.FORBIDDEN) // 403
 	@ExceptionHandler(AuthencationException.class)
 	public String handleNoAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("noAuthencation", "权限不足")));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.FORBIDDEN.value());
 			// 将链接放入
 			if ("get".equalsIgnoreCase(request.getMethod())) {
 				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
@@ -102,7 +101,6 @@ public class GlobalControllerExceptionHandler {
 		}
 	}
 
-	@ResponseStatus(HttpStatus.OK) // 403
 	@ExceptionHandler(TplRenderException.class)
 	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TplRenderException e)
 			throws IOException {
@@ -111,18 +109,17 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, e.getRenderErrorDescription()));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
 			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
-			return "redirect:" + urlHelper.getUrl() + "/error/ui";
+			return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error/ui";
 		}
 	}
 
-	@ResponseStatus(HttpStatus.OK)
 	@ExceptionHandler(FaultException.class)
 	public String handleFaultException(HttpServletRequest request, HttpServletResponse resp, FaultException ex)
 			throws IOException {
 		resp.setContentType(MediaType.APPLICATION_XML_VALUE);
-		byte[] bits = RequestXmlParser.createFailXml(ex.getCode(), messages.getMessage(ex.getDesc()))
-				.getBytes();
+		byte[] bits = RequestXmlParser.createFailXml(ex.getCode(), messages.getMessage(ex.getDesc())).getBytes();
 		resp.setContentLength(bits.length);
 		OutputStream os = resp.getOutputStream();
 		os.write(bits);
@@ -130,13 +127,13 @@ public class GlobalControllerExceptionHandler {
 		return null;
 	}
 
-	@ResponseStatus(HttpStatus.FORBIDDEN) // 403
 	@ExceptionHandler(CsrfException.class)
 	public String handleCsrfAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("csrfAuthencation", "认证信息失效，请刷新页面后重试")));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.FORBIDDEN.value());
 			return getErrorRedirect(request, 403);
 		}
 	}
@@ -158,9 +155,10 @@ public class GlobalControllerExceptionHandler {
 			return "redirect:" + urlHelper.getUrl();
 	}
 
-	@ResponseStatus(HttpStatus.FORBIDDEN) // 403
 	@ExceptionHandler(LockException.class)
-	public String handleLockException(HttpServletRequest request, LockException ex) throws IOException {
+	public String handleLockException(HttpServletRequest request, HttpServletResponse response, LockException ex)
+			throws IOException {
+		response.setStatus(HttpStatus.FORBIDDEN.value());
 		Lock lock = ex.getLock();
 		String redirectUrl = getFullUrl(request);
 		Message error = ex.getError();
@@ -208,7 +206,6 @@ public class GlobalControllerExceptionHandler {
 		return "redirect:" + urlHelper.getUrl();
 	}
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler({ MissingServletRequestParameterException.class, TypeMismatchException.class,
 			HttpMessageNotReadableException.class, BindException.class })
 	public String handlerBadRequest(HttpServletRequest request, HttpServletResponse resp, Exception ex)
@@ -218,11 +215,11 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidParameter", "数据格式异常")));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.BAD_REQUEST.value());
 			return getErrorRedirect(request, 400);
 		}
 	}
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler({ HttpMediaTypeNotSupportedException.class, HttpMediaTypeNotAcceptableException.class })
 	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp, Exception ex)
 			throws IOException {
@@ -231,6 +228,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.BAD_REQUEST.value());
 			return getErrorRedirect(request, 400);
 		}
 	}
@@ -247,7 +245,6 @@ public class GlobalControllerExceptionHandler {
 		throw new SystemException("抛出了MethodArgumentNotValidException，但没有发现任何错误");
 	}
 
-	@ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	public String handleHttpRequestMethodNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
 			HttpRequestMethodNotSupportedException ex) throws IOException {
@@ -255,11 +252,11 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.405", "405")));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.METHOD_NOT_ALLOWED.value());
 			return getErrorRedirect(request, 405);
 		}
 	}
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public String handleMaxUploadSizeExceededException(HttpServletRequest req, HttpServletResponse resp,
 			MaxUploadSizeExceededException e) throws IOException {
@@ -268,6 +265,7 @@ public class GlobalControllerExceptionHandler {
 					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize())));
 			return null;
 		} else {
+			resp.setStatus(HttpStatus.BAD_REQUEST.value());
 			return getErrorRedirect(req, 400);
 		}
 	}
@@ -277,24 +275,6 @@ public class GlobalControllerExceptionHandler {
 
 	}
 
-	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	@ExceptionHandler(value = Exception.class)
-	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
-		if (ExceptionUtils.indexOfThrowable(e, ClientAbortException.class) == -1) {
-			logger.error(e.getMessage(), e);
-		}
-		if (resp.isCommitted()) {
-			return null;
-		}
-		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
-			return null;
-		} else {
-			return getErrorRedirect(request, 500);
-		}
-	}
-
-	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@ExceptionHandler(value = NoHandlerFoundException.class)
 	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp,
 			NoHandlerFoundException ex) throws IOException {
@@ -302,7 +282,22 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.404", "404")));
 			return null;
 		}
+		resp.setStatus(HttpStatus.NOT_FOUND.value());
 		return getErrorRedirect(request, 404);
+	}
+
+	@ExceptionHandler(value = Exception.class)
+	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
+		if (ExceptionUtils.indexOfThrowable(e, ClientAbortException.class) == -1) {
+			logger.error(e.getMessage(), e);
+		}
+		if (Webs.isAjaxRequest(request)) {
+			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
+			return null;
+		} else {
+			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			return getErrorRedirect(request, 500);
+		}
 	}
 
 	private String getFullUrl(HttpServletRequest request) {

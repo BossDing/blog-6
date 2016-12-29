@@ -77,11 +77,20 @@ public class Jsons {
 				}
 			}).registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
-			.registerTypeAdapter(SysLock.class,new SysLockDeserializer())
+			.registerTypeAdapter(SysLock.class, new SysLockDeserializer())
 			.registerTypeAdapter(Page.class, new PageSerializer()).create();
 
 	private Jsons() {
 		super();
+	}
+
+	/**
+	 * for GsonHttpMessageConverter
+	 * 
+	 * @return
+	 */
+	public static Gson getGson() {
+		return gson;
 	}
 
 	/**

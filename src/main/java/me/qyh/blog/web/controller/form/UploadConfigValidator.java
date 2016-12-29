@@ -58,9 +58,10 @@ public class UploadConfigValidator implements Validator {
 						sb.append(_path).append(FileService.SPLIT_CHAR);
 					}
 				}
-				if (sb.length() > 0)
+				if (sb.length() > 0) {
 					sb.deleteCharAt(sb.length() - 1);
-				config.setPath(path);
+				}
+				config.setPath(sb.toString());
 			} else {
 				validatePath(path, errors);
 			}
