@@ -62,7 +62,7 @@ import me.qyh.blog.web.Webs;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 
-	private static final Logger logger = LoggerFactory.getLogger(AppInterceptor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AppInterceptor.class);
 
 	@Autowired
 	private UrlHelper urlHelper;
@@ -124,7 +124,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			} catch (Throwable e) {
 				removeContext();
 				// 防止死循环
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 				response.setStatus(500);
 				response.sendRedirect(urlHelper.getUrl() + "/error");
 				return false;
@@ -154,7 +154,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		// auto login
 		User user = rememberMe.login(request, response);
 		if (user != null) {
-			logger.debug("用户没有登录，自动登录成功");
+			LOGGER.debug("用户没有登录，自动登录成功");
 			user.setPassword(null);
 			request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
 		}
@@ -169,7 +169,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void setLockKeys(HttpServletRequest request) {
 		Map<String, LockKey> keysMap = LockHelper.getKeysMap(request);
 		if (!CollectionUtils.isEmpty(keysMap)) {
-			logger.debug("将LockKey放入LockKeyContext中:" + keysMap);
+			LOGGER.debug("将LockKey放入LockKeyContext中:" + keysMap);
 			LockKeyContext.set(keysMap);
 		}
 	}
@@ -189,7 +189,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		// static res request
 		// then mv is null
 		if (modelAndView != null) {
-			logger.debug("将用户和路径处理器放入model中");
+			LOGGER.debug("将用户和路径处理器放入model中");
 			uiExposeHelper.addVariables(request);
 		}
 	}
@@ -249,7 +249,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			actualToken = request.getParameter(csrfToken.getParameterName());
 		}
 		if (!csrfToken.getToken().equals(actualToken)) {
-			logger.debug("Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request));
+			LOGGER.debug("Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request));
 			if (missingToken) {
 				throw new MissingCsrfTokenException(actualToken);
 			} else {

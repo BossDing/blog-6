@@ -63,10 +63,9 @@ import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.evt.ArticleEvent.EventType;
+import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -81,7 +80,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware,
 		ApplicationListener<LockDeleteEvent> {
 
-	private static final Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
@@ -245,7 +244,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article writeArticle(Article article, boolean autoDraft) throws LogicException {
+	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceDao.selectById(article.getSpace().getId());
 		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
@@ -294,8 +293,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (article.isPublished()) {
 				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 			}
-			applicationEventPublisher
-					.publishEvent(new ArticleEvent(this, updated, autoDraft ? EventType.DRAFT : EventType.UPDATE));
+			applicationEventPublisher.publishEvent(new ArticleEvent(this, updated, EventType.UPDATE));
 		} else {
 			if (article.getAlias() != null) {
 				Article aliasDb = articleDao.selectByAlias(article.getAlias());
@@ -317,8 +315,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (article.isPublished()) {
 				articleIndexer.getIndexer().addOrUpdateDocument(updated);
 			}
-			applicationEventPublisher
-					.publishEvent(new ArticleEvent(this, updated, autoDraft ? EventType.DRAFT : EventType.INSERT));
+			applicationEventPublisher.publishEvent(new ArticleEvent(this, updated, EventType.INSERT));
 		}
 		scheduleManager.update();
 		return article;
@@ -625,15 +622,15 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		public int push() {
 			if (start == null) {
-				logger.debug("没有待发布的文章");
+				LOGGER.debug("没有待发布的文章");
 				return 0;
 			}
 			long now = System.currentTimeMillis();
 			if (now < start.getTime()) {
-				logger.debug("没有到发布日期：" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
+				LOGGER.debug("没有到发布日期：" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
 				return 0;
 			} else {
-				logger.debug("开始查询发布文章");
+				LOGGER.debug("开始查询发布文章");
 				Timestamp startCopy = new Timestamp(start.getTime());
 				TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
 				try {
@@ -644,7 +641,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							articleDao.update(article);
 							articleIndexer.getIndexer().addOrUpdateDocument(article);
 						}
-						logger.debug("发布了" + articles.size() + "篇文章");
+						LOGGER.debug("发布了" + articles.size() + "篇文章");
 						applicationEventPublisher.publishEvent(new ArticleEvent(this, articles, EventType.UPDATE));
 					}
 					start = articleDao.selectMinimumScheduleDate();
@@ -654,8 +651,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					status.setRollbackOnly();
 
 					rebuildIndexbackground();
-
-					throw new SystemException(e.getMessage(), e);
+					throw e;
 				} finally {
 					transactionManager.commit(status);
 				}
@@ -664,7 +660,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		public void update() {
 			start = articleDao.selectMinimumScheduleDate();
-			logger.debug(start == null ? "没有发现待发布文章"
+			LOGGER.debug(start == null ? "没有发现待发布文章"
 					: "发现待发布文章最小日期:" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
 		}
 	}

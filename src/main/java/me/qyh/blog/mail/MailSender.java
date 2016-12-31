@@ -67,7 +67,7 @@ public class MailSender implements InitializingBean {
 	private int limitCount = LIMIT_COUNT;
 
 	private Limit limit;
-	private static final Logger logger = LoggerFactory.getLogger(MailSender.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);
 
 	private static final File sdfile = new File("message_shutdown.dat");
 
@@ -103,7 +103,7 @@ public class MailSender implements InitializingBean {
 			timeCount.count++;
 			if (timeCount.exceed(current)) {
 				if (pull) {
-					logger.debug("在" + (current - timeCount.start) + "毫秒内，发送邮件数量达到了" + limit.getCount() + "封，放入队列中");
+					LOGGER.debug("在" + (current - timeCount.start) + "毫秒内，发送邮件数量达到了" + limit.getCount() + "封，放入队列中");
 					queue.add(mb);
 				}
 				return false;
@@ -124,7 +124,7 @@ public class MailSender implements InitializingBean {
 					email = UserConfig.get().getEmail();
 				}
 				if (Validators.isEmptyOrNull(email, true)) {
-					logger.error("接受人邮箱为空，无法发送邮件");
+					LOGGER.error("接受人邮箱为空，无法发送邮件");
 					return;
 				}
 				javaMailSender.send(new MimeMessagePreparator() {
@@ -143,7 +143,7 @@ public class MailSender implements InitializingBean {
 					callBack.callBack(mb, true);
 				}
 			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 				if (callBack != null) {
 					callBack.callBack(mb, false);
 				}
@@ -180,10 +180,10 @@ public class MailSender implements InitializingBean {
 		}
 		limit = new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 		if (sdfile.exists()) {
-			logger.debug("发现序列化文件，执行反序列化操作");
+			LOGGER.debug("发现序列化文件，执行反序列化操作");
 			queue = SerializationUtils.deserialize(new FileInputStream(sdfile));
 			if (!FileUtils.deleteQuietly(sdfile)) {
-				logger.warn("删除序列文件失败");
+				LOGGER.warn("删除序列文件失败");
 			}
 		}
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
@@ -202,12 +202,12 @@ public class MailSender implements InitializingBean {
 	 */
 	public void shutdown() {
 		if (!queue.isEmpty()) {
-			logger.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
+			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
 
 			try {
 				SerializationUtils.serialize(queue, new FileOutputStream(sdfile));
 			} catch (FileNotFoundException e) {
-				logger.error("序列化失败:" + e.getMessage(), e);
+				LOGGER.error("序列化失败:" + e.getMessage(), e);
 				return;
 			}
 		}

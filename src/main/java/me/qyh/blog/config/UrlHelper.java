@@ -55,7 +55,7 @@ import me.qyh.blog.util.Validators;
 @Component
 public class UrlHelper implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(UrlHelper.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UrlHelper.class);
 	private static final String SPACE_IN_URL = "/space/";
 
 	@Autowired
@@ -262,7 +262,7 @@ public class UrlHelper implements InitializingBean {
 				try {
 					sort = Sort.valueOf(sortStr);
 				} catch (Exception e) {
-					logger.debug("无效的ArticleQueryParam.Sort:" + sortStr, e);
+					LOGGER.debug("无效的ArticleQueryParam.Sort:" + sortStr, e);
 				}
 				cloned.setSort(sort);
 			} else {
@@ -341,14 +341,14 @@ public class UrlHelper implements InitializingBean {
 				String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
 				if (spaceStart.trim().isEmpty()) {
 					//
-					logger.debug("不完整的路径：" + request.getRequestURL().toString());
+					LOGGER.debug("不完整的路径：" + request.getRequestURL().toString());
 				} else {
 					int index = spaceStart.indexOf('/');
 					space = index == -1 ? spaceStart : spaceStart.substring(0, index);
 				}
 			}
 			if (space != null && space.trim().isEmpty()) {
-				logger.debug("错误的路径：" + request.getRequestURL().toString());
+				LOGGER.debug("错误的路径：" + request.getRequestURL().toString());
 				space = null;
 			}
 			env.space = space;

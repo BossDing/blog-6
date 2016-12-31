@@ -83,7 +83,7 @@ public abstract class DataTagProcessor<T> {
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
-		if (!Validators.isEmptyOrNull(dataNameAttV, true)) {
+		if (validDataName(dataNameAttV)) {
 			bind.setDataName(dataNameAttV);
 		} else {
 			bind.setDataName(dataName);
@@ -117,7 +117,7 @@ public abstract class DataTagProcessor<T> {
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
-		if (!Validators.isEmptyOrNull(dataNameAttV, true)) {
+		if (validDataName(dataNameAttV)) {
 			bind.setDataName(dataNameAttV);
 		} else {
 			bind.setDataName(dataName);
@@ -192,4 +192,7 @@ public abstract class DataTagProcessor<T> {
 		return result;
 	}
 
+	private boolean validDataName(String dataName) {
+		return !Validators.isEmptyOrNull(dataName, true) && dataName.matches("[a-zA-Z]+");
+	}
 }

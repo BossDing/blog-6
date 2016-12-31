@@ -109,7 +109,7 @@ $(document).ready(function(){
 		article.alias = $("#alias").val();
 		
 		me.prop("disabled",true);
-		var url = basePath+"/mgr/article/write?autoDraft=false";
+		var url = basePath+"/mgr/article/write";
 		if($("#id").val() != ""){
 			article.id = $("#id").val();
 		}
@@ -310,17 +310,7 @@ function changeEditorCss(csses,style){
 				return ;
 			}
 			article.from = $("#from").val();
-			if($("#oldStatus").val() != 'DRAFT'){
-				article.status = $("#status").val();
-				if(article.status == 'SCHEDULED'){
-					article.pubDate = $("#scheduleDate").val();
-					if(!article.pubDate || article.pubDate == ''){
-						article.status = 'DRAFT';
-					}
-				};
-			}else{
-				article.status = 'DRAFT';
-			}
+			article.status = 'DRAFT';
 			if($("#level").val() != ''){
 				article.level = $("#level").val();
 			}
@@ -336,7 +326,7 @@ function changeEditorCss(csses,style){
 			}
 			article.alias = $("#alias").val();
 			
-			var url = basePath+"/mgr/article/write?autoDraft=true";
+			var url = basePath+"/mgr/article/write";
 			if($("#id").val() != ""){
 				article.id = $("#id").val();
 			}

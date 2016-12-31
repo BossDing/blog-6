@@ -103,7 +103,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 			try {
 				throw new IOException("七牛云上传失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
 			} catch (QiniuException e1) {
-				logger.debug(e1.getMessage(), e1);
+				LOGGER.debug(e1.getMessage(), e1);
 			}
 		}
 	}
@@ -121,9 +121,9 @@ public class QiniuFileStore extends AbstractOssFileStore {
 				flag = true;
 			}
 			try {
-				logger.error("七牛云删除失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
+				LOGGER.error("七牛云删除失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
 			} catch (QiniuException e1) {
-				logger.debug(e1.getMessage(), e1);
+				LOGGER.debug(e1.getMessage(), e1);
 			}
 		}
 		return flag;
@@ -201,7 +201,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		} catch (QiniuException e) {
 			// 捕获异常信息
 			Response r = e.response;
-			logger.error(r.toString(), e);
+			LOGGER.error(r.toString(), e);
 		}
 		return false;
 	}

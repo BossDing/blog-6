@@ -36,7 +36,7 @@ import me.qyh.blog.evt.ArticleEvent.EventType;
  */
 public class SimplePingManager implements ApplicationListener<ArticleEvent> {
 
-	protected static final Logger logger = LoggerFactory.getLogger(SimplePingManager.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(SimplePingManager.class);
 
 	private List<PingService> pingServices = Lists.newArrayList();
 	private final String blogName;
@@ -68,7 +68,7 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent> {
 			try {
 				pingService.ping(article, blogName);
 			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 				continue;
 			}
 		}

@@ -50,7 +50,7 @@ import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
  */
 public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Article>> {
 
-	private static final Logger logger = LoggerFactory.getLogger(ArticleDataTagProcessor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleDataTagProcessor.class);
 
 	@Autowired
 	private ArticleService articleService;
@@ -119,7 +119,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 				param.setBegin(DateUtils.parseDate(beginStr, TIME_PATTERNS));
 				param.setEnd(DateUtils.parseDate(endStr, TIME_PATTERNS));
 			} catch (Exception e) {
-				logger.debug("开始时间和结束时间:[" + beginStr + "," + endStr + "]无法被转化:" + e.getMessage(), e);
+				LOGGER.debug("开始时间和结束时间:[" + beginStr + "," + endStr + "]无法被转化:" + e.getMessage(), e);
 				param.setBegin(null);
 				param.setEnd(null);
 			}
@@ -134,7 +134,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setFrom(ArticleFrom.valueOf(fromStr.toUpperCase()));
 			} catch (Exception e) {
-				logger.debug("文章来源:" + fromStr + "无法被转化:" + e.getMessage(), e);
+				LOGGER.debug("文章来源:" + fromStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 
@@ -148,7 +148,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setSort(Sort.valueOf(sortStr.toUpperCase()));
 			} catch (Exception e) {
-				logger.debug("排序方式:" + sortStr + "无法被转化:" + e.getMessage(), e);
+				LOGGER.debug("排序方式:" + sortStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 
@@ -157,7 +157,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));
 			} catch (Exception e) {
-				logger.debug("当前页码:" + currentPageStr + "无法被转化:" + e.getMessage(), e);
+				LOGGER.debug("当前页码:" + currentPageStr + "无法被转化:" + e.getMessage(), e);
 			}
 		}
 

@@ -60,7 +60,7 @@ import me.qyh.blog.util.Validators;
  */
 public class CommentEmailNotifySupport<T extends BaseComment<T>> implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
 	private ConcurrentLinkedQueue<T> toProcesses = new ConcurrentLinkedQueue<>();
 	private List<T> toSend = Collections.synchronizedList(Lists.newArrayList());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
@@ -113,14 +113,14 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 			try {
 				SerializationUtils.serialize(Lists.newArrayList(toSend), new FileOutputStream(toSendSdfile));
 			} catch (Exception e) {
-				logger.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
+				LOGGER.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
 			}
 		}
 		if (!toProcesses.isEmpty() && toProcessesSdfile != null) {
 			try {
 				SerializationUtils.serialize(toProcesses, new FileOutputStream(toProcessesSdfile));
 			} catch (Exception e) {
-				logger.error("序列化待处理列表时发生错误：" + e.getMessage(), e);
+				LOGGER.error("序列化待处理列表时发生错误：" + e.getMessage(), e);
 			}
 		}
 	}
@@ -181,14 +181,14 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 			List<T> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
 			this.toSend = Collections.synchronizedList(comments);
 			if (!FileUtils.deleteQuietly(toSendSdfile)) {
-				logger.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+				LOGGER.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 			}
 		}
 
 		if (toProcessesSdfile != null && toProcessesSdfile.exists()) {
 			this.toProcesses = SerializationUtils.deserialize(new FileInputStream(toProcessesSdfile));
 			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
-				logger.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+				LOGGER.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 			}
 		}
 
@@ -201,7 +201,7 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 					size++;
 					iterator.remove();
 					if (size >= messageTipCount) {
-						logger.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
+						LOGGER.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
 						sendMail(toSend, null);
 						toSend.clear();
 						break;
@@ -213,7 +213,7 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
 			synchronized (toSend) {
 				if (!toSend.isEmpty()) {
-					logger.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+					LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
 					sendMail(toSend, null);
 					toSend.clear();
 				}

@@ -41,8 +41,6 @@ import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.pageparam.PageQueryParam;
-import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.UserContext;
 import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.util.Validators;
@@ -398,18 +396,4 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	public void setEmailSupport(CommentEmailNotifySupport<T> emailSupport) {
 		this.emailSupport = emailSupport;
 	}
-
-	public static final class CommentPageResult<E extends BaseComment<E>> extends PageResult<E> {
-		private final CommentConfig commentConfig;
-
-		public CommentPageResult(PageQueryParam param, int totalRow, List<E> datas, CommentConfig commentConfig) {
-			super(param, totalRow, datas);
-			this.commentConfig = commentConfig;
-		}
-
-		public CommentConfig getCommentConfig() {
-			return commentConfig;
-		}
-	}
-
 }

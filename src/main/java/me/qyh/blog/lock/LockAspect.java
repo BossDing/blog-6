@@ -42,7 +42,7 @@ public class LockAspect {
 	@Autowired
 	private LockManager lockManager;
 
-	private static final Logger logger = LoggerFactory.getLogger(LockAspect.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(LockAspect.class);
 
 	/**
 	 * 尝试用LockKeyContext上下文中存在的钥匙开锁
@@ -66,10 +66,10 @@ public class LockAspect {
 					try {
 						lock.tryOpen(key);
 					} catch (LogicException e) {
-						logger.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
+						LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
 						throw new LockException(lock, lockResource, e.getLogicMessage());
 					} catch (Exception e) {
-						logger.error(e.getMessage(), e);
+						LOGGER.error(e.getMessage(), e);
 					}
 				}
 			}

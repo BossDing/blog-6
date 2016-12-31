@@ -95,7 +95,7 @@ import me.qyh.blog.pageparam.PageResult;
  */
 public abstract class NRTArticleIndexer implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(NRTArticleIndexer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(NRTArticleIndexer.class);
 
 	private static final Comparator<Article> COMPARATOR = new ArticleCommparator();
 
@@ -179,7 +179,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			writer.getIndexWriter().close();
 			dir.close();
 		} catch (IOException e) {
-			logger.warn(e.getMessage(), e);
+			LOGGER.warn(e.getMessage(), e);
 		}
 	}
 
@@ -304,7 +304,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 					searcherManager.release(searcher);
 				}
 			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -379,7 +379,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				}
 			}
 			Query query = builder.build();
-			logger.debug(query.toString());
+			LOGGER.debug(query.toString());
 
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
@@ -410,7 +410,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 					searcherManager.release(searcher);
 				}
 			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -424,7 +424,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		try {
 			return parser.parse(escaped);
 		} catch (ParseException e) {
-			logger.debug("无法解析输入的查询表达式:" + escaped + ":" + e.getMessage(), e);
+			LOGGER.debug("无法解析输入的查询表达式:" + escaped + ":" + e.getMessage(), e);
 			return null;
 		}
 	}
@@ -550,7 +550,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			try {
 				oriWriter.commit();
 			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		}, commitPeriod);
 	}

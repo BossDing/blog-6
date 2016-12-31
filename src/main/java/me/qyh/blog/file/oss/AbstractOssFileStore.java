@@ -48,7 +48,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	private String backupAbsPath;
 	private File backupDir;
 
-	protected static final Logger logger = LoggerFactory.getLogger(AbstractOssFileStore.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractOssFileStore.class);
 
 	@Autowired
 	protected ImageHelper imageHelper;
@@ -88,7 +88,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			try {
 				return imageHelper.read(tmp);
 			} catch (IOException e) {
-				logger.debug(e.getMessage(), e);
+				LOGGER.debug(e.getMessage(), e);
 				throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 			}
 		}

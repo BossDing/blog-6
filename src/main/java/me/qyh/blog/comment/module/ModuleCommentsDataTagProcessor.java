@@ -26,7 +26,7 @@ import com.google.common.collect.Lists;
 
 import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.comment.base.CommentConfig;
-import me.qyh.blog.comment.base.CommentSupport.CommentPageResult;
+import me.qyh.blog.comment.base.CommentPageResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;

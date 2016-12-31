@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
@@ -32,20 +31,14 @@ import org.springframework.web.servlet.View;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.lock.LockResource;
-import me.qyh.blog.security.UserContext;
-import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 
-public class PageReturnHandler extends RenderedSupport implements HandlerMethodReturnValueHandler {
+public class PageReturnHandler extends RenderSupport implements HandlerMethodReturnValueHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(PageReturnHandler.class);
-
-	@Autowired
-	private UIService uiService;
+	private static final Logger LOGGER = LoggerFactory.getLogger(PageReturnHandler.class);
 
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
@@ -70,41 +63,35 @@ public class PageReturnHandler extends RenderedSupport implements HandlerMethodR
 		// find or create a view
 		String templateName = TemplateUtils.getTemplateName(page);
 
-		if (page instanceof LockResource && UserContext.get() == null) {
-			// 如果是用户自定义页面，首先查询一次，因为页面可能被锁保护
-			uiService.queryPage(templateName);
-		}
+		String rendered;
 
 		try {
-			String rendered = render(templateName, mavContainer.getModel(), nativeRequest, nativeResponse);
-
-			Writer writer = nativeResponse.getWriter();
-			writer.write(rendered);
-			writer.flush();
+			rendered = render(templateName, mavContainer.getModel(), nativeRequest, nativeResponse);
 
 		} catch (Exception e) {
-			if (!nativeResponse.isCommitted()) {
-				// 如果是错误页面发生了错误，不再跳转(防止死循环)
-				if ((page instanceof ErrorPage)) {
-					ErrorPage errorPage = (ErrorPage) page;
-					logger.error("在错误页面" + errorPage.getErrorCode().name() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:"
-							+ e.getMessage(), e);
-					renderSysErrorPage(errorPage, nativeRequest, nativeResponse);
-					return;
-				}
-				// 解锁页面不能出现异常，不再跳转(防止死循环)
-				if (page instanceof LockPage) {
-					LockPage lockPage = (LockPage) page;
-					logger.error(
-							"在解锁页面" + lockPage.getLockType() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:" + e.getMessage(),
-							e);
-					renderSysErrorPage(new ErrorPage(ErrorCode.ERROR_500), nativeRequest, nativeResponse);
-					return;
-				}
-
-				throw e;
+			// 如果是错误页面发生了错误，不再跳转(防止死循环)
+			if ((page instanceof ErrorPage)) {
+				ErrorPage errorPage = (ErrorPage) page;
+				LOGGER.error("在错误页面" + errorPage.getErrorCode().name() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:"
+						+ e.getMessage(), e);
+				renderSysErrorPage(errorPage, nativeRequest, nativeResponse);
+				return;
 			}
+			// 解锁页面不能出现异常，不再跳转(防止死循环)
+			if (page instanceof LockPage) {
+				LockPage lockPage = (LockPage) page;
+				LOGGER.error(
+						"在解锁页面" + lockPage.getLockType() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:" + e.getMessage(), e);
+				renderSysErrorPage(new ErrorPage(ErrorCode.ERROR_500), nativeRequest, nativeResponse);
+				return;
+			}
+
+			throw e;
 		}
+		Writer writer = nativeResponse.getWriter();
+		writer.write(rendered);
+		writer.flush();
+
 	}
 
 	private void renderSysErrorPage(ErrorPage errorPage, HttpServletRequest request, HttpServletResponse response) {
@@ -115,7 +102,7 @@ public class PageReturnHandler extends RenderedSupport implements HandlerMethodR
 			errorView.render(Maps.newHashMap(), request, response);
 		} catch (Throwable e) {
 			// 不能够在这里继续抛出异常!
-			logger.error("/WEB-INF/templates/error/" + errorPage.getErrorCode().name() + "页面渲染异常！！！！！,异常信息:"
+			LOGGER.error("/WEB-INF/templates/error/" + errorPage.getErrorCode().name() + "页面渲染异常！！！！！,异常信息:"
 					+ e.getMessage(), e);
 		}
 	}

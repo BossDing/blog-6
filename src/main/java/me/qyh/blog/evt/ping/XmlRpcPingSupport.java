@@ -35,7 +35,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 
 	private final String pingUrl;
 
-	protected static final Logger logger = LoggerFactory.getLogger(XmlRpcPingSupport.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(XmlRpcPingSupport.class);
 
 	public XmlRpcPingSupport(String pingUrl) {
 		super();
@@ -45,8 +45,8 @@ public abstract class XmlRpcPingSupport extends PingService {
 	@Override
 	public void ping(Article article, String blogName) throws Exception {
 		String xml = articleToXml(article, blogName);
-		logger.debug("文章报文内容为:" + xml);
-		logger.debug("开始向" + pingUrl + "发送报文");
+		LOGGER.debug("文章报文内容为:" + xml);
+		LOGGER.debug("开始向" + pingUrl + "发送报文");
 		String type = "text/html";
 		String result = null;
 		try {
@@ -76,7 +76,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 			throw new Exception(msg, e);
 		}
 
-		logger.debug("响应信息为:" + result);
+		LOGGER.debug("响应信息为:" + result);
 
 		if (result == null) {
 			String msg = "ping地址:" + pingUrl + "失败，文章访问地址为:" + urlHelper.getUrls().getUrl(article) + "，发送请求报文为" + xml

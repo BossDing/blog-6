@@ -55,7 +55,7 @@ import me.qyh.blog.web.controller.BaseController;
 @RequestMapping("apis")
 public class MetaweblogController extends BaseController implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(MetaweblogController.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MetaweblogController.class);
 
 	private Map<String, FailInfo> authFailMap = Maps.newHashMap();
 	private Map<String, Long> invalidIpMap = Maps.newHashMap();
@@ -116,7 +116,7 @@ public class MetaweblogController extends BaseController implements Initializing
 					throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 				}
 			}
-			logger.error(e.getMessage(), e);
+			LOGGER.error(e.getMessage(), e);
 			throw new FaultException(Constants.SYS_ERROR, HANDLE_ERROR);
 		}
 	}
@@ -127,7 +127,7 @@ public class MetaweblogController extends BaseController implements Initializing
 		} catch (ParseException e) {
 			throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 		} catch (IOException e) {
-			logger.debug(e.getMessage(), e);
+			LOGGER.debug(e.getMessage(), e);
 			throw new FaultException(Constants.SYS_ERROR, HANDLE_ERROR);
 		}
 	}
@@ -150,7 +150,7 @@ public class MetaweblogController extends BaseController implements Initializing
 				throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 			}
 		} catch (SecurityException e) {
-			logger.debug(e.getMessage(), e);
+			LOGGER.debug(e.getMessage(), e);
 			throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 		}
 	}

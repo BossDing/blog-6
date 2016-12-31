@@ -18,11 +18,14 @@ package me.qyh.blog.ui;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -30,9 +33,11 @@ import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
 
+import com.google.common.base.Stopwatch;
+
 import me.qyh.blog.ui.ParseContext.ParseStatus;
 
-public class RenderedSupport {
+public class RenderSupport {
 
 	@Autowired
 	protected ThymeleafViewResolver thymeleafViewResolver;
@@ -41,10 +46,13 @@ public class RenderedSupport {
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 
+	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(RenderSupport.class);
+
 	protected String render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
 		uiExposeHelper.addVariables(request);
+		Stopwatch stopwatch = Stopwatch.createStarted();
 		try {
 			ResponseWrapper wrapper = new ResponseWrapper(response);
 			view.render(model, request, wrapper);
@@ -64,6 +72,10 @@ public class RenderedSupport {
 		} finally {
 			commit();
 			ParseContext.remove();
+
+			stopwatch.stop();
+			long renderMills = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+			TIME_LOGGER.debug("处理页面" + templateName + "耗费了" + renderMills + "ms");
 		}
 	}
 

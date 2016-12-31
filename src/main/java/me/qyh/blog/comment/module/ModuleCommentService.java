@@ -32,6 +32,7 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.comment.base.CommentConfig;
 import me.qyh.blog.comment.base.CommentConfig.CommentMode;
+import me.qyh.blog.comment.base.CommentPageResult;
 import me.qyh.blog.comment.base.CommentSupport;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;

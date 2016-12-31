@@ -79,7 +79,7 @@ import me.qyh.blog.web.controller.BaseController;
  */
 @ControllerAdvice
 public class GlobalControllerExceptionHandler {
-	private static final Logger logger = LoggerFactory.getLogger(GlobalControllerExceptionHandler.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(GlobalControllerExceptionHandler.class);
 
 	@Autowired
 	private UrlHelper urlHelper;
@@ -104,7 +104,7 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(TplRenderException.class)
 	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TplRenderException e)
 			throws IOException {
-		logger.error(e.getMessage(), e);
+		LOGGER.error(e.getMessage(), e);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, e.getRenderErrorDescription()));
 			return null;
@@ -202,7 +202,7 @@ public class GlobalControllerExceptionHandler {
 	 */
 	@ExceptionHandler(SpaceNotFoundException.class)
 	public String handleSpaceNotFoundException(HttpServletResponse resp, SpaceNotFoundException ex) throws IOException {
-		logger.debug("空间" + ex.getAlias() + "不存在，返回主页");
+		LOGGER.debug("空间" + ex.getAlias() + "不存在，返回主页");
 		return "redirect:" + urlHelper.getUrl();
 	}
 
@@ -210,7 +210,7 @@ public class GlobalControllerExceptionHandler {
 			HttpMessageNotReadableException.class, BindException.class })
 	public String handlerBadRequest(HttpServletRequest request, HttpServletResponse resp, Exception ex)
 			throws IOException {
-		logger.debug(ex.getMessage(), ex);
+		LOGGER.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidParameter", "数据格式异常")));
 			return null;
@@ -223,7 +223,7 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler({ HttpMediaTypeNotSupportedException.class, HttpMediaTypeNotAcceptableException.class })
 	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp, Exception ex)
 			throws IOException {
-		logger.debug(ex.getMessage(), ex);
+		LOGGER.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
 			return null;
@@ -289,7 +289,7 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
 		if (ExceptionUtils.indexOfThrowable(e, ClientAbortException.class) == -1) {
-			logger.error(e.getMessage(), e);
+			LOGGER.error(e.getMessage(), e);
 		}
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));

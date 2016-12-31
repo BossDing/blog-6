@@ -37,6 +37,7 @@ import com.google.common.collect.Maps;
 import me.qyh.blog.comment.article.CommentDao.ArticleComments;
 import me.qyh.blog.comment.base.CommentConfig;
 import me.qyh.blog.comment.base.CommentConfig.CommentMode;
+import me.qyh.blog.comment.base.CommentPageResult;
 import me.qyh.blog.comment.base.CommentSupport;
 import me.qyh.blog.config.UrlHelper.Urls;
 import me.qyh.blog.entity.Article;

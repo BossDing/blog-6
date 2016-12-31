@@ -22,7 +22,6 @@ import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.bean.ImportRecord;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.LockException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
@@ -220,8 +219,6 @@ public interface UIService {
 	 * @return 不会为null
 	 * @throws LogicException
 	 *             当空间或者页面不存在时
-	 * @throws LockException
-	 *             当页面受到锁保护时
 	 */
 	Page queryPage(String templateName) throws LogicException;
 

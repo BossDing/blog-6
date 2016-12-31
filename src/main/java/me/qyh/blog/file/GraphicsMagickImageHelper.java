@@ -49,7 +49,7 @@ import me.qyh.blog.util.Validators;
  */
 public class GraphicsMagickImageHelper extends ImageHelper implements InitializingBean {
 
-	private static final Logger logger = LoggerFactory.getLogger(GraphicsMagickImageHelper.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(GraphicsMagickImageHelper.class);
 
 	/**
 	 * 在windows环境下，必须设置这个路径
@@ -151,7 +151,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			op.addImage();
 			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", _gif.getAbsolutePath());
 		} catch (Exception e) {
-			logger.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
+			LOGGER.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
 			getGifCoverUseJava(gif, _gif);
 		}
 		if (Files.getFileExtension(dest.getName()).equalsIgnoreCase(GIF)) {

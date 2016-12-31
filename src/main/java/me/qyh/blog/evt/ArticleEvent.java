@@ -48,7 +48,6 @@ public class ArticleEvent extends ApplicationEvent {
 		UPDATE, // 更新
 		DELETE, // 删除
 		HITS, // 点击
-		DRAFT// 自动草稿
 	}
 
 	/**

@@ -97,14 +97,14 @@ public interface ArticleService {
 	/**
 	 * 插入|更新 文章
 	 * 
+	 * <b>自动保存的文章将会被设置为DRAFT</b>
+	 * 
 	 * @param article
 	 *            文章
-	 * @param autoDraft
-	 *            是否是自动保存的草稿
 	 * @return 插入后的文章
 	 * @throws LogicException
 	 */
-	Article writeArticle(Article article, boolean autoDraft) throws LogicException;
+	Article writeArticle(Article article) throws LogicException;
 
 	/**
 	 * 将博客放入回收站

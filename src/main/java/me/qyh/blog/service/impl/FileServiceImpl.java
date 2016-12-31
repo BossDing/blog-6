@@ -82,7 +82,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private BlogFile root;
 
-	private static final Logger logger = LoggerFactory.getLogger(FileServiceImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	private static final Message PARENT_NOT_EXISTS = new Message("file.parent.notexists", "父目录不存在");
 	private static final Message NOT_EXISTS = new Message("file.notexists", "文件不存在");
@@ -220,7 +220,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		String key = fd.getKey();
 		FileStore fs = fileManager.getFileStore(fd.getStore());
 		if (fs == null) {
-			logger.warn("无法找到id为" + fd.getStore() + "的存储器");
+			LOGGER.warn("无法找到id为" + fd.getStore() + "的存储器");
 			fileDeleteDao.deleteById(fd.getId());
 			return;
 		}
@@ -465,7 +465,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		// 找根目录
 		root = blogFileDao.selectRoot();
 		if (root == null) {
-			logger.debug("没有找到任何根目录，将创建一个根目录");
+			LOGGER.debug("没有找到任何根目录，将创建一个根目录");
 			root = new BlogFile();
 			root.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 			root.setLft(1);

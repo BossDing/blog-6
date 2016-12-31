@@ -33,7 +33,7 @@ import me.qyh.blog.web.filter.CORSFilter;
 
 public class AppContextLoaderListener extends ContextLoaderListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(AppContextLoaderListener.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AppContextLoaderListener.class);
 
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
@@ -43,7 +43,7 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		String domain = helper.getRootDomain();
 		ServletContext sc = event.getServletContext();
 		if (helper.isEnableSpaceDomain()) {
-			logger.debug("开启了多域名支持，添加UrlFilter以转发请求,添加CORSFilter以处理跨域");
+			LOGGER.debug("开启了多域名支持，添加UrlFilter以转发请求,添加CORSFilter以处理跨域");
 			Class<? extends Filter> corsFilter = CORSFilter.class;
 			sc.addFilter(corsFilter.getName(), corsFilter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST),
 					true, "/*");

@@ -59,7 +59,7 @@ import me.qyh.blog.web.Webs;
  */
 abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler implements FileStore {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractLocalResourceRequestHandlerFileStore.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLocalResourceRequestHandlerFileStore.class);
 
 	protected int id;
 	private String name;
@@ -277,7 +277,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			try {
 				Files.copy(file, response.getOutputStream());
 			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		}
 	}

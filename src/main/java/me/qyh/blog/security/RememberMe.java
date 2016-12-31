@@ -53,7 +53,7 @@ public class RememberMe {
 	private static final int TWO_WEEKS_S = 1209600;// 保持两个礼拜
 	private static final String COOKIE_NAME = "remember-me";
 	private static final String DELIMITER = ":";
-	private static final Logger logger = LoggerFactory.getLogger(RememberMe.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(RememberMe.class);
 
 	@Autowired
 	private UrlConfig urlConfig;
@@ -86,7 +86,7 @@ public class RememberMe {
 					}
 
 					if (isTokenExpired(tokenExpiryTime)) {
-						logger.info("token已经过期，过期时间为:"
+						LOGGER.info("token已经过期，过期时间为:"
 								+ Instant.ofEpochMilli(tokenExpiryTime).atZone(ZoneId.systemDefault()) + "，当前时间为"
 								+ LocalDateTime.now());
 						remove(request, response);
@@ -103,7 +103,7 @@ public class RememberMe {
 					return user;
 				}
 			} catch (InvalidCookieException e) {
-				logger.debug(e.getMessage(), e);
+				LOGGER.debug(e.getMessage(), e);
 				remove(request, response);
 			}
 		}

@@ -33,7 +33,7 @@ import me.qyh.blog.web.interceptor.SpaceContext;
  * @author Administrator
  *
  */
-public class UIRender extends RenderedSupport {
+public class UIRender extends RenderSupport {
 
 	@Autowired
 	private SpaceService spaceService;

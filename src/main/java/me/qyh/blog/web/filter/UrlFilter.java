@@ -43,8 +43,7 @@ import me.qyh.blog.web.Webs;
 public class UrlFilter extends OncePerRequestFilter {
 
 	private UrlHelper urlHelper;
-
-	private static final Logger logger = LoggerFactory.getLogger(UrlFilter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UrlFilter.class);
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain fc)
@@ -53,11 +52,11 @@ public class UrlFilter extends OncePerRequestFilter {
 			String host = req.getServerName();
 			if (urlHelper.maybeSpaceDomain(req)) {
 				String space = Splitter.on('.').split(host).iterator().next();
-				logger.debug("从空间域名请求中获取空间名:" + space);
+				LOGGER.debug("从空间域名请求中获取空间名:" + space);
 				// 如果开启了域名
 				if (urlHelper.isEnableSpaceDomain()) {
 					String requestUrl = buildForwardUrl(req, space);
-					logger.debug(UrlUtils.buildFullRequestUrl(req) + "转发请求到:" + requestUrl);
+					LOGGER.debug(UrlUtils.buildFullRequestUrl(req) + "转发请求到:" + requestUrl);
 					req.getRequestDispatcher(requestUrl).forward(req, resp);
 					return;
 				} else {
