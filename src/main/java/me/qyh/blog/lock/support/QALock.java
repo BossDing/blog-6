@@ -15,9 +15,9 @@
  */
 package me.qyh.blog.lock.support;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 
-import com.google.common.base.Splitter;
+import javax.servlet.http.HttpServletRequest;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -55,18 +55,7 @@ public class QALock extends SysLock {
 		if (answer == null || answer.isEmpty()) {
 			throw new LogicException(new Message("lock.qa.answer.blank", "请填写问题答案"));
 		}
-		return new LockKey() {
-
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Object getKey() {
-				return answer;
-			}
-		};
+		return () -> answer;
 	}
 
 	@Override
@@ -87,12 +76,7 @@ public class QALock extends SysLock {
 		if (answers == null) {
 			throw new SystemException("问答锁答案不能为空");
 		}
-		for (String corretAnswer : Splitter.on(',').split(answers)) {
-			if (corretAnswer.equals(answer)) {
-				return true;
-			}
-		}
-		return false;
+		return Arrays.stream(answers.split(",")).anyMatch(corretAnswer -> corretAnswer.equals(answer));
 	}
 
 	public String getQuestion() {

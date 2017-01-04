@@ -59,7 +59,6 @@ public class ErrorController {
 
 	@RequestMapping("ui")
 	public String handlerUI() {
-		System.out.println("???");
 		return "error/ui";
 	}
 

@@ -128,9 +128,9 @@ public abstract class ImageHelper {
 	 *
 	 */
 	public final class ImageInfo {
-		private int width;
-		private int height;
-		private String extension;// 图片真实后缀
+		private final int width;
+		private final int height;
+		private final String extension;// 图片真实后缀
 
 		/**
 		 * 

@@ -15,16 +15,17 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -40,7 +41,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
 import me.qyh.blog.bean.JsonResult;
@@ -52,9 +52,9 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage;
@@ -149,8 +149,8 @@ public class SysPageMgrController extends BaseMgrController {
 		String rendered;
 		try {
 			rendered = uiRender.render(
-					new DisposiblePage(uiService.queryPage(TemplateUtils
-							.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL)))),
+					new DisposiblePage(uiService.queryPage(
+							TemplateUtils.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL)))),
 					request, response);
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
@@ -161,14 +161,9 @@ public class SysPageMgrController extends BaseMgrController {
 		if (!eles.isEmpty()) {
 			style = eles.first().data();
 		}
-		Set<String> csses = Sets.newLinkedHashSet();
 		Elements imports = doc.select("link[href]");
-		for (Element ele : imports) {
-			String link = ele.attr("href");
-			if (isCss(link)) {
-				csses.add(link);
-			}
-		}
+		Set<String> csses = imports.stream().map(ele -> ele.attr("href")).filter(link -> isCss(link))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 		Map<String, Object> resultMap = Maps.newHashMap();
 		resultMap.put("csses", csses);
 		if (style != null) {

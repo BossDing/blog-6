@@ -56,18 +56,7 @@ public class PasswordLock extends SysLock {
 		if (Validators.isEmptyOrNull(requestPassword, true)) {
 			throw new LogicException(new Message("lock.password.password.blank", "密码不能为空"));
 		}
-		return new LockKey() {
-
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Object getKey() {
-				return requestPassword;
-			}
-		};
+		return () -> requestPassword;
 	}
 
 	@Override

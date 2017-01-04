@@ -50,12 +50,6 @@
 
 	<bean class="me.qyh.blog.file.local.LocalResourceSimpleUrlHandlerMapping" />
 
-	<bean id="annotationHandlerMapping"
-		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
-		<property name="order" value="1" />
-		<property name="alwaysUseFullPath" value="true" />
-	</bean>
-
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.security.csrf.HttpSessionCsrfTokenRepository" />
 

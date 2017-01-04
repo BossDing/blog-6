@@ -17,10 +17,9 @@ package me.qyh.blog.entity;
 
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
-import java.text.ParseException;
-
-import org.apache.commons.lang3.time.DateParser;
-import org.apache.commons.lang3.time.FastDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -35,9 +34,12 @@ import com.google.gson.JsonParseException;
  */
 public class DateDeserializer implements JsonDeserializer<Timestamp> {
 
-	private static final DateParser[] PARSERS = { FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss"),
-			FastDateFormat.getInstance("yyyy-MM-dd HH:mm"), FastDateFormat.getInstance("yyyy-MM-dd HH"),
-			FastDateFormat.getInstance("yyyy-MM-dd") };
+	/**
+	 * update to java8
+	 */
+	private static final DateTimeFormatter[] PARSERS = { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH"),
+			DateTimeFormatter.ofPattern("yyyy-MM-dd") };
 
 	@Override
 	public Timestamp deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
@@ -46,10 +48,10 @@ public class DateDeserializer implements JsonDeserializer<Timestamp> {
 	}
 
 	private Timestamp parse(String str) throws DateParseProcessingException {
-		for (DateParser dp : PARSERS) {
+		for (DateTimeFormatter formatter : PARSERS) {
 			try {
-				return new Timestamp(dp.parse(str).getTime());
-			} catch (ParseException e) {
+				return Timestamp.valueOf(LocalDateTime.parse(str, formatter));
+			} catch (DateTimeParseException e) {
 				continue;
 			}
 		}
@@ -66,7 +68,5 @@ public class DateDeserializer implements JsonDeserializer<Timestamp> {
 		protected DateParseProcessingException(String msg) {
 			super(msg);
 		}
-
 	}
-
 }

@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.lock;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -93,7 +92,7 @@ public final class LockHelper {
 	 *            资源Id
 	 */
 	public static void addKey(HttpServletRequest request, LockKey key, String resourceId) {
-		HashMap<String, LockKey> keysMap = (HashMap<String, LockKey>) getKeysMap(request);
+		Map<String, LockKey> keysMap = (Map<String, LockKey>) getKeysMap(request);
 		if (keysMap == null) {
 			keysMap = Maps.newHashMap();
 		}

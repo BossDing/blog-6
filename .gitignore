@@ -8,3 +8,5 @@ src/main/resources/logback.xml
 src/main/resources/resources/mybatis/db.properties
 src/main/resources/resources/mybatis/db.properties
 src/main/java/me/qyh/blog/tool/db.properties
+src/main/resources/resources/mybatis/db.properties
+src/main/java/me/qyh/blog/tool/db.properties

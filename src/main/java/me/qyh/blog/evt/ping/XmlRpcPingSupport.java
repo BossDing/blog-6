@@ -83,7 +83,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 					+ "，失败信息:无法获取服务器的响应信息";
 			throw new Exception(msg);
 		}
-		boolean success = handleResult(result);
+		boolean success = isSuccess(result);
 		if (!success) {
 			String msg = "ping地址:" + pingUrl + "失败，文章访问地址为:" + urlHelper.getUrls().getUrl(article) + "，发送请求报文为" + xml
 					+ "，响应信息:" + result;
@@ -97,7 +97,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 	 * @param result
 	 * @return 是否成功
 	 */
-	protected abstract boolean handleResult(String result);
+	protected abstract boolean isSuccess(String result);
 
 	protected String articleToXml(Article article, String blogName) {
 		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

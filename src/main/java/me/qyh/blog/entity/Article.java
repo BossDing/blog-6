@@ -19,8 +19,7 @@ import java.sql.Timestamp;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.springframework.util.CollectionUtils;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
@@ -308,15 +307,7 @@ public class Article extends BaseLockResource {
 	}
 
 	public String getTagStr() {
-		if (CollectionUtils.isEmpty(tags)) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder();
-		for (Tag tag : tags) {
-			sb.append(tag.getName()).append(",");
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		return sb.toString();
+		return tags.stream().map(tag -> tag.getName()).collect(Collectors.joining(","));
 	}
 
 	@Override
@@ -336,12 +327,7 @@ public class Article extends BaseLockResource {
 	 * @return true包含，false不包含
 	 */
 	public boolean hasTag(String tag) {
-		for (Tag _tag : this.tags) {
-			if (tag.equals(_tag.getName())) {
-				return true;
-			}
-		}
-		return false;
+		return this.tags.stream().anyMatch(_tag -> _tag.getName().equals(tag));
 	}
 
 	public String getAlias() {

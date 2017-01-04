@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.file;
 
+import java.util.Arrays;
+
 /**
  * 
  * @author Administrator
@@ -66,12 +68,7 @@ public class DefaultResizeValidator implements ResizeValidator {
 	}
 
 	private boolean inSize(int size) {
-		for (int allowSize : allowSizes) {
-			if (size == allowSize) {
-				return true;
-			}
-		}
-		return false;
+		return Arrays.stream(allowSizes).anyMatch(allowSize -> allowSize == size);
 	}
 
 	public void setAllowSizes(Integer[] allowSizes) {

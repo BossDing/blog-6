@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -203,12 +204,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	public boolean supportFormat(String extension) {
-		for (String ext : IMG_EXTENSIONS) {
-			if (ext.equalsIgnoreCase(extension)) {
-				return true;
-			}
-		}
-		return false;
+		return Arrays.stream(IMG_EXTENSIONS).anyMatch(ext -> ext.equalsIgnoreCase(extension));
 	}
 
 	@Override

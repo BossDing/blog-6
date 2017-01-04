@@ -200,17 +200,6 @@ public final class TemplateUtils {
 	}
 
 	/**
-	 * 获取一次性页面的模板名
-	 * 
-	 * @param page
-	 *            页面
-	 * @return
-	 */
-	public static String getTemplateName() {
-		return "Page:";
-	}
-
-	/**
 	 * 获取模板片段的模板名
 	 * 
 	 * @param fragment

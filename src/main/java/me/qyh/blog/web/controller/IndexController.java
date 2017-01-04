@@ -73,8 +73,8 @@ public class IndexController {
 			HttpServletResponse response) throws LogicException {
 		DisposiblePage page = new DisposiblePage();
 		page.setPreview(false);
-		page.setTpl(
-				buildDataTag(Webs.decode(tagName), allRequestParams) + buildFragmentTag(Webs.decode(fragment), null));
+		page.setTpl(buildTag("data", Webs.decode(tagName), allRequestParams)
+				+ buildTag("fragment", Webs.decode(fragment), null));
 		try {
 			return new JsonResult(true, uiRender.render(page, request, response));
 		} catch (TplRenderException e) {
@@ -106,7 +106,7 @@ public class IndexController {
 			return new JsonResult(true);
 		}
 		DisposiblePage page = new DisposiblePage();
-		page.setTpl(buildFragmentTag(fr.getName(), allRequestParams));
+		page.setTpl(buildTag("fragment", fr.getName(), allRequestParams));
 		Map<String, Fragment> frMap = Maps.newHashMap();
 		frMap.put(fr.getName(), fr);
 		try {
@@ -116,28 +116,15 @@ public class IndexController {
 		}
 	}
 
-	private String buildDataTag(String name, Map<String, String> atts) {
-		Tag tag = Tag.valueOf("data");
+	private String buildTag(String tagName, String nameAtt, Map<String, String> atts) {
+		Tag tag = Tag.valueOf(tagName);
 		Attributes attributes = new Attributes();
 		if (!CollectionUtils.isEmpty(atts)) {
 			for (Map.Entry<String, String> it : atts.entrySet()) {
 				attributes.put(it.getKey(), it.getValue());
 			}
 		}
-		attributes.put("name", name);
-		Element ele = new Element(tag, "", attributes);
-		return ele.toString();
-	}
-
-	private String buildFragmentTag(String name, Map<String, String> atts) {
-		Tag tag = Tag.valueOf("fragment");
-		Attributes attributes = new Attributes();
-		if (!CollectionUtils.isEmpty(atts)) {
-			for (Map.Entry<String, String> it : atts.entrySet()) {
-				attributes.put(it.getKey(), it.getValue());
-			}
-		}
-		attributes.put("name", name);
+		attributes.put("name", nameAtt);
 		Element ele = new Element(tag, "", attributes);
 		return ele.toString();
 	}

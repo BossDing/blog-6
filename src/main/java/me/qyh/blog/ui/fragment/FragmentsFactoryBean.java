@@ -15,9 +15,6 @@
  */
 package me.qyh.blog.ui.fragment;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
@@ -26,10 +23,9 @@ import org.springframework.core.io.Resource;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
 
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserFragmentValidator;
 
@@ -48,7 +44,7 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 			if (!name.matches(UserFragmentValidator.NAME_PATTERN)) {
 				throw new SystemException("模板片段名称只能为数字或者中英文");
 			}
-			String tpl = getTpl(it.getValue());
+			String tpl = Resources.readResourceToString(it.getValue());
 			if (tpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
 				throw new SystemException("模板片段长度不能超过" + UserFragmentValidator.MAX_TPL_LENGTH + "个字符");
 			}
@@ -61,15 +57,6 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 			fragments.add(fragment);
 		}
 		return fragments;
-	}
-
-	private String getTpl(Resource resource) throws IOException {
-		String tpl = null;
-		try (InputStream is = resource.getInputStream();
-				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
-			tpl = CharStreams.toString(ir);
-		}
-		return tpl;
 	}
 
 	@Override

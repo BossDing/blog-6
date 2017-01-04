@@ -29,9 +29,9 @@ public class ThumbnailUrl implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String small;
-	private String middle;
-	private String large;
+	private final String small;
+	private final String middle;
+	private final String large;
 
 	/**
 	 * @param small

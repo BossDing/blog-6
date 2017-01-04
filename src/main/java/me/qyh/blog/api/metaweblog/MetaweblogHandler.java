@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -102,6 +103,7 @@ public class MetaweblogHandler {
 		throw new FaultException(Constants.AUTH_ERROR, new Message("user.loginFail", "登录失败"));
 	}
 
+	@FunctionalInterface
 	private interface Execute {
 		Object execute() throws LogicException, ParseException;
 	}
@@ -143,11 +145,7 @@ public class MetaweblogHandler {
 		}
 		return execute(username, password, () -> {
 			List<Article> articles = articleService.queryRecentArticles(limit);
-			List<Map<?, ?>> result = Lists.newArrayList();
-			for (Article art : articles) {
-				result.add(articleToMap(art));
-			}
-			return result;
+			return articles.stream().map(this::articleToMap).collect(Collectors.toList());
 		});
 	}
 
@@ -283,12 +281,8 @@ public class MetaweblogHandler {
 		MetaweblogArticle article = new MetaweblogArticle();
 		List<String> categories = struct.getArray("categories", String.class);
 		if (!CollectionUtils.isEmpty(categories)) {
-			for (String category : categories) {
-				if (!Validators.isEmptyOrNull(category, true)) {
-					article.setSpace(category.trim());
-					break;
-				}
-			}
+			categories.stream().filter(category -> !Validators.isEmptyOrNull(category, true)).findAny()
+					.ifPresent(category -> article.setSpace(category.trim()));
 		}
 		String title = struct.getString("title");
 		if (Validators.isEmptyOrNull(title, true)) {

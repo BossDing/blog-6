@@ -101,10 +101,4 @@ public class Resize {
 	public void setSize(Integer size) {
 		this.size = size;
 	}
-
-	@Override
-	public String toString() {
-		return "Resize [width=" + width + ", height=" + height + ", keepRatio=" + keepRatio + ", size=" + size + "]";
-	}
-
 }

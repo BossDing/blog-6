@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -102,13 +103,9 @@ public class Webs {
 	 * @return
 	 */
 	public static String getIp(HttpServletRequest request) {
-		for (String header : HEADERS_TO_TRY) {
-			String ip = request.getHeader(header);
-			if (!Validators.isEmptyOrNull(ip, true) && !"unknown".equalsIgnoreCase(ip)) {
-				return ip;
-			}
-		}
-		return request.getRemoteAddr();
+		return Arrays.stream(HEADERS_TO_TRY).map(header -> request.getHeader(header))
+				.filter(ip -> (!Validators.isEmptyOrNull(ip, true) && !"unknown".equalsIgnoreCase(ip))).findFirst()
+				.orElse(request.getRemoteAddr());
 	}
 
 	/**

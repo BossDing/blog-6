@@ -53,8 +53,9 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 			throw new SystemException(e.getMessage(), e);
 		}
 		if (TransactionSynchronizationManager.isSynchronizationActive()
-				&& !TransactionSynchronizationManager.isCurrentTransactionReadOnly())
+				&& !TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
 			TransactionSynchronizationManager.registerSynchronization(this);
+		}
 	}
 
 	@AfterThrowing(pointcut = "@annotation(ArticleIndexRebuild)", throwing = "e")

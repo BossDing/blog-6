@@ -17,6 +17,7 @@ package me.qyh.blog.web;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,7 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.view.feed.AbstractRssFeedView;
 
-import com.google.common.collect.Lists;
 import com.rometools.rome.feed.rss.Channel;
 import com.rometools.rome.feed.rss.Content;
 import com.rometools.rome.feed.rss.Item;
@@ -46,20 +46,18 @@ public class RssView extends AbstractRssFeedView {
 			HttpServletResponse response) throws Exception {
 		@SuppressWarnings("unchecked")
 		PageResult<Article> page = (PageResult<Article>) model.get("page");
-		List<Item> items = Lists.newArrayList();
-		if (page.hasResult()) {
-			for (Article article : page.getDatas()) {
-				Item item = new Item();
-				Content content = new Content();
-				content.setValue(article.getSummary());
-				item.setContent(content);
-				item.setTitle(article.getTitle());
-				item.setLink(urlHelper.getUrls().getUrl(article));
-				item.setPubDate(article.getPubDate());
-				items.add(item);
-			}
-		}
-		return items;
+		return page.getDatas().stream().map(this::toItem).collect(Collectors.toList());
+	}
+
+	private Item toItem(Article article) {
+		Item item = new Item();
+		Content content = new Content();
+		content.setValue(article.getSummary());
+		item.setContent(content);
+		item.setTitle(article.getTitle());
+		item.setLink(urlHelper.getUrls().getUrl(article));
+		item.setPubDate(article.getPubDate());
+		return item;
 	}
 
 	@Override

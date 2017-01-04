@@ -23,6 +23,7 @@ import me.qyh.blog.mail.MailSender.MessageBean;
  * @author Administrator
  *
  */
+@FunctionalInterface
 public interface MailSendCallBack {
 
 	/**

@@ -17,16 +17,15 @@ package me.qyh.blog.comment.base;
 
 import me.qyh.blog.exception.LogicException;
 
-public interface CommentContentChecker {
+public interface CommentChecker<T extends BaseComment<T>> {
+
 	/**
-	 * 检查评论内容
+	 * 插入评论前检查
 	 * 
-	 * @param content
-	 *            内容
-	 * @param html
-	 *            是否是html文本
+	 * @param comment
+	 *            评论
 	 * @throws LogicException
-	 *             检查未通过
 	 */
-	void doCheck(final String content, boolean html) throws LogicException;
+	public void checkComment(T comment, CommentConfig config) throws LogicException;
+
 }

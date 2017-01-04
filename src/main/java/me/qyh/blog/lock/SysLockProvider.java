@@ -17,6 +17,7 @@ package me.qyh.blog.lock;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,12 +143,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 * @return 存在：true，不存在：false
 	 */
 	public boolean checkLockTypeExists(String lockType) {
-		for (String _lockType : LOCK_TYPES) {
-			if (_lockType.equals(lockType)) {
-				return true;
-			}
-		}
-		return false;
+		return Arrays.stream(LOCK_TYPES).anyMatch(_lockType -> _lockType.equals(lockType));
 	}
 
 	/**

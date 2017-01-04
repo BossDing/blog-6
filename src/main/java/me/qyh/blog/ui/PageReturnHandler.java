@@ -88,6 +88,8 @@ public class PageReturnHandler extends RenderSupport implements HandlerMethodRet
 
 			throw e;
 		}
+
+		// native response has been set contentType,directly output
 		Writer writer = nativeResponse.getWriter();
 		writer.write(rendered);
 		writer.flush();

@@ -16,10 +16,10 @@
 package me.qyh.blog.comment.base;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.annotations.Expose;
 
@@ -86,11 +86,8 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 
 	public void setParentPath(String parentPath) {
 		if (!"/".equals(parentPath)) {
-			for (String p : Splitter.on('/').split(parentPath)) {
-				if (!p.isEmpty()) {
-					this.parents.add(Integer.parseInt(p));
-				}
-			}
+			Arrays.stream(parentPath.split("/")).filter(path -> !path.isEmpty())
+					.forEach(path -> this.parents.add(Integer.parseInt(path)));
 		}
 		this.parentPath = parentPath;
 	}
@@ -211,13 +208,5 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 
 	public void setUrl(String url) {
 		this.url = url;
-	}
-
-	@Override
-	public String toString() {
-		return "BaseComment [parent=" + parent + ", parentPath=" + parentPath + ", content=" + content + ", parents="
-				+ parents + ", commentDate=" + commentDate + ", children=" + children + ", status=" + status
-				+ ", website=" + website + ", nickname=" + nickname + ", email=" + email + ", ip=" + ip + ", admin="
-				+ admin + ", gravatar=" + gravatar + "]";
 	}
 }

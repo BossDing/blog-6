@@ -21,6 +21,7 @@ package me.qyh.blog.file;
  * @author Administrator
  *
  */
+@FunctionalInterface
 public interface ResizeValidator {
 	/**
 	 * 验证是否是一个正确的缩略图尺寸

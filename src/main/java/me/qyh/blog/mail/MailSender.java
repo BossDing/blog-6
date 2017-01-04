@@ -26,8 +26,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javax.mail.internet.MimeMessage;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +33,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
@@ -58,7 +55,7 @@ public class MailSender implements InitializingBean {
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	private static final Executor executor = Executors.newCachedThreadPool();
-	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<MessageBean>();
+	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
 	private static final int LIMIT_SEC = 10;
 	private static final int LIMIT_COUNT = 1;
@@ -127,17 +124,12 @@ public class MailSender implements InitializingBean {
 					LOGGER.error("接受人邮箱为空，无法发送邮件");
 					return;
 				}
-				javaMailSender.send(new MimeMessagePreparator() {
-
-					@Override
-					public void prepare(MimeMessage mimeMessage) throws Exception {
-						MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html,
-								Constants.CHARSET.name());
-						helper.setText(mb.text, mb.html);
-						helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
-						helper.setSubject(mb.subject);
-						mimeMessage.setFrom();
-					}
+				javaMailSender.send((mimeMessage) -> {
+					MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
+					helper.setText(mb.text, mb.html);
+					helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
+					helper.setSubject(mb.subject);
+					mimeMessage.setFrom();
 				});
 				if (callBack != null) {
 					callBack.callBack(mb, true);
@@ -152,7 +144,7 @@ public class MailSender implements InitializingBean {
 	}
 
 	private final class TimeCount {
-		private long start;
+		private final long start;
 		private int count;
 
 		private TimeCount(long start, int count) {

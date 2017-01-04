@@ -125,8 +125,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				removeContext();
 				// 防止死循环
 				LOGGER.error(e.getMessage(), e);
-				response.setStatus(500);
-				response.sendRedirect(urlHelper.getUrl() + "/error");
 				return false;
 			}
 		}

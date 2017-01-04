@@ -35,6 +35,15 @@ import me.qyh.blog.service.ConfigService;
 @Service
 public class ConfigServiceImpl implements ConfigService, InitializingBean {
 
+	private static final String PAGE_SIZE_FILE = "pagesize.file";
+	private static final String PAGE_SIZE_USERFRAGEMENT = "pagesize.userfragment";
+	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
+	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
+	private static final String PAGE_SIZE_TAG = "pagesize.tag";
+
+	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
+	private static final String METAWEBLOG_UPLOAD_STORE = "metaweblog.upload.store";
+
 	private Properties config = new Properties();
 	private Resource resource;
 
@@ -111,14 +120,5 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		resource = new ClassPathResource("resources/config.properties");
 		config.load(resource.getInputStream());
 	}
-
-	private static final String PAGE_SIZE_FILE = "pagesize.file";
-	private static final String PAGE_SIZE_USERFRAGEMENT = "pagesize.userfragment";
-	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
-	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
-	private static final String PAGE_SIZE_TAG = "pagesize.tag";
-
-	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
-	private static final String METAWEBLOG_UPLOAD_STORE = "metaweblog.upload.store";
 
 }

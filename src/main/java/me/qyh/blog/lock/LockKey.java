@@ -23,6 +23,7 @@ import java.io.Serializable;
  * @author Administrator
  *
  */
+@FunctionalInterface
 public interface LockKey extends Serializable {
 
 	/**

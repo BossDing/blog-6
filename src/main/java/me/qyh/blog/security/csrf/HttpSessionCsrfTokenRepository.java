@@ -30,13 +30,13 @@
  */
 package me.qyh.blog.security.csrf;
 
-import java.util.UUID;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.util.Assert;
+
+import me.qyh.blog.util.UUIDs;
 
 /**
  * A {@link CsrfTokenRepository} that stores the {@link CsrfToken} in the
@@ -143,6 +143,6 @@ public final class HttpSessionCsrfTokenRepository implements CsrfTokenRepository
 	}
 
 	private String createNewToken() {
-		return UUID.randomUUID().toString();
+		return UUIDs.uuid();
 	}
 }

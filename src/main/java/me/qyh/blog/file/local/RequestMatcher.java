@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author Administrator
  *
  */
+@FunctionalInterface
 public interface RequestMatcher {
 
 	/**

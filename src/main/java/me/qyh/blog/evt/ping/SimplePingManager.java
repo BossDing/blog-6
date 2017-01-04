@@ -16,17 +16,24 @@
 package me.qyh.blog.evt.ping;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticleEvent;
 import me.qyh.blog.evt.ArticleEvent.EventType;
+import me.qyh.blog.exception.SystemException;
 
 /**
  * 简单的ping管理器
@@ -34,12 +41,16 @@ import me.qyh.blog.evt.ArticleEvent.EventType;
  * @author Administrator
  *
  */
-public class SimplePingManager implements ApplicationListener<ArticleEvent> {
+public class SimplePingManager implements ApplicationListener<ArticleEvent>, InitializingBean {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SimplePingManager.class);
 
 	private List<PingService> pingServices = Lists.newArrayList();
 	private final String blogName;
+
+	private int awaitSeconds;
+
+	private ExecutorService executor;
 
 	public SimplePingManager(String blogName) {
 		super();
@@ -50,11 +61,7 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent> {
 	@Override
 	public void onApplicationEvent(ArticleEvent event) {
 		List<Article> articles = event.getArticles();
-		for (Article article : articles) {
-			if (needPing(event.getEventType(), article)) {
-				ping(article);
-			}
-		}
+		articles.stream().filter(article -> needPing(event.getEventType(), article)).forEach(this::ping);
 	}
 
 	private boolean needPing(EventType eventType, Article article) {
@@ -64,18 +71,43 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent> {
 	}
 
 	private void ping(Article article) {
-		for (PingService pingService : pingServices) {
+		pingServices.stream().forEach(pingService -> CompletableFuture.supplyAsync(() -> {
 			try {
+				Thread.sleep(10000);
 				pingService.ping(article, blogName);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
-				continue;
 			}
-		}
+			return null;
+		}, executor));
 	}
 
 	public void setPingServices(List<PingService> pingServices) {
 		this.pingServices = pingServices;
+	}
+
+	public void close() {
+		executor.shutdown();
+		try {
+			executor.awaitTermination(awaitSeconds, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (CollectionUtils.isEmpty(pingServices)) {
+			throw new SystemException("ping服务不能为空");
+		}
+		if (awaitSeconds <= 0) {
+			awaitSeconds = 60;
+		}
+		executor = Executors.newFixedThreadPool(pingServices.size());
+	}
+
+	public void setAwaitSeconds(int awaitSeconds) {
+		this.awaitSeconds = awaitSeconds;
 	}
 
 }

@@ -43,6 +43,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFile;
@@ -433,15 +434,19 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// mysql can use order by field
 		// but h2 can not
 		List<Article> articles = articleDao.selectByIds(ids);
+
 		List<Article> ordered = Lists.newArrayList();
-		Article art;
+		Map<Integer, Article> maps = Maps.newHashMap();
+		for (Article art : articles) {
+			maps.put(art.getId(), art);
+		}
 		for (Integer id : ids) {
-			art = new Article(id);
-			int index = articles.indexOf(art);
-			if (index != -1) {
-				ordered.add(articles.get(index));
+			Article art = maps.get(id);
+			if (art != null) {
+				ordered.add(art);
 			}
 		}
+		maps.clear();
 		return ordered;
 	}
 
@@ -575,9 +580,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (article == null) {
 			return Collections.emptyList();
 		}
-		return articleIndexer.getIndexer().querySimilar(article, (List<Integer> articleIds) -> {
-			return articleDao.selectByIds(articleIds);
-		}, limit);
+		return articleIndexer.getIndexer().querySimilar(article, articleIds -> articleDao.selectByIds(articleIds),
+				limit);
 	}
 
 	@Override

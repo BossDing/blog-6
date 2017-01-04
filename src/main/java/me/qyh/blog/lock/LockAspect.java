@@ -50,27 +50,23 @@ public class LockAspect {
 	 * @param lockResource
 	 *            被锁的资源
 	 */
-	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "result")
-	public void after(Object result) {
-		if (result != null && result instanceof LockResource) {
-			LockResource lockResource = (LockResource) result;
-
-			// 需要验证密码
-			if (lockResource != null && lockResource.getLockId() != null && UserContext.get() == null) {
-				Lock lock = lockManager.findLock(lockResource.getLockId());
-				if (lock != null) {
-					LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
-					if (key == null) {
-						throw new LockException(lock, lockResource, null);
-					}
-					try {
-						lock.tryOpen(key);
-					} catch (LogicException e) {
-						LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
-						throw new LockException(lock, lockResource, e.getLogicMessage());
-					} catch (Exception e) {
-						LOGGER.error(e.getMessage(), e);
-					}
+	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "lockResource")
+	public void after(LockResource lockResource) {
+		// 需要验证密码
+		if (lockResource != null && lockResource.getLockId() != null && UserContext.get() == null) {
+			Lock lock = lockManager.findLock(lockResource.getLockId());
+			if (lock != null) {
+				LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
+				if (key == null) {
+					throw new LockException(lock, lockResource, null);
+				}
+				try {
+					lock.tryOpen(key);
+				} catch (LogicException e) {
+					LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
+					throw new LockException(lock, lockResource, e.getLogicMessage());
+				} catch (Exception e) {
+					LOGGER.error(e.getMessage(), e);
 				}
 			}
 		}

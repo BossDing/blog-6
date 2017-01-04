@@ -15,12 +15,8 @@
  */
 package me.qyh.blog.security.input;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
@@ -31,11 +27,10 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.base.Splitter;
-import com.google.common.io.CharStreams;
 
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
@@ -65,13 +60,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 		Document body = Jsoup.parseBodyFragment(html);
 		if (nofollow) {
 			Elements eles = body.select("a[href]");
-			for (Element ele : eles) {
-				String href = ele.attr("href");
-				// only abs url need to do
-				if (needNofollow(href)) {
-					ele.attr("rel", NOFOLLOW_ATTR);
-				}
-			}
+			eles.stream().filter(ele -> needNofollow(ele.attr("href"))).forEach(ele -> ele.attr("rel", NOFOLLOW_ATTR));
 		}
 		return Jsoup.clean(body.html(), InnerWhitelist.configured(tags));
 	}
@@ -90,10 +79,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (tags == null && (whitelistJsonResource != null)) {
-			try (InputStream is = whitelistJsonResource.getInputStream();
-					InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
-				tags = Jsons.readValue(AllowTags.class, CharStreams.toString(ir));
-			}
+			tags = Jsons.readValue(AllowTags.class, Resources.readResourceToString(whitelistJsonResource));
 		}
 		if (tags == null) {
 			tags = new AllowTags();

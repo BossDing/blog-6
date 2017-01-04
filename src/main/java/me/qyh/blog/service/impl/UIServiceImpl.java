@@ -15,15 +15,15 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -46,13 +46,11 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.bean.ImportRecord;
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.LockPageDao;
 import me.qyh.blog.dao.SysPageDao;
@@ -83,6 +81,7 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.interceptor.SpaceContext;
@@ -144,6 +143,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 							}
 						}
 						throw new LogicException(new Message("fragment.not.exists", "模板片段不存在"));
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
 					} finally {
 						platformTransactionManager.commit(status);
 					}
@@ -305,16 +307,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	public List<String> queryDataTags() {
-		List<String> dataTags = Lists.newArrayList();
-		for (DataTagProcessor<?> processor : processors) {
-			dataTags.add(processor.getName());
-		}
-		return dataTags;
+		return processors.stream().map(processor -> processor.getName()).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Fragment> querySysFragments() {
-		return fragments;
+		return Collections.unmodifiableList(fragments);
 	}
 
 	@Override
@@ -357,8 +355,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} else {
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
-			if (aliasPage != null)
+			if (aliasPage != null) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
+			}
 			userPageDao.insert(userPage);
 		}
 	}
@@ -694,7 +693,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (resource == null) {
 				resource = new ClassPathResource("resources/page/PAGE_" + target.name() + ".html");
 			}
-			String tpl = fromResource(resource);
+			String tpl = Resources.readResourceToString(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
@@ -708,7 +707,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (resource == null) {
 				resource = new ClassPathResource("resources/page/" + code.name() + ".html");
 			}
-			String tpl = fromResource(resource);
+			String tpl = Resources.readResourceToString(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
@@ -722,7 +721,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (resource == null) {
 				throw new SystemException("没有指定LockType:" + lockType + "的默认模板");
 			}
-			String tpl = fromResource(resource);
+			String tpl = Resources.readResourceToString(resource);
 			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
 				throw new SystemException("解锁页面：" + lockType + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
@@ -730,15 +729,6 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				throw new SystemException("解锁页面：" + lockType + "模板不能为空");
 			}
 			lockPageDefaultTpls.put(lockType, tpl);
-		}
-	}
-
-	private String fromResource(Resource resource) {
-		try (InputStream is = resource.getInputStream();
-				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
-			return CharStreams.toString(ir);
-		} catch (Exception e) {
-			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
@@ -751,12 +741,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	}
 
 	private DataTagProcessor<?> geTagProcessor(String name) {
-		for (DataTagProcessor<?> processor : processors) {
-			if (processor.getName().equals(name)) {
-				return processor;
-			}
-		}
-		return null;
+		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny().orElse(null);
 	}
 
 	private void checkSpace(Page page) throws LogicException {
@@ -822,14 +807,8 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (fragments == null || fragments.length == 0) {
 			return;
 		}
-		fragmentCache.asMap().keySet().removeIf(x -> {
-			for (Fragment fragment : fragments) {
-				if (x.name.equals(fragment.getName())) {
-					return true;
-				}
-			}
-			return false;
-		});
+		fragmentCache.asMap().keySet()
+				.removeIf(x -> Arrays.stream(fragments).anyMatch(fragment -> x.name.equals(fragment.getName())));
 		for (Fragment fragment : fragments) {
 			clearFragmentCache(fragment);
 		}

@@ -17,8 +17,7 @@ package me.qyh.blog.ui.utils;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-
-import org.apache.commons.lang3.math.NumberUtils;
+import java.util.stream.IntStream;
 
 public final class Nums {
 	public static int randomInt(int min, int max) {
@@ -26,27 +25,19 @@ public final class Nums {
 	}
 
 	public static int max(int... nums) {
-		return NumberUtils.max(nums);
+		return IntStream.of(nums).max().orElse(0);
 	}
 
 	public static int min(int... nums) {
-		return NumberUtils.min(nums);
+		return IntStream.of(nums).min().orElse(0);
 	}
 
 	public static int max(List<Integer> numList) {
-		int[] nums = new int[numList.size()];
-		for (int i = 0; i < numList.size(); i++) {
-			nums[i] = numList.get(i);
-		}
-		return NumberUtils.max(nums);
+		return numList.stream().mapToInt(Integer::intValue).max().orElse(0);
 	}
 
 	public static int min(List<Integer> numList) {
-		int[] nums = new int[numList.size()];
-		for (int i = 0; i < numList.size(); i++) {
-			nums[i] = numList.get(i);
-		}
-		return NumberUtils.min(nums);
+		return numList.stream().mapToInt(Integer::intValue).min().orElse(0);
 	}
 
 	private Nums() {

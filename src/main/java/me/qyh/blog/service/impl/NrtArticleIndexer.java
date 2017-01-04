@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.DateTools;
@@ -97,7 +98,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NRTArticleIndexer.class);
 
-	private static final Comparator<Article> COMPARATOR = new ArticleCommparator();
+	private static final Comparator<Article> COMPARATOR = Comparator.comparing(Article::getPubDate).reversed()
+			.thenComparing(Comparator.comparing(Article::getId).reversed());
 
 	private static final String ID = "id";
 	private static final String TITLE = "title";
@@ -285,14 +287,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			}
 			List<Article> articles = dquery.query(datas);
 			if (!articles.isEmpty()) {
-				Collections.sort(articles, COMPARATOR);
+				articles.sort(COMPARATOR);
 			}
-			List<Article> results = Lists.newArrayList();
-			for (Article art : articles) {
-				if (!art.equals(article)) {
-					results.add(art);
-				}
-			}
+			List<Article> results = articles.stream().filter(art -> !art.equals(article)).collect(Collectors.toList());
 			int size = results.size();
 			int max = Math.min(limit, size);
 			return size > max ? results.subList(0, max) : results;
@@ -582,24 +579,13 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}
 	}
 
-	private static class ArticleCommparator implements Comparator<Article> {
-
-		@Override
-		public int compare(Article o1, Article o2) {
-			int compare = -(o1.getPubDate().compareTo(o2.getPubDate()));
-			if (compare == 0) {
-				compare = -o1.getId().compareTo(o2.getId());
-			}
-			return compare;
-		}
-	}
-
 	/**
 	 * 文章查询接口
 	 * 
 	 * @author Administrator
 	 *
 	 */
+	@FunctionalInterface
 	public interface ArticlesDetailQuery {
 		/**
 		 * 通过id集合查询对应的文章

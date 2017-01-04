@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -447,17 +448,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private String getFilePath(BlogFile bf) {
 		List<BlogFile> files = blogFileDao.selectPath(bf);
-		StringBuilder path = new StringBuilder();
-		for (BlogFile file : files) {
-			if (file.getPath().isEmpty()) {
-				continue;
-			}
-			path.append(file.getPath()).append(SPLIT_CHAR);
-		}
-		if (path.length() > 0) {
-			path.deleteCharAt(path.length() - 1);
-		}
-		return path.toString();
+		return files.stream().map(file -> file.getPath()).filter(path -> !path.isEmpty())
+				.collect(Collectors.joining(SPLIT_CHAR));
 	}
 
 	@Override

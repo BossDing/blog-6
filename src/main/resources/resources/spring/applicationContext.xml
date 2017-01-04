@@ -146,7 +146,7 @@
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<bean id="htmlClean" class="me.qyh.blog.security.input.DefaultHtmlClean" />
-	<bean id="simpleCommentUserChecker" class="me.qyh.blog.comment.base.SimpleCommentUserChecker">
+	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.base.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
 				<value>qyh</value>
@@ -167,7 +167,7 @@
 		<!-- html内容清理器 -->
 		<property name="htmlClean" ref="htmlClean" />
 		<property name="commentDao" ref="commentDao" />
-		<property name="commentUserChecker" ref="simpleCommentUserChecker"></property>
+		<property name="commentChecker" ref="simpleCommentChecker"></property>
 		<property name="emailSupport">
 			<bean class="me.qyh.blog.comment.base.CommentEmailNotifySupport"
 				destroy-method="shutdown">
@@ -184,7 +184,7 @@
 		<!-- html内容清理器 -->
 		<property name="htmlClean" ref="htmlClean" />
 		<property name="commentDao" ref="moduleCommentDao" />
-		<property name="commentUserChecker" ref="simpleCommentUserChecker"></property>
+		<property name="commentChecker" ref="simpleCommentChecker"></property>
 		<property name="modules">
 			<list>
 				<bean class="me.qyh.blog.comment.module.CommentModule">
@@ -206,7 +206,7 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.evt.ping.SimplePingManager">
+	<bean class="me.qyh.blog.evt.ping.SimplePingManager" destroy-method="close">
 		<constructor-arg value="钱宇豪的个人博客" />
 		<property name="pingServices">
 			<list>

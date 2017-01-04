@@ -62,7 +62,6 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		if (TemplateUtils.isDisposablePageTemplate(template)) {
 			DisposiblePage page = DisposablePageContext.get();
 			if (page == null) {
-				// may be th:replace="Page:Disposable"?
 				template = EMPTY;
 			} else {
 				return new PageResource(page);
@@ -129,7 +128,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 
 		@Override
 		public ITemplateResource relative(String relativeLocation) {
-			throw new SystemException("un support");
+			throw new SystemException("unsupport");
 		}
 
 	}
@@ -164,7 +163,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 
 		@Override
 		public ITemplateResource relative(String relativeLocation) {
-			throw new SystemException("un support");
+			throw new SystemException("unsupport");
 		}
 	}
 }

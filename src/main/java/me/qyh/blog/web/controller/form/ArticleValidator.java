@@ -174,39 +174,39 @@ public class ArticleValidator implements Validator {
 				article.setAlias(null);
 			} else {
 				try {
-					try {
-						Integer.parseInt(alias);
-						errors.reject("article.alias.integer", "文章别名不能为数字");
+					Integer.parseInt(alias);
+					errors.reject("article.alias.integer", "文章别名不能为数字");
+					return;
+				} catch (Exception e) {
+				}
+				if (alias.length() > MAX_ALIAS_LENGTH) {
+					errors.reject("article.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
+							"文章别名不能超过" + MAX_ALIAS_LENGTH + "个字符");
+					return;
+				}
+				for (String keyword : ALIAS_KEY_WORDS) {
+					if (keyword.equals(alias)) {
+						errors.reject("article.alias.keyword", new Object[] { KEY_WORD_STR },
+								"关键词不能为" + KEY_WORD_STR + "这些关键词");
 						return;
-					} catch (Exception e) {
 					}
-					if (alias.length() > MAX_ALIAS_LENGTH) {
-						errors.reject("article.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
-								"文章别名不能超过" + MAX_ALIAS_LENGTH + "个字符");
-						return;
-					}
-					for (String keyword : ALIAS_KEY_WORDS) {
-						if (keyword.equals(alias)) {
-							errors.reject("article.alias.keyword", new Object[] { KEY_WORD_STR },
-									"关键词不能为" + KEY_WORD_STR + "这些关键词");
-							return;
-						}
-					}
+				}
+				try {
 					if (!alias.equals(URLEncoder.encode(alias, Constants.CHARSET.name()))) {
 						errors.reject("article.alias.invalid", "文章别名校验失败");
 						return;
 					}
-					char[] chars = alias.toCharArray();
-					for (char ch : chars) {
-						if (ch == '/' || ch == '.') {
-							errors.reject("article.alias.invalidChar", "文章别名校验不能包含'/'和'.'这些字符");
-							return;
-						}
-					}
-					article.setAlias(alias);
 				} catch (UnsupportedEncodingException e) {
 					throw new SystemException(e.getMessage(), e);
 				}
+				char[] chars = alias.toCharArray();
+				for (char ch : chars) {
+					if (ch == '/' || ch == '.') {
+						errors.reject("article.alias.invalidChar", "文章别名校验不能包含'/'和'.'这些字符");
+						return;
+					}
+				}
+				article.setAlias(alias);
 			}
 		}
 	}

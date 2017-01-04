@@ -167,7 +167,7 @@ public class MetaweblogController extends BaseController implements Initializing
 	}
 
 	private final class FailInfo {
-		private long timestamp;
+		private final long timestamp;
 		private int count;
 
 		public FailInfo(long timestamp) {
@@ -189,7 +189,7 @@ public class MetaweblogController extends BaseController implements Initializing
 	}
 
 	private void increase(String ip, long now) {
-		FailInfo fi = authFailMap.computeIfAbsent(ip, k -> new FailInfo(now));
+		FailInfo fi = authFailMap.computeIfAbsent(ip, current -> new FailInfo(now));
 		int currentCount = fi.increase();
 		if (!fi.overtime(now) && (currentCount >= limit.getCount())) {
 			invalidIpMap.put(ip, now);

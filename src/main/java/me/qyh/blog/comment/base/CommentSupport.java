@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,7 @@ import me.qyh.blog.util.Validators;
 
 public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T>> implements InitializingBean {
 
-	private CommentContentChecker commentContentChecker;
-	private CommentUserChecker commentUserChecker;
+	private CommentChecker<T> commentChecker;
 	private HtmlClean htmlClean;
 	protected E commentDao;
 
@@ -68,14 +68,8 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	protected static final String COMMENT_CHECK = "commentConfig.commentCheck";
 	protected static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
 
-	private final CommentComparator ascCommentComparator = new CommentComparator();
-	protected final Comparator<T> descCommentComparator = new Comparator<T>() {
-
-		@Override
-		public int compare(T o1, T o2) {
-			return -ascCommentComparator.compare(o1, o2);
-		}
-	};
+	private final Comparator<T> ascCommentComparator = Comparator.comparing(T::getCommentDate).thenComparing(T::getId);
+	private final Comparator<T> descCommentComparator = (t1, t2) -> -ascCommentComparator.compare(t1, t2);
 
 	/**
 	 * 为了保证一个树结构，这里采用 path来纪录层次结构
@@ -87,17 +81,6 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 
 	private CommentEmailNotifySupport<T> emailSupport;
 
-	private final class CommentComparator implements Comparator<T> {
-		@Override
-		public int compare(T o1, T o2) {
-			int compare = o1.getCommentDate().compareTo(o2.getCommentDate());
-			if (compare == 0) {
-				return o1.getId().compareTo(o2.getId());
-			}
-			return compare;
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
@@ -105,11 +88,9 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 			throw new SystemException("必须要提供一个html内容的清理器");
 		}
 
-		if (commentContentChecker == null) {
-			commentContentChecker = new DefaultCommentContentChecker();
-		}
-		if (commentUserChecker == null) {
-			commentUserChecker = new DefaultCommentUserChecker();
+		if (commentChecker == null) {
+			commentChecker = (comment, config) -> {
+			};
 		}
 	}
 
@@ -198,8 +179,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 		}
 
 		setContent(comment, config);
-
-		this.commentContentChecker.doCheck(comment.getContent(), config.getAllowHtml());
+		commentChecker.checkComment(comment, config);
 
 		String parentPath = "/";
 		// 判断是否存在父评论
@@ -231,8 +211,6 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 
 		if (UserContext.get() == null) {
 			String email = comment.getEmail();
-
-			commentUserChecker.doCheck(comment.getNickname(), email, comment.getWebsite());
 			if (email != null) {
 				// set gravatar md5
 				comment.setGravatar(DigestUtils.md5DigestAsHex(email.getBytes(Constants.CHARSET)));
@@ -314,12 +292,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	}
 
 	private T find(Integer id, List<T> comments) {
-		for (T comment : comments) {
-			if (comment.getId().equals(id)) {
-				return comment;
-			}
-		}
-		return null;
+		return comments.stream().filter(comment -> comment.getId().equals(id)).findAny().orElse(null);
 	}
 
 	private void build(T root, List<T> comments) {
@@ -333,32 +306,12 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	}
 
 	private List<T> findChildren(T root, List<T> comments) {
-		List<T> children = Lists.newArrayList();
-		for (T comment : comments) {
-			if (root.equals(comment.getParent())) {
-				comment.setParent(null);// 防止json死循环
-				children.add(comment);
-			}
+		List<T> children = comments.stream().filter(comment -> root.equals(comment.getParent()))
+				.sorted(ascCommentComparator).collect(Collectors.toList());
+		for (T comment : children) {
+			comment.setParent(null);// 防止json死循环
 		}
-		Collections.sort(children, ascCommentComparator);
 		return children;
-	}
-
-	private final class DefaultCommentContentChecker implements CommentContentChecker {
-
-		@Override
-		public void doCheck(String content, boolean html) throws LogicException {
-
-		}
-
-	}
-
-	private final class DefaultCommentUserChecker extends CommentUserChecker {
-
-		@Override
-		protected void checkMore(final String name, final String email, final String website) throws LogicException {
-		}
-
 	}
 
 	protected void completeComment(T comment) {
@@ -381,19 +334,15 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 		this.commentDao = commentDao;
 	}
 
-	public void setCommentContentChecker(CommentContentChecker commentContentChecker) {
-		this.commentContentChecker = commentContentChecker;
-	}
-
-	public void setCommentUserChecker(CommentUserChecker commentUserChecker) {
-		this.commentUserChecker = commentUserChecker;
-	}
-
 	public void setHtmlClean(HtmlClean htmlClean) {
 		this.htmlClean = htmlClean;
 	}
 
 	public void setEmailSupport(CommentEmailNotifySupport<T> emailSupport) {
 		this.emailSupport = emailSupport;
+	}
+
+	public void setCommentChecker(CommentChecker<T> commentChecker) {
+		this.commentChecker = commentChecker;
 	}
 }

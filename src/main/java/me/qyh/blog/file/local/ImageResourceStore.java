@@ -35,7 +35,6 @@ import com.google.common.io.Files;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
-import me.qyh.blog.file.DefaultResizeValidator;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
@@ -52,7 +51,7 @@ import me.qyh.blog.web.Webs;
  */
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
-	private static final Logger imageResourceStoreLogger = LoggerFactory.getLogger(ImageResourceStore.class);
+	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final Set<String> errorThumbPaths = Sets.newHashSet();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
@@ -142,7 +141,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		try {
 			return imageHelper.read(tmp);
 		} catch (IOException e) {
-			imageResourceStoreLogger.debug(e.getMessage(), e);
+			IMG_RESOURCE_LOGGER.debug(e.getMessage(), e);
 			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
 		}
 	}
@@ -190,18 +189,16 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 					return detectSupportWebp ? null : new PathResource(local.toPath());
 				}
 				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))) {
-					synchronized (this) {
-						File check = findThumbByPath(thumbPath);
-						if (check.exists()) {
-							return new PathResource(check.toPath());
-						}
-						try {
-							return new PathResource(doResize(local, resize, check, sourcePath).toPath());
-						} catch (IOException e) {
-							imageResourceStoreLogger.error(e.getMessage(), e);
-							errorThumbPaths.add(thumbPath);
-							return detectSupportWebp ? null : new PathResource(local.toPath());
-						}
+					File check = findThumbByPath(thumbPath);
+					if (check.exists()) {
+						return new PathResource(check.toPath());
+					}
+					try {
+						return new PathResource(doResize(local, resize, check, sourcePath).toPath());
+					} catch (IOException e) {
+						IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
+						errorThumbPaths.add(thumbPath);
+						return detectSupportWebp ? null : new PathResource(local.toPath());
 					}
 				}
 			} else {
@@ -277,7 +274,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		FileUtils.forceMkdir(thumbAbsFolder);
 
 		if (resizeValidator == null) {
-			resizeValidator = new DefaultResizeValidator();
+			resizeValidator = (resize) -> true;
 		}
 
 		validateResize(smallResize);

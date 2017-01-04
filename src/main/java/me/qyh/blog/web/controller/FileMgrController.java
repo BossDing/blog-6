@@ -16,6 +16,7 @@
 package me.qyh.blog.web.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -31,8 +32,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.bean.FileStoreBean;
 import me.qyh.blog.bean.JsonResult;
@@ -96,11 +95,7 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public List<FileStoreBean> allServers() {
 		List<FileStore> stores = fileService.allStores();
-		List<FileStoreBean> beans = Lists.newArrayList();
-		for (FileStore store : stores) {
-			beans.add(new FileStoreBean(store));
-		}
-		return beans;
+		return stores.stream().map(FileStoreBean::new).collect(Collectors.toList());
 	}
 
 	@RequestMapping("query")

@@ -18,11 +18,10 @@ package me.qyh.blog.file;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -35,7 +34,7 @@ import me.qyh.blog.exception.SystemException;
 public class DefaultFileManager implements FileManager, InitializingBean {
 
 	private List<FileStore> stores;
-	private Map<Integer, FileStore> storeMap = Maps.newHashMap();
+	private Map<Integer, FileStore> storeMap;
 
 	@Override
 	public FileStore getFileStore(int id) {
@@ -47,9 +46,7 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 		if (CollectionUtils.isEmpty(stores)) {
 			throw new SystemException("文件存储器不能为空");
 		}
-		for (FileStore store : stores) {
-			storeMap.put(store.id(), store);
-		}
+		storeMap = stores.stream().collect(Collectors.toMap(FileStore::id, store -> store));
 	}
 
 	@Override
