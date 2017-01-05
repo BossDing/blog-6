@@ -187,57 +187,20 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			throw new LogicException("space.notExists", "空间不存在");
 		}
 		Article article = null;
-		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		if (mba.hasId()) {
 			Article articleDb = articleDao.selectById(mba.getId());
-			if (articleDb == null) {
-				throw new LogicException("article.notExists", "文章不存在");
+			if (articleDb != null) {
+				article = new Article(articleDb);
+				mba.mergeArticle(article);
+			} else {
+				article = mba.toArticle();
+				article.setId(mba.getId());
 			}
-			if (articleDb.isDeleted()) {
-				throw new LogicException("article.deleted", "文章已经被删除");
-			}
-
-			mba.mergeArticle(articleDb);
-			articleDb.setSpace(space);
-			article = articleDb;
-
-			if (!article.isSchedule()) {
-				if (article.isDraft()) {
-					article.setPubDate(null);
-				} else {
-					article.setPubDate(articleDb.isPublished() ? articleDb.getPubDate() : now);
-				}
-			}
-			article.setLastModifyDate(now);
-			articleDao.update(article);
-			articleIndexer.getIndexer().deleteDocument(article.getId());
-			articleCache.evit(articleDb);
-
-			Article updated = articleDao.selectById(article.getId());
-			if (article.isPublished()) {
-				articleIndexer.getIndexer().addOrUpdateDocument(updated);
-			}
-
-			applicationEventPublisher.publishEvent(new ArticleEvent(this, updated, EventType.UPDATE));
 		} else {
 			article = mba.toArticle();
-			article.setSpace(space);
-
-			if (!article.isSchedule()) {
-				if (article.isDraft()) {
-					article.setPubDate(null);
-				} else {
-					article.setPubDate(now);
-				}
-			}
-			articleDao.insert(article);
-			Article updated = articleDao.selectById(article.getId());
-			if (article.isPublished()) {
-				articleIndexer.getIndexer().addOrUpdateDocument(updated);
-			}
-			applicationEventPublisher.publishEvent(new ArticleEvent(this, updated, EventType.INSERT));
 		}
-		return article;
+		article.setSpace(space);
+		return writeArticle(article);
 	}
 
 	@Override
@@ -273,14 +236,23 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							article.getAlias());
 				}
 			}
-
-			if (!article.isSchedule()) {
-				if (article.isDraft()) {
-					article.setPubDate(null);
-				} else {
-					article.setPubDate(articleDb.isPublished() ? articleDb.getPubDate() : now);
-				}
+			
+			Timestamp pubDate = null;
+			switch (article.getStatus()) {
+			case DRAFT:
+				pubDate = articleDb.isSchedule() ? null : articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
+				break;
+			case PUBLISHED:
+				pubDate = articleDb.isSchedule() ? now : articleDb.getPubDate() != null ? articleDb.getPubDate() : now;
+				break;
+			case SCHEDULED:
+				pubDate = article.getPubDate();
+				break;
+			default:
+				break;
 			}
+			article.setPubDate(pubDate);
+
 			article.setLastModifyDate(now);
 			articleTagDao.deleteByArticle(articleDb);
 
@@ -303,13 +275,24 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							article.getAlias());
 				}
 			}
-			if (!article.isSchedule()) {
-				if (article.isDraft()) {
-					article.setPubDate(null);
-				} else {
-					article.setPubDate(now);
-				}
+
+			Timestamp pubDate = null;
+			switch (article.getStatus()) {
+			case DRAFT:
+				// 如果是草稿
+				pubDate = null;
+				break;
+			case PUBLISHED:
+				pubDate = now;
+				break;
+			case SCHEDULED:
+				pubDate = article.getPubDate();
+				break;
+			default:
+				break;
 			}
+			article.setPubDate(pubDate);
+
 			articleDao.insert(article);
 			insertTags(article);
 			Article updated = articleDao.selectById(article.getId());
