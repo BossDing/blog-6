@@ -20,6 +20,8 @@ import java.lang.reflect.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
+import com.google.common.escape.Escaper;
+import com.google.common.html.HtmlEscapers;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
@@ -36,6 +38,8 @@ public class MessageSerializer implements JsonSerializer<Message> {
 	@Autowired(required = false)
 	private Messages messages;
 
+	private Escaper escaper = HtmlEscapers.htmlEscaper();
+
 	@Override
 	public JsonElement serialize(Message src, Type typeOfSrc, JsonSerializationContext context) {
 		if (messages == null) {
@@ -43,7 +47,8 @@ public class MessageSerializer implements JsonSerializer<Message> {
 			SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
 		}
 		// 如果不是在spring环境中，那么尝试使用code来输出
-		return messages == null ? new JsonPrimitive(src.getCodes()[0]) : new JsonPrimitive(messages.getMessage(src));
+		String msg = messages == null ? src.getCodes()[0] : escaper.escape(messages.getMessage(src));
+		return new JsonPrimitive(msg);
 	}
 
 }

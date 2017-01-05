@@ -17,6 +17,7 @@ package me.qyh.blog.entity;
 
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -37,23 +38,47 @@ public class DateDeserializer implements JsonDeserializer<Timestamp> {
 	/**
 	 * update to java8
 	 */
-	private static final DateTimeFormatter[] PARSERS = { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH"),
-			DateTimeFormatter.ofPattern("yyyy-MM-dd") };
+	private static final DateTimeFormatter[] DATE_TIME_PARSERS = { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH"), };
+
+	// 这里只能被LocalDate所解析
+	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
 	@Override
 	public Timestamp deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 			throws JsonParseException {
-		return parse(json.getAsString().trim());
+		return toTimestamp(json.getAsString().trim());
 	}
 
-	private Timestamp parse(String str) throws DateParseProcessingException {
-		for (DateTimeFormatter formatter : PARSERS) {
+	/**
+	 * 解析日期
+	 * 
+	 * @param str
+	 * @return 如果解析失败，返回null
+	 */
+	public static LocalDateTime parse(String str) {
+		if (str.indexOf(" ") == -1) {
+			// may be date
 			try {
-				return Timestamp.valueOf(LocalDateTime.parse(str, formatter));
+				return LocalDateTime.from(LocalDate.parse(str, DATE_FORMATTER).atStartOfDay());
+			} catch (DateTimeParseException e) {
+				return null;
+			}
+		}
+		for (DateTimeFormatter formatter : DATE_TIME_PARSERS) {
+			try {
+				return LocalDateTime.parse(str, formatter);
 			} catch (DateTimeParseException e) {
 				continue;
 			}
+		}
+		return null;
+	}
+
+	private Timestamp toTimestamp(String str) {
+		LocalDateTime localDateTime = parse(str);
+		if (localDateTime != null) {
+			return Timestamp.valueOf(localDateTime);
 		}
 		throw new DateParseProcessingException(str + "无法转化为符合格式的日期");
 	}

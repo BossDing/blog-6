@@ -12,7 +12,7 @@
 				<div class="media-body">
 					<h4 class="media-heading" th:text="${comment.nickname}"></h4>
 					<span th:utext="${#strings.length(comment.content) > 50  ? #strings.substring(comment.content,0,50)+'...' : comment.content}"></span>
-					<h5 th:text="${#dates.format(comment.commentDate, 'yyyy-MM-dd HH:mm:ss')}"></h5>
+					<h5 th:text="${messages.getMessage(timeDiffParser.parseDiff(comment.commentDate))}"></h5>
 				</div>
 			</div>
 		</div>

@@ -48,7 +48,7 @@ public class RenderSupport {
 
 	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(RenderSupport.class);
 
-	protected String render(String templateName, Map<String, Object> model, HttpServletRequest request,
+	protected final String render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
 		uiExposeHelper.addVariables(request);
