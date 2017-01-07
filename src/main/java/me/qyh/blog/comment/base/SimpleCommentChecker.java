@@ -10,7 +10,7 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
 
 public class SimpleCommentChecker<T extends BaseComment<T>> implements CommentChecker<T> {
@@ -28,7 +28,7 @@ public class SimpleCommentChecker<T extends BaseComment<T>> implements CommentCh
 	}
 
 	protected void checkCommentUser(T comment) throws LogicException {
-		if (UserContext.get() != null) {
+		if (Environment.isLogin()) {
 			return;
 		}
 		String email = comment.getEmail();

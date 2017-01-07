@@ -25,9 +25,9 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 public abstract class DataTagProcessor<T> {
 
@@ -143,11 +143,7 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	protected Space getSpace() {
-		Space current = SpaceContext.get();
-		if (current == null) {
-			return previewSpace;
-		}
-		return current;
+		return Environment.getSpace().orElse(previewSpace);
 	}
 
 	protected final class Attributes {

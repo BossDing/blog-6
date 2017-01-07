@@ -94,21 +94,21 @@ public class CORSFilter extends OncePerRequestFilter {
 	}
 
 	protected boolean isCorsRequest(HttpServletRequest request) {
-		return (request.getHeader("Origin") != null);
+		return request.getHeader("Origin") != null;
 	}
 
 	protected boolean isPreFlightRequest(HttpServletRequest request) {
-		return (isCorsRequest(request) && request.getMethod().equals(HttpMethod.OPTIONS.name())
-				&& request.getHeader("Access-Control-Request-Method") != null);
+		return isCorsRequest(request) && request.getMethod().equals(HttpMethod.OPTIONS.name())
+				&& request.getHeader("Access-Control-Request-Method") != null;
 	}
 
 	private UriComponents fromOriginalHeader(String origin) {
 		UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
 		if (StringUtils.hasText(origin)) {
 			int schemaIdx = origin.indexOf("://");
-			String schema = (schemaIdx != -1 ? origin.substring(0, schemaIdx) : "http");
+			String schema = schemaIdx != -1 ? origin.substring(0, schemaIdx) : "http";
 			builder.scheme(schema);
-			String hostString = (schemaIdx != -1 ? origin.substring(schemaIdx + 3) : origin);
+			String hostString = schemaIdx != -1 ? origin.substring(schemaIdx + 3) : origin;
 			if (hostString.contains(":")) {
 				String[] hostAndPort = StringUtils.split(hostString, ":");
 				builder.host(hostAndPort[0]);
@@ -195,7 +195,7 @@ public class CORSFilter extends OncePerRequestFilter {
 
 		builder.scheme(scheme);
 		builder.host(host);
-		if (scheme.equals("http") && port != 80 || scheme.equals("https") && port != 443) {
+		if ("http".equals(scheme) && port != 80 || "https".equals(scheme) && port != 443) {
 			builder.port(port);
 		}
 		return builder;

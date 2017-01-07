@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +45,9 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class CommentService extends CommentSupport<Comment, CommentDao> implements CommentServer {
@@ -80,10 +79,10 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (article == null || !article.isPublished()) {
 			return new CommentPageResult<>(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
-		if (article.isPrivate() && UserContext.get() == null) {
-			throw new AuthencationException();
+		if (article.isPrivate()) {
+			Environment.doAuthencation();
 		}
-		if (!article.getSpace().equals(SpaceContext.get())) {
+		if (!Environment.match(article.getSpace())) {
 			return new CommentPageResult<>(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
 		return super.queryComment(param, config);
@@ -99,14 +98,14 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	public Comment insertComment(Comment comment) throws LogicException {
 		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
 		// 博客不存在
-		if (article == null || !article.getSpace().equals(SpaceContext.get()) || !article.isPublished()) {
+		if (article == null || !Environment.match(article.getSpace()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
 		// 如果私人文章并且没有登录
-		if (article.isPrivate() && UserContext.get() == null) {
-			throw new AuthencationException();
+		if (article.isPrivate()) {
+			Environment.doAuthencation();
 		}
-		if (!article.getAllowComment() && UserContext.get() == null) {
+		if (!article.getAllowComment() && !Environment.isLogin()) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		super.insertComment(comment, config);
@@ -115,10 +114,12 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		return comment;
 	}
 
+	@Override
 	public void checkComment(Integer id) throws LogicException {
 		super.checkComment(id);
 	}
 
+	@Override
 	public void deleteComment(Integer id) throws LogicException {
 		super.deleteComment(id);
 	}
@@ -153,7 +154,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryAdmin) {
-		List<Comment> comments = commentDao.selectLastComments(space, limit, UserContext.get() != null, queryAdmin);
+		List<Comment> comments = commentDao.selectLastComments(space, limit, Environment.isLogin(), queryAdmin);
 		for (Comment comment : comments) {
 			completeComment(comment);
 		}
@@ -179,10 +180,10 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (!article.isPublished()) {
 			return Collections.emptyList();
 		}
-		if (article.isPrivate() && UserContext.get() == null) {
-			throw new AuthencationException();
+		if (article.isPrivate()) {
+			Environment.doAuthencation();
 		}
-		if (!article.getSpace().equals(SpaceContext.get())) {
+		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
 		Comment comment = commentDao.selectById(id);
@@ -233,8 +234,8 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 
 	@Override
 	@Transactional(readOnly = true)
-	public int queryArticleCommentCount(Integer id) {
-		return commentDao.selectArticleCommentCount(id);
+	public OptionalInt queryArticleCommentCount(Integer id) {
+		return OptionalInt.of(commentDao.selectArticleCommentCount(id));
 	}
 
 	@Override

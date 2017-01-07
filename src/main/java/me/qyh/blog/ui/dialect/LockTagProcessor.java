@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.ui.dialect;
 
+import java.util.Optional;
+
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -31,7 +33,7 @@ import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.lock.LockKeyContext;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.SimpleLockResource;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -63,14 +65,13 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 		checkLockManager(context);
 		try {
 			String lockId = tag.getAttributeValue(ID);
-			if (lockId != null && UserContext.get() == null) {
-				Lock lock = lockManager.findLock(lockId);
-				if (lock != null) {
+			if (lockId != null && !Environment.isLogin()) {
+				Optional<Lock> optionalLock = lockManager.findLock(lockId);
+				if (optionalLock.isPresent()) {
+					Lock lock = optionalLock.get();
 					String resourceId = context.getTemplateData().getTemplate();
-					LockKey key = LockKeyContext.getKey(resourceId);
-					if (key == null) {
-						throw new LockException(lock, new SimpleLockResource(resourceId, lockId), null);
-					}
+					LockKey key = LockKeyContext.getKey(resourceId).orElseThrow(
+							() -> new LockException(lock, new SimpleLockResource(resourceId, lockId), null));
 					try {
 						lock.tryOpen(key);
 					} catch (LogicException e) {

@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.Optional;
+
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
@@ -24,7 +26,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.message.Message;
+import me.qyh.blog.security.Environment;
 
 /**
  * 用户验证被保护的资源(拥有该annotation的方法必须返回lockResource对象！)<br/>
@@ -47,28 +50,46 @@ public class LockAspect {
 	/**
 	 * 尝试用LockKeyContext上下文中存在的钥匙开锁
 	 * 
-	 * @param lockResource
+	 * @param obj
 	 *            被锁的资源
 	 */
-	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "lockResource")
-	public void after(LockResource lockResource) {
+	@AfterReturning(value = "@within(LockProtected) || @annotation(LockProtected)", returning = "obj")
+	public void after(Object obj) {
+		Optional<LockResource> optionalLockResource = convert(obj);
+		if (!optionalLockResource.isPresent()) {
+			return;
+		}
+		LockResource lockResource = optionalLockResource.get();
 		// 需要验证密码
-		if (lockResource != null && lockResource.getLockId() != null && UserContext.get() == null) {
-			Lock lock = lockManager.findLock(lockResource.getLockId());
-			if (lock != null) {
-				LockKey key = LockKeyContext.getKey(lockResource.getResourceId());
-				if (key == null) {
-					throw new LockException(lock, lockResource, null);
-				}
-				try {
-					lock.tryOpen(key);
-				} catch (LogicException e) {
-					LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
-					throw new LockException(lock, lockResource, e.getLogicMessage());
-				} catch (Exception e) {
-					LOGGER.error(e.getMessage(), e);
-				}
+		if (lockResource.getLockId() != null && !Environment.isLogin()) {
+			Optional<Lock> optionalLock = lockManager.findLock(lockResource.getLockId());
+			if (!optionalLock.isPresent()) {
+				return;
+			}
+			Lock lock = optionalLock.get();
+			LockKey key = LockKeyContext.getKey(lockResource.getResourceId())
+					.orElseThrow(() -> new LockException(lock, lockResource, null));
+			try {
+				lock.tryOpen(key);
+			} catch (LogicException e) {
+				LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
+				throw new LockException(lock, lockResource, e.getLogicMessage());
+			} catch (Exception e) {
+				LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
+				throw new LockException(lock, lockResource, new Message("error.system", "系统异常"));
 			}
 		}
+	}
+
+	private Optional<LockResource> convert(Object obj) {
+		if (obj != null) {
+			if (obj instanceof Optional) {
+				Optional<?> optional = (Optional<?>) obj;
+				return optional.map(object -> (LockResource) object);
+			} else if (obj instanceof LockResource) {
+				return Optional.of((LockResource) obj);
+			}
+		}
+		return Optional.empty();
 	}
 }

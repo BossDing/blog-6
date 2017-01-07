@@ -162,7 +162,7 @@ public class SysPageMgrController extends BaseMgrController {
 			style = eles.first().data();
 		}
 		Elements imports = doc.select("link[href]");
-		Set<String> csses = imports.stream().map(ele -> ele.attr("href")).filter(link -> isCss(link))
+		Set<String> csses = imports.stream().map(ele -> ele.attr("href")).filter(SysPageMgrController::isCss)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		Map<String, Object> resultMap = Maps.newHashMap();
 		resultMap.put("csses", csses);
@@ -174,13 +174,13 @@ public class SysPageMgrController extends BaseMgrController {
 
 	private static boolean isCss(String link) {
 		String ext = Files.getFileExtension(link);
-		if (ext.equalsIgnoreCase("css")) {
+		if ("css".equalsIgnoreCase(ext)) {
 			return true;
 		} else {
 			int idx = ext.indexOf('?');
 			if (idx != -1) {
 				ext = ext.substring(0, idx);
-				if (ext.equalsIgnoreCase("css")) {
+				if ("css".equalsIgnoreCase(ext)) {
 					return true;
 				}
 			}

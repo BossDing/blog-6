@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
@@ -55,7 +55,7 @@ public class ArticleController {
 		articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
 		articleQueryParam.setSpace(null);
 		articleQueryParam.setIgnoreLevel(false);
-		articleQueryParam.setQueryPrivate(UserContext.get() != null);
+		articleQueryParam.setQueryPrivate(Environment.isLogin());
 
 		model.addAttribute(ArticleQueryParam.class.getName(), articleQueryParam);
 		return new SysPage(null, PageTarget.ARTICLE_LIST);

@@ -17,6 +17,7 @@ package me.qyh.blog.ui.dialect;
 
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -77,18 +78,19 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 				return;
 			}
 
-			DataBind<?> bind = null;
+			Optional<DataBind<?>> optional;
 			IWebContext webContext = (IWebContext) context;
 			if (DisposablePageContext.get() != null && DisposablePageContext.get().isPreview()) {
-				bind = uiService.queryPreviewData(dataTag);
+				optional = uiService.queryPreviewData(dataTag);
 			} else {
 				try {
-					bind = uiService.queryData(dataTag, buildContextVariables(webContext));
+					optional = uiService.queryData(dataTag, buildContextVariables(webContext));
 				} catch (LogicException e) {
 					throw new RuntimeLogicException(e);
 				}
 			}
-			if (bind != null) {
+			if (optional.isPresent()) {
+				DataBind<?> bind = optional.get();
 				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");

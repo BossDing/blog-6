@@ -16,7 +16,6 @@
 package me.qyh.blog.comment.article;
 
 import org.springframework.stereotype.Component;
-import org.springframework.validation.Errors;
 
 import me.qyh.blog.comment.base.BaseCommentValidator;
 
@@ -26,11 +25,6 @@ public class CommentValidator extends BaseCommentValidator {
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return Comment.class.isAssignableFrom(clazz);
-	}
-
-	@Override
-	public void validate(Object target, Errors errors) {
-		super.validate(target, errors);
 	}
 
 }

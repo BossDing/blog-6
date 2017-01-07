@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.Optional;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -100,11 +102,12 @@ public class UserPageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "update")
 	public String update(@RequestParam("id") Integer id, Model model, RedirectAttributes ra) {
-		UserPage page = uiService.queryUserPage(id);
-		if (page == null) {
+		Optional<UserPage> optional = uiService.queryUserPage(id);
+		if (!optional.isPresent()) {
 			ra.addFlashAttribute(ERROR, new Message("page.user.notExists", "自定义页面不存在"));
 			return "redirect:/mgr/page/user/index";
 		}
+		UserPage page = optional.get();
 		model.addAttribute("page", page);
 		SpaceQueryParam param = new SpaceQueryParam();
 		model.addAttribute("spaces", spaceService.querySpace(param));

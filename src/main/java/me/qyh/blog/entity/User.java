@@ -38,6 +38,17 @@ public class User implements Serializable {
 	 */
 	private String gravatar;
 
+	public User(User source) {
+		this.name = source.name;
+		this.password = source.password;
+		this.email = source.email;
+		this.gravatar = source.gravatar;
+	}
+
+	public User() {
+		super();
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -68,17 +79,6 @@ public class User implements Serializable {
 
 	public void setGravatar(String gravatar) {
 		this.gravatar = gravatar;
-	}
-
-	public User(User source) {
-		this.name = source.name;
-		this.password = source.password;
-		this.email = source.email;
-		this.gravatar = source.gravatar;
-	}
-
-	public User() {
-		super();
 	}
 
 }

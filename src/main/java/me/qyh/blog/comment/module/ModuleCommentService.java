@@ -94,6 +94,7 @@ public class ModuleCommentService extends CommentSupport<ModuleComment, ModuleCo
 	 *            评论id
 	 * @throws LogicException
 	 */
+	@Override
 	public void checkComment(Integer id) throws LogicException {
 		super.checkComment(id);
 	}
@@ -105,6 +106,7 @@ public class ModuleCommentService extends CommentSupport<ModuleComment, ModuleCo
 	 *            评论id
 	 * @throws LogicException
 	 */
+	@Override
 	public void deleteComment(Integer id) throws LogicException {
 		super.deleteComment(id);
 	}
@@ -209,10 +211,8 @@ public class ModuleCommentService extends CommentSupport<ModuleComment, ModuleCo
 		CommentConfig config = configMap.get(module);
 		if (config == null) {
 			synchronized (this) {
-				if (config == null) {
-					String prefix = module.getName() + ".";
-					config = loadCommentConfig(prefix);
-				}
+				String prefix = module.getName() + ".";
+				config = loadCommentConfig(prefix);
 			}
 		}
 		return config;

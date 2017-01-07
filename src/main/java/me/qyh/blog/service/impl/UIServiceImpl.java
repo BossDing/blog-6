@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,6 +65,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ContextVariables;
@@ -84,7 +86,6 @@ import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 public class UIServiceImpl implements UIService, InitializingBean {
 
@@ -163,8 +164,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 					try {
 						Page converted = TemplateUtils.convert(templateName);
 						Space space = converted.getSpace();
-						if (space != null && spaceCache.getSpace(space.getId()) == null) {
-							throw new LogicException(SPACE_NOT_EXISTS);
+						if (space != null) {
+							space = spaceCache.getSpace(space.getId())
+									.orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS));
 						}
 						switch (converted.getType()) {
 						case SYSTEM:
@@ -203,15 +205,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
-		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null) {
-			throw new LogicException(SPACE_NOT_EXISTS);
-		}
+		checkSpace(userFragment);
 		UserFragment db;
 		if (userFragment.isGlobal()) {
 			db = userFragmentDao.selectGlobalByName(userFragment.getName());
 		} else {
-			db = userFragmentDao.selectBySpaceAndName(space, userFragment.getName());
+			db = userFragmentDao.selectBySpaceAndName(userFragment.getSpace(), userFragment.getName());
 		}
 		boolean nameExists = db != null;
 		if (nameExists) {
@@ -239,10 +238,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
-		Space space = userFragment.getSpace();
-		if (space != null && spaceCache.getSpace(space.getId()) == null) {
-			throw new LogicException(SPACE_NOT_EXISTS);
-		}
+		checkSpace(userFragment);
 		UserFragment old = userFragmentDao.selectById(userFragment.getId());
 		if (old == null) {
 			throw new LogicException("fragment.user.notExists", "挂件不存在");
@@ -252,7 +248,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		if (userFragment.isGlobal()) {
 			db = userFragmentDao.selectGlobalByName(userFragment.getName());
 		} else {
-			db = userFragmentDao.selectBySpaceAndName(space, userFragment.getName());
+			db = userFragmentDao.selectBySpaceAndName(userFragment.getSpace(), userFragment.getName());
 		}
 		boolean nameExists = db != null && !db.getId().equals(userFragment.getId());
 		if (nameExists) {
@@ -275,14 +271,14 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserFragment queryUserFragment(Integer id) {
-		return userFragmentDao.selectById(id);
+	public Optional<UserFragment> queryUserFragment(Integer id) {
+		return Optional.ofNullable(userFragmentDao.selectById(id));
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserPage queryUserPage(Integer id) {
-		return userPageDao.selectById(id);
+	public Optional<UserPage> queryUserPage(Integer id) {
+		return Optional.ofNullable(userPageDao.selectById(id));
 	}
 
 	@Override
@@ -434,35 +430,33 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Override
 	@Transactional(readOnly = true)
-	public DataBind<?> queryData(DataTag dataTag, ContextVariables variables) throws LogicException {
-		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-		if (processor != null) {
-			return processor.getData(SpaceContext.get(), variables, dataTag.getAttrs());
+	public Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException {
+		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
+		if (processor.isPresent()) {
+			return Optional
+					.of(processor.get().getData(Environment.getSpace().orElse(null), variables, dataTag.getAttrs()));
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	@Override
-	public DataBind<?> queryPreviewData(DataTag dataTag) {
-		DataTagProcessor<?> processor = geTagProcessor(dataTag.getName());
-		if (processor != null) {
-			return processor.previewData(SpaceContext.get(), dataTag.getAttrs());
-		}
-		return null;
+	public Optional<DataBind<?>> queryPreviewData(DataTag dataTag) {
+		return getTagProcessor(dataTag.getName())
+				.map(processor -> processor.previewData(Environment.getSpace().orElse(null), dataTag.getAttrs()));
 	}
 
 	@Override
-	public Fragment queryFragment(String name) {
-		return queryFragment(SpaceContext.get(), name);
+	public Optional<Fragment> queryFragment(String name) {
+		return queryFragment(Environment.getSpace().orElse(null), name);
 	}
 
-	private Fragment queryFragment(Space space, String name) {
+	private Optional<Fragment> queryFragment(Space space, String name) {
 		try {
 			Fragment fragment = fragmentCache.getUnchecked(new FragmentKey(space, name));
-			return TemplateUtils.clone(fragment);
+			return Optional.of(TemplateUtils.clone(fragment));
 		} catch (UncheckedExecutionException e) {
 			if (e.getCause() instanceof LogicException) {
-				return null;
+				return Optional.empty();
 			}
 			throw new SystemException(e.getMessage(), e);
 		}
@@ -519,7 +513,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				return Lists.newArrayList();
 			}
 			// 空间不存在，直接退出
-			if (space != null && spaceCache.getSpace(space.getId()) == null) {
+			if (space != null && !spaceCache.getSpace(space.getId()).isPresent()) {
 				return Arrays.asList(new ImportRecord(false, SPACE_NOT_EXISTS));
 			}
 			if (importOption == null) {
@@ -622,11 +616,12 @@ public class UIServiceImpl implements UIService, InitializingBean {
 						continue;
 					}
 					// 查询当前的fragment
-					Fragment currentFragment = queryFragment(space, fragmentName);
-					if (currentFragment == null) {
+					Optional<Fragment> optional = queryFragment(space, fragmentName);
+					if (!optional.isPresent()) {
 						// 插入fragment
 						insertUserFragmentWhenImport(space, fragment, records);
 					} else {
+						Fragment currentFragment = optional.get();
 						if (currentFragment.getTpl().equals(fragment.getTpl())) {
 							records.add(new ImportRecord(true, new Message("import.tpl.nochange",
 									"模板" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
@@ -740,18 +735,22 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		this.sysPageDefaultTpls = sysPageDefaultTpls;
 	}
 
-	private DataTagProcessor<?> geTagProcessor(String name) {
-		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny().orElse(null);
+	private Optional<DataTagProcessor<?>> getTagProcessor(String name) {
+		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny();
 	}
 
 	private void checkSpace(Page page) throws LogicException {
 		Space space = page.getSpace();
 		if (space != null) {
-			space = spaceCache.getSpace(space.getId());
-			if (space == null) {
-				throw new LogicException(SPACE_NOT_EXISTS);
-			}
-			page.setSpace(space);
+			page.setSpace(spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS)));
+		}
+	}
+
+	private void checkSpace(UserFragment userFragment) throws LogicException {
+		Space space = userFragment.getSpace();
+		if (space != null) {
+			userFragment.setSpace(
+					spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS)));
 		}
 	}
 
@@ -908,10 +907,10 @@ public class UIServiceImpl implements UIService, InitializingBean {
 			if (fragmentMap.containsKey(name)) {
 				continue;
 			}
-			Fragment fragment = queryFragment(space, name);
-			fragmentMap.put(name, fragment);
-			if (fragment != null) {
-				fragmentMap2.put(name, fragment);
+			Optional<Fragment> optional = queryFragment(space, name);
+			fragmentMap.put(name, optional.orElse(null));
+			if (optional.isPresent()) {
+				fragmentMap2.put(name, optional.get());
 			}
 		}
 		for (Map.Entry<String, Fragment> fragmentIterator : fragmentMap2.entrySet()) {

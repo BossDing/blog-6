@@ -88,9 +88,10 @@ $(document).ready(
 		})
 	$("[data-action='edit']").click(function(){
 		$.get(basePath+"/mgr/fragment/user/get/"+$(this).attr("data-id"),{},function(data){
-			if(data == ""){
+			if(!data.success){
 				bootbox.alert("要更新的挂件不存在");
 			} else {
+				data = data.data;
 				$("#updateUserFragmentModal").modal("show");
 				var form = $("#updateUserFragmentModal").find('form');
 				form.find("input[name='name']").val(data.name);

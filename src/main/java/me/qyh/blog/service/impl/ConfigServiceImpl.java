@@ -63,11 +63,11 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	@Override
 	@CachePut(key = "'globalConfig'", value = "configCache")
 	public GlobalConfig updateGlobalConfig(GlobalConfig globalConfig) {
-		config.setProperty(PAGE_SIZE_FILE, globalConfig.getFilePageSize() + "");
-		config.setProperty(PAGE_SIZE_TAG, globalConfig.getTagPageSize() + "");
-		config.setProperty(PAGE_SIZE_ARICLE, globalConfig.getArticlePageSize() + "");
-		config.setProperty(PAGE_SIZE_USERFRAGEMENT, globalConfig.getUserFragmentPageSize() + "");
-		config.setProperty(PAGE_SIZE_USERPAGE, globalConfig.getUserPagePageSize() + "");
+		config.setProperty(PAGE_SIZE_FILE, Integer.toString(globalConfig.getFilePageSize()));
+		config.setProperty(PAGE_SIZE_TAG, Integer.toString(globalConfig.getTagPageSize()));
+		config.setProperty(PAGE_SIZE_ARICLE, Integer.toString(globalConfig.getArticlePageSize()));
+		config.setProperty(PAGE_SIZE_USERFRAGEMENT, Integer.toString(globalConfig.getUserFragmentPageSize()));
+		config.setProperty(PAGE_SIZE_USERPAGE, Integer.toString(globalConfig.getUserPagePageSize()));
 		store();
 		return globalConfig;
 	}
@@ -99,11 +99,11 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		return uploadConfig;
 	}
 
-	private Integer getInt(String key, Integer _default) {
+	private Integer getInt(String key, Integer defaultValue) {
 		if (config.containsKey(key)) {
 			return Integer.parseInt(config.getProperty(key));
 		}
-		return _default;
+		return defaultValue;
 	}
 
 	private void store() {

@@ -141,7 +141,7 @@ public abstract class ImageHelper {
 		 * @param extension
 		 *            实际后缀
 		 */
-		public ImageInfo(int width, int height, String extension) {
+		protected ImageInfo(int width, int height, String extension) {
 			super();
 			this.width = width;
 			this.height = height;

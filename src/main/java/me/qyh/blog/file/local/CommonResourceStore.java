@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.file.local;
 
-import java.io.File;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -41,9 +41,8 @@ public class CommonResourceStore extends AbstractLocalResourceRequestHandlerFile
 	}
 
 	@Override
-	protected Resource getResource(String path, HttpServletRequest request) {
-		File file = getFile(path);
-		return file == null ? null : new PathResource(file.toPath());
+	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
+		return getFile(path).map(file -> new PathResource(file.toPath()));
 	}
 
 }

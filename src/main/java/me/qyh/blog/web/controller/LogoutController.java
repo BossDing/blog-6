@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.security.RememberMe;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.security.csrf.CsrfTokenRepository;
 
 @Controller
@@ -56,7 +56,7 @@ public class LogoutController extends BaseController {
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			session.invalidate();
-			UserContext.set(null);
+			Environment.setUser(null);
 			rememberMe.remove(request, response);
 		}
 		csrfTokenRepository.saveToken(null, request, response);

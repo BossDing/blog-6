@@ -88,24 +88,26 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 
 				final IStandardExpression expression = expressionParser.parseExpression(context, attributeValue);
 
-				if (expression != null && expression instanceof FragmentExpression) {
-					// This is merely a FragmentExpression (not complex, not
-					// combined with anything), so we can apply a shortcut
-					// so that we don't require a "null" result for this
-					// expression if the template does not exist. That will
-					// save a call to resource.exists() which might be costly.
+				if (expression != null) {
+					if (expression instanceof FragmentExpression) {
+						// This is merely a FragmentExpression (not complex, not
+						// combined with anything), so we can apply a shortcut
+						// so that we don't require a "null" result for this
+						// expression if the template does not exist. That will
+						// save a call to resource.exists() which might be
+						// costly.
 
-					final FragmentExpression.ExecutedFragmentExpression executedFragmentExpression = FragmentExpression
-							.createExecutedFragmentExpression(context, (FragmentExpression) expression,
-									StandardExpressionExecutionContext.NORMAL);
+						final FragmentExpression.ExecutedFragmentExpression executedFragmentExpression = FragmentExpression
+								.createExecutedFragmentExpression(context, (FragmentExpression) expression,
+										StandardExpressionExecutionContext.NORMAL);
 
-					expressionResult = FragmentExpression.resolveExecutedFragmentExpression(context,
-							executedFragmentExpression, true);
-
+						expressionResult = FragmentExpression.resolveExecutedFragmentExpression(context,
+								executedFragmentExpression, true);
+					} else {
+						expressionResult = expression.execute(context);
+					}
 				} else {
-
-					expressionResult = expression.execute(context);
-
+					expressionResult = null;
 				}
 
 			} else {
@@ -133,7 +135,7 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 			if (newAttributeValue == null || newAttributeValue.length() == 0) {
 				return;
 			} else {
-				attMap.put(newAttributeName, newAttributeValue == null ? "" : newAttributeValue);
+				attMap.put(newAttributeName, newAttributeValue);
 			}
 
 		} catch (final TemplateProcessingException e) {

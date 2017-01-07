@@ -34,7 +34,7 @@ import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.web.interceptor.SpaceContext;
+import me.qyh.blog.security.Environment;
 
 public class RssView extends AbstractRssFeedView {
 
@@ -62,13 +62,13 @@ public class RssView extends AbstractRssFeedView {
 
 	@Override
 	protected void buildFeedMetadata(Map<String, Object> model, Channel feed, HttpServletRequest request) {
-		Space space = SpaceContext.get();
-		if (space == null) {
+		if (!Environment.hasSpace()) {
 			feed.setLink(urlHelper.getUrl());
 			String domain = urlHelper.getUrlConfig().getDomain();
 			feed.setDescription(domain);
 			feed.setTitle(domain);
 		} else {
+			Space space = Environment.getSpace().get();
 			feed.setTitle(space.getName());
 			feed.setDescription(space.getName());
 			feed.setLink(urlHelper.getUrls().getUrl(space));

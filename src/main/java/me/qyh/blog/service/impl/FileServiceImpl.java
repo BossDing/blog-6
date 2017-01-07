@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -122,10 +123,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (storeId == null) {
 			throw new LogicException("file.store.notexists", "文件存储器不存在");
 		}
-		FileStore store = fileManager.getFileStore(upload.getStore());
-		if (store == null) {
-			throw new LogicException("file.store.notexists", "文件存储器不存在");
-		}
+		FileStore store = fileManager.getFileStore(upload.getStore())
+				.orElseThrow(() -> new LogicException("file.store.notexists", "文件存储器不存在"));
 		List<UploadedFile> uploadedFiles = Lists.newArrayList();
 		for (MultipartFile file : upload.getFiles()) {
 			String originalFilename = file.getOriginalFilename();
@@ -153,7 +152,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throw new LogicException("file.path.exists", "文件已经存在");
 		}
 		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
-		CommonFile cf = null;
+		CommonFile cf;
 		synchronized (this) {
 			deleteImmediatelyIfNeed(key);
 			cf = store.store(key, file);
@@ -173,9 +172,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			blogFileDao.updateLftWhenAddChild(parent);
 			blogFileDao.updateRgtWhenAddChild(parent);
 			blogFileDao.insert(blogFile);
-			return new UploadedFile(originalFilename, cf.getSize(), store.getThumbnailUrl(key), store.getUrl(key));
+			return new UploadedFile(originalFilename, cf.getSize(), store.getThumbnailUrl(key).orElse(null),
+					store.getUrl(key));
 		} catch (RuntimeException | Error e) {
-			// delete file;
 			store.delete(key);
 			throw e;
 		}
@@ -219,12 +218,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private void deleteOne(FileDelete fd) throws LogicException {
 		String key = fd.getKey();
-		FileStore fs = fileManager.getFileStore(fd.getStore());
-		if (fs == null) {
+		Optional<FileStore> optionalFileStore = fileManager.getFileStore(fd.getStore());
+		if (!optionalFileStore.isPresent()) {
 			LOGGER.warn("无法找到id为" + fd.getStore() + "的存储器");
 			fileDeleteDao.deleteById(fd.getId());
 			return;
 		}
+		FileStore fs = optionalFileStore.get();
 		if (!fs.delete(key)) {
 			throw new LogicException("file.delete.fail", "文件删除失败，无法删除存储器" + fs.id() + "下" + key + "对应的文件", fs.id(),
 					key);
@@ -396,11 +396,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 		FileDelete fd = new FileDelete();
 		if (db.isFile()) {
-			FileStore store = fileManager.getFileStore(db.getCf().getStore());
-			if (store == null) {
-				return;
-			}
-			fd.setStore(store.id());
+			fileManager.getFileStore(db.getCf().getStore()).ifPresent(store -> fd.setStore(store.id()));
 		} else {
 			fileDeleteDao.deleteChildren(key);
 		}
@@ -431,7 +427,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			FileStore fs = getFileStore(cf);
 			ExpandedCommonFile pcf = new ExpandedCommonFile();
 			BeanUtils.copyProperties(cf, pcf);
-			pcf.setThumbnailUrl(fs.getThumbnailUrl(key));
+			pcf.setThumbnailUrl(fs.getThumbnailUrl(key).orElse(null));
 			pcf.setDownloadUrl(fs.getDownloadUrl(key));
 			pcf.setUrl(fs.getUrl(key));
 			bf.setCf(pcf);
@@ -439,16 +435,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	private FileStore getFileStore(CommonFile cf) {
-		FileStore fs = fileManager.getFileStore(cf.getStore());
-		if (fs == null) {
-			throw new SystemException("没有找到ID为:" + cf.getStore() + "的存储器");
-		}
-		return fs;
+		return fileManager.getFileStore(cf.getStore())
+				.orElseThrow(() -> new SystemException("没有找到ID为:" + cf.getStore() + "的存储器"));
 	}
 
 	private String getFilePath(BlogFile bf) {
 		List<BlogFile> files = blogFileDao.selectPath(bf);
-		return files.stream().map(file -> file.getPath()).filter(path -> !path.isEmpty())
+		return files.stream().map(BlogFile::getPath).filter(path -> !path.isEmpty())
 				.collect(Collectors.joining(SPLIT_CHAR));
 	}
 

@@ -57,7 +57,7 @@ public class DateDeserializer implements JsonDeserializer<Timestamp> {
 	 * @return 如果解析失败，返回null
 	 */
 	public static LocalDateTime parse(String str) {
-		if (str.indexOf(" ") == -1) {
+		if (str.indexOf(' ') == -1) {
 			// may be date
 			try {
 				return LocalDateTime.from(LocalDate.parse(str, DATE_FORMATTER).atStartOfDay());

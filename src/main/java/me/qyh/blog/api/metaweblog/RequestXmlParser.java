@@ -47,6 +47,10 @@ public class RequestXmlParser {
 	private static final String[] VALUES = new String[] { "i4", "int", "boolean", "string", "double",
 			"dateTime.iso8601", "base64", "struct", "array" };
 
+	private RequestXmlParser() {
+		super();
+	}
+
 	/**
 	 * 解析流获取方法和参数对象
 	 * 

@@ -125,6 +125,7 @@ public class MetaweblogController extends BaseController implements Initializing
 		try {
 			return RequestXmlParser.parse(request.getInputStream());
 		} catch (ParseException e) {
+			LOGGER.debug(e.getMessage(), e);
 			throw new FaultException(Constants.REQ_ERROR, BAD_REQUEST);
 		} catch (IOException e) {
 			LOGGER.debug(e.getMessage(), e);

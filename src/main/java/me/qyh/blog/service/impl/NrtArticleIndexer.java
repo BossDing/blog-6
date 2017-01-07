@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -458,36 +459,28 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * @param query
 	 */
 	protected void doHightlight(Article article, String content, Query query) {
-		String titleHL = getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE,
-				article.getTitle());
-		if (titleHL != null) {
-			article.setTitle(titleHL);
-		}
-		String summaryHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
+		getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE, article.getTitle())
+				.ifPresent(hl -> article.setTitle(hl));
+		Optional<String> summaryHl = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
 				clean(article.getSummary()));
-		if (summaryHL != null) {
-			article.setSummary(summaryHL);
+		if (summaryHl.isPresent()) {
+			article.setSummary(summaryHl.get());
 		} else {
-			String contentHL = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT,
-					clean(content));
-			if (contentHL != null) {
-				article.setSummary(contentHL);
-			}
+			getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT, clean(content))
+					.ifPresent(hl -> article.setSummary(hl));
 		}
 		if (!CollectionUtils.isEmpty(article.getTags())) {
 			for (Tag tag : article.getTags()) {
-				String tagHL = getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag.getName());
-				if (tagHL != null) {
-					tag.setName(tagHL);
-				}
+				getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag.getName())
+						.ifPresent(hl -> tag.setName(hl));
 			}
 		}
 
 	}
 
-	private String getHightlight(Highlighter highlighter, String fieldName, String text) {
+	private Optional<String> getHightlight(Highlighter highlighter, String fieldName, String text) {
 		try {
-			return highlighter.getBestFragment(analyzer, fieldName, text);
+			return Optional.ofNullable(highlighter.getBestFragment(analyzer, fieldName, text));
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
 		}

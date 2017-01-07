@@ -16,6 +16,7 @@
 package me.qyh.blog.file;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 文件服务管理器
@@ -37,8 +38,8 @@ public interface FileManager {
 	 * 
 	 * @param id
 	 *            服务id
-	 * @return 如果不存在，返回null
+	 * @return
 	 */
-	FileStore getFileStore(int id);
+	Optional<FileStore> getFileStore(int id);
 
 }

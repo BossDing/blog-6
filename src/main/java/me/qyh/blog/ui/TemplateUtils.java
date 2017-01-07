@@ -26,7 +26,7 @@ import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
-import me.qyh.blog.ui.page.UserPage;;
+import me.qyh.blog.ui.page.UserPage;
 
 public final class TemplateUtils {
 

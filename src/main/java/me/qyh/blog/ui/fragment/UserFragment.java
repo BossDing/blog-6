@@ -16,8 +16,10 @@
 package me.qyh.blog.ui.fragment;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.util.Validators;
 
 public class UserFragment extends Fragment {
 
@@ -87,6 +89,20 @@ public class UserFragment extends Fragment {
 
 	public void setGlobal(boolean global) {
 		this.global = global;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.getName());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (Validators.baseEquals(this, obj)) {
+			UserFragment other = (UserFragment) obj;
+			return Objects.equals(this.getName(), other.getName());
+		}
+		return false;
 	}
 
 }

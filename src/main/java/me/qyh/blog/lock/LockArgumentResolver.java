@@ -76,9 +76,6 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 		} catch (Exception e) {
 			throw new HttpMessageNotReadableException(e.getMessage(), e);
 		}
-		if (lock == null) {
-			throw new HttpMessageNotReadableException("无法从请求中解析锁");
-		}
 		// 做验证
 		WebDataBinder binder = binderFactory.createBinder(webRequest, lock, LOCK_NAME);
 		binder.setValidator(validator);

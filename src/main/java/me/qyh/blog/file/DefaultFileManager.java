@@ -18,6 +18,7 @@ package me.qyh.blog.file;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -37,8 +38,8 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 	private Map<Integer, FileStore> storeMap;
 
 	@Override
-	public FileStore getFileStore(int id) {
-		return storeMap.get(id);
+	public Optional<FileStore> getFileStore(int id) {
+		return Optional.ofNullable(storeMap.get(id));
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package me.qyh.blog.lock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
@@ -54,8 +55,8 @@ public class ExpandedLockProvider implements InitializingBean {
 	 *            锁id
 	 * @return 如果不存在返回null
 	 */
-	public Lock findLock(String id) {
-		return idsMap.get(id);
+	public Optional<Lock> findLock(String id) {
+		return Optional.ofNullable(idsMap.get(id));
 	}
 
 	@Override

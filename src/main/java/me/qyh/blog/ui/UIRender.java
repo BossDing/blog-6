@@ -23,9 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.ui.page.DisposiblePage;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 /**
  * 用于渲染一次性页面等
@@ -41,19 +41,18 @@ public class UIRender extends RenderSupport {
 	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response)
 			throws TplRenderException {
 		// set space
-		if (SpaceContext.get() == null && page.getSpace() != null) {
-			SpaceContext.set(spaceService.getSpace(page.getSpace().getId()));
+		if (!Environment.hasSpace() && page.getSpace() != null) {
+			Environment.setSpace(spaceService.getSpace(page.getSpace().getId())
+					.orElseThrow(() -> new SystemException("空间:" + page.getSpace() + "不存在")));
 		}
 		try {
 			DisposablePageContext.set(page);
 			return super.render(TemplateUtils.getTemplateName(page), Maps.newHashMap(), request, response);
+		} catch (TplRenderException e) {
+			throw e;
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
-			if (e instanceof TplRenderException) {
-				throw (TplRenderException) e;
-			}
-			if (e instanceof RuntimeException) {
-				throw (RuntimeException) e;
-			}
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			DisposablePageContext.clear();

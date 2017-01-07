@@ -27,10 +27,9 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.DefaultTimeDiffParser;
 import me.qyh.blog.util.TimeDiffParser;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 public class UIExposeHelper implements InitializingBean {
 
@@ -50,9 +49,9 @@ public class UIExposeHelper implements InitializingBean {
 			}
 		}
 		request.setAttribute("urls", urlHelper.getUrls(request));
-		request.setAttribute("user", UserContext.get());
+		request.setAttribute("user", Environment.getUser().orElse(null));
 		request.setAttribute("messages", messages);
-		request.setAttribute("space", SpaceContext.get());
+		request.setAttribute("space", Environment.getSpace().orElse(null));
 		request.setAttribute("timeDiffParser", timeDiffParser);
 	}
 

@@ -114,7 +114,8 @@ public class UserFragmentMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "get/{id}")
 	@ResponseBody
-	public UserFragment get(@PathVariable("id") Integer id) throws LogicException {
-		return uiService.queryUserFragment(id);
+	public JsonResult get(@PathVariable("id") Integer id) throws LogicException {
+		return uiService.queryUserFragment(id).map(fragment -> new JsonResult(true, fragment))
+				.orElse(new JsonResult(false));
 	}
 }

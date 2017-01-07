@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -76,8 +77,8 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 */
 	@Transactional(readOnly = true)
 	@Cacheable(value = "lockCache", key = "'lock-'+#id", unless = "#result == null")
-	public SysLock findLock(String id) {
-		return sysLockDao.selectById(id);
+	public Optional<SysLock> findLock(String id) {
+		return Optional.ofNullable(sysLockDao.selectById(id));
 	}
 
 	/**

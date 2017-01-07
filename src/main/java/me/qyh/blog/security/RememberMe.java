@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -66,7 +67,7 @@ public class RememberMe {
 				response);
 	}
 
-	public User login(HttpServletRequest request, HttpServletResponse response) {
+	public Optional<User> login(HttpServletRequest request, HttpServletResponse response) {
 		String rememberMeCookie = extractRememberMeCookie(request);
 		if (rememberMeCookie != null) {
 			try {
@@ -80,7 +81,7 @@ public class RememberMe {
 					}
 					long tokenExpiryTime;
 					try {
-						tokenExpiryTime = new Long(cookieTokens[1]).longValue();
+						tokenExpiryTime = Long.parseLong(cookieTokens[1]);
 					} catch (NumberFormatException nfe) {
 						throw new InvalidCookieException("token过期时间无法被解析:" + cookieTokens[1]);
 					}
@@ -90,7 +91,7 @@ public class RememberMe {
 								+ Instant.ofEpochMilli(tokenExpiryTime).atZone(ZoneId.systemDefault()) + "，当前时间为"
 								+ LocalDateTime.now());
 						remove(request, response);
-						return null;
+						return Optional.empty();
 					}
 					User user = UserConfig.get();
 					if (!user.getName().equals(cookieTokens[0])) {
@@ -100,14 +101,14 @@ public class RememberMe {
 					if (!equals(expectedTokenSignature, cookieTokens[2])) {
 						throw new InvalidCookieException("自动登录失败，密码被修改");
 					}
-					return user;
+					return Optional.of(user);
 				}
 			} catch (InvalidCookieException e) {
 				LOGGER.debug(e.getMessage(), e);
 				remove(request, response);
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	public void remove(HttpServletRequest request, HttpServletResponse response) {

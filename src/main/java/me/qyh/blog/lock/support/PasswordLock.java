@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.lock.support;
 
+import java.util.Objects;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.annotations.Expose;
@@ -61,11 +63,10 @@ public class PasswordLock extends SysLock {
 
 	@Override
 	public void tryOpen(LockKey key) throws LogicException {
-		if (key != null) {
-			Object keyData = key.getKey();
-			if (keyData != null && BCrypts.matches(keyData.toString(), password)) {
-				return;
-			}
+		Objects.requireNonNull(key);
+		Object keyData = key.getKey();
+		if (keyData != null && BCrypts.matches(keyData.toString(), password)) {
+			return;
 		}
 		throw new LogicException(new Message("lock.password.unlock.fail", "密码验证失败"));
 	}

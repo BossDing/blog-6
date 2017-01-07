@@ -16,7 +16,6 @@
 package me.qyh.blog.lock;
 
 import java.util.Map;
-import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -24,7 +23,7 @@ import javax.servlet.http.HttpSession;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.web.interceptor.SpaceContext;
+import me.qyh.blog.security.Environment;
 
 /**
  * 锁辅助类
@@ -56,8 +55,7 @@ public final class LockHelper {
 				throw new MissLockException();
 			}
 			String alias = lockBean.getSpaceAlias();
-			Space current = SpaceContext.get();
-			if (!Objects.equals(alias, current == null ? null : current.getAlias())) {
+			if (!Environment.match(new Space(alias))) {
 				throw new MissLockException();
 			}
 			return lockBean;

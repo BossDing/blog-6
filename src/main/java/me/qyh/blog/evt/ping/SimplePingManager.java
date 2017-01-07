@@ -73,7 +73,6 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 	private void ping(Article article) {
 		pingServices.stream().forEach(pingService -> CompletableFuture.supplyAsync(() -> {
 			try {
-				Thread.sleep(10000);
 				pingService.ping(article, blogName);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);

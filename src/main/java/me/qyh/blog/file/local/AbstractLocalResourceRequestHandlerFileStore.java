@@ -17,6 +17,7 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -144,8 +145,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public ThumbnailUrl getThumbnailUrl(String key) {
-		return null;
+	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
+		return Optional.empty();
 	}
 
 	@Override
@@ -153,17 +154,16 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		if (requestMatcher != null && !requestMatcher.match(request)) {
 			return null;
 		}
-		String path = getPathFromRequest(request);
-		return path == null ? null : getResource(path, request);
+		return getPathFromRequest(request).flatMap(path -> getResource(path, request)).orElse(null);
 	}
 
 	/**
-	 * 获取资源文件，如果不存在，直接返回null
+	 * 获取资源文件
 	 * 
 	 * @param path
 	 * @return
 	 */
-	protected abstract Resource getResource(String path, HttpServletRequest request);
+	protected abstract Optional<Resource> getResource(String path, HttpServletRequest request);
 
 	@Override
 	public final void afterPropertiesSet() throws Exception {
@@ -221,33 +221,23 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return originalName;
 	}
 
-	protected File getFile(String path) {
+	protected Optional<File> getFile(String path) {
 		File file = new File(absFolder, path);
-		if (!file.exists() || file.isDirectory()) {
-			return null;
-		}
-		return file;
+		return (!file.exists() || file.isDirectory()) ? Optional.empty() : Optional.of(file);
 	}
 
-	protected File findByKey(String key) {
+	protected Optional<File> findByKey(String key) {
 		File dest = new File(absFolder, key);
-		if (dest.exists()) {
-			return dest;
-		}
-		return null;
+		return dest.exists() ? Optional.of(dest) : Optional.empty();
 	}
 
-	protected String getPathFromRequest(HttpServletRequest request) {
+	protected Optional<String> getPathFromRequest(HttpServletRequest request) {
 		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 		if (path == null) {
 			throw new SystemException("Required request attribute '"
 					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
 		}
-
-		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
-			return null;
-		}
-		return path;
+		return (!StringUtils.hasText(path) || isInvalidPath(path)) ? Optional.empty() : Optional.of(path);
 	}
 
 	private final class DownloadHandler implements HttpRequestHandler {
@@ -259,16 +249,17 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
-			String path = getPathFromRequest(request);
-			if (path == null) {
+			Optional<String> path = getPathFromRequest(request);
+			if (!path.isPresent()) {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
-			File file = getFile(path);
-			if (file == null) {
+			Optional<File> optionalFile = getFile(path.get());
+			if (!optionalFile.isPresent()) {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
+			File file = optionalFile.get();
 			long length = file.length();
 			response.setContentLength((int) length);
 			response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);

@@ -18,6 +18,7 @@ package me.qyh.blog.lock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -53,9 +54,8 @@ public class LockManager implements InitializingBean {
 	 *            锁id
 	 * @return 如果不存在返回null
 	 */
-	public Lock findLock(String id) {
-		Lock lock = expandedLockProvider.findLock(id);
-		return lock == null ? sysLockProvider.findLock(id) : lock;
+	public Optional<Lock> findLock(String id) {
+		return Optional.ofNullable(expandedLockProvider.findLock(id).orElse(sysLockProvider.findLock(id).orElse(null)));
 	}
 
 	/**
@@ -67,10 +67,8 @@ public class LockManager implements InitializingBean {
 	 *             锁不可用(不存在)
 	 */
 	public void ensureLockvailable(String lockId) throws LogicException {
-		if (lockId != null) {
-			if (findLock(lockId) == null) {
-				throw new LogicException("lock.notexists", "锁不存在");
-			}
+		if (lockId != null && !findLock(lockId).isPresent()) {
+			throw new LogicException("lock.notexists", "锁不存在");
 		}
 	}
 

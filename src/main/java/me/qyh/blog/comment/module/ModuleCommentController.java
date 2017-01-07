@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.BaseController;
 
@@ -55,7 +55,7 @@ public class ModuleCommentController extends BaseController {
 	public JsonResult addComment(@RequestParam(value = "validateCode", required = false) String validateCode,
 			@RequestBody @Validated ModuleComment moduleComment, @PathVariable("name") String moduleName,
 			HttpServletRequest req) throws LogicException {
-		if (UserContext.get() == null) {
+		if (!Environment.isLogin()) {
 			HttpSession session = req.getSession(false);
 			if (!Webs.matchValidateCode(validateCode, session)) {
 				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));

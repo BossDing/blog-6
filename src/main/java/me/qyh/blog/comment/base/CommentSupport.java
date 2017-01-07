@@ -18,10 +18,9 @@ package me.qyh.blog.comment.base;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -31,8 +30,6 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import me.qyh.blog.comment.base.BaseComment.CommentStatus;
 import me.qyh.blog.config.Constants;
@@ -42,7 +39,7 @@ import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.util.Validators;
 
@@ -96,9 +93,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 
 	protected void sendEmail(T t) {
 		if (emailSupport != null) {
-			taskExecutor.execute(() -> {
-				emailSupport.handle(t);
-			});
+			taskExecutor.execute(() -> emailSupport.handle(t));
 		}
 	}
 
@@ -123,7 +118,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	}
 
 	protected CommentPageResult<T> queryComment(BaseCommentQueryParam param, CommentConfig config) {
-		int count = 0;
+		int count;
 		switch (config.getCommentMode()) {
 		case TREE:
 			count = commentDao.selectCountWithTree(param);
@@ -146,7 +141,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 			}
 		}
 		param.setAsc(asc);
-		List<T> datas = null;
+		List<T> datas;
 		switch (config.getCommentMode()) {
 		case TREE:
 			datas = commentDao.selectPageWithTree(param);
@@ -168,7 +163,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	protected void insertComment(T comment, CommentConfig config) throws LogicException {
 		long now = System.currentTimeMillis();
 		String ip = comment.getIp();
-		if (UserContext.get() == null) {
+		if (!Environment.isLogin()) {
 			// 检查频率
 			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
@@ -209,7 +204,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
 		}
 
-		if (UserContext.get() == null) {
+		if (!Environment.isLogin()) {
 			String email = comment.getEmail();
 			if (email != null) {
 				// set gravatar md5
@@ -228,7 +223,7 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
 
-		boolean check = config.getCheck() && (UserContext.get() == null);
+		boolean check = config.getCheck() && !Environment.isLogin();
 		comment.setStatus(check ? CommentStatus.CHECK : CommentStatus.NORMAL);
 
 		comment.setParent(parent);
@@ -255,63 +250,30 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 		comment.setContent(content);
 	}
 
+	private List<T> buildTree(List<T> comments) {
+		CollectFilteredFilter filter = new CollectFilteredFilter(null);
+		List<T> roots = Lists.newArrayList();
+		comments.stream().filter(filter).collect(Collectors.toList())
+				.forEach(comment -> roots.add(pickByParent(comment, filter.rests)));
+		return roots;
+	}
+
+	private T pickByParent(T parent, List<T> comments) {
+		Objects.requireNonNull(parent);
+		CollectFilteredFilter filter = new CollectFilteredFilter(parent);
+		List<T> children = comments.stream().filter(filter).collect(Collectors.toList());
+		children.forEach(child -> pickByParent(child, filter.rests));
+		parent.setChildren(children);
+		return parent;
+	}
+
 	private List<T> handlerTree(List<T> comments, CommentConfig config) {
 		if (comments.isEmpty()) {
 			return comments;
 		}
-		Map<T, List<T>> treeMap = Maps.newHashMap();
-		for (T comment : comments) {
-			if (comment.isRoot()) {
-				if (treeMap.containsKey(comment)) {
-					treeMap.put(comment, treeMap.get(comment));
-				} else {
-					treeMap.put(comment, Lists.newArrayList());
-				}
-			} else {
-				T parent = find(comment.getParents().get(0), comments);
-				parent.setId(comment.getParents().get(0));
-				if (treeMap.containsKey(parent)) {
-					treeMap.get(parent).add(comment);
-				} else {
-					List<T> _comments = Lists.newArrayList();
-					_comments.add(comment);
-					treeMap.put(parent, _comments);
-				}
-			}
-		}
-		SortedSet<T> keys = Sets.newTreeSet(config.getAsc() ? ascCommentComparator : descCommentComparator);
-		keys.addAll(treeMap.keySet());
-		List<T> sorted = Lists.newArrayList();
-		for (T root : keys) {
-			build(root, treeMap.get(root));
-			sorted.add(root);
-		}
-		treeMap.clear();
-		keys.clear();
-		return sorted;
-	}
-
-	private T find(Integer id, List<T> comments) {
-		return comments.stream().filter(comment -> comment.getId().equals(id)).findAny().orElse(null);
-	}
-
-	private void build(T root, List<T> comments) {
-		List<T> children = findChildren(root, comments);
-		comments.removeAll(children);
-		for (Iterator<T> it = children.iterator(); it.hasNext();) {
-			T child = it.next();
-			build(child, comments);
-		}
-		root.setChildren(children);
-	}
-
-	private List<T> findChildren(T root, List<T> comments) {
-		List<T> children = comments.stream().filter(comment -> root.equals(comment.getParent()))
-				.sorted(ascCommentComparator).collect(Collectors.toList());
-		for (T comment : children) {
-			comment.setParent(null);// 防止json死循环
-		}
-		return children;
+		List<T> tree = buildTree(comments);
+		tree.sort(config.getAsc() ? ascCommentComparator : descCommentComparator);
+		return tree;
 	}
 
 	protected void completeComment(T comment) {
@@ -345,4 +307,23 @@ public class CommentSupport<T extends BaseComment<T>, E extends BaseCommentDao<T
 	public void setCommentChecker(CommentChecker<T> commentChecker) {
 		this.commentChecker = commentChecker;
 	}
+
+	private final class CollectFilteredFilter implements Predicate<T> {
+		private final T parent;
+		private List<T> rests = Lists.newArrayList();
+
+		public CollectFilteredFilter(T parent) {
+			this.parent = parent;
+		}
+
+		@Override
+		public boolean test(T t) {
+			if (Objects.equals(parent, t.getParent())) {
+				return true;
+			}
+			rests.add(t);
+			return false;
+		}
+	}
+
 }

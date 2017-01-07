@@ -18,10 +18,10 @@ package me.qyh.blog.web.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 @RequestMapping(value = { "error", "space/{alias}/error" })
@@ -63,7 +63,7 @@ public class ErrorController {
 	}
 
 	private Page handlerError(int error) {
-		return new ErrorPage(SpaceContext.get(), ErrorCode.valueOf("ERROR_" + error));
+		return new ErrorPage(Environment.getSpace().orElse(null), ErrorCode.valueOf("ERROR_" + error));
 	}
 
 }

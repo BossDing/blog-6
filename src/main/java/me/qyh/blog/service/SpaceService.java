@@ -16,6 +16,7 @@
 package me.qyh.blog.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
@@ -55,7 +56,7 @@ public interface SpaceService {
 	 *            空间别名
 	 * @return 空间，如果不存在，返回null
 	 */
-	Space selectSpaceByAlias(String alias);
+	Optional<Space> selectSpaceByAlias(String alias);
 
 	/**
 	 * 查询空间，并且进行锁检查
@@ -63,7 +64,7 @@ public interface SpaceService {
 	 * @param alias
 	 * @return
 	 */
-	Space selectSpaceByAliasWithLockCheck(String alias);
+	Optional<Space> selectSpaceByAliasWithLockCheck(String alias);
 
 	/**
 	 * 查询空间
@@ -79,9 +80,9 @@ public interface SpaceService {
 	 * 
 	 * @param id
 	 *            空间id
-	 * @return 如果不存在，返回null
+	 * @return 
 	 * 
 	 */
-	Space getSpace(Integer id);
+	Optional<Space> getSpace(Integer id);
 
 }

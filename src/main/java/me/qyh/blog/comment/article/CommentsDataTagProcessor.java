@@ -30,7 +30,7 @@ import me.qyh.blog.comment.base.CommentPageResult;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
@@ -75,7 +75,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 
 	private CommentQueryParam parseParam(ContextVariables variables, Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
-		param.setStatus(UserContext.get() == null ? CommentStatus.NORMAL : null);
+		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
 		Article article = (Article) variables.getAttribute("article");
 		if (article == null) {
 			String articleStr = super.getVariables("article", variables, attributes);

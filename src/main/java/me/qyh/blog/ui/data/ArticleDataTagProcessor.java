@@ -95,11 +95,8 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 		if (idOrAlias == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		Article article = articleService.getArticleForView(idOrAlias);
-		if (article == null) {
-			throw new LogicException("article.notExists", "文章不存在");
-		}
-		return article;
+		return articleService.getArticleForView(idOrAlias)
+				.orElseThrow(() -> new LogicException("article.notExists", "文章不存在"));
 	}
 
 }

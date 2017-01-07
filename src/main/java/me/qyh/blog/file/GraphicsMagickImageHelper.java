@@ -30,6 +30,7 @@ import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
 import org.im4java.core.IdentifyCmd;
+import org.im4java.core.Operation;
 import org.im4java.process.ArrayListOutputConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,31 +92,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			op.interlace("Line");
 		}
 		op.addImage();
-		try {
-			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
-		} catch (IOException | InterruptedException e) {
-			throw new SystemException(e.getMessage(), e);
-		} catch (IM4JavaException e) {
-			throw new IOException(e.getMessage(), e);
-		}
-	}
 
-	protected void setResize(Resize resize, IMOperation op) {
-		if (resize.getSize() != null) {
-			op.resize(resize.getSize(), resize.getSize(), '>');
-		} else {
-			if (!resize.isKeepRatio()) {
-				op.resize(resize.getWidth(), resize.getHeight(), '!');
-			} else {
-				if (resize.getWidth() <= 0) {
-					op.resize(Integer.MAX_VALUE, resize.getHeight(), '>');
-				} else if (resize.getHeight() <= 0) {
-					op.resize(resize.getWidth(), Integer.MAX_VALUE, '>');
-				} else {
-					op.resize(resize.getWidth(), resize.getHeight(), '>');
-				}
-			}
-		}
+		run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
 	}
 
 	@Override
@@ -130,28 +108,26 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 		ArrayListOutputConsumer localArrayListOutputConsumer = new ArrayListOutputConsumer();
 		localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
-		try {
-			localIdentifyCmd.run(localIMOperation, file.getAbsolutePath() + "[0]");
-			List<String> atts = localArrayListOutputConsumer.getOutput();
-			Iterator<String> it = atts.iterator();
-			return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
-		} catch (Exception e) {
-			throw new IOException(e.getMessage(), e);
-		}
+
+		run(localIMOperation, file.getAbsolutePath() + "[0]");
+
+		List<String> atts = localArrayListOutputConsumer.getOutput();
+		Iterator<String> it = atts.iterator();
+		return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
 	}
 
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
 		String ext = Files.getFileExtension(dest.getName());
 		File _gif = FileUtils.temp(GIF);
+		IMOperation op = new IMOperation();
+		op.addImage();
+		op.strip();
+		op.p_profile("*");
+		op.addImage();
 		try {
-			IMOperation op = new IMOperation();
-			op.addImage();
-			op.strip();
-			op.p_profile("*");
-			op.addImage();
-			getConvertCmd().run(op, gif.getAbsolutePath() + "[0]", _gif.getAbsolutePath());
-		} catch (Exception e) {
+			run(op, gif.getAbsolutePath() + "[0]", _gif.getAbsolutePath());
+		} catch (IOException e) {
 			LOGGER.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
 			getGifCoverUseJava(gif, _gif);
 		}
@@ -161,20 +137,18 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			return;
 		}
 		// png to dest
-		IMOperation op = new IMOperation();
-		op.addImage();
+		IMOperation op2 = new IMOperation();
+		op2.addImage();
 		if (!maybeTransparentBg(ext)) {
-			setWhiteBg(op);
+			setWhiteBg(op2);
 		}
-		op.strip();
-		op.p_profile("*");
-		op.addImage();
+		op2.strip();
+		op2.p_profile("*");
+		op2.addImage();
 		try {
-			getConvertCmd().run(op, _gif.getAbsolutePath(), dest.getAbsolutePath());
-		} catch (Exception e1) {
-			throw new SystemException(e1.getMessage(), e1);
+			run(op2, _gif.getAbsolutePath(), dest.getAbsolutePath());
 		} finally {
-			if (_gif != null && _gif.exists()) {
+			if (_gif.exists()) {
 				FileUtils.deleteQuietly(_gif);
 			}
 		}
@@ -192,14 +166,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
-		try {
-			getConvertCmd().run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new SystemException(e.getMessage(), e);
-		} catch (IM4JavaException e) {
-			throw new IOException(e.getMessage(), e);
-		}
+		run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
 	}
 
 	@Override
@@ -255,4 +222,34 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	public void setMagickPath(String magickPath) {
 		this.magickPath = magickPath;
 	}
+
+	protected void setResize(Resize resize, IMOperation op) {
+		if (resize.getSize() != null) {
+			op.resize(resize.getSize(), resize.getSize(), '>');
+		} else {
+			if (!resize.isKeepRatio()) {
+				op.resize(resize.getWidth(), resize.getHeight(), '!');
+			} else {
+				if (resize.getWidth() <= 0) {
+					op.resize(Integer.MAX_VALUE, resize.getHeight(), '>');
+				} else if (resize.getHeight() <= 0) {
+					op.resize(resize.getWidth(), Integer.MAX_VALUE, '>');
+				} else {
+					op.resize(resize.getWidth(), resize.getHeight(), '>');
+				}
+			}
+		}
+	}
+
+	private void run(Operation operation, Object... args) throws IOException {
+		try {
+			getConvertCmd().run(operation, args);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new SystemException(e.getMessage(), e);
+		} catch (IM4JavaException e) {
+			throw new IOException(e);
+		}
+	}
+
 }

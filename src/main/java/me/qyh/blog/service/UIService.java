@@ -16,6 +16,7 @@
 package me.qyh.blog.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
@@ -86,7 +87,7 @@ public interface UIService {
 	 *            挂件ID
 	 * @return null如果不存在
 	 */
-	UserFragment queryUserFragment(Integer id);
+	Optional<UserFragment> queryUserFragment(Integer id);
 
 	/**
 	 * 根据ID查询用户页面
@@ -94,7 +95,7 @@ public interface UIService {
 	 * @param id
 	 * @return
 	 */
-	UserPage queryUserPage(Integer id);
+	Optional<UserPage> queryUserPage(Integer id);
 
 	/**
 	 * 分页查询用户自定义页面
@@ -161,7 +162,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	DataBind<?> queryData(DataTag dataTag, ContextVariables variables) throws LogicException;
+	Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException;
 
 	/**
 	 * 通过DATA_TAG标签查询预览数据
@@ -170,7 +171,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	DataBind<?> queryPreviewData(DataTag dataTag);
+	Optional<DataBind<?>> queryPreviewData(DataTag dataTag);
 
 	/**
 	 * 查询系统数据
@@ -192,7 +193,7 @@ public interface UIService {
 	 * @param name
 	 * @return
 	 */
-	Fragment queryFragment(String name);
+	Optional<Fragment> queryFragment(String name);
 
 	/**
 	 * 创建解锁页面模板
@@ -229,6 +230,7 @@ public interface UIService {
 	 *            空间
 	 * @return
 	 * @throws LogicException
+	 *             空间不存在
 	 */
 	List<ExportPage> exportPage(Space space) throws LogicException;
 
@@ -238,6 +240,7 @@ public interface UIService {
 	 * @param templateName
 	 * @return
 	 * @throws LogicException
+	 *             页面|空间不存在
 	 */
 	ExportPage exportPage(String templateName) throws LogicException;
 

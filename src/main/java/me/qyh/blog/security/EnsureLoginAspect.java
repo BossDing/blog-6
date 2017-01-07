@@ -28,9 +28,7 @@ public class EnsureLoginAspect {
 
 	@Before(value = "@within(EnsureLogin) || @annotation(EnsureLogin)")
 	public void before() {
-		if (UserContext.get() == null) {
-			throw new AuthencationException();
-		}
+		Environment.doAuthencation();
 	}
 
 }

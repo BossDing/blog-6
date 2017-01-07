@@ -17,6 +17,7 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
@@ -38,7 +39,7 @@ public interface CommentServer {
 	 * @param id
 	 * @return
 	 */
-	int queryArticleCommentCount(Integer id);
+	OptionalInt queryArticleCommentCount(Integer id);
 
 	/**
 	 * 查询总的文章评论数

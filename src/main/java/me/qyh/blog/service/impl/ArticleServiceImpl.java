@@ -22,7 +22,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +46,6 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFile;
@@ -70,13 +72,11 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware,
 		ApplicationListener<LockDeleteEvent> {
@@ -115,7 +115,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
 	@Override
-	public Article getArticleForView(String idOrAlias) {
+	public Optional<Article> getArticleForView(String idOrAlias) {
 		Article article = null;
 		try {
 			int id = Integer.parseInt(idOrAlias);
@@ -123,28 +123,23 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		} catch (NumberFormatException e) {
 			article = articleCache.getArticleWithLockCheck(idOrAlias);
 		}
-		if (article != null) {
-			if (article.isPublished()) {
-				if (article.isPrivate() && UserContext.get() == null) {
-					throw new AuthencationException();
-				}
-				// 如果文章不在目标空间下
-				if (!Objects.equals(SpaceContext.get(), article.getSpace())) {
-					return null;
-				}
-
-				Article clone = new Article(article);
-				clone.setComments(commentServer.queryArticleCommentCount(article.getId()));
-
-				if (!CollectionUtils.isEmpty(articleContentHandlers)) {
-					for (ArticleContentHandler handler : articleContentHandlers) {
-						handler.handle(clone);
-					}
-				}
-				return clone;
+		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
+			if (article.isPrivate()) {
+				Environment.doAuthencation();
 			}
+
+			Article clone = new Article(article);
+			clone.setComments(commentServer.queryArticleCommentCount(article.getId()).orElse(0));
+
+			if (!CollectionUtils.isEmpty(articleContentHandlers)) {
+				for (ArticleContentHandler handler : articleContentHandlers) {
+					handler.handle(clone);
+				}
+			}
+
+			return Optional.of(clone);
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	@Override
@@ -160,20 +155,20 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@ArticleIndexRebuild
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article hit(Integer id) {
+	public OptionalInt hit(Integer id) {
 		Article article = articleCache.getArticleWithLockCheck(id);
 		if (article != null) {
-			boolean hit = (UserContext.get() == null && article.isPublished()
-					&& article.getSpace().equals(SpaceContext.get()) && !article.getIsPrivate());
+			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
+					&& !article.getIsPrivate();
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				articleIndexer.getIndexer().addOrUpdateDocument(article);
 				article.addHits();
 				applicationEventPublisher.publishEvent(new ArticleEvent(this, new Article(article), EventType.HITS));
-				return article;
 			}
+			return OptionalInt.of(article.getHits());
 		}
-		return null;
+		return OptionalInt.empty();
 	}
 
 	@Override
@@ -186,7 +181,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (space == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		Article article = null;
+		Article article;
 		if (mba.hasId()) {
 			Article articleDb = articleDao.selectById(mba.getId());
 			if (articleDb != null) {
@@ -236,11 +231,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							article.getAlias());
 				}
 			}
-			
+
 			Timestamp pubDate = null;
 			switch (article.getStatus()) {
 			case DRAFT:
-				pubDate = articleDb.isSchedule() ? null : articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
+				pubDate = articleDb.isSchedule() ? null
+						: articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
 				break;
 			case PUBLISHED:
 				pubDate = articleDb.isSchedule() ? now : articleDb.getPubDate() != null ? articleDb.getPubDate() : now;
@@ -318,7 +314,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (!article.isDraft()) {
 			throw new LogicException("article.notDraft", "文章已经被删除");
 		}
-		article.setPubDate(Timestamp.valueOf(LocalDateTime.now()));
+		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+		article.setPubDate(article.isSchedule() ? now : article.getPubDate() != null ? article.getPubDate() : now);
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
 		if (article.isPublished()) {
@@ -356,9 +353,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+#space+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.security.UserContext).get() != null)")
+	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+#space+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
 	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode) {
-		List<ArticleDateFile> files = articleDao.selectDateFiles(space, mode, UserContext.get() != null);
+		List<ArticleDateFile> files = articleDao.selectDateFiles(space, mode, Environment.isLogin());
 		ArticleDateFiles _files = new ArticleDateFiles(files, mode);
 		_files.calDate();
 		return _files;
@@ -366,9 +363,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+(T(me.qyh.blog.security.UserContext).get() != null)")
+	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles() {
-		return articleDao.selectSpaceFiles(UserContext.get() != null);
+		return articleDao.selectSpaceFiles(Environment.isLogin());
 	}
 
 	@Override
@@ -379,15 +376,15 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (param.getSpace() == null) {
 			param.setPageSize(globalConfig.getArticlePageSize());
 		} else {
-			Space space = spaceCache.getSpace(param.getSpace().getId());
-			if (space == null) {
+			Optional<Space> space = spaceCache.getSpace(param.getSpace().getId());
+			if (!space.isPresent()) {
 				param.setPageSize(globalConfig.getArticlePageSize());
 				return new PageResult<>(param, 0, Collections.emptyList());
 			} else {
-				param.setPageSize(space.getArticlePageSize());
+				param.setPageSize(space.get().getArticlePageSize());
 			}
 		}
-		PageResult<Article> page = null;
+		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.getIndexer().query(param, (List<Integer> articleIds) -> {
 				return CollectionUtils.isEmpty(articleIds) ? Lists.newArrayList() : selectByIds(articleIds);
@@ -417,20 +414,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// mysql can use order by field
 		// but h2 can not
 		List<Article> articles = articleDao.selectByIds(ids);
-
-		List<Article> ordered = Lists.newArrayList();
-		Map<Integer, Article> maps = Maps.newHashMap();
-		for (Article art : articles) {
-			maps.put(art.getId(), art);
+		if (articles.isEmpty()) {
+			return Collections.emptyList();
 		}
-		for (Integer id : ids) {
-			Article art = maps.get(id);
-			if (art != null) {
-				ordered.add(art);
-			}
-		}
-		maps.clear();
-		return ordered;
+		Map<Integer, Article> map = articles.stream().collect(Collectors.toMap(Article::getId, article -> article));
+		return ids.stream().map(id -> map.get(id)).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@Override
@@ -509,27 +497,28 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleNav getArticleNav(Article article) {
-		boolean queryPrivate = UserContext.get() != null;
+	public Optional<ArticleNav> getArticleNav(Article article) {
+		Objects.requireNonNull(article);
+		if (!Environment.match(article.getSpace())) {
+			return Optional.empty();
+		}
+		boolean queryPrivate = Environment.isLogin();
 		Article previous = articleDao.getPreviousArticle(article, queryPrivate);
 		Article next = articleDao.getNextArticle(article, queryPrivate);
-		return (previous != null || next != null) ? new ArticleNav(previous, next) : null;
+		return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleNav getArticleNav(String idOrAlias) {
-		Article article = getArticleForView(idOrAlias);
-		if (article != null) {
-			return getArticleNav(article);
-		}
-		return null;
+	public Optional<ArticleNav> getArticleNav(String idOrAlias) {
+		Optional<Article> article = getArticleForView(idOrAlias);
+		return article.isPresent() ? getArticleNav(article.get()) : Optional.empty();
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public ArticleStatistics queryArticleStatistics(Space space) {
-		boolean queryPrivate = UserContext.get() != null;
+		boolean queryPrivate = Environment.isLogin();
 		ArticleStatistics statistics = articleDao.selectStatistics(space, queryPrivate);
 		statistics.setTotalSpaces(spaceCache.getSpaces(new SpacesCacheKey(queryPrivate)).size());
 		statistics.setTotalTags(articleTagDao.selectTagsCount(space, queryPrivate, queryPrivate));
@@ -553,14 +542,15 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
-		Article article = getArticleForView(idOrAlias);
-		return findSimilar(article, limit);
+		Optional<Article> article = getArticleForView(idOrAlias);
+		return article.isPresent() ? findSimilar(article.get(), limit) : Collections.emptyList();
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<Article> findSimilar(Article article, int limit) throws LogicException {
-		if (article == null) {
+		Objects.requireNonNull(article);
+		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
 		return articleIndexer.getIndexer().querySimilar(article, articleIds -> articleDao.selectByIds(articleIds),
@@ -653,9 +643,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	private void rebuildIndexbackground() {
-		threadPoolTaskExecutor.execute(() -> {
-			articleIndexer.rebuildIndex();
-		});
+		threadPoolTaskExecutor.execute(() -> articleIndexer.rebuildIndex());
 	}
 
 	@Override

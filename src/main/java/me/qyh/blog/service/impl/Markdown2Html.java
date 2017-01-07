@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.service.impl;
 
+@FunctionalInterface
 public interface Markdown2Html {
 
 	String toHtml(String markdown);

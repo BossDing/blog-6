@@ -64,7 +64,7 @@ public class RenderSupport {
 			 * 
 			 * @see DefaultTransactionAttribute
 			 */
-			if (e instanceof RuntimeException | e instanceof Error) {
+			if (e instanceof RuntimeException || e instanceof Error) {
 				markRollBack();
 			}
 			ParseContext.setStatus(ParseStatus.BREAK);

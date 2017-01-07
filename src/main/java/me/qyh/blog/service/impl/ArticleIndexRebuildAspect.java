@@ -66,12 +66,8 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	@Override
 	public void afterCompletion(int status) {
 		try {
-			if (status == STATUS_ROLLED_BACK) {
-				if (!noReload()) {
-					threadPoolTaskExecutor.execute(() -> {
-						articleIndexer.rebuildIndex();
-					});
-				}
+			if (status == STATUS_ROLLED_BACK && !noReload()) {
+				threadPoolTaskExecutor.execute(articleIndexer::rebuildIndex);
 			}
 		} finally {
 			throwableLocal.remove();

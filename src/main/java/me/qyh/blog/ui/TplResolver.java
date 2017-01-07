@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.IEngineConfiguration;
@@ -77,12 +78,12 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		}
 		if (TemplateUtils.isFragmentTemplate(template)) {
 			// 这里实际上是重复查询了，但这里必定会走缓存
-			Fragment fragment = uiService.queryFragment(TemplateUtils.getFragmentName(template));
-			if (fragment == null) {
-				template = EMPTY;
-			} else {
-				return new FragmentResource(fragment);
+			Optional<FragmentResource> optional = uiService.queryFragment(TemplateUtils.getFragmentName(template))
+					.map(fragment -> new FragmentResource(fragment));
+			if (optional.isPresent()) {
+				return optional.get();
 			}
+			template = EMPTY;
 		}
 		return super.computeTemplateResource(configuration, ownerTemplate, template, resourceName, characterEncoding,
 				templateResolutionAttributes);

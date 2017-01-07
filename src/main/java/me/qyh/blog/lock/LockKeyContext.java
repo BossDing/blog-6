@@ -16,6 +16,7 @@
 package me.qyh.blog.lock;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 钥匙上下文
@@ -38,9 +39,9 @@ public class LockKeyContext {
 	 *            资源id
 	 * @return 如果不存在返回null
 	 */
-	public static LockKey getKey(String id) {
+	public static Optional<LockKey> getKey(String id) {
 		Map<String, LockKey> keyMap = keysLocal.get();
-		return keyMap == null ? null : keyMap.get(id);
+		return keyMap == null ? Optional.empty() : Optional.ofNullable(keyMap.get(id));
 	}
 
 	/**

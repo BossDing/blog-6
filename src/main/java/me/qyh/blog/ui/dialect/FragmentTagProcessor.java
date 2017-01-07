@@ -16,6 +16,7 @@
 package me.qyh.blog.ui.dialect;
 
 import java.io.Writer;
+import java.util.Optional;
 
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.TemplateSpec;
@@ -74,8 +75,9 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 		IAttribute nameAtt = tag.getAttribute(NAME);
 		if (nameAtt != null) {
 			String name = nameAtt.getValue();
-			Fragment fragment = uiService.queryFragment(name);
-			if (fragment != null) {
+			Optional<Fragment> optional = uiService.queryFragment(name);
+			if (optional.isPresent()) {
+				Fragment fragment = optional.get();
 				String templateName = TemplateUtils.getTemplateName(fragment);
 				Writer writer = new FastStringWriter(200);
 				try {

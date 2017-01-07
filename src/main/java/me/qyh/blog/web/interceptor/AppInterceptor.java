@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,8 +47,8 @@ import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.lock.LockKeyContext;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.EnsureLogin;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.security.RememberMe;
-import me.qyh.blog.security.UserContext;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.blog.security.csrf.CsrfToken;
 import me.qyh.blog.security.csrf.CsrfTokenRepository;
@@ -91,27 +92,27 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				if (user == null) {
 					user = autoLogin(request, response);
 				}
-
+				
+				Environment.setUser(user);
 				enableLogin(handler, user);
-				UserContext.set(user);
 
 				setLockKeys(request);
 
 				if (spaceAlias != null) {
 					Space space = getSpace(request, spaceAlias);
 
-					if (space.getIsPrivate() && user == null) {
-						throw new AuthencationException();
+					if (space.getIsPrivate()) {
+						Environment.doAuthencation();
 					}
 
-					SpaceContext.set(space);
+					Environment.setSpace(space);
 				}
 
 				csrfCheck(request, response);
 
 			} catch (AuthencationException e) {
 				// 防止死循环
-				if (spaceAlias != null && SpaceContext.get() == null) {
+				if (spaceAlias != null && !Environment.hasSpace()) {
 					removeContext();
 					response.setStatus(403);
 					response.sendRedirect(urlHelper.getUrl() + "/login");
@@ -135,8 +136,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		// auth check
 		if (methodHandler instanceof HandlerMethod) {
 			EnsureLogin ensureLogin = getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class);
-			if (ensureLogin != null && user == null) {
-				throw new AuthencationException();
+			if (ensureLogin != null) {
+				Environment.doAuthencation();
 			}
 		}
 	}
@@ -150,13 +151,14 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	 */
 	private User autoLogin(HttpServletRequest request, HttpServletResponse response) {
 		// auto login
-		User user = rememberMe.login(request, response);
-		if (user != null) {
+		Optional<User> optionalUser = rememberMe.login(request, response);
+		if (optionalUser.isPresent()) {
 			LOGGER.debug("用户没有登录，自动登录成功");
+			User user = optionalUser.get();
 			user.setPassword(null);
 			request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
 		}
-		return user;
+		return null;
 	}
 
 	/**
@@ -207,19 +209,15 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	private void removeContext() {
-		UserContext.remove();
+		Environment.remove();
 		LockKeyContext.remove();
-		SpaceContext.remove();
 	}
 
 	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
 		boolean needLockProtected = !Webs.unlockRequest(request);
-		Space space = needLockProtected ? spaceService.selectSpaceByAliasWithLockCheck(spaceAlias)
-				: spaceService.selectSpaceByAlias(spaceAlias);
-		if (space == null) {
-			throw new SpaceNotFoundException(spaceAlias);
-		}
-		return space;
+		return (needLockProtected ? spaceService.selectSpaceByAliasWithLockCheck(spaceAlias)
+				: spaceService.selectSpaceByAlias(spaceAlias))
+						.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 	}
 
 	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {
@@ -277,14 +275,17 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			this.delegate = delegate;
 		}
 
+		@Override
 		public String getHeaderName() {
 			return delegate.getHeaderName();
 		}
 
+		@Override
 		public String getParameterName() {
 			return delegate.getParameterName();
 		}
 
+		@Override
 		public String getToken() {
 			saveTokenIfNecessary();
 			return delegate.getToken();

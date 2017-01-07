@@ -16,6 +16,7 @@
 package me.qyh.blog.web.controller;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,19 +38,18 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 public class IndexController {
@@ -61,7 +61,7 @@ public class IndexController {
 
 	@RequestMapping(value = { "/", "space/{alias}/", "", "space/{alias}" })
 	public Page index() throws LogicException {
-		return new SysPage(SpaceContext.get(), PageTarget.INDEX);
+		return new SysPage(Environment.getSpace().orElse(null), PageTarget.INDEX);
 	}
 
 	@RequestMapping(value = { "data/{tagName}",
@@ -92,8 +92,8 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		DataBind<?> result = uiService.queryData(tag, new ContextVariables());
-		return new JsonResult(true, result != null ? result : null);
+		return uiService.queryData(tag, new ContextVariables()).map(bind -> new JsonResult(true, bind))
+				.orElse(new JsonResult(false));
 	}
 
 	@RequestMapping(value = { "fragment/{fragment}", "space/{alias}/fragment/{fragment}" }, method = RequestMethod.GET)
@@ -101,10 +101,11 @@ public class IndexController {
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		Fragment fr = uiService.queryFragment(Webs.decode(fragment));
-		if (fr == null) {
+		Optional<Fragment> optional = uiService.queryFragment(Webs.decode(fragment));
+		if (!optional.isPresent()) {
 			return new JsonResult(true);
 		}
+		Fragment fr = optional.get();
 		DisposiblePage page = new DisposiblePage();
 		page.setTpl(buildTag("fragment", fr.getName(), allRequestParams));
 		Map<String, Fragment> frMap = Maps.newHashMap();

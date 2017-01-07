@@ -15,10 +15,13 @@
  */
 package me.qyh.blog.comment.article;
 
+import java.util.Objects;
+
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.comment.base.BaseComment;
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.util.Validators;
 
 /**
  * 
@@ -48,4 +51,17 @@ public class Comment extends BaseComment<Comment> {
 		return super.matchParent(parent) && (article.equals(parent.getArticle()));
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (Validators.baseEquals(this, obj)) {
+			Comment rhs = (Comment) obj;
+			return Objects.equals(this.id, rhs.id);
+		}
+		return false;
+	}
 }

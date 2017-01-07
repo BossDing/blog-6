@@ -62,8 +62,9 @@ public class DBConvert {
 		try (InputStream is = new ClassPathResource("me/qyh/blog/tool/blog.init.sql").getInputStream();
 				InputStreamReader reader = new InputStreamReader(is, Constants.CHARSET);
 				Connection conn = tds.getConnection()) {
-			RunScript.execute(conn, reader);
-			System.out.println("初始化" + to.name() + "完毕");
+			try (ResultSet rs = RunScript.execute(conn, reader)) {
+				System.out.println("初始化" + to.name() + "完毕");
+			}
 		}
 	}
 
@@ -138,14 +139,15 @@ public class DBConvert {
 				ResultSetMetaData rsmd = rs.getMetaData();
 				String insertSql = buildInsertSql(rsmd);
 				try (Connection h2Conn = tds.getConnection()) {
-					PreparedStatement h2Ps = h2Conn.prepareStatement(insertSql);
-					while (rs.next()) {
-						for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-							h2Ps.setObject(i, rs.getObject(i), rsmd.getColumnType(i));
+					try (PreparedStatement h2Ps = h2Conn.prepareStatement(insertSql)) {
+						while (rs.next()) {
+							for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+								h2Ps.setObject(i, rs.getObject(i), rsmd.getColumnType(i));
+							}
+							h2Ps.addBatch();
 						}
-						h2Ps.addBatch();
+						h2Ps.executeBatch();
 					}
-					h2Ps.executeBatch();
 				}
 			}
 		}

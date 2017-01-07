@@ -18,6 +18,7 @@ package me.qyh.blog.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -116,18 +117,18 @@ public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockD
 	}
 
 	@Override
-	public Space selectSpaceByAlias(String alias) {
+	public Optional<Space> selectSpaceByAlias(String alias) {
 		return spaceCache.getSpace(alias);
 	}
 
 	@Override
 	@LockProtected
-	public Space selectSpaceByAliasWithLockCheck(String alias) {
+	public Optional<Space> selectSpaceByAliasWithLockCheck(String alias) {
 		return spaceCache.getSpace(alias);
 	}
 
 	@Override
-	public Space getSpace(Integer id) {
+	public Optional<Space> getSpace(Integer id) {
 		return spaceCache.getSpace(id);
 	}
 

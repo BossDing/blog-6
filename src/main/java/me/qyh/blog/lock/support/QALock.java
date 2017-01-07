@@ -16,11 +16,11 @@
 package me.qyh.blog.lock.support;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
 
@@ -60,22 +60,19 @@ public class QALock extends SysLock {
 
 	@Override
 	public void tryOpen(LockKey key) throws LogicException {
-		if (key != null) {
-			Object data = key.getKey();
-			if (data != null) {
-				String answer = data.toString();
-				if (isCorrectAnswer(answer)) {
-					return;
-				}
+		Objects.requireNonNull(key);
+		Object data = key.getKey();
+		if (data != null) {
+			String answer = data.toString();
+			if (isCorrectAnswer(answer)) {
+				return;
 			}
 		}
 		throw new LogicException(new Message("lock.qa.unlock.fail", "答案错误"));
 	}
 
 	private boolean isCorrectAnswer(String answer) {
-		if (answers == null) {
-			throw new SystemException("问答锁答案不能为空");
-		}
+		Objects.requireNonNull(answers);
 		return Arrays.stream(answers.split(",")).anyMatch(corretAnswer -> corretAnswer.equals(answer));
 	}
 

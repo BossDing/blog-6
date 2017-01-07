@@ -36,9 +36,9 @@ import me.qyh.blog.lock.LockBean;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.interceptor.SpaceContext;
 
 @Controller
 public class LockController extends BaseController {
@@ -50,7 +50,7 @@ public class LockController extends BaseController {
 	public LockPage unlock(Model model, HttpServletRequest request) throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
-		return new LockPage(SpaceContext.get(), lockBean.getLock().getLockType());
+		return new LockPage(Environment.getSpace().orElse(null), lockBean.getLock().getLockType());
 	}
 
 	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)

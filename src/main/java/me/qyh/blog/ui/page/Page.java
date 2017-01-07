@@ -18,7 +18,7 @@ package me.qyh.blog.ui.page;
 import me.qyh.blog.entity.BaseEntity;
 import me.qyh.blog.entity.Space;
 
-public class Page extends BaseEntity implements Cloneable {
+public class Page extends BaseEntity {
 
 	/**
 	 * 

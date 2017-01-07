@@ -22,8 +22,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.catalina.connector.ClientAbortException;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
@@ -288,9 +286,7 @@ public class GlobalControllerExceptionHandler {
 
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
-		if (ExceptionUtils.indexOfThrowable(e, ClientAbortException.class) == -1) {
-			LOGGER.error(e.getMessage(), e);
-		}
+		LOGGER.error(e.getMessage(), e);
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
 			return null;

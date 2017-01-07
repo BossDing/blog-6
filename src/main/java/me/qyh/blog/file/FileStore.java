@@ -16,6 +16,7 @@
 package me.qyh.blog.file;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -91,7 +92,7 @@ public interface FileStore {
 	 *            文件路径
 	 * @return
 	 */
-	ThumbnailUrl getThumbnailUrl(String key);
+	Optional<ThumbnailUrl> getThumbnailUrl(String key);
 
 	/**
 	 * 是否能够存储该文件

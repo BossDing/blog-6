@@ -51,7 +51,7 @@ import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.BCrypts;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.service.SpaceService;
@@ -87,7 +87,7 @@ public class MetaweblogHandler {
 		} catch (LogicException e) {
 			throw new FaultException(Constants.LOGIC_ERROR, e.getLogicMessage());
 		} finally {
-			UserContext.remove();
+			Environment.remove();
 		}
 	}
 
@@ -96,7 +96,7 @@ public class MetaweblogHandler {
 		if (user.getName().equals(username)) {
 			String encrptPwd = user.getPassword();
 			if (BCrypts.matches(password, encrptPwd)) {
-				UserContext.set(user);
+				Environment.setUser(user);
 				return;
 			}
 		}

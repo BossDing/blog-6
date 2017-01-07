@@ -18,6 +18,7 @@ package me.qyh.blog.file.oss;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -152,24 +153,24 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	}
 
 	@Override
-	public ThumbnailUrl getThumbnailUrl(String key) {
+	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
+		ThumbnailUrl thumbnailUrl = null;
 		if (image(key)) {
 			String small = buildResizeUrl(smallResize, key);
 			String middle = buildResizeUrl(middleResize, key);
 			String large = buildResizeUrl(largeResize, key);
 			if (secret) {
-				return new ThumbnailUrl(auth.privateDownloadUrl(small), auth.privateDownloadUrl(middle),
+				thumbnailUrl = new ThumbnailUrl(auth.privateDownloadUrl(small), auth.privateDownloadUrl(middle),
 						auth.privateDownloadUrl(large));
 			} else if (sourceProtected) {
 				// 只能采用样式访问
 				String url = urlPrefix + key + styleSplitChar + style;
-				return new ThumbnailUrl(url, url, url);
+				thumbnailUrl = new ThumbnailUrl(url, url, url);
 			} else {
-				return new ThumbnailUrl(small, middle, large);
+				thumbnailUrl = new ThumbnailUrl(small, middle, large);
 			}
-		} else {
-			return null;
 		}
+		return Optional.ofNullable(thumbnailUrl);
 	}
 
 	@Override
@@ -268,29 +269,26 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	 * 
 	 * @return
 	 */
-	protected String buildResizeParam(Resize resize) {
-		if (resize == null) {
-			return null;
-		} else {
+	protected Optional<String> buildResizeParam(Resize resize) {
+		String result = null;
+		if (resize != null) {
 			if (resize.getSize() != null) {
-				return "imageView2/2/w/" + resize.getSize() + "/h/" + resize.getSize();
+				result = "imageView2/2/w/" + resize.getSize() + "/h/" + resize.getSize();
+			} else if (resize.getWidth() == 0 && resize.getHeight() == 0) {
+				result = null;
+			} else if (resize.getWidth() == 0) {
+				result = "imageView2/2/h/" + resize.getHeight();
+			} else if (resize.getHeight() == 0) {
+				result = "imageView2/2/w/" + resize.getWidth();
+			} else {
+				result = "imageView2/2/w/" + resize.getWidth() + "/h/" + resize.getHeight();
 			}
-			if (resize.getWidth() == 0 && resize.getHeight() == 0) {
-				return null;
-			}
-			if (resize.getWidth() == 0) {
-				return "imageView2/2/h/" + resize.getHeight();
-			}
-			if (resize.getHeight() == 0) {
-				return "imageView2/2/w/" + resize.getWidth();
-			}
-			return "imageView2/2/w/" + resize.getWidth() + "/h/" + resize.getHeight();
 		}
+		return Optional.ofNullable(result);
 	}
 
 	private String buildResizeUrl(Resize resize, String key) {
-		String param = buildResizeParam(resize);
-		return urlPrefix + key + (param == null ? "" : "?" + param);
+		return urlPrefix + key + buildResizeParam(resize).map(param -> "?" + param).orElse("");
 	}
 
 	// 简单上传，使用默认策略，只需要设置上传的空间名就可以了

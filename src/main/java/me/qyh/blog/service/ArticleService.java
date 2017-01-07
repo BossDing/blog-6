@@ -16,6 +16,8 @@
 package me.qyh.blog.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFiles;
@@ -45,9 +47,9 @@ public interface ArticleService {
 	 *            id或者文章别名
 	 * @throws AuthencationException
 	 *             如果访问了私人博客但是没有登录
-	 * @return 不存在|不可被访问 null
+	 * @return
 	 */
-	Article getArticleForView(String idOrAlias);
+	Optional<Article> getArticleForView(String idOrAlias);
 
 	/**
 	 * 获取一篇可以被编辑的文章
@@ -55,6 +57,7 @@ public interface ArticleService {
 	 * @param id
 	 *            文章id
 	 * @throws LogicException
+	 *             如果文章不存在
 	 * @return 文章
 	 */
 	Article getArticleForEdit(Integer id) throws LogicException;
@@ -138,9 +141,9 @@ public interface ArticleService {
 	 * 
 	 * @param id
 	 *            文章id
-	 * @return 被点击的文章
+	 * @return 当前点击数
 	 */
-	Article hit(Integer id);
+	OptionalInt hit(Integer id);
 
 	/**
 	 * 发布草稿
@@ -158,7 +161,7 @@ public interface ArticleService {
 	 *            当前文章
 	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
 	 */
-	ArticleNav getArticleNav(Article article);
+	Optional<ArticleNav> getArticleNav(Article article);
 
 	/**
 	 * 上一篇，下一篇文章
@@ -167,7 +170,7 @@ public interface ArticleService {
 	 *            文章的id或者别名
 	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
 	 */
-	ArticleNav getArticleNav(String idOrAlias);
+	Optional<ArticleNav> getArticleNav(String idOrAlias);
 
 	/**
 	 * 查询博客统计 <br>

@@ -68,7 +68,7 @@ public class TplMgrController extends BaseMgrController {
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
 		try {
 			List<ExportPage> pages = uiService.exportPage(spaceId == null ? null : new Space(spaceId));
-			return download(pages, spaceId == null ? null : spaceService.getSpace(spaceId));
+			return download(pages, spaceId == null ? null : spaceService.getSpace(spaceId).get());
 		} catch (LogicException e) {
 			ra.addFlashAttribute(ERROR, e.getLogicMessage());
 			return "redirect:/mgr/tpl/export";

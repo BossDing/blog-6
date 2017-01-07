@@ -50,7 +50,11 @@ public class TplRenderErrorDescription implements Serializable {
 		this.expression = expression;
 	}
 
-	public static class TemplateErrorInfo {
+	public static class TemplateErrorInfo implements Serializable {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		private final String templateName;
 		private final Integer line;
 		private final Integer col;

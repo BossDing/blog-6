@@ -26,7 +26,7 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
 
@@ -62,7 +62,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	@Override
 	protected List<TagCount> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		boolean queryPrivate = UserContext.get() != null;
+		boolean queryPrivate = Environment.isLogin();
 		if (queryPrivate) {
 			String queryPrivateStr = super.getVariables("queryPrivate", variables, attributes);
 			if (queryPrivateStr != null) {

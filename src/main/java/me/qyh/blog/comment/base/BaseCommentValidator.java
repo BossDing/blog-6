@@ -19,7 +19,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserValidator;
 
@@ -53,7 +53,7 @@ public class BaseCommentValidator implements Validator {
 					"回复的内容不能超过" + MAX_COMMENT_LENGTH + "个字符");
 			return;
 		}
-		if (UserContext.get() == null) {
+		if (!Environment.isLogin()) {
 			String email = comment.getEmail();
 			if (email != null) {
 				email = email.trim();

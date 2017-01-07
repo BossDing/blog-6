@@ -37,7 +37,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
@@ -102,7 +102,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			param = parseParam(space, variables, attributes);
 		}
 		param.setStatus(ArticleStatus.PUBLISHED);
-		param.setQueryPrivate(UserContext.get() != null);
+		param.setQueryPrivate(Environment.isLogin());
 		return articleService.queryArticle(param);
 	}
 
@@ -161,7 +161,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		if (UserContext.get() != null) {
+		if (Environment.isLogin()) {
 			String ignoreLevelStr = super.getVariables("ignoreLevel", variables, attributes);
 			if (ignoreLevelStr != null) {
 				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));

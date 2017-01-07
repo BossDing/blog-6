@@ -53,11 +53,11 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 		if (article == null) {
 			String idOrAlias = super.getVariables(ID_OR_ALIAS, variables, attributes);
 			if (idOrAlias != null) {
-				return articleService.getArticleNav(idOrAlias);
+				return articleService.getArticleNav(idOrAlias).orElse(null);
 			}
 		}
-		if (article != null && space.getAlias().equals(article.getSpace().getAlias())) {
-			return articleService.getArticleNav(article);
+		if (article != null && space != null && space.getAlias().equals(article.getSpace().getAlias())) {
+			return articleService.getArticleNav(article).orElse(null);
 		}
 		return null;
 	}

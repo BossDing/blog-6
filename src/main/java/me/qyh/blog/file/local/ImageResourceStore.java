@@ -17,6 +17,7 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -159,18 +160,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	@Override
-	protected Resource getResource(String path, HttpServletRequest request) {
+	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
 		// 从链接中获取缩放信息
-		Resize resize = getResizeFromPath(path);
-		if (sourceProtected && resize == null) {
+		Optional<Resize> optionalResize = getResizeFromPath(path);
+		if (sourceProtected && !optionalResize.isPresent()) {
 			String ext = Files.getFileExtension(path);
 			// 如果是GIF图片,直接输出原图
 			if (!ImageHelper.isGIF(ext)) {
-				return null;
+				return Optional.empty();
 			}
 		}
 		boolean detectSupportWebp = supportWebp(request);
-		if (resize != null) {
+		if (optionalResize.isPresent()) {
+			Resize resize = optionalResize.get();
 			String ext = Files.getFileExtension(getSourcePathByResizePath(path));
 			String thumbPath = path + (detectSupportWebp ? WEBP_EXT
 					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
@@ -179,38 +181,35 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			if (!file.exists()) {
 				String sourcePath = getSourcePathByResizePath(path);
 				// 缩略图不存在，寻找原图
-				File local = super.findByKey(sourcePath);
-				if (local == null) {
+				Optional<File> optionalFile = super.findByKey(sourcePath);
+				if (!optionalFile.isPresent()) {
 					// 返回null
-					return null;
+					return Optional.empty();
 				}
+				File local = optionalFile.get();
 				// 如果原图存在，进行缩放
 				if (errorThumbPaths.contains(thumbPath)) {
-					return detectSupportWebp ? null : new PathResource(local.toPath());
+					return detectSupportWebp ? Optional.empty() : Optional.of(new PathResource(local.toPath()));
 				}
 				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))) {
 					File check = findThumbByPath(thumbPath);
 					if (check.exists()) {
-						return new PathResource(check.toPath());
+						return Optional.of(new PathResource(check.toPath()));
 					}
 					try {
-						return new PathResource(doResize(local, resize, check, sourcePath).toPath());
+						return Optional.of(new PathResource(doResize(local, resize, check, sourcePath).toPath()));
 					} catch (IOException e) {
 						IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
 						errorThumbPaths.add(thumbPath);
-						return detectSupportWebp ? null : new PathResource(local.toPath());
+						return detectSupportWebp ? Optional.empty() : Optional.of(new PathResource(local.toPath()));
 					}
 				}
 			} else {
-				return new PathResource(file.toPath());
+				return Optional.of(new PathResource(file.toPath()));
 			}
 		}
 		// 寻找源文件
-		File local = super.findByKey(path);
-		if (local != null) {
-			return new PathResource(local.toPath());
-		}
-		return null;
+		return findByKey(path).map(file -> new PathResource(file.toPath()));
 	}
 
 	@Override
@@ -249,9 +248,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	@Override
-	public ThumbnailUrl getThumbnailUrl(String key) {
-		return new ThumbnailUrl(buildResizePath(smallResize, key), buildResizePath(middleResize, key),
-				buildResizePath(largeResize, key));
+	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
+		return Optional.of(new ThumbnailUrl(buildResizePath(smallResize, key), buildResizePath(middleResize, key),
+				buildResizePath(largeResize, key)));
 	}
 
 	private String buildResizePath(Resize resize, String key) {
@@ -274,7 +273,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		FileUtils.forceMkdir(thumbAbsFolder);
 
 		if (resizeValidator == null) {
-			resizeValidator = (resize) -> true;
+			resizeValidator = resize -> true;
 		}
 
 		validateResize(smallResize);
@@ -345,10 +344,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return StringUtils.cleanPath(path + sb.toString());
 	}
 
-	protected Resize getResizeFromPath(String path) {
+	protected Optional<Resize> getResizeFromPath(String path) {
 		String extension = Files.getFileExtension(path);
-		if (extension != null && !extension.isEmpty()) {
-			return null;
+		if (!extension.isEmpty()) {
+			return Optional.empty();
 		}
 		Resize resize = null;
 		String baseName = Files.getNameWithoutExtension(path);
@@ -374,7 +373,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				} else {
 					String[] splits = baseName.split(Character.toString(CONCAT_CHAR));
 					if (splits.length != 2) {
-						return null;
+						return Optional.empty();
 					} else {
 						Integer w = Integer.valueOf(splits[0]);
 						Integer h = Integer.valueOf(splits[1]);
@@ -385,9 +384,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				resize = new Resize(Integer.valueOf(baseName));
 			}
 		} catch (NumberFormatException e) {
-			return null;
+			return Optional.empty();
 		}
-		return resizeValidator.valid(resize) ? resize : null;
+		return resizeValidator.valid(resize) ? Optional.of(resize) : Optional.empty();
 	}
 
 	private String getThumname(Resize resize) {

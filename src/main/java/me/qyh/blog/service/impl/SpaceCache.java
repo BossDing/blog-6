@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -118,31 +119,35 @@ public class SpaceCache {
 		return spacesCache.getUnchecked(key);
 	}
 
-	public Space getSpace(String alias) {
+	public Optional<Space> getSpace(String alias) {
 		try {
-			return aliasCache.getUnchecked(alias);
+			return Optional.of(aliasCache.getUnchecked(alias));
 		} catch (UncheckedExecutionException e) {
 			if (e.getCause() instanceof LogicException) {
-				return null;
+				return Optional.empty();
 			}
 			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
-	public Space getSpace(Integer id) {
+	public Optional<Space> getSpace(Integer id) {
 		try {
-			return idCache.getUnchecked(id);
+			return Optional.of(idCache.getUnchecked(id));
 		} catch (UncheckedExecutionException e) {
 			if (e.getCause() instanceof LogicException) {
-				return null;
+				return Optional.empty();
 			}
 			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
 	public void evit(Space db) {
-		idCache.invalidate(db.getId());
-		aliasCache.invalidate(db.getAlias());
+		if (db.hasId()) {
+			idCache.invalidate(db.getId());
+		}
+		if (db.getAlias() != null) {
+			aliasCache.invalidate(db.getAlias());
+		}
 		spacesCache.invalidateAll();
 	}
 
@@ -179,7 +184,6 @@ public class SpaceCache {
 			}
 			return false;
 		}
-
 	}
 
 }

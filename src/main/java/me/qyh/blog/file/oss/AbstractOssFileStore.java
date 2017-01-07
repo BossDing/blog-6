@@ -17,6 +17,7 @@ package me.qyh.blog.file.oss;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,17 +65,16 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			throw new SystemException(e.getMessage(), e);
 		}
 		try {
-			ImageInfo ii = readImage(tmp, extension);
-			doUpload(key, tmp);
 			CommonFile cf = new CommonFile();
+			readImage(tmp, extension).ifPresent(ii -> {
+				cf.setWidth(ii.getWidth());
+				cf.setHeight(ii.getHeight());
+			});
+			doUpload(key, tmp);
 			cf.setExtension(extension);
 			cf.setOriginalFilename(originalFilename);
 			cf.setSize(tmp.length());
 			cf.setStore(id);
-			if (ii != null) {
-				cf.setWidth(ii.getWidth());
-				cf.setHeight(ii.getHeight());
-			}
 			return cf;
 		} finally {
 			if (tmp.exists()) {
@@ -83,16 +83,16 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 	}
 
-	private ImageInfo readImage(File tmp, String extension) throws LogicException {
+	protected Optional<ImageInfo> readImage(File tmp, String extension) throws LogicException {
 		if (imageHelper.supportFormat(extension)) {
 			try {
-				return imageHelper.read(tmp);
+				return Optional.of(imageHelper.read(tmp));
 			} catch (IOException e) {
 				LOGGER.debug(e.getMessage(), e);
 				throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private void doUpload(String key, File tmp) {

@@ -15,9 +15,12 @@
  */
 package me.qyh.blog.comment.module;
 
+import java.util.Objects;
+
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.comment.base.BaseComment;
+import me.qyh.blog.util.Validators;
 
 /**
  * 一种类似页面性质的评论，
@@ -47,4 +50,17 @@ public class ModuleComment extends BaseComment<ModuleComment> {
 		return super.matchParent(parent) && this.module.equals(parent.module);
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (Validators.baseEquals(this, obj)) {
+			ModuleComment rhs = (ModuleComment) obj;
+			return Objects.equals(this.id, rhs.id);
+		}
+		return false;
+	}
 }

@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.security.UserContext;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.ui.ContextVariables;
 
@@ -50,7 +50,7 @@ public class SpacesDataTagProcessor extends DataTagProcessor<List<Space>> {
 	@Override
 	protected List<Space> query(Space space, ContextVariables variables, Attributes attributes) throws LogicException {
 		SpaceQueryParam param = new SpaceQueryParam();
-		param.setQueryPrivate(UserContext.get() != null);
+		param.setQueryPrivate(Environment.isLogin());
 		return spaceService.querySpace(param);
 	}
 
