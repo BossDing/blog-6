@@ -30,7 +30,7 @@
 		<property name="password" value="${jdbc.password}" />
 		<property name="poolName" value="blogCP" />
 		<property name="maximumPoolSize" value="${jdbc.maxPoolSize}" />
-		<property name="maxLifetime" value="${jdbc.maxLifetime}"/>
+		<property name="maxLifetime" value="${jdbc.maxLifetime}" />
 	</bean>
 
 	<!-- 配置SqlSessionFactory -->
@@ -62,9 +62,8 @@
 	</bean>
 
 	<!-- 锁 -->
-	<bean class="me.qyh.blog.lock.LockManager" />
+	<bean class="me.qyh.blog.lock.LockManager"/>
 	<bean class="me.qyh.blog.lock.SysLockProvider" />
-	<bean class="me.qyh.blog.lock.LockAspect" />
 
 	<!-- 登录验证 -->
 	<bean class="me.qyh.blog.security.EnsureLoginAspect" />
@@ -106,14 +105,13 @@
 	</bean>
 
 
-	<bean class="me.qyh.blog.service.impl.CommonMarkdown2Html"
-		id="markdown2Html" />
+	<bean class="me.qyh.blog.service.impl.CommonMarkdown2Html" id="markdown2Html" />
 
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<!-- markdown2html handler -->
 		<property name="articleContentHandlers">
 			<list>
-				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler"/>
+				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler" />
 			</list>
 		</property>
 	</bean>
@@ -207,7 +205,8 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.evt.ping.SimplePingManager" destroy-method="close">
+	<bean class="me.qyh.blog.evt.ping.SimplePingManager"
+		destroy-method="close">
 		<constructor-arg value="钱宇豪的个人博客" />
 		<property name="pingServices">
 			<list>

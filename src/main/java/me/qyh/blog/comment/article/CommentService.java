@@ -45,6 +45,7 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
@@ -54,6 +55,8 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 
 	@Autowired
 	private ArticleCache articleCache;
+	@Autowired
+	private LockManager lockManager;
 
 	/**
 	 * 评论配置文件位置
@@ -75,7 +78,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (param.getArticle() == null) {
 			return new CommentPageResult<>(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
-		Article article = articleCache.getArticleWithLockCheck(param.getArticle().getId());
+		Article article = articleCache.getArticle(param.getArticle().getId());
 		if (article == null || !article.isPublished()) {
 			return new CommentPageResult<>(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
@@ -85,6 +88,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (!Environment.match(article.getSpace())) {
 			return new CommentPageResult<>(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
+		lockManager.openLock(article);
 		return super.queryComment(param, config);
 	}
 
@@ -96,7 +100,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	 * @throws LogicException
 	 */
 	public Comment insertComment(Comment comment) throws LogicException {
-		Article article = articleCache.getArticleWithLockCheck(comment.getArticle().getId());
+		Article article = articleCache.getArticle(comment.getArticle().getId());
 		// 博客不存在
 		if (article == null || !Environment.match(article.getSpace()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -108,6 +112,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (!article.getAllowComment() && !Environment.isLogin()) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
+		lockManager.openLock(article);
 		super.insertComment(comment, config);
 		comment.setArticle(article);// 用来获取文章链接
 		sendEmail(comment);
@@ -173,7 +178,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryConversations(Integer articleId, Integer id) throws LogicException {
-		Article article = articleCache.getArticleWithLockCheck(articleId);
+		Article article = articleCache.getArticle(articleId);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}
@@ -186,6 +191,7 @@ public class CommentService extends CommentSupport<Comment, CommentDao> implemen
 		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
+		lockManager.openLock(article);
 		Comment comment = commentDao.selectById(id);
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");

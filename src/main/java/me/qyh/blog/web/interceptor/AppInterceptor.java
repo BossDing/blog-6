@@ -92,7 +92,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				if (user == null) {
 					user = autoLogin(request, response);
 				}
-				
+
 				Environment.setUser(user);
 				enableLogin(handler, user);
 
@@ -215,9 +215,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
 		boolean needLockProtected = !Webs.unlockRequest(request);
-		return (needLockProtected ? spaceService.selectSpaceByAliasWithLockCheck(spaceAlias)
-				: spaceService.selectSpaceByAlias(spaceAlias))
-						.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
+		return spaceService.selectSpaceByAlias(spaceAlias, needLockProtected)
+				.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 	}
 
 	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {

@@ -18,9 +18,12 @@ package me.qyh.blog.lock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -31,6 +34,8 @@ import com.google.common.collect.Sets;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.message.Message;
+import me.qyh.blog.security.Environment;
 
 /**
  * 锁管理器
@@ -47,15 +52,34 @@ public class LockManager implements InitializingBean {
 
 	private static final String TYPE_PATTERN = "^[A-Za-z0-9]+$";
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(LockManager.class);
+
 	/**
-	 * 根据id获取锁
+	 * 解锁
 	 * 
-	 * @param id
-	 *            锁id
-	 * @return 如果不存在返回null
+	 * @param lockResource
+	 *            锁资源
+	 * @throws LockException
+	 *             解锁失败
 	 */
-	public Optional<Lock> findLock(String id) {
-		return Optional.ofNullable(expandedLockProvider.findLock(id).orElse(sysLockProvider.findLock(id).orElse(null)));
+	public void openLock(LockResource lockResource) throws LockException {
+		Objects.requireNonNull(lockResource);
+		if (Environment.isLogin() || lockResource.getLockId() == null) {
+			return;
+		}
+		findLock(lockResource.getLockId()).ifPresent(lock -> {
+			LockKey key = LockKeyContext.getKey(lockResource.getResourceId())
+					.orElseThrow(() -> new LockException(lock, lockResource, null));
+			try {
+				lock.tryOpen(key);
+			} catch (LogicException e) {
+				LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
+				throw new LockException(lock, lockResource, e.getLogicMessage());
+			} catch (Exception e) {
+				LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
+				throw new LockException(lock, lockResource, new Message("error.system", "系统异常"));
+			}
+		});
 	}
 
 	/**
@@ -143,4 +167,9 @@ public class LockManager implements InitializingBean {
 		}
 		allTypes.addAll(types);
 	}
+
+	private Optional<Lock> findLock(String id) {
+		return Optional.ofNullable(expandedLockProvider.findLock(id).orElse(sysLockProvider.findLock(id).orElse(null)));
+	}
+
 }

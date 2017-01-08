@@ -56,15 +56,7 @@ public interface SpaceService {
 	 *            空间别名
 	 * @return 空间，如果不存在，返回null
 	 */
-	Optional<Space> selectSpaceByAlias(String alias);
-
-	/**
-	 * 查询空间，并且进行锁检查
-	 * 
-	 * @param alias
-	 * @return
-	 */
-	Optional<Space> selectSpaceByAliasWithLockCheck(String alias);
+	Optional<Space> selectSpaceByAlias(String alia, boolean lockCheck);
 
 	/**
 	 * 查询空间
@@ -80,7 +72,7 @@ public interface SpaceService {
 	 * 
 	 * @param id
 	 *            空间id
-	 * @return 
+	 * @return
 	 * 
 	 */
 	Optional<Space> getSpace(Integer id);

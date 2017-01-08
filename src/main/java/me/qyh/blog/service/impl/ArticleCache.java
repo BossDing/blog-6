@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.lock.LockProtected;
 
 @Component
 public class ArticleCache {
@@ -36,17 +35,9 @@ public class ArticleCache {
 	@Autowired
 	private CacheManager cacheManager;
 
-	@LockProtected
-	@Cacheable(value = CACHE_NAME, key = "'article-'+#id", unless = "#result == null || !#result.isPublished()")
-	@Transactional(readOnly = true)
-	public Article getArticleWithLockCheck(Integer id) {
-		return articleDao.selectById(id);
-	}
-
-	@LockProtected
 	@Cacheable(value = CACHE_NAME, key = "'article-'+#alias", unless = "#result == null || !#result.isPublished()")
 	@Transactional(readOnly = true)
-	public Article getArticleWithLockCheck(String alias) {
+	public Article getArticle(String alias) {
 		return articleDao.selectByAlias(alias);
 	}
 

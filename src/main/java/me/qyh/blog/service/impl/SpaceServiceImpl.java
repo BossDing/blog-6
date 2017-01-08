@@ -34,7 +34,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
-import me.qyh.blog.lock.LockProtected;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
@@ -117,14 +116,12 @@ public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockD
 	}
 
 	@Override
-	public Optional<Space> selectSpaceByAlias(String alias) {
-		return spaceCache.getSpace(alias);
-	}
-
-	@Override
-	@LockProtected
-	public Optional<Space> selectSpaceByAliasWithLockCheck(String alias) {
-		return spaceCache.getSpace(alias);
+	public Optional<Space> selectSpaceByAlias(String alias, boolean lockCheck) {
+		Optional<Space> spaceOptional = spaceCache.getSpace(alias);
+		if (lockCheck) {
+			spaceOptional.ifPresent(space -> lockManager.openLock(space));
+		}
+		return spaceOptional;
 	}
 
 	@Override

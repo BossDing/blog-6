@@ -119,14 +119,16 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		Article article = null;
 		try {
 			int id = Integer.parseInt(idOrAlias);
-			article = articleCache.getArticleWithLockCheck(id);
+			article = articleCache.getArticle(id);
 		} catch (NumberFormatException e) {
-			article = articleCache.getArticleWithLockCheck(idOrAlias);
+			article = articleCache.getArticle(idOrAlias);
 		}
 		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
 			if (article.isPrivate()) {
 				Environment.doAuthencation();
 			}
+
+			lockManager.openLock(article);
 
 			Article clone = new Article(article);
 			clone.setComments(commentServer.queryArticleCommentCount(article.getId()).orElse(0));
@@ -156,10 +158,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public OptionalInt hit(Integer id) {
-		Article article = articleCache.getArticleWithLockCheck(id);
+		Article article = articleCache.getArticle(id);
 		if (article != null) {
 			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
 					&& !article.getIsPrivate();
+			lockManager.openLock(article);
 			if (hit) {
 				articleDao.updateHits(id, 1);
 				articleIndexer.getIndexer().addOrUpdateDocument(article);

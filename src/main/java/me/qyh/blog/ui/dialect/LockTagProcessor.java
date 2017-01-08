@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.ui.dialect;
 
-import java.util.Optional;
-
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -26,11 +24,6 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.Lock;
-import me.qyh.blog.lock.LockException;
-import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyContext;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.SimpleLockResource;
 import me.qyh.blog.security.Environment;
@@ -66,18 +59,8 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 		try {
 			String lockId = tag.getAttributeValue(ID);
 			if (lockId != null && !Environment.isLogin()) {
-				Optional<Lock> optionalLock = lockManager.findLock(lockId);
-				if (optionalLock.isPresent()) {
-					Lock lock = optionalLock.get();
-					String resourceId = context.getTemplateData().getTemplate();
-					LockKey key = LockKeyContext.getKey(resourceId).orElseThrow(
-							() -> new LockException(lock, new SimpleLockResource(resourceId, lockId), null));
-					try {
-						lock.tryOpen(key);
-					} catch (LogicException e) {
-						throw new LockException(lock, new SimpleLockResource(resourceId, lockId), e.getLogicMessage());
-					}
-				}
+				String resourceId = context.getTemplateData().getTemplate();
+				lockManager.openLock(new SimpleLockResource(resourceId, lockId));
 			}
 		} finally {
 			structureHandler.removeElement();
