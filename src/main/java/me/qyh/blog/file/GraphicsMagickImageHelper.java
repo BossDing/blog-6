@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
@@ -30,6 +31,7 @@ import org.im4java.core.ConvertCmd;
 import org.im4java.core.IM4JavaException;
 import org.im4java.core.IMOperation;
 import org.im4java.core.IdentifyCmd;
+import org.im4java.core.ImageCommand;
 import org.im4java.core.Operation;
 import org.im4java.process.ArrayListOutputConsumer;
 import org.slf4j.Logger;
@@ -102,14 +104,15 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		localIMOperation.ping();
 		localIMOperation.format("%w\n%h\n%m\n");
 		localIMOperation.addImage();
-		IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
-		if (WINDOWS) {
-			localIdentifyCmd.setSearchPath(magickPath);
-		}
 		ArrayListOutputConsumer localArrayListOutputConsumer = new ArrayListOutputConsumer();
-		localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
-
-		run(localIMOperation, file.getAbsolutePath() + "[0]");
+		run(() -> {
+			IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
+			if (WINDOWS) {
+				localIdentifyCmd.setSearchPath(magickPath);
+			}
+			localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
+			return localIdentifyCmd;
+		}, localIMOperation, file.getAbsolutePath() + "[0]");
 
 		List<String> atts = localArrayListOutputConsumer.getOutput();
 		Iterator<String> it = atts.iterator();
@@ -207,14 +210,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.addRawArgs("+matte");
 	}
 
-	private ConvertCmd getConvertCmd() {
-		ConvertCmd cmd = new ConvertCmd(true);
-		if (WINDOWS) {
-			cmd.setSearchPath(magickPath);
-		}
-		return cmd;
-	}
-
 	public void setDoInterlace(boolean doInterlace) {
 		this.doInterlace = doInterlace;
 	}
@@ -241,15 +236,25 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 	}
 
-	private void run(Operation operation, Object... args) throws IOException {
+	private void run(Supplier<ImageCommand> supplier, Operation operation, Object... args) throws IOException {
 		try {
-			getConvertCmd().run(operation, args);
+			supplier.get().run(operation, args);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new SystemException(e.getMessage(), e);
 		} catch (IM4JavaException e) {
 			throw new IOException(e);
 		}
+	}
+
+	private void run(Operation operation, Object... args) throws IOException {
+		run(() -> {
+			ConvertCmd cmd = new ConvertCmd(true);
+			if (WINDOWS) {
+				cmd.setSearchPath(magickPath);
+			}
+			return cmd;
+		}, operation, args);
 	}
 
 }
