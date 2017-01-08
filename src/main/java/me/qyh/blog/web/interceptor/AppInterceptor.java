@@ -90,7 +90,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 					user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
 				}
 				if (user == null) {
-					user = autoLogin(request, response);
+					user = autoLogin(request, response).orElse(null);
 				}
 
 				Environment.setUser(user);
@@ -149,7 +149,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	 * @param response
 	 * @return
 	 */
-	private User autoLogin(HttpServletRequest request, HttpServletResponse response) {
+	private Optional<User> autoLogin(HttpServletRequest request, HttpServletResponse response) {
 		// auto login
 		Optional<User> optionalUser = rememberMe.login(request, response);
 		if (optionalUser.isPresent()) {
@@ -158,7 +158,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			user.setPassword(null);
 			request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
 		}
-		return null;
+		return optionalUser;
 	}
 
 	/**

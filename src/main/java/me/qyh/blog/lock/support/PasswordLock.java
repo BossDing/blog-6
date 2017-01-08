@@ -65,7 +65,7 @@ public class PasswordLock extends SysLock {
 	public void tryOpen(LockKey key) throws LogicException {
 		Objects.requireNonNull(key);
 		Object keyData = key.getKey();
-		if (keyData != null && BCrypts.matches(keyData.toString(), password)) {
+		if (BCrypts.matches(keyData.toString(), password)) {
 			return;
 		}
 		throw new LogicException(new Message("lock.password.unlock.fail", "密码验证失败"));

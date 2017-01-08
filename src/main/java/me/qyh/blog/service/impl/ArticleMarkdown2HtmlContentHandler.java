@@ -1,13 +1,14 @@
 package me.qyh.blog.service.impl;
 
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Editor;
@@ -27,7 +28,7 @@ public class ArticleMarkdown2HtmlContentHandler
 	private static final String DEFAULT_CACHESPECIFICATION = "maximumSize=500";
 	private String cacheSpecification = DEFAULT_CACHESPECIFICATION;
 
-	private LoadingCache<Article, String> markdownCache;
+	private Cache<Integer, String> markdownCache;
 
 	@Autowired
 	private Markdown2Html markdown2Html;
@@ -35,8 +36,12 @@ public class ArticleMarkdown2HtmlContentHandler
 	@Override
 	public void handle(Article article) {
 		if (Editor.MD.equals(article.getEditor())) {
-			String html = markdownCache.getUnchecked(article);
-			article.setContent(html);
+			String cached = markdownCache.getIfPresent(article.getId());
+			if (cached == null) {
+				cached = markdown2Html.toHtml(article.getContent());
+				markdownCache.put(article.getId(), cached);
+			}
+			article.setContent(cached);
 		}
 	}
 
@@ -45,24 +50,16 @@ public class ArticleMarkdown2HtmlContentHandler
 	public void onApplicationEvent(ArticleEvent event) {
 		EventType eventType = event.getEventType();
 		if (!EventType.HITS.equals(eventType) && !EventType.INSERT.equals(eventType)) {
-			markdownCache.invalidateAll(event.getArticles());
+			markdownCache.invalidateAll(event.getArticles().stream().map(Article::getId).collect(Collectors.toList()));
 		}
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		CacheLoader<Article, String> markdownCacheLoader = new CacheLoader<Article, String>() {
-
-			@Override
-			public String load(Article article) throws Exception {
-				return markdown2Html.toHtml(article.getContent());
-			}
-
-		};
 		if (cacheSpecification != null) {
-			markdownCache = CacheBuilder.from(cacheSpecification).build(markdownCacheLoader);
+			markdownCache = CacheBuilder.from(cacheSpecification).build();
 		} else {
-			markdownCache = CacheBuilder.newBuilder().build(markdownCacheLoader);
+			markdownCache = CacheBuilder.newBuilder().build();
 		}
 	}
 

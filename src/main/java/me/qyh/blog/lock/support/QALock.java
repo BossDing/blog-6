@@ -62,11 +62,9 @@ public class QALock extends SysLock {
 	public void tryOpen(LockKey key) throws LogicException {
 		Objects.requireNonNull(key);
 		Object data = key.getKey();
-		if (data != null) {
-			String answer = data.toString();
-			if (isCorrectAnswer(answer)) {
-				return;
-			}
+		String answer = data.toString();
+		if (isCorrectAnswer(answer)) {
+			return;
 		}
 		throw new LogicException(new Message("lock.qa.unlock.fail", "答案错误"));
 	}
