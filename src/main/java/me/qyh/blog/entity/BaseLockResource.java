@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.entity;
 
+import java.util.Optional;
+
 import me.qyh.blog.lock.LockResource;
 
 /**
@@ -52,20 +54,19 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	}
 
 	@Override
-	public String getLockId() {
-		return lockId;
+	public final Optional<String[]> getLockIds() {
+		return lockId == null ? Optional.empty() : Optional.of(new String[] { lockId });
 	}
 
 	public void setLockId(String lockId) {
 		this.lockId = lockId;
 	}
 
-	/**
-	 * 是否受到锁保护
-	 * 
-	 * @return
-	 */
+	public String getLockId() {
+		return lockId;
+	}
+
 	public boolean hasLock() {
-		return lockId != null;
+		return getLockIds().isPresent();
 	}
 }

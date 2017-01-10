@@ -26,6 +26,13 @@ import java.io.Serializable;
 public interface LockKey extends Serializable {
 
 	/**
+	 * 锁ID
+	 * 
+	 * @return
+	 */
+	String lockId();
+
+	/**
 	 * 得到钥匙
 	 * 
 	 * @return 钥匙

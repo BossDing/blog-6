@@ -15,8 +15,11 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.util.CollectionUtils;
 
 /**
  * 钥匙上下文
@@ -26,7 +29,7 @@ import java.util.Optional;
  */
 public class LockKeyContext {
 
-	private static final ThreadLocal<Map<String, LockKey>> keysLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Map<String, List<LockKey>>> keysLocal = new ThreadLocal<>();
 
 	private LockKeyContext() {
 		super();
@@ -39,9 +42,14 @@ public class LockKeyContext {
 	 *            资源id
 	 * @return 如果不存在返回null
 	 */
-	public static Optional<LockKey> getKey(String id) {
-		Map<String, LockKey> keyMap = keysLocal.get();
-		return keyMap == null ? Optional.empty() : Optional.ofNullable(keyMap.get(id));
+	public static Optional<LockKey> getKey(String resourceId, String lockId) {
+		Map<String, List<LockKey>> keyMap = keysLocal.get();
+		if (CollectionUtils.isEmpty(keyMap)) {
+			return Optional.empty();
+		}
+		List<LockKey> resourceKeys = keyMap.get(resourceId);
+		return CollectionUtils.isEmpty(resourceKeys) ? Optional.empty()
+				: resourceKeys.stream().filter(key -> key.lockId().equals(lockId)).findAny();
 	}
 
 	/**
@@ -56,7 +64,7 @@ public class LockKeyContext {
 	 * 
 	 * @param keysMap
 	 */
-	public static void set(Map<String, LockKey> keysMap) {
+	public static void set(Map<String, List<LockKey>> keysMap) {
 		keysLocal.set(keysMap);
 	}
 

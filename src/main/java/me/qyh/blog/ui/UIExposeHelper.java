@@ -16,20 +16,28 @@
 package me.qyh.blog.ui;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.security.Environment;
-import me.qyh.blog.util.DefaultTimeDiffParser;
-import me.qyh.blog.util.TimeDiffParser;
+import me.qyh.blog.ui.utils.DefaultTimeDiffParser;
+import me.qyh.blog.ui.utils.TimeDiffParser;
+import me.qyh.blog.ui.utils.UIUtils;
+import me.qyh.blog.util.Validators;
 
 public class UIExposeHelper implements InitializingBean {
 
@@ -39,6 +47,11 @@ public class UIExposeHelper implements InitializingBean {
 	private Messages messages;
 	@Autowired(required = false)
 	private TimeDiffParser timeDiffParser;
+
+	/**
+	 * 用于扫描 UIUtils
+	 */
+	private String[] packages;
 
 	private Map<String, Object> pros = Maps.newHashMap();
 
@@ -64,6 +77,28 @@ public class UIExposeHelper implements InitializingBean {
 		if (timeDiffParser == null) {
 			timeDiffParser = new DefaultTimeDiffParser();
 		}
+		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+		scanner.addIncludeFilter(new AnnotationTypeFilter(UIUtils.class));
+		Set<BeanDefinition> definitions = Sets.newHashSet();
+		definitions.addAll(scanner.findCandidateComponents("me.qyh.blog"));
+		if (packages != null && packages.length > 0) {
+			for (String pack : packages) {
+				definitions.addAll(scanner.findCandidateComponents(pack));
+			}
+		}
+		for (BeanDefinition definition : definitions) {
+			Class<?> clazz = Class.forName(definition.getBeanClassName());
+			UIUtils ann = AnnotationUtils.findAnnotation(clazz, UIUtils.class);
+			String name = ann.name();
+			if (Validators.isEmptyOrNull(name, true)) {
+				name = clazz.getSimpleName();
+				name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+			}
+			pros.put(name, clazz);
+		}
 	}
 
+	public void setPackages(String[] packages) {
+		this.packages = packages;
+	}
 }

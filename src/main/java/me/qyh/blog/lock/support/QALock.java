@@ -55,7 +55,23 @@ public class QALock extends SysLock {
 		if (answer == null || answer.isEmpty()) {
 			throw new LogicException(new Message("lock.qa.answer.blank", "请填写问题答案"));
 		}
-		return () -> answer;
+		return new LockKey() {
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String lockId() {
+				return getId();
+			}
+
+			@Override
+			public Object getKey() {
+				return answer;
+			}
+		};
 	}
 
 	@Override

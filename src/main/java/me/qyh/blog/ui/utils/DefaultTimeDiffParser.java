@@ -1,4 +1,4 @@
-package me.qyh.blog.util;
+package me.qyh.blog.ui.utils;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

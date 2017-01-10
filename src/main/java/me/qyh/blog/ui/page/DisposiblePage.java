@@ -41,6 +41,11 @@ public class DisposiblePage extends Page {
 		super(page);
 	}
 
+	public DisposiblePage(Page page, boolean preview) {
+		super(page);
+		this.preview = preview;
+	}
+
 	@Override
 	public final PageType getType() {
 		return PageType.DISPOSIBLE;

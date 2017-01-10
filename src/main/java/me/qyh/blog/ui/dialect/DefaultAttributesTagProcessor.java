@@ -125,8 +125,9 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 			/*
 			 * Compute the new attribute value
 			 */
-			final String newAttributeValue = HtmlEscape
-					.escapeHtml4Xml(expressionResult == null ? null : expressionResult.toString());
+			boolean escapeHtml = !newAttributeName.endsWith("utext");
+			final String newAttributeValue = expressionResult == null ? null
+					: escapeHtml ? HtmlEscape.escapeHtml4Xml(expressionResult.toString()) : expressionResult.toString();
 
 			/*
 			 * Set the new value, removing the attribute completely if the

@@ -20,6 +20,7 @@ import java.util.Random;
 
 import com.google.common.collect.Lists;
 
+@UIUtils
 public final class Collections {
 
 	private Collections() {

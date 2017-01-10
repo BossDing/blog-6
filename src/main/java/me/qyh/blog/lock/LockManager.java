@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,22 +65,26 @@ public class LockManager implements InitializingBean {
 	 */
 	public void openLock(LockResource lockResource) throws LockException {
 		Objects.requireNonNull(lockResource);
-		if (Environment.isLogin() || lockResource.getLockId() == null) {
+		if (Environment.isLogin()) {
 			return;
 		}
-		findLock(lockResource.getLockId()).ifPresent(lock -> {
-			LockKey key = LockKeyContext.getKey(lockResource.getResourceId())
-					.orElseThrow(() -> new LockException(lock, lockResource, null));
-			try {
-				lock.tryOpen(key);
-			} catch (LogicException e) {
-				LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
-				throw new LockException(lock, lockResource, e.getLogicMessage());
-			} catch (Exception e) {
-				LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
-				throw new LockException(lock, lockResource, new Message("error.system", "系统异常"));
-			}
-		});
+		Optional<String[]> optionalLockIds = lockResource.getLockIds();
+		String resourceId = lockResource.getResourceId();
+		optionalLockIds.ifPresent(lockIds -> Arrays.stream(lockIds).forEach(lockId -> {
+			findLock(lockId).ifPresent(lock -> {
+				LockKey key = LockKeyContext.getKey(resourceId, lockId)
+						.orElseThrow(() -> new LockException(lock, lockResource, null));
+				try {
+					lock.tryOpen(key);
+				} catch (LogicException e) {
+					LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
+					throw new LockException(lock, lockResource, e.getLogicMessage());
+				} catch (Exception e) {
+					LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
+					throw new LockException(lock, lockResource, new Message("error.system", "系统异常"));
+				}
+			});
+		}));
 	}
 
 	/**

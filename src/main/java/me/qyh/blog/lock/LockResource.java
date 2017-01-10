@@ -16,6 +16,7 @@
 package me.qyh.blog.lock;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * 
@@ -36,6 +37,6 @@ public interface LockResource extends Serializable {
 	 * 
 	 * @return 锁id
 	 */
-	String getLockId();
+	Optional<String[]> getLockIds();
 
 }

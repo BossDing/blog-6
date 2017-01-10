@@ -238,4 +238,12 @@ public interface ArticleService {
 	 */
 	List<Article> findSimilar(Article article, int limit) throws LogicException;
 
+	/**
+	 * 用来处理预览文章，比如将markdown转化为html
+	 * 
+	 * @param article
+	 *            预览文章
+	 */
+	void preparePreview(Article article);
+
 }

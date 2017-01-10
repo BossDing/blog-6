@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.Optional;
+
 public class SimpleLockResource implements LockResource {
 
 	/**
@@ -36,8 +38,8 @@ public class SimpleLockResource implements LockResource {
 	}
 
 	@Override
-	public String getLockId() {
-		return lockId;
+	public Optional<String[]> getLockIds() {
+		return lockId == null ? Optional.empty() : Optional.of(new String[] { lockId });
 	}
 
 }

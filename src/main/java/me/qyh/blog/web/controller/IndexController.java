@@ -21,12 +21,8 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jsoup.nodes.Attributes;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +38,7 @@ import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -73,8 +70,9 @@ public class IndexController {
 			HttpServletResponse response) throws LogicException {
 		DisposiblePage page = new DisposiblePage();
 		page.setPreview(false);
-		page.setTpl(buildTag("data", Webs.decode(tagName), allRequestParams)
-				+ buildTag("fragment", Webs.decode(fragment), null));
+		page.setTpl(TemplateUtils.buildDataTag(Webs.decode(tagName), allRequestParams)
+				+ TemplateUtils.buildFragmentTag(Webs.decode(fragment), null));
+		System.out.println(page.getTpl());
 		try {
 			return new JsonResult(true, uiRender.render(page, request, response));
 		} catch (TplRenderException e) {
@@ -107,7 +105,7 @@ public class IndexController {
 		}
 		Fragment fr = optional.get();
 		DisposiblePage page = new DisposiblePage();
-		page.setTpl(buildTag("fragment", fr.getName(), allRequestParams));
+		page.setTpl(TemplateUtils.buildFragmentTag(fr.getName(), allRequestParams));
 		Map<String, Fragment> frMap = Maps.newHashMap();
 		frMap.put(fr.getName(), fr);
 		try {
@@ -115,18 +113,5 @@ public class IndexController {
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
-	}
-
-	private String buildTag(String tagName, String nameAtt, Map<String, String> atts) {
-		Tag tag = Tag.valueOf(tagName);
-		Attributes attributes = new Attributes();
-		if (!CollectionUtils.isEmpty(atts)) {
-			for (Map.Entry<String, String> it : atts.entrySet()) {
-				attributes.put(it.getKey(), it.getValue());
-			}
-		}
-		attributes.put("name", nameAtt);
-		Element ele = new Element(tag, "", attributes);
-		return ele.toString();
 	}
 }

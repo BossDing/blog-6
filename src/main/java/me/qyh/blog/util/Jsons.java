@@ -36,6 +36,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageSerializer;
 import me.qyh.blog.ui.PageSerializer;
 import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.utils.UIUtils;
 
 /**
  * json处理工具类
@@ -43,6 +44,7 @@ import me.qyh.blog.ui.page.Page;
  * @author Administrator
  *
  */
+@UIUtils
 public class Jsons {
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting()
 			.addSerializationExclusionStrategy(new ExclusionStrategy() {

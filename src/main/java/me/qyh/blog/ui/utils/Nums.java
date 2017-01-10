@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+@UIUtils
 public final class Nums {
 	public static int randomInt(int min, int max) {
 		return ThreadLocalRandom.current().nextInt(min, max + 1);

@@ -156,7 +156,7 @@ public class Article extends BaseLockResource {
 		this.title = source.title;
 		this.id = source.id;
 		this.allowComment = source.allowComment;
-		setLockId(source.getLockId());
+		source.getLockIds().ifPresent(lockIds -> setLockId(lockIds[0]));
 	}
 
 	public Space getSpace() {

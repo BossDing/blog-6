@@ -17,6 +17,9 @@ package me.qyh.blog.web.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,7 +46,6 @@ import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.impl.Markdown2Html;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 
@@ -65,8 +67,6 @@ public class ArticleMgrController extends BaseMgrController {
 	private ArticleValidator articleValidator;
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
-	@Autowired
-	private Markdown2Html markdown2Html;
 
 	@InitBinder(value = "article")
 	protected void initBinder(WebDataBinder binder) {
@@ -138,12 +138,6 @@ public class ArticleMgrController extends BaseMgrController {
 		return "mgr/article/write/mdpreview";
 	}
 
-	@RequestMapping(value = "write/md/preview", method = RequestMethod.POST)
-	@ResponseBody
-	public JsonResult mdPreview(@RequestParam("content") String markdown) {
-		return new JsonResult(true, markdown2Html.toHtml(markdown));
-	}
-
 	@RequestMapping(value = "write", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult write(@RequestBody @Validated Article article) throws LogicException {
@@ -169,6 +163,14 @@ public class ArticleMgrController extends BaseMgrController {
 		model.addAttribute("article", article);
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		return "mgr/article/write/" + article.getEditor().name().toLowerCase();
+	}
+
+	@RequestMapping(value = "write/preview", method = RequestMethod.POST)
+	@ResponseBody
+	public JsonResult preview(@RequestBody @Validated Article article, HttpServletRequest request,
+			HttpServletResponse response) throws LogicException {
+		articleService.preparePreview(article);
+		return new JsonResult(true, article.getContent());
 	}
 
 }

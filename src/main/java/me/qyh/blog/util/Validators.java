@@ -17,12 +17,15 @@ package me.qyh.blog.util;
 
 import java.util.regex.Pattern;
 
+import me.qyh.blog.ui.utils.UIUtils;
+
 /**
  * 校验辅助
  * 
  * @author Administrator
  *
  */
+@UIUtils
 public final class Validators {
 
 	/**

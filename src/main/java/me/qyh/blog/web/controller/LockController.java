@@ -70,7 +70,7 @@ public class LockController extends BaseController {
 			ra.addFlashAttribute(ERROR, e.getMessage());
 			return buildLockUrl(lockBean.getSpaceAlias());
 		}
-		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
+		LockHelper.addKey(request, key, lockBean.getLockResource());
 		LockHelper.clearLockBean(request);
 		return "redirect:" + lockBean.getRedirectUrl();
 	}
@@ -95,7 +95,7 @@ public class LockController extends BaseController {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 		}
 		LockKey key = lock.getKeyFromRequest(request);
-		LockHelper.addKey(request, key, lockBean.getLockResource().getResourceId());
+		LockHelper.addKey(request, key, lockBean.getLockResource());
 		lock.tryOpen(key);
 		LockHelper.clearLockBean(request);
 		return new JsonResult(true, lockBean.getRedirectUrl());

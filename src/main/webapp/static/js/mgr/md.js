@@ -74,32 +74,9 @@
 			$("#submit-art").click(function(){
 				publishing = true;
 				var me = $(this);
-				var article = {};
-    			article.title = $("#title").val();
-    			article.content = editor.getValue();
-    			article.from = $("#from").val();
-    			article.status = $("#status").val();
-    			if(article.status == 'SCHEDULED'){
-    				article.pubDate = $("#scheduleDate").val()
-    			};
-    			if($("#level").val() != ''){
-    				article.level = $("#level").val();
-    			}
-    			article.isPrivate = $("#private").prop("checked");
-    			article.allowComment = $("#allowComment").prop("checked");
-    			article.tags = tags;
-    			article.summary = $("#summary").val();
-    			article.space = {"id":$("#space").val()};
-    			article.editor = "MD";
-    			if($("#lockId").val() != ""){
-    				article.lockId = $("#lockId").val();
-    			}
-    			article.alias = $("#alias").val();
+				var article = getArticle();
     			me.prop("disabled",true);
     			var url = basePath+"/mgr/article/write";
-    			if($("#id").val() != ""){
-    				article.id = $("#id").val();
-    			}
     			$.ajax({
     				type : "post",
     				url : url,
@@ -209,35 +186,12 @@
 			if(publishing){
 				return ;
 			}
-			var article = {};
-			article.title = $("#title").val();
-			if($.trim(article.title) == ""){
-				article.title = "No title";
-			}
-			article.content = editor.getValue();
-			if($.trim(article.content) == ''){
+			var article = getArticle();
+			if(article.content == ''){
 				return ;
 			}
-			article.from = $("#from").val();
-			article.status = 'DRAFT';
-			if($("#level").val() != ''){
-				article.level = $("#level").val();
-			}
-			article.isPrivate = $("#private").prop("checked");
-			article.allowComment = $("#allowComment").prop("checked");
-			article.tags = tags;
-			article.summary = $("#summary").val();
-			article.space = {"id":$("#space").val()};
-			article.editor = "MD";
-			if($("#lockId").val() != ""){
-				article.lockId = $("#lockId").val();
-			}
-			article.alias = $("#alias").val();
 			
 			var url = basePath+"/mgr/article/write";
-			if($("#id").val() != ""){
-				article.id = $("#id").val();
-			}
 			publishing = true;
 			$.ajax({
 				type : "post",
@@ -285,11 +239,48 @@
 		};
 
 		var parseAndRender = function() {
-			var parsed = $.post(basePath+'/mgr/article/write/md/preview',{"content":editor.getValue()},function(data){
-				if(data.success){
-					render(data.data);
-				}else{
-					bootbox.alert(data.message);
+			$.ajax({
+				type : "post",
+				url : basePath+'/mgr/article/write/preview',
+	            contentType:"application/json",
+				data : JSON.stringify(getArticle()),
+				success : function(data){
+					if(data.success){
+						render(data.data);
+					} else {
+						bootbox.alert(data.message);
+					}
+				},
+				complete:function(){
 				}
-			})
+			});
 		};
+		
+		
+		function getArticle(){
+			var article = {};
+			article.title = $("#title").val();
+			if($.trim(article.title) == ""){
+				article.title = "No title";
+			}
+			article.content = editor.getValue();
+			article.from = $("#from").val();
+			article.status = $("#status").val();
+			if($("#level").val() != ''){
+				article.level = $("#level").val();
+			}
+			article.isPrivate = $("#private").prop("checked");
+			article.allowComment = $("#allowComment").prop("checked");
+			article.tags = tags;
+			article.summary = $("#summary").val();
+			article.space = {"id":$("#space").val()};
+			article.editor = "MD";
+			if($("#lockId").val() != ""){
+				article.lockId = $("#lockId").val();
+			}
+			article.alias = $("#alias").val();
+			if($("#id").val() != ""){
+				article.id = $("#id").val();
+			}
+			return article;
+		}

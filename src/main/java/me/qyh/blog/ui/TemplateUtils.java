@@ -15,6 +15,13 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Map;
+
+import org.jsoup.nodes.Attributes;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Tag;
+import org.springframework.util.CollectionUtils;
+
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -304,5 +311,44 @@ public final class TemplateUtils {
 			return new UserFragment((UserFragment) fragment);
 		}
 		return new Fragment(fragment);
+	}
+
+	/**
+	 * 构建一个fragment标签
+	 * 
+	 * @param name
+	 *            name属性
+	 * @param atts
+	 *            其他属性
+	 * @return
+	 */
+	public static String buildFragmentTag(String name, Map<String, String> atts) {
+		return buildTag("fragment", name, atts);
+	}
+
+	/**
+	 * 构建一个data标签
+	 * 
+	 * @param name
+	 *            name属性
+	 * @param atts
+	 *            其他属性
+	 * @return
+	 */
+	public static String buildDataTag(String name, Map<String, String> atts) {
+		return buildTag("data", name, atts);
+	}
+
+	private static String buildTag(String tagName, String name, Map<String, String> atts) {
+		Tag tag = Tag.valueOf(tagName);
+		Attributes attributes = new Attributes();
+		if (!CollectionUtils.isEmpty(atts)) {
+			for (Map.Entry<String, String> it : atts.entrySet()) {
+				attributes.put(it.getKey(), it.getValue());
+			}
+		}
+		attributes.put("name", name);
+		Element ele = new Element(tag, "", attributes);
+		return ele.toString();
 	}
 }

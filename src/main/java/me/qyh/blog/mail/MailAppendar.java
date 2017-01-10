@@ -48,10 +48,10 @@ import me.qyh.blog.mail.MailSender.MessageBean;
 public class MailAppendar extends AppenderBase<ILoggingEvent> {
 
 	// ~ 14 days
-	static final int MAX_DELAY_BETWEEN_STATUS_MESSAGES = 1228800 * CoreConstants.MILLIS_IN_ONE_SECOND;
+	static final long MAX_DELAY_BETWEEN_STATUS_MESSAGES = 1228800 * CoreConstants.MILLIS_IN_ONE_SECOND;
 
 	long lastTrackerStatusPrint = 0;
-	int delayBetweenStatusMessages = 300 * CoreConstants.MILLIS_IN_ONE_SECOND;
+	long delayBetweenStatusMessages = 300 * CoreConstants.MILLIS_IN_ONE_SECOND;
 
 	@Autowired(required = false)
 	private MailSender mailSender;

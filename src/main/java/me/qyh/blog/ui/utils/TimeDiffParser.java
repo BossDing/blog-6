@@ -1,32 +1,17 @@
-package me.qyh.blog.util;
+package me.qyh.blog.ui.utils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 
-import me.qyh.blog.entity.DateDeserializer;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.ui.utils.Times;
+import me.qyh.blog.util.Validators;
 
 public abstract class TimeDiffParser {
-
-	/**
-	 * Minutes per hour.
-	 */
-	static final int MINUTES_PER_HOUR = 60;
-	/**
-	 * Seconds per minute.
-	 */
-	static final int SECONDS_PER_MINUTE = 60;
-	/**
-	 * Seconds per hour.
-	 */
-	static final int SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
-	/**
-	 * Seconds per day.
-	 */
-	static final int SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 
 	public abstract Message parseDiff(LocalDateTime begin, LocalDateTime end);
 
@@ -51,18 +36,18 @@ public abstract class TimeDiffParser {
 
 	public final Message parseDiff(String begin, String end) {
 		Objects.requireNonNull(begin, "开始日期不能为空");
-		LocalDateTime beginTime = DateDeserializer.parse(begin);
-		if (beginTime == null) {
+		Optional<LocalDateTime> optionalBeginTime = Times.parse(begin);
+		if (!optionalBeginTime.isPresent()) {
 			return new Message("datetime.parse.fail", "日期" + begin + "解析失败", begin);
 		}
 		LocalDateTime endTime = LocalDateTime.now();
 		if (!Validators.isEmptyOrNull(end, true)) {
-			endTime = DateDeserializer.parse(end);
+			endTime = Times.parse(end).orElse(null);
 		}
 		if (endTime == null) {
 			return new Message("datetime.parse.fail", "日期" + end + "解析失败", end);
 		}
-		return parseDiff(beginTime, endTime);
+		return parseDiff(optionalBeginTime.get(), endTime);
 	}
 
 	public final Message parseDiff(Timestamp begin, Timestamp end) {

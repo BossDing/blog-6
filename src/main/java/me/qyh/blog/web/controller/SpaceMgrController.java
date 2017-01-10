@@ -91,6 +91,7 @@ public class SpaceMgrController extends BaseMgrController {
 	@RequestMapping(value = "get/{id}", method = RequestMethod.GET)
 	@ResponseBody
 	public JsonResult get(@PathVariable("id") Integer id) {
-		return new JsonResult(true, spaceService.getSpace(id));
+		return spaceService.getSpace(id).map(space -> new JsonResult(true, space))
+				.orElse(new JsonResult(false, new Message("space.notExists")));
 	}
 }

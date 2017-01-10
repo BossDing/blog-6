@@ -17,6 +17,7 @@ package me.qyh.blog.web.interceptor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -167,7 +168,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	 * @param request
 	 */
 	private void setLockKeys(HttpServletRequest request) {
-		Map<String, LockKey> keysMap = LockHelper.getKeysMap(request);
+		Map<String, List<LockKey>> keysMap = LockHelper.getKeysMap(request);
 		if (!CollectionUtils.isEmpty(keysMap)) {
 			LOGGER.debug("将LockKey放入LockKeyContext中:" + keysMap);
 			LockKeyContext.set(keysMap);

@@ -15,11 +15,15 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
@@ -71,12 +75,12 @@ public final class LockHelper {
 	 * @return 资源id和钥匙的集合，可能为null
 	 */
 	@SuppressWarnings("unchecked")
-	public static Map<String, LockKey> getKeysMap(HttpServletRequest request) {
+	public static Map<String, List<LockKey>> getKeysMap(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			return null;
 		}
-		return (Map<String, LockKey>) session.getAttribute(LOCKKEY_SESSION_KEY);
+		return (Map<String, List<LockKey>>) session.getAttribute(LOCKKEY_SESSION_KEY);
 	}
 
 	/**
@@ -89,12 +93,19 @@ public final class LockHelper {
 	 * @param resourceId
 	 *            资源Id
 	 */
-	public static void addKey(HttpServletRequest request, LockKey key, String resourceId) {
-		Map<String, LockKey> keysMap = (Map<String, LockKey>) getKeysMap(request);
+	public static void addKey(HttpServletRequest request, LockKey key, LockResource lockResource) {
+		Map<String, List<LockKey>> keysMap = (Map<String, List<LockKey>>) getKeysMap(request);
 		if (keysMap == null) {
 			keysMap = Maps.newHashMap();
 		}
-		keysMap.put(resourceId, key);
+		List<LockKey> keys = keysMap.get(lockResource.getResourceId());
+		if (CollectionUtils.isEmpty(keys)) {
+			keys = Lists.newArrayList(key);
+			keysMap.put(lockResource.getResourceId(), keys);
+		} else {
+			keys.removeIf(_key -> _key.lockId().equals(key.lockId()));
+			keys.add(key);
+		}
 		request.getSession().setAttribute(LOCKKEY_SESSION_KEY, keysMap);
 	}
 

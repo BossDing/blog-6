@@ -21,7 +21,6 @@ import java.util.Optional;
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
@@ -84,19 +83,12 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 					context.getConfiguration().getTemplateManager().parseAndProcess(
 							new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
 					structureHandler.replaceWith(writer.toString(), false);
-				} catch (Exception e) {
-					structureHandler.removeElement();
-					throw new TemplateProcessingException(e.getMessage(), e);
 				} catch (StackOverflowError e) {
-					structureHandler.removeElement();
 					if (tag.hasLocation()) {
 						throw new UIStackoverflowError(templateName, tag.getCol(), tag.getLine(), e);
 					} else {
 						throw new UIStackoverflowError(templateName, null, null, e);
 					}
-				} catch (Throwable e) {
-					structureHandler.removeElement();
-					throw e;
 				}
 				return;
 			}

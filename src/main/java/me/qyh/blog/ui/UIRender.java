@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -38,8 +40,8 @@ public class UIRender extends RenderSupport {
 	@Autowired
 	private SpaceService spaceService;
 
-	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response)
-			throws TplRenderException {
+	public String render(DisposiblePage page, Map<String, Object> model, HttpServletRequest request,
+			HttpServletResponse response) throws TplRenderException {
 		// set space
 		if (!Environment.hasSpace() && page.getSpace() != null) {
 			Environment.setSpace(spaceService.getSpace(page.getSpace().getId())
@@ -47,7 +49,8 @@ public class UIRender extends RenderSupport {
 		}
 		try {
 			DisposablePageContext.set(page);
-			return super.render(TemplateUtils.getTemplateName(page), Maps.newHashMap(), request, response);
+			return super.render(TemplateUtils.getTemplateName(page), model == null ? Maps.newHashMap() : model, request,
+					response);
 		} catch (TplRenderException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -58,6 +61,11 @@ public class UIRender extends RenderSupport {
 			DisposablePageContext.clear();
 		}
 
+	}
+
+	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response)
+			throws TplRenderException {
+		return render(page, null, request, response);
 	}
 
 }

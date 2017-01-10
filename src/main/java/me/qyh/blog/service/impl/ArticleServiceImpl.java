@@ -349,7 +349,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				articleTagDao.insert(articleTag);
 			}
 			if (rebuildIndex) {
-				rebuildIndexbackground();
+				rebuildIndexBackground();
 			}
 		}
 	}
@@ -561,6 +561,16 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
+	public void preparePreview(Article article) {
+
+		if (!CollectionUtils.isEmpty(articleContentHandlers)) {
+			for (ArticleContentHandler handler : articleContentHandlers) {
+				handler.handlePreview(article);
+			}
+		}
+	}
+
+	@Override
 	public void onApplicationEvent(LockDeleteEvent event) {
 		// synchronized
 		// do not worry about transaction
@@ -590,7 +600,19 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	public interface ArticleContentHandler {
+		/**
+		 * 用来处理文章
+		 * 
+		 * @param article
+		 */
 		void handle(Article article);
+
+		/**
+		 * 用来处理预览文章
+		 * 
+		 * @param article
+		 */
+		void handlePreview(Article article);
 	}
 
 	public void setArticleContentHandlers(List<ArticleContentHandler> articleContentHandlers) {
@@ -630,7 +652,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					start = startCopy;
 					status.setRollbackOnly();
 
-					rebuildIndexbackground();
+					rebuildIndexBackground();
 					throw e;
 				} finally {
 					transactionManager.commit(status);
@@ -645,7 +667,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 	}
 
-	private void rebuildIndexbackground() {
+	private void rebuildIndexBackground() {
 		threadPoolTaskExecutor.execute(() -> articleIndexer.rebuildIndex());
 	}
 
