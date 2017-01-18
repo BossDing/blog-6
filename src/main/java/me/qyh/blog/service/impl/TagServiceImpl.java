@@ -20,7 +20,8 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.dao.ArticleTagDao;
 import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Tag;
+import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.TagQueryParam;
@@ -36,7 +38,7 @@ import me.qyh.blog.service.TagService;
 
 @Service
 @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-public class TagServiceImpl implements TagService, InitializingBean {
+public class TagServiceImpl implements TagService, InitializingBean, ApplicationEventPublisherAware {
 
 	@Autowired
 	private TagDao tagDao;
@@ -45,13 +47,8 @@ public class TagServiceImpl implements TagService, InitializingBean {
 	@Autowired
 	private ConfigService configSerivce;
 	@Autowired
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
-	/**
-	 * 用于重建文章索引
-	 */
-	@Autowired
-	private ArticleIndexer articleIndexer;
+	private NRTArticleIndexer articleIndexer;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -79,16 +76,13 @@ public class TagServiceImpl implements TagService, InitializingBean {
 			} else {
 				articleTagDao.merge(db, newTag);
 				tagDao.deleteById(db.getId());
-				articleIndexer.getIndexer().removeTag(db.getName());
+				articleIndexer.removeTag(db.getName());
 			}
 		} else {
 			tagDao.update(tag);
 		}
-		articleIndexer.getIndexer().addTags(tag.getName());
-		threadPoolTaskExecutor.execute(() -> {
-			articleIndexer.rebuildIndex();
-		});
-
+		articleIndexer.addTags(tag.getName());
+		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 	}
 
 	@Override
@@ -100,16 +94,20 @@ public class TagServiceImpl implements TagService, InitializingBean {
 		}
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
-		articleIndexer.getIndexer().removeTag(db.getName());
-		threadPoolTaskExecutor.execute(() -> {
-			articleIndexer.rebuildIndex();
-		});
+		articleIndexer.removeTag(db.getName());
+		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		for (Tag tag : tagDao.selectAll()) {
-			articleIndexer.getIndexer().addTags(tag.getName());
+			articleIndexer.addTags(tag.getName());
 		}
 	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
+	}
+
 }

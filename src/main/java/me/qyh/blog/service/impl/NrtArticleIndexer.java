@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -116,6 +117,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	private static final String LOCKED = "locked";
 	private static final String ALIAS = "alias";
 	private static final String SUMMARY = "summary";
+	private static final String LASTMODIFYDATE = "lastModifyDate";
 
 	protected Analyzer analyzer;
 	private final ControlledRealTimeReopenThread<IndexSearcher> reopenThread;
@@ -213,6 +215,11 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		BytesRef pubDate = new BytesRef(pubDateStr);
 		doc.add(new SortedDocValuesField(PUB_DATE, pubDate));
 		doc.add(new StringField(PUB_DATE, pubDateStr, Field.Store.NO));
+
+		Timestamp lastModifyDate = article.getLastModifyDate();
+		if (lastModifyDate != null) {
+			doc.add(new SortedDocValuesField(LASTMODIFYDATE, new BytesRef(timeToString(lastModifyDate))));
+		}
 		doc.add(new SortedDocValuesField(ID, new BytesRef(article.getId().toString())));
 		return doc;
 	}
@@ -440,10 +447,15 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			case HITS:
 				fields.add(new SortField(HITS, Type.INT, true));
 				break;
+			case PUBDATE:
+				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
+				break;
+			case LASTMODIFYDATE:
+				fields.add(new SortField(LASTMODIFYDATE, SortField.Type.STRING, true));
+				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
 			default:
 				break;
 			}
-			fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
 			fields.add(new SortField(ID, SortField.Type.STRING, true));
 		}
 		return new Sort(fields.toArray(new SortField[] {}));

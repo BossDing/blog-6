@@ -15,9 +15,9 @@
  */
 package me.qyh.blog.security.input;
 
+import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.util.Validators;
@@ -38,14 +38,8 @@ public class AllowTags {
 
 	public List<Tag> getTags() {
 		if (!Validators.isEmptyOrNull(simpleTags, true)) {
-			for (String name : Splitter.on(',').split(simpleTags)) {
-				if (name.isEmpty()) {
-					continue;
-				}
-				Tag tag = new Tag();
-				tag.setName(name);
-				tags.add(tag);
-			}
+			Arrays.stream(simpleTags.split(",")).filter(name -> !name.isEmpty()).map(Tag::new)
+					.forEach(tag -> tags.add(tag));
 		}
 		return tags;
 	}

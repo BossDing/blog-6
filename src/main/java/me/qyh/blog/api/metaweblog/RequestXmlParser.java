@@ -18,6 +18,7 @@ package me.qyh.blog.api.metaweblog;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -31,7 +32,6 @@ import org.springframework.util.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import me.qyh.blog.security.Base64;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -162,8 +162,8 @@ public class RequestXmlParser {
 		} else if (v instanceof Date) {
 			sb.append("<dateTime.iso8601>").append(ISO8601_FORMAT.format((Date) v)).append("</dateTime.iso8601>");
 		} else if (v instanceof byte[]) {
-			sb.append("<base64>").append("<![CDATA[").append(new String(Base64.encode((byte[]) v))).append("]]>")
-					.append("</base64>");
+			sb.append("<base64>").append("<![CDATA[").append(Base64.getEncoder().encodeToString((byte[]) v))
+					.append("]]>").append("</base64>");
 		} else if (v instanceof Collection<?>) {
 			sb.append("<array>");
 			sb.append("<data>");
@@ -257,7 +257,7 @@ public class RequestXmlParser {
 			}
 		case "base64":
 			try {
-				return Base64.decode(v.getBytes());
+				return Base64.getDecoder().decode(v.getBytes());
 			} catch (Exception e) {
 				throw new ParseException("解析失败:" + e.getMessage(), e);
 			}

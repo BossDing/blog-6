@@ -15,43 +15,29 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.lang.reflect.Method;
-
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.security.AuthencationException;
 
 @Aspect
-public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter {
+public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
+		implements ApplicationEventPublisherAware {
 	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
 
-	@Autowired
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-	@Autowired
-	private ArticleIndexer articleIndexer;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Before("@annotation(ArticleIndexRebuild)")
 	public void before(JoinPoint joinPoint) throws InterruptedException {
-		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-		Method method = signature.getMethod();
-		String methodName = method.getName();
-		Class<?>[] parameterTypes = method.getParameterTypes();
-		try {
-			method = joinPoint.getTarget().getClass().getMethod(methodName, parameterTypes);
-		} catch (Exception e) {
-			throw new SystemException(e.getMessage(), e);
-		}
 		if (TransactionSynchronizationManager.isSynchronizationActive()
 				&& !TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
 			TransactionSynchronizationManager.registerSynchronization(this);
@@ -67,7 +53,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	public void afterCompletion(int status) {
 		try {
 			if (status == STATUS_ROLLED_BACK && !noReload()) {
-				threadPoolTaskExecutor.execute(articleIndexer::rebuildIndex);
+				this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 			}
 		} finally {
 			throwableLocal.remove();
@@ -78,5 +64,10 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		Throwable e = throwableLocal.get();
 		return e != null
 				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException);
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

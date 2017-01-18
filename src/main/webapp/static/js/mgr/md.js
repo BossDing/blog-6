@@ -269,6 +269,9 @@
 			if($("#level").val() != ''){
 				article.level = $("#level").val();
 			}
+			if(article.status == 'SCHEDULED'){
+				article.pubDate = $("#scheduleDate").val()
+			};
 			article.isPrivate = $("#private").prop("checked");
 			article.allowComment = $("#allowComment").prop("checked");
 			article.tags = tags;

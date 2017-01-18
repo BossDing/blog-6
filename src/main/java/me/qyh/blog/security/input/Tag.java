@@ -29,6 +29,14 @@ public class Tag {
 	private String name;
 	private List<Attribute> attributes = Lists.newArrayList();
 
+	public Tag() {
+		super();
+	}
+
+	public Tag(String name) {
+		this.name = name;
+	}
+
 	public String getName() {
 		return name;
 	}

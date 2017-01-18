@@ -2,10 +2,14 @@
 	th:if="${showSortLab == null ? true : showSortLab}">
 	<li role="presentation"
 		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,null)}" >默认</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,null)}">默认</a></li>
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'PUBDATE') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,'PUBDATE')}" th:if="${articlePage.param.hasQuery()}">发布时间</a></li>
+		th:href="${urls.getArticlesUrl(articlePage.param,'PUBDATE')}"
+		th:if="${articlePage.param.hasQuery()}">发布时间</a></li>
+	<li role="presentation"
+		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'LASTMODIFYDATE') ? 'active' : null}"><a
+		th:href="${urls.getArticlesUrl(articlePage.param,'LASTMODIFYDATE')}">最近更新</a></li>
 	<li role="presentation"
 		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
 		th:href="${urls.getArticlesUrl(articlePage.param,'HITS')}">点击量</a></li>
@@ -31,8 +35,13 @@
 				th:href=" ${urls.getArticlesUrl(tag)}" th:utext=" ${tag.name}"></a>
 			</span>
 		</div>
-		<div style="margin-top: 5px; margin-bottom: 10px"
-			th:text="${messages.getMessage(timeDiffParser.parseDiff(article.pubDate))}"> </div>
+		<div style="margin-top: 5px; margin-bottom: 10px">
+			 <span
+				th:text="'发布日期：'+${messages.getMessage(timeDiffParser.parseDiff(article.pubDate))}"></span>
+			&nbsp;&nbsp;&nbsp;&nbsp; <span
+				th:if="${article.lastModifyDate != null}"
+				th:text="'最近更新：'+${messages.getMessage(timeDiffParser.parseDiff(article.lastModifyDate))}"></span>
+		</div>
 
 		<div style="margin-top: 5px; margin-bottom: 10px">
 			<span aria-hidden="true" class="glyphicon glyphicon-fire"

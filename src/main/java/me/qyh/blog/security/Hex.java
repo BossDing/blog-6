@@ -26,7 +26,7 @@ public final class Hex {
 		if (nChars % 2 != 0) {
 			throw new IllegalArgumentException("Hex-encoded string must have an even number of characters");
 		}
-
+		
 		byte[] result = new byte[nChars / 2];
 
 		for (int i = 0; i < nChars; i += 2) {

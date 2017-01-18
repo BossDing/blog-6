@@ -70,26 +70,28 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 				|| StringUtils.startsWithIgnoreCase(href, "https://"))) {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
 			String host = uc.getHost();
-			if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain()))
+			if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())) {
 				return false;
+			}
 		}
 		return true;
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (tags == null && (whitelistJsonResource != null)) {
-			tags = Jsons.readValue(AllowTags.class, Resources.readResourceToString(whitelistJsonResource));
-		}
 		if (tags == null) {
-			tags = new AllowTags();
-			tags.setSimpleTags("b,code,em,del,small,strong");
-			Tag a = new Tag();
-			a.setName("a");
-			Attribute href = new Attribute();
-			href.setName("href");
-			a.addAttribute(href);
-			tags.addTag(a);
+			if (whitelistJsonResource != null) {
+				tags = Jsons.readValue(AllowTags.class, Resources.readResourceToString(whitelistJsonResource));
+			} else {
+				tags = new AllowTags();
+				tags.setSimpleTags("b,code,em,del,small,strong");
+				Tag a = new Tag();
+				a.setName("a");
+				Attribute href = new Attribute();
+				href.setName("href");
+				a.addAttribute(href);
+				tags.addTag(a);
+			}
 		}
 	}
 

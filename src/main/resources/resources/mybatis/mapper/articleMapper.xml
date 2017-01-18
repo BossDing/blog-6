@@ -15,54 +15,56 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="allowComment" property="allowComment" />
 		<result column="summary" property="summary" />
 		<result property="level" column="art_level" />
-		<result column="art_lock" property="lockId"/>
-		<result property="tags" column="tags" typeHandler="TagsTypeHandler"/>
+		<result column="art_lock" property="lockId" />
+		<result property="tags" column="tags" typeHandler="TagsTypeHandler" />
 		<result property="status" column="art_status" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="alias" column="art_alias" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
-			<result column="space_alias" property="alias"/>
-			<result column="space_name" property="name"/>
-			<result column="space_is_private" property="isPrivate"/>
-			<result column="space_lock" property="lockId"/>
+			<result column="space_alias" property="alias" />
+			<result column="space_name" property="name" />
+			<result column="space_is_private" property="isPrivate" />
+			<result column="space_lock" property="lockId" />
 		</association>
 	</resultMap>
-	
+
 	<resultMap type="ArticleDateFile" id="ArticleDateFileDetail">
-		<id column="art_id"/>
-		<result column="pubDate" property="begin"/>
-		<result column="pubDate" property="end"/>
-		<result column="art_count" property="count"/>
+		<id column="art_id" />
+		<result column="pubDate" property="begin" />
+		<result column="pubDate" property="end" />
+		<result column="art_count" property="count" />
 	</resultMap>
-	
+
 	<resultMap type="ArticleSpaceFile" id="ArticleSpaceFileDetail">
-		<id column="space_id"/>
-		<result column="art_count" property="count"/>
+		<id column="space_id" />
+		<result column="art_count" property="count" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
-			<result column="space_alias" property="alias"/>
-			<result column="space_name" property="name"/>
+			<result column="space_alias" property="alias" />
+			<result column="space_name" property="name" />
 		</association>
 	</resultMap>
-	
+
 	<resultMap type="ArticleStatistics" id="ArticleStatisticsDetail">
-		<id column="space_id"/>
-		<result column="lastModifyDate" property="lastModifyDate"/>
-		<result column="totalHits" property="totalHits"/>
-		<result column="totalArticles" property="totalArticles"/>
+		<id column="space_id" />
+		<result column="lastModifyDate" property="lastModifyDate" />
+		<result column="totalHits" property="totalHits" />
+		<result column="totalArticles" property="totalArticles" />
 	</resultMap>
-	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,allowComment)
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
+		keyColumn="id">
+		INSERT INTO
+		blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,allowComment)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
-			#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-			#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{allowComment})
+		#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
+		#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{allowComment})
 	</insert>
-	
+
 	<update id="update">
-		UPDATE 
-			blog_article
+		UPDATE
+		blog_article
 		<set>
 			<if test="content != null">
 				content = #{content},
@@ -78,12 +80,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				summary = #{summary},
 			</if>
 			art_level = #{level},
-			art_lock  = #{lockId},
+			art_lock = #{lockId},
 			<if test="status != null">
-				art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},
+				art_status =
+				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},
 			</if>
 			<if test="from != null">
-				art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
+				art_from =
+				#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
 			</if>
 			<if test="space != null">
 				space_id = #{space.id},
@@ -99,23 +103,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
 	<select id="selectById" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
-		WHERE 
-			art.id = #{id}
+		WHERE
+		art.id = #{id}
 		GROUP BY art.id
 	</select>
-	
+
 	<select id="selectByAlias" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
-		WHERE 
-			art_alias = #{alias}
+		WHERE
+		art_alias = #{alias}
 		GROUP BY art.id
 	</select>
-	
+
 	<select id="selectCount" resultType="int">
-		SELECT 
-			COUNT(art.id) 
-		FROM 
-			blog_article art
+		SELECT
+		COUNT(art.id)
+		FROM
+		blog_article art
 		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
 		<where>
 			<if test="space != null">
@@ -129,15 +133,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.pubDate BETWEEN #{begin} AND #{end}
 			</if>
 			<if test="status != null">
-				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+				AND art.art_status =
+				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
 			<if test="from != null">
-				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
+				AND art.art_from =
+				#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
 			<if test="hasLock != null">
 				<choose>
 					<when test="hasLock">
-						AND (art.art_lock IS NOT NULL OR sp.space_lock IS NOT NULL)
+						AND (art.art_lock IS NOT NULL OR sp.space_lock IS
+						NOT NULL)
 					</when>
 					<otherwise>
 						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
@@ -145,38 +152,42 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				</choose>
 			</if>
 			<if test="tag != null">
-				AND art.id IN (SELECT article_id FROM blog_article_tag bat LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id WHERE bt.tag_name = #{tag})
+				AND art.id IN (SELECT article_id FROM blog_article_tag
+				bat LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id WHERE
+				bt.tag_name = #{tag})
 			</if>
 		</where>
 	</select>
-	
+
 	<select id="selectPage" resultMap="ArticleDetail">
 		SELECT
-			art.id AS art_id,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.editor,
-			art.art_from,
-			art.space_id,
-			art.art_lock,
-			art.art_alias,
-			sp.space_alias,
-			space_lock,
-			sp.is_private AS space_is_private,
-			sp.space_name,
-			GROUP_CONCAT(bt.tag_name) AS tags
+		art.id AS art_id,
+		art.pubDate,
+		art.lastModifyDate,
+		art.title,
+		art.isPrivate,
+		art.hits,
+		art.summary,
+		art.art_level,
+		art.art_status,
+		art.editor,
+		art.art_from,
+		art.space_id,
+		art.art_lock,
+		art.art_alias,
+		sp.space_alias,
+		space_lock,
+		sp.is_private AS space_is_private,
+		sp.space_name,
+		GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON
+		bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
+		bt.id
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
@@ -189,15 +200,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.pubDate BETWEEN #{begin} AND #{end}
 			</if>
 			<if test="status != null">
-				AND art.art_status = #{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
+				AND art.art_status =
+				#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler}
 			</if>
 			<if test="from != null">
-				AND art.art_from = #{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
+				AND art.art_from =
+				#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
 			<if test="hasLock != null">
 				<choose>
 					<when test="hasLock">
-						AND (art.art_lock IS NOT NULL OR sp.space_lock IS NOT NULL)
+						AND (art.art_lock IS NOT NULL OR sp.space_lock IS
+						NOT NULL)
 					</when>
 					<otherwise>
 						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
@@ -209,55 +223,72 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 		</where>
 		GROUP BY art.id
-		ORDER BY 
+		ORDER BY
 		<if test="!ignoreLevel">
 			art_level DESC,
 		</if>
-		<if test="sort != null">
-			<choose>
-				<when test='sort.name() == "HITS"'>
-					art.hits DESC,
-				</when>
-			</choose>
-		</if>
-		art.pubDate DESC,art.id DESC
+		<choose>
+			<when test="sort != null">
+				<choose>
+					<when test='sort.name() == "HITS"'>
+						art.hits DESC,
+					</when>
+					<when test='sort.name() == "LASTMODIFYDATE"'>
+						art.lastModifyDate DESC,art.pubDate DESC,
+					</when>
+					<otherwise>
+						art.pubDate DESC,
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				art.pubDate DESC,
+			</otherwise>
+		</choose>
+		art.id DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
-	
+
 	<select id="selectByIds" resultMap="ArticleDetail">
 		SELECT
-			art.id AS art_id,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.space_id,
-			art.art_lock,
-			art.art_alias,
-			sp.space_alias,
-			space_lock,
-			sp.space_name,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
+		art.id AS art_id,
+		art.pubDate,
+		art.lastModifyDate,
+		art.title,
+		art.isPrivate,
+		art.hits,
+		art.summary,
+		art.art_level,
+		art.art_status,
+		art.art_from,
+		art.space_id,
+		art.art_lock,
+		art.art_alias,
+		sp.space_alias,
+		space_lock,
+		sp.space_name,
+		sp.is_private AS space_is_private,
+		GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
-		WHERE art.id IN <foreach collection="list" item="id" open="(" close=")" separator=",">#{id}</foreach>
+		ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON
+		bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
+		bt.id
+		WHERE art.id IN
+		<foreach collection="list" item="id" open="(" close=")"
+			separator=",">#{id}</foreach>
 		GROUP BY art.id
 	</select>
-	
+
 	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
-		SELECT MIN(pubDate) AS pubDate,COUNT(*) AS art_count,MIN(art.id) AS art_id
+		SELECT MIN(pubDate) AS pubDate,COUNT(*) AS art_count,MIN(art.id) AS
+		art_id
 		FROM blog_article art
-		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_space sp ON
+		art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -267,7 +298,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<when test="space != null">
 				AND space_id = #{space.id}
 			</when>
-			</choose>
+		</choose>
 		<choose>
 			<when test='mode.name() == "Y"'>
 				GROUP BY YEAR(pubDate)
@@ -281,10 +312,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</choose>
 		ORDER BY pubDate DESC
 	</select>
-	
+
 	<select id="selectSpaceFiles" resultMap="ArticleSpaceFileDetail">
 		SELECT space_id,space_alias,space_name,COUNT(*) AS art_count
-		FROM blog_article art
+		FROM
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art_status = 0<!-- PUBLISHED -->
@@ -294,17 +326,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		GROUP BY space_id
 	</select>
-	
+
 	<select id="selectScheduled" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
 		WHERE
-			art.art_status = 1<!-- SCHEDULED -->
-		AND 
-			art.pubDate <![CDATA[ <= ]]> #{date}
+		art.art_status = 1<!-- SCHEDULED -->
+		AND
+		art.pubDate <![CDATA[ <= ]]>
+		#{date}
 		GROUP BY art.id
 	</select>
-	
-	
+
+
 	<select id="selectPublished" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
 		WHERE art.art_status = 0
@@ -313,37 +346,39 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		GROUP BY art.id
 	</select>
-	
+
 	<delete id="deleteById">
 		DELETE FROM blog_article WHERE id = #{id}
 	</delete>
-	
+
 	<update id="updateHits">
-		UPDATE blog_article SET hits = hits + #{hits} WHERE id = #{id}
+		UPDATE blog_article SET hits = hits + #{hits} WHERE
+		id = #{id}
 	</update>
-	
+
 	<select id="selectAll" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
 		GROUP BY art.id
 	</select>
-	
+
 	<select id="getPreviousArticle" resultMap="ArticleDetail">
 		SELECT
-			art.id AS art_id,
-			art.art_alias,
-			art.title,
-			sp.space_alias,
-			sp.space_name
+		art.id AS art_id,
+		art.art_alias,
+		art.title,
+		sp.space_alias,
+		sp.space_name
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
+		ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.pubDate  <![CDATA[ < ]]> #{article.pubDate}
+		AND art.pubDate  <![CDATA[ < ]]>
+		#{article.pubDate}
 		<choose>
-		<when test="article.space != null">
-			AND art.space_id = #{article.space.id}
-		</when>
+			<when test="article.space != null">
+				AND art.space_id = #{article.space.id}
+			</when>
 		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -352,24 +387,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY art.pubDate DESC,art.id DESC
 		LIMIT 0,1
 	</select>
-	
+
 	<select id="getNextArticle" resultMap="ArticleDetail">
 		SELECT
-			art.id AS art_id,
-			art.art_alias,
-			art.title,
-			sp.space_alias,
-			sp.space_name
+		art.id AS art_id,
+		art.art_alias,
+		art.title,
+		sp.space_alias,
+		sp.space_name
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
+		ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.pubDate  > #{article.pubDate}
+		AND art.pubDate >
+		#{article.pubDate}
 		<choose>
-		<when test="article.space != null">
-			AND art.space_id = #{article.space.id}
-		</when>
+			<when test="article.space != null">
+				AND art.space_id = #{article.space.id}
+			</when>
 		</choose>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
@@ -378,17 +414,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY art.pubDate ASC,art.id ASC
 		LIMIT 0,1
 	</select>
-	
+
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
-			COALESCE(SUM(hits),0) AS totalHits,
-			COUNT(art.id) AS totalArticles,
-			MAX(lastModifyDate) AS lastModifyDate,
-			MAX(pubDate) AS lastPubDate
+		COALESCE(SUM(hits),0) AS totalHits,
+		COUNT(art.id) AS totalArticles,
+		MAX(lastModifyDate) AS lastModifyDate,
+		MAX(pubDate) AS lastPubDate
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
+		ON art.space_id = sp.id
 		WHERE art.art_status = 0
 		<if test="space != null">
 			AND art.space_id = #{space.id}
@@ -398,60 +434,63 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND sp.is_private = false
 		</if>
 	</select>
-	
+
 	<select id="selectRecentArticles" resultMap="ArticleDetail">
 		SELECT
-			art.id AS art_id,
-			art.pubDate,
-			art.title,
-			sp.space_alias,
-			sp.space_name,
-			art.art_alias
+		art.id AS art_id,
+		art.pubDate,
+		art.title,
+		sp.space_alias,
+		sp.space_name,
+		art.art_alias
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
+		ON art.space_id = sp.id
 		WHERE art.art_status != 3<!-- DELETED -->
 		ORDER BY art.id DESC <!-- 这里不按照时间排序，因为这样草稿将会最后显示 -->
 		LIMIT 0,#{limit}
 	</select>
-	
+
 	<update id="deleteLock">
-		UPDATE blog_article SET  art_lock = NULL WHERE art_lock = #{lockId}
+		UPDATE blog_article SET art_lock = NULL WHERE
+		art_lock = #{lockId}
 	</update>
-	
+
 	<select id="selectMinimumScheduleDate" resultType="java.sql.Timestamp">
 		SELECT MIN(pubDate) FROM blog_article WHERE art_status = 1<!-- SCHEDULED -->
 	</select>
-	
+
 	<sql id="articleDetailSql">
 		SELECT
-			art.id AS art_id,
-			art.content,
-			art.pubDate,
-			art.lastModifyDate,
-			art.title,
-			art.isPrivate,
-			art.hits,
-			art.summary,
-			art.art_level,
-			art.art_status,
-			art.art_from,
-			art.editor,
-			art.space_id,
-			art.art_lock,
-			art.art_alias,
-			art.allowComment,
-			sp.space_alias,
-			sp.space_name,
-			space_lock,
-			sp.is_private AS space_is_private,
-			GROUP_CONCAT(bt.tag_name) AS tags
+		art.id AS art_id,
+		art.content,
+		art.pubDate,
+		art.lastModifyDate,
+		art.title,
+		art.isPrivate,
+		art.hits,
+		art.summary,
+		art.art_level,
+		art.art_status,
+		art.art_from,
+		art.editor,
+		art.space_id,
+		art.art_lock,
+		art.art_alias,
+		art.allowComment,
+		sp.space_alias,
+		sp.space_name,
+		space_lock,
+		sp.is_private AS space_is_private,
+		GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
-			blog_article art
+		blog_article art
 		LEFT OUTER JOIN blog_space sp
-			ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
+		ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article_tag bat ON
+		bat.article_id = art.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
+		bt.id
 	</sql>
 </mapper>

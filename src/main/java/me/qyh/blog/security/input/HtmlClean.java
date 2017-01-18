@@ -21,6 +21,7 @@ package me.qyh.blog.security.input;
  * @author Administrator
  *
  */
+@FunctionalInterface
 public interface HtmlClean {
 
 	/**

@@ -47,7 +47,7 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean highlight = true;// 查询是否高亮显示
 
 	public enum Sort {
-		HITS, PUBDATE
+		HITS, PUBDATE, LASTMODIFYDATE
 	}
 
 	public Space getSpace() {

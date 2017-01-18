@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.Optional;
 
 import javax.servlet.http.Cookie;
@@ -165,7 +166,7 @@ public class RememberMe {
 
 		String value = sb.toString();
 
-		sb = new StringBuilder(new String(Base64.encode(value.getBytes())));
+		sb = new StringBuilder(Base64.getEncoder().encodeToString(value.getBytes()));
 
 		while (sb.charAt(sb.length() - 1) == '=') {
 			sb.deleteCharAt(sb.length() - 1);
@@ -178,12 +179,13 @@ public class RememberMe {
 		for (int j = 0; j < cookieValue.length() % 4; j++) {
 			cookieValue = cookieValue + "=";
 		}
-		if (!Base64.isBase64(cookieValue.getBytes())) {
-			throw new InvalidCookieException("Cookie不是正确的Base64格式");
+		try {
+			String cookieAsPlainText = new String(Base64.getDecoder().decode(cookieValue.getBytes()));
+			String[] tokens = StringUtils.delimitedListToStringArray(cookieAsPlainText, DELIMITER);
+			return tokens;
+		} catch (Exception e) {
+			throw new InvalidCookieException("cookieValue:" + cookieValue + "解码失败");
 		}
-		String cookieAsPlainText = new String(Base64.decode(cookieValue.getBytes()));
-		String[] tokens = StringUtils.delimitedListToStringArray(cookieAsPlainText, DELIMITER);
-		return tokens;
 	}
 
 	protected String extractRememberMeCookie(HttpServletRequest request) {

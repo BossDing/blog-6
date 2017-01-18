@@ -72,7 +72,6 @@ public class IndexController {
 		page.setPreview(false);
 		page.setTpl(TemplateUtils.buildDataTag(Webs.decode(tagName), allRequestParams)
 				+ TemplateUtils.buildFragmentTag(Webs.decode(fragment), null));
-		System.out.println(page.getTpl());
 		try {
 			return new JsonResult(true, uiRender.render(page, request, response));
 		} catch (TplRenderException e) {

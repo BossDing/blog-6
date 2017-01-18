@@ -23,14 +23,16 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
@@ -41,7 +43,8 @@ import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.util.Validators;
 
 @Service
-public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockDeleteEvent> {
+public class SpaceServiceImpl
+		implements SpaceService, ApplicationListener<LockDeleteEvent>, ApplicationEventPublisherAware {
 
 	@Autowired
 	private SpaceDao spaceDao;
@@ -49,10 +52,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockD
 	private LockManager lockManager;
 	@Autowired
 	private SpaceCache spaceCache;
-	@Autowired
-	private ArticleIndexer articleIndexer;
-	@Autowired
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -110,9 +110,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockD
 		spaceDao.update(space);
 		spaceCache.evit(db);
 
-		threadPoolTaskExecutor.execute(() -> {
-			articleIndexer.rebuildIndex();
-		});
+		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 	}
 
 	@Override
@@ -143,5 +141,10 @@ public class SpaceServiceImpl implements SpaceService, ApplicationListener<LockD
 		// synchronized
 		// do not worry about transaction
 		spaceDao.deleteLock(event.getLockId());
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

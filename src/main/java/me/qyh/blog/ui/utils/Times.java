@@ -76,8 +76,8 @@ public class Times {
 	 */
 	public static Optional<LocalDateTime> parse(String text) {
 		if (text.indexOf(' ') == -1) {
+			// may be date
 			for (DateTimeFormatter formatter : DATE_FORMATTERS) {
-				// may be date
 				try {
 					return Optional.of(LocalDateTime.from(LocalDate.parse(text, formatter).atStartOfDay()));
 				} catch (DateTimeParseException e) {
