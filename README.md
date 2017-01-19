@@ -1,7 +1,7 @@
 # blog5
 钱宇豪的个人博客
 
-## www.qyh.me
+## https://www.qyh.me
 
 **不会对任何IE内核浏览器(包括Edge)作任何支持，如果你是IE的忠实拥趸，那么这并不适合你**
 
@@ -19,7 +19,7 @@
 * 支持metaweblog api
 * ping服务
 
-## Executable War http://www.qyh.me/page/executable-war
+## Executable War https://www.qyh.me/page/executable-war
 
 
 
