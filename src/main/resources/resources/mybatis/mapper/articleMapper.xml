@@ -95,8 +95,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="allowComment != null">
 				allowComment = #{allowComment},
 			</if>
-			art_alias = #{alias},
-			lastModifyDate = #{lastModifyDate}
+			<if test="lastModifyDate != null">
+				lastModifyDate = #{lastModifyDate},
+			</if>
+			art_alias = #{alias}
 		</set>
 		WHERE id = #{id}
 	</update>
