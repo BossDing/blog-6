@@ -26,7 +26,6 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
 
@@ -62,16 +61,6 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	@Override
 	protected List<TagCount> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		boolean queryPrivate = Environment.isLogin();
-		if (queryPrivate) {
-			String queryPrivateStr = super.getVariables("queryPrivate", variables, attributes);
-			if (queryPrivateStr != null) {
-				try {
-					queryPrivate = Boolean.parseBoolean(queryPrivateStr);
-				} catch (Exception e) {
-				}
-			}
-		}
 		boolean hasLock = true;
 		String hasLockStr = super.getVariables("hasLock", variables, attributes);
 		if (hasLockStr != null) {
@@ -80,7 +69,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 			} catch (Exception e) {
 			}
 		}
-		return articleService.queryTags(space, hasLock, queryPrivate);
+		return articleService.queryTags(space, hasLock);
 	}
 
 }

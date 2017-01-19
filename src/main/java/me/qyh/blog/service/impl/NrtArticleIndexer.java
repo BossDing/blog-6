@@ -376,13 +376,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			if (param.getTag() != null) {
 				builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
 			}
-			Query multiFieldQuery = null;
-			if (param.hasQuery()) {
-				multiFieldQuery = buildMultiFieldQuery(param.getQuery());
-				if (multiFieldQuery != null) {
-					builder.add(multiFieldQuery, Occur.MUST);
-				}
-			}
+			Optional<Query> optionalMultiFieldQuery = param.hasQuery() ? buildMultiFieldQuery(param.getQuery())
+					: Optional.empty();
+			optionalMultiFieldQuery.ifPresent(query -> builder.add(query, Occur.MUST));
 			Query query = builder.build();
 			LOGGER.debug(query.toString());
 
@@ -400,9 +396,9 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				}
 			}
 			List<Article> articles = dquery.query(Lists.newArrayList(datas.keySet()));
-			if (param.isHighlight() && multiFieldQuery != null) {
+			if (param.isHighlight() && optionalMultiFieldQuery.isPresent()) {
 				for (Article article : articles) {
-					doHightlight(article, datas.get(article.getId()), multiFieldQuery);
+					doHightlight(article, datas.get(article.getId()), optionalMultiFieldQuery.get());
 					article.setContent(null);
 				}
 			}
@@ -420,17 +416,17 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}
 	}
 
-	protected Query buildMultiFieldQuery(String query) {
+	protected Optional<Query> buildMultiFieldQuery(String query) {
 		String escaped = MultiFieldQueryParser.escape(query.trim());
 		MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT },
 				analyzer, qboostMap);
 		parser.setAutoGeneratePhraseQueries(true);
 		parser.setPhraseSlop(0);
 		try {
-			return parser.parse(escaped);
+			return Optional.of(parser.parse(escaped));
 		} catch (ParseException e) {
 			LOGGER.debug("无法解析输入的查询表达式:" + escaped + ":" + e.getMessage(), e);
-			return null;
+			return Optional.empty();
 		}
 	}
 

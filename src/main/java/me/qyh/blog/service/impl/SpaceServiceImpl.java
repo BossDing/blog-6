@@ -38,6 +38,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.util.Validators;
@@ -130,6 +131,9 @@ public class SpaceServiceImpl
 	@Override
 	@Transactional(readOnly = true)
 	public List<Space> querySpace(SpaceQueryParam param) {
+		if (param.getQueryPrivate() && !Environment.isLogin()) {
+			param.setQueryPrivate(false);
+		}
 		if (Validators.isEmptyOrNull(param.getAlias(), true) && Validators.isEmptyOrNull(param.getName(), true)) {
 			return spaceCache.getSpaces(new SpacesCacheKey(param.getQueryPrivate()));
 		}

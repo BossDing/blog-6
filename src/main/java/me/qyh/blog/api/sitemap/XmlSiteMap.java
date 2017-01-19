@@ -1,0 +1,183 @@
+package me.qyh.blog.api.sitemap;
+
+import java.sql.Timestamp;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Lists;
+
+import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.config.UrlHelper.SpaceUrls;
+import me.qyh.blog.dao.ArticleDao;
+import me.qyh.blog.entity.Article;
+import me.qyh.blog.entity.Article.ArticleStatus;
+import me.qyh.blog.entity.Space;
+import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.pageparam.ArticleQueryParam;
+import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
+
+public class XmlSiteMap implements InitializingBean {
+
+	@Autowired
+	private UrlHelper urlHelper;
+	@Autowired
+	private ArticleDao articleDao;
+	@Autowired
+	private PlatformTransactionManager platformTransactionManager;
+
+	private List<SiteMapUrlItem> extras = Lists.newArrayList();
+
+	private SiteMapConfigure configure;
+
+	private final Comparator<Article> lastModifyDateComparator = new Comparator<Article>() {
+
+		@Override
+		public int compare(Article o1, Article o2) {
+			Timestamp lastModifyDate1 = o1.getLastModifyDate();
+			Timestamp lastModifyDate2 = o2.getLastModifyDate();
+			if (lastModifyDate1 == null && lastModifyDate2 != null) {
+				return 1;
+			}
+
+			if (lastModifyDate1 != null && lastModifyDate2 == null) {
+				return -1;
+			}
+
+			if (lastModifyDate1 == null && lastModifyDate2 == null) {
+				int compare = -o1.getPubDate().compareTo(o2.getPubDate());
+				if (compare == 0) {
+					compare = -o1.getId().compareTo(o2.getId());
+				}
+				return compare;
+			}
+
+			if (lastModifyDate1 != null && lastModifyDate2 != null) {
+				int compare = -lastModifyDate1.compareTo(lastModifyDate2);
+				if (compare == 0) {
+					compare = -o1.getPubDate().compareTo(o2.getPubDate());
+					if (compare == 0) {
+						compare = -o1.getId().compareTo(o2.getId());
+					}
+				}
+				return compare;
+			}
+			return 0;
+		}
+	};
+
+	private String lastXml;
+
+	public String getSiteMap() {
+		if (lastXml == null) {
+			synchronized (this) {
+				if (lastXml == null) {
+					lastXml = buildSiteMapXml();
+				}
+			}
+		}
+
+		return lastXml;
+	}
+
+	public synchronized void updateSitemap() {
+		this.lastXml = buildSiteMapXml();
+	}
+
+	private String buildSiteMapXml() {
+		List<SiteMapUrlItem> items = querySiteMapItems();
+		if (!CollectionUtils.isEmpty(extras)) {
+			items.addAll(extras);
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		sb.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
+		for (SiteMapUrlItem item : items) {
+			sb.append(item.toBuilder());
+		}
+		sb.append("</urlset>");
+		return sb.toString();
+	}
+
+	private List<SiteMapUrlItem> querySiteMapItems() {
+		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
+		td.setReadOnly(true);
+		TransactionStatus status = platformTransactionManager.getTransaction(td);
+		try {
+			SpaceUrls urls = urlHelper.getUrlsBySpace(null);
+			List<SiteMapUrlItem> items = Lists.newArrayList();
+
+			ArticleQueryParam param = new ArticleQueryParam();
+			param.setSort(Sort.LASTMODIFYDATE);
+			param.setStatus(ArticleStatus.PUBLISHED);
+			param.setPageSize(-1);// 查询全部
+
+			List<Article> articles = articleDao.selectPage(param);
+			for (Article article : articles) {
+				SiteMapConfig config = configure.getConfig(article);
+				items.add(new SiteMapUrlItem(urls.getUrl(article),
+						article.getLastModifyDate() == null ? article.getPubDate() : article.getLastModifyDate(),
+						config.getFreq(), config.getFormattedPriority()));
+			}
+
+			Map<Space, List<Article>> map = articles.stream().collect(Collectors.groupingBy(Article::getSpace));
+			for (Map.Entry<Space, List<Article>> entry : map.entrySet()) {
+				Space space = entry.getKey();
+				SiteMapConfig config = configure.getConfig(space);
+				Timestamp lastmod = entry.getValue().stream().min(lastModifyDateComparator)
+						.map(article -> (article.getLastModifyDate() == null ? article.getPubDate()
+								: article.getLastModifyDate()))
+						.orElse(null);
+				items.add(new SiteMapUrlItem(urls.getUrl(space), lastmod, config.getFreq(),
+						config.getFormattedPriority()));
+			}
+
+			articles.stream().flatMap(article -> article.getTags().stream()).distinct().collect(Collectors.toList())
+					.forEach(tag -> {
+						SiteMapConfig config = configure.getConfig(tag);
+						items.add(new SiteMapUrlItem(urls.getArticlesUrl(tag), null, config.getFreq(),
+								config.getFormattedPriority()));
+					});
+
+			return items;
+		} catch (RuntimeException | Error e) {
+			status.setRollbackOnly();
+			throw new SystemException(e.getMessage(), e);
+		} finally {
+			platformTransactionManager.commit(status);
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+
+		if (configure == null) {
+			configure = (o) -> {
+				if (o instanceof Article) {
+					return new SiteMapConfig(Changefreq.MONTHLY, 0.8F);
+				}
+				if (o instanceof Space) {
+					return new SiteMapConfig(Changefreq.WEEKLY, 0.6F);
+				}
+				return new SiteMapConfig(Changefreq.MONTHLY, 0.8F);
+			};
+		}
+
+	}
+
+	public void setExtras(List<SiteMapUrlItem> extras) {
+		this.extras = extras;
+	}
+
+	public void setConfigure(SiteMapConfigure configure) {
+		this.configure = configure;
+	}
+}

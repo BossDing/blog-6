@@ -50,7 +50,7 @@ import me.qyh.blog.api.metaweblog.RequestXmlParser;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.config.UrlHelper.RequestUrls;
+import me.qyh.blog.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.RuntimeLogicException;
@@ -163,7 +163,7 @@ public class GlobalControllerExceptionHandler {
 		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put("error", error);
 		}
-		RequestUrls urls = urlHelper.getUrls(request);
+		SpaceUrls urls = urlHelper.getUrls(request);
 		// 获取空间别名
 		String alias = urls.getSpace();
 		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));

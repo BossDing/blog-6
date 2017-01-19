@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.util;
 
-import java.util.regex.Pattern;
-
 import me.qyh.blog.ui.utils.UIUtils;
 
 /**
@@ -33,19 +31,6 @@ public final class Validators {
 	 */
 	private Validators() {
 		super();
-	}
-
-	/**
-	 * 校验字符串
-	 * 
-	 * @param pattern
-	 *            正则表达式
-	 * @param input
-	 *            字符串
-	 * @return 是否校验通过
-	 */
-	public static boolean validate(Pattern pattern, CharSequence input) {
-		return pattern.matcher(input).matches();
 	}
 
 	/**

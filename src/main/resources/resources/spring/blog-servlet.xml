@@ -98,4 +98,7 @@
 	<bean class="me.qyh.blog.comment.article.CommentMgrController" />
 	<bean class="me.qyh.blog.comment.module.ModuleCommentController" />
 	<bean class="me.qyh.blog.comment.module.ModuleCommentMgrController" />
+	
+	<!-- sitemap -->
+	<bean class="me.qyh.blog.api.sitemap.SiteMapController" />
 </beans>

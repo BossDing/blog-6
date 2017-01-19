@@ -16,7 +16,6 @@
 package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -114,6 +113,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
 	@Override
+	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
 		Article article = null;
 		try {
@@ -392,6 +392,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				param.setPageSize(space.get().getArticlePageSize());
 			}
 		}
+		if (param.isQueryPrivate() && !Environment.isLogin()) {
+			param.setQueryPrivate(false);
+		}
 		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
@@ -536,9 +539,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "hotTags")
-	public List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate) {
-		return articleTagDao.selectTags(space, hasLock, queryPrivate);
+	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+#space+'-hasLock-'+#hasLock+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
+	public List<TagCount> queryTags(Space space, boolean hasLock) {
+		return articleTagDao.selectTags(space, hasLock, Environment.isLogin());
 	}
 
 	@Override
@@ -667,7 +670,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		public void update() {
 			start = articleDao.selectMinimumScheduleDate();
 			LOGGER.debug(start == null ? "没有发现待发布文章"
-					: "发现待发布文章最小日期:" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(start));
+					: "发现待发布文章最小日期:" + Times.format(start.toLocalDateTime(), "yyyy-MM-dd HH:mm:ss"));
 		}
 	}
 

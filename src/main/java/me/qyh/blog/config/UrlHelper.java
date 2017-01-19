@@ -16,6 +16,7 @@
 package me.qyh.blog.config;
 
 import java.util.Date;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -73,8 +74,39 @@ public class UrlHelper implements InitializingBean {
 	 *            当前请求
 	 * @return 链接辅助类
 	 */
-	public RequestUrls getUrls(HttpServletRequest request) {
-		return new RequestUrls(request);
+	public SpaceUrls getUrls(HttpServletRequest request) {
+		Objects.requireNonNull(request);
+		// 如果开启了空间域名
+		String space = null;
+		if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
+			space = Splitter.on('.').split(request.getServerName()).iterator().next();
+		}
+		String requestUri = request.getRequestURI();
+		if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
+			String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
+			if (spaceStart.trim().isEmpty()) {
+				//
+				LOGGER.debug("不完整的路径：" + request.getRequestURL().toString());
+			} else {
+				int index = spaceStart.indexOf('/');
+				space = index == -1 ? spaceStart : spaceStart.substring(0, index);
+			}
+		}
+		if (space != null && space.trim().isEmpty()) {
+			LOGGER.debug("错误的路径：" + request.getRequestURL().toString());
+			space = null;
+		}
+		return new SpaceUrls(space);
+	}
+
+	/**
+	 * 获取空间地址辅助
+	 * 
+	 * @param alias
+	 * @return
+	 */
+	public SpaceUrls getUrlsBySpace(String alias) {
+		return new SpaceUrls(alias);
 	}
 
 	public Urls getUrls() {
@@ -110,6 +142,10 @@ public class UrlHelper implements InitializingBean {
 	 *
 	 */
 	public class Urls {
+
+		private Urls() {
+			super();
+		}
 
 		/**
 		 * 判断能否从目标文章中拼接访问地址
@@ -203,14 +239,23 @@ public class UrlHelper implements InitializingBean {
 	 * @author Administrator
 	 *
 	 */
-	public class RequestUrls extends Urls {
+	public class SpaceUrls extends Urls {
 
-		private HttpServletRequest request;
 		private Env env;
 
-		protected RequestUrls(HttpServletRequest req) {
-			this.request = req;
-			setEnv();
+		private SpaceUrls(String alias) {
+			// 空间域名
+			this.env = new Env();
+			env.space = alias;
+			if (env.isSpaceEnv()) {
+				if (urlConfig.isEnableSpaceDomain()) {
+					env.url = getSpaceUrl(env.space);
+				} else {
+					env.url = url + SPACE_IN_URL + env.space;
+				}
+			} else {
+				env.url = url;
+			}
 		}
 
 		public String getCurrentUrl() {
@@ -325,42 +370,6 @@ public class UrlHelper implements InitializingBean {
 			param.setBegin(begin);
 			param.setEnd(end);
 			return getArticlesUrl(param, 1);
-		}
-
-		private void setEnv() {
-
-			// 空间域名
-			this.env = new Env();
-			// 如果开启了空间域名
-			String space = null;
-			if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
-				space = Splitter.on('.').split(request.getServerName()).iterator().next();
-			}
-			String requestUri = request.getRequestURI();
-			if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
-				String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
-				if (spaceStart.trim().isEmpty()) {
-					//
-					LOGGER.debug("不完整的路径：" + request.getRequestURL().toString());
-				} else {
-					int index = spaceStart.indexOf('/');
-					space = index == -1 ? spaceStart : spaceStart.substring(0, index);
-				}
-			}
-			if (space != null && space.trim().isEmpty()) {
-				LOGGER.debug("错误的路径：" + request.getRequestURL().toString());
-				space = null;
-			}
-			env.space = space;
-			if (env.isSpaceEnv()) {
-				if (urlConfig.isEnableSpaceDomain()) {
-					env.url = getSpaceUrl(env.space);
-				} else {
-					env.url = url + SPACE_IN_URL + env.space;
-				}
-			} else {
-				env.url = url;
-			}
 		}
 
 		private class Env {

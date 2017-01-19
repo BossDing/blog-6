@@ -136,10 +136,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void enableLogin(Object methodHandler, User user) {
 		// auth check
 		if (methodHandler instanceof HandlerMethod) {
-			EnsureLogin ensureLogin = getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class);
-			if (ensureLogin != null) {
-				Environment.doAuthencation();
-			}
+			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
+					.ifPresent(ann -> Environment.doAuthencation());
 		}
 	}
 
@@ -175,12 +173,12 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		}
 	}
 
-	private <T extends Annotation> T getAnnotation(Method method, Class<T> annotationType) {
+	private <T extends Annotation> Optional<T> getAnnotation(Method method, Class<T> annotationType) {
 		T t = AnnotationUtils.findAnnotation(method, annotationType);
 		if (t == null) {
 			t = AnnotationUtils.findAnnotation(method.getDeclaringClass(), annotationType);
 		}
-		return t;
+		return Optional.ofNullable(t);
 	}
 
 	@Override

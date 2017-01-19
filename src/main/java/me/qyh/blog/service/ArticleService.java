@@ -193,7 +193,7 @@ public interface ArticleService {
 	 *            是否查询私人文章
 	 * @return 标签集
 	 */
-	List<TagCount> queryTags(Space space, boolean hasLock, boolean queryPrivate);
+	List<TagCount> queryTags(Space space, boolean hasLock);
 
 	/**
 	 * 更新metaweblog文章

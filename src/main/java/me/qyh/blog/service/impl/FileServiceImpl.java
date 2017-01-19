@@ -104,7 +104,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	@Override
-	public List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
+	public synchronized List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
 		BlogFile parent;
 		if (upload.getParent() != null) {
 			parent = blogFileDao.selectById(upload.getParent());
@@ -116,9 +116,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 
 		String folderKey = getFilePath(parent);
-		synchronized (this) {
-			deleteImmediatelyIfNeed(folderKey);
-		}
+		deleteImmediatelyIfNeed(folderKey);
 		Integer storeId = upload.getStore();
 		if (storeId == null) {
 			throw new LogicException("file.store.notexists", "文件存储器不存在");
@@ -152,11 +150,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throw new LogicException("file.path.exists", "文件已经存在");
 		}
 		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
-		CommonFile cf;
-		synchronized (this) {
-			deleteImmediatelyIfNeed(key);
-			cf = store.store(key, file);
-		}
+		deleteImmediatelyIfNeed(key);
+		CommonFile cf = store.store(key, file);
 		try {
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();
