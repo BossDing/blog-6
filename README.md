@@ -18,6 +18,7 @@
 * 文件管理（可拓展七牛云存储支持），缩略图服务
 * 支持metaweblog api
 * ping服务
+* sitemap
 
 ## Executable War https://www.qyh.me/page/executable-war
 
