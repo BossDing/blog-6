@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.module;
+package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,35 +25,33 @@ import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.comment.base.BaseComment.CommentStatus;
-import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.comment.Comment.CommentStatus;
+import me.qyh.blog.comment.CommentModule.ModuleType;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
-public class LastModuleCommentsDataTagProcessor extends DataTagProcessor<List<ModuleComment>> {
+public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 
 	private static final Integer DEFAULT_LIMIT = 10;
 	private static final String LIMIT = "limit";
 	private static final String QUERY_ADMIN = "queryAdmin";
-	private static final String MODULE = "module";
+	private static final String MODULE_TYPE = "moduleType";
 
 	private static final int MAX_LIMIT = 50;
 
 	@Autowired
-	private ModuleCommentService commentService;
-	@Autowired
-	private UrlHelper urlHelper;
+	private CommentService commentService;
 
-	public LastModuleCommentsDataTagProcessor(String name, String dataName) {
+	public LastCommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected List<ModuleComment> buildPreviewData(Space space, Attributes attributes) {
-		List<ModuleComment> comments = Lists.newArrayList();
-		ModuleComment comment = new ModuleComment();
+	protected List<Comment> buildPreviewData(Space space, Attributes attributes) {
+		List<Comment> comments = Lists.newArrayList();
+		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
 		comment.setContent("测试内容");
 		comment.setNickname("测试");
@@ -60,22 +59,30 @@ public class LastModuleCommentsDataTagProcessor extends DataTagProcessor<List<Mo
 		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
 		comment.setAdmin(true);
 		comment.setIp("127.0.0.1");
-		CommentModule module = new CommentModule();
-		module.setId(-1);
-		module.setName("test");
-		module.setUrl(urlHelper.getUrl());
-		comment.setModule(module);
 		comment.setId(-1);
+		comment.setCommentModule(new CommentModule(ModuleType.ARTICLE, -1));
 		comment.setStatus(CommentStatus.NORMAL);
 		comments.add(comment);
 		return comments;
 	}
 
 	@Override
-	protected List<ModuleComment> query(Space space, ContextVariables variables, Attributes attributes)
+	protected List<Comment> query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		return commentService.queryLastComments(super.getVariables(MODULE, variables, attributes), getLimit(attributes),
+		ModuleType type = getModuleType(variables, attributes);
+		if (type == null) {
+			return Collections.emptyList();
+		}
+		return commentService.queryLastComments(type, space, getLimit(attributes),
 				getQueryAdmin(variables, attributes));
+	}
+
+	private ModuleType getModuleType(ContextVariables variables, Attributes attributes) {
+		try {
+			return ModuleType.valueOf(super.getVariables(MODULE_TYPE, variables, attributes).toUpperCase());
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	private boolean getQueryAdmin(ContextVariables variables, Attributes attributes) {

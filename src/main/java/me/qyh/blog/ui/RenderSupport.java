@@ -59,11 +59,6 @@ public class RenderSupport {
 			ParseContext.setStatus(ParseStatus.COMPLETE);
 			return wrapper.getRendered();
 		} catch (Throwable e) {
-			/**
-			 * 因为这里是readonly的事务，默认只在RuntimeException|Error中回滚
-			 * 
-			 * @see DefaultTransactionAttribute
-			 */
 			if (e instanceof RuntimeException || e instanceof Error) {
 				markRollBack();
 			}

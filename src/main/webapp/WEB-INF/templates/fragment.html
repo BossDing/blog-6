@@ -19,7 +19,7 @@
 					th:text="${parent.nickname}"></span>
 				</span>
 			</h5>
-			<p style="word-break: break-all" th:text="${comment.content}"></p>
+			<p style="word-break: break-all" th:utext="${comment.content}"></p>
 			<h5>
 				<span
 					th:text="${messages.getMessage(timeDiffParser.parseDiff(comment.commentDate))}"></span>&nbsp;&nbsp;&nbsp;

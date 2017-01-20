@@ -22,7 +22,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.ArticleEvent.EventType;
+import me.qyh.blog.evt.EventType;
 import me.qyh.blog.service.ArticleService;
 
 /**

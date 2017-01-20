@@ -37,18 +37,7 @@ public class ArticleEvent extends ApplicationEvent {
 	private final List<Article> articles;
 	private final EventType eventType;
 
-	/**
-	 * 事件类型
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public enum EventType {
-		INSERT, // 插入
-		UPDATE, // 更新
-		DELETE, // 删除
-		HITS, // 点击
-	}
+	private boolean hit;
 
 	/**
 	 * 
@@ -63,6 +52,24 @@ public class ArticleEvent extends ApplicationEvent {
 		super(source);
 		this.articles = Arrays.asList(article);
 		this.eventType = eventType;
+	}
+
+	/**
+	 * 
+	 * @param source
+	 *            操作对象
+	 * @param article
+	 *            文章
+	 * @param eventType
+	 *            操作方式
+	 * @param hit
+	 *            是否是点击
+	 */
+	public ArticleEvent(Object source, Article article, EventType eventType, boolean hit) {
+		super(source);
+		this.articles = Arrays.asList(article);
+		this.eventType = eventType;
+		this.hit = hit;
 	}
 
 	/**
@@ -86,6 +93,14 @@ public class ArticleEvent extends ApplicationEvent {
 
 	public EventType getEventType() {
 		return eventType;
+	}
+
+	public boolean isHit() {
+		return hit;
+	}
+
+	public void setHit(boolean hit) {
+		this.hit = hit;
 	}
 
 }

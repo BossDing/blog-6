@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.config.Limit;
+import me.qyh.blog.entity.Editor;
 import me.qyh.blog.message.Message;
 
 /**
@@ -29,7 +30,7 @@ import me.qyh.blog.message.Message;
  */
 public class CommentConfig {
 
-	private Boolean allowHtml;
+	private Editor editor;// 编辑器
 	private Boolean asc;
 	private CommentMode commentMode;
 	@Expose(serialize = false, deserialize = true)
@@ -44,7 +45,7 @@ public class CommentConfig {
 	}
 
 	public CommentConfig(CommentConfig source) {
-		this.allowHtml = source.allowHtml;
+		this.editor = source.editor;
 		this.asc = source.asc;
 		this.check = source.check;
 		this.commentMode = source.commentMode;
@@ -75,14 +76,6 @@ public class CommentConfig {
 		public Message getMessage() {
 			return message;
 		}
-	}
-
-	public Boolean getAllowHtml() {
-		return allowHtml;
-	}
-
-	public void setAllowHtml(Boolean allowHtml) {
-		this.allowHtml = allowHtml;
 	}
 
 	public Boolean getAsc() {
@@ -135,5 +128,13 @@ public class CommentConfig {
 
 	public void setPageSize(Integer pageSize) {
 		this.pageSize = pageSize;
+	}
+
+	public Editor getEditor() {
+		return editor;
+	}
+
+	public void setEditor(Editor editor) {
+		this.editor = editor;
 	}
 }

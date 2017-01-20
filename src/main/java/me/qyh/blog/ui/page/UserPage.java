@@ -30,6 +30,7 @@ public class UserPage extends Page {
 	private String description;
 	private Timestamp createDate;
 	private String alias;
+	private Boolean allowComment;// 是否允许评论
 
 	public UserPage() {
 		super();
@@ -54,6 +55,7 @@ public class UserPage extends Page {
 		this.description = page.description;
 		this.createDate = page.createDate;
 		this.alias = page.alias;
+		this.allowComment = page.allowComment;
 	}
 
 	public String getName() {
@@ -86,6 +88,14 @@ public class UserPage extends Page {
 
 	public void setAlias(String alias) {
 		this.alias = alias;
+	}
+
+	public Boolean getAllowComment() {
+		return allowComment;
+	}
+
+	public void setAllowComment(Boolean allowComment) {
+		this.allowComment = allowComment;
 	}
 
 	@Override

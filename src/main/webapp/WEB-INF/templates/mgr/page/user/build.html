@@ -56,6 +56,14 @@
 					</div>
 				</div>
 			</div>
+			<div class="checkbox">
+				<label
+					th:if="${page.allowComment == null || !page.allowComment}">
+					<input type="checkbox" id="allowComment" />允许评论
+				</label> <label
+					th:if="${page.allowComment != null && page.allowComment}"><input
+					type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
+			</div>
 			<div class="row">
 				<div class="col-md-12 " style="margin-top: 10px; text-align: center">
 					<form style="display: none" id="tplForm">

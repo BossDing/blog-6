@@ -98,11 +98,11 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		return AlwaysValidCacheEntryValidity.INSTANCE;
 	}
 
-	private final class FragmentResource implements ITemplateResource {
+	public final class FragmentResource implements ITemplateResource {
 
 		private final Fragment fragment;
 
-		public FragmentResource(Fragment fragment) {
+		private FragmentResource(Fragment fragment) {
 			super();
 			this.fragment = fragment;
 		}
@@ -132,13 +132,17 @@ public class TplResolver extends SpringResourceTemplateResolver {
 			throw new SystemException("unsupport");
 		}
 
+		public Fragment getFragment() {
+			return fragment;
+		}
+
 	}
 
-	private final class PageResource implements ITemplateResource {
+	public final class PageResource implements ITemplateResource {
 
 		private final Page page;
 
-		public PageResource(Page page) {
+		private PageResource(Page page) {
 			this.page = page;
 		}
 
@@ -165,6 +169,10 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		@Override
 		public ITemplateResource relative(String relativeLocation) {
 			throw new SystemException("unsupport");
+		}
+
+		public Page getPage() {
+			return page;
 		}
 	}
 }

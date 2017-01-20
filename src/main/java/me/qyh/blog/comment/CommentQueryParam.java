@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
-import me.qyh.blog.comment.base.BaseComment.CommentStatus;
+import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.pageparam.PageQueryParam;
 
-public class BaseCommentQueryParam extends PageQueryParam {
+public class CommentQueryParam extends PageQueryParam {
 
 	/**
 	 * 
@@ -26,6 +26,7 @@ public class BaseCommentQueryParam extends PageQueryParam {
 	private static final long serialVersionUID = 1L;
 
 	private CommentStatus status;
+	private CommentModule module;
 	private boolean asc;
 
 	public CommentStatus getStatus() {
@@ -44,4 +45,15 @@ public class BaseCommentQueryParam extends PageQueryParam {
 		this.asc = asc;
 	}
 
+	public CommentModule getModule() {
+		return module;
+	}
+
+	public void setModule(CommentModule module) {
+		this.module = module;
+	}
+
+	public boolean complete() {
+		return module != null && module.getType() != null && module.getId() != null;
+	}
 }

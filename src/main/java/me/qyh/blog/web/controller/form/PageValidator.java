@@ -117,6 +117,11 @@ public class PageValidator implements Validator {
 				errors.reject("page.alias.invalid", "页面别名不被允许");
 				return;
 			}
+
+			if (userPage.getAllowComment() == null) {
+				errors.reject("page.allowComment", "是否允许评论不能为空");
+				return;
+			}
 		}
 
 	}

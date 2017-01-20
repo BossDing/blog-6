@@ -32,6 +32,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -58,6 +60,8 @@ import me.qyh.blog.dao.SysPageDao;
 import me.qyh.blog.dao.UserFragmentDao;
 import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.evt.EventType;
+import me.qyh.blog.evt.UserPageEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
@@ -87,7 +91,7 @@ import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.PageValidator;
 
-public class UIServiceImpl implements UIService, InitializingBean {
+public class UIServiceImpl implements UIService, InitializingBean, ApplicationEventPublisherAware {
 
 	@Autowired
 	private SysPageDao sysPageDao;
@@ -108,6 +112,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	private static final String DATA_TAG_PROCESSOR_NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
 	private static final String DATA_TAG_PROCESSOR_DATA_NAME_PATTERN = "^[A-Za-z]+$";
@@ -299,6 +304,7 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		}
 		userPageDao.deleteById(id);
 		clearPageCache(db);
+		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
 	}
 
 	@Override
@@ -340,14 +346,17 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				throw new LogicException(USER_PAGE_NOT_EXISTS);
 			}
 			// 检查
-			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(db.getSpace(), alias);
-			if (aliasPage != null && !aliasPage.getId().equals(db.getId())) {
+			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
+			if (aliasPage != null && !aliasPage.getId().equals(userPage.getId())) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
 
 			clearPageCache(db);
+
+			this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.UPDATE,
+					(UserPage) queryPage(TemplateUtils.getTemplateName(userPage))));
 		} else {
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
@@ -355,6 +364,9 @@ public class UIServiceImpl implements UIService, InitializingBean {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 			userPageDao.insert(userPage);
+
+			this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.INSERT,
+					(UserPage) queryPage(TemplateUtils.getTemplateName(userPage))));
 		}
 	}
 
@@ -666,6 +678,11 @@ public class UIServiceImpl implements UIService, InitializingBean {
 		} finally {
 			platformTransactionManager.commit(ts);
 		}
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
 	private void insertUserFragmentWhenImport(Space space, Fragment toImport, List<ImportRecord> records) {

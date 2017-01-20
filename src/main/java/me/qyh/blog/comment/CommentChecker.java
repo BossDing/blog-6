@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.module;
+package me.qyh.blog.comment;
 
-import com.google.gson.annotations.Expose;
+import me.qyh.blog.exception.LogicException;
 
-import me.qyh.blog.comment.base.BaseCommentQueryParam;
-
-public class ModuleCommentQueryParam extends BaseCommentQueryParam {
+public interface CommentChecker {
 
 	/**
+	 * 插入评论前检查
 	 * 
+	 * @param comment
+	 *            评论
+	 * @throws LogicException
 	 */
-	private static final long serialVersionUID = 1L;
-
-	@Expose(serialize = false, deserialize = true)
-	private CommentModule module;
-
-	public CommentModule getModule() {
-		return module;
-	}
-
-	public void setModule(CommentModule module) {
-		this.module = module;
-	}
+	public void checkComment(Comment comment, CommentConfig config) throws LogicException;
 
 }

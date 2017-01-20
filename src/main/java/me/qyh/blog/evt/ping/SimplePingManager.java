@@ -32,7 +32,7 @@ import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.ArticleEvent.EventType;
+import me.qyh.blog.evt.EventType;
 import me.qyh.blog.exception.SystemException;
 
 /**

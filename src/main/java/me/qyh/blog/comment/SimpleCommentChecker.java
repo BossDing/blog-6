@@ -1,4 +1,4 @@
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.PatternMatchUtils;
@@ -13,7 +13,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
 
-public class SimpleCommentChecker<T extends BaseComment<T>> implements CommentChecker<T> {
+public class SimpleCommentChecker implements CommentChecker {
 
 	private String[] disallowUsernamePatterns;
 	private String[] disallowEmailPatterns;
@@ -22,12 +22,12 @@ public class SimpleCommentChecker<T extends BaseComment<T>> implements CommentCh
 	private UrlHelper urlHelper;
 
 	@Override
-	public void checkComment(T comment, CommentConfig config) throws LogicException {
+	public void checkComment(Comment comment, CommentConfig config) throws LogicException {
 		checkCommentUser(comment);
 		checkCommentContent(comment, config);
 	}
 
-	protected void checkCommentUser(T comment) throws LogicException {
+	protected void checkCommentUser(Comment comment) throws LogicException {
 		if (Environment.isLogin()) {
 			return;
 		}
@@ -64,7 +64,7 @@ public class SimpleCommentChecker<T extends BaseComment<T>> implements CommentCh
 		}
 	}
 
-	protected void checkCommentContent(T comment, CommentConfig config) throws LogicException {
+	protected void checkCommentContent(Comment comment, CommentConfig config) throws LogicException {
 
 	}
 

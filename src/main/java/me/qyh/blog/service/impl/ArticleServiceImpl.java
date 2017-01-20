@@ -35,7 +35,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
@@ -64,8 +64,8 @@ import me.qyh.blog.entity.ArticleTag;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.ArticleEvent.EventType;
 import me.qyh.blog.evt.ArticleIndexRebuildEvent;
+import me.qyh.blog.evt.EventType;
 import me.qyh.blog.evt.LockDeleteEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockManager;
@@ -78,8 +78,7 @@ import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.ui.utils.Times;
 
-public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware,
-		ApplicationListener<LockDeleteEvent> {
+public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
@@ -166,7 +165,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				articleDao.updateHits(id, 1);
 				articleIndexer.addOrUpdateDocument(article);
 				article.addHits();
-				applicationEventPublisher.publishEvent(new ArticleEvent(this, new Article(article), EventType.HITS));
+				applicationEventPublisher
+						.publishEvent(new ArticleEvent(this, new Article(article), EventType.UPDATE, true));
 			}
 			return OptionalInt.of(article.getHits());
 		}
@@ -491,8 +491,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
-		// 删除博客所有的评论
-		commentServer.deleteComments(article);
 		articleDao.deleteById(id);
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.DELETE));
@@ -577,8 +575,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 	}
 
-	@Override
-	public void onApplicationEvent(LockDeleteEvent event) {
+	@EventListener
+	public void handleLockDeleteEvent(LockDeleteEvent event) {
 		// synchronized
 		// do not worry about transaction
 		articleDao.deleteLock(event.getLockId());

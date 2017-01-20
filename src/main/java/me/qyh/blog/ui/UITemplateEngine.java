@@ -25,7 +25,7 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import com.google.common.collect.ImmutableSet;
 
-import me.qyh.blog.ui.dialect.PageCheckTemplateHandler;
+import me.qyh.blog.ui.dialect.PreTemplateHandler;
 import me.qyh.blog.ui.dialect.PageDialect;
 import me.qyh.blog.ui.dialect.TransactionDialect;
 
@@ -44,7 +44,7 @@ public class UITemplateEngine extends SpringTemplateEngine {
 
 			@Override
 			public Set<IPreProcessor> getPreProcessors() {
-				return ImmutableSet.of(new PreProcessor(TemplateMode.HTML, PageCheckTemplateHandler.class, 1000));
+				return ImmutableSet.of(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000));
 			}
 
 			@Override

@@ -12,6 +12,7 @@ function preview() {
 		page.name="test";
 		page.description="";
 		page.alias = "test";
+		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
 			url : basePath + '/mgr/page/user/preview',
@@ -47,7 +48,7 @@ function preview() {
 		}
 		page.name=$("#name").val();
 		page.description=$("#description").val();
-		
+		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
 			url : basePath + '/mgr/page/user/preview',

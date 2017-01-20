@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -39,8 +39,8 @@ public class CommentConfigValidator implements Validator {
 			errors.reject("commentConfig.commentMode.blank", "评论展现形式不能为空");
 			return;
 		}
-		if (config.getAllowHtml() == null) {
-			errors.reject("commentConfig.allowHtml.blank", "评论是否允许html不能为空");
+		if (config.getEditor() == null) {
+			errors.reject("commentConfig.editor.blank", "评论编辑器不能为空");
 			return;
 		}
 		if (config.getAsc() == null) {

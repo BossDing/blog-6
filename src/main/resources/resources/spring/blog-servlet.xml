@@ -94,10 +94,8 @@
 
 
 	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.article.CommentController" />
-	<bean class="me.qyh.blog.comment.article.CommentMgrController" />
-	<bean class="me.qyh.blog.comment.module.ModuleCommentController" />
-	<bean class="me.qyh.blog.comment.module.ModuleCommentMgrController" />
+	<bean class="me.qyh.blog.comment.CommentMgrController" />
+	<bean class="me.qyh.blog.comment.CommentController" />
 	
 	<!-- sitemap -->
 	<bean class="me.qyh.blog.api.sitemap.SiteMapController" />

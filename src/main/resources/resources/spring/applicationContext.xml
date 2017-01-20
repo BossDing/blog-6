@@ -104,6 +104,9 @@
 		</property>
 	</bean>
 
+	<!-- markdown to html -->
+	<bean class="me.qyh.blog.security.input.CommonMarkdown2Html" />
+
 
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<!-- markdown2html handler -->
@@ -143,7 +146,7 @@
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<bean id="htmlClean" class="me.qyh.blog.security.input.DefaultHtmlClean" />
-	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.base.SimpleCommentChecker">
+	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
 				<value>qyh</value>
@@ -159,46 +162,18 @@
 			</array>
 		</property>
 	</bean>
+	
 	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.article.CommentService">
+	<bean class="me.qyh.blog.comment.CommentService">
 		<!-- html内容清理器 -->
 		<property name="htmlClean" ref="htmlClean" />
-		<property name="commentDao" ref="commentDao" />
 		<property name="commentChecker" ref="simpleCommentChecker"></property>
-		<property name="emailSupport">
-			<bean class="me.qyh.blog.comment.base.CommentEmailNotifySupport"
+		<property name="commentEmailNotifySupport">
+			<bean class="me.qyh.blog.comment.CommentEmailNotifySupport"
 				destroy-method="shutdown">
-				<property name="mailTemplateResource"
-					value="classpath:resources/page/defaultMailTemplate.html" />
 				<property name="mailSubject" value="您有新的评论" />
-				<property name="toSendSdfilePath" value="/web/art_comment_tosend.dat" />
-				<property name="toProcessesSdfilePath" value="/web/art_comment_toprocess.dat" />
-			</bean>
-		</property>
-	</bean>
-	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.module.ModuleCommentService">
-		<!-- html内容清理器 -->
-		<property name="htmlClean" ref="htmlClean" />
-		<property name="commentDao" ref="moduleCommentDao" />
-		<property name="commentChecker" ref="simpleCommentChecker"></property>
-		<property name="modules">
-			<list>
-				<bean class="me.qyh.blog.comment.module.CommentModule">
-					<property name="id" value="1" />
-					<property name="name" value="guestbook" />
-					<property name="url" value="page/guestbook" />
-				</bean>
-			</list>
-		</property>
-		<property name="emailSupport">
-			<bean class="me.qyh.blog.comment.base.CommentEmailNotifySupport"
-				destroy-method="shutdown">
-				<property name="mailTemplateResource"
-					value="classpath:resources/page/defaultModuleMailTemplate.html" />
-				<property name="mailSubject" value="您有新的评论" />
-				<property name="toSendSdfilePath" value="/web/module_comment_tosend.dat" />
-				<property name="toProcessesSdfilePath" value="/web/module_comment_toprocess.dat" />
+				<property name="toSendSdfilePath" value="/web/email/comment_tosend.dat" />
+				<property name="toProcessesSdfilePath" value="/web/email/comment_toprocess.dat" />
 			</bean>
 		</property>
 	</bean>
@@ -218,7 +193,8 @@
 	<bean class="me.qyh.blog.api.sitemap.XmlSiteMap" id="xmlSiteMap" />
 	<task:scheduled-tasks scheduler="taskScheduler">
 		<!-- 凌晨一点更新sitemap -->
-		<task:scheduled ref="xmlSiteMap" method="updateSitemap" cron="0 0 1 * * ?" />
+		<task:scheduled ref="xmlSiteMap" method="updateSitemap"
+			cron="0 0 1 * * ?" />
 	</task:scheduled-tasks>
 
 </beans>      

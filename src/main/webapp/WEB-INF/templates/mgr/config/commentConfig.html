@@ -21,15 +21,14 @@
 							</label>
 						</div>
 						<div class="form-group">
-							<label>评论是否允许html标签</label> <label class="radio-inline">
-								<input type="radio" name="allowHtml" value="true"
-								th:attr="checked=${config.allowHtml ? 'checked' : null}">
-								是
-							</label> <label class="radio-inline"> <input type="radio"
-								name="allowHtml" value="false"
-								th:attr="checked=${config.allowHtml ? null : 'checked'}">
-								否
-							</label>
+							<label>编辑器</label> <select class="form-control"
+								name="editor">
+								<option th:value="${config.editor.name()}"
+									selected="selected"
+									th:text="'当前:'+${config.editor.name()}"></option>
+								<option value="HTML">HTML</option>
+								<option value="MD">MD</option>
+							</select>
 						</div>
 						<div class="form-group">
 							<label>评论展现方式</label> <select class="form-control"

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.article;
+package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,17 +24,15 @@ import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.comment.base.BaseComment.CommentStatus;
-import me.qyh.blog.comment.base.CommentConfig;
-import me.qyh.blog.comment.base.CommentPageResult;
-import me.qyh.blog.entity.Article;
+import me.qyh.blog.comment.Comment.CommentStatus;
+import me.qyh.blog.comment.CommentModule.ModuleType;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
 
-public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult<Comment>> {
+public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired
 	private CommentService commentService;
 
@@ -43,7 +41,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult<Comment> buildPreviewData(Space space, Attributes attributes) {
+	protected CommentPageResult buildPreviewData(Space space, Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -53,40 +51,28 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
 		comment.setAdmin(true);
 		comment.setIp("127.0.0.1");
-		Article article = new Article();
-		article.setId(1);
-		comment.setArticle(article);
-		comment.setId(-1);
+		comment.setCommentModule(new CommentModule(ModuleType.ARTICLE, -1));
 		comment.setStatus(CommentStatus.NORMAL);
 		comments.add(comment);
 		CommentQueryParam param = new CommentQueryParam();
 		param.setCurrentPage(1);
 		CommentConfig config = commentService.getCommentConfig();
 		param.setPageSize(config.getPageSize());
-		return new CommentPageResult<>(param, config.getPageSize() + 1, comments, config);
+		return new CommentPageResult(param, config.getPageSize() + 1, comments, config);
 	}
 
 	@Override
-	protected CommentPageResult<Comment> query(Space space, ContextVariables variables, Attributes attributes)
+	protected CommentPageResult query(Space space, ContextVariables variables, Attributes attributes)
 			throws LogicException {
-		CommentQueryParam param = parseParam(variables, attributes);
-		return commentService.queryComment(param);
-	}
-
-	private CommentQueryParam parseParam(ContextVariables variables, Attributes attributes) {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
-		Article article = (Article) variables.getAttribute("article");
-		if (article == null) {
-			String articleStr = super.getVariables("article", variables, attributes);
-			if (articleStr != null) {
-				try {
-					article = new Article(Integer.parseInt(articleStr));
-				} catch (Exception e) {
-				}
-			}
+
+		try {
+			ModuleType type = ModuleType.valueOf(super.getVariables("moduleType", variables, attributes).toUpperCase());
+			Integer id = Integer.parseInt(super.getVariables("moduleId", variables, attributes));
+			param.setModule(new CommentModule(type, id));
+		} catch (Exception e) {
 		}
-		param.setArticle(article);
 		String currentPageStr = super.getVariables("currentPage", variables, attributes);
 		if (currentPageStr != null) {
 			try {
@@ -98,7 +84,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 			param.setCurrentPage(0);
 		}
 
-		return param;
+		return commentService.queryComment(param);
 	}
 
 }

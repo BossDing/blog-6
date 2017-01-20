@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
+import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -23,7 +24,8 @@ import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.UserValidator;
 
-public class BaseCommentValidator implements Validator {
+@Component
+public class CommentValidator implements Validator {
 
 	public static final int MAX_COMMENT_LENGTH = 500;
 	private static final int MAX_NAME_LENGTH = 20;
@@ -33,12 +35,13 @@ public class BaseCommentValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return BaseComment.class.isAssignableFrom(clazz);
+		return Comment.class.isAssignableFrom(clazz);
 	}
 
 	@Override
+	// TODO message.properties
 	public void validate(Object target, Errors errors) {
-		BaseComment<?> comment = (BaseComment<?>) target;
+		Comment comment = (Comment) target;
 		if (comment == null) {
 			errors.reject("comment.blank", "评论不能为空");
 			return;

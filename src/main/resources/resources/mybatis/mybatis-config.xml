@@ -50,12 +50,11 @@
 		<typeAlias type="me.qyh.blog.bean.ArticleSpaceFile" alias="ArticleSpaceFile" />
 		<typeAlias type="me.qyh.blog.bean.ArticleStatistics" alias="ArticleStatistics" />
 
-		<typeAlias type="me.qyh.blog.comment.article.Comment" alias="Comment" />
-		<typeAlias type="me.qyh.blog.comment.module.ModuleComment" alias="ModuleComment" />
-		<typeAlias type="me.qyh.blog.comment.base.BaseComment"
-			alias="BaseComment" />
-		<typeAlias type="me.qyh.blog.comment.base.BaseComment$CommentStatus"
+		<typeAlias type="me.qyh.blog.comment.Comment" alias="Comment" />
+		<typeAlias type="me.qyh.blog.comment.Comment$CommentStatus"
 			alias="CommentStatus" />
+		<typeAlias type="me.qyh.blog.comment.CommentModule" alias="CommentModule" />
+		<typeAlias type="me.qyh.blog.comment.CommentModule$ModuleType" alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.mybatis.handler.TagsTypeHandler" />
@@ -81,6 +80,5 @@
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/moduleCommentMapper.xml" />
 	</mappers>
 </configuration>

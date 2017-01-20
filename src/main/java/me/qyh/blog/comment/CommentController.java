@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.module;
+package me.qyh.blog.comment;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -31,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
+import me.qyh.blog.comment.CommentModule.ModuleType;
+import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.Environment;
@@ -38,40 +41,63 @@ import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.BaseController;
 
 @Controller
-public class ModuleCommentController extends BaseController {
+public class CommentController extends BaseController {
 
 	@Autowired
-	private ModuleCommentService commentService;
+	private CommentService commentService;
 	@Autowired
-	private ModuleCommentValidator commentValidator;
+	private CommentValidator commentValidator;
+	@Autowired
+	private UrlHelper urlHelper;
 
-	@InitBinder(value = "moduleComment")
+	@InitBinder(value = "comment")
 	protected void initCommentBinder(WebDataBinder binder) {
 		binder.setValidator(commentValidator);
 	}
 
-	@RequestMapping(value = "module/{name}/addComment", method = RequestMethod.POST)
+	@RequestMapping(value = "comment/config", method = RequestMethod.GET)
+	@ResponseBody
+	public JsonResult getConfig() {
+		return new JsonResult(true, commentService.getCommentConfig());
+	}
+
+	@RequestMapping(value = { "space/{alias}/{type}/{id}/addComment",
+			"{type}/{id}/addComment" }, method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult addComment(@RequestParam(value = "validateCode", required = false) String validateCode,
-			@RequestBody @Validated ModuleComment moduleComment, @PathVariable("name") String moduleName,
-			HttpServletRequest req) throws LogicException {
+			@RequestBody @Validated Comment comment, @PathVariable("type") String type,
+			@PathVariable("id") Integer moduleId, HttpServletRequest req) throws LogicException {
 		if (!Environment.isLogin()) {
 			HttpSession session = req.getSession(false);
 			if (!Webs.matchValidateCode(validateCode, session)) {
 				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 			}
 		}
-		CommentModule module = new CommentModule();
-		module.setName(moduleName);
-		moduleComment.setModule(module);
-		moduleComment.setIp(Webs.getIp(req));
-		return new JsonResult(true, commentService.insertComment(moduleComment));
+		comment.setCommentModule(new CommentModule(getModuleType(type), moduleId));
+		comment.setIp(Webs.getIp(req));
+		return new JsonResult(true, commentService.insertComment(comment));
 	}
 
-	@RequestMapping(value = "module/{name}/comment/{id}/conversations")
+	@RequestMapping(value = { "space/{alias}/{type}/{id}/comment/{commentId}/conversations",
+			"{type}/{id}/comment/{commentId}/conversations" }, method = RequestMethod.GET)
 	@ResponseBody
-	public JsonResult queryConversations(@PathVariable("name") String moduleName, @PathVariable("id") Integer id)
-			throws LogicException {
-		return new JsonResult(true, commentService.queryConversations(moduleName, id));
+	public JsonResult queryConversations(@PathVariable("type") String type, @PathVariable("id") Integer moduleId,
+			@PathVariable("commentId") Integer commentId) throws LogicException {
+		return new JsonResult(true,
+				commentService.queryConversations(new CommentModule(getModuleType(type), moduleId), commentId));
+	}
+
+	@RequestMapping(value = "comment/link/{type}/{id}", method = RequestMethod.GET)
+	public String redic(@PathVariable("type") String type, @PathVariable("id") Integer moduleId) throws LogicException {
+		return "redirect:"
+				+ commentService.getLink(new CommentModule(getModuleType(type), moduleId)).orElse(urlHelper.getUrl());
+	}
+
+	private ModuleType getModuleType(String type) {
+		try {
+			return ModuleType.valueOf(type.toUpperCase());
+		} catch (Exception e) {
+			throw new TypeMismatchException(type, ModuleType.class);
+		}
 	}
 }

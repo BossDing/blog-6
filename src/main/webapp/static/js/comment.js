@@ -152,7 +152,8 @@ function queryComments(page) {
 		url : actPath + '/data/评论',
 		data : {
 			"currentPage" : page,
-			"article" : $("#articleId").val()
+			"moduleType" : 'article',
+			'moduleId' : $("#articleId").val()
 		},
 		dataType : "json",
 		contentType : 'application/json',

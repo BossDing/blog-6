@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.thymeleaf.TemplateEngine;
@@ -58,11 +59,11 @@ import me.qyh.blog.util.Validators;
  * @author Administrator
  *
  */
-public class CommentEmailNotifySupport<T extends BaseComment<T>> implements InitializingBean {
+public class CommentEmailNotifySupport implements InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
-	private ConcurrentLinkedQueue<T> toProcesses = new ConcurrentLinkedQueue<>();
-	private List<T> toSend = Collections.synchronizedList(Lists.newArrayList());
+	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
+	private List<Comment> toSend = Collections.synchronizedList(Lists.newArrayList());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
 	private Resource mailTemplateResource;
 	private String mailTemplate;
@@ -125,11 +126,11 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		}
 	}
 
-	protected final void add(T comment) {
+	protected final void add(Comment comment) {
 		toProcesses.add(comment);
 	}
 
-	protected final void sendMail(List<T> comments, String to) {
+	protected final void sendMail(List<Comment> comments, String to) {
 		Context context = new Context();
 		context.setVariable("urls", urlHelper.getUrls());
 		context.setVariable("comments", comments);
@@ -159,8 +160,9 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}
+
 		if (mailTemplateResource == null) {
-			throw new SystemException("邮件模板不能为空");
+			mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
 		}
 
 		try (InputStream is = mailTemplateResource.getInputStream();
@@ -178,7 +180,7 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		}
 
 		if (toSendSdfile != null && toSendSdfile.exists()) {
-			List<T> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
+			List<Comment> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
 			this.toSend = Collections.synchronizedList(comments);
 			if (!FileUtils.deleteQuietly(toSendSdfile)) {
 				LOGGER.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
@@ -195,8 +197,8 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
 			synchronized (toSend) {
 				int size = toSend.size();
-				for (Iterator<T> iterator = toProcesses.iterator(); iterator.hasNext();) {
-					T toProcess = iterator.next();
+				for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
+					Comment toProcess = iterator.next();
 					toSend.add(toProcess);
 					size++;
 					iterator.remove();
@@ -249,8 +251,8 @@ public class CommentEmailNotifySupport<T extends BaseComment<T>> implements Init
 		this.toProcessesSdfilePath = toProcessesSdfilePath;
 	}
 
-	public void handle(T comment) {
-		T parent = comment.getParent();
+	public void handle(Comment comment) {
+		Comment parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
 		// 如果回复了管理员
 		if (!comment.getAdmin() && (parent == null || parent.getAdmin())) {

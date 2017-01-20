@@ -25,7 +25,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,8 +44,7 @@ import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
 import me.qyh.blog.util.Validators;
 
 @Service
-public class SpaceServiceImpl
-		implements SpaceService, ApplicationListener<LockDeleteEvent>, ApplicationEventPublisherAware {
+public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisherAware {
 
 	@Autowired
 	private SpaceDao spaceDao;
@@ -140,8 +139,8 @@ public class SpaceServiceImpl
 		return spaceDao.selectByParam(param);
 	}
 
-	@Override
-	public void onApplicationEvent(LockDeleteEvent event) {
+	@EventListener
+	public void handleLockDeleteEvent(LockDeleteEvent event) {
 		// synchronized
 		// do not worry about transaction
 		spaceDao.deleteLock(event.getLockId());

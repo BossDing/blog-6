@@ -62,13 +62,13 @@
 	<div th:unless="${#lists.isEmpty(comments)}" th:remove="tag">
 		<div class="panel-body">
 			<div class="media" th:each="comment : ${comments}">
-				<a class="media-left" th:href="${urls.getUrl(comment.article)}">
+				<a class="media-left" th:href="${comment.url}">
 					<img th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : gravatarPrefix+comment.gravatar}"
 					style="width: 64px; height: 64px" alt="...">
 				</a>
 				<div class="media-body">
 					<h4 class="media-heading" th:if="${comment.parent == null}"
-						th:text="${comment.nickname}+'评论了你的博客：'+${comment.article.title}"></h4>
+						th:text="${comment.nickname}+'评论了你'"></h4>
 					<h4 class="media-heading" th:if="${comment.parent != null}"
 						th:text="${comment.nickname}+'回复了你的评论'"></h4>
 					<div th:if="${comment.parent != null}" class="alert alert-success">

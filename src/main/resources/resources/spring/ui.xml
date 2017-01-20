@@ -43,26 +43,17 @@
 					<constructor-arg index="0" value="所有空间" />
 					<constructor-arg index="1" value="spaces" />
 				</bean>
-
-
-
-				<bean class="me.qyh.blog.comment.article.LastCommentsDataTagProcessor">
-					<constructor-arg index="0" value="最近评论" />
-					<constructor-arg index="1" value="comments" />
-				</bean>
-				<bean class="me.qyh.blog.comment.article.CommentsDataTagProcessor">
+				
+				<bean class="me.qyh.blog.comment.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
 				</bean>
-				<bean class="me.qyh.blog.comment.module.ModuleCommentsDataTagProcessor">
-					<constructor-arg index="0" value="模块评论" />
-					<constructor-arg index="1" value="moduleCommentPage" />
+				
+				<bean class="me.qyh.blog.comment.LastCommentsDataTagProcessor">
+					<constructor-arg index="0" value="最近评论" />
+					<constructor-arg index="1" value="comments" />
 				</bean>
-				<bean
-					class="me.qyh.blog.comment.module.LastModuleCommentsDataTagProcessor">
-					<constructor-arg index="0" value="最近模块评论" />
-					<constructor-arg index="1" value="moduleComments" />
-				</bean>
+
 			</list>
 		</property>
 		<property name="fragments">
@@ -83,12 +74,7 @@
 						<entry key="底部" value="classpath:resources/fragment/foot.html" />
 						<entry key="相似文章"
 							value="classpath:resources/fragment/similarArticles.html" />
-
-
-						<entry key="最近评论" value="classpath:resources/fragment/comments.html" />
-						<entry key="评论" value="classpath:resources/fragment/_comments.html" />
-						<entry key="模块评论"
-							value="classpath:resources/fragment/moduleComments.html" />
+					<entry key="评论" value="classpath:resources/fragment/comments.html" />
 					</map>
 				</property>
 			</bean>

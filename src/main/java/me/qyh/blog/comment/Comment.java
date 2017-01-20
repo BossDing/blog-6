@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.base;
+package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
 import java.util.Arrays;
@@ -24,21 +24,22 @@ import com.google.common.collect.Lists;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.entity.BaseEntity;
+import me.qyh.blog.entity.Editor;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
 
-public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
+public class Comment extends BaseEntity {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private T parent;// 如果为null,则为评论，否则为回复
+	private Comment parent;// 如果为null,则为评论，否则为回复
 	private String parentPath;// 路径，最多支持255个字符(索引原因)
 	private String content;
 	private List<Integer> parents = Lists.newArrayList();
 	private Timestamp commentDate;
-	private List<T> children = Lists.newArrayList();
+	private List<Comment> children = Lists.newArrayList();
 	private CommentStatus status;
 
 	private String website;
@@ -51,6 +52,9 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 
 	private String gravatar;
 	private String url;
+	private Editor editor;// 编辑器
+
+	private CommentModule commentModule;
 
 	/**
 	 * 评论状态
@@ -72,11 +76,11 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 		}
 	}
 
-	public T getParent() {
+	public Comment getParent() {
 		return parent;
 	}
 
-	public void setParent(T parent) {
+	public void setParent(Comment parent) {
 		this.parent = parent;
 	}
 
@@ -116,11 +120,11 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 		this.commentDate = commentDate;
 	}
 
-	public List<T> getChildren() {
+	public List<Comment> getChildren() {
 		return children;
 	}
 
-	public void setChildren(List<T> children) {
+	public void setChildren(List<Comment> children) {
 		this.children = children;
 	}
 
@@ -192,14 +196,14 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 	@Override
 	public boolean equals(Object obj) {
 		if (Validators.baseEquals(this, obj)) {
-			BaseComment<?> rhs = (BaseComment<?>) obj;
+			Comment rhs = (Comment) obj;
 			return Objects.equals(this.id, rhs.id);
 		}
 		return false;
 	}
 
-	public boolean matchParent(T parent) {
-		return this.parent != null && this.parent.equals(parent);
+	public boolean matchParent(Comment parent) {
+		return this.parent != null && this.parent.equals(parent) && this.commentModule.equals(parent.commentModule);
 	}
 
 	public String getUrl() {
@@ -208,5 +212,21 @@ public class BaseComment<T extends BaseComment<T>> extends BaseEntity {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public Editor getEditor() {
+		return editor;
+	}
+
+	public void setEditor(Editor editor) {
+		this.editor = editor;
+	}
+
+	public CommentModule getCommentModule() {
+		return commentModule;
+	}
+
+	public void setCommentModule(CommentModule commentModule) {
+		this.commentModule = commentModule;
 	}
 }

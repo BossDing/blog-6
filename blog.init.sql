@@ -1,4 +1,3 @@
-drop table if exists `blog_article`;
 CREATE TABLE IF NOT EXISTS `blog_article` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `content` mediumtext  NOT NULL,
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `blog_article` (
   `allowComment` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
 );
-drop table if exists `blog_article_tag`;
+
 CREATE TABLE IF NOT EXISTS `blog_article_tag` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `article_id` int(11) NOT NULL,
@@ -26,7 +25,6 @@ CREATE TABLE IF NOT EXISTS `blog_article_tag` (
   PRIMARY KEY (`id`)
 );
 
-drop table if exists `blog_comment`;
 CREATE TABLE IF NOT EXISTS `blog_comment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `parent_id` int(11) DEFAULT NULL,
@@ -36,33 +34,16 @@ CREATE TABLE IF NOT EXISTS `blog_comment` (
   `comment_ip` varchar(255)  NOT NULL,
    `comment_admin` tinyint(1)  NOT NULL DEFAULT '0',
   `content` varchar(2000)  NOT NULL,
-  `article_id` int(11) NOT NULL,
   `comment_date` datetime NOT NULL,
   `comment_status` int(11) NOT NULL,
   comment_website varchar(255),
-  COMMENT_GRAVATAR varchar(255),
-  PRIMARY KEY (`id`)
-) ;
-
-drop table if exists `blog_comment_module`;
-CREATE TABLE IF NOT EXISTS `blog_comment_module` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `parent_id` int(11) DEFAULT NULL,
-  `parent_path` varchar(255)  NOT NULL,
-  `comment_nickname` varchar(20)  DEFAULT NULL,
-  `comment_email` varchar(255)  DEFAULT NULL,
-  `comment_ip` varchar(255)  NOT NULL,
-   `comment_admin` tinyint(1)  NOT NULL DEFAULT '0',
-  `content` varchar(2000)  NOT NULL,
+  `COMMENT_GRAVATAR` varchar(255),
   `module_id` int(11) NOT NULL,
-  `comment_date` datetime NOT NULL,
-  `comment_status` int(11) NOT NULL,
-  comment_website varchar(255),
-  COMMENT_GRAVATAR varchar(255),
+  `module_type` int(11) NOT NULL,
+  `comment_editor` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_common_file`;
 CREATE TABLE IF NOT EXISTS `blog_common_file` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file_key` varchar(2000)  DEFAULT NULL,
@@ -75,7 +56,6 @@ CREATE TABLE IF NOT EXISTS `blog_common_file` (
   PRIMARY KEY (`id`)
 );
 
-drop table if exists `blog_file`;
 CREATE TABLE IF NOT EXISTS `blog_file` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file_name` varchar(500)  NOT NULL,
@@ -90,7 +70,6 @@ CREATE TABLE IF NOT EXISTS `blog_file` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_file_delete`;
 CREATE TABLE IF NOT EXISTS `blog_file_delete` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file_store` int(11) DEFAULT NULL,
@@ -99,7 +78,6 @@ CREATE TABLE IF NOT EXISTS `blog_file_delete` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_fragment_user`;
 CREATE TABLE IF NOT EXISTS `blog_fragment_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `fragment_name` varchar(20)  NOT NULL,
@@ -111,7 +89,6 @@ CREATE TABLE IF NOT EXISTS `blog_fragment_user` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_lock`;
 CREATE TABLE IF NOT EXISTS `blog_lock` (
   `id` varchar(40)  NOT NULL,
   `lock_type` int(11) NOT NULL DEFAULT '0',
@@ -123,7 +100,6 @@ CREATE TABLE IF NOT EXISTS `blog_lock` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_page_error`;
 CREATE TABLE IF NOT EXISTS `blog_page_error` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `space_id` int(11) DEFAULT NULL,
@@ -132,7 +108,6 @@ CREATE TABLE IF NOT EXISTS `blog_page_error` (
   PRIMARY KEY (`id`)
 );
 
-drop table if exists `blog_page_expanded`;
 CREATE TABLE IF NOT EXISTS `blog_page_expanded` (
   `id` int(11) NOT NULL,
   `page_name` varchar(20)  NOT NULL,
@@ -140,7 +115,6 @@ CREATE TABLE IF NOT EXISTS `blog_page_expanded` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_page_lock`;
 CREATE TABLE IF NOT EXISTS `blog_page_lock` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `space_id` int(11) DEFAULT NULL,
@@ -149,7 +123,6 @@ CREATE TABLE IF NOT EXISTS `blog_page_lock` (
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_page_sys`;
 CREATE TABLE  IF NOT EXISTS `blog_page_sys` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `space_id` int(11) DEFAULT NULL,
@@ -158,7 +131,6 @@ CREATE TABLE  IF NOT EXISTS `blog_page_sys` (
   PRIMARY KEY (`id`)
 );
 
-drop table if exists `blog_page_user`;
 CREATE TABLE IF NOT EXISTS `blog_page_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `page_tpl` mediumtext  NOT NULL,
@@ -167,10 +139,10 @@ CREATE TABLE IF NOT EXISTS `blog_page_user` (
   `space_id` int(11) DEFAULT NULL,
   `page_create_date` datetime NOT NULL,
   `page_alias` varchar(40)  DEFAULT NULL,
+  `page_allowComment` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ;
 
-drop table if exists `blog_space`;
 CREATE TABLE IF NOT EXISTS `blog_space` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `space_alias` varchar(20)  NOT NULL,
@@ -185,7 +157,6 @@ CREATE TABLE IF NOT EXISTS `blog_space` (
   UNIQUE KEY `space_name` (`space_name`)
 ) ;
 
-drop table if exists `blog_tag`;
 CREATE TABLE IF NOT EXISTS `blog_tag` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `tag_name` varchar(20)  NOT NULL,

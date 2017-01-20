@@ -3,7 +3,7 @@ var cp = 0;
 var login = $("#login").val() == 'true';
 var flag = false;
 var asc = false;
-var module = $("#module").val();
+var moduleId = $("#moduleId").val();
 // 评论表单html
 
 function getCommentFormHtml() {
@@ -93,7 +93,7 @@ $(document).ready(
 						flag = true;
 						$.ajax({
 							type : "post",
-							url : rootPath + "/module/" + module
+							url : actPath + "/userpage/" + moduleId
 									+ "/addComment?validateCode="+validateCode,
 							data : JSON.stringify({
 								"content" : $('#comment-content').val(),
@@ -134,15 +134,16 @@ function queryComments(page) {
 	cp = page;
 	$.ajax({
 		type : 'get',
-		url : actPath + '/data/模块评论',
+		url : actPath + '/data/评论',
 		data : {
 			"currentPage" : page,
-			"module" : module
+			"moduleId" : moduleId,
+			"moduleType" : 'userpage'
 		},
 		dataType : "json",
 		contentType : 'application/json',
 		beforeSend : function(xhr) {
-			xhr.setRequestHeader("X-Fragment", encodeURI("模块评论"));
+			xhr.setRequestHeader("X-Fragment", encodeURI("评论"));
 		},
 		success : function(result) {
 			if (!result.success) {
@@ -192,7 +193,7 @@ function toReply(parent) {
 					var validateCode = $("#reply-validateCode").length>0?$("#reply-validateCode").val():""
 					$.ajax({
 						type : "post",
-						url : rootPath + "/module/" + module
+						url : rootPath + "/userpage/" + moduleId
 								+ "/addComment?validateCode="+validateCode,
 						data : JSON.stringify(data),
 						async : false,
@@ -271,7 +272,7 @@ function loadUserinfo() {
 function queryConversations(id) {
 	$
 			.get(
-					actPath + '/module/' + module + '/comment/'
+					actPath + '/userpage/' + moduleId + '/comment/'
 							+ id + '/conversations',
 					{},
 					function(data) {
@@ -360,7 +361,7 @@ function removeComment(id) {
 		if (result) {
 			$.ajax({
 				type : "post",
-				url : rootPath + "/mgr/moduleComment/delete?id=" + id,
+				url : rootPath + "/mgr/comment/delete?id=" + id,
 				contentType : "application/json",
 				data : {},
 				xhrFields : {
@@ -386,7 +387,7 @@ function checkComment(id) {
 		if (result) {
 			$.ajax({
 				type : "post",
-				url : rootPath + "/mgr/moduleComment/check?id=" + id,
+				url : rootPath + "/mgr/comment/check?id=" + id,
 				data : {
 					id : id
 				},
