@@ -23,6 +23,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<id column="file_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
 		<result column="file_count" property="count"/>
 	</resultMap>
+	
+	<resultMap type="me.qyh.blog.dao.BlogFileDao$FileCountBean" id="FileCountBeanDetail">
+		<id column="file_store" property="fileStore"/>
+		<association property="fileCount" javaType="me.qyh.blog.service.StatisticsService$FileCount">
+			<result column="fileCount" property="fileCount"/>
+			<result column="totalSize" property="totalSize"/>
+		</association>
+	</resultMap>
 
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_file(file_name,file_parent,file_type,file_createDate,common_file,file_lft,file_rgt,file_path)
@@ -283,5 +291,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<delete id="deleteUnassociateCommonFile">
 		DELETE FROM blog_common_file  WHERE id NOT IN(SELECT common_file FROM blog_file bf WHERE bf.`common_file` IS NOT NULL )
 	</delete>
+	
+	
+	<select id="selectFileCount" resultMap="FileCountBeanDetail">
+		SELECT COUNT(*) AS fileCount,SUM(file_size) AS totalSize,file_store 
+		FROM blog_file bf LEFT OUTER JOIN blog_common_file bcf ON bf.`common_file` = bcf.`id` 
+		WHERE file_type = 1 GROUP BY file_store
+	</select>
 
 </mapper>

@@ -1,4 +1,4 @@
-package me.qyh.blog.ui.utils;
+package me.qyh.blog.util;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

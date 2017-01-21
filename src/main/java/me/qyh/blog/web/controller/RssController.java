@@ -51,7 +51,7 @@ public class RssController {
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setSpace(space);
 		param.setIgnoreLevel(true);
-		param.setHasLock(false);
+		param.setQueryLock(false);
 		param.setQueryPrivate(false);
 		param.setSort(null);
 		PageResult<Article> page = articleService.queryArticle(param);

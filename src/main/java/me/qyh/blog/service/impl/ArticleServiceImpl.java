@@ -51,7 +51,6 @@ import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
-import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.dao.ArticleDao;
@@ -75,8 +74,7 @@ import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.ConfigService;
-import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
-import me.qyh.blog.ui.utils.Times;
+import me.qyh.blog.util.Times;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -98,7 +96,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private ConfigService configService;
 	@Autowired
-	private CommentServer commentServer;
+	private CommentServer articleCommentStatisticsService;
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
@@ -129,7 +127,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			lockManager.openLock(article);
 
 			Article clone = new Article(article);
-			clone.setComments(commentServer.queryArticleCommentCount(article.getId()).orElse(0));
+			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(article.getId()).orElse(0));
 
 			if (!CollectionUtils.isEmpty(articleContentHandlers)) {
 				for (ArticleContentHandler handler : articleContentHandlers) {
@@ -206,10 +204,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article writeArticle(Article article) throws LogicException {
-		Space space = spaceDao.selectById(article.getSpace().getId());
-		if (space == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
+		Space space = spaceCache.checkSpace(article.getSpace().getId());
 		article.setSpace(space);
 		// 如果文章是私有的，无法设置锁
 		if (article.isPrivate()) {
@@ -361,9 +356,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+#space+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
-	public ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode) {
-		List<ArticleDateFile> files = articleDao.selectDateFiles(space, mode, Environment.isLogin());
+	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
+	public ArticleDateFiles queryArticleDateFiles(ArticleDateFileMode mode) throws LogicException {
+		List<ArticleDateFile> files = articleDao.selectDateFiles(Environment.getSpace().orElse(null), mode,
+				Environment.isLogin());
 		ArticleDateFiles _files = new ArticleDateFiles(files, mode);
 		_files.calDate();
 		return _files;
@@ -412,7 +408,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			for (Article article : datas) {
 				ids.add(article.getId());
 			}
-			Map<Integer, Integer> countsMap = commentServer.queryArticlesCommentCount(ids);
+			Map<Integer, Integer> countsMap = articleCommentStatisticsService.queryArticlesCommentCount(ids);
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
 				article.setComments(comments == null ? 0 : comments);
@@ -526,20 +522,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public ArticleStatistics queryArticleStatistics(Space space) {
-		boolean queryPrivate = Environment.isLogin();
-		ArticleStatistics statistics = articleDao.selectStatistics(space, queryPrivate);
-		statistics.setTotalSpaces(spaceCache.getSpaces(new SpacesCacheKey(queryPrivate)).size());
-		statistics.setTotalTags(articleTagDao.selectTagsCount(space, queryPrivate, queryPrivate));
-		statistics.setTotalComments(commentServer.queryArticlesTotalCommentCount(space, queryPrivate));
-		return statistics;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+#space+'-hasLock-'+#hasLock+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
-	public List<TagCount> queryTags(Space space, boolean hasLock) {
-		return articleTagDao.selectTags(space, hasLock, Environment.isLogin());
+	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
+	public List<TagCount> queryTags() throws LogicException {
+		return articleTagDao.selectTags(Environment.getSpace().orElse(null), Environment.isLogin());
 	}
 
 	@Override

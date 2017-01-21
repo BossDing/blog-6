@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 import com.google.common.html.HtmlEscapers;
 
-import me.qyh.blog.ui.utils.Times;
+import me.qyh.blog.util.Times;
 
 public class SiteMapUrlItem {
 

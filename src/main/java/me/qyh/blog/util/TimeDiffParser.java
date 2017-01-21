@@ -1,4 +1,4 @@
-package me.qyh.blog.ui.utils;
+package me.qyh.blog.util;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -8,8 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import me.qyh.blog.message.Message;
-import me.qyh.blog.ui.utils.Times;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.util.Times;
 
 public abstract class TimeDiffParser {
 

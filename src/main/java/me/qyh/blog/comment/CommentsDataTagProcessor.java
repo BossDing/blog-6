@@ -26,7 +26,6 @@ import com.google.common.collect.Lists;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.comment.CommentModule.ModuleType;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.ContextVariables;
@@ -41,7 +40,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult buildPreviewData(Space space, Attributes attributes) {
+	protected CommentPageResult buildPreviewData(Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -62,8 +61,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
+	protected CommentPageResult query(ContextVariables variables, Attributes attributes) throws LogicException {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
 

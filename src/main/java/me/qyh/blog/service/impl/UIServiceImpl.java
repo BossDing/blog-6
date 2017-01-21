@@ -124,7 +124,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private Map<String, String> lockPageDefaultTpls = Maps.newHashMap();
 	private List<DataTagProcessor<?>> processors = Lists.newArrayList();
 
-	private static final Message SPACE_NOT_EXISTS = new Message("space.notExists", "空间不存在");
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
 	private final LoadingCache<FragmentKey, Fragment> fragmentCache = CacheBuilder.newBuilder()
@@ -170,8 +169,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 						Page converted = TemplateUtils.convert(templateName);
 						Space space = converted.getSpace();
 						if (space != null) {
-							space = spaceCache.getSpace(space.getId())
-									.orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS));
+							space = spaceCache.checkSpace(space.getId());
 						}
 						switch (converted.getType()) {
 						case SYSTEM:
@@ -372,7 +370,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteSysPage(Space space, PageTarget target) throws LogicException {
+	public void deleteSysPage(Integer spaceId, PageTarget target) throws LogicException {
+		Space space = spaceCache.checkSpace(spaceId);
 		SysPage page = sysPageDao.selectBySpaceAndPageTarget(space, target);
 		if (page != null) {
 			sysPageDao.deleteById(page.getId());
@@ -400,7 +399,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteLockPage(Space space, String lockType) throws LogicException {
+	public void deleteLockPage(Integer spaceId, String lockType) throws LogicException {
+		Space space = spaceCache.checkSpace(spaceId);
 		LockPage page = lockPageDao.selectBySpaceAndLockType(space, lockType);
 		if (page != null) {
 			lockPageDao.deleteById(page.getId());
@@ -432,7 +432,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException {
+	public void deleteErrorPage(Integer spaceId, ErrorCode errorCode) throws LogicException {
+		Space space = spaceCache.checkSpace(spaceId);
 		ErrorPage page = errorPageDao.selectBySpaceAndErrorCode(space, errorCode);
 		if (page != null) {
 			errorPageDao.deleteById(page.getId());
@@ -445,16 +446,14 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	public Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException {
 		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
 		if (processor.isPresent()) {
-			return Optional
-					.of(processor.get().getData(Environment.getSpace().orElse(null), variables, dataTag.getAttrs()));
+			return Optional.of(processor.get().getData(variables, dataTag.getAttrs()));
 		}
 		return Optional.empty();
 	}
 
 	@Override
 	public Optional<DataBind<?>> queryPreviewData(DataTag dataTag) {
-		return getTagProcessor(dataTag.getName())
-				.map(processor -> processor.previewData(Environment.getSpace().orElse(null), dataTag.getAttrs()));
+		return getTagProcessor(dataTag.getName()).map(processor -> processor.previewData(dataTag.getAttrs()));
 	}
 
 	@Override
@@ -496,7 +495,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ExportPage> exportPage(Space space) throws LogicException {
+	public List<ExportPage> exportPage(Integer spaceId) throws LogicException {
+		Space space = spaceCache.checkSpace(spaceId);
 		List<ExportPage> exportPages = Lists.newArrayList();
 		// sys
 		for (PageTarget pageTarget : PageTarget.values()) {
@@ -518,15 +518,17 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
-	public List<ImportRecord> importPage(Space space, List<ExportPage> exportPages, ImportOption importOption) {
+	public List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption) {
 		TransactionStatus ts = platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
 		try {
 			if (CollectionUtils.isEmpty(exportPages)) {
 				return Lists.newArrayList();
 			}
-			// 空间不存在，直接退出
-			if (space != null && !spaceCache.getSpace(space.getId()).isPresent()) {
-				return Arrays.asList(new ImportRecord(false, SPACE_NOT_EXISTS));
+			Space space = null;
+			try {
+				space = spaceCache.checkSpace(spaceId);
+			} catch (LogicException e) {
+				return Arrays.asList(new ImportRecord(false, e.getLogicMessage()));
 			}
 			if (importOption == null) {
 				importOption = new ImportOption();
@@ -759,15 +761,14 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private void checkSpace(Page page) throws LogicException {
 		Space space = page.getSpace();
 		if (space != null) {
-			page.setSpace(spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS)));
+			page.setSpace(spaceCache.checkSpace(space.getId()));
 		}
 	}
 
 	private void checkSpace(UserFragment userFragment) throws LogicException {
 		Space space = userFragment.getSpace();
 		if (space != null) {
-			userFragment.setSpace(
-					spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException(SPACE_NOT_EXISTS)));
+			userFragment.setSpace(spaceCache.checkSpace(space.getId()));
 		}
 	}
 

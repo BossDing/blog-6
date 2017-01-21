@@ -337,6 +337,7 @@ function changeEditorCss(csses,style){
 			$.ajax({
 				type : "post",
 				url : url,
+				async:false,
 	            contentType:"application/json",
 				data : JSON.stringify(article),
 				success : function(data){

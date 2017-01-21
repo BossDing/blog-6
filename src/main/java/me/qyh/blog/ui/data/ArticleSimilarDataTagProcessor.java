@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
@@ -45,8 +44,7 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
+	protected List<Article> query(ContextVariables variables, Attributes attributes) throws LogicException {
 		Article article = (Article) variables.getAttribute("article");
 		if (article == null) {
 			String idOrAlias = super.getVariables("idOrAlias", variables, attributes);
@@ -61,7 +59,7 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> buildPreviewData(Space space, Attributes attributes) {
+	protected List<Article> buildPreviewData(Attributes attributes) {
 		List<Article> articles = Lists.newArrayList();
 		Article article = new Article();
 		article.setComments(0);

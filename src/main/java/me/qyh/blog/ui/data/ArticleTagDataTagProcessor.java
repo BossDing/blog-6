@@ -23,7 +23,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.bean.TagCount;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
@@ -39,7 +38,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> buildPreviewData(Space space, Attributes attributes) {
+	protected List<TagCount> buildPreviewData(Attributes attributes) {
 		TagCount count1 = new TagCount();
 		Tag tag1 = new Tag();
 		tag1.setCreate(Timestamp.valueOf(LocalDateTime.now()));
@@ -59,17 +58,8 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
-		boolean hasLock = true;
-		String hasLockStr = super.getVariables("hasLock", variables, attributes);
-		if (hasLockStr != null) {
-			try {
-				hasLock = Boolean.parseBoolean(hasLockStr);
-			} catch (Exception e) {
-			}
-		}
-		return articleService.queryTags(space, hasLock);
+	protected List<TagCount> query(ContextVariables variables, Attributes attributes) throws LogicException {
+		return articleService.queryTags();
 	}
 
 }

@@ -15,7 +15,10 @@
  */
 package me.qyh.blog.bean;
 
+import java.util.Objects;
+
 import me.qyh.blog.file.FileStore;
+import me.qyh.blog.util.Validators;
 
 /**
  * 文件服务描述
@@ -60,5 +63,19 @@ public class FileStoreBean {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (Validators.baseEquals(this, obj)) {
+			FileStoreBean fsb = (FileStoreBean) obj;
+			return Objects.equals(this.id, fsb.id);
+		}
+		return false;
 	}
 }

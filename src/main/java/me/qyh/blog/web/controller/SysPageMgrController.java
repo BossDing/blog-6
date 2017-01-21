@@ -127,7 +127,7 @@ public class SysPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult delete(@RequestParam("target") PageTarget target,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId) throws LogicException {
-		uiService.deleteSysPage(spaceId == null ? null : new Space(spaceId), target);
+		uiService.deleteSysPage(spaceId, target);
 		return new JsonResult(true, new Message("page.sys.delete.success", "还原成功"));
 	}
 

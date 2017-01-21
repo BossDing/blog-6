@@ -36,7 +36,6 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.message.MessageSerializer;
 import me.qyh.blog.ui.PageSerializer;
 import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.utils.UIUtils;
 
 /**
  * json处理工具类
@@ -77,7 +76,7 @@ public class Jsons {
 				public boolean shouldSkipClass(Class<?> clazz) {
 					return false;
 				}
-			}).registerTypeAdapter(Message.class, new MessageSerializer())
+			}).enableComplexMapKeySerialization().registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
 			.registerTypeAdapter(SysLock.class, new SysLockDeserializer())
 			.registerTypeAdapter(Page.class, new PageSerializer()).create();

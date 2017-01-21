@@ -34,9 +34,9 @@ import com.google.common.collect.Sets;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.utils.DefaultTimeDiffParser;
-import me.qyh.blog.ui.utils.TimeDiffParser;
-import me.qyh.blog.ui.utils.UIUtils;
+import me.qyh.blog.util.DefaultTimeDiffParser;
+import me.qyh.blog.util.TimeDiffParser;
+import me.qyh.blog.util.UIUtils;
 import me.qyh.blog.util.Validators;
 
 public class UIExposeHelper implements InitializingBean {

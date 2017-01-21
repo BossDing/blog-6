@@ -42,7 +42,8 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean ignoreLevel;// 忽略置顶
 	private boolean queryPrivate;// 查询私人博客
 	private String tag;
-	private Boolean hasLock;
+	// 是否查询带锁文章
+	private boolean queryLock = true;
 	private Sort sort;
 	private boolean highlight = true;// 查询是否高亮显示
 
@@ -122,12 +123,12 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.queryPrivate = queryPrivate;
 	}
 
-	public Boolean getHasLock() {
-		return hasLock;
+	public boolean isQueryLock() {
+		return queryLock;
 	}
 
-	public void setHasLock(Boolean hasLock) {
-		this.hasLock = hasLock;
+	public void setQueryLock(boolean queryLock) {
+		this.queryLock = queryLock;
 	}
 
 	public Sort getSort() {

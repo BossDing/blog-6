@@ -63,8 +63,8 @@ public class LockPageMgrController extends BaseMgrController {
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("lockType") String lockType,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
-		model.addAttribute("page", uiService.queryPage(TemplateUtils
-				.getTemplateName(new LockPage(spaceId == null ? null : new Space(spaceId), lockType))));
+		model.addAttribute("page", uiService.queryPage(
+				TemplateUtils.getTemplateName(new LockPage(spaceId == null ? null : new Space(spaceId), lockType))));
 		return "mgr/page/lock/build";
 	}
 
@@ -94,7 +94,7 @@ public class LockPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult delete(@RequestParam("lockType") String lockType,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId) throws LogicException {
-		uiService.deleteLockPage(spaceId == null ? null : new Space(spaceId), lockType);
+		uiService.deleteLockPage(spaceId, lockType);
 		return new JsonResult(true, new Message("page.lock.delete.success", "还原成功"));
 	}
 

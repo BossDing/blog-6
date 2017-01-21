@@ -21,7 +21,6 @@ import java.util.Optional;
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.bean.ImportRecord;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
@@ -132,11 +131,12 @@ public interface UIService {
 	/**
 	 * 删除系统挂件模板
 	 * 
-	 * @param space
+	 * @param spaceId
+	 *            空间ID
 	 * @param target
 	 * @throws LogicException
 	 */
-	void deleteSysPage(Space space, PageTarget target) throws LogicException;
+	void deleteSysPage(Integer spaceId, PageTarget target) throws LogicException;
 
 	/**
 	 * 保存更新错误页面模板
@@ -149,11 +149,12 @@ public interface UIService {
 	/**
 	 * 删除错误挂件模板
 	 * 
-	 * @param space
+	 * @param spaceId
+	 *            空间id
 	 * @param errorCode
 	 * @throws LogicException
 	 */
-	void deleteErrorPage(Space space, ErrorCode errorCode) throws LogicException;
+	void deleteErrorPage(Integer spaceId, ErrorCode errorCode) throws LogicException;
 
 	/**
 	 * 通过DATA_TAG标签查询数据
@@ -206,11 +207,12 @@ public interface UIService {
 	/**
 	 * 删除存在的解锁页面模板
 	 * 
-	 * @param space
+	 * @param spaceId
+	 *            空间id
 	 * @param lockType
 	 * @throws LogicException
 	 */
-	void deleteLockPage(Space space, String lockType) throws LogicException;
+	void deleteLockPage(Integer spaceId, String lockType) throws LogicException;
 
 	/**
 	 * 根据模板名查询页面
@@ -226,13 +228,13 @@ public interface UIService {
 	/**
 	 * 根据空间导出页面
 	 * 
-	 * @param space
-	 *            空间
+	 * @param spaceId
+	 *            空间Id
 	 * @return
 	 * @throws LogicException
 	 *             空间不存在
 	 */
-	List<ExportPage> exportPage(Space space) throws LogicException;
+	List<ExportPage> exportPage(Integer spaceId) throws LogicException;
 
 	/**
 	 * 导出单个页面
@@ -247,13 +249,15 @@ public interface UIService {
 	/**
 	 * 导入模板
 	 * 
-	 * @param space
-	 *            空间
+	 * @param spaceId
+	 *            空间Id
 	 * @param exportPages
 	 *            要导入的页面
 	 * @param importOption
 	 *            操作选择
+	 * @throws LogicException
+	 *             空间不存在
 	 */
-	List<ImportRecord> importPage(Space space, List<ExportPage> exportPages, ImportOption importOption);
+	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption);
 
 }

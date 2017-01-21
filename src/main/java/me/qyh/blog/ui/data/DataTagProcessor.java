@@ -66,15 +66,14 @@ public abstract class DataTagProcessor<T> {
 		this.dataName = dataName;
 	}
 
-	public final DataBind<T> getData(Space space, ContextVariables variables, Map<String, String> attributes)
-			throws LogicException {
+	public final DataBind<T> getData(ContextVariables variables, Map<String, String> attributes) throws LogicException {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
 		}
 		T result = null;
 		Attributes atts = new Attributes(attributes);
 		try {
-			result = query(space, variables, atts);
+			result = query(variables, atts);
 		} catch (LogicException e) {
 			if (!ignoreLogicException(attributes)) {
 				throw e;
@@ -108,12 +107,12 @@ public abstract class DataTagProcessor<T> {
 	 * @param attributes
 	 * @return
 	 */
-	public final DataBind<T> previewData(Space space, Map<String, String> attributes) {
+	public final DataBind<T> previewData(Map<String, String> attributes) {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
 		}
 		Attributes atts = new Attributes(attributes);
-		T result = buildPreviewData(space, atts);
+		T result = buildPreviewData(atts);
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
@@ -130,9 +129,9 @@ public abstract class DataTagProcessor<T> {
 	 * 
 	 * @return
 	 */
-	protected abstract T buildPreviewData(Space space, Attributes attributes);
+	protected abstract T buildPreviewData(Attributes attributes);
 
-	protected abstract T query(Space space, ContextVariables variables, Attributes attributes) throws LogicException;
+	protected abstract T query(ContextVariables variables, Attributes attributes) throws LogicException;
 
 	public String getName() {
 		return name;
@@ -144,6 +143,10 @@ public abstract class DataTagProcessor<T> {
 
 	protected Space getSpace() {
 		return Environment.getSpace().orElse(previewSpace);
+	}
+
+	protected Space getCurrentSpace() {
+		return Environment.getSpace().orElse(null);
 	}
 
 	protected final class Attributes {

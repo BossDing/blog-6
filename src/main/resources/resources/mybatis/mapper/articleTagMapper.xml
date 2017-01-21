@@ -44,12 +44,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="space != null">
 			AND ba.space_id = ${space.id}
 		</if>
-		<if test="!hasLock">
-			AND ba.art_lock IS NULL 
-			AND bs.space_lock IS NULL 
-		</if>
 		<if test="!queryPrivate">
 			AND ba.isPrivate = FALSE
+			AND bs.is_private = FALSE
 		</if>
 		GROUP BY bt.id
 		ORDER BY counts DESC,tag_create_date DESC,bt.id DESC
@@ -64,12 +61,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="space != null">
 			AND ba.space_id = ${space.id}
 		</if>
-		<if test="!hasLock">
-			AND ba.art_lock IS NULL 
-			AND bs.space_lock IS NULL 
-		</if>
 		<if test="!queryPrivate">
 			AND ba.isPrivate = FALSE
+			AND bs.is_private = FALSE
 		</if>
+	</select>
+	
+	<select id="selectAllTagsCount" resultType="int">
+		SELECT COUNT(DISTINCT(bt.id)) FROM blog_tag bt 
+		LEFT OUTER JOIN blog_article_tag bat ON bt.id = bat.tag_id 
+		LEFT OUTER JOIN blog_article ba ON bat.article_id = ba.id
+		<where>
+			<if test="space != null">
+				ba.space_id = ${space.id}
+			</if>
+		</where>
 	</select>
 </mapper>

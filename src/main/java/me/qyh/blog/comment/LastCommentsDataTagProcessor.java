@@ -27,7 +27,6 @@ import com.google.common.collect.Lists;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.comment.CommentModule.ModuleType;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.data.DataTagProcessor;
@@ -49,7 +48,7 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> buildPreviewData(Space space, Attributes attributes) {
+	protected List<Comment> buildPreviewData(Attributes attributes) {
 		List<Comment> comments = Lists.newArrayList();
 		Comment comment = new Comment();
 		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -67,14 +66,12 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
+	protected List<Comment> query(ContextVariables variables, Attributes attributes) throws LogicException {
 		ModuleType type = getModuleType(variables, attributes);
 		if (type == null) {
 			return Collections.emptyList();
 		}
-		return commentService.queryLastComments(type, space, getLimit(attributes),
-				getQueryAdmin(variables, attributes));
+		return commentService.queryLastComments(type, getLimit(attributes), getQueryAdmin(variables, attributes));
 	}
 
 	private ModuleType getModuleType(ContextVariables variables, Attributes attributes) {

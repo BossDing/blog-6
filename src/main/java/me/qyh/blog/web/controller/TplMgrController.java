@@ -67,7 +67,7 @@ public class TplMgrController extends BaseMgrController {
 	@RequestMapping(value = "export", method = RequestMethod.POST)
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
 		try {
-			List<ExportPage> pages = uiService.exportPage(spaceId == null ? null : new Space(spaceId));
+			List<ExportPage> pages = uiService.exportPage(spaceId);
 			return download(pages, spaceId == null ? null : spaceService.getSpace(spaceId).get());
 		} catch (LogicException e) {
 			ra.addFlashAttribute(ERROR, e.getLogicMessage());
@@ -116,7 +116,7 @@ public class TplMgrController extends BaseMgrController {
 			toImportPages.add(exportPage);
 			bindingResult.getTargetMap().clear();
 		}
-		records.addAll(uiService.importPage(spaceId == null ? null : new Space(spaceId), toImportPages, importOption));
+		records.addAll(uiService.importPage(spaceId, toImportPages, importOption));
 		return new JsonResult(true, records);
 	}
 

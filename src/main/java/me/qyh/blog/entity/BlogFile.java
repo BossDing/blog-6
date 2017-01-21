@@ -18,6 +18,7 @@ package me.qyh.blog.entity;
 import java.sql.Timestamp;
 
 import me.qyh.blog.file.CommonFile;
+import me.qyh.blog.message.Message;
 
 /**
  * 
@@ -41,8 +42,22 @@ public class BlogFile extends BaseEntity {
 	 *
 	 */
 	public enum BlogFileType {
-		DIRECTORY, // 文件夹
-		FILE // 文件
+		DIRECTORY(new Message("blogFile.type.directory", "文件夹")), // 文件夹
+		FILE(new Message("blogFile.type.file", "文件"));// 文件
+
+		private Message message;
+
+		private BlogFileType(Message message) {
+			this.message = message;
+		}
+
+		private BlogFileType() {
+
+		}
+
+		public Message getMessage() {
+			return message;
+		}
 	}
 
 	private BlogFileType type;

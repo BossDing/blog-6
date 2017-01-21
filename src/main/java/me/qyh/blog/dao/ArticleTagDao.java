@@ -71,27 +71,34 @@ public interface ArticleTagDao {
 	 * 
 	 * @param space
 	 *            空间
-	 * @param hasLock
-	 *            是否查询被锁的空间|文章
 	 * @param queryPrivate
 	 *            是否查询私有
 	 * @return 标签集合
 	 */
-	List<TagCount> selectTags(@Param("space") Space space, @Param("hasLock") boolean hasLock,
-			@Param("queryPrivate") boolean queryPrivate);
+	List<TagCount> selectTags(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 查询标签总数
+	 * <p>
+	 * 只会查询<b>状态为发布的</b>文章
+	 * </p>
 	 * 
 	 * @param space
 	 *            空间
-	 * @param hasLock
-	 *            是否查询被锁的空间|文章
 	 * @param queryPrivate
 	 *            是否查询私有
 	 * @return
 	 */
-	int selectTagsCount(@Param("space") Space space, @Param("hasLock") boolean hasLock,
-			@Param("queryPrivate") boolean queryPrivate);
+	int selectTagsCount(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
+
+	/**
+	 * 查询<b>所有的</b>文章的引用标签的数量
+	 * <p>
+	 * 用于后台统计
+	 * </p>
+	 * 
+	 * @return
+	 */
+	int selectAllTagsCount(@Param("space") Space space);
 
 }

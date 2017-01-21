@@ -24,7 +24,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
-import me.qyh.blog.ui.utils.Times;
+import me.qyh.blog.util.Times;
 
 /**
  * JsonFormat annotation可以解决同样的问题，但只能局限一种格式？

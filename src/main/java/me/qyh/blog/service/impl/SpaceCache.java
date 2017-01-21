@@ -141,6 +141,21 @@ public class SpaceCache {
 		}
 	}
 
+	/**
+	 * 判断空间是否存在
+	 * 
+	 * @param spaceId
+	 *            空间ID
+	 * @return
+	 * @throws LogicException
+	 */
+	public Space checkSpace(Integer spaceId) throws LogicException {
+		if (spaceId == null) {
+			return null;
+		}
+		return getSpace(spaceId).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
+	}
+
 	public void evit(Space db) {
 		if (db.hasId()) {
 			idCache.invalidate(db.getId());

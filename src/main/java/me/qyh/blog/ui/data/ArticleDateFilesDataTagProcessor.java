@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
@@ -39,7 +38,7 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles buildPreviewData(Space space, Attributes attributes) {
+	protected ArticleDateFiles buildPreviewData(Attributes attributes) {
 		ArticleDateFiles files = new ArticleDateFiles();
 		files.setMode(ArticleDateFileMode.YM);
 		Calendar cal = Calendar.getInstance();
@@ -60,10 +59,9 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
+	protected ArticleDateFiles query(ContextVariables variables, Attributes attributes) throws LogicException {
 		ArticleDateFileMode mode = getMode(variables, attributes);
-		return articleService.queryArticleDateFiles(space, mode);
+		return articleService.queryArticleDateFiles(mode);
 	}
 
 	private ArticleDateFileMode getMode(ContextVariables variables, Attributes attributes) {

@@ -208,6 +208,10 @@ public interface CommentDao {
 			this.comments = comments;
 		}
 
+		public Integer getModuleId() {
+			return module.getId();
+		}
+
 	}
 
 }

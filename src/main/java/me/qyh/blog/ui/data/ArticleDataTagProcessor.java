@@ -27,7 +27,6 @@ import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.entity.Editor;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
@@ -51,7 +50,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article buildPreviewData(Space space, Attributes attributes) {
+	protected Article buildPreviewData(Attributes attributes) {
 		Article article = new Article();
 		article.setComments(0);
 		article.setEditor(Editor.MD);
@@ -78,7 +77,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article query(Space space, ContextVariables variables, Attributes attributes) throws LogicException {
+	protected Article query(ContextVariables variables, Attributes attributes) throws LogicException {
 		// 首先从属性中获取
 		String idOrAlias = attributes.get(ID_OR_ALIAS);
 		if (idOrAlias == null) {

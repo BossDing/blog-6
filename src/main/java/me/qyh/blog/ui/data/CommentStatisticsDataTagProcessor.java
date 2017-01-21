@@ -15,43 +15,33 @@
  */
 package me.qyh.blog.ui.data;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.service.StatisticsService;
+import me.qyh.blog.service.StatisticsService.CommentStatistics;
 import me.qyh.blog.ui.ContextVariables;
 
-/**
- * 查询所有的空间
- * 
- * @author mhlx
- *
- */
-public class SpacesDataTagProcessor extends DataTagProcessor<List<Space>> {
+public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentStatistics> {
 
 	@Autowired
-	private SpaceService spaceService;
+	private StatisticsService statisticsService;
 
-	public SpacesDataTagProcessor(String name, String dataName) {
+	public CommentStatisticsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected List<Space> buildPreviewData(Attributes attributes) {
-		return Arrays.asList(getSpace());
+	protected CommentStatistics buildPreviewData(Attributes attributes) {
+		CommentStatistics cs = new CommentStatistics();
+		cs.setTotalArticleComments(1);
+		cs.setTotalUserPageComments(1);
+		return cs;
 	}
 
 	@Override
-	protected List<Space> query(ContextVariables variables, Attributes attributes) throws LogicException {
-		SpaceQueryParam param = new SpaceQueryParam();
-		param.setQueryPrivate(Environment.isLogin());
-		return spaceService.querySpace(param);
+	protected CommentStatistics query(ContextVariables variables, Attributes attributes) throws LogicException {
+		return statisticsService.queryCommentStatistics();
 	}
 
 }

@@ -187,6 +187,7 @@
 				return ;
 			}
 			var article = getArticle();
+			article.status = 'DRAFT';
 			if(article.content == ''){
 				return ;
 			}
@@ -196,6 +197,7 @@
 			$.ajax({
 				type : "post",
 				url : url,
+				async:false,
 	            contentType:"application/json",
 				data : JSON.stringify(article),
 				success : function(data){

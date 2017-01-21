@@ -22,6 +22,7 @@ import org.apache.ibatis.annotations.Param;
 import me.qyh.blog.bean.BlogFileCount;
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
+import me.qyh.blog.service.StatisticsService.FileCount;
 
 /**
  * 
@@ -180,4 +181,33 @@ public interface BlogFileDao {
 	 * 删除没有关联的文件信息
 	 */
 	void deleteUnassociateCommonFile();
+
+	/**
+	 * 根据文件存储器查询文件数量(用于后台统计)
+	 * 
+	 * @return
+	 */
+	List<FileCountBean> selectFileCount();
+
+	public class FileCountBean {
+		private int fileStore;
+		private FileCount fileCount;
+
+		public int getFileStore() {
+			return fileStore;
+		}
+
+		public void setFileStore(int fileStore) {
+			this.fileStore = fileStore;
+		}
+
+		public FileCount getFileCount() {
+			return fileCount;
+		}
+
+		public void setFileCount(FileCount fileCount) {
+			this.fileCount = fileCount;
+		}
+
+	}
 }

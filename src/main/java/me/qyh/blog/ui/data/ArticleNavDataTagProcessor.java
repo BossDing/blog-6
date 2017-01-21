@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
@@ -36,7 +35,7 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav buildPreviewData(Space space, Attributes attributes) {
+	protected ArticleNav buildPreviewData(Attributes attributes) {
 		Article previous = new Article(-1);
 		previous.setTitle("预览博客-前一篇");
 		Article next = new Article(-2);
@@ -48,7 +47,7 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav query(Space space, ContextVariables variables, Attributes attributes) throws LogicException {
+	protected ArticleNav query(ContextVariables variables, Attributes attributes) throws LogicException {
 		Article article = (Article) variables.getAttribute("article");
 		if (article == null) {
 			String idOrAlias = super.getVariables(ID_OR_ALIAS, variables, attributes);
@@ -56,10 +55,7 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 				return articleService.getArticleNav(idOrAlias).orElse(null);
 			}
 		}
-		if (article != null && space != null && space.getAlias().equals(article.getSpace().getAlias())) {
-			return articleService.getArticleNav(article).orElse(null);
-		}
-		return null;
+		return articleService.getArticleNav(article).orElse(null);
 	}
 
 }

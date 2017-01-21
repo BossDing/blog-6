@@ -31,7 +31,6 @@ import com.google.common.collect.Sets;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
@@ -70,7 +69,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> buildPreviewData(Space space, Attributes attributes) {
+	protected PageResult<Article> buildPreviewData(Attributes attributes) {
 		List<Article> articles = Lists.newArrayList();
 		Article article = new Article();
 		article.setComments(0);
@@ -95,20 +94,19 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
+	protected PageResult<Article> query(ContextVariables variables, Attributes attributes) throws LogicException {
 		ArticleQueryParam param = (ArticleQueryParam) variables.getAttribute(ArticleQueryParam.class.getName());
 		if (param == null) {
-			param = parseParam(space, variables, attributes);
+			param = parseParam(variables, attributes);
 		}
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setQueryPrivate(Environment.isLogin());
 		return articleService.queryArticle(param);
 	}
 
-	private ArticleQueryParam parseParam(Space space, ContextVariables variables, Attributes attributes) {
+	private ArticleQueryParam parseParam(ContextVariables variables, Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
-		param.setSpace(space);
+		param.setSpace(getCurrentSpace());
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setCurrentPage(1);
 
@@ -172,9 +170,9 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 			}
 
-			String hasLockStr = super.getVariables("hasLock", variables, attributes);
-			if (hasLockStr != null) {
-				param.setHasLock(Boolean.parseBoolean(hasLockStr));
+			String queryLockStr = super.getVariables("queryLock", variables, attributes);
+			if (queryLockStr != null) {
+				param.setQueryLock(Boolean.parseBoolean(queryLockStr));
 			}
 		}
 

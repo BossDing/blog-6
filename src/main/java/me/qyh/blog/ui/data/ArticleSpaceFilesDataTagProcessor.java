@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.collect.Lists;
 
 import me.qyh.blog.bean.ArticleSpaceFile;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
 
@@ -37,7 +37,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> buildPreviewData(Space space, Attributes attributes) {
+	protected List<ArticleSpaceFile> buildPreviewData(Attributes attributes) {
 		List<ArticleSpaceFile> files = Lists.newArrayList();
 
 		ArticleSpaceFile file1 = new ArticleSpaceFile();
@@ -49,9 +49,8 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> query(Space space, ContextVariables variables, Attributes attributes)
-			throws LogicException {
-		if (space == null) {
+	protected List<ArticleSpaceFile> query(ContextVariables variables, Attributes attributes) throws LogicException {
+		if (!Environment.hasSpace()) {
 			return articleService.queryArticleSpaceFiles();
 		}
 		return null;

@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.pageparam;
 
+import me.qyh.blog.entity.Space;
+
 public class UserPageQueryParam extends PageQueryParam {
 
 	/**
@@ -23,6 +25,15 @@ public class UserPageQueryParam extends PageQueryParam {
 	private static final long serialVersionUID = 1L;
 
 	private String name;
+	private Space space;
+
+	public Space getSpace() {
+		return space;
+	}
+
+	public void setSpace(Space space) {
+		this.space = space;
+	}
 
 	public String getName() {
 		return name;

@@ -43,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.html.HtmlEscapers;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
@@ -377,12 +376,13 @@ public class CommentService implements InitializingBean, CommentServer {
 	}
 
 	/**
-	 * 查询某空间下 某个模块类型的最近的评论
+	 * 查询<b>当前空间</b>下 某个模块类型的最近的评论
+	 * <p>
+	 * <b>用于DataTag</b>
+	 * </p>
 	 * 
 	 * @param type
 	 *            模块类型
-	 * @param space
-	 *            空间
 	 * @param limit
 	 *            数目限制
 	 * @param queryAdmin
@@ -390,8 +390,9 @@ public class CommentService implements InitializingBean, CommentServer {
 	 * @return
 	 */
 	@Transactional(readOnly = true)
-	public List<Comment> queryLastComments(ModuleType type, Space space, int limit, boolean queryAdmin) {
-		return commentDao.selectLastComments(type, space, limit, Environment.isLogin(), queryAdmin);
+	public List<Comment> queryLastComments(ModuleType type, int limit, boolean queryAdmin) {
+		return commentDao.selectLastComments(type, Environment.getSpace().orElse(null), limit, Environment.isLogin(),
+				queryAdmin);
 	}
 
 	@EventListener
@@ -482,13 +483,8 @@ public class CommentService implements InitializingBean, CommentServer {
 	public Map<Integer, Integer> queryArticlesCommentCount(List<Integer> ids) {
 		List<CommentModule> modules = ids.stream().map(id -> new CommentModule(ModuleType.ARTICLE, id))
 				.collect(Collectors.toList());
-		List<ModuleCommentCount> counts = commentDao.selectCommentCounts(modules);
-		// TODO Collectors.toMap ???
-		Map<Integer, Integer> map = Maps.newHashMap();
-		for (ModuleCommentCount count : counts) {
-			map.put(count.getModule().getId(), count.getComments());
-		}
-		return map;
+		return commentDao.selectCommentCounts(modules).stream()
+				.collect(Collectors.toMap(ModuleCommentCount::getModuleId, ModuleCommentCount::getComments));
 	}
 
 	@Override
@@ -502,6 +498,12 @@ public class CommentService implements InitializingBean, CommentServer {
 	@Transactional(readOnly = true)
 	public int queryArticlesTotalCommentCount(Space space, boolean queryPrivate) {
 		return commentDao.selectTotalCommentCount(ModuleType.ARTICLE, space, queryPrivate);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public int queryUserPagesTotalCommentCount(Space space, boolean queryPrivate) {
+		return commentDao.selectTotalCommentCount(ModuleType.USERPAGE, space, queryPrivate);
 	}
 
 	/**

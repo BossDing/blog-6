@@ -24,10 +24,8 @@ import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.bean.ArticleSpaceFile;
-import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -63,15 +61,20 @@ public interface ArticleService {
 	Article getArticleForEdit(Integer id) throws LogicException;
 
 	/**
-	 * 查询文章日期归档
+	 * 查询<b>当前空间</b>文章日期归档
+	 * <p>
+	 * <b>用于DataTag</b>
+	 * </p>
 	 * 
 	 * @param space
 	 *            空间
 	 * @param mode
 	 *            归档方式
 	 * @return 文章归档
+	 * @throws LogicException
+	 *             空间不存在
 	 */
-	ArticleDateFiles queryArticleDateFiles(Space space, ArticleDateFileMode mode);
+	ArticleDateFiles queryArticleDateFiles(ArticleDateFileMode mode) throws LogicException;
 
 	/**
 	 * 查询文章空间归档
@@ -173,27 +176,16 @@ public interface ArticleService {
 	Optional<ArticleNav> getArticleNav(String idOrAlias);
 
 	/**
-	 * 查询博客统计 <br>
-	 * <strong>只会统计状态为发表的博客点击数、评论数、最近撰写日期和最后修改日期</strong>
+	 * 查询<b>当前空间</b>被文章引用的标签数量
+	 * <p>
+	 * <b>用于DataTag</b>
+	 * </p>
 	 * 
-	 * @param space
-	 *            空间
-	 * @return 文章统计详情
-	 */
-	ArticleStatistics queryArticleStatistics(Space space);
-
-	/**
-	 * 查询被文章所引用的标签集
-	 * 
-	 * @param space
-	 *            空间
-	 * @param hasLock
-	 *            是否查询锁保护的文章
 	 * @param queryPrivate
 	 *            是否查询私人文章
 	 * @return 标签集
 	 */
-	List<TagCount> queryTags(Space space, boolean hasLock);
+	List<TagCount> queryTags() throws LogicException;
 
 	/**
 	 * 更新metaweblog文章

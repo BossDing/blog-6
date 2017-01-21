@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.util;
 
-import me.qyh.blog.ui.utils.UIUtils;
-
 /**
  * 校验辅助
  * 

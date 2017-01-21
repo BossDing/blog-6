@@ -78,8 +78,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			blog_page_user bpu
 		LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id
 		<where>
+			<if test="space != null">
+				bpu.space_id = #{space.id}
+			</if>
 			<if test="name != null and name != ''">
-				page_name LIKE CONCAT('%', #{name},'%')
+				AND page_name LIKE CONCAT('%', #{name},'%')
 			</if>
 		</where>
 		ORDER BY page_create_date DESC,bpu.id DESC
@@ -92,8 +95,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		FROM 
 			blog_page_user
 		<where>
+			<if test="space != null">
+				space_id = #{space.id}
+			</if>
 			<if test="name != null and name != ''">
-				page_name LIKE CONCAT('%', #{name},'%')
+				AND page_name LIKE CONCAT('%', #{name},'%')
 			</if>
 		</where>
 	</select>

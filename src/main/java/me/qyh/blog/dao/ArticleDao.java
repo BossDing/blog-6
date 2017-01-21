@@ -23,10 +23,10 @@ import org.apache.ibatis.annotations.Param;
 import me.qyh.blog.bean.ArticleDateFile;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.bean.ArticleSpaceFile;
-import me.qyh.blog.bean.ArticleStatistics;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.ArticleQueryParam;
+import me.qyh.blog.service.StatisticsService.ArticleStatistics;
 
 /**
  * 
@@ -169,6 +169,9 @@ public interface ArticleDao {
 
 	/**
 	 * 查询文章统计
+	 * <p>
+	 * <b>只会统计已经发布的博客</b>
+	 * </p>
 	 * 
 	 * @param space
 	 *            空间，如果为空，则查询全部
@@ -177,6 +180,18 @@ public interface ArticleDao {
 	 * @return 文章统计
 	 */
 	ArticleStatistics selectStatistics(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
+
+	/**
+	 * 查询文章统计(用于后台统计)
+	 * <p>
+	 * <b>会统计全部文章</b>
+	 * </p>
+	 * 
+	 * @param space
+	 *            空间，如果为空，则查询全部
+	 * @return 文章统计
+	 */
+	ArticleStatistics selectAllStatistics(@Param("space") Space space);
 
 	/**
 	 * 根据文章的别名查询文章

@@ -98,7 +98,7 @@ public class ErrorPageMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult delete(@RequestParam("errorCode") ErrorCode code,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId) throws LogicException {
-		uiService.deleteErrorPage(spaceId == null ? null : new Space(spaceId), code);
+		uiService.deleteErrorPage(spaceId, code);
 		return new JsonResult(true, new Message("page.error.delete.success", "还原成功"));
 	}
 

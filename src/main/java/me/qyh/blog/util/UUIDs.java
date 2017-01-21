@@ -17,8 +17,6 @@ package me.qyh.blog.util;
 
 import java.util.UUID;
 
-import me.qyh.blog.ui.utils.UIUtils;
-
 /**
  * 
  * @author Administrator

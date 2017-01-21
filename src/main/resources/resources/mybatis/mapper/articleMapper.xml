@@ -49,6 +49,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
 	<resultMap type="ArticleStatistics" id="ArticleStatisticsDetail">
 		<id column="space_id" />
+		<result column="lastPubDate" property="lastPubDate" />
 		<result column="lastModifyDate" property="lastModifyDate" />
 		<result column="totalHits" property="totalHits" />
 		<result column="totalArticles" property="totalArticles" />
@@ -142,16 +143,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.art_from =
 				#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
-			<if test="hasLock != null">
-				<choose>
-					<when test="hasLock">
-						AND (art.art_lock IS NOT NULL OR sp.space_lock IS
-						NOT NULL)
-					</when>
-					<otherwise>
-						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
-					</otherwise>
-				</choose>
+			<if test="!queryLock">
+				AND art.art_lock IS NULL
+				AND sp.space_lock IS NULL
 			</if>
 			<if test="tag != null">
 				AND art.id IN (SELECT article_id FROM blog_article_tag
@@ -209,16 +203,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.art_from =
 				#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler}
 			</if>
-			<if test="hasLock != null">
-				<choose>
-					<when test="hasLock">
-						AND (art.art_lock IS NOT NULL OR sp.space_lock IS
-						NOT NULL)
-					</when>
-					<otherwise>
-						AND (art.art_lock IS NULL AND sp.space_lock IS NULL)
-					</otherwise>
-				</choose>
+			<if test="!queryLock">
+				AND art.art_lock IS NULL
+				AND sp.space_lock IS NULL
 			</if>
 			<if test="tag != null">
 				AND bt.tag_name = #{tag}
@@ -437,6 +424,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.isPrivate = false
 			AND sp.is_private = false
 		</if>
+	</select>
+	
+	<select id="selectAllStatistics" resultMap="ArticleStatisticsDetail">
+		SELECT
+		COALESCE(SUM(hits),0) AS totalHits,
+		COUNT(art.id) AS totalArticles,
+		MAX(lastModifyDate) AS lastModifyDate,
+		MAX(pubDate) AS lastPubDate
+		FROM
+		blog_article art
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
+		<where>
+			<if test="space != null">
+				art.space_id = #{space.id}
+			</if>
+		</where>
 	</select>
 
 	<select id="selectRecentArticles" resultMap="ArticleDetail">
