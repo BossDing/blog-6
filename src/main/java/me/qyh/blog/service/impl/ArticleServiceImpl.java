@@ -158,8 +158,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (article != null) {
 			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
 					&& !article.getIsPrivate();
-			lockManager.openLock(article);
 			if (hit) {
+				lockManager.openLock(article);
 				articleDao.updateHits(id, 1);
 				articleIndexer.addOrUpdateDocument(article);
 				article.addHits();

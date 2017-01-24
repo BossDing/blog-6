@@ -34,6 +34,7 @@ import org.im4java.core.IdentifyCmd;
 import org.im4java.core.ImageCommand;
 import org.im4java.core.Operation;
 import org.im4java.process.ArrayListOutputConsumer;
+import org.im4java.process.ProcessStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -48,6 +49,7 @@ import me.qyh.blog.util.Validators;
 /**
  * 图片处理类，基于{@link http://www.graphicsmagick.org/}，可以用来处理PNG,JPEG,GIF,WEBP等多种格式
  * 
+ * @see http://im4java.sourceforge.net/docs/dev-guide.html
  * @author Administrator
  *
  */
@@ -107,9 +109,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		ArrayListOutputConsumer localArrayListOutputConsumer = new ArrayListOutputConsumer();
 		run(() -> {
 			IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
-			if (WINDOWS) {
-				localIdentifyCmd.setSearchPath(magickPath);
-			}
 			localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
 			return localIdentifyCmd;
 		}, localIMOperation, file.getAbsolutePath() + "[0]");
@@ -182,6 +181,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (WINDOWS && Validators.isEmptyOrNull(magickPath, true)) {
 			throw new SystemException("windows下必须设置GraphicsMagick的主目录");
 		}
+
+		if (WINDOWS) {
+			ProcessStarter.setGlobalSearchPath(magickPath);
+		}
 	}
 
 	private boolean interlace(File dest) {
@@ -248,13 +251,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	private void run(Operation operation, Object... args) throws IOException {
-		run(() -> {
-			ConvertCmd cmd = new ConvertCmd(true);
-			if (WINDOWS) {
-				cmd.setSearchPath(magickPath);
-			}
-			return cmd;
-		}, operation, args);
+		run(() -> new ConvertCmd(true), operation, args);
 	}
 
 }

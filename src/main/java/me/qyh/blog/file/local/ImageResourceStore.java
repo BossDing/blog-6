@@ -96,17 +96,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		try {
 			Webs.save(mf, tmp);
 		} catch (IOException e1) {
+			FileUtils.deleteQuietly(tmp);
 			throw new SystemException(e1.getMessage(), e1);
 		}
 		File finalFile = tmp;
 		ImageInfo ii = readImage(tmp);
 		String extension = ii.getExtension();
-		if (ImageHelper.isWEBP(extension)) {
-			finalFile = FileUtils.temp(ImageHelper.JPEG);
-			webpFormat(tmp, finalFile);
-			extension = ImageHelper.JPEG;
-		}
 		try {
+			if (ImageHelper.isWEBP(extension)) {
+				finalFile = FileUtils.temp(ImageHelper.PNG);
+				// 将WEBP格式转化为PNG格式，因为WEBP格式有可能透明
+				webpFormat(tmp, finalFile);
+				extension = ImageHelper.PNG;
+			}
 			FileUtils.forceMkdir(dest.getParentFile());
 			Files.move(finalFile, dest);
 			CommonFile cf = new CommonFile();
@@ -151,7 +153,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (!supportWebp) {
 			throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
 		}
-		// 如果是webp的图片，需要转化为jpeg格式
 		try {
 			imageHelper.format(src, dest);
 		} catch (IOException e) {
@@ -303,16 +304,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected File doResize(File local, Resize resize, File thumb, String key) throws IOException {
-		// 不知道为什么。gm转化webp的时候特别耗费时间，所以这里只提取jpeg|PNG的封面
 		String ext = Files.getFileExtension(local.getName());
 		File cover = new File(thumbAbsFolder, key + File.separator + Files.getNameWithoutExtension(key)
 				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
 		if (!cover.exists()) {
-			FileUtils.forceMkdir(cover.getParentFile());
-			if (ImageHelper.isGIF(Files.getFileExtension(local.getName()))) {
-				imageHelper.getGifCover(local, cover);
-			} else {
-				imageHelper.format(local, cover);
+			synchronized (this) {
+				if (!cover.exists()) {
+					FileUtils.forceMkdir(cover.getParentFile());
+					if (ImageHelper.isGIF(Files.getFileExtension(local.getName()))) {
+						imageHelper.getGifCover(local, cover);
+					} else {
+						imageHelper.format(local, cover);
+					}
+				}
 			}
 		}
 		FileUtils.forceMkdir(thumb.getParentFile());

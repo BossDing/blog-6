@@ -264,6 +264,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			response.setContentLength((int) length);
 			response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
 			response.setHeader("Content-Disposition",
+					// 中文乱码
 					"attachment; filename=" + new String(file.getName().getBytes(Constants.CHARSET), "iso-8859-1"));
 			try {
 				Files.copy(file, response.getOutputStream());

@@ -94,8 +94,7 @@ public class JavaImageHelper extends ImageHelper {
 					ImageReader reader = imageReaders.next();
 					reader.setInput(iis);
 					int minIndex = reader.getMinIndex();
-					return new ImageInfo(reader.getWidth(reader.getMinIndex()), reader.getHeight(minIndex),
-							reader.getFormatName());
+					return new ImageInfo(reader.getWidth(minIndex), reader.getHeight(minIndex), reader.getFormatName());
 				}
 				throw new IOException("无法确定图片:" + file.getAbsolutePath() + "的具体类型");
 			}
