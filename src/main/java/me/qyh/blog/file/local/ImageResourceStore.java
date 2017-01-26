@@ -305,17 +305,28 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	protected File doResize(File local, Resize resize, File thumb, String key) throws IOException {
 		String ext = Files.getFileExtension(local.getName());
-		File cover = new File(thumbAbsFolder, key + File.separator + Files.getNameWithoutExtension(key)
-				+ (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT));
+		File thumbFolder = new File(thumbAbsFolder, key);
+
+		String thumbFilename = Files.getNameWithoutExtension(key);
+		String coverExt = (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT);
+
+		File cover = new File(thumbFolder, thumbFilename + ".cover" + coverExt);
 		if (!cover.exists()) {
 			synchronized (this) {
 				if (!cover.exists()) {
-					FileUtils.forceMkdir(cover.getParentFile());
+					// 这里不直接写入cover文件
+					// 因为在使用GraphicsMagick的情况下，会先生成一个空的文件
+					// 如果两个线程同时生成缩略图，其中一个线程可能会读取到空的封面
+					// 所以这里先写入再重命名，确保cover是一个被写入完毕的文件
+					File target = new File(thumbFolder, thumbFilename + coverExt);
+					FileUtils.forceMkdir(thumbFolder);
 					if (ImageHelper.isGIF(Files.getFileExtension(local.getName()))) {
-						imageHelper.getGifCover(local, cover);
+						imageHelper.getGifCover(local, target);
 					} else {
-						imageHelper.format(local, cover);
+						imageHelper.format(local, target);
 					}
+
+					FileUtils.rename(target, cover);
 				}
 			}
 		}

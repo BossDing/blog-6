@@ -28,7 +28,7 @@ public class ArticleIndexRebuilder implements ApplicationListener<ArticleIndexRe
 	private PlatformTransactionManager platformTransactionManager;
 	@Autowired
 	private NRTArticleIndexer articleIndexer;
-	private static final Logger logger = LoggerFactory.getLogger(ArticleIndexRebuilder.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleIndexRebuilder.class);
 
 	@Override
 	@Async
@@ -44,9 +44,10 @@ public class ArticleIndexRebuilder implements ApplicationListener<ArticleIndexRe
 				articleIndexer.addOrUpdateDocument(article);
 			}
 			sw.stop();
-			logger.debug("重建索引花费了：" + sw.elapsed(TimeUnit.MILLISECONDS) + "ms");
+			LOGGER.debug("重建索引花费了：" + sw.elapsed(TimeUnit.MILLISECONDS) + "ms");
 		} catch (RuntimeException | Error e) {
 			status.setRollbackOnly();
+			LOGGER.error("重建索引过程中发生异常：" + e.getMessage(), e);
 		} finally {
 			platformTransactionManager.commit(status);
 		}

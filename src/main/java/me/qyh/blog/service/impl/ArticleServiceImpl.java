@@ -163,8 +163,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				articleDao.updateHits(id, 1);
 				articleIndexer.addOrUpdateDocument(article);
 				article.addHits();
-				applicationEventPublisher
-						.publishEvent(new ArticleEvent(this, new Article(article), EventType.UPDATE, true));
 			}
 			return OptionalInt.of(article.getHits());
 		}
@@ -643,6 +641,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					status.setRollbackOnly();
 
 					applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+					LOGGER.error("发布预发布文章过程中发生异常:" + e.getMessage(), e);
 					throw e;
 				} finally {
 					transactionManager.commit(status);

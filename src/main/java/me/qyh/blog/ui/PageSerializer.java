@@ -75,8 +75,9 @@ public class PageSerializer implements JsonDeserializer<Page>, JsonSerializer<Pa
 				PageType type = src.getType();
 				obj.add("type", type == null ? JsonNull.INSTANCE : new JsonPrimitive(type.name()));
 				return obj;
-			} else
+			} else {
 				return context.serialize(src, src.getClass());
+			}
 		}
 		return null;
 	}

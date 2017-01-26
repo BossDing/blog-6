@@ -57,7 +57,7 @@ public class ArticleMarkdown2HtmlContentHandler
 	@Override
 	public void onApplicationEvent(ArticleEvent event) {
 		EventType eventType = event.getEventType();
-		if (!event.isHit() && !EventType.INSERT.equals(eventType)) {
+		if (!EventType.INSERT.equals(eventType)) {
 			markdownCache.invalidateAll(event.getArticles().stream().map(Article::getId).collect(Collectors.toList()));
 		}
 	}

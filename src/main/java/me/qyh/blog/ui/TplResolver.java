@@ -133,7 +133,9 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		}
 
 		public Fragment getFragment() {
-			return fragment;
+			Fragment clone = TemplateUtils.clone(fragment);
+			clone.setTpl("");
+			return clone;
 		}
 
 	}
@@ -172,7 +174,9 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		}
 
 		public Page getPage() {
-			return page;
+			Page clone = TemplateUtils.clone(page);
+			clone.setTpl("");
+			return clone;
 		}
 	}
 }

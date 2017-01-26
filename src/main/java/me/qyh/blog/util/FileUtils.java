@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -43,6 +44,25 @@ public class FileUtils {
 	public static File temp(String ext) {
 		try {
 			return File.createTempFile(RandomStringUtils.randomNumeric(6), "." + ext);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * 文件重命名
+	 * 
+	 * @param file
+	 *            要重命名的文件
+	 * @param newName
+	 *            新文件名
+	 * 
+	 */
+	public static void rename(File file, File newNameFile) {
+		Objects.requireNonNull(file);
+		Objects.requireNonNull(newNameFile);
+		try {
+			Files.move(file.toPath(), newNameFile.toPath());
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}

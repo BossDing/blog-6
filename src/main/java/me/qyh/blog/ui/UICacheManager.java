@@ -55,7 +55,7 @@ public class UICacheManager extends AbstractCacheManager {
 	 * @param template
 	 */
 	public static void clearCachesFor(final String template) {
-		final Set<TemplateCacheKey> keysToBeRemoved = new HashSet<TemplateCacheKey>(4);
+		final Set<TemplateCacheKey> keysToBeRemoved = new HashSet<>(4);
 		final Set<TemplateCacheKey> templateCacheKeys = templateCache.keySet();
 		for (final TemplateCacheKey templateCacheKey : templateCacheKeys) {
 			final String ownerTemplate = templateCacheKey.getOwnerTemplate();

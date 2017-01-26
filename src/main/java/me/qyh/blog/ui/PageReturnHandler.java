@@ -60,7 +60,6 @@ public class PageReturnHandler extends RenderSupport implements HandlerMethodRet
 			throw new SystemException("必须返回一个确切的页面");
 		}
 
-		// find or create a view
 		String templateName = TemplateUtils.getTemplateName(page);
 
 		String rendered;
