@@ -166,6 +166,16 @@ public interface UIService {
 	Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException;
 
 	/**
+	 * 查询可被外部调用(ajax)的dataBind
+	 * 
+	 * @param dataTag
+	 * @param variables
+	 * @return
+	 * @throws LogicException
+	 */
+	Optional<DataBind<?>> queryCallableData(DataTag dataTag, ContextVariables variables) throws LogicException;
+
+	/**
 	 * 通过DATA_TAG标签查询预览数据
 	 * 
 	 * @param dataTagStr
@@ -259,5 +269,13 @@ public interface UIService {
 	 *             空间不存在
 	 */
 	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption);
+
+	/**
+	 * 查询可被外部调用的fragment
+	 * 
+	 * @param name
+	 * @return
+	 */
+	Optional<Fragment> queryCallableFragment(String name);
 
 }

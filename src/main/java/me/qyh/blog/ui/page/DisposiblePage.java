@@ -28,11 +28,6 @@ public class DisposiblePage extends Page {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * if true load preview data tag
-	 */
-	private boolean preview = true;
-
 	public DisposiblePage() {
 		super();
 	}
@@ -41,22 +36,9 @@ public class DisposiblePage extends Page {
 		super(page);
 	}
 
-	public DisposiblePage(Page page, boolean preview) {
-		super(page);
-		this.preview = preview;
-	}
-
 	@Override
 	public final PageType getType() {
 		return PageType.DISPOSIBLE;
-	}
-
-	public boolean isPreview() {
-		return preview;
-	}
-
-	public void setPreview(boolean preview) {
-		this.preview = preview;
 	}
 
 }

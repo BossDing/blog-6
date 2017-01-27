@@ -34,11 +34,11 @@ public abstract class DataTagProcessor<T> {
 	/**
 	 * 是否忽略逻辑异常
 	 */
-	private static final String IGNORE_LOGIC_EXCEPTION = "ignoreLogicException";
 	private static final String DATA_NAME = "dataName";
 
 	private String name;// 数据名，唯一
 	private String dataName;// 默认数据绑定名，唯一
+	private boolean callable;// 是否可以被ajax调用
 
 	protected static final Space previewSpace = new Space();
 
@@ -66,19 +66,20 @@ public abstract class DataTagProcessor<T> {
 		this.dataName = dataName;
 	}
 
+	/**
+	 * 查询数据
+	 * 
+	 * @param variables
+	 * @param attributes
+	 * @return
+	 * @throws LogicException
+	 */
 	public final DataBind<T> getData(ContextVariables variables, Map<String, String> attributes) throws LogicException {
 		if (attributes == null) {
 			attributes = Maps.newHashMap();
 		}
-		T result = null;
 		Attributes atts = new Attributes(attributes);
-		try {
-			result = query(variables, atts);
-		} catch (LogicException e) {
-			if (!ignoreLogicException(attributes)) {
-				throw e;
-			}
-		}
+		T result = query(variables, atts);
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
@@ -88,17 +89,6 @@ public abstract class DataTagProcessor<T> {
 			bind.setDataName(dataName);
 		}
 		return bind;
-	}
-
-	private boolean ignoreLogicException(Map<String, String> attributes) {
-		String v = attributes.get(IGNORE_LOGIC_EXCEPTION);
-		if (v != null) {
-			try {
-				return Boolean.parseBoolean(v);
-			} catch (Exception e) {
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -139,6 +129,14 @@ public abstract class DataTagProcessor<T> {
 
 	public String getDataName() {
 		return dataName;
+	}
+
+	public boolean isCallable() {
+		return callable;
+	}
+
+	public void setCallable(boolean callable) {
+		this.callable = callable;
 	}
 
 	protected Space getSpace() {

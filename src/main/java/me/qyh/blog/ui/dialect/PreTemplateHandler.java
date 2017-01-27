@@ -22,8 +22,8 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import me.qyh.blog.ui.ParseContext;
 import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.TplResolver.FragmentResource;
-import me.qyh.blog.ui.TplResolver.PageResource;
+import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.ui.page.Page;
 
 /**
  * 不希望通过replace等方式再次渲染页面
@@ -43,14 +43,20 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 			if (ParseContext.isStart()) {
 				throw new TemplateProcessingException("无法再次处理页面");
 			}
+
 			ParseContext.start();
 
-			PageResource pageResource = (PageResource) context.getTemplateData().getTemplateResource();
-			((IEngineContext) context).setVariable("this", pageResource.getPage());
+			Page page = TemplateUtils.clone(ParseContext.getPage());
+			page.setTpl("");
+			((IEngineContext) context).setVariable("this", page);
 		}
 		if (TemplateUtils.isFragmentTemplate(template)) {
-			FragmentResource fragmentResource = (FragmentResource) context.getTemplateData().getTemplateResource();
-			((IEngineContext) context).setVariable("this", fragmentResource.getFragment());
+
+			Fragment fragment = TemplateUtils.clone(ParseContext.getFragment(template)
+					.orElseThrow(() -> new TemplateProcessingException("模板" + template + "不存在")));
+			fragment.setTpl("");
+
+			((IEngineContext) context).setVariable("this", fragment);
 		}
 		super.setContext(context);
 	}

@@ -444,11 +444,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException {
-		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
-		if (processor.isPresent()) {
-			return Optional.of(processor.get().getData(variables, dataTag.getAttrs()));
-		}
-		return Optional.empty();
+		return doQuery(dataTag, variables, false);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<DataBind<?>> queryCallableData(DataTag dataTag, ContextVariables variables) throws LogicException {
+		return doQuery(dataTag, variables, true);
 	}
 
 	@Override
@@ -459,6 +461,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	public Optional<Fragment> queryFragment(String name) {
 		return queryFragment(Environment.getSpace().orElse(null), name);
+	}
+
+	@Override
+	public Optional<Fragment> queryCallableFragment(String name) {
+		return queryFragment(name).filter(Fragment::isCallable);
 	}
 
 	private Optional<Fragment> queryFragment(Space space, String name) {
@@ -756,6 +763,18 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	private Optional<DataTagProcessor<?>> getTagProcessor(String name) {
 		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny();
+	}
+
+	private Optional<DataBind<?>> doQuery(DataTag dataTag, ContextVariables variables, boolean onlyCallable)
+			throws LogicException {
+		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
+		if (onlyCallable) {
+			processor = processor.filter(DataTagProcessor::isCallable);
+		}
+		if (processor.isPresent()) {
+			return Optional.of(processor.get().getData(variables, dataTag.getAttrs()));
+		}
+		return Optional.empty();
 	}
 
 	private void checkSpace(Page page) throws LogicException {

@@ -30,6 +30,7 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.ParseContext;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.UIStackoverflowError;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -74,12 +75,14 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 		IAttribute nameAtt = tag.getAttribute(NAME);
 		if (nameAtt != null) {
 			String name = nameAtt.getValue();
-			Optional<Fragment> optional = uiService.queryFragment(name);
+			Optional<Fragment> optional = ParseContext.onlyCallable() ? uiService.queryCallableFragment(name)
+					: uiService.queryFragment(name);
 			if (optional.isPresent()) {
 				Fragment fragment = optional.get();
 				String templateName = TemplateUtils.getTemplateName(fragment);
 				Writer writer = new FastStringWriter(200);
 				try {
+					ParseContext.addFragment(fragment);
 					context.getConfiguration().getTemplateManager().parseAndProcess(
 							new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
 					structureHandler.replaceWith(writer.toString(), false);

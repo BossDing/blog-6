@@ -20,7 +20,6 @@ import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.ui.DisposablePageContext;
 import me.qyh.blog.ui.ParseContext;
 
 /**
@@ -50,7 +49,7 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			if (DisposablePageContext.get() == null && ParseContext.getTransactionStatus() == null) {
+			if (!ParseContext.isPreview() && ParseContext.getTransactionStatus() == null) {
 				ParseContext.setTransactionStatus(getTransactionStatus(context));
 			}
 		} finally {

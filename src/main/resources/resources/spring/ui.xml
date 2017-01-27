@@ -43,6 +43,7 @@
 				<bean class="me.qyh.blog.comment.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
+					<property name="callable" value="true" />
 				</bean>
 
 				<bean class="me.qyh.blog.comment.LastCommentsDataTagProcessor">
@@ -80,13 +81,26 @@
 						<entry key="底部" value="classpath:resources/fragment/foot.html" />
 						<entry key="相似文章"
 							value="classpath:resources/fragment/similarArticles.html" />
-						<entry key="评论" value="classpath:resources/fragment/comments.html" />
 						<entry key="文章统计"
 							value="classpath:resources/fragment/articleStatistics.html" />
 						<entry key="评论统计"
 							value="classpath:resources/fragment/commentStatistics.html" />
 						<entry key="标签统计" value="classpath:resources/fragment/tagStatistics.html" />
 					</map>
+				</property>
+				<property name="fragments">
+					<list>
+						<bean class="me.qyh.blog.ui.fragment.Fragment">
+							<property name="name" value="评论" />
+							<property name="tpl">
+								<bean class="me.qyh.blog.ui.ResourceString">
+									<constructor-arg index="0"
+										value="classpath:resources/fragment/comments.html" />
+								</bean>
+							</property>
+							<property name="callable" value="true" />
+						</bean>
+					</list>
 				</property>
 			</bean>
 		</property>

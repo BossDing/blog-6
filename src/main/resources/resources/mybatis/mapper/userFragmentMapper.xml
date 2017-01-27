@@ -10,6 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="tpl" column="fragment_tpl"/>
 		<result property="createDate" column="fragment_create_date"/>
 		<result property="global" column="is_global"/>
+		<result property="callable" column="is_callable"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_name" property="name"/>
@@ -21,8 +22,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</delete>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
-		INSERT INTO blog_fragment_user(fragment_name,fragment_description,fragment_tpl,fragment_create_date,space_id,is_global)
-		VALUES(#{name},#{description},#{tpl},#{createDate},#{space.id},#{global})
+		INSERT INTO blog_fragment_user(fragment_name,fragment_description,fragment_tpl,fragment_create_date,space_id,is_global,is_callable)
+		VALUES(#{name},#{description},#{tpl},#{createDate},#{space.id},#{global},#{callable})
 	</insert>
 	
 	<select id="selectBySpaceAndName" resultMap="UserFragmentDetail">
@@ -33,7 +34,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_tpl,
 			fragment_create_date,
 			space_id,
-			is_global
+			is_global,
+			is_callable
 		FROM
 			blog_fragment_user
 		WHERE 
@@ -57,7 +59,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_tpl,
 			fragment_create_date,
 			space_id,
-			is_global
+			is_global,
+			is_callable
 		FROM
 			blog_fragment_user
 		WHERE 
@@ -73,7 +76,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_create_date,
 			space_id,
 			space_name,
-			is_global
+			is_global,
+			is_callable
 		FROM
 			blog_fragment_user bfu
 		LEFT OUTER JOIN blog_space bs ON bfu.space_id = bs.id
@@ -124,7 +128,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				fragment_tpl = #{tpl},
 			</if>
 			space_id = #{space.id},
-			is_global = #{global}
+			is_global = #{global},
+			is_callable = #{callable}
 		</set>
 		WHERE 
 			id = #{id}
@@ -138,7 +143,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_tpl,
 			fragment_create_date,
 			space_id,
-			is_global
+			is_global,
+			is_callable
 		FROM
 			blog_fragment_user
 		WHERE 

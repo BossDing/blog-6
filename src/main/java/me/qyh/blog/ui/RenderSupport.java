@@ -35,7 +35,8 @@ import org.thymeleaf.util.FastStringWriter;
 
 import com.google.common.base.Stopwatch;
 
-import me.qyh.blog.ui.ParseContext.ParseStatus;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
+import me.qyh.blog.ui.page.Page;
 
 public class RenderSupport {
 
@@ -48,21 +49,22 @@ public class RenderSupport {
 
 	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(RenderSupport.class);
 
-	protected final String render(String templateName, Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
+	protected final String render(Page page, Map<String, Object> model, HttpServletRequest request,
+			HttpServletResponse response, ParseConfig config) throws Exception {
+		String templateName = TemplateUtils.getTemplateName(page);
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
 		uiExposeHelper.addVariables(request);
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		try {
+			ParseContext.setPage(page);
+			ParseContext.setConfig(config);
 			ResponseWrapper wrapper = new ResponseWrapper(response);
 			view.render(model, request, wrapper);
-			ParseContext.setStatus(ParseStatus.COMPLETE);
 			return wrapper.getRendered();
 		} catch (Throwable e) {
 			if (e instanceof RuntimeException || e instanceof Error) {
 				markRollBack();
 			}
-			ParseContext.setStatus(ParseStatus.BREAK);
 			throw UIExceptionUtils.convert(templateName, e);
 		} finally {
 			commit();

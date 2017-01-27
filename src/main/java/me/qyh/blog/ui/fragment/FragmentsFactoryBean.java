@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
+import org.springframework.util.CollectionUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -32,31 +33,49 @@ import me.qyh.blog.web.controller.form.UserFragmentValidator;
 public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
 	private Map<String, Resource> tplMap = Maps.newHashMap();
+	private List<Fragment> fragments = Lists.newArrayList();
 
 	@Override
 	public List<Fragment> getObject() throws Exception {
 		List<Fragment> fragments = Lists.newArrayList();
 		for (Map.Entry<String, Resource> it : tplMap.entrySet()) {
-			String name = it.getKey();
-			if (Validators.isEmptyOrNull(name, true)) {
-				throw new SystemException("模板片段名称不能为空");
-			}
-			if (!name.matches(UserFragmentValidator.NAME_PATTERN)) {
-				throw new SystemException("模板片段名称只能为数字或者中英文");
-			}
-			String tpl = Resources.readResourceToString(it.getValue());
-			if (tpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
-				throw new SystemException("模板片段长度不能超过" + UserFragmentValidator.MAX_TPL_LENGTH + "个字符");
-			}
-			if (Validators.isEmptyOrNull(tpl, true)) {
-				throw new SystemException("模板片段不能为空");
-			}
 			Fragment fragment = new Fragment();
 			fragment.setName(it.getKey());
-			fragment.setTpl(tpl);
+			fragment.setTpl(Resources.readResourceToString(it.getValue()));
+			doValid(fragment);
 			fragments.add(fragment);
 		}
+		if (!CollectionUtils.isEmpty(this.fragments)) {
+			for (Fragment fragment : this.fragments) {
+				checkExists(fragments, fragment.getName());
+				doValid(fragment);
+				fragments.add(fragment);
+			}
+		}
 		return fragments;
+	}
+
+	private void checkExists(List<Fragment> fragments, String name) {
+		fragments.stream().filter(fr -> fr.getName().equals(name)).findAny().ifPresent(fr -> {
+			throw new SystemException(name + "已经存在");
+		});
+	}
+
+	private void doValid(Fragment fragment) {
+		String name = fragment.getName();
+		if (Validators.isEmptyOrNull(name, true)) {
+			throw new SystemException("模板片段名称不能为空");
+		}
+		if (!name.matches(UserFragmentValidator.NAME_PATTERN)) {
+			throw new SystemException("模板片段名称只能为数字或者中英文");
+		}
+		String tpl = fragment.getTpl();
+		if (tpl.length() > UserFragmentValidator.MAX_TPL_LENGTH) {
+			throw new SystemException("模板片段长度不能超过" + UserFragmentValidator.MAX_TPL_LENGTH + "个字符");
+		}
+		if (Validators.isEmptyOrNull(tpl, true)) {
+			throw new SystemException("模板片段不能为空");
+		}
 	}
 
 	@Override
@@ -71,6 +90,10 @@ public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
 	public void setTplMap(Map<String, Resource> tplMap) {
 		this.tplMap = tplMap;
+	}
+
+	public void setFragments(List<Fragment> fragments) {
+		this.fragments = fragments;
 	}
 
 }

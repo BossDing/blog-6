@@ -7,8 +7,7 @@
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <link th:href="@{/static/bootstrap/css/bootstrap.min.css}"
 	rel="stylesheet">
-<link rel="stylesheet"
-	th:href="@{/static/css/sb-admin-2.css}">
+<link rel="stylesheet" th:href="@{/static/css/sb-admin-2.css}">
 <link th:href="@{/static/codemirror/lib/codemirror.css}"
 	rel="stylesheet">
 <link th:href="@{/static/codemirror/addon/hint/show-hint.css}"
@@ -57,6 +56,7 @@
 										<th>创建日期</th>
 										<th>空间</th>
 										<th>全局</th>
+										<th>可外部调用</th>
 										<th>操作</th>
 									</tr>
 								</thead>
@@ -73,6 +73,7 @@
 										<td><span th:if="${fragment.space != null}"
 											th:text="${fragment.space.name}"></span></td>
 										<td th:text="${fragment.global ? '是' : '否'}"></td>
+										<td th:text="${fragment.callable ? '是' : '否'}"></td>
 										<td><a href="###" style="margin-right: 10px"
 											data-action="remove" th:data-id="${fragment.id}"><span
 												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
@@ -126,6 +127,10 @@
 							<label><input type="checkbox" name="global" value="true" />全局
 							</label>
 						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" name="callable" value="true" />外部调用
+							</label>
+						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" name="space">
 								<option value="">无</option>
@@ -176,6 +181,10 @@
 						</div>
 						<div class="checkbox">
 							<label><input type="checkbox" name="global" value="true" />全局
+							</label>
+						</div>
+						<div class="checkbox">
+							<label><input type="checkbox" name="callable" value="true" />外部调用
 							</label>
 						</div>
 						<div class="form-group">

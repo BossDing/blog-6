@@ -21,7 +21,6 @@ import java.io.StringReader;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.cache.AlwaysValidCacheEntryValidity;
 import org.thymeleaf.cache.ICacheEntryValidity;
@@ -29,18 +28,11 @@ import org.thymeleaf.cache.NonCacheableCacheEntryValidity;
 import org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templateresource.ITemplateResource;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.fragment.Fragment;
-import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.Page;
 
 public class TplResolver extends SpringResourceTemplateResolver {
-
-	@Autowired
-	private UIService uiService;
 
 	private static final String EMPTY = "empty";
 
@@ -60,25 +52,16 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate,
 			String template, String resourceName, String characterEncoding,
 			Map<String, Object> templateResolutionAttributes) {
-		if (TemplateUtils.isDisposablePageTemplate(template)) {
-			DisposiblePage page = DisposablePageContext.get();
+		if (TemplateUtils.isPageTemplate(template)) {
+			Page page = ParseContext.getPage();
 			if (page == null) {
 				template = EMPTY;
 			} else {
 				return new PageResource(page);
 			}
 		}
-		if (TemplateUtils.isPageTemplate(template)) {
-			try {
-				Page page = uiService.queryPage(template);
-				return new PageResource(page);
-			} catch (LogicException e) {
-				throw new RuntimeLogicException(e);
-			}
-		}
 		if (TemplateUtils.isFragmentTemplate(template)) {
-			// 这里实际上是重复查询了，但这里必定会走缓存
-			Optional<FragmentResource> optional = uiService.queryFragment(TemplateUtils.getFragmentName(template))
+			Optional<FragmentResource> optional = ParseContext.getFragment(template)
 					.map(fragment -> new FragmentResource(fragment));
 			if (optional.isPresent()) {
 				return optional.get();
@@ -131,13 +114,6 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		public ITemplateResource relative(String relativeLocation) {
 			throw new SystemException("unsupport");
 		}
-
-		public Fragment getFragment() {
-			Fragment clone = TemplateUtils.clone(fragment);
-			clone.setTpl("");
-			return clone;
-		}
-
 	}
 
 	public final class PageResource implements ITemplateResource {
@@ -171,12 +147,6 @@ public class TplResolver extends SpringResourceTemplateResolver {
 		@Override
 		public ITemplateResource relative(String relativeLocation) {
 			throw new SystemException("unsupport");
-		}
-
-		public Page getPage() {
-			Page clone = TemplateUtils.clone(page);
-			clone.setTpl("");
-			return clone;
 		}
 	}
 }

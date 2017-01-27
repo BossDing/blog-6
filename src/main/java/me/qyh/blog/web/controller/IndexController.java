@@ -38,6 +38,7 @@ import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
@@ -69,11 +70,10 @@ public class IndexController {
 			@RequestHeader(value = "X-Fragment", required = true) String fragment, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		DisposiblePage page = new DisposiblePage();
-		page.setPreview(false);
 		page.setTpl(TemplateUtils.buildDataTag(Webs.decode(tagName), allRequestParams)
 				+ TemplateUtils.buildFragmentTag(Webs.decode(fragment), null));
 		try {
-			return new JsonResult(true, uiRender.render(page, request, response));
+			return new JsonResult(true, uiRender.render(page, request, response, new ParseConfig(false, true)));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
@@ -89,7 +89,7 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		return uiService.queryData(tag, new ContextVariables()).map(bind -> new JsonResult(true, bind))
+		return uiService.queryCallableData(tag, new ContextVariables()).map(bind -> new JsonResult(true, bind))
 				.orElse(new JsonResult(false));
 	}
 
@@ -98,9 +98,9 @@ public class IndexController {
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		Optional<Fragment> optional = uiService.queryFragment(Webs.decode(fragment));
+		Optional<Fragment> optional = uiService.queryCallableFragment(Webs.decode(fragment));
 		if (!optional.isPresent()) {
-			return new JsonResult(true);
+			return new JsonResult(false);
 		}
 		Fragment fr = optional.get();
 		DisposiblePage page = new DisposiblePage();
@@ -108,7 +108,7 @@ public class IndexController {
 		Map<String, Fragment> frMap = Maps.newHashMap();
 		frMap.put(fr.getName(), fr);
 		try {
-			return new JsonResult(true, uiRender.render(page, request, response));
+			return new JsonResult(true, uiRender.render(page, request, response, new ParseConfig(false, true)));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}

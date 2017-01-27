@@ -41,6 +41,11 @@ public class Fragment implements Serializable {
 	private String name;
 	private String tpl;
 
+	/**
+	 * 是否能够被ajax调用
+	 */
+	private boolean callable;
+
 	public Fragment() {
 		super();
 	}
@@ -48,6 +53,7 @@ public class Fragment implements Serializable {
 	public Fragment(Fragment fragment) {
 		this.name = fragment.name;
 		this.tpl = fragment.tpl;
+		this.callable = fragment.callable;
 	}
 
 	public String getTpl() {
@@ -64,6 +70,14 @@ public class Fragment implements Serializable {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public boolean isCallable() {
+		return callable;
+	}
+
+	public void setCallable(boolean callable) {
+		this.callable = callable;
 	}
 
 	@Override

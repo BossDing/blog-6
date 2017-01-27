@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.page.DisposiblePage;
 
 /**
@@ -41,31 +42,27 @@ public class UIRender extends RenderSupport {
 	private SpaceService spaceService;
 
 	public String render(DisposiblePage page, Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response) throws TplRenderException {
+			HttpServletResponse response, ParseConfig config) throws TplRenderException {
 		// set space
 		if (!Environment.hasSpace() && page.getSpace() != null) {
 			Environment.setSpace(spaceService.getSpace(page.getSpace().getId())
 					.orElseThrow(() -> new SystemException("空间:" + page.getSpace() + "不存在")));
 		}
 		try {
-			DisposablePageContext.set(page);
-			return super.render(TemplateUtils.getTemplateName(page), model == null ? Maps.newHashMap() : model, request,
-					response);
+			return super.render(page, model == null ? Maps.newHashMap() : model, request, response, config);
 		} catch (TplRenderException e) {
 			throw e;
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
-		} finally {
-			DisposablePageContext.clear();
 		}
 
 	}
 
-	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response)
-			throws TplRenderException {
-		return render(page, null, request, response);
+	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response,
+			ParseConfig config) throws TplRenderException {
+		return render(page, null, request, response, config);
 	}
 
 }

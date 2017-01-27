@@ -72,14 +72,14 @@ $(document).ready(
 			});
 		});
 	});
-		$("#updateUserFragmentModal").find("form").find("input[type=checkbox]").change(function(){
+		$("#updateUserFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
 			if($(this).prop("checked")){
 				$("#updateUserFragmentModal").find("form").find("select[name=space]").parent().hide();
 			}else{
 				$("#updateUserFragmentModal").find("form").find("select[name=space]").parent().show();
 			}
 		})
-		$("#createUserFragmentModal").find("form").find("input[type=checkbox]").change(function(){
+		$("#createUserFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
 			if($(this).prop("checked")){
 				$("#createUserFragmentModal").find("form").find("select[name=space]").parent().hide();
 			}else{
@@ -96,7 +96,8 @@ $(document).ready(
 				var form = $("#updateUserFragmentModal").find('form');
 				form.find("input[name='name']").val(data.name);
 				form.find("input[name='id']").val(data.id);
-				form.find("input[type=checkbox]").prop("checked",data.global);
+				form.find("input[type=checkbox]").eq(0).prop("checked",data.global);
+				form.find("input[type=checkbox]").eq(1).prop("checked",data.callable);
 				if(data.space){
 					form.find("select[name='space']").val(data.space.id);
 				}

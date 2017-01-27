@@ -15,18 +15,31 @@
  */
 package me.qyh.blog.util;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Type;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.UrlResource;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.entity.DateDeserializer;
@@ -45,41 +58,52 @@ import me.qyh.blog.ui.page.Page;
  */
 @UIUtils
 public class Jsons {
+
+	private static final ExclusionStrategy SERIALIZATION_EXCLUSION_STRATEGY = new ExclusionStrategy() {
+
+		@Override
+		public boolean shouldSkipField(FieldAttributes f) {
+			Expose expose = f.getAnnotation(Expose.class);
+			if (expose != null) {
+				return !expose.serialize();
+			}
+			return false;
+		}
+
+		@Override
+		public boolean shouldSkipClass(Class<?> clazz) {
+			return false;
+		}
+	};
+
+	private static final ExclusionStrategy DESERIALIZATION_EXCLUSION_STRATEGY = new ExclusionStrategy() {
+
+		@Override
+		public boolean shouldSkipField(FieldAttributes f) {
+			Expose expose = f.getAnnotation(Expose.class);
+			if (expose != null) {
+				return !expose.deserialize();
+			}
+			return false;
+		}
+
+		@Override
+		public boolean shouldSkipClass(Class<?> clazz) {
+			return false;
+		}
+	};
+
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting()
-			.addSerializationExclusionStrategy(new ExclusionStrategy() {
-
-				@Override
-				public boolean shouldSkipField(FieldAttributes f) {
-					Expose expose = f.getAnnotation(Expose.class);
-					if (expose != null) {
-						return !expose.serialize();
-					}
-					return false;
-				}
-
-				@Override
-				public boolean shouldSkipClass(Class<?> clazz) {
-					return false;
-				}
-			}).addDeserializationExclusionStrategy(new ExclusionStrategy() {
-
-				@Override
-				public boolean shouldSkipField(FieldAttributes f) {
-					Expose expose = f.getAnnotation(Expose.class);
-					if (expose != null) {
-						return !expose.deserialize();
-					}
-					return false;
-				}
-
-				@Override
-				public boolean shouldSkipClass(Class<?> clazz) {
-					return false;
-				}
-			}).enableComplexMapKeySerialization().registerTypeAdapter(Message.class, new MessageSerializer())
+			.addSerializationExclusionStrategy(SERIALIZATION_EXCLUSION_STRATEGY)
+			.addDeserializationExclusionStrategy(DESERIALIZATION_EXCLUSION_STRATEGY).enableComplexMapKeySerialization()
+			.registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
 			.registerTypeAdapter(SysLock.class, new SysLockDeserializer())
 			.registerTypeAdapter(Page.class, new PageSerializer()).create();
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(Jsons.class);
+	private static final String SPLIT_STR = "->";
+	private static final UrlReader DEFAULT_READER = new UrlResourceReader();
 
 	private Jsons() {
 		super();
@@ -192,5 +216,243 @@ public class Jsons {
 	 */
 	public static void write(Object toWrite, Writer writer) {
 		gson.toJson(toWrite, writer);
+	}
+
+	/**
+	 * @see Jsons#read(String, String, UrlReader)
+	 * @param url
+	 * @param expression
+	 * @return
+	 */
+	public static ExpressionExecutor read(String url) {
+		return read(url, DEFAULT_READER);
+	}
+
+	/**
+	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
+	 * 
+	 * @param url
+	 *            url
+	 * @param expression
+	 *            表达式
+	 * @param reader
+	 *            表达式读取
+	 * @return
+	 */
+	public static ExpressionExecutor read(String url, UrlReader reader) {
+		JsonElement je = null;
+		try {
+			String value = reader.read(url);
+
+			JsonParser jp = new JsonParser();
+			je = jp.parse(value);
+		} catch (Exception e) {
+			LOGGER.debug(e.getMessage(), e);
+			je = JsonNull.INSTANCE;
+		}
+
+		return new ExpressionExecutor(je);
+	}
+
+	/**
+	 * 
+	 * @author mhlx
+	 *
+	 */
+	@FunctionalInterface
+	public interface UrlReader {
+
+		/**
+		 * 读取Url中的内容
+		 * 
+		 * @param url
+		 * @exception IOException
+		 * @return
+		 */
+		String read(String url) throws IOException;
+
+	}
+
+	private static final class UrlResourceReader implements UrlReader {
+
+		@Override
+		public String read(String url) throws IOException {
+			UrlResource urlResource = new UrlResource(new URL(url));
+			return Resources.readResourceToString(urlResource);
+		}
+
+	}
+
+	/**
+	 * <p>
+	 * 假如json内容为
+	 * 
+	 * <pre>
+	{
+	"success": true,
+	"data": {
+	"data": {
+	  "files": [
+	    {
+	      "begin": "Jan 26, 2017 12:00:00 AM",
+	      "end": "Jan 27, 2017 12:00:00 AM",
+	      "count": 1
+	    }
+	  ],
+	  "mode": "YMD"
+	},
+	"dataName": "articleDateFiles"
+	}	
+	}
+	 * </pre>
+	 * 
+	 * 那么通过表达式 {@code data->data->files[0]->begin} 将会返回Jan 26, 2017 12:00:00
+	 * AM<br>
+	 * 通过表达式{@code data-data->files} 将会返回
+	 * 
+	 * <pre>
+	 [{
+	 "begin": "Jan 26, 2017 12:00:00 AM",
+	 "end": "Jan 27, 2017 12:00:00 AM",
+	 "count": 1
+	 }]
+	 * </pre>
+	 * </p>
+	 * 
+	 * @author mhlx
+	 *
+	 */
+	public static final class ExpressionExecutor {
+
+		private static final Expression NULL_EXPRESSION = new NullExpression();
+
+		private final JsonElement ele;
+
+		private ExpressionExecutor(JsonElement ele) {
+			super();
+			this.ele = ele;
+		}
+
+		public String execute(String expression) {
+			if (ele == JsonNull.INSTANCE) {
+				return null;
+			}
+			List<Expression> expressionList = parseExpressions(expression);
+			JsonElement executed = null;
+			for (Expression exp : expressionList) {
+				if (exp == NULL_EXPRESSION) {
+					return null;
+				}
+				if (executed == null) {
+					executed = exp.get(ele);
+				} else {
+					executed = exp.get(executed);
+				}
+			}
+			return executed == JsonNull.INSTANCE ? null
+					: executed.isJsonPrimitive() ? executed.getAsString() : executed.toString();
+		}
+
+		private static List<Expression> parseExpressions(String expression) {
+			expression = StringUtils.deleteWhitespace(expression);
+			if (expression.isEmpty()) {
+				return Arrays.asList(NULL_EXPRESSION);
+			}
+			if (expression.indexOf(SPLIT_STR) != -1) {
+				// multi expressions
+				List<Expression> expressionList = Lists.newArrayList();
+				for (String _expression : Splitter.on(SPLIT_STR).split(expression)) {
+					_expression = StringUtils.deleteWhitespace(_expression);
+					if (_expression.isEmpty()) {
+						return Arrays.asList(NULL_EXPRESSION);
+					}
+					Expression parsed = parseExpression(_expression);
+					if (parsed == NULL_EXPRESSION) {
+						return Arrays.asList(NULL_EXPRESSION);
+					}
+					expressionList.add(parsed);
+				}
+				return expressionList;
+			}
+			return Arrays.asList(parseExpression(expression));
+		}
+
+		private static Expression parseExpression(String expression) {
+			String indexStr = StringUtils.substringBetween(expression, "[", "]");
+			if (indexStr != null) {
+				try {
+					int index = Integer.parseInt(indexStr);
+					String _expression = expression.substring(0, expression.indexOf('[')).trim();
+					if (!_expression.isEmpty()) {
+						return new ArrayExpression(_expression, index);
+					}
+				} catch (NumberFormatException e) {
+					LOGGER.debug(e.getMessage(), e);
+				}
+			} else {
+				return new Expression(expression);
+			}
+			return NULL_EXPRESSION;
+		}
+
+		private static class Expression {
+			protected final String expression;
+
+			public Expression(String expression) {
+				super();
+				this.expression = expression;
+			}
+
+			JsonElement get(JsonElement ele) {
+				if (ele.isJsonObject()) {
+					JsonObject jo = ele.getAsJsonObject();
+					if (jo.has(expression)) {
+						return jo.get(expression);
+					}
+				}
+				return JsonNull.INSTANCE;
+			}
+		}
+
+		private static class NullExpression extends Expression {
+			public NullExpression() {
+				super("");
+			}
+
+			JsonElement get(JsonElement ele) {
+				return JsonNull.INSTANCE;
+			}
+		}
+
+		private static class ArrayExpression extends Expression {
+			private final int index;
+
+			public ArrayExpression(String expression, int index) {
+				super(expression);
+				this.index = index;
+			}
+
+			@Override
+			JsonElement get(JsonElement ele) {
+				if (ele.isJsonObject()) {
+					JsonObject jo = ele.getAsJsonObject();
+					if (jo.has(expression)) {
+						JsonElement expressionEle = jo.get(expression);
+						if (expressionEle.isJsonArray()) {
+							JsonArray array = expressionEle.getAsJsonArray();
+							if (index >= 0 && index <= array.size() - 1) {
+								return array.get(index);
+							}
+						}
+					}
+				}
+				return JsonNull.INSTANCE;
+			}
+		}
+
+		@Override
+		public String toString() {
+			return ele.toString();
+		}
 	}
 }

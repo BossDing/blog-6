@@ -38,6 +38,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.LockPage;
@@ -82,7 +83,7 @@ public class LockPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(new DisposiblePage(lockPage), request, response);
+			rendered = uiRender.render(new DisposiblePage(lockPage), request, response, new ParseConfig(true, false));
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

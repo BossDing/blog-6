@@ -15,7 +15,15 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.transaction.TransactionStatus;
+
+import com.google.common.collect.Maps;
+
+import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.ui.page.Page;
 
 /**
  * 解析上下文
@@ -27,6 +35,18 @@ public class ParseContext {
 
 	private static final ThreadLocal<ParseStatus> statusLocal = new ThreadLocal<>();
 	private static final ThreadLocal<TransactionStatus> transactionLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Page> pageLocal = new ThreadLocal<>();
+	private static final ThreadLocal<ParseConfig> configLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Map<String, Fragment>> fragmentsLocal = new ThreadLocal<Map<String, Fragment>>() {
+
+		@Override
+		protected Map<String, Fragment> initialValue() {
+			return Maps.newHashMap();
+		}
+
+	};
+
+	private static final ParseConfig DEFAULT_CONFIG = new ParseConfig(false, false);
 
 	public enum ParseStatus {
 		START, COMPLETE, BREAK;
@@ -43,6 +63,9 @@ public class ParseContext {
 	public static void remove() {
 		statusLocal.remove();
 		transactionLocal.remove();
+		pageLocal.remove();
+		configLocal.remove();
+		fragmentsLocal.remove();
 	}
 
 	public static ParseStatus getStatus() {
@@ -64,6 +87,50 @@ public class ParseContext {
 
 	public static void removeTransactionStatus() {
 		transactionLocal.remove();
+	}
+
+	public static boolean isPreview() {
+		return getConfig().preview;
+	}
+
+	public static boolean onlyCallable() {
+		return getConfig().onlyCallable;
+	}
+
+	public static Page getPage() {
+		return pageLocal.get();
+	}
+
+	public static void setConfig(ParseConfig config) {
+		configLocal.set(config);
+	}
+
+	public static void setPage(Page page) {
+		pageLocal.set(page);
+	}
+
+	public static void addFragment(Fragment fragment) {
+		fragmentsLocal.get().put(TemplateUtils.getTemplateName(fragment), fragment);
+	}
+
+	public static Optional<Fragment> getFragment(String templateName) {
+		return Optional.ofNullable(fragmentsLocal.get().get(templateName));
+	}
+
+	private static ParseConfig getConfig() {
+		ParseConfig inLocal = configLocal.get();
+		return inLocal == null ? DEFAULT_CONFIG : inLocal;
+	}
+
+	public static final class ParseConfig {
+		private final boolean preview;
+		private final boolean onlyCallable;
+
+		public ParseConfig(boolean preview, boolean onlyCallable) {
+			super();
+			this.preview = preview;
+			this.onlyCallable = onlyCallable;
+		}
 	}
 
 }

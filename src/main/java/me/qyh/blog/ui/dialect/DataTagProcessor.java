@@ -38,7 +38,7 @@ import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
-import me.qyh.blog.ui.DisposablePageContext;
+import me.qyh.blog.ui.ParseContext;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.util.Validators;
 
@@ -80,11 +80,13 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 			Optional<DataBind<?>> optional;
 			IWebContext webContext = (IWebContext) context;
-			if (DisposablePageContext.get() != null && DisposablePageContext.get().isPreview()) {
+			if (ParseContext.isPreview()) {
 				optional = uiService.queryPreviewData(dataTag);
 			} else {
 				try {
-					optional = uiService.queryData(dataTag, buildContextVariables(webContext));
+					optional = ParseContext.onlyCallable()
+							? uiService.queryCallableData(dataTag, buildContextVariables(webContext))
+							: uiService.queryData(dataTag, buildContextVariables(webContext));
 				} catch (LogicException e) {
 					throw new RuntimeLogicException(e);
 				}

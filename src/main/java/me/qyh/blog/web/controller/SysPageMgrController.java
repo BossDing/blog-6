@@ -55,6 +55,7 @@ import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage;
@@ -115,7 +116,7 @@ public class SysPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(new DisposiblePage(sysPage), request, response);
+			rendered = uiRender.render(new DisposiblePage(sysPage), request, response, new ParseConfig(true, false));
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {
@@ -151,7 +152,7 @@ public class SysPageMgrController extends BaseMgrController {
 			rendered = uiRender.render(
 					new DisposiblePage(uiService.queryPage(
 							TemplateUtils.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL)))),
-					request, response);
+					request, response, new ParseConfig(true, false));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
