@@ -391,8 +391,12 @@ public class CommentService implements InitializingBean, CommentServer {
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(ModuleType type, int limit, boolean queryAdmin) {
-		return commentDao.selectLastComments(type, Environment.getSpace().orElse(null), limit, Environment.isLogin(),
-				queryAdmin);
+		List<Comment> comments = commentDao.selectLastComments(type, Environment.getSpace().orElse(null), limit,
+				Environment.isLogin(), queryAdmin);
+		for (Comment comment : comments) {
+			completeComment(comment);
+		}
+		return comments;
 	}
 
 	@EventListener
