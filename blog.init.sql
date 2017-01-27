@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `blog_fragment_user` (
   `fragment_create_date` datetime NOT NULL,
   `space_id` int(11) DEFAULT NULL,
   `is_global` tinyint(1) NOT NULL DEFAULT '0',
+  `is_callable` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ;
 
