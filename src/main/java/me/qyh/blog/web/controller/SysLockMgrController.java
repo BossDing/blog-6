@@ -42,7 +42,7 @@ public class SysLockMgrController extends BaseMgrController {
 	@RequestMapping(value = "get/{id}")
 	@ResponseBody
 	public JsonResult lock(@PathVariable("id") String id) {
-		return new JsonResult(true, sysLockProvider.findLock(id));
+		return sysLockProvider.findLock(id).map(sysLock -> new JsonResult(true, sysLock)).orElse(new JsonResult(false));
 	}
 
 	@RequestMapping(value = "add", method = RequestMethod.POST)
