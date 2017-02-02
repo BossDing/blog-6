@@ -75,7 +75,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 	@Override
 	protected ICacheEntryValidity computeValidity(IEngineConfiguration configuration, String ownerTemplate,
 			String template, Map<String, Object> templateResolutionAttributes) {
-		if (TemplateUtils.isDisposablePageTemplate(template)) {
+		if (ParseContext.isDisposible()) {
 			return NonCacheableCacheEntryValidity.INSTANCE;
 		}
 		return AlwaysValidCacheEntryValidity.INSTANCE;

@@ -22,6 +22,7 @@
 				<bean class="me.qyh.blog.ui.data.ArticleDateFilesDataTagProcessor">
 					<constructor-arg index="0" value="文章日期归档" />
 					<constructor-arg index="1" value="articleDateFiles" />
+					<property name="callable" value="true" />
 				</bean>
 				<bean class="me.qyh.blog.ui.data.ArticleNavDataTagProcessor">
 					<constructor-arg index="0" value="上一篇下一篇" />
@@ -96,6 +97,16 @@
 								<bean class="me.qyh.blog.ui.ResourceString">
 									<constructor-arg index="0"
 										value="classpath:resources/fragment/comments.html" />
+								</bean>
+							</property>
+							<property name="callable" value="true" />
+						</bean>
+						<bean class="me.qyh.blog.ui.fragment.Fragment">
+							<property name="name" value="评论挂件" />
+							<property name="tpl">
+								<bean class="me.qyh.blog.ui.ResourceString">
+									<constructor-arg index="0"
+										value="classpath:resources/fragment/commentWidget.html" />
 								</bean>
 							</property>
 							<property name="callable" value="true" />

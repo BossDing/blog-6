@@ -42,10 +42,9 @@ import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.ParseContext.ParseConfig;
-import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
@@ -121,7 +120,7 @@ public class UserPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(new DisposiblePage(userPage), request, response, new ParseConfig(true, false));
+			rendered = uiRender.render(userPage, request, response, new ParseConfig(true, false, true));
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

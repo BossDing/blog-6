@@ -36,11 +36,10 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.page.DisposiblePage;
+import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -87,7 +86,7 @@ public class ErrorPageMgrController extends BaseMgrController {
 		}
 		String rendered;
 		try {
-			rendered = uiRender.render(new DisposiblePage(errorPage), request, response, new ParseConfig(true, false));
+			rendered = uiRender.render(errorPage, request, response, new ParseConfig(true, false, true));
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

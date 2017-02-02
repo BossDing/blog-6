@@ -78,19 +78,8 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 				return;
 			}
 
-			Optional<DataBind<?>> optional;
 			IWebContext webContext = (IWebContext) context;
-			if (ParseContext.isPreview()) {
-				optional = uiService.queryPreviewData(dataTag);
-			} else {
-				try {
-					optional = ParseContext.onlyCallable()
-							? uiService.queryCallableData(dataTag, buildContextVariables(webContext))
-							: uiService.queryData(dataTag, buildContextVariables(webContext));
-				} catch (LogicException e) {
-					throw new RuntimeLogicException(e);
-				}
-			}
+			Optional<DataBind<?>> optional = queryDataBind(dataTag, buildContextVariables(webContext));
 			if (optional.isPresent()) {
 				DataBind<?> bind = optional.get();
 				HttpServletRequest request = webContext.getRequest();
@@ -101,6 +90,19 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			}
 		} finally {
 			structureHandler.removeElement();
+		}
+	}
+
+	private Optional<DataBind<?>> queryDataBind(DataTag dataTag, ContextVariables contextVariables) {
+		if (ParseContext.isPreview()) {
+			return uiService.queryPreviewData(dataTag);
+		} else {
+			try {
+				return ParseContext.onlyCallable() ? uiService.queryCallableData(dataTag, contextVariables)
+						: uiService.queryData(dataTag, contextVariables);
+			} catch (LogicException e) {
+				throw new RuntimeLogicException(e);
+			}
 		}
 	}
 

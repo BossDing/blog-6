@@ -134,7 +134,7 @@ function queryComments(page) {
 	cp = page;
 	$.ajax({
 		type : 'get',
-		url : actPath + '/data/评论',
+		url : actPath + '/fragment/评论挂件',
 		data : {
 			"currentPage" : page,
 			"moduleId" : moduleId,
@@ -142,9 +142,6 @@ function queryComments(page) {
 		},
 		dataType : "json",
 		contentType : 'application/json',
-		beforeSend : function(xhr) {
-			xhr.setRequestHeader("X-Fragment", encodeURI("评论"));
-		},
 		success : function(result) {
 			if (!result.success) {
 				bootbox.alert(result.message);

@@ -28,10 +28,13 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.ui.ParseContext.ParseConfig;
-import me.qyh.blog.ui.page.DisposiblePage;
+import me.qyh.blog.ui.page.Page;
 
 /**
- * 用于渲染一次性页面等
+ * 用来将模板解析成字符串
+ * <p>
+ * <b>会克隆页面进行解析</b>
+ * </p>
  * 
  * @author Administrator
  *
@@ -41,15 +44,16 @@ public class UIRender extends RenderSupport {
 	@Autowired
 	private SpaceService spaceService;
 
-	public String render(DisposiblePage page, Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response, ParseConfig config) throws TplRenderException {
+	public String render(Page page, Map<String, Object> model, HttpServletRequest request, HttpServletResponse response,
+			ParseConfig config) throws TplRenderException {
 		// set space
 		if (!Environment.hasSpace() && page.getSpace() != null) {
 			Environment.setSpace(spaceService.getSpace(page.getSpace().getId())
 					.orElseThrow(() -> new SystemException("空间:" + page.getSpace() + "不存在")));
 		}
 		try {
-			return super.render(page, model == null ? Maps.newHashMap() : model, request, response, config);
+			return super.doRender(TemplateUtils.clone(page), model == null ? Maps.newHashMap() : model, request,
+					response, config);
 		} catch (TplRenderException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -57,12 +61,10 @@ public class UIRender extends RenderSupport {
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-
 	}
 
-	public String render(DisposiblePage page, HttpServletRequest request, HttpServletResponse response,
-			ParseConfig config) throws TplRenderException {
+	public String render(Page page, HttpServletRequest request, HttpServletResponse response, ParseConfig config)
+			throws TplRenderException {
 		return render(page, null, request, response, config);
 	}
-
 }

@@ -26,7 +26,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
-import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
@@ -42,8 +41,6 @@ public final class TemplateUtils {
 	private static final String USERPAGE_PREFIX = "Page:User" + SPLITER;
 	private static final String LOCKPAGE_PREFIX = "Page:Lock" + SPLITER;
 	private static final String ERRORPAGE_PREFIX = "Page:Error" + SPLITER;
-
-	private static final String DISPOSIBLEPAGE_NAME = "Page:Disposable";
 
 	public static final String FRAGMENT_PREFIX = "Fragment" + SPLITER;
 
@@ -91,16 +88,6 @@ public final class TemplateUtils {
 	}
 
 	/**
-	 * 判断是否是一次性页面
-	 * 
-	 * @param templateName
-	 * @return
-	 */
-	public static boolean isDisposablePageTemplate(String templateName) {
-		return DISPOSIBLEPAGE_NAME.equals(templateName);
-	}
-
-	/**
 	 * 从fragment模板名中获取fragment名
 	 * 
 	 * @param templateName
@@ -119,7 +106,7 @@ public final class TemplateUtils {
 	 */
 	public static String getTemplateName(Page page) {
 		if (page.getType() == null) {
-			throw new SystemException("必须指定具体的页面类型");
+			return "Page:";
 		}
 		switch (page.getType()) {
 		case ERROR:
@@ -130,8 +117,6 @@ public final class TemplateUtils {
 			return getTemplateName((SysPage) page);
 		case USER:
 			return getTemplateName((UserPage) page);
-		case DISPOSIBLE:
-			return DISPOSIBLEPAGE_NAME;
 		default:
 			throw new SystemException("无法确定" + page.getType() + "的页面类型");
 		}
@@ -282,7 +267,7 @@ public final class TemplateUtils {
 	 */
 	public static Page clone(Page page) {
 		if (page.getType() == null) {
-			throw new SystemException("必须指定具体的页面类型");
+			return new Page(page);
 		}
 		switch (page.getType()) {
 		case ERROR:
@@ -293,8 +278,6 @@ public final class TemplateUtils {
 			return new SysPage((SysPage) page);
 		case USER:
 			return new UserPage((UserPage) page);
-		case DISPOSIBLE:
-			return new DisposiblePage(page);
 		default:
 			throw new SystemException("无法确定" + page.getType() + "的页面类型");
 		}

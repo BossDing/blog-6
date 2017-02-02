@@ -90,6 +90,9 @@ public class UICacheManager extends AbstractCacheManager {
 
 		@Override
 		public V get(K key) {
+			if (ParseContext.isDisposible()) {
+				return null;
+			}
 			return cache.getIfPresent(key);
 		}
 

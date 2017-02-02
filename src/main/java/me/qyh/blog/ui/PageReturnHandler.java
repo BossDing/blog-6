@@ -33,7 +33,6 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
@@ -73,9 +72,9 @@ public class PageReturnHandler extends RenderSupport implements HandlerMethodRet
 		String rendered;
 
 		try {
-			
-			rendered = render(page, mavContainer.getModel(), nativeRequest, nativeResponse,
-					new ParseConfig(false, false));
+
+			rendered = super.doRender(page, mavContainer.getModel(), nativeRequest, nativeResponse,
+					ParseContext.DEFAULT_CONFIG);
 
 		} catch (Exception e) {
 			// 如果是错误页面发生了错误，不再跳转(防止死循环)

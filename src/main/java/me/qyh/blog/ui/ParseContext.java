@@ -46,7 +46,7 @@ public class ParseContext {
 
 	};
 
-	private static final ParseConfig DEFAULT_CONFIG = new ParseConfig(false, false);
+	public static final ParseConfig DEFAULT_CONFIG = new ParseConfig();
 
 	public enum ParseStatus {
 		START, COMPLETE, BREAK;
@@ -97,6 +97,10 @@ public class ParseContext {
 		return getConfig().onlyCallable;
 	}
 
+	public static boolean isDisposible() {
+		return getConfig().disposible;
+	}
+
 	public static Page getPage() {
 		return pageLocal.get();
 	}
@@ -125,11 +129,17 @@ public class ParseContext {
 	public static final class ParseConfig {
 		private final boolean preview;
 		private final boolean onlyCallable;
+		private final boolean disposible;
 
-		public ParseConfig(boolean preview, boolean onlyCallable) {
+		public ParseConfig(boolean preview, boolean onlyCallable, boolean disposible) {
 			super();
 			this.preview = preview;
 			this.onlyCallable = onlyCallable;
+			this.disposible = disposible;
+		}
+
+		public ParseConfig() {
+			this(false, false, false);
 		}
 	}
 

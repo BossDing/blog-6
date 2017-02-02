@@ -49,7 +49,7 @@ public class RenderSupport {
 
 	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(RenderSupport.class);
 
-	protected final String render(Page page, Map<String, Object> model, HttpServletRequest request,
+	protected final String doRender(Page page, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws Exception {
 		String templateName = TemplateUtils.getTemplateName(page);
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());

@@ -52,11 +52,10 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.ParseContext.ParseConfig;
-import me.qyh.blog.ui.page.DisposiblePage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
@@ -116,7 +115,7 @@ public class SysPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(new DisposiblePage(sysPage), request, response, new ParseConfig(true, false));
+			rendered = uiRender.render(sysPage, request, response, new ParseConfig(true, false, true));
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {
@@ -150,9 +149,9 @@ public class SysPageMgrController extends BaseMgrController {
 		String rendered;
 		try {
 			rendered = uiRender.render(
-					new DisposiblePage(uiService.queryPage(
-							TemplateUtils.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL)))),
-					request, response, new ParseConfig(true, false));
+					uiService.queryPage(
+							TemplateUtils.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL))),
+					request, response, new ParseConfig(true, false, true));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
