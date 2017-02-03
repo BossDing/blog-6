@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.OptionalInt;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -80,8 +78,8 @@ public class SpaceArticleController extends BaseController {
 			return new JsonResult(false);
 		}
 
-		OptionalInt hits = articleService.hit(id);
-		return hits.isPresent() ? new JsonResult(true, hits.getAsInt()) : new JsonResult(false);
+		articleService.hit(id);
+		return new JsonResult(true);
 	}
 
 	@RequestMapping(value = "list")

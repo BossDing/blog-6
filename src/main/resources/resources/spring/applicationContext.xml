@@ -107,13 +107,16 @@
 	<!-- markdown to html -->
 	<bean class="me.qyh.blog.security.input.CommonMarkdown2Html" />
 
-
 	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<!-- markdown2html handler -->
 		<property name="articleContentHandlers">
 			<list>
 				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler" />
 			</list>
+		</property>
+		<property name="hitsStrategy">
+			<bean class="me.qyh.blog.service.impl.CacheableHitsStrategy"
+				destroy-method="close"/>
 		</property>
 	</bean>
 
@@ -162,7 +165,7 @@
 			</array>
 		</property>
 	</bean>
-	
+
 	<!-- 默认评论服务 -->
 	<bean class="me.qyh.blog.comment.CommentService">
 		<!-- html内容清理器 -->

@@ -342,10 +342,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		DELETE FROM blog_article WHERE id = #{id}
 	</delete>
 
-	<update id="updateHits">
+	<update id="addHits">
 		UPDATE blog_article SET hits = hits + #{hits} WHERE
 		id = #{id}
 	</update>
+	
+	<update id="updateHits">
+		UPDATE blog_article SET hits = #{hits} WHERE
+		id = #{id}
+	</update>
+	
+	<select id="selectHits" resultType="int">
+		SELECT hits FROM blog_article WHERE id = #{id}
+	</select>
 
 	<select id="selectAll" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>

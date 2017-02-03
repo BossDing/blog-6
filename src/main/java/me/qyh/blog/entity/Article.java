@@ -17,8 +17,8 @@ package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
@@ -54,8 +54,6 @@ public class Article extends BaseLockResource {
 	private Integer level; // 博客级别，级别越高显示越靠前
 	private String alias;// 别名，可通过别名访问文章
 	private Boolean allowComment;
-
-	private AtomicInteger atomicHits;
 
 	/**
 	 * 文章来源
@@ -138,7 +136,6 @@ public class Article extends BaseLockResource {
 	 *            源文章
 	 */
 	public Article(Article source) {
-		this.atomicHits = source.atomicHits;
 		this.alias = source.alias;
 		this.comments = source.comments;
 		this.content = source.content;
@@ -218,21 +215,11 @@ public class Article extends BaseLockResource {
 	}
 
 	public int getHits() {
-		return atomicHits != null ? atomicHits.get() : hits;
+		return hits;
 	}
 
 	public void setHits(int hits) {
 		this.hits = hits;
-		this.atomicHits = new AtomicInteger(hits);
-	}
-
-	/**
-	 * 点击量+1
-	 * 
-	 * @return 当前点击量
-	 */
-	public int addHits() {
-		return atomicHits.incrementAndGet();
 	}
 
 	public int getComments() {
@@ -329,6 +316,10 @@ public class Article extends BaseLockResource {
 	 */
 	public boolean hasTag(String tag) {
 		return this.tags.stream().anyMatch(_tag -> _tag.getName().equals(tag));
+	}
+
+	public Optional<Tag> getTag(String name) {
+		return this.tags.stream().filter(tag -> name.equalsIgnoreCase(tag.getName())).findAny();
 	}
 
 	public String getAlias() {

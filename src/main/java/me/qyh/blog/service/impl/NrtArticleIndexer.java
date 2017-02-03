@@ -81,11 +81,13 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
+import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.security.input.Markdown2Html;
 
 /**
  * 近实时文章索引
@@ -143,6 +145,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+	@Autowired
+	private Markdown2Html markdown2Html;
 
 	/**
 	 * 构造器
@@ -193,7 +197,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		doc.add(new StringField(ID, article.getId().toString(), Field.Store.YES));
 		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.YES));
 		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.YES));
-		doc.add(new TextField(CONTENT, clean(article.getContent()), Field.Store.YES));
+		doc.add(new TextField(CONTENT, cleanContent(article), Field.Store.YES));
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
 			for (Tag tag : tags) {
@@ -385,14 +389,14 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();
-			Map<Integer, String> datas = Maps.newLinkedHashMap();
+			Map<Integer, Document> datas = Maps.newLinkedHashMap();
 			if (offset < total) {
 				ScoreDoc[] docs = tds.scoreDocs;
 				int last = offset + param.getPageSize();
 				for (int i = offset; i < Math.min(Math.min(last, total), MAX_RESULTS); i++) {
 					int docId = docs[i].doc;
 					Document doc = searcher.doc(docId);
-					datas.put(Integer.parseInt(doc.get(ID)), doc.get(CONTENT));
+					datas.put(Integer.parseInt(doc.get(ID)), doc);
 				}
 			}
 			List<Article> articles = dquery.query(Lists.newArrayList(datas.keySet()));
@@ -466,21 +470,31 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *            文章内容
 	 * @param query
 	 */
-	protected void doHightlight(Article article, String content, Query query) {
-		getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE, article.getTitle())
+	protected void doHightlight(Article article, Document doc, Query query) {
+
+		String content = doc.get(CONTENT);
+		String summary = doc.get(SUMMARY);
+		String title = doc.get(TITLE);
+		String[] tags = doc.getValues(TAG);
+
+		getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE, title)
 				.ifPresent(hl -> article.setTitle(hl));
 		Optional<String> summaryHl = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
-				clean(article.getSummary()));
+				summary);
 		if (summaryHl.isPresent()) {
 			article.setSummary(summaryHl.get());
 		} else {
-			getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT, clean(content))
+			getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT, content)
 					.ifPresent(hl -> article.setSummary(hl));
 		}
-		if (!CollectionUtils.isEmpty(article.getTags())) {
-			for (Tag tag : article.getTags()) {
-				getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag.getName())
-						.ifPresent(hl -> tag.setName(hl));
+		if (tags != null && tags.length > 0) {
+			for (String tag : tags) {
+				Optional<Tag> optionalTag = article.getTag(tag);
+				if (optionalTag.isPresent()) {
+					Tag _tag = optionalTag.get();
+					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, _tag.getName())
+							.ifPresent(hl -> _tag.setName(hl));
+				}
 			}
 		}
 
@@ -507,6 +521,14 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	private String clean(String content) {
 		return Jsoup.clean(content, Whitelist.none());
+	}
+
+	private String cleanContent(Article article) {
+		String content = article.getContent();
+		if (Editor.MD.equals(article.getEditor())) {
+			content = markdown2Html.toHtml(content);
+		}
+		return clean(content);
 	}
 
 	/**

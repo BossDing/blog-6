@@ -28,6 +28,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.View;
+import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
 import com.google.common.collect.Maps;
 
@@ -38,12 +39,16 @@ import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 
-public class PageReturnHandler extends RenderSupport implements HandlerMethodReturnValueHandler {
+public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PageReturnHandler.class);
 
 	@Autowired
 	private UIService uiService;
+	@Autowired
+	private UIRender uiRender;
+	@Autowired
+	protected ThymeleafViewResolver thymeleafViewResolver;
 
 	@Override
 	public boolean supportsReturnType(MethodParameter returnType) {
@@ -73,7 +78,7 @@ public class PageReturnHandler extends RenderSupport implements HandlerMethodRet
 
 		try {
 
-			rendered = super.doRender(page, mavContainer.getModel(), nativeRequest, nativeResponse,
+			rendered = uiRender.render(page, mavContainer.getModel(), nativeRequest, nativeResponse,
 					ParseContext.DEFAULT_CONFIG);
 
 		} catch (Exception e) {

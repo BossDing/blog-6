@@ -136,15 +136,33 @@ public interface ArticleDao {
 	void deleteById(Integer id);
 
 	/**
-	 * 更新文章的点击量
+	 * 增加文章的点击量
 	 * 
 	 * @param id
 	 *            文章的id
 	 * @param increase
 	 *            <strong>增加的</strong>点击量
 	 */
-	void updateHits(@Param("id") Integer id, @Param("hits") int increase);
+	void addHits(@Param("id") Integer id, @Param("hits") int increase);
 
+	/**
+	 * 更新文章的点击量
+	 * 
+	 * @param id
+	 *            文章的id
+	 * @param currentHits
+	 *            <strong>当前的</strong>点击量
+	 */
+	void updateHits(@Param("id") Integer id, @Param("hits") int currentHits);
+
+	/**
+	 * 查询文章点击数
+	 * 
+	 * @param id
+	 * @return
+	 */
+	int selectHits(Integer id);
+	
 	/**
 	 * 上一篇文章
 	 * 

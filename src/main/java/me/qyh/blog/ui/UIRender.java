@@ -15,13 +15,25 @@
  */
 package me.qyh.blog.ui;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.web.servlet.View;
+import org.thymeleaf.spring4.view.ThymeleafViewResolver;
+import org.thymeleaf.util.FastStringWriter;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
@@ -32,17 +44,22 @@ import me.qyh.blog.ui.page.Page;
 
 /**
  * 用来将模板解析成字符串
- * <p>
- * <b>会克隆页面进行解析</b>
- * </p>
  * 
  * @author Administrator
  *
  */
-public class UIRender extends RenderSupport {
+public final class UIRender {
+
+	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(UIRender.class);
 
 	@Autowired
 	private SpaceService spaceService;
+	@Autowired
+	protected ThymeleafViewResolver thymeleafViewResolver;
+	@Autowired
+	private UIExposeHelper uiExposeHelper;
+	@Autowired
+	private PlatformTransactionManager transactionManager;
 
 	public String render(Page page, Map<String, Object> model, HttpServletRequest request, HttpServletResponse response,
 			ParseConfig config) throws TplRenderException {
@@ -52,8 +69,7 @@ public class UIRender extends RenderSupport {
 					.orElseThrow(() -> new SystemException("空间:" + page.getSpace() + "不存在")));
 		}
 		try {
-			return super.doRender(TemplateUtils.clone(page), model == null ? Maps.newHashMap() : model, request,
-					response, config);
+			return doRender(page, model == null ? Maps.newHashMap() : model, request, response, config);
 		} catch (TplRenderException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -67,4 +83,65 @@ public class UIRender extends RenderSupport {
 			throws TplRenderException {
 		return render(page, null, request, response, config);
 	}
+
+	private final String doRender(Page page, Map<String, Object> model, HttpServletRequest request,
+			HttpServletResponse response, ParseConfig config) throws Exception {
+		String templateName = TemplateUtils.getTemplateName(page);
+		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
+		uiExposeHelper.addVariables(request);
+		Stopwatch stopwatch = Stopwatch.createStarted();
+		try {
+			ParseContext.remove();
+			ParseContext.setPage(page);
+			ParseContext.setConfig(config);
+			ResponseWrapper wrapper = new ResponseWrapper(response);
+			view.render(model, request, wrapper);
+			return wrapper.getRendered();
+		} catch (Throwable e) {
+			if (e instanceof RuntimeException || e instanceof Error) {
+				markRollBack();
+			}
+			throw UIExceptionUtils.convert(templateName, e);
+		} finally {
+			commit();
+			ParseContext.remove();
+
+			stopwatch.stop();
+			long renderMills = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+			TIME_LOGGER.debug("处理页面" + templateName + "耗费了" + renderMills + "ms");
+		}
+	}
+
+	private void markRollBack() {
+		TransactionStatus status = ParseContext.getTransactionStatus();
+		if (status != null) {
+			status.setRollbackOnly();
+		}
+	}
+
+	private void commit() {
+		TransactionStatus status = ParseContext.getTransactionStatus();
+		if (status != null) {
+			transactionManager.commit(status);
+		}
+	}
+
+	public static final class ResponseWrapper extends HttpServletResponseWrapper {
+
+		private FastStringWriter writer = new FastStringWriter(100);
+
+		public ResponseWrapper(HttpServletResponse response) {
+			super(response);
+		}
+
+		@Override
+		public PrintWriter getWriter() throws IOException {
+			return new PrintWriter(writer);
+		}
+
+		public String getRendered() {
+			return writer.toString();
+		}
+	}
+
 }

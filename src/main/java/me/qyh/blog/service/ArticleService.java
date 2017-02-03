@@ -17,7 +17,6 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFiles;
@@ -146,7 +145,7 @@ public interface ArticleService {
 	 *            文章id
 	 * @return 当前点击数
 	 */
-	OptionalInt hit(Integer id);
+	void hit(Integer id);
 
 	/**
 	 * 发布草稿

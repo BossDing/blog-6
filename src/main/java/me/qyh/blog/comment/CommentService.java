@@ -351,7 +351,7 @@ public class CommentService implements InitializingBean, CommentServer {
 			for (Comment comment : datas) {
 				completeComment(comment);
 			}
-			datas = handlerTree(datas, config);
+			datas = handleTree(datas, config);
 			break;
 		default:
 			datas = commentDao.selectPageWithList(param);
@@ -628,7 +628,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		return parent;
 	}
 
-	private List<Comment> handlerTree(List<Comment> comments, CommentConfig config) {
+	private List<Comment> handleTree(List<Comment> comments, CommentConfig config) {
 		if (comments.isEmpty()) {
 			return comments;
 		}

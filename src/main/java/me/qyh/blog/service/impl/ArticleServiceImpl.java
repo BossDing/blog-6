@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -109,6 +108,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private List<ArticleContentHandler> articleContentHandlers = Lists.newArrayList();
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
+	/**
+	 * 点击策略
+	 */
+	private HitsStrategy hitsStrategy;
+
+	private ArticleHitManager articleHitManager;
+
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
@@ -151,22 +157,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public OptionalInt hit(Integer id) {
-		Article article = articleCache.getArticle(id);
-		if (article != null) {
-			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
-					&& !article.getIsPrivate();
-			if (hit) {
-				lockManager.openLock(article);
-				articleDao.updateHits(id, 1);
-				articleIndexer.addOrUpdateDocument(article);
-				article.addHits();
-			}
-			return OptionalInt.of(article.getHits());
-		}
-		return OptionalInt.empty();
+	public void hit(Integer id) {
+		articleHitManager.hit(id);
 	}
 
 	@Override
@@ -570,6 +563,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (rebuildIndex) {
 			this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 		}
+
+		if (hitsStrategy == null) {
+			hitsStrategy = new DefaultHitsStrategy();
+		}
+
+		this.articleHitManager = new ArticleHitManager(hitsStrategy);
+
 		scheduleManager.update();
 	}
 
@@ -656,6 +656,69 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 	}
 
+	private final class ArticleHitManager {
+
+		private final HitsStrategy hitsStrategy;
+
+		public ArticleHitManager(HitsStrategy hitsStrategy) {
+			super();
+			this.hitsStrategy = hitsStrategy;
+		}
+
+		void hit(Integer id) {
+			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
+			try {
+				Article article = articleCache.getArticle(id);
+				if (article != null && validHit(article)) {
+					hitsStrategy.hit(article);
+				}
+			} catch (RuntimeException | Error e) {
+				ts.setRollbackOnly();
+				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+				throw e;
+			} finally {
+				transactionManager.commit(ts);
+			}
+		}
+
+		private boolean validHit(Article article) {
+			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
+					&& !article.getIsPrivate();
+
+			if (hit) {
+				lockManager.openLock(article);
+			}
+			return hit;
+		}
+
+	}
+
+	public interface HitsStrategy {
+		/**
+		 * 点击文章
+		 * <p>
+		 * <b>这个方法的执行处于事务中</b>
+		 * <p>
+		 * 
+		 * @param article
+		 *            可能来自于缓存，如果是实时的点击数更新必须要在缓存中有所体现
+		 * @see DefaultHitsStrategy
+		 */
+		void hit(Article article);
+	}
+
+	private final class DefaultHitsStrategy implements HitsStrategy {
+
+		@Override
+		public void hit(Article article) {
+			Integer id = article.getId();
+			articleDao.addHits(id, 1);
+			article.setHits(articleDao.selectHits(article.getId()));
+			articleIndexer.addOrUpdateDocument(article);
+		}
+
+	}
+
 	/**
 	 * 判断文章是否需要更新
 	 * 
@@ -685,5 +748,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
+	}
+
+	public void setHitsStrategy(HitsStrategy hitsStrategy) {
+		this.hitsStrategy = hitsStrategy;
 	}
 }
