@@ -29,18 +29,16 @@ import me.qyh.blog.util.Validators;
  */
 public class AllowTags {
 
-	private String simpleTags;
 	private List<Tag> tags = Lists.newArrayList();
 
-	public void setSimpleTags(String simpleTags) {
-		this.simpleTags = simpleTags;
-	}
-
-	public List<Tag> getTags() {
+	public void addSimpleTags(String simpleTags) {
 		if (!Validators.isEmptyOrNull(simpleTags, true)) {
 			Arrays.stream(simpleTags.split(",")).filter(name -> !name.isEmpty()).map(Tag::new)
 					.forEach(tag -> tags.add(tag));
 		}
+	}
+
+	public List<Tag> getTags() {
 		return tags;
 	}
 
