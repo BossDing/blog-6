@@ -174,8 +174,8 @@ public interface CommentDao {
 	/**
 	 * 查询某个空间下某个模块类型最后的几条评论
 	 * 
-	 * @param type
-	 *            模块类型
+	 * @param module
+	 *            模块，如果moduleId为空，则查询类型
 	 * @param space
 	 *            空间
 	 * @param limit
@@ -184,7 +184,7 @@ public interface CommentDao {
 	 *            是否查询私有空间|文章下的评论
 	 * @return 评论集
 	 */
-	List<Comment> selectLastComments(@Param("type") ModuleType type, @Param("space") Space space,
+	List<Comment> selectLastComments(@Param("module") CommentModule module, @Param("space") Space space,
 			@Param("limit") int limit, @Param("queryPrivate") boolean queryPrivate,
 			@Param("queryAdmin") boolean queryAdmin);
 

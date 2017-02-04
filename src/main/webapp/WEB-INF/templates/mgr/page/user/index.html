@@ -27,6 +27,7 @@
 								<table class="table">
 									<thead>
 										<tr>
+											<th>页面ID</th>
 											<th>页面名</th>
 											<th>别名</th>
 											<th>描述</th>
@@ -37,6 +38,7 @@
 									</thead>
 									<tbody>
 										<tr th:each="page : ${page.datas}">
+											<td th:text="${page.id}"></td>
 											<td><a href="###" th:title="${page.name}"
 												data-toggle="tooltip"
 												th:text="${#strings.length(page.name) > 10  ? #strings.substring(page.name,0,10)+'...' : page.name}"></a></td>

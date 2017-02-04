@@ -52,5 +52,4 @@ public class ArticleIndexRebuilder implements ApplicationListener<ArticleIndexRe
 			platformTransactionManager.commit(status);
 		}
 	}
-
 }

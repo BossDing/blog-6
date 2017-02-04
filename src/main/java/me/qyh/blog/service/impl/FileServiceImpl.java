@@ -149,18 +149,21 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null) {
 			throw new LogicException("file.path.exists", "文件已经存在");
 		}
-		String key = folderKey.isEmpty() ? originalFilename : (folderKey + SPLIT_CHAR + originalFilename);
+		String ext = Files.getFileExtension(originalFilename);
+		String name = Files.getNameWithoutExtension(originalFilename);
+		String fullname = name + "." + ext.toLowerCase();
+		String key = folderKey.isEmpty() ? fullname : (folderKey + SPLIT_CHAR + fullname);
 		deleteImmediatelyIfNeed(key);
 		CommonFile cf = store.store(key, file);
 		try {
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();
 			blogFile.setCf(cf);
-			blogFile.setPath(originalFilename);
+			blogFile.setPath(fullname);
 			blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 			blogFile.setLft(parent.getLft() + 1);
 			blogFile.setRgt(parent.getLft() + 2);
-			blogFile.setName(originalFilename);
+			blogFile.setName(fullname);
 			blogFile.setParent(parent);
 			blogFile.setType(BlogFileType.FILE);
 

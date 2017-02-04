@@ -81,13 +81,11 @@ import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
-import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.security.input.Markdown2Html;
 
 /**
  * 近实时文章索引
@@ -145,8 +143,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-	@Autowired
-	private Markdown2Html markdown2Html;
+	@Autowired(required = false)
+	private ArticleContentHandler articleContentHandler;
 
 	/**
 	 * 构造器
@@ -520,15 +518,15 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	}
 
 	private String clean(String content) {
+		// 只需要纯文字的内容
 		return Jsoup.clean(content, Whitelist.none());
 	}
 
 	private String cleanContent(Article article) {
-		String content = article.getContent();
-		if (Editor.MD.equals(article.getEditor())) {
-			content = markdown2Html.toHtml(content);
+		if (articleContentHandler != null) {
+			articleContentHandler.handle(article);
 		}
-		return clean(content);
+		return clean(article.getContent());
 	}
 
 	/**

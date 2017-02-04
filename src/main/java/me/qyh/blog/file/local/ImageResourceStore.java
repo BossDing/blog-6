@@ -179,33 +179,39 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
 			// 缩略图是否已经存在
 			File file = findThumbByPath(thumbPath);
+			// 缩略图不存在，寻找原图
 			if (!file.exists()) {
 				String sourcePath = getSourcePathByResizePath(path);
-				// 缩略图不存在，寻找原图
 				Optional<File> optionalFile = super.findByKey(sourcePath);
 				if (!optionalFile.isPresent()) {
-					// 返回null
+					// 源文件也不存在
 					return Optional.empty();
 				}
-				File local = optionalFile.get();
 				// 如果原图存在，进行缩放
+				File local = optionalFile.get();
+				// 如果已经缩放失败过，直接返回原图
 				if (errorThumbPaths.contains(thumbPath)) {
-					return detectSupportWebp ? Optional.empty() : Optional.of(new PathResource(local.toPath()));
+					return Optional.of(new PathResource(local.toPath()));
 				}
-				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))) {
-					File check = findThumbByPath(thumbPath);
-					if (check.exists()) {
-						return Optional.of(new PathResource(check.toPath()));
-					}
+				// 如果支持文件格式(防止ImageHelper变更)
+				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))
+						&& imageHelper.supportFormat(Files.getFileExtension(thumbPath))) {
 					try {
-						return Optional.of(new PathResource(doResize(local, resize, check, sourcePath).toPath()));
+						return Optional.of(new PathResource(doResize(local, resize, file, sourcePath).toPath()));
 					} catch (IOException e) {
 						IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
 						errorThumbPaths.add(thumbPath);
-						return detectSupportWebp ? Optional.empty() : Optional.of(new PathResource(local.toPath()));
+						return Optional.of(new PathResource(local.toPath()));
 					}
+				} else {
+					// 不支持的文件格式
+					// 可能更改了ImageHelper
+					// 这里直接输出源文件
+					return Optional.of(new PathResource(local.toPath()));
 				}
+
 			} else {
+				// 直接返回缩略图
 				return Optional.of(new PathResource(file.toPath()));
 			}
 		}
@@ -287,6 +293,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 		if (sourceProtected) {
 			setEnableDownloadHandler(false);
+		}
+
+		if (!imageHelper.supportFormat(ImageHelper.WEBP)) {
+			supportWebp = false;
 		}
 	}
 

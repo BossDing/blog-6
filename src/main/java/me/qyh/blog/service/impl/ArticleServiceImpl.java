@@ -105,7 +105,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private boolean rebuildIndex = true;
 
-	private List<ArticleContentHandler> articleContentHandlers = Lists.newArrayList();
+	@Autowired(required = false)
+	private ArticleContentHandler articleContentHandler;
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
 	/**
@@ -135,10 +136,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			Article clone = new Article(article);
 			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(article.getId()).orElse(0));
 
-			if (!CollectionUtils.isEmpty(articleContentHandlers)) {
-				for (ArticleContentHandler handler : articleContentHandlers) {
-					handler.handle(clone);
-				}
+			if (articleContentHandler != null) {
+				articleContentHandler.handle(clone);
 			}
 
 			return Optional.of(clone);
@@ -544,10 +543,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void preparePreview(Article article) {
 
-		if (!CollectionUtils.isEmpty(articleContentHandlers)) {
-			for (ArticleContentHandler handler : articleContentHandlers) {
-				handler.handlePreview(article);
-			}
+		if (articleContentHandler != null) {
+			articleContentHandler.handlePreview(article);
 		}
 	}
 
@@ -585,26 +582,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	public void setRebuildIndex(boolean rebuildIndex) {
 		this.rebuildIndex = rebuildIndex;
-	}
-
-	public interface ArticleContentHandler {
-		/**
-		 * 用来处理文章
-		 * 
-		 * @param article
-		 */
-		void handle(Article article);
-
-		/**
-		 * 用来处理预览文章
-		 * 
-		 * @param article
-		 */
-		void handlePreview(Article article);
-	}
-
-	public void setArticleContentHandlers(List<ArticleContentHandler> articleContentHandlers) {
-		this.articleContentHandlers = articleContentHandlers;
 	}
 
 	private final class ScheduleManager {

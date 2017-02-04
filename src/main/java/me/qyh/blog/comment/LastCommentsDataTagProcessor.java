@@ -37,6 +37,7 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	private static final String LIMIT = "limit";
 	private static final String QUERY_ADMIN = "queryAdmin";
 	private static final String MODULE_TYPE = "moduleType";
+	private static final String MODULE_ID = "moduleId";
 
 	private static final int MAX_LIMIT = 50;
 
@@ -71,7 +72,8 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 		if (type == null) {
 			return Collections.emptyList();
 		}
-		return commentService.queryLastComments(type, getLimit(attributes), getQueryAdmin(variables, attributes));
+		return commentService.queryLastComments(new CommentModule(type, getModuleId(variables, attributes)),
+				getLimit(attributes), getQueryAdmin(variables, attributes));
 	}
 
 	private ModuleType getModuleType(ContextVariables variables, Attributes attributes) {
@@ -80,6 +82,18 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 		} catch (Exception e) {
 			return null;
 		}
+	}
+
+	private Integer getModuleId(ContextVariables variables, Attributes attributes) {
+		String moduleIdStr = super.getVariables(MODULE_ID, variables, attributes);
+		if (moduleIdStr != null) {
+			try {
+				return Integer.parseInt(moduleIdStr);
+			} catch (NumberFormatException e) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	private boolean getQueryAdmin(ContextVariables variables, Attributes attributes) {

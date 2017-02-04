@@ -173,7 +173,7 @@ public abstract class DataTagProcessor<T> {
 	 * 
 	 * @param variables
 	 * @param attributes
-	 * @return
+	 * @return 如果不存在，返回null
 	 */
 	protected String getVariables(String name, ContextVariables variables, Attributes attributes) {
 		String result = attributes.get(name);

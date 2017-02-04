@@ -107,16 +107,19 @@
 	<!-- markdown to html -->
 	<bean class="me.qyh.blog.security.input.CommonMarkdown2Html" />
 
-	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
-		<!-- markdown2html handler -->
-		<property name="articleContentHandlers">
+	<!-- article content handler -->
+	<bean class="me.qyh.blog.service.impl.ArticleContentHandlers">
+		<property name="handlers">
 			<list>
 				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler" />
 			</list>
 		</property>
+	</bean>
+
+	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
 		<property name="hitsStrategy">
 			<bean class="me.qyh.blog.service.impl.CacheableHitsStrategy"
-				destroy-method="close"/>
+				destroy-method="close" />
 		</property>
 	</bean>
 

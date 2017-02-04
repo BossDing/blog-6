@@ -183,11 +183,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		FROM blog_comment a
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
 		<choose>
-			<when test="type.name() == 'ARTICLE'">
+			<when test="module.type.name() == 'ARTICLE'">
 				LEFT OUTER JOIN blog_article ba ON a.module_id = ba.id
 				LEFT OUTER JOIN blog_space bs ON ba.space_id  = bs.id
 				WHERE ba.art_status = 0<!-- PUBLISHED -->
-				AND a.module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+				AND a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+				<if test="module.id != null">
+					AND a.module_id = #{module.id}
+				</if>
 				AND a.comment_status = 0<!-- NORMAL -->
 				<if test="space != null">
 					AND bs.id = #{space.id} 
@@ -204,13 +207,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				LEFT OUTER JOIN blog_page_user bpu ON a.module_id = bpu.id
 				LEFT OUTER JOIN blog_space bs ON bpu.space_id  = bs.id
 				WHERE a.comment_status = 0
-				AND a.module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
-				<if test="space != null">
-					AND bs.id = #{space.id} 
+				AND a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+				<if test="module.id != null">
+					AND a.module_id = #{module.id}
 				</if>
-				<if test="!queryPrivate">
-					AND bs.is_private = FALSE
-				</if>
+				<choose>
+					<when test="space == null">
+						AND bs.id IS NULL
+					</when>
+					<otherwise>
+						AND bs.id = #{space.id}
+						<if test="!queryPrivate">
+							AND bs.is_private = FALSE
+						</if>
+					</otherwise>
+				</choose>
 				<if test="!queryAdmin">
 					AND a.comment_admin = FALSE
 				</if>

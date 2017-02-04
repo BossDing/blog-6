@@ -15,7 +15,6 @@ import me.qyh.blog.entity.Editor;
 import me.qyh.blog.evt.ArticleEvent;
 import me.qyh.blog.evt.EventType;
 import me.qyh.blog.security.input.Markdown2Html;
-import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleContentHandler;
 
 /**
  * 将文章的markdown转化为html内容
