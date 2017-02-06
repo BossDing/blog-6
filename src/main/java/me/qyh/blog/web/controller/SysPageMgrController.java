@@ -15,18 +15,11 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,9 +32,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
@@ -129,62 +119,5 @@ public class SysPageMgrController extends BaseMgrController {
 			@RequestParam(required = false, value = "spaceId") Integer spaceId) throws LogicException {
 		uiService.deleteSysPage(spaceId, target);
 		return new JsonResult(true, new Message("page.sys.delete.success", "还原成功"));
-	}
-
-	/**
-	 * 获取预览页面中的css链接和style标签内容，主要撰写博客的时候使用
-	 * <p>
-	 * <strong>如果某些css是动态变化的，比如根据时间和用户展现不同的css，那么指挥获取符合这一时刻的预览css(如果css的路径跟widget中的对象有关，那么只会也只能采用系统的预览widget)</strong>
-	 * </p>
-	 * 
-	 * @param target
-	 * @param spaceId
-	 * @return
-	 * @throws LogicException
-	 */
-	@RequestMapping(value = "getStyles", method = RequestMethod.GET)
-	@ResponseBody
-	public JsonResult getStyles(@RequestParam("id") Integer id, HttpServletRequest request,
-			HttpServletResponse response) throws LogicException {
-		String rendered;
-		try {
-			rendered = uiRender.render(
-					uiService.queryPage(
-							TemplateUtils.getTemplateName(new SysPage(new Space(id), PageTarget.ARTICLE_DETAIL))),
-					request, response, new ParseConfig(true, false, true));
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
-		}
-		Document doc = Jsoup.parse(rendered);
-		String style = null;
-		Elements eles = doc.select("style");
-		if (!eles.isEmpty()) {
-			style = eles.first().data();
-		}
-		Elements imports = doc.select("link[href]");
-		Set<String> csses = imports.stream().map(ele -> ele.attr("href")).filter(SysPageMgrController::isCss)
-				.collect(Collectors.toCollection(LinkedHashSet::new));
-		Map<String, Object> resultMap = Maps.newHashMap();
-		resultMap.put("csses", csses);
-		if (style != null) {
-			resultMap.put("style", style.trim());
-		}
-		return new JsonResult(true, resultMap);
-	}
-
-	private static boolean isCss(String link) {
-		String ext = Files.getFileExtension(link);
-		if ("css".equalsIgnoreCase(ext)) {
-			return true;
-		} else {
-			int idx = ext.indexOf('?');
-			if (idx != -1) {
-				ext = ext.substring(0, idx);
-				if ("css".equalsIgnoreCase(ext)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 }

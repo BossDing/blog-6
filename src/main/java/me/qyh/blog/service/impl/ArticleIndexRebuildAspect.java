@@ -15,6 +15,9 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.List;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
@@ -24,6 +27,8 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.google.common.collect.ImmutableList;
+
 import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockException;
@@ -32,7 +37,11 @@ import me.qyh.blog.security.AuthencationException;
 @Aspect
 public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		implements ApplicationEventPublisherAware {
+
 	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
+
+	private static final List<Class<? extends Exception>> NO_NEED_REBUILD_EXCEPTIONS = ImmutableList
+			.of(LogicException.class, AuthencationException.class, LockException.class);
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -52,7 +61,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	@Override
 	public void afterCompletion(int status) {
 		try {
-			if (status == STATUS_ROLLED_BACK && !noReload()) {
+			if (status == STATUS_ROLLED_BACK && needRebuild()) {
 				this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 			}
 		} finally {
@@ -60,10 +69,16 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		}
 	}
 
-	private boolean noReload() {
-		Throwable e = throwableLocal.get();
-		return e != null
-				&& (e instanceof LogicException || e instanceof AuthencationException || e instanceof LockException);
+	private boolean needRebuild() {
+		Throwable ex = throwableLocal.get();
+		if (ex != null) {
+			for (Class<?> type : NO_NEED_REBUILD_EXCEPTIONS) {
+				if (ExceptionUtils.indexOfThrowable(ex, type) != -1) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override

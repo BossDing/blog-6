@@ -21,6 +21,7 @@ import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -28,6 +29,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.common.base.Splitter;
 
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
@@ -41,6 +44,12 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	@Autowired
 	private UrlHelper urlHelper;
 
+	/**
+	 * whitelist的json配置,请小心配置注意xss，当且仅当配置评论允许html之后才会生效;
+	 * 
+	 * @see JsonWhitelist
+	 */
+	private Resource whitelistJsonResource;
 	private AllowTags tags;
 	private boolean nofollow = true;// 是否在超链接上机上nofollow属性
 
@@ -70,9 +79,12 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		if (whitelistJsonResource != null) {
+			tags = Jsons.readValue(AllowTags.class, Resources.readResourceToString(whitelistJsonResource));
+		}
 		if (tags == null) {
 			tags = new AllowTags();
-			tags.addSimpleTags("b,code,em,del,small,strong");
+			tags.addSimpleTags(new String[] { "b", "code", "em", "del", "small", "strong" });
 			Tag a = new Tag();
 			a.setName("a");
 			Attribute href = new Attribute();
@@ -84,7 +96,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 
 	private static final class InnerWhitelist extends Whitelist {
 		InnerWhitelist(AllowTags tags) {
-			tags.getTags().forEach(tag -> {
+			for (Tag tag : tags.getTags()) {
 				addTags(tag.getName());
 				for (Attribute att : tag.getAttributes()) {
 					addAttributes(tag.getName(), att.getName());
@@ -99,7 +111,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 						addEnforcedAttribute(tag.getName(), att.getName(), enforce);
 					}
 				}
-			});
+			}
 		}
 
 		static Whitelist configured(AllowTags tags) {
@@ -109,6 +121,10 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 
 	public void setTags(AllowTags tags) {
 		this.tags = tags;
+	}
+
+	public void setWhitelistJsonResource(Resource whitelistJsonResource) {
+		this.whitelistJsonResource = whitelistJsonResource;
 	}
 
 }

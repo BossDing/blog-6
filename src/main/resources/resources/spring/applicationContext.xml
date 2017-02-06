@@ -111,7 +111,7 @@
 	<bean class="me.qyh.blog.service.impl.ArticleContentHandlers">
 		<property name="handlers">
 			<list>
-				<bean class="me.qyh.blog.service.impl.ArticleMarkdown2HtmlContentHandler" />
+				<bean class="me.qyh.blog.service.impl.DefaultArticleContentHandler" />
 			</list>
 		</property>
 	</bean>

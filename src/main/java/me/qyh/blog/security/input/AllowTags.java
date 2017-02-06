@@ -20,8 +20,6 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import me.qyh.blog.util.Validators;
-
 /**
  * 
  * @author Administrator
@@ -31,9 +29,9 @@ public class AllowTags {
 
 	private List<Tag> tags = Lists.newArrayList();
 
-	public void addSimpleTags(String simpleTags) {
-		if (!Validators.isEmptyOrNull(simpleTags, true)) {
-			Arrays.stream(simpleTags.split(",")).filter(name -> !name.isEmpty()).map(Tag::new)
+	public void addSimpleTags(String[] simpleTags) {
+		if (simpleTags != null && simpleTags.length > 0) {
+			Arrays.stream(simpleTags).filter(name -> !name.isEmpty()).distinct().map(Tag::new)
 					.forEach(tag -> tags.add(tag));
 		}
 	}

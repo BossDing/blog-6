@@ -124,18 +124,14 @@ public class ArticleMgrController extends BaseMgrController {
 			return "redirect:/mgr/space/index";
 		}
 		model.addAttribute("spaces", spaces);
+		model.addAttribute("editor", editor.name());
 		model.addAttribute("article", new Article());
-		switch (editor) {
-		case MD:
-			return "mgr/article/write/md";
-		default:
-			return "mgr/article/write/html";
-		}
+		return "mgr/article/write/editor";
 	}
 
-	@RequestMapping(value = "write/md/preview", method = RequestMethod.GET)
-	public String mdPreview() {
-		return "mgr/article/write/mdpreview";
+	@RequestMapping(value = "write/preview", method = RequestMethod.GET)
+	public String preview() {
+		return "mgr/article/write/preview";
 	}
 
 	@RequestMapping(value = "write", method = RequestMethod.POST)
@@ -162,7 +158,8 @@ public class ArticleMgrController extends BaseMgrController {
 		}
 		model.addAttribute("article", article);
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
-		return "mgr/article/write/" + article.getEditor().name().toLowerCase();
+		model.addAttribute("editor", article.getEditor().name());
+		return "mgr/article/write/editor";
 	}
 
 	@RequestMapping(value = "write/preview", method = RequestMethod.POST)
