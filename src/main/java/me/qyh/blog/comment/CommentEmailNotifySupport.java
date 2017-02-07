@@ -18,8 +18,7 @@ package me.qyh.blog.comment;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,16 +37,13 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.CharStreams;
-
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.mail.MailSender;
 import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -63,7 +59,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
-	private List<Comment> toSend = Collections.synchronizedList(Lists.newArrayList());
+	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
 	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
 	private Resource mailTemplateResource;
 	private String mailTemplate;
@@ -112,7 +108,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	public final void shutdown() {
 		if (!toSend.isEmpty() && toSendSdfile != null) {
 			try {
-				SerializationUtils.serialize(Lists.newArrayList(toSend), new FileOutputStream(toSendSdfile));
+				SerializationUtils.serialize(new ArrayList<>(toSend), new FileOutputStream(toSendSdfile));
 			} catch (Exception e) {
 				LOGGER.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
 			}
@@ -165,10 +161,8 @@ public class CommentEmailNotifySupport implements InitializingBean {
 			mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
 		}
 
-		try (InputStream is = mailTemplateResource.getInputStream();
-				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
-			mailTemplate = CharStreams.toString(ir);
-		}
+		mailTemplate = Resources.readResourceToString(mailTemplateResource);
+		
 		if (messageProcessPeriodSec <= 0) {
 			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
 		}

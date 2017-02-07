@@ -16,9 +16,9 @@
 package me.qyh.blog.service;
 
 import java.sql.Timestamp;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.FileStoreBean;
 import me.qyh.blog.entity.Article.ArticleStatus;
@@ -127,7 +127,7 @@ public interface StatisticsService {
 	}
 
 	public class ArticleDetailStatistics extends ArticleStatistics {
-		private Map<ArticleStatus, Integer> statusCountMap = Maps.newEnumMap(ArticleStatus.class);
+		private Map<ArticleStatus, Integer> statusCountMap = new EnumMap<>(ArticleStatus.class);
 
 		public ArticleDetailStatistics(ArticleStatistics statistics) {
 			super(statistics);
@@ -170,8 +170,8 @@ public interface StatisticsService {
 	}
 
 	public class FileStatistics {
-		private Map<BlogFileType, Integer> typeCountMap = Maps.newEnumMap(BlogFileType.class);
-		private Map<FileStoreBean, FileCount> storeCountMap = Maps.newHashMap();
+		private Map<BlogFileType, Integer> typeCountMap = new EnumMap<>(BlogFileType.class);
+		private Map<FileStoreBean, FileCount> storeCountMap = new HashMap<>();
 
 		public Map<BlogFileType, Integer> getTypeCountMap() {
 			return typeCountMap;

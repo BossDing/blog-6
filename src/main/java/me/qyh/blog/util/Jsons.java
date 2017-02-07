@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.UrlResource;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -360,8 +359,8 @@ public class Jsons {
 			}
 			if (expression.indexOf(SPLIT_STR) != -1) {
 				// multi expressions
-				List<Expression> expressionList = Lists.newArrayList();
-				for (String _expression : Splitter.on(SPLIT_STR).split(expression)) {
+				List<Expression> expressionList = new ArrayList<>();
+				for (String _expression : expression.split(SPLIT_STR)) {
 					_expression = StringUtils.deleteWhitespace(_expression);
 					if (_expression.isEmpty()) {
 						return Arrays.asList(NULL_EXPRESSION);

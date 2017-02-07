@@ -15,10 +15,9 @@
  */
 package me.qyh.blog.bean;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -39,7 +38,7 @@ public class ArticleDateFiles {
 		Y, YM, YMD
 	}
 
-	private List<ArticleDateFile> files = Lists.newArrayList();
+	private List<ArticleDateFile> files = new ArrayList<>();
 	private ArticleDateFileMode mode;
 
 	/**

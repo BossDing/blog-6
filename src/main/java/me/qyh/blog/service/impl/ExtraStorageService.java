@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,8 +30,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import com.google.common.collect.Maps;
 
 /**
  * 额外的存储，以键值对的形式用来存放一些<b>文本数据</b>
@@ -48,7 +47,7 @@ public class ExtraStorageService implements InitializingBean {
 
 	private final File dataFile = new File("extra.dat");
 
-	private Map<String, String> dataMap = Collections.synchronizedMap(Maps.newHashMap());
+	private Map<String, String> dataMap = Collections.synchronizedMap(new HashMap<>());
 
 	/**
 	 * 存储键值对数据

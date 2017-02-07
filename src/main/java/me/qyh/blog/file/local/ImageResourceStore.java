@@ -17,6 +17,7 @@ package me.qyh.blog.file.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -29,9 +30,6 @@ import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -53,7 +51,7 @@ import me.qyh.blog.web.Webs;
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
-	private static final Set<String> errorThumbPaths = Sets.newHashSet();// 当缩略图制作失败时存放路径，防止下次再次读取
+	private static final Set<String> errorThumbPaths = new HashSet<>();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final String WEBP_EXT = ".webp";
 	private static final String JPEG_EXT = ".jpeg";
@@ -92,7 +90,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		checkFileStoreable(dest);
 		// 先写入临时文件
 		String originalFilename = mf.getOriginalFilename();
-		File tmp = FileUtils.temp(Files.getFileExtension(originalFilename));
+		File tmp = FileUtils.temp(FileUtils.getFileExtension(originalFilename));
 		try {
 			Webs.save(mf, tmp);
 		} catch (IOException e1) {
@@ -110,7 +108,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				extension = ImageHelper.PNG;
 			}
 			FileUtils.forceMkdir(dest.getParentFile());
-			Files.move(finalFile, dest);
+			FileUtils.move(finalFile, dest);
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
 			cf.setSize(mf.getSize());
@@ -165,7 +163,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		// 从链接中获取缩放信息
 		Optional<Resize> optionalResize = getResizeFromPath(path);
 		if (sourceProtected && !optionalResize.isPresent()) {
-			String ext = Files.getFileExtension(path);
+			String ext = FileUtils.getFileExtension(path);
 			// 如果是GIF图片,直接输出原图
 			if (!ImageHelper.isGIF(ext)) {
 				return Optional.empty();
@@ -174,7 +172,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		boolean detectSupportWebp = supportWebp(request);
 		if (optionalResize.isPresent()) {
 			Resize resize = optionalResize.get();
-			String ext = Files.getFileExtension(getSourcePathByResizePath(path));
+			String ext = FileUtils.getFileExtension(getSourcePathByResizePath(path));
 			String thumbPath = path + (detectSupportWebp ? WEBP_EXT
 					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
 			// 缩略图是否已经存在
@@ -194,8 +192,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 					return Optional.of(new PathResource(local.toPath()));
 				}
 				// 如果支持文件格式(防止ImageHelper变更)
-				if (imageHelper.supportFormat(Files.getFileExtension(local.getName()))
-						&& imageHelper.supportFormat(Files.getFileExtension(thumbPath))) {
+				if (imageHelper.supportFormat(FileUtils.getFileExtension(local.getName()))
+						&& imageHelper.supportFormat(FileUtils.getFileExtension(thumbPath))) {
 					try {
 						return Optional.of(new PathResource(doResize(local, resize, file, sourcePath).toPath()));
 					} catch (IOException e) {
@@ -238,13 +236,13 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		return imageHelper.supportFormat(Files.getFileExtension(multipartFile.getOriginalFilename()));
+		return imageHelper.supportFormat(FileUtils.getFileExtension(multipartFile.getOriginalFilename()));
 	}
 
 	@Override
 	public String getUrl(String key) {
 		if (sourceProtected) {
-			if (ImageHelper.isGIF(Files.getFileExtension(key))) {
+			if (ImageHelper.isGIF(FileUtils.getFileExtension(key))) {
 				return super.getUrl(key);
 			}
 			Resize resize = largeResize == null ? (middleResize == null ? smallResize : middleResize) : largeResize;
@@ -314,10 +312,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected File doResize(File local, Resize resize, File thumb, String key) throws IOException {
-		String ext = Files.getFileExtension(local.getName());
+		String ext = FileUtils.getFileExtension(local.getName());
 		File thumbFolder = new File(thumbAbsFolder, key);
 
-		String thumbFilename = Files.getNameWithoutExtension(key);
+		String thumbFilename = FileUtils.getNameWithoutExtension(key);
 		String coverExt = (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT);
 
 		File cover = new File(thumbFolder, thumbFilename + ".cover" + coverExt);
@@ -328,7 +326,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			// 所以这里先写入再重命名，确保cover是一个被写入完毕的文件
 			File target = new File(thumbFolder, thumbFilename + coverExt);
 			FileUtils.forceMkdir(thumbFolder);
-			if (ImageHelper.isGIF(Files.getFileExtension(local.getName()))) {
+			if (ImageHelper.isGIF(FileUtils.getFileExtension(local.getName()))) {
 				imageHelper.getGifCover(local, target);
 			} else {
 				imageHelper.format(local, target);
@@ -366,12 +364,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected Optional<Resize> getResizeFromPath(String path) {
-		String extension = Files.getFileExtension(path);
+		String extension = FileUtils.getFileExtension(path);
 		if (!extension.isEmpty()) {
 			return Optional.empty();
 		}
 		Resize resize = null;
-		String baseName = Files.getNameWithoutExtension(path);
+		String baseName = FileUtils.getNameWithoutExtension(path);
 		try {
 			if (baseName.indexOf(CONCAT_CHAR) != -1) {
 				boolean keepRatio = true;

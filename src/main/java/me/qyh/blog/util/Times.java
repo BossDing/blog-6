@@ -23,9 +23,9 @@ import java.time.temporal.Temporal;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 /**
  * java8 date utils for thymeleaf
@@ -39,7 +39,7 @@ public class Times {
 	private static final DateTimeFormatter[] DATE_TIME_PARSERS;
 	private static final DateTimeFormatter[] DATE_FORMATTERS;
 
-	private static final LoadingCache<String, DateTimeFormatter> DATE_TIME_FORMATTER_CACHE = CacheBuilder.newBuilder()
+	private static final LoadingCache<String, DateTimeFormatter> DATE_TIME_FORMATTER_CACHE = Caffeine.newBuilder()
 			.build(new CacheLoader<String, DateTimeFormatter>() {
 
 				@Override
@@ -50,14 +50,12 @@ public class Times {
 			});
 
 	static {
-		DATE_FORMATTERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy-MM-dd"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy/MM/dd") };
-		DATE_TIME_PARSERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy-MM-dd HH:mm:ss"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy-MM-dd HH:mm"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy-MM-dd HH"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy/MM/dd HH:mm:ss"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy/MM/dd HH:mm"),
-				DATE_TIME_FORMATTER_CACHE.getUnchecked("yyyy/MM/dd HH") };
+		DATE_FORMATTERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd"),
+				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd") };
+		DATE_TIME_PARSERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH:mm:ss"),
+				DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH:mm"), DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH"),
+				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH:mm:ss"), DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH:mm"),
+				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH") };
 	}
 
 	private Times() {
@@ -121,6 +119,6 @@ public class Times {
 	public static String format(Temporal temporal, String pattern) {
 		Objects.requireNonNull(temporal);
 		Objects.requireNonNull(pattern);
-		return DATE_TIME_FORMATTER_CACHE.getUnchecked(pattern).format(temporal);
+		return DATE_TIME_FORMATTER_CACHE.get(pattern).format(temporal);
 	}
 }

@@ -16,8 +16,6 @@
 package me.qyh.blog.evt.ping;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -26,10 +24,10 @@ import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.io.CharStreams;
+import org.springframework.core.io.InputStreamResource;
 
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.util.Resources;
 
 public abstract class XmlRpcPingSupport extends PingService {
 
@@ -65,10 +63,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 			int responseCode = conn.getResponseCode();
 
 			if (HttpURLConnection.HTTP_OK == responseCode) {// 连接成功
-				try (InputStream is = conn.getInputStream();
-						InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-					result = CharStreams.toString(isr);
-				}
+				result = Resources.readResourceToString(new InputStreamResource(conn.getInputStream()));
 			}
 		} catch (IOException e) {
 			String msg = "ping地址:" + pingUrl + "失败，文章访问地址为:" + urlHelper.getUrls().getUrl(article) + "，发送请求报文为" + xml

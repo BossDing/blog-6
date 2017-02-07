@@ -15,13 +15,13 @@
  */
 package me.qyh.blog.ui.dialect;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.thymeleaf.dialect.AbstractProcessorDialect;
 import org.thymeleaf.processor.IProcessor;
 import org.thymeleaf.standard.StandardDialect;
-
-import com.google.common.collect.ImmutableSet;
 
 public class PageDialect extends AbstractProcessorDialect {
 
@@ -32,8 +32,8 @@ public class PageDialect extends AbstractProcessorDialect {
 	}
 
 	public Set<IProcessor> getProcessors(final String dialectPrefix) {
-		return ImmutableSet.of(new DataTagProcessor(dialectPrefix), new FragmentTagProcessor(dialectPrefix),
-				new LockTagProcessor(dialectPrefix), new ProcessableTagProcessor(dialectPrefix));
+		return new HashSet<>(Arrays.asList(new DataTagProcessor(dialectPrefix), new FragmentTagProcessor(dialectPrefix),
+				new LockTagProcessor(dialectPrefix), new ProcessableTagProcessor(dialectPrefix)));
 	}
 
 }

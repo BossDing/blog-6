@@ -31,8 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import com.google.common.base.Splitter;
-
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
@@ -79,7 +77,7 @@ public class UrlHelper implements InitializingBean {
 		// 如果开启了空间域名
 		String space = null;
 		if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
-			space = Splitter.on('.').split(request.getServerName()).iterator().next();
+			space = request.getServerName().split(".")[0];
 		}
 		String requestUri = request.getRequestURI();
 		if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {

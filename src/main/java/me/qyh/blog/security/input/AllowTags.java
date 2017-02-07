@@ -15,10 +15,9 @@
  */
 package me.qyh.blog.security.input;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 /**
  * 
@@ -27,7 +26,7 @@ import com.google.common.collect.Lists;
  */
 public class AllowTags {
 
-	private List<Tag> tags = Lists.newArrayList();
+	private List<Tag> tags = new ArrayList<>();
 
 	public void addSimpleTags(String[] simpleTags) {
 		if (simpleTags != null && simpleTags.length > 0) {

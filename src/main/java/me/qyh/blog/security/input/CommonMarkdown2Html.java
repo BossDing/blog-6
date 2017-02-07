@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.security.input;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.commonmark.Extension;
@@ -28,12 +30,9 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
 public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
 
-	private List<Extension> extensions = Lists.newArrayList();
+	private List<Extension> extensions = new ArrayList<>();
 
 	/**
 	 * singleton?
@@ -41,7 +40,7 @@ public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
 	private Parser parser;
 	private HtmlRenderer renderer;
 
-	private static final List<Extension> BASE_EXTENSIONS = ImmutableList.of(AutolinkExtension.create(),
+	private static final List<Extension> BASE_EXTENSIONS = Arrays.asList(AutolinkExtension.create(),
 			TablesExtension.create(), StrikethroughExtension.create(), HeadingAnchorExtension.create());
 
 	@Override
@@ -59,7 +58,7 @@ public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		List<Extension> extensions = Lists.newArrayList(BASE_EXTENSIONS);
+		List<Extension> extensions = new ArrayList<>(BASE_EXTENSIONS);
 		if (!CollectionUtils.isEmpty(this.extensions)) {
 			extensions.addAll(this.extensions);
 		}

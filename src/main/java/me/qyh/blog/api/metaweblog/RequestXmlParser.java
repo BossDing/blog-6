@@ -18,9 +18,11 @@ package me.qyh.blog.api.metaweblog;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +30,6 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.util.Validators;
 
@@ -84,7 +83,7 @@ public class RequestXmlParser {
 		if (paramsNodes.size() > 1) {
 			throw new ParseException("解析失败，存在多个params节点");
 		}
-		List<Object> arguments = Lists.newArrayList();
+		List<Object> arguments = new ArrayList<>();
 		if (!paramsNodes.isEmpty()) {
 			List<?> params = ((Element) paramsNodes.get(0)).getChildren("param");
 			if (!params.isEmpty()) {
@@ -140,7 +139,7 @@ public class RequestXmlParser {
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<methodResponse>");
 		sb.append("<fault>");
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		map.put("faultCode", code);
 		map.put("faultString", desc);
 		sb.append(buildVXml(map));
@@ -266,7 +265,7 @@ public class RequestXmlParser {
 			if (CollectionUtils.isEmpty(memberNodes)) {
 				throw new ParseException("解析失败，struct节点不存在:member节点");
 			}
-			Map<String, Object> map = Maps.newHashMap();
+			Map<String, Object> map = new HashMap<>();
 			for (Object memberNode : memberNodes) {
 				Element memberEle = (Element) memberNode;
 				List<?> memberNameNodes = memberEle.getChildren("name");
@@ -289,7 +288,7 @@ public class RequestXmlParser {
 			if (dataNodes.size() != 1) {
 				throw new ParseException("解析失败，array节点下存在:" + dataNodes.size() + "个data节点");
 			}
-			List<Object> results = Lists.newArrayList();
+			List<Object> results = new ArrayList<>();
 			for (Object vNode : ((Element) dataNodes.get(0)).getChildren("value")) {
 				Element dataVe = (Element) vNode;
 				results.add(parseValueElement(dataVe));
@@ -347,7 +346,7 @@ public class RequestXmlParser {
 	}
 
 	static final class Struct {
-		private Map<String, Object> data = Maps.newHashMap();
+		private Map<String, Object> data = new HashMap<>();
 
 		Struct(Map<String, Object> data) {
 			this.data = data;
@@ -461,9 +460,9 @@ public class RequestXmlParser {
 		public <T> List<T> getArray(String key, Class<T> t) throws ParseException {
 			List<Object> list = getArray(key);
 			if (list == null) {
-				return Lists.newArrayList();
+				return new ArrayList<>();
 			}
-			List<T> rest = Lists.newArrayList();
+			List<T> rest = new ArrayList<>();
 			for (Object o : list) {
 				if (o != null && !t.isInstance(o)) {
 					throw new ParseException(o.getClass() + "不是" + t.getName() + "类型");

@@ -16,6 +16,7 @@
 package me.qyh.blog.api.sitemap;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +28,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UrlHelper.SpaceUrls;
@@ -49,7 +48,7 @@ public class XmlSiteMap implements InitializingBean {
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
 
-	private List<SiteMapUrlItem> extras = Lists.newArrayList();
+	private List<SiteMapUrlItem> extras = new ArrayList<>();
 
 	private SiteMapConfigure configure;
 
@@ -128,7 +127,7 @@ public class XmlSiteMap implements InitializingBean {
 		TransactionStatus status = platformTransactionManager.getTransaction(td);
 		try {
 			SpaceUrls urls = urlHelper.getUrlsBySpace(null);
-			List<SiteMapUrlItem> items = Lists.newArrayList();
+			List<SiteMapUrlItem> items = new ArrayList<>();
 
 			ArticleQueryParam param = new ArticleQueryParam();
 			param.setSort(Sort.LASTMODIFYDATE);

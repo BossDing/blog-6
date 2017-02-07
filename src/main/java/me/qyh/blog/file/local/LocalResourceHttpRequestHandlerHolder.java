@@ -15,11 +15,10 @@
  */
 package me.qyh.blog.file.local;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.web.HttpRequestHandler;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -30,7 +29,7 @@ import me.qyh.blog.exception.SystemException;
  */
 public class LocalResourceHttpRequestHandlerHolder {
 
-	private static Map<String, Object> urlMap = Maps.newHashMap();
+	private static Map<String, Object> urlMap = new HashMap<>();
 
 	static void put(String pattern, Object handler) {
 		if (!(handler instanceof HttpRequestHandler)) {

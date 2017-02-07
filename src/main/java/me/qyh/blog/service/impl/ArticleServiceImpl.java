@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +42,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
 import me.qyh.blog.bean.ArticleDateFile;
@@ -119,22 +118,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
-		Article article = null;
-		try {
-			int id = Integer.parseInt(idOrAlias);
-			article = articleCache.getArticle(id);
-		} catch (NumberFormatException e) {
-			article = articleCache.getArticle(idOrAlias);
-		}
-		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
-			if (article.isPrivate()) {
-				Environment.doAuthencation();
-			}
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
+		if (optionalArticle.isPresent()) {
 
-			lockManager.openLock(article);
-
-			Article clone = new Article(article);
-			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(article.getId()).orElse(0));
+			Article clone = new Article(optionalArticle.get());
+			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(clone.getId()).orElse(0));
 
 			if (articleContentHandler != null) {
 				articleContentHandler.handle(clone);
@@ -384,7 +372,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
-				return CollectionUtils.isEmpty(articleIds) ? Lists.newArrayList() : selectByIds(articleIds);
+				return CollectionUtils.isEmpty(articleIds) ? new ArrayList<>() : selectByIds(articleIds);
 			});
 		} else {
 			int count = articleDao.selectCount(param);
@@ -394,7 +382,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// query comments
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
-			List<Integer> ids = Lists.newArrayList(datas.size());
+			List<Integer> ids = new ArrayList<>(datas.size());
 			for (Article article : datas) {
 				ids.add(article.getId());
 			}
@@ -506,7 +494,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<ArticleNav> getArticleNav(String idOrAlias) {
-		Optional<Article> article = getArticleForView(idOrAlias);
+		Optional<Article> article = getCheckedArticle(idOrAlias);
 		return article.isPresent() ? getArticleNav(article.get()) : Optional.empty();
 	}
 
@@ -526,7 +514,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
-		Optional<Article> article = getArticleForView(idOrAlias);
+		Optional<Article> article = getCheckedArticle(idOrAlias);
 		return article.isPresent() ? findSimilar(article.get(), limit) : Collections.emptyList();
 	}
 
@@ -537,12 +525,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
-		return articleIndexer.querySimilar(article, articleIds -> articleDao.selectByIds(articleIds), limit);
+		return articleIndexer.querySimilar(article, articleIds -> articleDao.selectByIds(articleIds), limit).stream()
+				.map(this::toSimpleArticle).collect(Collectors.toList());
 	}
 
 	@Override
 	public void preparePreview(Article article) {
-
 		if (articleContentHandler != null) {
 			articleContentHandler.handlePreview(article);
 		}
@@ -568,6 +556,26 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		this.articleHitManager = new ArticleHitManager(hitsStrategy);
 
 		scheduleManager.update();
+	}
+
+	private Optional<Article> getCheckedArticle(String idOrAlias) {
+		Article article = null;
+		try {
+			int id = Integer.parseInt(idOrAlias);
+			article = articleCache.getArticle(id);
+		} catch (NumberFormatException e) {
+			article = articleCache.getArticle(idOrAlias);
+		}
+		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
+			if (article.isPrivate()) {
+				Environment.doAuthencation();
+			}
+
+			lockManager.openLock(article);
+			return Optional.of(article);
+		}
+
+		return Optional.empty();
 	}
 
 	/**
@@ -693,7 +701,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			article.setHits(articleDao.selectHits(article.getId()));
 			articleIndexer.addOrUpdateDocument(article);
 		}
+	}
 
+	protected Article toSimpleArticle(Article article) {
+		Article simple = new Article(article.getId());
+		simple.setAlias(article.getAlias());
+		simple.setSpace(article.getSpace());
+		simple.setTitle(article.getTitle());
+		return simple;
 	}
 
 	/**

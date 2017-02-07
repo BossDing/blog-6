@@ -15,14 +15,13 @@
  */
 package me.qyh.blog.ui.dialect;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.ui.UIStackoverflowError;
 
@@ -53,7 +52,7 @@ public class ProcessableTagProcessor extends DefaultAttributesTagProcessor {
 	@Override
 	protected void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		Map<String, String> attMap = Maps.newHashMap();
+		Map<String, String> attMap = new HashMap<>();
 		processAttribute(context, tag, attMap);
 		String text = attMap.get("utext");
 		try {

@@ -15,15 +15,14 @@
  */
 package me.qyh.blog.pageparam;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.util.CollectionUtils;
 
-import com.google.common.collect.Lists;
-
 public class PageResult<T> {
 
-	private List<T> datas = Lists.newArrayList();
+	private List<T> datas = new ArrayList<>();
 	private int totalPage;// 总页码
 	private int offset;
 	private int currentPage;// 当前页

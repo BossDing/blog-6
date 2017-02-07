@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.thymeleaf.dialect.IPreProcessorDialect;
@@ -23,10 +25,8 @@ import org.thymeleaf.preprocessor.PreProcessor;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import com.google.common.collect.ImmutableSet;
-
-import me.qyh.blog.ui.dialect.PreTemplateHandler;
 import me.qyh.blog.ui.dialect.PageDialect;
+import me.qyh.blog.ui.dialect.PreTemplateHandler;
 import me.qyh.blog.ui.dialect.TransactionDialect;
 
 public class UITemplateEngine extends SpringTemplateEngine {
@@ -44,7 +44,8 @@ public class UITemplateEngine extends SpringTemplateEngine {
 
 			@Override
 			public Set<IPreProcessor> getPreProcessors() {
-				return ImmutableSet.of(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000));
+				return new HashSet<>(
+						Arrays.asList(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000)));
 			}
 
 			@Override

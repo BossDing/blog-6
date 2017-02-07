@@ -15,18 +15,19 @@
  */
 package me.qyh.blog.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
-
-import com.google.common.io.CharStreams;
 
 import me.qyh.blog.config.Constants;
 
 public final class Resources {
+
+	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	/**
 	 * 读取Resource资源内容
@@ -35,7 +36,7 @@ public final class Resources {
 	 * @throws IOException
 	 */
 	public static String readResourceToString(Resource resource) throws IOException {
-		return readResource(resource, CharStreams::toString);
+		return readResource(resource, Resources::read);
 	}
 
 	/**
@@ -47,19 +48,32 @@ public final class Resources {
 	 * @throws IOException
 	 */
 	public static <T> T readResource(Resource resource, ResourceReader<T> reader) throws IOException {
-		try (InputStream is = resource.getInputStream();
-				InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET)) {
-			return reader.read(ir);
+		try (InputStream is = resource.getInputStream()) {
+			return reader.read(is);
 		}
 	}
 
 	@FunctionalInterface
 	public interface ResourceReader<R> {
-		R read(Reader reader) throws IOException;
+		R read(InputStream is) throws IOException;
 	}
 
 	private Resources() {
 
+	}
+
+	/**
+	 * InputStream to string
+	 * <p>
+	 * <b>not close is!!!</b>
+	 * </p>
+	 * 
+	 * @param is
+	 * @return
+	 */
+	public static String read(InputStream is) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, Constants.CHARSET));
+		return reader.lines().collect(Collectors.joining(LINE_SEPARATOR));
 	}
 
 }

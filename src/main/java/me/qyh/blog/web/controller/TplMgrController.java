@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -33,9 +35,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.TemplateEngine;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
@@ -85,16 +84,16 @@ public class TplMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult importPage(@RequestParam("json") String json,
 			@RequestParam(value = "spaceId", required = false) Integer spaceId, ImportOption importOption) {
-		List<ImportRecord> records = Lists.newArrayList();
-		List<ExportPage> exportPages = Lists.newArrayList();
+		List<ImportRecord> records = new ArrayList<>();
+		List<ExportPage> exportPages = new ArrayList<>();
 		try {
 			exportPages = Jsons.readList(ExportPage[].class, json);
 		} catch (Exception e) {
 			records.add(new ImportRecord(false, new Message("tpl.parse.fail", "模板解析失败")));
 			return new JsonResult(true, records);
 		}
-		List<ExportPage> toImportPages = Lists.newArrayList();
-		MapBindingResult bindingResult = new MapBindingResult(Maps.newHashMap(), "exportPage");
+		List<ExportPage> toImportPages = new ArrayList<>();
+		MapBindingResult bindingResult = new MapBindingResult(new HashMap<>(), "exportPage");
 		// validate
 		for (ExportPage exportPage : exportPages) {
 			exportPageValidator.validate(exportPage, bindingResult);

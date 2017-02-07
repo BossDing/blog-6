@@ -18,6 +18,7 @@ package me.qyh.blog.service.impl;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,10 +26,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
@@ -45,7 +45,7 @@ public class SpaceCache {
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 
-	private final LoadingCache<String, Space> aliasCache = CacheBuilder.newBuilder()
+	private final LoadingCache<String, Space> aliasCache = Caffeine.newBuilder()
 			.build(new CacheLoader<String, Space>() {
 
 				@Override
@@ -69,7 +69,7 @@ public class SpaceCache {
 
 			});
 
-	private final LoadingCache<SpacesCacheKey, List<Space>> spacesCache = CacheBuilder.newBuilder()
+	private final LoadingCache<SpacesCacheKey, List<Space>> spacesCache = Caffeine.newBuilder()
 			.build(new CacheLoader<SpacesCacheKey, List<Space>>() {
 
 				@Override
@@ -91,38 +91,37 @@ public class SpaceCache {
 
 			});
 
-	private final LoadingCache<Integer, Space> idCache = CacheBuilder.newBuilder()
-			.build(new CacheLoader<Integer, Space>() {
+	private final LoadingCache<Integer, Space> idCache = Caffeine.newBuilder().build(new CacheLoader<Integer, Space>() {
 
-				@Override
-				public Space load(Integer key) throws Exception {
-					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-					definition.setReadOnly(true);
-					TransactionStatus status = transactionManager.getTransaction(definition);
-					try {
-						Space space = spaceDao.selectById(key);
-						if (space == null) {
-							throw new LogicException(new Message("space.notExists", "空间不存在"));
-						}
-						return space;
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						transactionManager.commit(status);
-					}
+		@Override
+		public Space load(Integer key) throws Exception {
+			DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+			definition.setReadOnly(true);
+			TransactionStatus status = transactionManager.getTransaction(definition);
+			try {
+				Space space = spaceDao.selectById(key);
+				if (space == null) {
+					throw new LogicException(new Message("space.notExists", "空间不存在"));
 				}
+				return space;
+			} catch (RuntimeException | Error e) {
+				status.setRollbackOnly();
+				throw e;
+			} finally {
+				transactionManager.commit(status);
+			}
+		}
 
-			});
+	});
 
 	public List<Space> getSpaces(SpacesCacheKey key) {
-		return spacesCache.getUnchecked(key);
+		return spacesCache.get(key);
 	}
 
 	public Optional<Space> getSpace(String alias) {
 		try {
-			return Optional.of(aliasCache.getUnchecked(alias));
-		} catch (UncheckedExecutionException e) {
+			return Optional.of(aliasCache.get(alias));
+		} catch (CompletionException e) {
 			if (e.getCause() instanceof LogicException) {
 				return Optional.empty();
 			}
@@ -132,8 +131,8 @@ public class SpaceCache {
 
 	public Optional<Space> getSpace(Integer id) {
 		try {
-			return Optional.of(idCache.getUnchecked(id));
-		} catch (UncheckedExecutionException e) {
+			return Optional.of(idCache.get(id));
+		} catch (CompletionException e) {
 			if (e.getCause() instanceof LogicException) {
 				return Optional.empty();
 			}

@@ -15,13 +15,12 @@
  */
 package me.qyh.blog.web.controller.form;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -58,7 +57,7 @@ public class ExportPageValidator implements Validator {
 		}
 		List<Fragment> fragments = exportPage.getFragments();
 		if (fragments == null) {
-			exportPage.setFragments(Lists.newArrayList());
+			exportPage.setFragments(new ArrayList<>());
 		} else {
 			for (Fragment fragment : fragments) {
 				fragmentValidator.validate(fragment, errors);

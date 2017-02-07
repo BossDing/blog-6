@@ -16,12 +16,11 @@
 package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Sets;
 
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
@@ -41,7 +40,7 @@ public class Article extends BaseLockResource {
 	private Space space;// 空间
 	private String title;// 标题
 	private String content;// 博客原始内容
-	private Set<Tag> tags = Sets.newLinkedHashSet();// 博客标签
+	private Set<Tag> tags = new LinkedHashSet<>();// 博客标签
 	private Timestamp pubDate;// 撰写日期
 	private Timestamp lastModifyDate;// 最后修改日期
 	private Boolean isPrivate;// 是否是私人博客

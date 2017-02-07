@@ -15,12 +15,11 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.transaction.TransactionStatus;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.page.Page;
@@ -41,7 +40,7 @@ public class ParseContext {
 
 		@Override
 		protected Map<String, Fragment> initialValue() {
-			return Maps.newHashMap();
+			return new HashMap<>();
 		}
 
 	};

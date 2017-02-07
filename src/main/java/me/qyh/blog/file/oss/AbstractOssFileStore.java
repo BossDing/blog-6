@@ -25,8 +25,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.common.io.Files;
-
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
@@ -57,7 +55,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	@Override
 	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
 		String originalFilename = multipartFile.getOriginalFilename();
-		String extension = Files.getFileExtension(originalFilename);
+		String extension = FileUtils.getFileExtension(originalFilename);
 		File tmp = FileUtils.temp(extension);
 		try {
 			Webs.save(multipartFile, tmp);
@@ -101,7 +99,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			if (backupDir != null) {
 				backup = new File(backupDir, key);
 				FileUtils.forceMkdir(backup.getParentFile());
-				Files.copy(tmp, backup);
+				FileUtils.copy(tmp, backup);
 			}
 			upload(key, tmp);
 		} catch (IOException e) {
@@ -115,7 +113,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	protected abstract void upload(String key, File file) throws IOException;
 
 	protected boolean image(String key) {
-		return imageHelper.supportFormat(Files.getFileExtension(key));
+		return imageHelper.supportFormat(FileUtils.getFileExtension(key));
 	}
 
 	@Override

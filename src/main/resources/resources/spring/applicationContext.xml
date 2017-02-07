@@ -57,7 +57,7 @@
 
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager" class="org.springframework.cache.guava.GuavaCacheManager">
+	<bean id="cacheManager" class="org.springframework.cache.caffeine.CaffeineCacheManager">
 		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,9 +42,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
-
-import com.google.common.collect.Lists;
-import com.google.common.html.HtmlEscapers;
+import org.springframework.web.util.HtmlUtils;
 
 import me.qyh.blog.comment.Comment.CommentStatus;
 import me.qyh.blog.comment.CommentConfig.CommentMode;
@@ -445,7 +444,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		if (comment.getParents().isEmpty()) {
 			return Arrays.asList(comment);
 		}
-		List<Comment> comments = Lists.newArrayList();
+		List<Comment> comments = new ArrayList<>();
 		for (Integer pid : comment.getParents()) {
 			Comment p = commentDao.selectById(pid);
 			completeComment(p);
@@ -594,7 +593,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		if (Editor.HTML.equals(comment.getEditor())) {
 			content = htmlClean.clean(content);
 		} else {
-			content = HtmlEscapers.htmlEscaper().escape(content);
+			content = HtmlUtils.htmlEscape(content, Constants.CHARSET.name());
 
 			String parsed = htmlClean.clean(markdown2Html.toHtml(content));
 			validContentLength(parsed);
@@ -616,7 +615,7 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	private List<Comment> buildTree(List<Comment> comments) {
 		CollectFilteredFilter filter = new CollectFilteredFilter(null);
-		List<Comment> roots = Lists.newArrayList();
+		List<Comment> roots = new ArrayList<>();
 		comments.stream().filter(filter).collect(Collectors.toList())
 				.forEach(comment -> roots.add(pickByParent(comment, filter.rests)));
 		return roots;
@@ -695,7 +694,7 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	private final class CollectFilteredFilter implements Predicate<Comment> {
 		private final Comment parent;
-		private List<Comment> rests = Lists.newArrayList();
+		private List<Comment> rests = new ArrayList<>();
 
 		public CollectFilteredFilter(Comment parent) {
 			this.parent = parent;

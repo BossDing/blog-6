@@ -18,9 +18,12 @@ package me.qyh.blog.service.impl;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,9 +79,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.CollectionUtils;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Space;
@@ -130,8 +130,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	private Formatter tagFormatter;
 	private Formatter summaryFormatter;
 
-	private Map<String, Float> boostMap = Maps.newHashMap();
-	private Map<String, Float> qboostMap = Maps.newHashMap();
+	private Map<String, Float> boostMap = new HashMap<>();
+	private Map<String, Float> qboostMap = new HashMap<>();
 
 	/**
 	 * 最大查询数量
@@ -287,13 +287,13 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			builder.add(likeQuery, Occur.MUST);
 			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
 			TopDocs likeDocs = searcher.search(builder.build(), limit + 1);
-			List<Integer> datas = Lists.newArrayList();
+			List<Integer> datas = new ArrayList<>();
 			for (ScoreDoc scoreDoc : likeDocs.scoreDocs) {
 				Document aSimilar = searcher.doc(scoreDoc.doc);
 				datas.add(Integer.parseInt(aSimilar.get(ID)));
 			}
 			if (datas.isEmpty()) {
-				return Lists.newArrayList();
+				return new ArrayList<>();
 			}
 			List<Article> articles = dquery.query(datas);
 			if (!articles.isEmpty()) {
@@ -387,7 +387,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();
-			Map<Integer, Document> datas = Maps.newLinkedHashMap();
+			Map<Integer, Document> datas = new LinkedHashMap<>();
 			if (offset < total) {
 				ScoreDoc[] docs = tds.scoreDocs;
 				int last = offset + param.getPageSize();
@@ -397,7 +397,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 					datas.put(Integer.parseInt(doc.get(ID)), doc);
 				}
 			}
-			List<Article> articles = dquery.query(Lists.newArrayList(datas.keySet()));
+			List<Article> articles = dquery.query(new ArrayList<>(datas.keySet()));
 			if (param.isHighlight() && optionalMultiFieldQuery.isPresent()) {
 				for (Article article : articles) {
 					doHightlight(article, datas.get(article.getId()), optionalMultiFieldQuery.get());
@@ -433,7 +433,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	}
 
 	protected Sort buildSort(ArticleQueryParam param) {
-		List<SortField> fields = Lists.newArrayList();
+		List<SortField> fields = new ArrayList<>();
 		if (!param.isIgnoreLevel()) {
 			fields.add(new SortField(LEVEL, Type.INT, true));
 		}

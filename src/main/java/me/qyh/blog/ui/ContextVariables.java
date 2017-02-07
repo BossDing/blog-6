@@ -15,11 +15,11 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.web.servlet.View;
-
-import com.google.common.collect.ImmutableMap;
 
 /**
  * request参数
@@ -44,15 +44,18 @@ public final class ContextVariables {
 	public ContextVariables(Map<String, Object> attributes, Map<String, String[]> params,
 			Map<String, Object> pathVariables) {
 		super();
-		this.attributes = attributes == null ? ImmutableMap.of() : ImmutableMap.copyOf(attributes);
-		this.params = params == null ? ImmutableMap.of() : ImmutableMap.copyOf(params);
-		this.pathVariables = pathVariables == null ? ImmutableMap.of() : ImmutableMap.copyOf(pathVariables);
+		this.attributes = attributes == null ? Collections.unmodifiableMap(new HashMap<>())
+				: Collections.unmodifiableMap(attributes);
+		this.params = params == null ? Collections.unmodifiableMap(new HashMap<>())
+				: Collections.unmodifiableMap(params);
+		this.pathVariables = pathVariables == null ? Collections.unmodifiableMap(new HashMap<>())
+				: Collections.unmodifiableMap(pathVariables);
 	}
 
 	public ContextVariables() {
-		this.attributes = ImmutableMap.of();
-		this.params = ImmutableMap.of();
-		this.pathVariables = ImmutableMap.of();
+		this.attributes = Collections.unmodifiableMap(new HashMap<>());
+		this.params = Collections.unmodifiableMap(new HashMap<>());
+		this.pathVariables = Collections.unmodifiableMap(new HashMap<>());
 	}
 
 	public String getParam(String param) {

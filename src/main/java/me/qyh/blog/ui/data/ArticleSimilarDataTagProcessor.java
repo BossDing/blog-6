@@ -17,13 +17,12 @@ package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
@@ -55,12 +54,12 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 		if (article != null) {
 			return articleService.findSimilar(article, limit);
 		}
-		return Lists.newArrayList();
+		return new ArrayList<>();
 	}
 
 	@Override
 	protected List<Article> buildPreviewData(Attributes attributes) {
-		List<Article> articles = Lists.newArrayList();
+		List<Article> articles = new ArrayList<>();
 		Article article = new Article();
 		article.setComments(0);
 		article.setFrom(ArticleFrom.ORIGINAL);
@@ -71,7 +70,7 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 		article.setSpace(getSpace());
 		article.setSummary("这是预览内容");
 		article.setTitle("预览内容");
-		Set<Tag> tags = Sets.newHashSet();
+		Set<Tag> tags = new HashSet<>();
 		tags.add(new Tag("预览"));
 		article.setTags(tags);
 		articles.add(article);

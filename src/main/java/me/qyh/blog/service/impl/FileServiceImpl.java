@@ -17,7 +17,9 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,11 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.ExpandedCommonFile;
@@ -58,6 +55,7 @@ import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 
@@ -123,7 +121,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 		FileStore store = fileManager.getFileStore(upload.getStore())
 				.orElseThrow(() -> new LogicException("file.store.notexists", "文件存储器不存在"));
-		List<UploadedFile> uploadedFiles = Lists.newArrayList();
+		List<UploadedFile> uploadedFiles = new ArrayList<>();
 		for (MultipartFile file : upload.getFiles()) {
 			String originalFilename = file.getOriginalFilename();
 			if (store.canStore(file)) {
@@ -134,7 +132,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 					uploadedFiles.add(new UploadedFile(originalFilename, e.getLogicMessage()));
 				}
 			} else {
-				String extension = Files.getFileExtension(originalFilename);
+				String extension = FileUtils.getFileExtension(originalFilename);
 				uploadedFiles.add(new UploadedFile(originalFilename,
 						new Message("file.store.unsupportformat", "存储器不支持存储" + extension + "文件", extension)));
 			}
@@ -149,8 +147,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (blogFileDao.selectByParentAndPath(parent, originalFilename) != null) {
 			throw new LogicException("file.path.exists", "文件已经存在");
 		}
-		String ext = Files.getFileExtension(originalFilename);
-		String name = Files.getNameWithoutExtension(originalFilename);
+		String ext = FileUtils.getFileExtension(originalFilename);
+		String name = FileUtils.getNameWithoutExtension(originalFilename);
 		String fullname = name + "." + ext.toLowerCase();
 		String key = folderKey.isEmpty() ? fullname : (folderKey + SPLIT_CHAR + fullname);
 		deleteImmediatelyIfNeed(key);
@@ -182,7 +180,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (key.isEmpty()) {
 			return;
 		}
-		String rootKey = Splitter.on(SPLIT_CHAR).split(key).iterator().next();
+		String rootKey = key.split(SPLIT_CHAR)[0];
 		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
 		if (children.isEmpty()) {
 			return;
@@ -268,7 +266,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 				return createFolder(root, path);
 			} else {
 				BlogFile parent = root;
-				for (String _path : Splitter.on(SPLIT_CHAR).split(path)) {
+				for (String _path : path.split(SPLIT_CHAR)) {
 					parent = createFolder(parent, _path);
 				}
 				return parent;
@@ -335,7 +333,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (file == null) {
 			throw new LogicException(NOT_EXISTS);
 		}
-		Map<String, Object> proMap = Maps.newHashMap();
+		Map<String, Object> proMap = new HashMap<>();
 		if (file.isDir()) {
 			proMap.put("counts", blogFileDao.selectSubBlogFileCount(file));
 			proMap.put("totalSize", blogFileDao.selectSubBlogFileSize(file));

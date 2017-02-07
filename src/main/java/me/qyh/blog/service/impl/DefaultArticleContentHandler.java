@@ -23,8 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Editor;
@@ -83,9 +83,9 @@ public class DefaultArticleContentHandler
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (cacheSpecification != null) {
-			cache = CacheBuilder.from(cacheSpecification).build();
+			cache = Caffeine.from(cacheSpecification).build();
 		} else {
-			cache = CacheBuilder.newBuilder().build();
+			cache = Caffeine.newBuilder().build();
 		}
 	}
 

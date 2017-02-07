@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,9 +29,6 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.message.Messages;
@@ -53,7 +52,7 @@ public class UIExposeHelper implements InitializingBean {
 	 */
 	private String[] packages;
 
-	private Map<String, Object> pros = Maps.newHashMap();
+	private Map<String, Object> pros = new HashMap<>();
 
 	public final void addVariables(HttpServletRequest request) {
 		if (!CollectionUtils.isEmpty(pros)) {
@@ -79,7 +78,7 @@ public class UIExposeHelper implements InitializingBean {
 		}
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 		scanner.addIncludeFilter(new AnnotationTypeFilter(UIUtils.class));
-		Set<BeanDefinition> definitions = Sets.newHashSet();
+		Set<BeanDefinition> definitions = new HashSet<>();
 		definitions.addAll(scanner.findCandidateComponents("me.qyh.blog"));
 		if (packages != null && packages.length > 0) {
 			for (String pack : packages) {

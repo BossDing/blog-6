@@ -15,17 +15,16 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
 
 public class ArticleContentHandlers implements ArticleContentHandler {
 
-	private List<ArticleContentHandler> handlers = Lists.newArrayList();
+	private List<ArticleContentHandler> handlers = new ArrayList<>();
 
 	@Override
 	public void handle(Article article) {

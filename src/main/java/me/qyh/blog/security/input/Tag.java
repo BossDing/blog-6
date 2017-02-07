@@ -15,9 +15,8 @@
  */
 package me.qyh.blog.security.input;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 /**
  * 
@@ -27,7 +26,7 @@ import com.google.common.collect.Lists;
 public class Tag {
 
 	private String name;
-	private List<Attribute> attributes = Lists.newArrayList();
+	private List<Attribute> attributes = new ArrayList<>();
 
 	public Tag() {
 		super();

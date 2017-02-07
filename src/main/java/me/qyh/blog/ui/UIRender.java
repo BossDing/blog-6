@@ -17,8 +17,8 @@ package me.qyh.blog.ui;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,9 +32,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.util.FastStringWriter;
-
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.Environment;
@@ -69,7 +66,7 @@ public final class UIRender {
 					.orElseThrow(() -> new SystemException("空间:" + page.getSpace() + "不存在")));
 		}
 		try {
-			return doRender(page, model == null ? Maps.newHashMap() : model, request, response, config);
+			return doRender(page, model == null ? new HashMap<>() : model, request, response, config);
 		} catch (TplRenderException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -89,7 +86,7 @@ public final class UIRender {
 		String templateName = TemplateUtils.getTemplateName(page);
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
 		uiExposeHelper.addVariables(request);
-		Stopwatch stopwatch = Stopwatch.createStarted();
+		long start = System.currentTimeMillis();
 		try {
 			ParseContext.remove();
 			ParseContext.setPage(page);
@@ -106,8 +103,7 @@ public final class UIRender {
 			commit();
 			ParseContext.remove();
 
-			stopwatch.stop();
-			long renderMills = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+			long renderMills = System.currentTimeMillis() - start;
 			TIME_LOGGER.debug("处理页面" + templateName + "耗费了" + renderMills + "ms");
 		}
 	}

@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +28,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
@@ -63,7 +62,7 @@ public class IndexController {
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		Map<String, String> attMap = Maps.newHashMap();
+		Map<String, String> attMap = new HashMap<>();
 		for (Map.Entry<String, String> it : allRequestParams.entrySet()) {
 			attMap.put(it.getKey(), it.getValue());
 		}

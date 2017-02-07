@@ -17,12 +17,12 @@ package me.qyh.blog.file.oss;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.common.collect.Lists;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
@@ -176,7 +176,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	@Override
 	public boolean doDeleteBatch(String key) {
 		try {
-			List<String> keys = Lists.newArrayList();
+			List<String> keys = new ArrayList<>();
 			BucketManager bucketManager = new BucketManager(auth);
 			FileListing fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, null,
 					RECOMMEND_LIMIT, null);

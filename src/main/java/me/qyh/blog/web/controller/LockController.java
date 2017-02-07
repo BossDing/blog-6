@@ -67,7 +67,7 @@ public class LockController extends BaseController {
 		try {
 			key = lock.getKeyFromRequest(request);
 		} catch (LogicException e) {
-			ra.addFlashAttribute(ERROR, e.getMessage());
+			ra.addFlashAttribute(ERROR, e.getLogicMessage());
 			return buildLockUrl(lockBean.getSpaceAlias());
 		}
 		LockHelper.addKey(request, key, lockBean.getLockResource());

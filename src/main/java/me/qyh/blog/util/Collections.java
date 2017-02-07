@@ -15,10 +15,9 @@
  */
 package me.qyh.blog.util;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import com.google.common.collect.Lists;
 
 @UIUtils
 public final class Collections {
@@ -36,7 +35,7 @@ public final class Collections {
 	 * @return
 	 */
 	public static List<?> shuffle(List<?> list, boolean clone) {
-		List<?> toShuffle = clone ? Lists.newArrayList(list) : list;
+		List<?> toShuffle = clone ? new ArrayList<>(list) : list;
 		java.util.Collections.shuffle(toShuffle, new Random(System.nanoTime()));
 		return toShuffle;
 	}

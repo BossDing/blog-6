@@ -15,10 +15,10 @@
  */
 package me.qyh.blog.ui;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import com.google.common.collect.ImmutableMap;
 
 import me.qyh.blog.util.Validators;
 
@@ -33,7 +33,8 @@ public class DataTag {
 
 	public DataTag(String name, Map<String, String> attrs) {
 		this.name = name;
-		this.attrs = attrs == null ? ImmutableMap.of() : ImmutableMap.copyOf(attrs);
+		this.attrs = attrs == null ? Collections.unmodifiableMap(new HashMap<>())
+				: Collections.unmodifiableMap(new HashMap<>(attrs));
 	}
 
 	public Map<String, String> getAttrs() {

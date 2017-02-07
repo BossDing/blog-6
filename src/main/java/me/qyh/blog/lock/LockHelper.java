@@ -15,6 +15,9 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.security.Environment;
@@ -96,11 +96,11 @@ public final class LockHelper {
 	public static void addKey(HttpServletRequest request, LockKey key, LockResource lockResource) {
 		Map<String, List<LockKey>> keysMap = (Map<String, List<LockKey>>) getKeysMap(request);
 		if (keysMap == null) {
-			keysMap = Maps.newHashMap();
+			keysMap = new HashMap<>();
 		}
 		List<LockKey> keys = keysMap.get(lockResource.getResourceId());
 		if (CollectionUtils.isEmpty(keys)) {
-			keys = Lists.newArrayList(key);
+			keys = new ArrayList<>(Arrays.asList(key));
 			keysMap.put(lockResource.getResourceId(), keys);
 		} else {
 			keys.removeIf(_key -> _key.lockId().equals(key.lockId()));

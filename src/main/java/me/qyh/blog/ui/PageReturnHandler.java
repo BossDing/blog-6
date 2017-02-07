@@ -16,6 +16,7 @@
 package me.qyh.blog.ui;
 
 import java.io.Writer;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,8 +30,6 @@ import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.UIService;
@@ -113,7 +112,7 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 			// render /WEB-INF/templates/error/{errorCode}
 			View errorView = thymeleafViewResolver.resolveViewName("error/" + errorPage.getErrorCode().getCode(),
 					request.getLocale());
-			errorView.render(Maps.newHashMap(), request, response);
+			errorView.render(new HashMap<>(), request, response);
 		} catch (Throwable e) {
 			// 不能够在这里继续抛出异常!
 			LOGGER.error("/WEB-INF/templates/error/" + errorPage.getErrorCode().name() + "页面渲染异常！！！！！,异常信息:"

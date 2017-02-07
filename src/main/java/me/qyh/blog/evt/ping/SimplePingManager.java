@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.evt.ping;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -27,8 +28,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticleEvent;
@@ -45,9 +44,9 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SimplePingManager.class);
 
-	private List<PingService> pingServices = Lists.newArrayList();
+	private List<PingService> pingServices = new ArrayList<>();
 	private final String blogName;
-
+	
 	private int awaitSeconds;
 
 	private ExecutorService executor;

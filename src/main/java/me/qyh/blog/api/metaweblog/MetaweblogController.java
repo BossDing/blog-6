@@ -18,6 +18,8 @@ package me.qyh.blog.api.metaweblog;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -34,9 +36,6 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.api.metaweblog.RequestXmlParser.MethodCaller;
 import me.qyh.blog.api.metaweblog.RequestXmlParser.ParseException;
@@ -57,8 +56,8 @@ public class MetaweblogController extends BaseController implements Initializing
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MetaweblogController.class);
 
-	private Map<String, FailInfo> authFailMap = Maps.newHashMap();
-	private Map<String, Long> invalidIpMap = Maps.newHashMap();
+	private Map<String, FailInfo> authFailMap = new HashMap<>();
+	private Map<String, Long> invalidIpMap = new HashMap<>();
 
 	// 60s内失败5次
 	private static final int DEFAULT_SEC = 60;
@@ -134,7 +133,7 @@ public class MetaweblogController extends BaseController implements Initializing
 	}
 
 	private Object invokeMethod(MethodCaller mc) throws FaultException {
-		List<Class<?>> paramClassList = Lists.newArrayList();
+		List<Class<?>> paramClassList = new ArrayList<>();
 		for (Object arg : mc.getArguments()) {
 			paramClassList.add(arg.getClass());
 		}

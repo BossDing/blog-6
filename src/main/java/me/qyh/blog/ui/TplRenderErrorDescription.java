@@ -16,9 +16,8 @@
 package me.qyh.blog.ui;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 public class TplRenderErrorDescription implements Serializable {
 
@@ -27,7 +26,7 @@ public class TplRenderErrorDescription implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private List<TemplateErrorInfo> templateErrorInfos = Lists.newArrayList();
+	private List<TemplateErrorInfo> templateErrorInfos = new ArrayList<>();
 	private String expression;// 表达式
 
 	public TplRenderErrorDescription() {

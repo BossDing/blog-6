@@ -26,8 +26,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.common.base.Splitter;
-
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Resources;
@@ -102,7 +100,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 					addAttributes(tag.getName(), att.getName());
 					if (!Validators.isEmptyOrNull(att.getProtocols(), true)) {
 						String protocols = att.getProtocols().trim();
-						for (String protocol : Splitter.on(',').split(protocols)) {
+						for (String protocol : protocols.split(",")) {
 							addProtocols(tag.getName(), att.getName(), protocol);
 						}
 					}

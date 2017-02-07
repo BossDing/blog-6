@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.google.common.base.Splitter;
-
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.Webs;
@@ -51,7 +49,7 @@ public class UrlFilter extends OncePerRequestFilter {
 		if (Webs.isAction(req)) {
 			String host = req.getServerName();
 			if (urlHelper.maybeSpaceDomain(req)) {
-				String space = Splitter.on('.').split(host).iterator().next();
+				String space = host.split(".")[0];
 				LOGGER.debug("从空间域名请求中获取空间名:" + space);
 				// 如果开启了域名
 				if (urlHelper.isEnableSpaceDomain()) {

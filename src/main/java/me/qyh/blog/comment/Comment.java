@@ -16,11 +16,11 @@
 package me.qyh.blog.comment;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import com.google.common.collect.Lists;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.entity.BaseEntity;
@@ -37,9 +37,9 @@ public class Comment extends BaseEntity {
 	private Comment parent;// 如果为null,则为评论，否则为回复
 	private String parentPath;// 路径，最多支持255个字符(索引原因)
 	private String content;
-	private List<Integer> parents = Lists.newArrayList();
+	private List<Integer> parents = new ArrayList<>();
 	private Timestamp commentDate;
-	private List<Comment> children = Lists.newArrayList();
+	private List<Comment> children = new ArrayList<>();
 	private CommentStatus status;
 
 	private String website;

@@ -16,7 +16,6 @@
 package me.qyh.blog.service.impl;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +26,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-
-import com.google.common.base.Stopwatch;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
@@ -52,14 +49,13 @@ public class ArticleIndexRebuilder implements ApplicationListener<ArticleIndexRe
 		dtd.setReadOnly(true);
 		TransactionStatus status = platformTransactionManager.getTransaction(dtd);
 		try {
-			Stopwatch sw = Stopwatch.createStarted();
+			long start = System.currentTimeMillis();
 			articleIndexer.deleteAll();
 			List<Article> articles = articleDao.selectPublished(null);
 			for (Article article : articles) {
 				articleIndexer.addOrUpdateDocument(article);
 			}
-			sw.stop();
-			LOGGER.debug("重建索引花费了：" + sw.elapsed(TimeUnit.MILLISECONDS) + "ms");
+			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
 		} catch (RuntimeException | Error e) {
 			status.setRollbackOnly();
 			LOGGER.error("重建索引过程中发生异常：" + e.getMessage(), e);

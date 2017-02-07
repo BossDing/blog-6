@@ -29,7 +29,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
-import com.google.common.io.Files;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
@@ -47,7 +46,7 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected void doResize(Resize resize, File src, File dest) throws IOException {
-		String ext = Files.getFileExtension(src.getName());
+		String ext = FileUtils.getFileExtension(src.getName());
 		File todo = src;
 		File tmp = null;
 		try {
@@ -58,7 +57,7 @@ public class JavaImageHelper extends ImageHelper {
 				todo = tmp;
 			}
 			BufferedImage bi = doWithThumbnailator(todo, dest, resize);
-			writeImg(bi, Files.getFileExtension(dest.getName()), dest);
+			writeImg(bi, FileUtils.getFileExtension(dest.getName()), dest);
 		} finally {
 			FileUtils.deleteQuietly(tmp);
 		}
@@ -66,7 +65,7 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected ImageInfo doRead(File file) throws IOException {
-		String ext = Files.getFileExtension(file.getName());
+		String ext = FileUtils.getFileExtension(file.getName());
 		if (isGIF(ext)) {
 			return readGif(file);
 		} else {
@@ -113,11 +112,11 @@ public class JavaImageHelper extends ImageHelper {
 			BufferedImage bi = gd.getFrame(0);
 			png = FileUtils.temp(PNG);
 			writeImg(bi, PNG, png);
-			String destExt = Files.getFileExtension(dest.getName());
+			String destExt = FileUtils.getFileExtension(dest.getName());
 			if (isPNG(destExt)) {
 				try {
 					FileUtils.deleteQuietly(dest);
-					Files.move(png, dest);
+					FileUtils.move(png, dest);
 					return;
 				} catch (IOException e) {
 					throw new SystemException(e.getMessage(), e);
@@ -138,11 +137,11 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected void doFormat(File src, File dest) throws IOException {
-		String ext = Files.getFileExtension(src.getName());
-		String destExt = Files.getFileExtension(dest.getName());
+		String ext = FileUtils.getFileExtension(src.getName());
+		String destExt = FileUtils.getFileExtension(dest.getName());
 		if (sameFormat(ext, destExt)) {
 			try {
-				Files.copy(src, dest);
+				FileUtils.copy(src, dest);
 			} catch (IOException e) {
 				throw new SystemException(e.getMessage(), e);
 			}
@@ -194,7 +193,7 @@ public class JavaImageHelper extends ImageHelper {
 				resizeHeight = (resize.getHeight() > height) ? height : resize.getHeight();
 			}
 		}
-		String destExt = Files.getFileExtension(dest.getName());
+		String destExt = FileUtils.getFileExtension(dest.getName());
 		Builder<BufferedImage> builder = Thumbnails.of(originalImage);
 		if (!maybeTransparentBg(destExt)) {
 			// 防止红色背景

@@ -16,6 +16,7 @@
 package me.qyh.blog.ui.dialect;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,8 +31,6 @@ import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.RuntimeLogicException;
@@ -111,7 +110,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 		@SuppressWarnings("unchecked")
 		Map<String, Object> pathVariables = (Map<String, Object>) request.getAttribute(View.PATH_VARIABLES);
 		Map<String, String[]> paramsMap = request.getParameterMap();
-		Map<String, Object> attributes = Maps.newHashMap();
+		Map<String, Object> attributes = new HashMap<>();
 		Enumeration<String> enAttr = request.getAttributeNames();
 		while (enAttr.hasMoreElements()) {
 			String attributeName = enAttr.nextElement();
@@ -121,7 +120,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 	}
 
 	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
-		Map<String, String> attMap = Maps.newHashMap();
+		Map<String, String> attMap = new HashMap<>();
 
 		processAttribute(context, tag, attMap);
 

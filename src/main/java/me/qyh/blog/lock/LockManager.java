@@ -15,8 +15,11 @@
  */
 package me.qyh.blog.lock;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,10 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -47,9 +46,10 @@ import me.qyh.blog.security.Environment;
 public class LockManager implements InitializingBean {
 	@Autowired
 	private SysLockProvider sysLockProvider;
+	@Autowired(required = false)
 	private ExpandedLockProvider expandedLockProvider;
 
-	private List<String> allTypes = Lists.newArrayList();
+	private List<String> allTypes = new ArrayList<>();
 
 	private static final String TYPE_PATTERN = "^[A-Za-z0-9]+$";
 
@@ -107,7 +107,7 @@ public class LockManager implements InitializingBean {
 	 * @return 所有的锁
 	 */
 	public List<Lock> allLock() {
-		Map<String, Lock> idsMap = Maps.newLinkedHashMap();
+		Map<String, Lock> idsMap = new LinkedHashMap<>();
 		for (Lock lock : expandedLockProvider.allLock()) {
 			idsMap.put(lock.getId(), lock);
 		}
@@ -116,7 +116,7 @@ public class LockManager implements InitializingBean {
 				idsMap.put(lock.getId(), lock);
 			}
 		}
-		return Collections.unmodifiableList(Lists.newArrayList(idsMap.values()));
+		return Collections.unmodifiableList(new ArrayList<>(idsMap.values()));
 	}
 
 	/**
@@ -151,16 +151,12 @@ public class LockManager implements InitializingBean {
 		return resource == null ? sysLockProvider.getDefaultTemplateResource(lockType) : resource;
 	}
 
-	public void setExpandedLockProvider(ExpandedLockProvider expandedLockProvider) {
-		this.expandedLockProvider = expandedLockProvider;
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (expandedLockProvider == null) {
 			expandedLockProvider = new ExpandedLockProvider();
 		}
-		Set<String> types = Sets.newLinkedHashSet();
+		Set<String> types = new LinkedHashSet<>();
 		for (String type : expandedLockProvider.getLockTypes()) {
 			if (!type.matches(TYPE_PATTERN)) {
 				throw new SystemException("锁类型只能为英文字母或者数字");

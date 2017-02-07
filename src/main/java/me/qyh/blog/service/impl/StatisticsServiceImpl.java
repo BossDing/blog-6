@@ -15,14 +15,13 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.bean.BlogFileCount;
 import me.qyh.blog.bean.FileStoreBean;
@@ -118,7 +117,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setQueryPrivate(true);
 		param.setSpace(space);
-		Map<ArticleStatus, Integer> countMap = Maps.newEnumMap(ArticleStatus.class);
+		Map<ArticleStatus, Integer> countMap = new EnumMap<>(ArticleStatus.class);
 		for (ArticleStatus status : ArticleStatus.values()) {
 			param.setStatus(status);
 			countMap.put(status, articleDao.selectCount(param));

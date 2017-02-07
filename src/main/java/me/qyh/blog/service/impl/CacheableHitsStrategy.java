@@ -15,10 +15,12 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.slf4j.Logger;
@@ -32,9 +34,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
@@ -70,7 +69,7 @@ public final class CacheableHitsStrategy
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CacheableHitsStrategy.class);
 
-	private final Map<Integer, LongAdder> hitsMap = Maps.newConcurrentMap();
+	private final Map<Integer, LongAdder> hitsMap = new ConcurrentHashMap<>();
 
 	private final int flushSeconds;
 
@@ -99,7 +98,7 @@ public final class CacheableHitsStrategy
 	// not atomic ???
 	private void flush() {
 		if (!hitsMap.isEmpty()) {
-			List<HitsWrapper> wrappers = Lists.newArrayList();
+			List<HitsWrapper> wrappers = new ArrayList<>();
 			for (Iterator<Entry<Integer, LongAdder>> iter = hitsMap.entrySet().iterator(); iter.hasNext();) {
 				Entry<Integer, LongAdder> entry = iter.next();
 				Integer key = entry.getKey();

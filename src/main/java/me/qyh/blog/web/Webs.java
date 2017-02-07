@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Validators;
 
@@ -74,7 +75,7 @@ public class Webs {
 	}
 
 	public static boolean isAction(HttpServletRequest request) {
-		return com.google.common.io.Files.getFileExtension(request.getRequestURI()).trim().isEmpty();
+		return FileUtils.getFileExtension(request.getRequestURI()).trim().isEmpty();
 	}
 
 	public static String decode(String toDecode) {

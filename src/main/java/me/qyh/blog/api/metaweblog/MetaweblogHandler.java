@@ -22,8 +22,10 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,10 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 
 import me.qyh.blog.api.metaweblog.RequestXmlParser.ParseException;
 import me.qyh.blog.api.metaweblog.RequestXmlParser.Struct;
@@ -55,6 +53,7 @@ import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 import me.qyh.blog.web.controller.form.BlogFileUploadValidator;
@@ -110,7 +109,7 @@ public class MetaweblogHandler {
 
 	public Object getUsersBlogs(String key, String username, String password) throws FaultException, ParseException {
 		return execute(username, password, () -> {
-			Map<String, String> map = Maps.newHashMap();
+			Map<String, String> map = new HashMap<>();
 			map.put("blogid", "1");
 			map.put("blogName", username);
 			map.put("url", urlHelper.getUrl());
@@ -121,9 +120,9 @@ public class MetaweblogHandler {
 	public Object getCategories(String blogid, String username, String password) throws FaultException, ParseException {
 		return execute(username, password, () -> {
 			List<Space> spaces = spaceService.querySpace(new SpaceQueryParam());
-			List<Map<?, ?>> result = Lists.newArrayList();
+			List<Map<?, ?>> result = new ArrayList<>();
 			for (Space space : spaces) {
-				Map<String, String> map = Maps.newHashMap();
+				Map<String, String> map = new HashMap<>();
 				map.put("description", "");
 				map.put("htmlUrl", urlHelper.getUrls().getUrl(space));
 				map.put("rssUrl", urlHelper.getUrls().getUrl(space) + "/rss");
@@ -190,7 +189,7 @@ public class MetaweblogHandler {
 			if (res.hasError()) {
 				throw new LogicException(res.getError());
 			} else {
-				Map<String, String> urlMap = Maps.newHashMap();
+				Map<String, String> urlMap = new HashMap<>();
 				ThumbnailUrl url = res.getThumbnailUrl();
 				if (url != null) {
 					urlMap.put("url", url.getMiddle());
@@ -238,7 +237,7 @@ public class MetaweblogHandler {
 
 		@Override
 		public void transferTo(File dest) throws IOException, IllegalStateException {
-			Files.write(bits, dest);
+			FileUtils.write(bits, dest);
 		}
 
 		@Override
@@ -329,7 +328,7 @@ public class MetaweblogHandler {
 	}
 
 	private Map<String, Object> articleToMap(Article art) {
-		Map<String, Object> map = Maps.newHashMap();
+		Map<String, Object> map = new HashMap<>();
 		map.put("dateCreated", art.getPubDate());
 		map.put("title", art.getTitle());
 		map.put("categories", Arrays.asList(art.getSpace().getName()));

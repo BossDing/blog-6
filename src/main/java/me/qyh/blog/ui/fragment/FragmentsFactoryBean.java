@@ -15,15 +15,14 @@
  */
 package me.qyh.blog.ui.fragment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.util.Resources;
@@ -32,12 +31,12 @@ import me.qyh.blog.web.controller.form.UserFragmentValidator;
 
 public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
-	private Map<String, Resource> tplMap = Maps.newHashMap();
-	private List<Fragment> fragments = Lists.newArrayList();
+	private Map<String, Resource> tplMap = new HashMap<>();
+	private List<Fragment> fragments = new ArrayList<>();
 
 	@Override
 	public List<Fragment> getObject() throws Exception {
-		List<Fragment> fragments = Lists.newArrayList();
+		List<Fragment> fragments = new ArrayList<>();
 		for (Map.Entry<String, Resource> it : tplMap.entrySet()) {
 			Fragment fragment = new Fragment();
 			fragment.setName(it.getKey());

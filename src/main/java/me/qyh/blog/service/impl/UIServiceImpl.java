@@ -17,13 +17,18 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
@@ -43,13 +48,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
@@ -117,16 +118,16 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private static final String DATA_TAG_PROCESSOR_NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
 	private static final String DATA_TAG_PROCESSOR_DATA_NAME_PATTERN = "^[A-Za-z]+$";
 
-	private Map<PageTarget, Resource> sysPageDefaultTpls = Maps.newEnumMap(PageTarget.class);
-	private Map<PageTarget, String> sysPageDefaultParsedTpls = Maps.newEnumMap(PageTarget.class);
-	private Map<ErrorCode, Resource> errorPageDefaultTpls = Maps.newEnumMap(ErrorCode.class);
-	private Map<ErrorCode, String> errorPageDefaultParsedTpls = Maps.newEnumMap(ErrorCode.class);
-	private Map<String, String> lockPageDefaultTpls = Maps.newHashMap();
-	private List<DataTagProcessor<?>> processors = Lists.newArrayList();
+	private Map<PageTarget, Resource> sysPageDefaultTpls = new EnumMap<>(PageTarget.class);
+	private Map<PageTarget, String> sysPageDefaultParsedTpls = new EnumMap<>(PageTarget.class);
+	private Map<ErrorCode, Resource> errorPageDefaultTpls = new EnumMap<>(ErrorCode.class);
+	private Map<ErrorCode, String> errorPageDefaultParsedTpls = new EnumMap<>(ErrorCode.class);
+	private Map<String, String> lockPageDefaultTpls = new HashMap<>();
+	private List<DataTagProcessor<?>> processors = new ArrayList<>();
 
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
-	private final LoadingCache<FragmentKey, Fragment> fragmentCache = CacheBuilder.newBuilder()
+	private final LoadingCache<FragmentKey, Fragment> fragmentCache = Caffeine.newBuilder()
 			.build(new CacheLoader<FragmentKey, Fragment>() {
 
 				@Override
@@ -157,53 +158,52 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				}
 			});
 
-	private final LoadingCache<String, Page> pageCache = CacheBuilder.newBuilder()
-			.build(new CacheLoader<String, Page>() {
+	private final LoadingCache<String, Page> pageCache = Caffeine.newBuilder().build(new CacheLoader<String, Page>() {
 
-				@Override
-				public Page load(String templateName) throws Exception {
-					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-					definition.setReadOnly(true);
-					TransactionStatus status = platformTransactionManager.getTransaction(definition);
-					try {
-						Page converted = TemplateUtils.convert(templateName);
-						Space space = converted.getSpace();
-						if (space != null) {
-							space = spaceCache.checkSpace(space.getId());
-						}
-						switch (converted.getType()) {
-						case SYSTEM:
-							SysPage sysPage = (SysPage) converted;
-							return querySysPage(sysPage.getSpace(), sysPage.getTarget());
-						case ERROR:
-							ErrorPage errorPage = (ErrorPage) converted;
-							return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
-						case LOCK:
-							LockPage lockPage = (LockPage) converted;
-							return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
-						case USER:
-							UserPage userPage = (UserPage) converted;
-							UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), userPage.getAlias());
-							if (db == null) {
-								throw new LogicException(USER_PAGE_NOT_EXISTS);
-							}
-							return db;
-						default:
-							throw new SystemException("无法确定" + converted.getType() + "的页面类型");
-						}
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						platformTransactionManager.commit(status);
-					}
+		@Override
+		public Page load(String templateName) throws Exception {
+			DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+			definition.setReadOnly(true);
+			TransactionStatus status = platformTransactionManager.getTransaction(definition);
+			try {
+				Page converted = TemplateUtils.convert(templateName);
+				Space space = converted.getSpace();
+				if (space != null) {
+					space = spaceCache.checkSpace(space.getId());
 				}
-			});
+				switch (converted.getType()) {
+				case SYSTEM:
+					SysPage sysPage = (SysPage) converted;
+					return querySysPage(sysPage.getSpace(), sysPage.getTarget());
+				case ERROR:
+					ErrorPage errorPage = (ErrorPage) converted;
+					return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
+				case LOCK:
+					LockPage lockPage = (LockPage) converted;
+					return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
+				case USER:
+					UserPage userPage = (UserPage) converted;
+					UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), userPage.getAlias());
+					if (db == null) {
+						throw new LogicException(USER_PAGE_NOT_EXISTS);
+					}
+					return db;
+				default:
+					throw new SystemException("无法确定" + converted.getType() + "的页面类型");
+				}
+			} catch (RuntimeException | Error e) {
+				status.setRollbackOnly();
+				throw e;
+			} finally {
+				platformTransactionManager.commit(status);
+			}
+		}
+	});
 
 	/**
 	 * 系统默认片段
 	 */
-	private List<Fragment> fragments = Lists.newArrayList();
+	private List<Fragment> fragments = new ArrayList<>();
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -470,9 +470,9 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	private Optional<Fragment> queryFragment(Space space, String name) {
 		try {
-			Fragment fragment = fragmentCache.getUnchecked(new FragmentKey(space, name));
+			Fragment fragment = fragmentCache.get(new FragmentKey(space, name));
 			return Optional.of(TemplateUtils.clone(fragment));
-		} catch (UncheckedExecutionException e) {
+		} catch (CompletionException e) {
 			if (e.getCause() instanceof LogicException) {
 				return Optional.empty();
 			}
@@ -483,8 +483,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	public Page queryPage(String templateName) throws LogicException {
 		try {
-			return TemplateUtils.clone(pageCache.getUnchecked(templateName));
-		} catch (UncheckedExecutionException e) {
+			return TemplateUtils.clone(pageCache.get(templateName));
+		} catch (CompletionException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof LogicException) {
 				throw (LogicException) cause;
@@ -504,7 +504,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Transactional(readOnly = true)
 	public List<ExportPage> exportPage(Integer spaceId) throws LogicException {
 		Space space = spaceCache.checkSpace(spaceId);
-		List<ExportPage> exportPages = Lists.newArrayList();
+		List<ExportPage> exportPages = new ArrayList<>();
 		// sys
 		for (PageTarget pageTarget : PageTarget.values()) {
 			exportPages.add(exportPage(TemplateUtils.getTemplateName(new SysPage(space, pageTarget))));
@@ -529,7 +529,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		TransactionStatus ts = platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
 		try {
 			if (CollectionUtils.isEmpty(exportPages)) {
-				return Lists.newArrayList();
+				return new ArrayList<>();
 			}
 			Space space = null;
 			try {
@@ -540,9 +540,9 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			if (importOption == null) {
 				importOption = new ImportOption();
 			}
-			List<ImportRecord> records = Lists.newArrayList();
-			Set<String> pageEvitKeySet = Sets.newHashSet();
-			Set<String> fragmentEvitKeySet = Sets.newHashSet();
+			List<ImportRecord> records = new ArrayList<>();
+			Set<String> pageEvitKeySet = new HashSet<>();
+			Set<String> fragmentEvitKeySet = new HashSet<>();
 			for (ExportPage exportPage : exportPages) {
 				Page page = exportPage.getPage();
 				page.setSpace(space);
@@ -924,7 +924,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private ExportPage export(Page page) {
 		ExportPage exportPage = new ExportPage();
 		exportPage.setPage(page.toExportPage());
-		Map<String, Fragment> fragmentMap = Maps.newHashMap();
+		Map<String, Fragment> fragmentMap = new HashMap<>();
 		fillMap(fragmentMap, page.getSpace(), page.getTpl());
 		for (Fragment fragment : fragmentMap.values()) {
 			if (fragment != null) {
@@ -936,7 +936,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	private void fillMap(Map<String, Fragment> fragmentMap, Space space, String tpl) {
-		Map<String, Fragment> fragmentMap2 = Maps.newHashMap();
+		Map<String, Fragment> fragmentMap2 = new HashMap<>();
 		Document document = Jsoup.parse(tpl);
 		Elements elements = document.getElementsByTag("fragment");
 		for (Element element : elements) {

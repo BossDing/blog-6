@@ -17,10 +17,13 @@ package me.qyh.blog.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 
@@ -50,6 +53,17 @@ public class FileUtils {
 	}
 
 	/**
+	 * write bits to file
+	 * 
+	 * @param bytes
+	 * @param file
+	 * @throws IOException
+	 */
+	public static void write(byte[] bytes, File file) throws IOException {
+		Files.write(file.toPath(), bytes, StandardOpenOption.WRITE);
+	}
+
+	/**
 	 * 文件重命名
 	 * 
 	 * @param file
@@ -68,6 +82,36 @@ public class FileUtils {
 		}
 	}
 
+	/**
+	 * 获取文件的后缀名
+	 * 
+	 * @param fullName
+	 * @return
+	 */
+	public static String getFileExtension(String fullName) {
+		String fileName = new File(fullName).getName();
+		int dotIndex = fileName.lastIndexOf('.');
+		return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
+	}
+
+	/**
+	 * 获取文件名(不包括后缀)
+	 * 
+	 * @param file
+	 * @return
+	 */
+	public static String getNameWithoutExtension(String file) {
+		String fileName = new File(file).getName();
+		int dotIndex = fileName.lastIndexOf('.');
+		return (dotIndex == -1) ? fileName : fileName.substring(0, dotIndex);
+	}
+
+	/**
+	 * 删除文件|文件夹
+	 * 
+	 * @param file
+	 * @return
+	 */
 	public static boolean deleteQuietly(File file) {
 		if (file == null || !file.exists()) {
 			return true;
@@ -106,5 +150,39 @@ public class FileUtils {
 				throw new SystemException("创建文件夹：" + dir.getAbsolutePath() + "失败");
 			}
 		}
+	}
+
+	/**
+	 * 拷贝一个文件
+	 * 
+	 * @param source
+	 * @param target
+	 * @throws IOException
+	 */
+	public static void copy(File source, File target) throws IOException {
+		Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	/**
+	 * 移动一个文件
+	 * 
+	 * @param png
+	 * @param dest
+	 * @throws IOException
+	 */
+	public static void move(File source, File target) throws IOException {
+		Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	/**
+	 * write file to outputstream
+	 * 
+	 * @param file
+	 * @param outputStream
+	 * @throws IOException
+	 */
+	public static void write(File file, OutputStream outputStream) throws IOException {
+		Files.copy(file.toPath(), outputStream);
+		outputStream.flush();
 	}
 }

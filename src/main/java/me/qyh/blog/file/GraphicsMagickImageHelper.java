@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.google.common.io.Files;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
@@ -85,8 +84,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		IMOperation op = new IMOperation();
 		op.addImage();
 		setResize(resize, op);
-		String ext = Files.getFileExtension(dest.getName());
-		String srcExt = Files.getFileExtension(src.getName());
+		String ext = FileUtils.getFileExtension(dest.getName());
+		String srcExt = FileUtils.getFileExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
 			setWhiteBg(op);
 		}
@@ -120,7 +119,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
-		String ext = Files.getFileExtension(dest.getName());
+		String ext = FileUtils.getFileExtension(dest.getName());
 		File _gif = FileUtils.temp(GIF);
 		IMOperation op = new IMOperation();
 		op.addImage();
@@ -133,9 +132,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			LOGGER.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
 			getGifCoverUseJava(gif, _gif);
 		}
-		if (Files.getFileExtension(dest.getName()).equalsIgnoreCase(GIF)) {
+		if (FileUtils.getFileExtension(dest.getName()).equalsIgnoreCase(GIF)) {
 			// copy
-			Files.copy(_gif, dest);
+			FileUtils.copy(_gif, dest);
 			return;
 		}
 		// png to dest
@@ -160,8 +159,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	protected void doFormat(File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
-		String ext = Files.getFileExtension(dest.getName());
-		String srcExt = Files.getFileExtension(src.getName());
+		String ext = FileUtils.getFileExtension(dest.getName());
+		String srcExt = FileUtils.getFileExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
 			setWhiteBg(op);
 		}
@@ -191,7 +190,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (!doInterlace) {
 			return false;
 		}
-		String ext = Files.getFileExtension(dest.getName());
+		String ext = FileUtils.getFileExtension(dest.getName());
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 

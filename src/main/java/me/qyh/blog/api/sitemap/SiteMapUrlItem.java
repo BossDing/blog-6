@@ -17,8 +17,9 @@ package me.qyh.blog.api.sitemap;
 
 import java.sql.Timestamp;
 
-import com.google.common.html.HtmlEscapers;
+import org.springframework.web.util.HtmlUtils;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.util.Times;
 
 public class SiteMapUrlItem {
@@ -54,6 +55,6 @@ public class SiteMapUrlItem {
 	}
 
 	private String cleanUrl(String url) {
-		return HtmlEscapers.htmlEscaper().escape(url);
+		return HtmlUtils.htmlEscape(url, Constants.CHARSET.name());
 	}
 }

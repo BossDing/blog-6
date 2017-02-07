@@ -34,8 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
-import com.google.common.io.Files;
-
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
@@ -100,7 +98,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			throw new SystemException(e.getMessage(), e);
 		}
 		CommonFile cf = new CommonFile();
-		cf.setExtension(Files.getFileExtension(originalFilename));
+		cf.setExtension(FileUtils.getFileExtension(originalFilename));
 		cf.setSize(mf.getSize());
 		cf.setStore(id);
 		cf.setOriginalFilename(originalFilename);
@@ -267,7 +265,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 					// 中文乱码
 					"attachment; filename=" + new String(file.getName().getBytes(Constants.CHARSET), "iso-8859-1"));
 			try {
-				Files.copy(file, response.getOutputStream());
+				FileUtils.write(file, response.getOutputStream());
 			} catch (IOException e) {
 				LOGGER.error(e.getMessage(), e);
 			}

@@ -17,11 +17,9 @@ package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.Maps;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
@@ -76,7 +74,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	public final DataBind<T> getData(ContextVariables variables, Map<String, String> attributes) throws LogicException {
 		if (attributes == null) {
-			attributes = Maps.newHashMap();
+			attributes = new HashMap<>();
 		}
 		Attributes atts = new Attributes(attributes);
 		T result = query(variables, atts);
@@ -99,7 +97,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	public final DataBind<T> previewData(Map<String, String> attributes) {
 		if (attributes == null) {
-			attributes = Maps.newHashMap();
+			attributes = new HashMap<>();
 		}
 		Attributes atts = new Attributes(attributes);
 		T result = buildPreviewData(atts);
@@ -155,11 +153,7 @@ public abstract class DataTagProcessor<T> {
 		}
 
 		public Attributes(Map<String, String> attMap) {
-			ImmutableMap.Builder<String, String> builder = new Builder<>();
-			for (Map.Entry<String, String> att : attMap.entrySet()) {
-				builder.put(att.getKey(), att.getValue());
-			}
-			this.attMap = builder.build();
+			this.attMap = Collections.unmodifiableMap(attMap);
 		}
 
 		@Override

@@ -16,7 +16,6 @@
 package me.qyh.blog.lock;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,20 +32,19 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import com.google.common.io.CharStreams;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.support.PasswordLock;
 import me.qyh.blog.lock.support.QALock;
 import me.qyh.blog.lock.support.SysLock;
 import me.qyh.blog.lock.support.SysLock.SysLockType;
 import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -90,8 +88,7 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 
 	private SysLock getLockFromRequest(HttpServletRequest request) throws Exception {
 		InputStream is = request.getInputStream();
-		InputStreamReader ir = new InputStreamReader(is, Constants.CHARSET);
-		return Jsons.readValue(SysLock.class, CharStreams.toString(ir));
+		return Jsons.readValue(SysLock.class, Resources.read(is));
 	}
 
 	public static final class SysLockDeserializer implements JsonDeserializer<SysLock> {

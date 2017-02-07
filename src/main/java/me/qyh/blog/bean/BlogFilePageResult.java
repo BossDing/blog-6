@@ -15,9 +15,8 @@
  */
 package me.qyh.blog.bean;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.pageparam.PageResult;
@@ -29,7 +28,7 @@ import me.qyh.blog.pageparam.PageResult;
  */
 public class BlogFilePageResult {
 
-	private List<BlogFile> paths = Lists.newArrayList();
+	private List<BlogFile> paths = new ArrayList<>();
 	private PageResult<BlogFile> page;
 
 	public List<BlogFile> getPaths() {
