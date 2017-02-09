@@ -178,8 +178,6 @@
 			<bean class="me.qyh.blog.comment.CommentEmailNotifySupport"
 				destroy-method="shutdown">
 				<property name="mailSubject" value="您有新的评论" />
-				<property name="toSendSdfilePath" value="/web/email/comment_tosend.dat" />
-				<property name="toProcessesSdfilePath" value="/web/email/comment_toprocess.dat" />
 			</bean>
 		</property>
 	</bean>

@@ -16,9 +16,6 @@
 package me.qyh.blog.mail;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -26,7 +23,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,6 +35,7 @@ import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.SerializationUtils;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -173,7 +170,7 @@ public class MailSender implements InitializingBean {
 		limit = new Limit(limitCount, limitSec, TimeUnit.SECONDS);
 		if (sdfile.exists()) {
 			LOGGER.debug("发现序列化文件，执行反序列化操作");
-			queue = SerializationUtils.deserialize(new FileInputStream(sdfile));
+			queue = SerializationUtils.deserialize(sdfile);
 			if (!FileUtils.deleteQuietly(sdfile)) {
 				LOGGER.warn("删除序列文件失败");
 			}
@@ -192,16 +189,10 @@ public class MailSender implements InitializingBean {
 	/**
 	 * 关闭
 	 */
-	public void shutdown() {
+	public void shutdown() throws Exception {
 		if (!queue.isEmpty()) {
 			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
-
-			try {
-				SerializationUtils.serialize(queue, new FileOutputStream(sdfile));
-			} catch (FileNotFoundException e) {
-				LOGGER.error("序列化失败:" + e.getMessage(), e);
-				return;
-			}
+			SerializationUtils.serialize(queue, sdfile);
 		}
 	}
 

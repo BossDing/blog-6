@@ -15,7 +15,9 @@
  */
 package me.qyh.blog.ui;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.support.ServletContextResource;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -25,6 +27,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.ui.TplRenderErrorDescription.TemplateErrorInfo;
+import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.Validators;
 
 public final class UIExceptionUtils {
@@ -39,18 +42,10 @@ public final class UIExceptionUtils {
 
 	public static Exception convert(String templateName, Throwable e) {
 		if (e instanceof TemplateProcessingException) {
-			Throwable[] chains = ExceptionUtils.getThrowables(e);
-			int logicExceptionIndex = ExceptionUtils.indexOfThrowable(e, RuntimeLogicException.class);
-			if (logicExceptionIndex != -1) {
-				return ((RuntimeLogicException) chains[logicExceptionIndex]);
-			}
-			int lockExceptionIndex = ExceptionUtils.indexOfThrowable(e, LockException.class);
-			if (lockExceptionIndex != -1) {
-				return ((LockException) chains[lockExceptionIndex]);
-			}
-			int authencationExceptionIndex = ExceptionUtils.indexOfThrowable(e, AuthencationException.class);
-			if (authencationExceptionIndex != -1) {
-				return ((AuthencationException) chains[authencationExceptionIndex]);
+			Optional<Throwable> finded = ExceptionUtils.getFromChain(e, RuntimeLogicException.class,
+					LockException.class, AuthencationException.class);
+			if (finded.isPresent()) {
+				return (Exception) finded.get();
 			}
 			return new TplRenderException(fromException((TemplateProcessingException) e, templateName), e);
 		}
@@ -70,7 +65,7 @@ public final class UIExceptionUtils {
 
 	private static TplRenderErrorDescription fromException(TemplateProcessingException e, String templateName) {
 		TplRenderErrorDescription description = new TplRenderErrorDescription();
-		Throwable[] ths = ExceptionUtils.getThrowables(e);
+		List<Throwable> ths = ExceptionUtils.getThrowableList(e);
 		TemplateProcessingException last = null;
 		for (Throwable th : ths) {
 			if (TemplateProcessingException.class.isAssignableFrom(th.getClass())) {

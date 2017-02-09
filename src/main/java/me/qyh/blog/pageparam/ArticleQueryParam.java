@@ -51,6 +51,27 @@ public class ArticleQueryParam extends PageQueryParam {
 		HITS, PUBDATE, LASTMODIFYDATE
 	}
 
+	public ArticleQueryParam() {
+		super();
+	}
+
+	// clone
+	public ArticleQueryParam(ArticleQueryParam param) {
+		super(param);
+		this.begin = param.begin;
+		this.end = param.end;
+		this.from = param.from;
+		this.highlight = param.highlight;
+		this.ignoreLevel = param.ignoreLevel;
+		this.query = param.query;
+		this.queryLock = param.queryLock;
+		this.queryPrivate = param.queryPrivate;
+		this.sort = param.sort;
+		this.space = param.space;
+		this.status = param.status;
+		this.tag = param.tag;
+	}
+
 	public Space getSpace() {
 		return space;
 	}

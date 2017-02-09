@@ -20,8 +20,6 @@ import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
@@ -38,6 +36,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -299,7 +298,7 @@ public class UrlHelper implements InitializingBean {
 		 * @return 分页链接
 		 */
 		public String getArticlesUrl(ArticleQueryParam param, String sortStr) {
-			ArticleQueryParam cloned = SerializationUtils.clone(param);
+			ArticleQueryParam cloned = new ArticleQueryParam(param);
 			if (sortStr != null) {
 				Sort sort = null;
 				try {
@@ -329,8 +328,8 @@ public class UrlHelper implements InitializingBean {
 			Date begin = param.getBegin();
 			Date end = param.getEnd();
 			if (begin != null && end != null) {
-				sb.append("&begin=").append(DateFormatUtils.format(begin, "yyyy-MM-dd HH:mm:ss"));
-				sb.append("&end=").append(DateFormatUtils.format(end, "yyyy-MM-dd HH:mm:ss"));
+				sb.append("&begin=").append(Times.format(Times.toLocalDateTime(begin), "yyyy-MM-dd HH:mm:ss"));
+				sb.append("&end=").append(Times.format(Times.toLocalDateTime(end), "yyyy-MM-dd HH:mm:ss"));
 			}
 			if (param.getFrom() != null) {
 				sb.append("&from=").append(param.getFrom().name());

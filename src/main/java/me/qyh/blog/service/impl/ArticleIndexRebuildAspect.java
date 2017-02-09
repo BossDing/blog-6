@@ -15,10 +15,6 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
@@ -32,6 +28,7 @@ import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.security.AuthencationException;
+import me.qyh.blog.util.ExceptionUtils;
 
 @Aspect
 public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
@@ -39,8 +36,8 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 
 	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
 
-	private static final List<Class<? extends Exception>> NO_NEED_REBUILD_EXCEPTIONS = Arrays
-			.asList(LogicException.class, AuthencationException.class, LockException.class);
+	private static final Class<?>[] NO_NEED_REBUILD_EXCEPTIONS = new Class<?>[] { LogicException.class,
+			AuthencationException.class, LockException.class };
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -71,10 +68,8 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	private boolean needRebuild() {
 		Throwable ex = throwableLocal.get();
 		if (ex != null) {
-			for (Class<?> type : NO_NEED_REBUILD_EXCEPTIONS) {
-				if (ExceptionUtils.indexOfThrowable(ex, type) != -1) {
-					return false;
-				}
+			if (ExceptionUtils.getFromChain(ex, NO_NEED_REBUILD_EXCEPTIONS).isPresent()) {
+				return false;
 			}
 		}
 		return true;

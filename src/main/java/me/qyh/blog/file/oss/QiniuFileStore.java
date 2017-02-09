@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.core.io.UrlResource;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.qiniu.common.QiniuException;
@@ -33,9 +34,13 @@ import com.qiniu.storage.model.FileListing;
 import com.qiniu.util.Auth;
 
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Jsons.ExpressionExecutor;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
@@ -56,40 +61,30 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	private static final long PRIVATE_DOWNLOAD_URL_EXPIRES = 3600L;
 
-	private String ak;// ACCESS_KEY
-	private String sk;// SECRET_KEY
 	private String urlPrefix;// 外链域名
-	private String bucket;
 	private boolean secret;// 私人空间
 	private long privateDownloadUrlExpires = PRIVATE_DOWNLOAD_URL_EXPIRES;
 	private Character styleSplitChar;// 样式分隔符
 	private boolean sourceProtected;// 原图保护
 	private String style;// 样式
-	private String name;
-
-	/**
-	 * 所允许的样式分割符号
-	 * 
-	 * @see https://portal.qiniu.com/bucket/qyhqym/separator
-	 */
-	private static final char[] ALLOW_STYLE_SPLIT_CHARS = { '-', '_', '!', '/', '~', '`', '@', '$', '^', '&', '*', '(',
-			')', '+', '=', '{', '}', '[', ']', '|', ':', ';', '\"', '\'', '<', '>', ',', '.' };
 
 	/**
 	 * 七牛云推荐的分页条数
 	 */
 	private static final int RECOMMEND_LIMIT = 100;
 
-	/**
-	 * 跟七牛云设置有关
-	 */
-	private Resize smallResize;
-	private Resize middleResize;
-	private Resize largeResize;
-
-	private Auth auth;
+	private final String bucket;
+	private final Auth auth;
 
 	private static final int FILE_NOT_EXISTS_ERROR_CODE = 612;// 文件不存在错误码
+
+	private static final String IMAGE_INFO_PARAM = "?imageInfo";
+
+	public QiniuFileStore(int id, String name, String ak, String sk, String bucket) {
+		super(id, name);
+		this.auth = Auth.create(ak, sk);
+		this.bucket = bucket;
+	}
 
 	@Override
 	protected void upload(String key, File file) throws IOException {
@@ -136,7 +131,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		if (secret) {
 			return auth.privateDownloadUrl(url);
 		}
-		if (image(key) && sourceProtected) {
+		if (isSystemAllowedImage(key) && sourceProtected) {
 			return url + styleSplitChar + style;
 		}
 		return url;
@@ -154,23 +149,20 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	@Override
 	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
-		ThumbnailUrl thumbnailUrl = null;
-		if (image(key)) {
-			String small = buildResizeUrl(smallResize, key);
-			String middle = buildResizeUrl(middleResize, key);
-			String large = buildResizeUrl(largeResize, key);
+		Optional<ThumbnailUrl> optionalUrl = super.getThumbnailUrl(key);
+		if (optionalUrl.isPresent()) {
+			ThumbnailUrl thumbnailUrl = optionalUrl.get();
 			if (secret) {
-				thumbnailUrl = new ThumbnailUrl(auth.privateDownloadUrl(small), auth.privateDownloadUrl(middle),
-						auth.privateDownloadUrl(large));
+				return Optional.of(new ThumbnailUrl(auth.privateDownloadUrl(thumbnailUrl.getSmall()),
+						auth.privateDownloadUrl(thumbnailUrl.getMiddle()),
+						auth.privateDownloadUrl(thumbnailUrl.getLarge())));
 			} else if (sourceProtected) {
 				// 只能采用样式访问
 				String url = urlPrefix + key + styleSplitChar + style;
-				thumbnailUrl = new ThumbnailUrl(url, url, url);
-			} else {
-				thumbnailUrl = new ThumbnailUrl(small, middle, large);
+				return Optional.of(new ThumbnailUrl(url, url, url));
 			}
 		}
-		return Optional.ofNullable(thumbnailUrl);
+		return optionalUrl;
 	}
 
 	@Override
@@ -207,26 +199,26 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		return false;
 	}
 
-	private boolean allowStyleSplitChar(char schar) {
-		for (char ch : ALLOW_STYLE_SPLIT_CHARS) {
-			if (ch == schar) {
-				return true;
-			}
+	@Override
+	protected ImageInfo readImage(String key) throws IOException {
+		String json = Resources.readResourceToString(new UrlResource(urlPrefix + key + IMAGE_INFO_PARAM));
+		ExpressionExecutor executor = Jsons.readJson(json);
+		if (executor.isNull()) {
+			throw new IOException("无法将结果转化为json信息:" + json);
 		}
-		return false;
-
+		try {
+			String format = executor.execute("format");
+			Integer width = Integer.parseInt(executor.execute("width"));
+			Integer height = Integer.parseInt(executor.execute("height"));
+			return new ImageInfo(width, height, format);
+		} catch (Exception e) {
+			throw new IOException("获取图片信息失败:" + json);
+		}
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		super.afterPropertiesSet();
-
-		if (Validators.isEmptyOrNull(ak, true)) {
-			throw new SystemException("AccessKey不能为空");
-		}
-		if (Validators.isEmptyOrNull(sk, true)) {
-			throw new SystemException("SecretKey不能为空");
-		}
 		if (Validators.isEmptyOrNull(bucket, true)) {
 			throw new SystemException("Bucket不能为空");
 		}
@@ -239,9 +231,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		if (!urlPrefix.endsWith("/")) {
 			urlPrefix += "/";
 		}
-		auth = Auth.create(ak, sk);
-
-		if (privateDownloadUrlExpires < PRIVATE_DOWNLOAD_URL_EXPIRES) {
+		if (privateDownloadUrlExpires < 0) {
 			privateDownloadUrlExpires = PRIVATE_DOWNLOAD_URL_EXPIRES;
 		}
 
@@ -250,15 +240,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 				throw new SystemException("开启了原图保护之后请指定一个默认的样式名");
 			}
 			if (styleSplitChar == null) {
-				styleSplitChar = ALLOW_STYLE_SPLIT_CHARS[0];
-			}
-			if (!allowStyleSplitChar(styleSplitChar)) {
-				StringBuilder sb = new StringBuilder();
-				for (char ch : ALLOW_STYLE_SPLIT_CHARS) {
-					sb.append(ch).append(',');
-				}
-				sb.deleteCharAt(sb.length() - 1);
-				throw new SystemException("样式分隔符不被接受，样式分割符必须为以下字符:" + sb.toString());
+				styleSplitChar = '-';
 			}
 		}
 
@@ -287,7 +269,8 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		return Optional.ofNullable(result);
 	}
 
-	private String buildResizeUrl(Resize resize, String key) {
+	@Override
+	protected String buildThumbnailUrl(String key, Resize resize) {
 		return urlPrefix + key + buildResizeParam(resize).map(param -> "?" + param).orElse("");
 	}
 
@@ -296,36 +279,12 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		return auth.uploadToken(bucket);
 	}
 
-	public void setBucket(String bucket) {
-		this.bucket = bucket;
-	}
-
-	public void setAk(String ak) {
-		this.ak = ak;
-	}
-
-	public void setSk(String sk) {
-		this.sk = sk;
-	}
-
 	public void setUrlPrefix(String urlPrefix) {
 		this.urlPrefix = urlPrefix;
 	}
 
 	public void setSecret(boolean secret) {
 		this.secret = secret;
-	}
-
-	public void setSmallResize(Resize smallResize) {
-		this.smallResize = smallResize;
-	}
-
-	public void setMiddleResize(Resize middleResize) {
-		this.middleResize = middleResize;
-	}
-
-	public void setLargeResize(Resize largeResize) {
-		this.largeResize = largeResize;
 	}
 
 	public void setPrivateDownloadUrlExpires(long privateDownloadUrlExpires) {
@@ -347,15 +306,6 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
 		return true;// can store every file
-	}
-
-	@Override
-	public String name() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 }

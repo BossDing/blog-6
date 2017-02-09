@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.config;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -88,14 +87,14 @@ public class UrlConfig implements InitializingBean {
 		}
 		domain = domain.toLowerCase();
 		if (domain.indexOf('.') == -1) {
-			if(enableSpaceDomain){
+			if (enableSpaceDomain) {
 				throw new SystemException("错误的域名:" + domain);
 			}
 			rootDomain = domain;
 		} else {
 			String[] splitResult = domain.split("\\.");
 			String last = splitResult[splitResult.length - 1];
-			if (!StringUtils.isAlpha(last)) {
+			if (!Validators.isAlpha(last)) {
 				throw new SystemException("错误的域名:" + domain);
 			}
 

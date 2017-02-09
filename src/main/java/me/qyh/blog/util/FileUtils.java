@@ -27,8 +27,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import me.qyh.blog.exception.SystemException;
 
 public class FileUtils {
@@ -46,7 +44,7 @@ public class FileUtils {
 	 */
 	public static File temp(String ext) {
 		try {
-			return File.createTempFile(RandomStringUtils.randomNumeric(6), "." + ext);
+			return File.createTempFile(StringUtils.uuid(), "." + ext);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}

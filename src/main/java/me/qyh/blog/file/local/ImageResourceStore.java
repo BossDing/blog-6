@@ -40,6 +40,7 @@ import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.Webs;
 
 /**
@@ -236,7 +237,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
-		return imageHelper.supportFormat(FileUtils.getFileExtension(multipartFile.getOriginalFilename()));
+		String ext = FileUtils.getFileExtension(multipartFile.getOriginalFilename());
+		return imageHelper.supportFormat(ext) && ImageHelper.isSystemAllowedImage(ext);
 	}
 
 	@Override
@@ -266,7 +268,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (resize == null) {
 			return getUrl(path);
 		}
-		return urlPrefix + cleanPath(generateResizePathFromPath(resize, path));
+		return urlPrefix + Validators.cleanPath(generateResizePathFromPath(resize, path));
 	}
 
 	@Override

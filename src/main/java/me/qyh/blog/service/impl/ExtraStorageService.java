@@ -16,11 +16,7 @@
 package me.qyh.blog.service.impl;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +26,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import me.qyh.blog.util.SerializationUtils;
 
 /**
  * 额外的存储，以键值对的形式用来存放一些<b>文本数据</b>
@@ -81,38 +79,15 @@ public class ExtraStorageService implements InitializingBean {
 	@EventListener
 	public void handleCloseEvent(ContextClosedEvent evt) throws IOException {
 		synchronized (dataMap) {
-			ObjectOutputStream out = null;
-			try {
-				out = new ObjectOutputStream(new FileOutputStream(dataFile));
-				out.writeObject(dataMap);
-			} finally {
-				try {
-					if (out != null) {
-						out.close();
-					}
-				} catch (final IOException ex) {
-				}
-			}
+			SerializationUtils.serialize(dataMap, dataFile);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		// load map from dataFile
 		if (dataFile.exists()) {
-			ObjectInputStream in = null;
-			try {
-				in = new ObjectInputStream(new FileInputStream(dataFile));
-				dataMap = (Map<String, String>) in.readObject();
-			} finally {
-				try {
-					if (in != null) {
-						in.close();
-					}
-				} catch (final IOException ex) {
-				}
-			}
+			dataMap = SerializationUtils.deserialize(dataFile);
 		}
 	}
 }

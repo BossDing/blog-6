@@ -31,6 +31,11 @@ public abstract class PageQueryParam implements Serializable {
 		super();
 	}
 
+	public PageQueryParam(PageQueryParam param) {
+		this.currentPage = param.currentPage;
+		this.pageSize = param.pageSize;
+	}
+
 	public PageQueryParam(int currentPage, int pageSize) {
 		this.currentPage = currentPage;
 		this.pageSize = pageSize;

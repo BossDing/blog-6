@@ -16,8 +16,6 @@
 package me.qyh.blog.comment;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,7 +41,7 @@ import me.qyh.blog.mail.MailSender.MessageBean;
 import me.qyh.blog.message.Messages;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.util.SerializationUtils;
 
 /**
  * 用来向管理员发送评论|回复通知邮件
@@ -65,11 +62,8 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private String mailTemplate;
 	private String mailSubject;
 
-	private String toSendSdfilePath;
-	private String toProcessesSdfilePath;
-
-	private File toSendSdfile;
-	private File toProcessesSdfile;
+	private File toSendSdfile = new File("toSendSdfile.dat");
+	private File toProcessesSdfile = new File("toProcessesSdfile.dat");
 
 	/**
 	 * 每隔5秒从评论队列中获取评论放入待发送列表
@@ -105,20 +99,12 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	/**
 	 * 系统关闭时序列化待发送列表和待处理列表
 	 */
-	public final void shutdown() {
-		if (!toSend.isEmpty() && toSendSdfile != null) {
-			try {
-				SerializationUtils.serialize(new ArrayList<>(toSend), new FileOutputStream(toSendSdfile));
-			} catch (Exception e) {
-				LOGGER.error("序列化待发送列表时发生错误：" + e.getMessage(), e);
-			}
+	public final void shutdown() throws Exception {
+		if (!toSend.isEmpty()) {
+			SerializationUtils.serialize(toSend, toSendSdfile);
 		}
-		if (!toProcesses.isEmpty() && toProcessesSdfile != null) {
-			try {
-				SerializationUtils.serialize(toProcesses, new FileOutputStream(toProcessesSdfile));
-			} catch (Exception e) {
-				LOGGER.error("序列化待处理列表时发生错误：" + e.getMessage(), e);
-			}
+		if (!toProcesses.isEmpty()) {
+			SerializationUtils.serialize(toProcesses, toProcessesSdfile);
 		}
 	}
 
@@ -147,12 +133,6 @@ public class CommentEmailNotifySupport implements InitializingBean {
 
 	@Override
 	public final void afterPropertiesSet() throws Exception {
-		if (!Validators.isEmptyOrNull(toSendSdfilePath, true)) {
-			toSendSdfile = new File(toSendSdfilePath);
-		}
-		if (!Validators.isEmptyOrNull(toProcessesSdfilePath, true)) {
-			toProcessesSdfile = new File(toProcessesSdfilePath);
-		}
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}
@@ -162,7 +142,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 
 		mailTemplate = Resources.readResourceToString(mailTemplateResource);
-		
+
 		if (messageProcessPeriodSec <= 0) {
 			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
 		}
@@ -173,16 +153,15 @@ public class CommentEmailNotifySupport implements InitializingBean {
 			messageTipCount = MESSAGE_TIP_COUNT;
 		}
 
-		if (toSendSdfile != null && toSendSdfile.exists()) {
-			List<Comment> comments = SerializationUtils.deserialize(new FileInputStream(toSendSdfile));
-			this.toSend = Collections.synchronizedList(comments);
+		if (toSendSdfile.exists()) {
+			this.toSend = SerializationUtils.deserialize(toSendSdfile);
 			if (!FileUtils.deleteQuietly(toSendSdfile)) {
 				LOGGER.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 			}
 		}
 
-		if (toProcessesSdfile != null && toProcessesSdfile.exists()) {
-			this.toProcesses = SerializationUtils.deserialize(new FileInputStream(toProcessesSdfile));
+		if (toProcessesSdfile.exists()) {
+			this.toProcesses = SerializationUtils.deserialize(toProcessesSdfile);
 			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
 				LOGGER.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
 			}
@@ -235,14 +214,6 @@ public class CommentEmailNotifySupport implements InitializingBean {
 
 	public void setMessageTipCount(int messageTipCount) {
 		this.messageTipCount = messageTipCount;
-	}
-
-	public void setToSendSdfilePath(String toSendSdfilePath) {
-		this.toSendSdfilePath = toSendSdfilePath;
-	}
-
-	public void setToProcessesSdfilePath(String toProcessesSdfilePath) {
-		this.toProcessesSdfilePath = toProcessesSdfilePath;
 	}
 
 	public void handle(Comment comment) {

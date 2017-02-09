@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.util;
 
+import java.util.Objects;
+
 /**
  * 校验辅助
  * 
@@ -48,6 +50,28 @@ public final class Validators {
 	}
 
 	/**
+	 * is alpha
+	 * 
+	 * <pre>
+	 * Validators.isAlpha(null)   = false
+	 * Validators.isAlpha("")     = false
+	 * Validators.isAlpha("  ")   = false
+	 * Validators.isAlpha("abc")  = true
+	 * Validators.isAlpha("ab2c") = false
+	 * Validators.isAlpha("ab-c") = false
+	 * </pre>
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static boolean isAlpha(String str) {
+		if (isEmptyOrNull(str, false)) {
+			return false;
+		}
+		return !str.chars().anyMatch(i -> !Character.isLetter(i));
+	}
+
+	/**
 	 * 判断两个对象是否是相同的类型，如果两个对象任意一个为null，那么返回false
 	 * 
 	 * @param a
@@ -71,4 +95,20 @@ public final class Validators {
 		}
 		return true;
 	}
+
+	/**
+	 * 删除连续的 '/';
+	 * 
+	 * <pre>
+	 * clean("\\\\////123/\\\\////456//\\\\////789.txt") = '/123/456/789.txt';
+	 * </pre>
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static String cleanPath(String path) {
+		Objects.requireNonNull(path);
+		return org.springframework.util.StringUtils.cleanPath(path).replaceAll("/+", "/");
+	}
+
 }

@@ -17,6 +17,7 @@ package me.qyh.blog.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import me.qyh.blog.util.FileUtils;
 
@@ -127,7 +128,7 @@ public abstract class ImageHelper {
 	 * @author Administrator
 	 *
 	 */
-	public final class ImageInfo {
+	public static final class ImageInfo {
 		private final int width;
 		private final int height;
 		private final String extension;// 图片真实后缀
@@ -141,7 +142,7 @@ public abstract class ImageHelper {
 		 * @param extension
 		 *            实际后缀
 		 */
-		protected ImageInfo(int width, int height, String extension) {
+		public ImageInfo(int width, int height, String extension) {
 			super();
 			this.width = width;
 			this.height = height;
@@ -237,9 +238,19 @@ public abstract class ImageHelper {
 		return isPNG(extension) || isGIF(extension) || isWEBP(extension);
 	}
 
+	/**
+	 * 判断是否使是系统允许的图片格式
+	 * 
+	 * @param ext
+	 * @return
+	 */
+	public static boolean isSystemAllowedImage(String ext) {
+		return Arrays.stream(IMG_EXTENSIONS).anyMatch(_ext -> _ext.equalsIgnoreCase(ext));
+	}
+
 	private void formatCheck(File file) throws IOException {
 		String extension = FileUtils.getFileExtension(file.getName());
-		if (!supportFormat(extension)) {
+		if (!supportFormat(extension) || !isSystemAllowedImage(extension)) {
 			throw new IOException("文件格式" + extension + "不被支持");
 		}
 	}

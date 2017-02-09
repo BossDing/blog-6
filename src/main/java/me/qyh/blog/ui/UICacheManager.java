@@ -29,13 +29,12 @@ import org.thymeleaf.engine.TemplateModel;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-
 public class UICacheManager extends AbstractCacheManager {
 
 	private static final ICache<TemplateCacheKey, TemplateModel> templateCache = new UICache<>(
-			Caffeine.newBuilder().maximumSize(1000).build());
+			Caffeine.newBuilder().build());
 	private static final ICache<ExpressionCacheKey, Object> expressionCache = new UICache<>(
-			Caffeine.newBuilder().maximumSize(2000).build());
+			Caffeine.newBuilder().build());
 
 	@Override
 	protected ICache<TemplateCacheKey, TemplateModel> initializeTemplateCache() {

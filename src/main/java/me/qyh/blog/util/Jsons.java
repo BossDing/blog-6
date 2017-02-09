@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.UrlResource;
@@ -239,12 +238,29 @@ public class Jsons {
 	 * @return
 	 */
 	public static ExpressionExecutor read(String url, UrlReader reader) {
+		try {
+			return readJson(reader.read(url));
+		} catch (IOException e) {
+			return new ExpressionExecutor(JsonNull.INSTANCE);
+		}
+	}
+
+	/**
+	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
+	 * 
+	 * @param url
+	 *            url
+	 * @param expression
+	 *            表达式
+	 * @param reader
+	 *            表达式读取
+	 * @return
+	 */
+	public static ExpressionExecutor readJson(String json) {
 		JsonElement je = null;
 		try {
-			String value = reader.read(url);
-
 			JsonParser jp = new JsonParser();
-			je = jp.parse(value);
+			je = jp.parse(json);
 		} catch (Exception e) {
 			LOGGER.debug(e.getMessage(), e);
 			je = JsonNull.INSTANCE;
@@ -352,8 +368,12 @@ public class Jsons {
 					: executed.isJsonPrimitive() ? executed.getAsString() : executed.toString();
 		}
 
+		public boolean isNull() {
+			return ele == JsonNull.INSTANCE;
+		}
+
 		private static List<Expression> parseExpressions(String expression) {
-			expression = StringUtils.deleteWhitespace(expression);
+			expression = expression.replaceAll("\\s+", "");
 			if (expression.isEmpty()) {
 				return Arrays.asList(NULL_EXPRESSION);
 			}
@@ -361,7 +381,7 @@ public class Jsons {
 				// multi expressions
 				List<Expression> expressionList = new ArrayList<>();
 				for (String _expression : expression.split(SPLIT_STR)) {
-					_expression = StringUtils.deleteWhitespace(_expression);
+					_expression = _expression.replaceAll("\\s+", "");
 					if (_expression.isEmpty()) {
 						return Arrays.asList(NULL_EXPRESSION);
 					}

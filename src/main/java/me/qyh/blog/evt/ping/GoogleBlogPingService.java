@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.evt.ping;
 
-import org.apache.commons.lang3.StringUtils;
+import me.qyh.blog.util.StringUtils;
 
 public class GoogleBlogPingService extends XmlRpcPingSupport {
 

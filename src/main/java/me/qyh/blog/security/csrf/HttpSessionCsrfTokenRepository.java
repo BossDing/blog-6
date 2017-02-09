@@ -36,7 +36,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.util.Assert;
 
-import me.qyh.blog.util.UUIDs;
+import me.qyh.blog.util.StringUtils;
 
 /**
  * A {@link CsrfTokenRepository} that stores the {@link CsrfToken} in the
@@ -143,6 +143,6 @@ public final class HttpSessionCsrfTokenRepository implements CsrfTokenRepository
 	}
 
 	private String createNewToken() {
-		return UUIDs.uuid();
+		return StringUtils.uuid();
 	}
 }

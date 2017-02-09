@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -48,6 +47,7 @@ import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.ExportPageValidator;
 
 @Controller
@@ -150,7 +150,7 @@ public class TplMgrController extends BaseMgrController {
 		if (space != null) {
 			filenamePrefix += space.getAlias() + "-";
 		}
-		filenamePrefix += DateFormatUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss");
+		filenamePrefix += Times.format(Times.now(), "yyyyMMddHHmmss");
 		header.set("Content-Disposition", "attachment; filename=" + filenamePrefix + ".json");
 		return new ResponseEntity<>(Jsons.write(pages).getBytes(Constants.CHARSET), header, HttpStatus.OK);
 	}

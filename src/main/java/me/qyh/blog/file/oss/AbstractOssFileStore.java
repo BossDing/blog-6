@@ -22,7 +22,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.exception.LogicException;
@@ -31,6 +30,8 @@ import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.file.ImageHelper.ImageInfo;
+import me.qyh.blog.file.Resize;
+import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.web.Webs;
@@ -43,14 +44,21 @@ import me.qyh.blog.web.Webs;
  */
 public abstract class AbstractOssFileStore implements FileStore, InitializingBean {
 
-	private int id;
+	private final int id;
+	private final String name;
 	private String backupAbsPath;
 	private File backupDir;
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractOssFileStore.class);
 
-	@Autowired
-	protected ImageHelper imageHelper;
+	private Resize smallResize;
+	private Resize middleResize;
+	private Resize largeResize;
+
+	public AbstractOssFileStore(int id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 
 	@Override
 	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
@@ -64,11 +72,19 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		try {
 			CommonFile cf = new CommonFile();
-			readImage(tmp, extension).ifPresent(ii -> {
-				cf.setWidth(ii.getWidth());
-				cf.setHeight(ii.getHeight());
-			});
 			doUpload(key, tmp);
+
+			if (ImageHelper.isSystemAllowedImage(extension)) {
+				try {
+					ImageInfo ii = this.readImage(key);
+					cf.setWidth(ii.getWidth());
+					cf.setHeight(ii.getHeight());
+				} catch (IOException e) {
+					LOGGER.debug(e.getMessage(), e);
+					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
+				}
+			}
+
 			cf.setExtension(extension);
 			cf.setOriginalFilename(originalFilename);
 			cf.setSize(tmp.length());
@@ -79,18 +95,6 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 				FileUtils.deleteQuietly(tmp);
 			}
 		}
-	}
-
-	protected Optional<ImageInfo> readImage(File tmp, String extension) throws LogicException {
-		if (imageHelper.supportFormat(extension)) {
-			try {
-				return Optional.of(imageHelper.read(tmp));
-			} catch (IOException e) {
-				LOGGER.debug(e.getMessage(), e);
-				throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
-			}
-		}
-		return Optional.empty();
 	}
 
 	private void doUpload(String key, File tmp) {
@@ -112,9 +116,15 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	protected abstract void upload(String key, File file) throws IOException;
 
-	protected boolean image(String key) {
-		return imageHelper.supportFormat(FileUtils.getFileExtension(key));
-	}
+	/**
+	 * 读取图片信息
+	 * 
+	 * @param key
+	 * @return
+	 * @throws IOException
+	 *             图片损坏或者格式不被接受
+	 */
+	protected abstract ImageInfo readImage(String key) throws IOException;
 
 	@Override
 	public int id() {
@@ -147,6 +157,11 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		return flag;
 	}
 
+	@Override
+	public String name() {
+		return name;
+	}
+
 	private boolean deleteBackup(String key) {
 		if (backupDir != null) {
 			File backup = new File(backupDir, key);
@@ -161,11 +176,45 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	protected abstract boolean doDeleteBatch(String key);
 
-	public void setId(int id) {
-		this.id = id;
+	/**
+	 * 构造缩略图信息地址
+	 * 
+	 * @param key
+	 *            key
+	 * @param resize
+	 *            缩放信息，可能为null
+	 * @return
+	 */
+	protected abstract String buildThumbnailUrl(String key, Resize resize);
+
+	protected final boolean isSystemAllowedImage(String key) {
+		return ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(key));
+	}
+
+	@Override
+	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
+		if (isSystemAllowedImage(key)) {
+			String small = buildThumbnailUrl(key, smallResize);
+			String middle = buildThumbnailUrl(key, middleResize);
+			String large = buildThumbnailUrl(key, largeResize);
+			return Optional.of(new ThumbnailUrl(small, middle, large));
+		}
+		return Optional.empty();
 	}
 
 	public void setBackupAbsPath(String backupAbsPath) {
 		this.backupAbsPath = backupAbsPath;
+	}
+
+	public void setSmallResize(Resize smallResize) {
+		this.smallResize = smallResize;
+	}
+
+	public void setMiddleResize(Resize middleResize) {
+		this.middleResize = middleResize;
+	}
+
+	public void setLargeResize(Resize largeResize) {
+		this.largeResize = largeResize;
 	}
 }

@@ -38,7 +38,7 @@ import me.qyh.blog.lock.support.SysLock;
 import me.qyh.blog.lock.support.SysLock.SysLockType;
 import me.qyh.blog.lock.support.SysLockDao;
 import me.qyh.blog.security.BCrypts;
-import me.qyh.blog.util.UUIDs;
+import me.qyh.blog.util.StringUtils;
 
 /**
  * 系统锁管理
@@ -99,7 +99,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 */
 	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	public void addLock(SysLock lock) {
-		lock.setId(UUIDs.uuid());
+		lock.setId(StringUtils.uuid());
 		lock.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		encryptPasswordLock(lock);
 		sysLockDao.insert(lock);

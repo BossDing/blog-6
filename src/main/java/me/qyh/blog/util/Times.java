@@ -17,9 +17,11 @@ package me.qyh.blog.util;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -72,7 +74,7 @@ public class Times {
 	}
 
 	/**
-	 * 解析失败
+	 * 解析日期
 	 * 
 	 * @param text
 	 * @return 如果解析失败，返回null
@@ -120,5 +122,27 @@ public class Times {
 		Objects.requireNonNull(temporal);
 		Objects.requireNonNull(pattern);
 		return DATE_TIME_FORMATTER_CACHE.get(pattern).format(temporal);
+	}
+
+	/**
+	 * 将Date转化为LocalDateTime
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static LocalDateTime toLocalDateTime(Date date) {
+		Objects.requireNonNull(date);
+		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+	}
+
+	/**
+	 * 解析日期
+	 * 
+	 * @param text
+	 * @return 如果解析失败，返回null
+	 */
+	public static Date parseAndGetDate(String text) {
+		LocalDateTime time = parseAndGet(text);
+		return time == null ? null : Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
 	}
 }

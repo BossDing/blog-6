@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +37,7 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 /**
@@ -52,8 +52,6 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 
 	@Autowired
 	private ArticleService articleService;
-
-	private static final String[] TIME_PATTERNS = new String[] { "yyyy-MM-dd", "yyyy-MM", "yyyy-MM-dd HH:mm:ss" };
 
 	/**
 	 * 构造器
@@ -112,14 +110,8 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		String beginStr = super.getVariables("begin", variables, attributes);
 		String endStr = super.getVariables("end", variables, attributes);
 		if (beginStr != null && endStr != null) {
-			try {
-				param.setBegin(DateUtils.parseDate(beginStr, TIME_PATTERNS));
-				param.setEnd(DateUtils.parseDate(endStr, TIME_PATTERNS));
-			} catch (Exception e) {
-				LOGGER.debug("开始时间和结束时间:[" + beginStr + "," + endStr + "]无法被转化:" + e.getMessage(), e);
-				param.setBegin(null);
-				param.setEnd(null);
-			}
+			param.setBegin(Times.parseAndGetDate(beginStr));
+			param.setEnd(Times.parseAndGetDate(endStr));
 		}
 		String query = super.getVariables("query", variables, attributes);
 		if (query != null) {

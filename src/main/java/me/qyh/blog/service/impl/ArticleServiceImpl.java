@@ -502,7 +502,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
 	public List<TagCount> queryTags() throws LogicException {
-		return articleTagDao.selectTags(Environment.getSpace().orElse(null), Environment.isLogin());
+		return new ArrayList<>(articleTagDao.selectTags(Environment.getSpace().orElse(null), Environment.isLogin()));
 	}
 
 	@Override
