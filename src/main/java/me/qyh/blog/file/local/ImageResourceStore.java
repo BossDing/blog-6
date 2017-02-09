@@ -99,15 +99,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			throw new SystemException(e1.getMessage(), e1);
 		}
 		File finalFile = tmp;
-		ImageInfo ii = readImage(tmp);
-		String extension = ii.getExtension();
 		try {
-			if (ImageHelper.isWEBP(extension)) {
-				finalFile = FileUtils.temp(ImageHelper.PNG);
-				// 将WEBP格式转化为PNG格式，因为WEBP格式有可能透明
-				webpFormat(tmp, finalFile);
-				extension = ImageHelper.PNG;
-			}
+			ImageInfo ii = readImage(tmp);
+			String extension = ii.getExtension();
 			FileUtils.forceMkdir(dest.getParentFile());
 			FileUtils.move(finalFile, dest);
 			CommonFile cf = new CommonFile();
@@ -129,8 +123,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	private void checkFileStoreable(File dest) throws LogicException {
-		if (dest.exists()) {
-			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
+		if (dest.exists() && !FileUtils.deleteQuietly(dest)) {
+			throw new LogicException("file.store.exists", "文件" + dest.getAbsolutePath() + "已经存在",
 					dest.getAbsolutePath());
 		}
 		if (inThumbDir(dest)) {
@@ -145,17 +139,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		} catch (IOException e) {
 			IMG_RESOURCE_LOGGER.debug(e.getMessage(), e);
 			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
-		}
-	}
-
-	private void webpFormat(File src, File dest) throws LogicException {
-		if (!supportWebp) {
-			throw new LogicException("file.format.notsupport", "webp格式不被支持", "webp");
-		}
-		try {
-			imageHelper.format(src, dest);
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
@@ -193,8 +176,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 					return Optional.of(new PathResource(local.toPath()));
 				}
 				// 如果支持文件格式(防止ImageHelper变更)
-				if (imageHelper.supportFormat(FileUtils.getFileExtension(local.getName()))
-						&& imageHelper.supportFormat(FileUtils.getFileExtension(thumbPath))) {
+				if (ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(local.getName()))) {
 					try {
 						return Optional.of(new PathResource(doResize(local, resize, file, sourcePath).toPath()));
 					} catch (IOException e) {
@@ -236,9 +218,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	@Override
-	public boolean canStore(MultipartFile multipartFile) {
+	public final boolean canStore(MultipartFile multipartFile) {
 		String ext = FileUtils.getFileExtension(multipartFile.getOriginalFilename());
-		return imageHelper.supportFormat(ext) && ImageHelper.isSystemAllowedImage(ext);
+		return ImageHelper.isSystemAllowedImage(ext);
 	}
 
 	@Override
@@ -295,7 +277,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			setEnableDownloadHandler(false);
 		}
 
-		if (!imageHelper.supportFormat(ImageHelper.WEBP)) {
+		if (!imageHelper.supportWebp()) {
 			supportWebp = false;
 		}
 	}

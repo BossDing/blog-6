@@ -115,11 +115,12 @@ public class QiniuFileStore extends AbstractOssFileStore {
 			Response r = e.response;
 			if (r.statusCode == FILE_NOT_EXISTS_ERROR_CODE) {
 				flag = true;
-			}
-			try {
-				LOGGER.error("七牛云删除失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
-			} catch (QiniuException e1) {
-				LOGGER.debug(e1.getMessage(), e1);
+			} else {
+				try {
+					LOGGER.error("七牛云删除失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
+				} catch (QiniuException e1) {
+					LOGGER.debug(e1.getMessage(), e1);
+				}
 			}
 		}
 		return flag;

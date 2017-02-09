@@ -157,11 +157,6 @@ public class JavaImageHelper extends ImageHelper {
 		}
 	}
 
-	@Override
-	public boolean supportFormat(String extension) {
-		return isGIF(extension) || isJPEG(extension) || isPNG(extension);
-	}
-
 	private void writeImg(BufferedImage bi, String ext, File dest) throws IOException {
 		FileUtils.deleteQuietly(dest);
 		ImageIO.write(bi, ext, dest);
@@ -200,5 +195,10 @@ public class JavaImageHelper extends ImageHelper {
 			builder = builder.imageType(BufferedImage.TYPE_INT_RGB);
 		}
 		return builder.size(resizeWidth, resizeHeight).asBufferedImage();
+	}
+
+	@Override
+	public final boolean supportWebp() {
+		return false;
 	}
 }

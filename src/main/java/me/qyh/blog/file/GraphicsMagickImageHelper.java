@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
@@ -171,11 +170,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	public boolean supportFormat(String extension) {
-		return Arrays.stream(IMG_EXTENSIONS).anyMatch(ext -> ext.equalsIgnoreCase(extension));
-	}
-
-	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (WINDOWS && Validators.isEmptyOrNull(magickPath, true)) {
 			throw new SystemException("windows下必须设置GraphicsMagick的主目录");
@@ -251,6 +245,11 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	private void run(Operation operation, Object... args) throws IOException {
 		run(() -> new ConvertCmd(true), operation, args);
+	}
+
+	@Override
+	public boolean supportWebp() {
+		return true;
 	}
 
 }

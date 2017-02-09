@@ -86,8 +86,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		File dest = new File(absFolder, key);
-		if (dest.exists()) {
-			throw new LogicException("file.local.exists", "文件" + dest.getAbsolutePath() + "已经存在",
+		if (dest.exists() && !FileUtils.deleteQuietly(dest)) {
+			throw new LogicException("file.store.exists", "文件" + dest.getAbsolutePath() + "已经存在",
 					dest.getAbsolutePath());
 		}
 		String originalFilename = mf.getOriginalFilename();

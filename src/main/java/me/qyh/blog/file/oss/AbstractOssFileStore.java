@@ -61,7 +61,10 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	}
 
 	@Override
-	public CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
+	public final CommonFile store(String key, MultipartFile multipartFile) throws LogicException {
+		if (!delete(key)) {
+			throw new LogicException("file.store.exists", "文件" + key + "已经存在", key);
+		}
 		String originalFilename = multipartFile.getOriginalFilename();
 		String extension = FileUtils.getFileExtension(originalFilename);
 		File tmp = FileUtils.temp(extension);
@@ -74,18 +77,21 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 			CommonFile cf = new CommonFile();
 			doUpload(key, tmp);
 
+			cf.setExtension(extension);
+
 			if (ImageHelper.isSystemAllowedImage(extension)) {
 				try {
 					ImageInfo ii = this.readImage(key);
+
 					cf.setWidth(ii.getWidth());
 					cf.setHeight(ii.getHeight());
+					cf.setExtension(ii.getExtension());
 				} catch (IOException e) {
 					LOGGER.debug(e.getMessage(), e);
 					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 				}
 			}
 
-			cf.setExtension(extension);
 			cf.setOriginalFilename(originalFilename);
 			cf.setSize(tmp.length());
 			cf.setStore(id);
@@ -169,7 +175,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 				return FileUtils.deleteQuietly(backup);
 			}
 		}
-		return false;
+		return true;
 	}
 
 	protected abstract boolean doDelete(String key);

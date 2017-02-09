@@ -50,6 +50,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.file.CommonFile;
 import me.qyh.blog.file.FileManager;
 import me.qyh.blog.file.FileStore;
+import me.qyh.blog.file.ImageHelper;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
@@ -153,6 +154,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		String key = folderKey.isEmpty() ? fullname : (folderKey + SPLIT_CHAR + fullname);
 		deleteImmediatelyIfNeed(key);
 		CommonFile cf = store.store(key, file);
+		
+		// 如果不是被支持的图片格式
+		if (ImageHelper.isSystemAllowedImage(ext) && !ImageHelper.isSystemAllowedImage(cf.getExtension())) {
+			store.delete(key);
+			throw new LogicException("file.unsupportformat", "不支持" + cf.getExtension() + "格式的文件", cf.getExtension());
+		}
+		
 		try {
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();

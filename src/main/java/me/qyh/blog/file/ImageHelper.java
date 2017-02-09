@@ -35,7 +35,7 @@ public abstract class ImageHelper {
 	public static final String PNG = "png";
 	public static final String WEBP = "webp";
 
-	protected static final String[] IMG_EXTENSIONS = { GIF, JPEG, JPG, PNG, WEBP };
+	private static final String[] ALLOWED_IMG_EXTENSIONS = { GIF, JPEG, JPG, PNG };
 
 	/**
 	 * 缩放图片
@@ -67,9 +67,6 @@ public abstract class ImageHelper {
 	public final ImageInfo read(File file) throws IOException {
 		formatCheck(file);
 		ImageInfo ii = doRead(file);
-		if (!supportFormat(ii.getExtension())) {
-			throw new IOException("文件格式" + ii.extension + "不被支持");
-		}
 		return ii;
 
 	}
@@ -106,14 +103,6 @@ public abstract class ImageHelper {
 		doFormat(src, dest);
 	}
 
-	/**
-	 * 是否支持格式
-	 * 
-	 * @param extension
-	 * @return
-	 */
-	public abstract boolean supportFormat(String extension);
-
 	protected abstract void doResize(Resize resize, File src, File dest) throws IOException;
 
 	protected abstract ImageInfo doRead(File file) throws IOException;
@@ -121,6 +110,13 @@ public abstract class ImageHelper {
 	protected abstract void doGetGifCover(File gif, File dest) throws IOException;
 
 	protected abstract void doFormat(File src, File dest) throws IOException;
+
+	/**
+	 * 是否支持webp格式
+	 * 
+	 * @return
+	 */
+	public abstract boolean supportWebp();
 
 	/**
 	 * 图片信息
@@ -240,17 +236,23 @@ public abstract class ImageHelper {
 
 	/**
 	 * 判断是否使是系统允许的图片格式
+	 * <p>
+	 * <b>只接受gif,jpg|jpeg,png格式的图片</b>
+	 * </p>
 	 * 
 	 * @param ext
 	 * @return
 	 */
 	public static boolean isSystemAllowedImage(String ext) {
-		return Arrays.stream(IMG_EXTENSIONS).anyMatch(_ext -> _ext.equalsIgnoreCase(ext));
+		return Arrays.stream(ALLOWED_IMG_EXTENSIONS).anyMatch(_ext -> _ext.equalsIgnoreCase(ext));
 	}
 
 	private void formatCheck(File file) throws IOException {
 		String extension = FileUtils.getFileExtension(file.getName());
-		if (!supportFormat(extension) || !isSystemAllowedImage(extension)) {
+		if (isWEBP(extension) && supportWebp()) {
+			return;
+		}
+		if (!isSystemAllowedImage(extension)) {
 			throw new IOException("文件格式" + extension + "不被支持");
 		}
 	}
