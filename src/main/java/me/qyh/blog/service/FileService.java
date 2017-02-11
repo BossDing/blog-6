@@ -17,6 +17,7 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +27,7 @@ import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
+import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 
 /**
@@ -81,11 +83,11 @@ public interface FileService {
 	Map<String, Object> getBlogFileProperty(Integer id) throws LogicException;
 
 	/**
-	 * 获取所有的文件服务
+	 * 获取可存储文件的文件储存器
 	 * 
 	 * @return 文件服务列表
 	 */
-	List<FileStore> allStores();
+	List<FileStore> allStorableStores();
 
 	/**
 	 * 更新文件
@@ -126,4 +128,20 @@ public interface FileService {
 	 *             保存过程中发生逻辑异常
 	 */
 	UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException;
+
+	/**
+	 * 查询<b>文件</b>
+	 * <p>
+	 * 用于DataTag
+	 * </p>
+	 * 
+	 * @param path
+	 *            路径，指向一个文件夹，如果为null或空或为/，查询根目录
+	 * @param extensions
+	 *            后缀，如果为null或者为空，查询所有后缀
+	 * @param page
+	 *            当前页
+	 * @return
+	 */
+	PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page);
 }

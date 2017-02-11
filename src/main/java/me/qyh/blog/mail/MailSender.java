@@ -63,7 +63,7 @@ public class MailSender implements InitializingBean {
 	private Limit limit;
 	private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);
 
-	private static final File sdfile = new File("message_shutdown.dat");
+	private static final File sdfile = new File(FileUtils.getHomeDir(), "message_shutdown.dat");
 
 	private TimeCount timeCount;
 

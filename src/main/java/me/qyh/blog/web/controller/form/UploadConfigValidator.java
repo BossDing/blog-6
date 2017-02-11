@@ -40,6 +40,7 @@ public class UploadConfigValidator implements Validator {
 		UploadConfig config = (UploadConfig) target;
 		String path = config.getPath();
 		if (!Validators.isEmptyOrNull(path, true)) {
+			path = Validators.cleanPath(path);
 			if (path.indexOf(FileService.SPLIT_CHAR) != -1) {
 				String[] pathArray = path.split(FileService.SPLIT_CHAR);
 				if (pathArray.length > MAX_FLOOR) {

@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,9 +83,11 @@ public class FileMgrController extends BaseMgrController {
 			blogFileQueryParam = new BlogFileQueryParam();
 			blogFileQueryParam.setCurrentPage(1);
 		}
+		blogFileQueryParam.setQuerySubDir(false);
+		blogFileQueryParam.setExtensions(new HashSet<>());
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
-			model.addAttribute("stores", fileService.allStores());
+			model.addAttribute("stores", fileService.allStorableStores());
 		} catch (LogicException e) {
 			model.addAttribute(ERROR, e.getLogicMessage());
 		}
@@ -94,7 +97,7 @@ public class FileMgrController extends BaseMgrController {
 	@RequestMapping("stores")
 	@ResponseBody
 	public List<FileStoreBean> allServers() {
-		List<FileStore> stores = fileService.allStores();
+		List<FileStore> stores = fileService.allStorableStores();
 		return stores.stream().map(FileStoreBean::new).collect(Collectors.toList());
 	}
 
@@ -106,6 +109,8 @@ public class FileMgrController extends BaseMgrController {
 			blogFileQueryParam = new BlogFileQueryParam();
 			blogFileQueryParam.setCurrentPage(1);
 		}
+		blogFileQueryParam.setQuerySubDir(false);
+		blogFileQueryParam.setExtensions(new HashSet<>());
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
 

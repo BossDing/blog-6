@@ -109,4 +109,11 @@ public interface FileStore {
 	 */
 	String name();
 
+	/**
+	 * 是否只读
+	 * 
+	 * @return
+	 */
+	boolean readOnly();
+
 }

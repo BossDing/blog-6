@@ -31,6 +31,10 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public class CommonResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 
+	public CommonResourceStore(String urlPatternPrefix) {
+		super(urlPatternPrefix);
+	}
+
 	public CommonResourceStore() {
 		super("file");
 	}

@@ -62,8 +62,8 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private String mailTemplate;
 	private String mailSubject;
 
-	private File toSendSdfile = new File("toSendSdfile.dat");
-	private File toProcessesSdfile = new File("toProcessesSdfile.dat");
+	private File toSendSdfile = new File(FileUtils.getHomeDir(), "toSendSdfile.dat");
+	private File toProcessesSdfile = new File(FileUtils.getHomeDir(), "toProcessesSdfile.dat");
 
 	/**
 	 * 每隔5秒从评论队列中获取评论放入待发送列表

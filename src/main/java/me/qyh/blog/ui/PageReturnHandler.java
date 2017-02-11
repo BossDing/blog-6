@@ -31,6 +31,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.page.ErrorPage;
@@ -77,7 +78,7 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 
 		try {
 
-			rendered = uiRender.render(page, mavContainer.getModel(), nativeRequest, nativeResponse,
+			rendered = uiRender.doRender(page, mavContainer.getModel(), nativeRequest, nativeResponse,
 					ParseContext.DEFAULT_CONFIG);
 
 		} catch (Exception e) {
@@ -101,6 +102,7 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 			throw e;
 		}
 
+		nativeResponse.setContentLength(rendered.getBytes(Constants.CHARSET).length);
 		Writer writer = nativeResponse.getWriter();
 		writer.write(rendered);
 		writer.flush();

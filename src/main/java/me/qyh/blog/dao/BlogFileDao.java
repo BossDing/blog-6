@@ -168,6 +168,9 @@ public interface BlogFileDao {
 
 	/**
 	 * 根据父节点和路径查询节点
+	 * <p>
+	 * <b>只会查询父节点下第一层</b>
+	 * </p>
 	 * 
 	 * @param parent
 	 *            父节点

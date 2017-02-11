@@ -115,9 +115,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private PlatformTransactionManager platformTransactionManager;
 	private ApplicationEventPublisher applicationEventPublisher;
 
-	private static final String DATA_TAG_PROCESSOR_NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
-	private static final String DATA_TAG_PROCESSOR_DATA_NAME_PATTERN = "^[A-Za-z]+$";
-
 	private Map<PageTarget, Resource> sysPageDefaultTpls = new EnumMap<>(PageTarget.class);
 	private Map<PageTarget, String> sysPageDefaultParsedTpls = new EnumMap<>(PageTarget.class);
 	private Map<ErrorCode, Resource> errorPageDefaultTpls = new EnumMap<>(ErrorCode.class);
@@ -715,11 +712,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				resource = new ClassPathResource("resources/page/PAGE_" + target.name() + ".html");
 			}
 			String tpl = Resources.readResourceToString(resource);
-			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-			}
 			if (Validators.isEmptyOrNull(tpl, true)) {
 				throw new SystemException("系统页面：" + target + "模板不能为空");
+			}
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("系统页面：" + target + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
 			sysPageDefaultParsedTpls.put(target, tpl);
 		}
@@ -729,11 +726,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				resource = new ClassPathResource("resources/page/" + code.name() + ".html");
 			}
 			String tpl = Resources.readResourceToString(resource);
-			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-			}
 			if (Validators.isEmptyOrNull(tpl, true)) {
 				throw new SystemException("错误页面：" + code + "模板不能为空");
+			}
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
 			errorPageDefaultParsedTpls.put(code, tpl);
 		}
@@ -743,11 +740,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				throw new SystemException("没有指定LockType:" + lockType + "的默认模板");
 			}
 			String tpl = Resources.readResourceToString(resource);
-			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-				throw new SystemException("解锁页面：" + lockType + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-			}
 			if (Validators.isEmptyOrNull(tpl, true)) {
 				throw new SystemException("解锁页面：" + lockType + "模板不能为空");
+			}
+			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
+				throw new SystemException("解锁页面：" + lockType + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
 			}
 			lockPageDefaultTpls.put(lockType, tpl);
 		}
@@ -882,10 +879,10 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	public void setProcessors(List<DataTagProcessor<?>> processors) {
 		for (DataTagProcessor<?> processor : processors) {
-			if (!processor.getName().matches(DATA_TAG_PROCESSOR_NAME_PATTERN)) {
-				throw new SystemException("数据名之内为中英文或者数字");
+			if (!Validators.isLetterOrNumOrChinese(processor.getName())) {
+				throw new SystemException("数据名只能为中英文或者数字");
 			}
-			if (!processor.getDataName().matches(DATA_TAG_PROCESSOR_DATA_NAME_PATTERN)) {
+			if (!Validators.isLetter(processor.getDataName())) {
 				throw new SystemException("数据dataName只能为英文字母");
 			}
 		}

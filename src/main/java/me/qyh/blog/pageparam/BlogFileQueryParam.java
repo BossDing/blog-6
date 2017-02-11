@@ -15,6 +15,10 @@
  */
 package me.qyh.blog.pageparam;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.entity.BlogFile.BlogFileType;
 
 public class BlogFileQueryParam extends PageQueryParam {
@@ -25,6 +29,9 @@ public class BlogFileQueryParam extends PageQueryParam {
 	private static final long serialVersionUID = 1L;
 	private Integer parent;
 	private BlogFileType type;
+	private boolean querySubDir;
+	private BlogFile parentFile;
+	private Set<String> extensions = new HashSet<>();
 
 	public Integer getParent() {
 		return parent;
@@ -40,6 +47,30 @@ public class BlogFileQueryParam extends PageQueryParam {
 
 	public void setType(BlogFileType type) {
 		this.type = type;
+	}
+
+	public boolean isQuerySubDir() {
+		return querySubDir;
+	}
+
+	public void setQuerySubDir(boolean querySubDir) {
+		this.querySubDir = querySubDir;
+	}
+
+	public BlogFile getParentFile() {
+		return parentFile;
+	}
+
+	public void setParentFile(BlogFile parentFile) {
+		this.parentFile = parentFile;
+	}
+
+	public Set<String> getExtensions() {
+		return extensions;
+	}
+
+	public void setExtensions(Set<String> extensions) {
+		this.extensions = extensions;
 	}
 
 }

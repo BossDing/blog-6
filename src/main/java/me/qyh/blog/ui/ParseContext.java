@@ -140,6 +140,18 @@ public class ParseContext {
 		public ParseConfig() {
 			this(false, false, false);
 		}
+
+		public boolean isPreview() {
+			return preview;
+		}
+
+		public boolean isOnlyCallable() {
+			return onlyCallable;
+		}
+
+		public boolean isDisposible() {
+			return disposible;
+		}
 	}
 
 }

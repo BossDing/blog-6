@@ -26,6 +26,10 @@ import java.util.Objects;
 @UIUtils
 public final class Validators {
 
+	private static final String LETTER_NUM_PATTERN = "^[A-Za-z0-9]+$";
+	private static final String LETTER_PATTERN = "^[A-Za-z]+$";
+	private static final String LETTER_NUM_CHINESE_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
+
 	/**
 	 * private
 	 */
@@ -111,4 +115,33 @@ public final class Validators {
 		return org.springframework.util.StringUtils.cleanPath(path).replaceAll("/+", "/");
 	}
 
+	/**
+	 * 判断字符串是否由字母或者数字组成
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static boolean isLetterOrNum(String str) {
+		return str != null && str.matches(LETTER_NUM_PATTERN);
+	}
+
+	/**
+	 * 判断字符串是否由字母组成
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static boolean isLetter(String str) {
+		return str != null && str.matches(LETTER_PATTERN);
+	}
+
+	/**
+	 * 判断字符串是否只由字母，数字和中文组成
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static boolean isLetterOrNumOrChinese(String str) {
+		return str != null && str.matches(LETTER_NUM_CHINESE_PATTERN);
+	}
 }

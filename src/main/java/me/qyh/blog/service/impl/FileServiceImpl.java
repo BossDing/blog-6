@@ -19,10 +19,12 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -81,8 +83,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Autowired
 	private ConfigService configService;
 
-	private BlogFile root;
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	private static final Message PARENT_NOT_EXISTS = new Message("file.parent.notexists", "父目录不存在");
@@ -111,7 +111,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 				throw new LogicException(PARENT_NOT_EXISTS);
 			}
 		} else {
-			parent = root;
+			parent = blogFileDao.selectRoot();
 		}
 
 		String folderKey = getFilePath(parent);
@@ -122,6 +122,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 		FileStore store = fileManager.getFileStore(upload.getStore())
 				.orElseThrow(() -> new LogicException("file.store.notexists", "文件存储器不存在"));
+
+		if (store.readOnly()) {
+			throw new LogicException("file.store.readonly", "只读存储器无法存储文件");
+		}
 		List<UploadedFile> uploadedFiles = new ArrayList<>();
 		for (MultipartFile file : upload.getFiles()) {
 			String originalFilename = file.getOriginalFilename();
@@ -154,13 +158,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		String key = folderKey.isEmpty() ? fullname : (folderKey + SPLIT_CHAR + fullname);
 		deleteImmediatelyIfNeed(key);
 		CommonFile cf = store.store(key, file);
-		
+
 		// 如果不是被支持的图片格式
 		if (ImageHelper.isSystemAllowedImage(ext) && !ImageHelper.isSystemAllowedImage(cf.getExtension())) {
 			store.delete(key);
 			throw new LogicException("file.unsupportformat", "不支持" + cf.getExtension() + "格式的文件", cf.getExtension());
 		}
-		
+
 		try {
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();
@@ -268,12 +272,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private BlogFile createFolder(String path) {
 		if (Validators.isEmptyOrNull(path, true)) {
-			return root;
+			return blogFileDao.selectRoot();
 		} else {
 			if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
-				return createFolder(root, path);
+				return createFolder(blogFileDao.selectRoot(), path);
 			} else {
-				BlogFile parent = root;
+				BlogFile parent = blogFileDao.selectRoot();
 				for (String _path : path.split(SPLIT_CHAR)) {
 					parent = createFolder(parent, _path);
 				}
@@ -314,8 +318,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 				throw new LogicException("file.parent.mustDir", "父目录必须是一个文件夹");
 			}
 			paths = blogFileDao.selectPath(parent);
+			param.setParentFile(parent);
 		} else {
-			param.setParent(root.getId());
+			param.setParentFile(blogFileDao.selectRoot());
 		}
 		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
 		int count = blogFileDao.selectCount(param);
@@ -367,8 +372,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	@Override
-	public List<FileStore> allStores() {
-		return fileManager.getAllStores();
+	public List<FileStore> allStorableStores() {
+		return fileManager.getAllStores().stream().filter(store -> !store.readOnly()).collect(Collectors.toList());
 	}
 
 	@Override
@@ -424,6 +429,53 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		blogFileDao.deleteUnassociateCommonFile();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * path层次过深会影响效率
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page) {
+		BlogFileQueryParam param = new BlogFileQueryParam();
+		param.setCurrentPage(page);
+		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
+		BlogFile parent = blogFileDao.selectRoot();
+		if (Validators.isEmptyOrNull(path, true) || FileService.SPLIT_CHAR.equals(path)) {
+			param.setParentFile(parent);
+		} else {
+			String cleanedPath = Validators.cleanPath(path.trim());
+			if (cleanedPath.indexOf(FileService.SPLIT_CHAR) == -1) {
+				parent = blogFileDao.selectByParentAndPath(parent, cleanedPath);
+			} else {
+				for (String _path : cleanedPath.split(SPLIT_CHAR)) {
+					parent = blogFileDao.selectByParentAndPath(parent, _path);
+					if (parent == null) {
+						break;
+					}
+				}
+			}
+
+			if (parent == null || BlogFileType.FILE.equals(parent.getType())) {
+				return new PageResult<>(param, 0, Collections.emptyList());
+			}
+
+			param.setParentFile(parent);
+		}
+		param.setType(BlogFileType.FILE);
+		param.setQuerySubDir(true);
+		param.setExtensions(extensions);
+
+		int count = blogFileDao.selectCount(param);
+		List<BlogFile> datas = blogFileDao.selectPage(param);
+
+		for (BlogFile file : datas) {
+			setExpandedCommonFile(file);
+		}
+
+		return new PageResult<>(param, count, datas);
+	}
+
 	private void setExpandedCommonFile(BlogFile bf) {
 		CommonFile cf = bf.getCf();
 		if (cf != null && bf.isFile()) {
@@ -452,10 +504,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		// 找根目录
-		root = blogFileDao.selectRoot();
-		if (root == null) {
+		if (blogFileDao.selectRoot() == null) {
 			LOGGER.debug("没有找到任何根目录，将创建一个根目录");
-			root = new BlogFile();
+			BlogFile root = new BlogFile();
 			root.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 			root.setLft(1);
 			root.setName("");
@@ -465,5 +516,4 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			blogFileDao.insert(root);
 		}
 	}
-
 }

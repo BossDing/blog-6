@@ -64,6 +64,11 @@
 					<constructor-arg index="0" value="标签统计" />
 					<constructor-arg index="1" value="tagStatistics" />
 				</bean>
+				
+				<bean class="me.qyh.blog.ui.data.FilesDataTagProcessor">
+					<constructor-arg index="0" value="文件查询" />
+					<constructor-arg index="1" value="files" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragments">

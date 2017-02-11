@@ -55,6 +55,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	private Resize middleResize;
 	private Resize largeResize;
 
+	private boolean readOnly;
+
 	public AbstractOssFileStore(int id, String name) {
 		this.id = id;
 		this.name = name;
@@ -168,6 +170,11 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		return name;
 	}
 
+	@Override
+	public boolean readOnly() {
+		return readOnly;
+	}
+
 	private boolean deleteBackup(String key) {
 		if (backupDir != null) {
 			File backup = new File(backupDir, key);
@@ -222,5 +229,9 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	public void setLargeResize(Resize largeResize) {
 		this.largeResize = largeResize;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
 	}
 }

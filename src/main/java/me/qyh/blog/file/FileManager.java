@@ -32,7 +32,7 @@ public interface FileManager {
 	 * @return
 	 */
 	List<FileStore> getAllStores();
-
+	
 	/**
 	 * 根据id查询文件服务
 	 * 

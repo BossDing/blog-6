@@ -36,6 +36,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.Environment;
+import me.qyh.blog.util.Validators;
 
 /**
  * 锁管理器
@@ -50,8 +51,6 @@ public class LockManager implements InitializingBean {
 	private ExpandedLockProvider expandedLockProvider;
 
 	private List<String> allTypes = new ArrayList<>();
-
-	private static final String TYPE_PATTERN = "^[A-Za-z0-9]+$";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LockManager.class);
 
@@ -158,7 +157,7 @@ public class LockManager implements InitializingBean {
 		}
 		Set<String> types = new LinkedHashSet<>();
 		for (String type : expandedLockProvider.getLockTypes()) {
-			if (!type.matches(TYPE_PATTERN)) {
+			if (!Validators.isLetterOrNum(type)) {
 				throw new SystemException("锁类型只能为英文字母或者数字");
 			}
 			types.add(type);

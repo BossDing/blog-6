@@ -45,7 +45,7 @@ import me.qyh.blog.ui.page.Page;
  * @author Administrator
  *
  */
-public final class UIRender {
+public class UIRender {
 
 	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(UIRender.class);
 
@@ -81,7 +81,7 @@ public final class UIRender {
 		return render(page, null, request, response, config);
 	}
 
-	private final String doRender(Page page, Map<String, Object> model, HttpServletRequest request,
+	public String doRender(Page page, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws Exception {
 		String templateName = TemplateUtils.getTemplateName(page);
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());

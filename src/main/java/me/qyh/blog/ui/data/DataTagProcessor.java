@@ -184,6 +184,6 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	private boolean validDataName(String dataName) {
-		return !Validators.isEmptyOrNull(dataName, true) && dataName.matches("[a-zA-Z]+");
+		return Validators.isLetter(dataName);
 	}
 }

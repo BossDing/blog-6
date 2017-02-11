@@ -35,6 +35,8 @@ public class FileUtils {
 
 	}
 
+	private static final File HOME_DIR = new File(System.getProperty("user.home"));
+
 	/**
 	 * 采用随机6位前缀，创建一个临时空文件，<strong>需要手动删除！</strong>
 	 * 
@@ -182,5 +184,14 @@ public class FileUtils {
 	public static void write(File file, OutputStream outputStream) throws IOException {
 		Files.copy(file.toPath(), outputStream);
 		outputStream.flush();
+	}
+
+	/**
+	 * 获取主目录
+	 * 
+	 * @return
+	 */
+	public static File getHomeDir() {
+		return HOME_DIR;
 	}
 }

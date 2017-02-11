@@ -66,16 +66,22 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	protected String urlPrefix;
 	protected File absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
-	private final String handlerPrefix;
-	private String urlPatternPrefix;
+	private final String urlPatternPrefix;
 	private boolean enableDownloadHandler = true;
+	private boolean readOnly;
 
 	@Autowired
 	protected UrlHelper urlHelper;
 
-	public AbstractLocalResourceRequestHandlerFileStore(String handlerPrefix) {
+	public AbstractLocalResourceRequestHandlerFileStore(String urlPatternPrefix) {
 		super();
-		this.handlerPrefix = handlerPrefix;
+		if (!Validators.isLetterOrNum(urlPatternPrefix)) {
+			throw new SystemException("处理器路径不能为空，且只能由字母或数字组成");
+		}
+		if (!urlPatternPrefix.startsWith("/")) {
+			urlPatternPrefix = "/" + urlPatternPrefix;
+		}
+		this.urlPatternPrefix = urlPatternPrefix;
 	}
 
 	@Override
@@ -155,6 +161,11 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return getPathFromRequest(request).flatMap(path -> getResource(path, request)).orElse(null);
 	}
 
+	@Override
+	public boolean readOnly() {
+		return readOnly;
+	}
+
 	/**
 	 * 获取资源文件
 	 * 
@@ -180,15 +191,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		absFolder = new File(absPath);
 		FileUtils.forceMkdir(absFolder);
 
-		if (Validators.isEmptyOrNull(handlerPrefix, true)) {
-			throw new SystemException("处理器路径不能为空");
-		}
-
 		if (urlPrefix == null || !UrlUtils.isAbsoluteUrl(urlPrefix)) {
-			urlPrefix = urlHelper.getUrl() + "/" + handlerPrefix;
+			urlPrefix = urlHelper.getUrl() + urlPatternPrefix;
 		}
-
-		urlPatternPrefix = handlerPrefix.startsWith("/") ? handlerPrefix : "/" + handlerPrefix;
 
 		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler) {
@@ -294,6 +299,10 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
 	}
 
 }

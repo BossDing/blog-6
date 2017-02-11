@@ -50,7 +50,6 @@ import me.qyh.blog.web.Webs;
  *
  */
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
-
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final Set<String> errorThumbPaths = new HashSet<>();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
@@ -80,6 +79,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize smallResize;
 	private Resize middleResize;
 	private Resize largeResize;
+
+	public ImageResourceStore(String urlPatternPrefix) {
+		super(urlPatternPrefix);
+	}
 
 	public ImageResourceStore() {
 		super("image");
