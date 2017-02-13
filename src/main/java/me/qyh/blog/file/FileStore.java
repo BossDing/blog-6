@@ -116,4 +116,18 @@ public interface FileStore {
 	 */
 	boolean readOnly();
 
+	/**
+	 * 拷贝<b>文件</b>
+	 * <p>
+	 * 如果目标地址存在文件，则覆盖
+	 * </p>
+	 * 
+	 * @param oldPath
+	 *            源路径
+	 * @param path
+	 *            现路径
+	 * @return 拷贝成功|失败
+	 */
+	boolean copy(String oldPath, String path);
+
 }

@@ -25,7 +25,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Objects;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -61,25 +60,6 @@ public class FileUtils {
 	 */
 	public static void write(byte[] bytes, File file) throws IOException {
 		Files.write(file.toPath(), bytes, StandardOpenOption.WRITE);
-	}
-
-	/**
-	 * 文件重命名
-	 * 
-	 * @param file
-	 *            要重命名的文件
-	 * @param newName
-	 *            新文件名
-	 * 
-	 */
-	public static void rename(File file, File newNameFile) {
-		Objects.requireNonNull(file);
-		Objects.requireNonNull(newNameFile);
-		try {
-			Files.move(file.toPath(), newNameFile.toPath());
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
 	}
 
 	/**
@@ -160,6 +140,7 @@ public class FileUtils {
 	 * @throws IOException
 	 */
 	public static void copy(File source, File target) throws IOException {
+		forceMkdir(target.getParentFile());
 		Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 

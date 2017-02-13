@@ -28,8 +28,8 @@
 								<li><a th:href="@{/mgr/file/index}">根目录</a></li>
 								<li th:each="path : ${result.paths}"><a
 									th:href="@{/mgr/file/index?parent=}+${path.id}"
-									th:title="${path.name}" data-toggle="tooltip"
-									th:text="${#strings.length(path.name) > 5  ? #strings.substring(path.name,0,5)+'...' : path.name}"></a>
+									th:title="${path.path}" data-toggle="tooltip"
+									th:text="${#strings.length(path.path) > 5  ? #strings.substring(path.path,0,5)+'...' : path.path}"></a>
 								</li>
 							</ol>
 						</div>
@@ -57,11 +57,9 @@
 												th:src="@{/static/fileicon/folder.png}"
 												class="img-responsive" style="height: 80px" /></a>
 											<div class="caption">
-												<a th:title="${file.name}" data-toggle="tooltip"
-													th:text="${#strings.length(file.name) > 5  ? #strings.substring(file.name,0,5)+'...' : file.name}"></a>
+												<a th:title="${file.path}" data-toggle="tooltip"
+													th:text="${#strings.length(file.path) > 5  ? #strings.substring(file.path,0,5)+'...' : file.path}"></a>
 											</div>
-											<div class="caption"
-												th:text="${#dates.format(file.lastModifyDate, 'yyyy-MM-dd HH:mm')}"></div>
 											<div class="caption" style="height: 45px">
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="删除" data-action="delete"
@@ -69,8 +67,7 @@
 													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}"
-													th:data-path="${file.path}"
+													th:data-id="${file.id}" 
 													th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
@@ -86,11 +83,9 @@
 												th:src="@{/static/fileicon/file.png}" class="img-responsive"
 												style="height: 80px" th:if="${file.cf.thumbnailUrl == null}" />
 											<div class="caption">
-												<a th:title="${file.name}" data-toggle="tooltip"
-													th:text="${#strings.length(file.name) > 5  ? #strings.substring(file.name,0,5)+'...' : file.name}"></a>
+												<a th:title="${file.path}" data-toggle="tooltip"
+													th:text="${#strings.length(file.path) > 5  ? #strings.substring(file.path,0,5)+'...' : file.path}"></a>
 											</div>
-											<div class="caption"
-												th:text="${#dates.format(file.lastModifyDate, 'yyyy-MM-dd HH:mm')}"></div>
 											<div class="caption" style="height: 45px">
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="删除" data-action="delete"
@@ -98,13 +93,13 @@
 													class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="更新" data-action="update"
-													th:data-id="${file.id}" th:data-name="${file.name}"
+													th:data-id="${file.id}" th:data-name="${file.path}"
 													th:data-path="${file.path}"
 													th:data-type="${file.type.name()}"><span
 													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" th:href="${file.cf.url}"
 													target="_blank" data-toggle="tooltip"
-													title="查看文件，这跟文件和浏览器有关系，通常情况下，只能查看js,css,txt和图片等文件，其他文件会被当作文件下载。(如果储存在受保护的存储器中，则不会执行预览请求，而是直接下载文件)"><span
+													title="查看文件，这跟文件和浏览器有关系，通常情况下，只能查看js,css,txt和图片等文件，其他文件会被当作文件下载。"><span
 													class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>
 												<a style="margin-right: 5px" target="_blank"
 													th:href="${file.cf.downloadUrl}" data-toggle="tooltip"
@@ -219,10 +214,6 @@
 					<form autocomplete="off">
 						<span th:remove="tag" th:if="${param.parent != null}"><input
 							type="hidden" th:value="${param.parent}" name="parent"></span>
-						<div class="form-group">
-							<label for="name" class="control-label">名称(1~20个字符):</label> <input
-								type="text" class="form-control" name="name">
-						</div>
 						<input type="hidden" value="DIRECTORY" class="form-control"
 							name="type">
 						<div class="form-group">
@@ -254,15 +245,8 @@
 					<div class="tip"></div>
 					<form autocomplete="off">
 						<input type="hidden" class="form-control" name="id">
-						<div class="form-group">
-							<label for="name" class="control-label">名称(1~20个字符):</label> <input
-								type="text" class="form-control" name="name">
-						</div>
 						<input type="hidden" value="" class="form-control" name="type">
-						<div class="form-group">
-							<label for="name" class="control-label">路径:</label> <input
-								type="text" class="form-control" name="path" readonly="readonly">
-						</div>
+						<div id="update-path-container"></div>
 					</form>
 				</div>
 				<div class="modal-footer">

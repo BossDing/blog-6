@@ -160,11 +160,32 @@ $(document).ready(function(){
 				})
 				break;
 			case "update":
-				$("#updateModal").modal("show");
-				$("#updateModal input[name='name']").val(me.attr("data-name"));
-				$("#updateModal input[name='path']").val(me.attr("data-path"));
-				$("#updateModal input[name='type']").val(me.attr("data-type"));
-				$("#updateModal input[name='id']").val(id);
+				$.ajax({
+					type : "get",
+					url : basePath+"/mgr/file/get/"+id,
+					data : {},
+					success : function(data){
+						if(data.success){
+							var  f= data.data;
+							$("#updateModal").modal("show");
+							$("#updateModal input[name='name']").val(f.name);
+							$("#updateModal input[name='path']").val(f.path);
+							$("#updateModal input[name='type']").val(f.type);
+							$("#updateModal input[name='id']").val(id);
+							if(f.type == 'FILE'){
+								var ext = f.path.split('.').pop();
+								var name = f.path.substr(0, f.path.lastIndexOf('.'));
+								$("#update-path-container").html('<div class="input-group" ><span class="input-group-addon">路径</span><input  type="text" value="'+name+'" class="form-control" name="path"> <span class="input-group-addon" id="basic-addon2">.'+ext+'</span></div>');
+							}else{
+								$("#update-path-container").html('<div class="form-group" ><label for="name" class="control-label">路径:</label> <input type="text" value="'+f.path+'" class="form-control" name="path" readonly="readonly"></div>');
+							}
+						} else {
+							error("文件不存在或者已经被删除");
+						}
+					},
+					complete:function(){
+					}
+				});
 				break;
 			case "move":
 				$("#directorySelectModal").modal('show');

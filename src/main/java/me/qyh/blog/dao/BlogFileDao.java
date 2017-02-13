@@ -49,38 +49,6 @@ public interface BlogFileDao {
 	BlogFile selectById(Integer id);
 
 	/**
-	 * 当插入新节点时，更新父节点的左值
-	 * 
-	 * @param parent
-	 *            父节点
-	 */
-	void updateLftWhenAddChild(BlogFile parent);
-
-	/**
-	 * 当插入新节点时，更新父节点的右值
-	 * 
-	 * @param parent
-	 *            父节点
-	 */
-	void updateRgtWhenAddChild(BlogFile parent);
-
-	/**
-	 * 删除节点时，更新受影响节点的左值
-	 * 
-	 * @param toDelete
-	 *            待删除的节点
-	 */
-	void updateLftWhenDelete(BlogFile toDelete);
-
-	/**
-	 * 删除节点时，更新受影响节点的右值
-	 * 
-	 * @param toDelete
-	 *            待删除的节点
-	 */
-	void updateRgtWhenDelete(BlogFile toDelete);
-
-	/**
 	 * 查询文件数目
 	 * 
 	 * @param param
@@ -191,6 +159,73 @@ public interface BlogFileDao {
 	 * @return
 	 */
 	List<FileCountBean> selectFileCount();
+	
+
+	/**
+	 * 添加节点后批量更新父节点左右值
+	 * 
+	 * @param parent
+	 */
+	default void updateWhenAddChild(BlogFile parent) {
+		updateLftWhenAddChild(parent);
+		updateRgtWhenAddChild(parent);
+	}
+
+	/**
+	 * 删除节点后批量更新受影响节点左右值
+	 * 
+	 * @param toDelete
+	 */
+	default void updateWhenDelete(BlogFile toDelete) {
+		updateLftWhenDelete(toDelete);
+		updateRgtWhenDelete(toDelete);
+	}
+
+	/**
+	 * 插入新节点时，更新父节点的左右值
+	 * <p>
+	 * <b>不应该直接调用</b>
+	 * </p>
+	 * 
+	 * @see BlogFileDao#updateWhenAddChild(BlogFile)
+	 * @param parent
+	 */
+	void updateLftWhenAddChild(BlogFile parent);
+
+	/**
+	 * 插入新节点时，更新父节点的左右值
+	 * <p>
+	 * <b>不应该直接调用</b>
+	 * </p>
+	 * 
+	 * @see BlogFileDao#updateWhenAddChild(BlogFile)
+	 * @param parent
+	 */
+	void updateRgtWhenAddChild(BlogFile parent);
+
+	/**
+	 * 删除节点时，更新受影响节点的左值
+	 * <p>
+	 * <b>不应该直接调用</b>
+	 * </p>
+	 * 
+	 * @see BlogFileDao#updateWhenDelete(BlogFile)
+	 * @param toDelete
+	 *            待删除的节点
+	 */
+	void updateLftWhenDelete(BlogFile toDelete);
+
+	/**
+	 * 删除节点时，更新受影响节点的右值
+	 * <p>
+	 * <b>不应该直接调用</b>
+	 * </p>
+	 * 
+	 * @see BlogFileDao#updateWhenDelete(BlogFile)
+	 * @param toDelete
+	 *            待删除的节点
+	 */
+	void updateRgtWhenDelete(BlogFile toDelete);
 
 	public class FileCountBean {
 		private int fileStore;

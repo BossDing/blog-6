@@ -17,6 +17,7 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.file.FileStore;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 
 /**
@@ -144,4 +146,27 @@ public interface FileService {
 	 * @return
 	 */
 	PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page);
+
+	/**
+	 * 根据ID查询文件
+	 * <p>
+	 * <b>返回的文件路径为全路径</b>
+	 * </p>
+	 * 
+	 * @param id
+	 *            文件id
+	 */
+	Optional<BlogFile> getFile(int id);
+
+	static String cleanPath(String path) {
+		if (FileService.SPLIT_CHAR.equals(path)) {
+			return "";
+		}
+		String cleaned = Validators.cleanPath(path);
+		if (cleaned.startsWith(FileService.SPLIT_CHAR)) {
+			cleaned = cleaned.substring(1, cleaned.length());
+		}
+		return cleaned;
+	}
+
 }

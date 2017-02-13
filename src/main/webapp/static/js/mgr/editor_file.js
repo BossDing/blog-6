@@ -489,7 +489,7 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 			html += '<li><a href="###"  data-parent="" data-page="1" >根目录</a></li>'	;
 			for(var i=0;i<paths.length;i++){
 				var path = paths[i];
-				html += '<li><a href="###" data-parent="'+path.id+'" data-page="1" >'+path.name+'</a></li>';
+				html += '<li><a href="###" data-parent="'+path.id+'" data-page="1" >'+path.path+'</a></li>';
 			}
 			html += '</ol>';
 			html += '</div>';
@@ -518,7 +518,7 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 					html += '</a>';
 				}
 				html += '<div class="caption" style="height:35px">';
-				var name = data.name
+				var name = data.path
 				if(name.length > 10){
 					name = name.substring(0,10)+"...";
 				}

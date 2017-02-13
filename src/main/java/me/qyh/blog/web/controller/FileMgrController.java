@@ -156,4 +156,10 @@ public class FileMgrController extends BaseMgrController {
 		fileService.update(blogFile);
 		return new JsonResult(true, new Message("file.update.success", "更新成功"));
 	}
+
+	@RequestMapping(value = "get/{id}", method = RequestMethod.GET)
+	@ResponseBody
+	public JsonResult get(@PathVariable("id") int id) throws LogicException {
+		return fileService.getFile(id).map(f -> new JsonResult(true, f)).orElse(new JsonResult(false));
+	}
 }

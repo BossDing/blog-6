@@ -33,6 +33,7 @@ import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.service.FileService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.web.Webs;
 
@@ -77,13 +78,15 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		try {
 			CommonFile cf = new CommonFile();
-			doUpload(key, tmp);
+
+			String vkey = FileService.cleanPath(key);
+			doUpload(vkey, tmp);
 
 			cf.setExtension(extension);
 
 			if (ImageHelper.isSystemAllowedImage(extension)) {
 				try {
-					ImageInfo ii = this.readImage(key);
+					ImageInfo ii = this.readImage(vkey);
 
 					cf.setWidth(ii.getWidth());
 					cf.setHeight(ii.getHeight());
@@ -149,18 +152,20 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public final boolean deleteBatch(String key) {
-		boolean flag = doDeleteBatch(key);
+		String vkey = FileService.cleanPath(key);
+		boolean flag = doDeleteBatch(vkey);
 		if (flag) {
-			flag = deleteBackup(key);
+			flag = deleteBackup(vkey);
 		}
 		return flag;
 	}
 
 	@Override
 	public final boolean delete(String key) {
-		boolean flag = doDelete(key);
+		String vkey = FileService.cleanPath(key);
+		boolean flag = doDelete(vkey);
 		if (flag) {
-			flag = deleteBackup(key);
+			flag = deleteBackup(vkey);
 		}
 		return flag;
 	}
@@ -184,6 +189,25 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		return true;
 	}
+
+	@Override
+	public final boolean copy(String oldPath, String path) {
+		String vo = FileService.cleanPath(oldPath);
+		String vp = FileService.cleanPath(path);
+		if (backupDir != null) {
+			File backup = new File(backupDir, vo);
+			if (backup.exists()) {
+				try {
+					FileUtils.copy(backup, new File(backupDir, vp));
+				} catch (IOException e) {
+					return false;
+				}
+			}
+		}
+		return doCopy(vo, vp);
+	}
+
+	protected abstract boolean doCopy(String oldPath, String path);
 
 	protected abstract boolean doDelete(String key);
 

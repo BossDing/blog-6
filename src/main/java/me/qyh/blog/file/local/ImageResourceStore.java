@@ -319,7 +319,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				imageHelper.format(local, target);
 			}
 
-			FileUtils.rename(target, cover);
+			FileUtils.move(target, cover);
 		}
 		FileUtils.forceMkdir(thumb.getParentFile());
 		// 基于封面缩放

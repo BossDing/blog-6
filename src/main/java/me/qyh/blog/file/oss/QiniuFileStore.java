@@ -218,6 +218,22 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	}
 
 	@Override
+	public boolean doCopy(String oldPath, String path) {
+		try {
+			new BucketManager(auth).copy(bucket, oldPath, bucket, path);
+			return true;
+		} catch (QiniuException e) {
+			try {
+				Response r = e.response;
+				LOGGER.error("七牛云拷贝文件失败，异常信息:" + r.toString() + ",响应信息:" + r.bodyString(), e);
+			} catch (QiniuException e1) {
+				LOGGER.debug(e1.getMessage(), e1);
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public void afterPropertiesSet() throws Exception {
 		super.afterPropertiesSet();
 		if (Validators.isEmptyOrNull(bucket, true)) {
@@ -244,7 +260,6 @@ public class QiniuFileStore extends AbstractOssFileStore {
 				styleSplitChar = '-';
 			}
 		}
-
 	}
 
 	/**

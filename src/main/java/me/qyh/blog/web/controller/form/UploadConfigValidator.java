@@ -75,11 +75,12 @@ public class UploadConfigValidator implements Validator {
 
 	private void validatePath(String path, Errors errors) {
 		if (path.length() > MAX_PATH_LENGTH) {
-			errors.reject("file.path.toolong", new Object[] { MAX_PATH_LENGTH }, "文件夹路径不能超过" + MAX_PATH_LENGTH + "个字符");
+			errors.reject("file.path.toolong", new Object[] { path, MAX_PATH_LENGTH },
+					"路径" + path + "不能超过" + MAX_PATH_LENGTH + "个字符");
 			return;
 		}
 		if (!BlogFileValidator.checkPath(path)) {
-			errors.reject("file.path.valid", "文件夹路径无效");
+			errors.reject("file.path.valid", new Object[] { path }, "路径" + path + "无效");
 			return;
 		}
 	}

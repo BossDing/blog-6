@@ -33,7 +33,6 @@ public class BlogFile extends BaseEntity {
 	private static final long serialVersionUID = 1L;
 
 	private Timestamp createDate;
-	private Timestamp lastModifyDate;
 
 	/**
 	 * 文件类型
@@ -66,9 +65,12 @@ public class BlogFile extends BaseEntity {
 	private Integer lft;
 	private Integer rgt;
 	private BlogFile parent; // 父节点
-	private String name; // 名称
 	private String path;
-
+	
+	public BlogFile(){
+		super();
+	}
+	
 	public CommonFile getCf() {
 		return cf;
 	}
@@ -101,14 +103,6 @@ public class BlogFile extends BaseEntity {
 		this.parent = parent;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public BlogFileType getType() {
 		return type;
 	}
@@ -132,14 +126,6 @@ public class BlogFile extends BaseEntity {
 	 */
 	public boolean isRoot() {
 		return parent == null;
-	}
-
-	public Timestamp getLastModifyDate() {
-		return lastModifyDate == null ? createDate : lastModifyDate;
-	}
-
-	public void setLastModifyDate(Timestamp lastModifyDate) {
-		this.lastModifyDate = lastModifyDate;
 	}
 
 	public Timestamp getCreateDate() {

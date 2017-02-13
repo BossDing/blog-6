@@ -48,7 +48,6 @@ import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Jsons.ExpressionExecutor;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.util.Validators;
 
 /**
  * 阿里云的
@@ -152,6 +151,17 @@ public class AliyunFileStore extends AbstractOssFileStore {
 		return true;
 	}
 
+	@Override
+	public boolean doCopy(String oldPath, String path) {
+		try {
+			ossClient.copyObject(bucket, oldPath, bucket, path);
+			return true;
+		} catch (OSSException | ClientException e) {
+			LOGGER.error(e.getMessage(), e);
+		}
+		return false;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -161,13 +171,13 @@ public class AliyunFileStore extends AbstractOssFileStore {
 	 */
 	@Override
 	protected void upload(String key, File file) throws IOException {
-		ossClient.putObject(bucket, validKey(key), Files.newInputStream(file.toPath()));
+		ossClient.putObject(bucket, key, Files.newInputStream(file.toPath()));
 	}
 
 	@Override
 	protected boolean doDelete(String key) {
 		try {
-			ossClient.deleteObject(bucket, validKey(key));
+			ossClient.deleteObject(bucket, key);
 		} catch (OSSException | ClientException e) {
 			LOGGER.error(e.getMessage(), e);
 			return false;
@@ -181,7 +191,6 @@ public class AliyunFileStore extends AbstractOssFileStore {
 	 */
 	@Override
 	protected boolean doDeleteBatch(String key) {
-		String vkey = validKey(key);
 		String nextMarker = null;
 		ObjectListing objectListing;
 		List<OSSObjectSummary> sums;
@@ -189,7 +198,7 @@ public class AliyunFileStore extends AbstractOssFileStore {
 		try {
 			do {
 				objectListing = ossClient.listObjects(
-						new ListObjectsRequest(bucket).withPrefix(vkey).withMarker(nextMarker).withMaxKeys(maxKeys));
+						new ListObjectsRequest(bucket).withPrefix(key).withMarker(nextMarker).withMaxKeys(maxKeys));
 
 				sums = objectListing.getObjectSummaries();
 
@@ -272,14 +281,6 @@ public class AliyunFileStore extends AbstractOssFileStore {
 		} catch (Exception e) {
 			throw new IOException("获取图片信息失败:" + result);
 		}
-	}
-
-	private String validKey(String key) {
-		String cleaned = Validators.cleanPath(key);
-		if (cleaned.startsWith("/")) {
-			cleaned = cleaned.substring(1, cleaned.length());
-		}
-		return cleaned;
 	}
 
 	private String sourceProtectedUrl(String key) {
