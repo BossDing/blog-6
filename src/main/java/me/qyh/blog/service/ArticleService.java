@@ -180,8 +180,6 @@ public interface ArticleService {
 	 * <b>用于DataTag</b>
 	 * </p>
 	 * 
-	 * @param queryPrivate
-	 *            是否查询私人文章
 	 * @return 标签集
 	 */
 	List<TagCount> queryTags() throws LogicException;

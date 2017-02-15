@@ -43,6 +43,16 @@ public class CommonFile extends BaseEntity {
 		super();
 	}
 
+	public CommonFile(CommonFile cf) {
+		this.size = cf.size;
+		this.extension = cf.extension;
+		this.store = cf.store;
+		this.id = cf.id;
+		this.originalFilename = cf.originalFilename;
+		this.width = cf.width;
+		this.height = cf.height;
+	}
+
 	public long getSize() {
 		return size;
 	}

@@ -522,7 +522,7 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 				if(name.length > 10){
 					name = name.substring(0,10)+"...";
 				}
-				html += '<a title="'+data.name+'" data-toggle="tooltip">'+name+'</a>';
+				html += '<a title="'+data.path+'" data-toggle="tooltip">'+name+'</a>';
 				html += '</div>';
 				html += '</div>';
 				html += '</div>';

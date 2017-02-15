@@ -90,7 +90,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	public  CommonFile store(String key, MultipartFile mf) throws LogicException {
+	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		File dest = new File(absFolder, key);
 		if (dest.exists() && !FileUtils.deleteQuietly(dest)) {
 			throw new LogicException("file.store.exists", "文件" + dest.getAbsolutePath() + "已经存在",
@@ -174,7 +174,22 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 				FileUtils.copy(optionalOld.get(), new File(absFolder, path));
 				return true;
 			} catch (IOException e) {
-				LOGGER.error("移动文件夹失败:" + e.getMessage(), e);
+				LOGGER.error("拷贝文件失败:" + e.getMessage(), e);
+				return false;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean move(String oldPath, String path) {
+		Optional<File> optionalOld = getFile(oldPath);
+		if (optionalOld.isPresent()) {
+			try {
+				FileUtils.move(optionalOld.get(), new File(absFolder, path));
+				return true;
+			} catch (IOException e) {
+				LOGGER.error("移动文件失败:" + e.getMessage(), e);
 				return false;
 			}
 		}

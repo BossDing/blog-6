@@ -17,6 +17,7 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -134,7 +135,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 			param.setQueryPrivate(false);
 		}
 		if (Validators.isEmptyOrNull(param.getAlias(), true) && Validators.isEmptyOrNull(param.getName(), true)) {
-			return spaceCache.getSpaces(new SpacesCacheKey(param.getQueryPrivate()));
+			return new ArrayList<>(spaceCache.getSpaces(new SpacesCacheKey(param.getQueryPrivate())));
 		}
 		return spaceDao.selectByParam(param);
 	}

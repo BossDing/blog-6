@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.controller;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.validation.MapBindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -150,16 +153,37 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("file.create.success", "创建成功"));
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@RequestMapping(value = "copy", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult update(@RequestBody @Validated BlogFile blogFile) throws LogicException {
-		fileService.update(blogFile);
-		return new JsonResult(true, new Message("file.update.success", "更新成功"));
+	public JsonResult copy(@RequestParam("sourceId") Integer sourceId, @RequestParam("folderPath") String folderPath)
+			throws LogicException {
+		Errors bingdingResult = new MapBindingResult(new HashMap<>(), "folderPath");
+		BlogFileValidator.validFolderPath(folderPath, bingdingResult);
+		if (bingdingResult.hasErrors()) {
+			List<ObjectError> errors = bingdingResult.getAllErrors();
+			for (ObjectError error : errors) {
+				return new JsonResult(false,
+						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
+			}
+		}
+		fileService.copy(sourceId, folderPath);
+		return new JsonResult(true, new Message("file.copy.success", "拷贝成功"));
 	}
 
-	@RequestMapping(value = "get/{id}", method = RequestMethod.GET)
+	@RequestMapping(value = "move", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult get(@PathVariable("id") int id) throws LogicException {
-		return fileService.getFile(id).map(f -> new JsonResult(true, f)).orElse(new JsonResult(false));
+	public JsonResult move(@RequestParam("sourceId") Integer sourceId, @RequestParam("destPath") String destPath)
+			throws LogicException {
+		Errors bingdingResult = new MapBindingResult(new HashMap<>(), "destPath");
+		BlogFileValidator.validFilePath(destPath, bingdingResult);
+		if (bingdingResult.hasErrors()) {
+			List<ObjectError> errors = bingdingResult.getAllErrors();
+			for (ObjectError error : errors) {
+				return new JsonResult(false,
+						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
+			}
+		}
+		fileService.move(sourceId, destPath);
+		return new JsonResult(true, new Message("file.move.success", "移动成功"));
 	}
 }

@@ -347,6 +347,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles() {
+		if (Environment.hasSpace()) {
+			return Collections.emptyList();
+		}
 		return articleDao.selectSpaceFiles(Environment.isLogin());
 	}
 
@@ -525,8 +528,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
-		return articleIndexer.querySimilar(article, articleIds -> articleDao.selectByIds(articleIds), limit).stream()
-				.map(this::toSimpleArticle).collect(Collectors.toList());
+		return articleIndexer.querySimilar(article, Environment.isLogin(),
+				articleIds -> articleDao.selectSimpleByIds(articleIds), limit).stream().collect(Collectors.toList());
 	}
 
 	@Override
@@ -701,14 +704,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			article.setHits(articleDao.selectHits(article.getId()));
 			articleIndexer.addOrUpdateDocument(article);
 		}
-	}
-
-	protected Article toSimpleArticle(Article article) {
-		Article simple = new Article(article.getId());
-		simple.setAlias(article.getAlias());
-		simple.setSpace(article.getSpace());
-		simple.setTitle(article.getTitle());
-		return simple;
 	}
 
 	/**

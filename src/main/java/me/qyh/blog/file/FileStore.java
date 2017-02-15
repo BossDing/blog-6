@@ -23,6 +23,10 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.exception.LogicException;
 
 /**
+ * 文件存储器
+ * <p>
+ * <b>执行文件操作的时候(写入|删除|拷贝|移动)等，可能需要额外的同步</b>
+ * </p>
  * 
  * @author Administrator
  *
@@ -129,5 +133,19 @@ public interface FileStore {
 	 * @return 拷贝成功|失败
 	 */
 	boolean copy(String oldPath, String path);
+
+	/**
+	 * 移动<b>文件</b>
+	 * <p>
+	 * 如果目标地址存在文件，则覆盖
+	 * </p>
+	 * 
+	 * @param oldPath
+	 *            原路径
+	 * @param path
+	 *            新路径
+	 * @return
+	 */
+	boolean move(String oldPath, String path);
 
 }

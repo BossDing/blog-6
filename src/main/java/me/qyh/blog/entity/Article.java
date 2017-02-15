@@ -22,6 +22,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
+
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
 
@@ -314,11 +317,12 @@ public class Article extends BaseLockResource {
 	 * @return true包含，false不包含
 	 */
 	public boolean hasTag(String tag) {
-		return this.tags.stream().anyMatch(_tag -> _tag.getName().equals(tag));
+		return this.tags.stream().anyMatch(_tag -> Jsoup.clean(_tag.getName(), Whitelist.none()).equalsIgnoreCase(tag));
 	}
 
 	public Optional<Tag> getTag(String name) {
-		return this.tags.stream().filter(tag -> name.equalsIgnoreCase(tag.getName())).findAny();
+		return this.tags.stream().filter(tag -> name.equalsIgnoreCase(Jsoup.clean(tag.getName(), Whitelist.none())))
+				.findAny();
 	}
 
 	public String getAlias() {

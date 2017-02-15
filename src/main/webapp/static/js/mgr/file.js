@@ -19,7 +19,7 @@ $(document).ready(function(){
 			clearTip();
 			$(this).find("form")[0].reset();
 		})
-		$("#updateModal").on("show.bs.modal",function(){
+		$("#copyModal").on("show.bs.modal",function(){
 			clearTip();
 			$(this).find("form")[0].reset();
 		})
@@ -159,36 +159,17 @@ $(document).ready(function(){
 					}
 				})
 				break;
-			case "update":
-				$.ajax({
-					type : "get",
-					url : basePath+"/mgr/file/get/"+id,
-					data : {},
-					success : function(data){
-						if(data.success){
-							var  f= data.data;
-							$("#updateModal").modal("show");
-							$("#updateModal input[name='name']").val(f.name);
-							$("#updateModal input[name='path']").val(f.path);
-							$("#updateModal input[name='type']").val(f.type);
-							$("#updateModal input[name='id']").val(id);
-							if(f.type == 'FILE'){
-								var ext = f.path.split('.').pop();
-								var name = f.path.substr(0, f.path.lastIndexOf('.'));
-								$("#update-path-container").html('<div class="input-group" ><span class="input-group-addon">路径</span><input  type="text" value="'+name+'" class="form-control" name="path"> <span class="input-group-addon" id="basic-addon2">.'+ext+'</span></div>');
-							}else{
-								$("#update-path-container").html('<div class="form-group" ><label for="name" class="control-label">路径:</label> <input type="text" value="'+f.path+'" class="form-control" name="path" readonly="readonly"></div>');
-							}
-						} else {
-							error("文件不存在或者已经被删除");
-						}
-					},
-					complete:function(){
-					}
-				});
+			case "copy":
+				$("#copyModal").modal("show");
+				$("#copyModal input[name='id']").val(id);
+				$("#copyModal input[name='path']").val('');
 				break;
 			case "move":
-				$("#directorySelectModal").modal('show');
+				$("#moveModal").modal("show");
+				$("#moveModal input[name='id']").val(id);
+				var ext = me.attr('data-ext')
+				$("#move-path-container").html('<span class="input-group-addon">路径</span><input type="text" value="" class="form-control" name="path"><span class="input-group-addon" >.'+ext+'</span>');
+				$("#moveModal input[name='path']").val('');
 				break;
 			default : 
 				break;
@@ -226,14 +207,12 @@ $(document).ready(function(){
 			});
 		});
 		
-		$("#update").click(function(){
-			$("#update").prop("disabled",true);
-			var data = $("#updateModal").find("form").serializeObject();
+		$("#copy").click(function(){
+			$("#copy").prop("disabled",true);
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/file/update",
-				data : JSON.stringify(data),
-				dataType : "json",
+				url : basePath+"/mgr/file/copy?sourceId="+$("#copyModal input[name='id']").val()+"&folderPath="+$("#copyModal input[name='path']").val(),
+				data : {},
 				contentType : 'application/json',
 				success : function(data){
 					if(data.success){
@@ -246,7 +225,30 @@ $(document).ready(function(){
 					}
 				},
 				complete:function(){
-					$("#update").prop("disabled",false);
+					$("#copy").prop("disabled",false);
+				}
+			});
+		});
+		
+		$("#move").click(function(){
+			$("#move").prop("disabled",true);
+			$.ajax({
+				type : "post",
+				url : basePath+"/mgr/file/move?sourceId="+$("#moveModal input[name='id']").val()+"&destPath="+$("#moveModal input[name='path']").val(),
+				data : {},
+				contentType : 'application/json',
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500)
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+					$("#move").prop("disabled",false);
 				}
 			});
 		});

@@ -58,14 +58,12 @@ CREATE TABLE IF NOT EXISTS `blog_common_file` (
 
 CREATE TABLE IF NOT EXISTS `blog_file` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `file_name` varchar(500)  NOT NULL,
   `file_parent` int(11) DEFAULT NULL,
   `file_type` int(11) NOT NULL DEFAULT '0',
   `file_createDate` datetime NOT NULL,
   `common_file` int(11) DEFAULT NULL,
   `file_lft` int(11) NOT NULL,
   `file_rgt` int(11) NOT NULL,
-  `file_lastmodifydate` datetime DEFAULT NULL,
   `file_path` varchar(500)  NOT NULL,
   PRIMARY KEY (`id`)
 ) ;

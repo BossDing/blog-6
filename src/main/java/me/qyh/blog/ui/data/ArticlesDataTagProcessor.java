@@ -150,6 +150,11 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
+		String highlightStr = super.getVariables("highlight", variables, attributes);
+		if (highlightStr != null) {
+			param.setHighlight(Boolean.parseBoolean(highlightStr));
+		}
+
 		if (Environment.isLogin()) {
 			String ignoreLevelStr = super.getVariables("ignoreLevel", variables, attributes);
 			if (ignoreLevelStr != null) {

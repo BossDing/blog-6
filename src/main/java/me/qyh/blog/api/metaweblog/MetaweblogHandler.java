@@ -56,7 +56,7 @@ import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.ArticleValidator;
-import me.qyh.blog.web.controller.form.BlogFileUploadValidator;
+import me.qyh.blog.web.controller.form.BlogFileValidator;
 
 /**
  * http://www.oschina.net/uploads/doc/MetaWeblog.html
@@ -214,8 +214,8 @@ public class MetaweblogHandler {
 		if (name.indexOf('/') != -1) {
 			name = name.substring(name.lastIndexOf('/') + 1, name.length());
 		}
-		if (name.length() > BlogFileUploadValidator.MAX_FILE_NAME_LENGTH) {
-			throw new LogicException("file.name.toolong", BlogFileUploadValidator.MAX_FILE_NAME_LENGTH);
+		if (name.length() > BlogFileValidator.MAX_FILE_NAME_LENGTH) {
+			throw new LogicException("file.name.toolong", BlogFileValidator.MAX_FILE_NAME_LENGTH);
 		}
 		byte[] bits = struct.getBase64("bits");
 		if (bits == null) {

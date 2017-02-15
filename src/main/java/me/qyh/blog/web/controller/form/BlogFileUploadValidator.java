@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.controller.form;
 
+import java.io.File;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class BlogFileUploadValidator implements Validator {
 
-	public static final int MAX_FILE_NAME_LENGTH = 500;
+	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -45,6 +46,12 @@ public class BlogFileUploadValidator implements Validator {
 			if (file.getOriginalFilename().length() > MAX_FILE_NAME_LENGTH) {
 				errors.reject("file.name.toolong", new Object[] { MAX_FILE_NAME_LENGTH },
 						"文件名不能超过" + MAX_FILE_NAME_LENGTH + "个字符");
+				return;
+			}
+			try {
+				new File(file.getOriginalFilename()).getCanonicalPath();
+			} catch (Exception e) {
+				errors.reject("file.name.valid", "文件名非法");
 				return;
 			}
 			if (file.isEmpty()) {

@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,6 +59,7 @@ import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.FileService;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.BlogFileUpload;
 import me.qyh.blog.web.controller.form.BlogFileValidator;
@@ -84,15 +85,17 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Autowired
 	private ConfigService configService;
 
-	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
 	private static final Message PARENT_NOT_EXISTS = new Message("file.parent.notexists", "父目录不存在");
 	private static final Message NOT_EXISTS = new Message("file.notexists", "文件不存在");
 
+	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
+
+	private ReentrantLock lock = new ReentrantLock();
+
 	@Override
-	public synchronized UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException {
+	public UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException {
 		return upload(configService.getMetaweblogConfig(), file);
 	}
 
@@ -106,46 +109,51 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	@Override
-	public synchronized List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
-		BlogFile parent;
-		if (upload.getParent() != null) {
-			parent = blogFileDao.selectById(upload.getParent());
-			if (parent == null) {
-				throw new LogicException(PARENT_NOT_EXISTS);
-			}
-		} else {
-			parent = blogFileDao.selectRoot();
-		}
-
-		String folderKey = getFilePath(parent);
-		deleteImmediatelyIfNeed(folderKey);
-		Integer storeId = upload.getStore();
-		if (storeId == null) {
-			throw new LogicException("file.store.notexists", "文件存储器不存在");
-		}
-		FileStore store = fileManager.getFileStore(upload.getStore())
-				.orElseThrow(() -> new LogicException("file.store.notexists", "文件存储器不存在"));
-
-		if (store.readOnly()) {
-			throw new LogicException("file.store.readonly", "只读存储器无法存储文件");
-		}
-		List<UploadedFile> uploadedFiles = new ArrayList<>();
-		for (MultipartFile file : upload.getFiles()) {
-			String originalFilename = file.getOriginalFilename();
-			if (store.canStore(file)) {
-				try {
-					UploadedFile uf = storeMultipartFile(file, parent, folderKey, store);
-					uploadedFiles.add(uf);
-				} catch (LogicException e) {
-					uploadedFiles.add(new UploadedFile(originalFilename, e.getLogicMessage()));
+	public List<UploadedFile> upload(BlogFileUpload upload) throws LogicException {
+		lock.lock();
+		try {
+			BlogFile parent;
+			if (upload.getParent() != null) {
+				parent = blogFileDao.selectById(upload.getParent());
+				if (parent == null) {
+					throw new LogicException(PARENT_NOT_EXISTS);
 				}
 			} else {
-				String extension = FileUtils.getFileExtension(originalFilename);
-				uploadedFiles.add(new UploadedFile(originalFilename,
-						new Message("file.store.unsupportformat", "存储器不支持存储" + extension + "文件", extension)));
+				parent = blogFileDao.selectRoot();
 			}
+
+			String folderKey = getFilePath(parent);
+			deleteImmediatelyIfNeed(folderKey);
+			Integer storeId = upload.getStore();
+			if (storeId == null) {
+				throw new LogicException("file.store.notexists", "文件存储器不存在");
+			}
+			FileStore store = fileManager.getFileStore(upload.getStore())
+					.orElseThrow(() -> new LogicException("file.store.notexists", "文件存储器不存在"));
+
+			if (store.readOnly()) {
+				throw new LogicException("file.store.readonly", "只读存储器无法存储文件");
+			}
+			List<UploadedFile> uploadedFiles = new ArrayList<>();
+			for (MultipartFile file : upload.getFiles()) {
+				String originalFilename = file.getOriginalFilename();
+				if (store.canStore(file)) {
+					try {
+						UploadedFile uf = storeMultipartFile(file, parent, folderKey, store);
+						uploadedFiles.add(uf);
+					} catch (LogicException e) {
+						uploadedFiles.add(new UploadedFile(originalFilename, e.getLogicMessage()));
+					}
+				} else {
+					String extension = FileUtils.getFileExtension(originalFilename);
+					uploadedFiles.add(new UploadedFile(originalFilename,
+							new Message("file.store.unsupportformat", "存储器不支持存储" + extension + "文件", extension)));
+				}
+			}
+			return uploadedFiles;
+		} finally {
+			lock.unlock();
 		}
-		return uploadedFiles;
 	}
 
 	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileStore store)
@@ -168,7 +176,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			store.delete(key);
 			throw new LogicException("file.unsupportformat", "不支持" + cf.getExtension() + "格式的文件", cf.getExtension());
 		}
-
 		try {
 			commonFileDao.insert(cf);
 			blogFile = new BlogFile();
@@ -190,20 +197,18 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 	}
 
-	private void deleteImmediatelyIfNeed(String key) throws LogicException {
-		if (key.isEmpty()) {
+	private void deleteImmediatelyIfNeed(String path) throws LogicException {
+		String clean = FileService.cleanPath(path);
+		if (clean.isEmpty()) {
 			return;
 		}
-		String rootKey = key.split(SPLIT_CHAR)[0];
+		String rootKey = clean.split(SPLIT_CHAR)[0];
 		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
 		if (children.isEmpty()) {
 			return;
 		}
 		for (FileDelete child : children) {
-			String ckey = child.getKey();
-			if (key.startsWith(ckey)) {
-				deleteFile(child);
-			}
+			deleteFile(child);
 		}
 	}
 
@@ -382,126 +387,175 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	@Override
-	public synchronized void update(BlogFile toUpdate) throws LogicException {
-		BlogFile db = blogFileDao.selectById(toUpdate.getId());
+	public void copy(Integer sourceId, String folderPath) throws LogicException {
+		lock.lock();
+		try {
+			BlogFile source = blogFileDao.selectById(sourceId);
+			if (source == null) {
+				throw new LogicException(NOT_EXISTS);
+			}
+			if (!source.isFile()) {
+				throw new LogicException("file.copy.onlyFile", "只有文件才能被拷贝");
+			}
+
+			deleteImmediatelyIfNeed(folderPath);
+
+			String oldPath = getFilePath(source);
+			BlogFile parent = createFolder(folderPath);
+			BlogFile checked = blogFileDao.selectByParentAndPath(parent, source.getPath());
+			// 路径上存在文件
+			if (checked != null) {
+				throw new LogicException("file.path.exists", "文件已经存在");
+			}
+
+			CommonFile copyCf = new CommonFile(source.getCf());
+			BlogFile copyBf = new BlogFile();
+			copyBf.setCf(copyCf);
+			copyBf.setCreateDate(Timestamp.valueOf(Times.now()));
+			copyBf.setCf(copyCf);
+			copyBf.setPath(source.getPath());
+			copyBf.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+			copyBf.setLft(parent.getLft() + 1);
+			copyBf.setRgt(parent.getLft() + 2);
+			copyBf.setParent(parent);
+			copyBf.setType(BlogFileType.FILE);
+
+			blogFileDao.updateWhenAddChild(parent);
+			blogFileDao.insert(copyBf);
+
+			FileStore fs = getFileStore(source.getCf());
+			String destPath = folderPath + FileService.SPLIT_CHAR + source.getPath();
+			if (!fs.copy(oldPath, destPath)) {
+				throw new LogicException("file.copy.fail", "文件拷贝失败");
+			}
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public void move(Integer sourceId, String newPath) throws LogicException {
+		BlogFile db = blogFileDao.selectById(sourceId);
 		if (db == null) {
 			throw new LogicException(NOT_EXISTS);
 		}
-		if (db.getParent() == null) {
-			throw new LogicException("file.root.canNotUpdate", "根节点不能更新");
+		if (!db.isFile()) {
+			throw new LogicException("file.move.onlyFile", "只有文件才能被移动");
 		}
-		if (db.isDir()) {
-			db.setPath(null);
-			blogFileDao.update(db);
-		} else {
-			String oldPath = Validators.cleanPath(getFilePath(db));
-			String path = Validators.cleanPath(toUpdate.getPath());
-			// 需要更新路径
-			// 这里只允许文件更新，文件夹更新无法保证文件夹内文件全部更新
-			// oss存储没有文件夹的概念
-			String ext = FileUtils.getFileExtension(oldPath);
-			// 不能更改后缀
-			if (!Validators.isEmptyOrNull(ext, true)) {
-				path = path + "." + ext;
+		String oldPath = FileService.cleanPath(getFilePath(db));
+		String path = FileService.cleanPath(newPath);
+		// 需要更新路径
+		// 这里只允许文件更新，文件夹更新无法保证文件夹内文件全部移动成功
+		// oss存储没有文件夹的概念
+		String ext = FileUtils.getFileExtension(oldPath);
+		// 不能更改后缀
+		if (!Validators.isEmptyOrNull(ext, true)) {
+			path = path + "." + ext;
+		}
+		lock.lock();
+		try {
+			int index = path.lastIndexOf(FileService.SPLIT_CHAR);
+			String folderPath = index == -1 ? "" : path.substring(0, index);
+			String fileName = index == -1 ? path : path.substring(index + 1, path.length());
+
+			if (fileName.length() > MAX_FILE_NAME_LENGTH) {
+				int extLength = ext.length() + 1;
+				if (extLength >= MAX_FILE_NAME_LENGTH) {
+					throw new LogicException("file.move.ext.toolong", "该文件后缀名过长，无法更新路径");
+				} else {
+					throw new LogicException("file.name.toolong",
+							"文件名不能超过" + (MAX_FILE_NAME_LENGTH - extLength) + "个字符", fileName,
+							(MAX_FILE_NAME_LENGTH - extLength));
+				}
 			}
-			if (!oldPath.equals(path)) {
-				int index = path.lastIndexOf(FileService.SPLIT_CHAR);
-				String folderPath = index == -1 ? "" : path.substring(0, index);
-				String fileName = index == -1 ? path : path.substring(index + 1, path.length());
 
-				if (fileName.length() > MAX_FILE_NAME_LENGTH) {
-					int extLength = ext.length() + 1;
-					if (extLength >= MAX_FILE_NAME_LENGTH) {
-						throw new LogicException("file.ext.toolong", "该文件后缀名过长，无法更新路径");
-					} else {
-						throw new LogicException("file.name.toolong",
-								"文件名不能超过" + (MAX_FILE_NAME_LENGTH - extLength) + "个字符", fileName,
-								(MAX_FILE_NAME_LENGTH - extLength));
-					}
-				}
+			// 先删除节点
+			blogFileDao.delete(db);
+			blogFileDao.updateWhenDelete(db);
 
-				// 先删除节点
-				blogFileDao.delete(db);
-				blogFileDao.updateWhenDelete(db);
+			// 如果目标文件夹待删除，立即删除
+			deleteImmediatelyIfNeed(folderPath);
 
-				BlogFile parent = createFolder(folderPath);
-				BlogFile checked = blogFileDao.selectByParentAndPath(parent, fileName);
-				// 路径上存在文件
-				if (checked != null) {
-					throw new LogicException("file.path.exists", "文件已经存在");
-				}
-				FileStore fs;
-
-				fs = getFileStore(db.getCf());
-				if (!fs.copy(oldPath, path)) {
-					throw new LogicException("file.move.fail", "文件移动失败");
-				}
-
-				// 再插入节点
-				blogFileDao.updateWhenAddChild(parent);
-
-				BlogFile bf = new BlogFile();
-				bf.setCf(db.getCf());
-				bf.setCreateDate(db.getCreateDate());
-				bf.setLft(parent.getLft() + 1);
-				bf.setRgt(parent.getLft() + 2);
-				bf.setParent(parent);
-				bf.setPath(fileName);
-				bf.setType(BlogFileType.FILE);
-
-				blogFileDao.insert(bf);
-
-				if (!fs.delete(oldPath)) {
-					FileDelete fd = new FileDelete();
-					fd.setKey(oldPath);
-					fd.setStore(fs.id());
-					fd.setType(BlogFileType.FILE);
-					fileDeleteDao.insert(fd);
-				}
-			} else {
-				db.setPath(null);
-				blogFileDao.update(db);
+			// 创建文件夹，如果不存在
+			BlogFile parent = createFolder(folderPath);
+			BlogFile checked = blogFileDao.selectByParentAndPath(parent, fileName);
+			// 路径上存在文件
+			if (checked != null) {
+				throw new LogicException("file.path.exists", "文件已经存在");
 			}
+
+			// 更新父节点左右值
+			blogFileDao.updateWhenAddChild(parent);
+
+			BlogFile bf = new BlogFile();
+			bf.setCf(db.getCf());
+			bf.setCreateDate(db.getCreateDate());
+			bf.setLft(parent.getLft() + 1);
+			bf.setRgt(parent.getLft() + 2);
+			bf.setParent(parent);
+			bf.setPath(fileName);
+			bf.setType(BlogFileType.FILE);
+
+			// 插入新节点
+			blogFileDao.insert(bf);
+
+			// 移动实际文件
+			FileStore fs = getFileStore(db.getCf());
+			if (!fs.move(oldPath, path)) {
+				throw new LogicException("file.move.fail", "文件移动失败");
+			}
+
+		} finally {
+			lock.unlock();
 		}
 	}
 
 	@Override
 	public void delete(Integer id) throws LogicException {
-		BlogFile db = blogFileDao.selectById(id);
-		if (db == null) {
-			throw new LogicException(NOT_EXISTS);
-		}
-		if (db.getParent() == null) {
-			throw new LogicException("file.root.canNotDelete", "根节点不能删除");
-		}
-		String key = getFilePath(db);
-		// 删除文件记录
-		blogFileDao.delete(db);
-		blogFileDao.deleteCommonFile(db);
-		// 更新受影响节点的左右值
-		blogFileDao.updateWhenDelete(db);
+		lock.lock();
+		try {
+			BlogFile db = blogFileDao.selectById(id);
+			if (db == null) {
+				throw new LogicException(NOT_EXISTS);
+			}
+			if (db.getParent() == null) {
+				throw new LogicException("file.root.canNotDelete", "根节点不能删除");
+			}
+			String key = getFilePath(db);
+			// 删除文件记录
+			blogFileDao.delete(db);
+			blogFileDao.deleteCommonFile(db);
+			// 更新受影响节点的左右值
+			blogFileDao.updateWhenDelete(db);
 
-		FileDelete fd = new FileDelete();
-		if (db.isFile()) {
-			fileManager.getFileStore(db.getCf().getStore()).ifPresent(store -> fd.setStore(store.id()));
-		} else {
-			fileDeleteDao.deleteChildren(key);
+			FileDelete fd = new FileDelete();
+			if (db.isFile()) {
+				fileManager.getFileStore(db.getCf().getStore()).ifPresent(store -> fd.setStore(store.id()));
+			} else {
+				fileDeleteDao.deleteChildren(key);
+			}
+			fd.setKey(key);
+			fd.setType(db.getType());
+			fileDeleteDao.insert(fd);
+		} finally {
+			lock.unlock();
 		}
-		fd.setKey(key);
-		fd.setType(db.getType());
-		fileDeleteDao.insert(fd);
-
 	}
 
 	@Override
-	public synchronized void clearDeletedCommonFile() {
-		List<FileDelete> all = fileDeleteDao.selectAll();
-		for (FileDelete fd : all) {
-			try {
-				deleteFile(fd);
-			} catch (LogicException e) {
-				continue;
+	public void clearDeletedCommonFile() {
+		lock.lock();
+		try {
+			List<FileDelete> all = fileDeleteDao.selectAll();
+			for (FileDelete fd : all) {
+				try {
+					deleteFile(fd);
+				} catch (LogicException e) {
+					continue;
+				}
 			}
+		} finally {
+			lock.unlock();
 		}
 		blogFileDao.deleteUnassociateCommonFile();
 	}
@@ -518,10 +572,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		param.setCurrentPage(page);
 		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
 		BlogFile parent = blogFileDao.selectRoot();
-		if (Validators.isEmptyOrNull(path, true) || FileService.SPLIT_CHAR.equals(path)) {
+		String cleanedPath = FileService.cleanPath(path.trim());
+		if (cleanedPath.isEmpty()) {
 			param.setParentFile(parent);
 		} else {
-			String cleanedPath = Validators.cleanPath(path.trim());
 			if (cleanedPath.indexOf(FileService.SPLIT_CHAR) == -1) {
 				parent = blogFileDao.selectByParentAndPath(parent, cleanedPath);
 			} else {
@@ -553,26 +607,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		return new PageResult<>(param, count, datas);
 	}
 
-	@Override
-	@Transactional(readOnly = true)
-	public Optional<BlogFile> getFile(int id) {
-		BlogFile file = blogFileDao.selectById(id);
-		if (file.getParent() == null) {
-			file = null;
-		}
-		if (file != null) {
-			file.setPath(getFilePath(file));
-		}
-		return Optional.ofNullable(file);
-	}
-
 	private void setExpandedCommonFile(BlogFile bf) {
 		CommonFile cf = bf.getCf();
 		if (cf != null && bf.isFile()) {
 			String key = getFilePath(bf);
 			FileStore fs = getFileStore(cf);
-			ExpandedCommonFile pcf = new ExpandedCommonFile();
-			BeanUtils.copyProperties(cf, pcf);
+			ExpandedCommonFile pcf = new ExpandedCommonFile(cf);
 			pcf.setThumbnailUrl(fs.getThumbnailUrl(key).orElse(null));
 			pcf.setDownloadUrl(fs.getDownloadUrl(key));
 			pcf.setUrl(fs.getUrl(key));

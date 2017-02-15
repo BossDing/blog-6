@@ -1,4 +1,4 @@
-<div th:if="${space == null}" class="panel panel-default">
+<div th:unless="${#lists.isEmpty(articleSpaceFiles)}" class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">文章空间归档</h3>
 	</div>

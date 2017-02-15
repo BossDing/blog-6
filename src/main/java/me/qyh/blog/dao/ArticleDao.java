@@ -126,6 +126,15 @@ public interface ArticleDao {
 	 * @return id集合对应的文章集合
 	 */
 	List<Article> selectByIds(List<Integer> ids);
+	
+	/**
+	 * 根据指定id集合查询对应的文章，只会查询一些构建访问链接等必要的信息
+	 * 
+	 * @param ids
+	 *            文章id集合
+	 * @return id集合对应的文章集合
+	 */
+	List<Article> selectSimpleByIds(List<Integer> ids);
 
 	/**
 	 * 根据文章id删除文章

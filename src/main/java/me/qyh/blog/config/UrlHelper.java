@@ -76,7 +76,7 @@ public class UrlHelper implements InitializingBean {
 		// 如果开启了空间域名
 		String space = null;
 		if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
-			space = request.getServerName().split(".")[0];
+			space = request.getServerName().split("\\.")[0];
 		}
 		String requestUri = request.getRequestURI();
 		if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
@@ -283,7 +283,6 @@ public class UrlHelper implements InitializingBean {
 		 */
 		public String getArticlesUrl(String tag) {
 			ArticleQueryParam param = new ArticleQueryParam();
-			param.setCurrentPage(1);
 			param.setTag(Jsoup.clean(tag, Whitelist.none()));
 			return getArticlesUrl(param, 1);
 		}
@@ -363,9 +362,26 @@ public class UrlHelper implements InitializingBean {
 		 */
 		public String getArticlesUrl(Date begin, Date end) {
 			ArticleQueryParam param = new ArticleQueryParam();
-			param.setCurrentPage(1);
 			param.setBegin(begin);
 			param.setEnd(end);
+			return getArticlesUrl(param, 1);
+		}
+
+		/**
+		 * 获取某个时间段内文章分页查询链接
+		 * 
+		 * @param begin
+		 *            开始时间
+		 * @param end
+		 *            结束时间
+		 * @return 该时间段内的分页链接
+		 */
+		public String getArticlesUrl(String begin, String end) {
+			ArticleQueryParam param = new ArticleQueryParam();
+			param.setBegin(Times.parseAndGetDate(begin));
+			if (param.getBegin() != null) {
+				param.setEnd(Times.parseAndGetDate(end));
+			}
 			return getArticlesUrl(param, 1);
 		}
 

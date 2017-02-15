@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -80,6 +81,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize middleResize;
 	private Resize largeResize;
 
+	private static final ReentrantLock lock = new ReentrantLock();
+
 	public ImageResourceStore(String urlPatternPrefix) {
 		super(urlPatternPrefix);
 	}
@@ -94,11 +97,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		checkFileStoreable(dest);
 		// 先写入临时文件
 		String originalFilename = mf.getOriginalFilename();
-		File tmp = FileUtils.temp(FileUtils.getFileExtension(originalFilename));
+		File tmp = FileUtils.appTemp(FileUtils.getFileExtension(originalFilename));
 		try {
 			Webs.save(mf, tmp);
 		} catch (IOException e1) {
-			FileUtils.deleteQuietly(tmp);
 			throw new SystemException(e1.getMessage(), e1);
 		}
 		File finalFile = tmp;
@@ -121,7 +123,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			throw new SystemException(e.getMessage(), e);
 		} finally {
 			FileUtils.deleteQuietly(finalFile);
-			FileUtils.deleteQuietly(tmp);
 		}
 	}
 
@@ -305,21 +306,23 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		String thumbFilename = FileUtils.getNameWithoutExtension(key);
 		String coverExt = (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT);
 
-		File cover = new File(thumbFolder, thumbFilename + ".cover" + coverExt);
-		if (!cover.exists()) {
-			// 这里不直接写入cover文件
-			// 因为在使用GraphicsMagick的情况下，会先生成一个空的文件
-			// 如果两个线程同时生成缩略图，其中一个线程可能会读取到空的封面
-			// 所以这里先写入再重命名，确保cover是一个被写入完毕的文件
-			File target = new File(thumbFolder, thumbFilename + coverExt);
-			FileUtils.forceMkdir(thumbFolder);
-			if (ImageHelper.isGIF(FileUtils.getFileExtension(local.getName()))) {
-				imageHelper.getGifCover(local, target);
-			} else {
-				imageHelper.format(local, target);
+		File cover = new File(thumbFolder, thumbFilename + coverExt);
+		// 这里不直接写入cover文件
+		// 因为在使用GraphicsMagick的情况下，会先生成一个空的文件
+		// 如果两个线程同时生成缩略图，其中一个线程可能会读取到空的封面
+		// 所以这里先写入再重命名，确保cover是一个被写入完毕的文件
+		lock.lock();
+		try {
+			if (!cover.exists()) {
+				FileUtils.forceMkdir(thumbFolder);
+				if (ImageHelper.isGIF(FileUtils.getFileExtension(local.getName()))) {
+					imageHelper.getGifCover(local, cover);
+				} else {
+					imageHelper.format(local, cover);
+				}
 			}
-
-			FileUtils.move(target, cover);
+		} finally {
+			lock.unlock();
 		}
 		FileUtils.forceMkdir(thumb.getParentFile());
 		// 基于封面缩放

@@ -15,19 +15,34 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.FileUtils;
 
-@Component
-public class ClearDeletedCommonFileJob {
+public class FileClearJob {
+
+	private static final long MAX_MODIFY_TIME = 30 * 60 * 1000;
 
 	@Autowired
 	private FileService fileService;
 
 	public void doJob() {
 		fileService.clearDeletedCommonFile();
+		FileUtils.clearAppTemp(this::overMaxModifyTime);
+	}
+
+	public boolean overMaxModifyTime(Path path) {
+		try {
+			long lastModifyMill = Files.getLastModifiedTime(path).toMillis();
+			return System.currentTimeMillis() - lastModifyMill > MAX_MODIFY_TIME;
+		} catch (IOException e) {
+			return true;
+		}
 	}
 
 }

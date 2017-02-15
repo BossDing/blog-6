@@ -25,8 +25,11 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.service.impl.FileClearJob;
 
 public class FileUtils {
 
@@ -37,15 +40,29 @@ public class FileUtils {
 	private static final File HOME_DIR = new File(System.getProperty("user.home"));
 
 	/**
-	 * 采用随机6位前缀，创建一个临时空文件，<strong>需要手动删除！</strong>
+	 * 博客用来存放临时文件的文件夹
+	 */
+	private static final File TEMP_DIR = new File(HOME_DIR, "blog_temp");
+
+	static {
+		forceMkdir(TEMP_DIR);
+	}
+
+	/**
+	 * 采用UUID创造一个文件，这个文件为系统临时文件，会通过定时任务删除
 	 * 
 	 * @param ext
-	 *            文件名后缀
+	 *            文件后缀
 	 * @return 临时文件
+	 * @see FileUtils#clearAppTemp(Predicate)
+	 * @see FileClearJob#doJob()
 	 */
-	public static File temp(String ext) {
+	public static File appTemp(String ext) {
+		String name = StringUtils.uuid() + "." + ext;
 		try {
-			return File.createTempFile(StringUtils.uuid(), "." + ext);
+			File temp = new File(TEMP_DIR, name);
+			Files.createFile(temp.toPath());
+			return temp;
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
@@ -152,6 +169,7 @@ public class FileUtils {
 	 * @throws IOException
 	 */
 	public static void move(File source, File target) throws IOException {
+		forceMkdir(target.getParentFile());
 		Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 
@@ -174,5 +192,36 @@ public class FileUtils {
 	 */
 	public static File getHomeDir() {
 		return HOME_DIR;
+	}
+
+	/**
+	 * 删除系统临时文件夹内符合条件的文件
+	 * 
+	 * @param predicate
+	 */
+	public static void clearAppTemp(Predicate<Path> predicate) {
+		Objects.requireNonNull(predicate);
+		try {
+			Files.walkFileTree(TEMP_DIR.toPath(), new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+					if (predicate.test(file)) {
+						try {
+							Files.delete(file);
+						} catch (Exception e) {
+						}
+					}
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			// ignore
+		}
 	}
 }

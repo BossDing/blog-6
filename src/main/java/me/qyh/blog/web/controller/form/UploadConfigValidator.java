@@ -26,10 +26,6 @@ import me.qyh.blog.util.Validators;
 @Component
 public class UploadConfigValidator implements Validator {
 
-	private static final int MAX_PATH_LENGTH = BlogFileValidator.MAX_PATH_LENGTH;
-
-	private static final int MAX_FLOOR = 5;
-
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return UploadConfig.class.isAssignableFrom(clazz);
@@ -40,47 +36,15 @@ public class UploadConfigValidator implements Validator {
 		UploadConfig config = (UploadConfig) target;
 		String path = config.getPath();
 		if (!Validators.isEmptyOrNull(path, true)) {
-			path = Validators.cleanPath(path);
-			if (path.indexOf(FileService.SPLIT_CHAR) != -1) {
-				String[] pathArray = path.split(FileService.SPLIT_CHAR);
-				if (pathArray.length > MAX_FLOOR) {
-					errors.reject("uploadConfig.floor.oversize", new Object[] { MAX_FLOOR },
-							"路径最多只能" + MAX_FLOOR + "层");
-					return;
-				}
-				StringBuilder sb = new StringBuilder();
-				for (String _path : pathArray) {
-					_path = _path.trim();
-					if (!_path.isEmpty()) {
-						validatePath(_path, errors);
-						if (errors.hasErrors()) {
-							return;
-						}
-						sb.append(_path).append(FileService.SPLIT_CHAR);
-					}
-				}
-				if (sb.length() > 0) {
-					sb.deleteCharAt(sb.length() - 1);
-				}
-				config.setPath(sb.toString());
-			} else {
-				validatePath(path, errors);
+			path = FileService.cleanPath(path);
+			BlogFileValidator.validFolderPath(path, errors);
+			if (errors.hasErrors()) {
+				return;
 			}
+			config.setPath(path);
 		}
 		if (config.getStore() == null) {
 			errors.reject("file.uploadstore.blank", "文件存储器为空");
-			return;
-		}
-	}
-
-	private void validatePath(String path, Errors errors) {
-		if (path.length() > MAX_PATH_LENGTH) {
-			errors.reject("file.path.toolong", new Object[] { path, MAX_PATH_LENGTH },
-					"路径" + path + "不能超过" + MAX_PATH_LENGTH + "个字符");
-			return;
-		}
-		if (!BlogFileValidator.checkPath(path)) {
-			errors.reject("file.path.valid", new Object[] { path }, "路径" + path + "无效");
 			return;
 		}
 	}

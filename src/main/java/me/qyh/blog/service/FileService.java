@@ -17,7 +17,6 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -92,16 +91,6 @@ public interface FileService {
 	List<FileStore> allStorableStores();
 
 	/**
-	 * 更新文件
-	 * 
-	 * @param toUpdate
-	 *            待更新的文件
-	 * @throws LogicException
-	 *             更新过程中逻辑异常
-	 */
-	void update(BlogFile toUpdate) throws LogicException;
-
-	/**
 	 * 删除文件树节点(不会删除实际的物理文件)
 	 * 
 	 * @see FileService#clearDeletedCommonFile()
@@ -148,15 +137,29 @@ public interface FileService {
 	PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page);
 
 	/**
-	 * 根据ID查询文件
+	 * 拷贝文件
+	 * 
+	 * @param sourceId
+	 *            源文件ID
+	 * @param folderPath
+	 *            目标文件夹
+	 * @throws LogicException
+	 */
+	void copy(Integer sourceId, String folderPath) throws LogicException;
+
+	/**
+	 * 移动文件至新的路径
 	 * <p>
-	 * <b>返回的文件路径为全路径</b>
+	 * <b>只有文件才能够被移动，无法更改文件后缀名</b>
 	 * </p>
 	 * 
-	 * @param id
-	 *            文件id
+	 * @param sourceId
+	 *            原文件id
+	 * @param newPath
+	 *            新路径，该路径指向一个文件
+	 * @throws LogicException
 	 */
-	Optional<BlogFile> getFile(int id);
+	void move(Integer sourceId, String newPath) throws LogicException;
 
 	static String cleanPath(String path) {
 		if (FileService.SPLIT_CHAR.equals(path)) {
@@ -166,7 +169,9 @@ public interface FileService {
 		if (cleaned.startsWith(FileService.SPLIT_CHAR)) {
 			cleaned = cleaned.substring(1, cleaned.length());
 		}
+		if (cleaned.endsWith(FileService.SPLIT_CHAR)) {
+			cleaned = cleaned.substring(0, cleaned.length() - 1);
+		}
 		return cleaned;
 	}
-
 }

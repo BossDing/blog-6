@@ -49,18 +49,14 @@ public class JavaImageHelper extends ImageHelper {
 		String ext = FileUtils.getFileExtension(src.getName());
 		File todo = src;
 		File tmp = null;
-		try {
-			if (isGIF(ext)) {
-				// 获取封面
-				tmp = FileUtils.temp(PNG);
-				doGetGifCover(src, tmp);
-				todo = tmp;
-			}
-			BufferedImage bi = doWithThumbnailator(todo, dest, resize);
-			writeImg(bi, FileUtils.getFileExtension(dest.getName()), dest);
-		} finally {
-			FileUtils.deleteQuietly(tmp);
+		if (isGIF(ext)) {
+			// 获取封面
+			tmp = FileUtils.appTemp(PNG);
+			doGetGifCover(src, tmp);
+			todo = tmp;
 		}
+		BufferedImage bi = doWithThumbnailator(todo, dest, resize);
+		writeImg(bi, FileUtils.getFileExtension(dest.getName()), dest);
 	}
 
 	@Override
@@ -110,7 +106,7 @@ public class JavaImageHelper extends ImageHelper {
 				throw new IOException(gif + "文件无法读取");
 			}
 			BufferedImage bi = gd.getFrame(0);
-			png = FileUtils.temp(PNG);
+			png = FileUtils.appTemp(PNG);
 			writeImg(bi, PNG, png);
 			String destExt = FileUtils.getFileExtension(dest.getName());
 			if (isPNG(destExt)) {
@@ -130,8 +126,6 @@ public class JavaImageHelper extends ImageHelper {
 			g2d.drawImage(readed, 0, 0, Color.WHITE, null);
 			g2d.dispose();
 			writeImg(newBufferedImage, destExt, dest);
-		} finally {
-			FileUtils.deleteQuietly(png);
 		}
 	}
 

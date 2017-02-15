@@ -62,7 +62,7 @@
 	<ul class="pagination">
 		<li
 			th:each=" i : ${#numbers.sequence(articlePage.listbegin, articlePage.listend-1)}"
-			th:class="${(i == articlePage.param.currentPage) ? 'active' : ''}"><a
+			th:class="${(i == articlePage.currentPage) ? 'active' : ''}"><a
 			th:href="${urls.getArticlesUrl(articlePage.param,i)}" th:text="${i}"></a>
 	</ul>
 </div>

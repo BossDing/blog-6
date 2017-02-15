@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
 import me.qyh.blog.ui.ContextVariables;
 
@@ -49,10 +48,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 
 	@Override
 	protected List<ArticleSpaceFile> query(ContextVariables variables, Attributes attributes) throws LogicException {
-		if (!Environment.hasSpace()) {
-			return articleService.queryArticleSpaceFiles();
-		}
-		return null;
+		return articleService.queryArticleSpaceFiles();
 	}
 
 }

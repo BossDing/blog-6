@@ -273,7 +273,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *            文章数
 	 * @return
 	 */
-	public List<Article> querySimilar(Article article, ArticlesDetailQuery dquery, int limit) {
+	public List<Article> querySimilar(Article article,boolean queryPrivate, ArticlesDetailQuery dquery, int limit) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
@@ -286,6 +286,10 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			Builder builder = new Builder();
 			builder.add(likeQuery, Occur.MUST);
 			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
+			if(!queryPrivate){
+				builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
+				builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
+			}
 			TopDocs likeDocs = searcher.search(builder.build(), limit + 1);
 			List<Integer> datas = new ArrayList<>();
 			for (ScoreDoc scoreDoc : likeDocs.scoreDocs) {

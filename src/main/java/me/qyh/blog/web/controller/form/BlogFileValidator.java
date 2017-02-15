@@ -31,7 +31,7 @@ public class BlogFileValidator implements Validator {
 	public static final int MAX_PATH_LENGTH = 30;
 	public static final int MAX_FILE_NAME_LENGTH = 225;
 
-	private static final String PATH_PATTERN = "^[A-Za-z0-9_-\u4E00-\u9FA5]+$";
+	private static final String PATH_PATTERN = "^[A-Za-z0-9_-]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -41,73 +41,101 @@ public class BlogFileValidator implements Validator {
 	@Override
 	public void validate(Object target, Errors errors) {
 		BlogFile file = (BlogFile) target;
-		if (!file.hasId()) {
-			if (file.isDir()) {
-				String path = file.getPath();
-				if (Validators.isEmptyOrNull(path, true)) {
-					errors.reject("file.path.blank", "文件夹路径不能为空");
-					return;
-				}
-				if (path.length() > MAX_PATH_LENGTH) {
-					errors.reject("file.path.toolong", new Object[] { path, MAX_PATH_LENGTH },
-							"路径" + path + "不能超过" + MAX_PATH_LENGTH + "个字符");
-					return;
-				}
-				if (!checkPath(path)) {
-					errors.reject("file.path.valid", new Object[] { path }, "文件名" + path + "无效，文件名必须为字母数字或者汉字或者_和-");
-					return;
-				}
-			}
-		} else {
-			if (file.isFile()) {
-				String path = file.getPath();
-				if (Validators.isEmptyOrNull(path, true)) {
-					errors.reject("file.path.blank", "文件夹路径不能为空");
-					return;
-				}
-				String fileName;
-				if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
-					fileName = path;
-				} else {
-					String[] toCopy = path.split(FileService.SPLIT_CHAR);
-					String[] pathArray = new String[toCopy.length - 1];
-					System.arraycopy(toCopy, 0, pathArray, 0, toCopy.length - 1);
-
-					for (String _path : pathArray) {
-						if (_path.isEmpty()) {
-							continue;
-						}
-						if (_path.length() > MAX_PATH_LENGTH) {
-							errors.reject("file.path.toolong", new Object[] { _path, MAX_PATH_LENGTH },
-									"路径" + _path + "不能超过" + MAX_PATH_LENGTH + "个字符");
-							return;
-						}
-						if (!checkPath(_path)) {
-							errors.reject("file.path.valid", new Object[] { _path }, "文件名" + _path + "无效，文件名必须为字母数字或者汉字或者_和-");
-							return;
-						}
-					}
-
-					fileName = toCopy[toCopy.length - 1];
-				}
-
-				if (fileName.length() > MAX_FILE_NAME_LENGTH) {
-					errors.reject("file.name.toolong", new Object[] { fileName, MAX_FILE_NAME_LENGTH },
-							"文件名不能超过" + MAX_FILE_NAME_LENGTH + "个字符");
-					return;
-				}
-
-				if (!checkPath(fileName)) {
-					errors.reject("file.path.valid", new Object[] { fileName },
-							"文件名" + fileName + "无效，文件名必须为字母数字或者汉字或者_和-");
-					return;
-				}
-
+		if (file.isDir()) {
+			String path = file.getPath();
+			validPath(path, errors);
+			if (errors.hasErrors()) {
+				return;
 			}
 		}
 	}
 
-	public static boolean checkPath(String path) {
+	/**
+	 * valid /a/b/c like
+	 * 
+	 * @param folderPath
+	 * @return
+	 */
+	public static void validFolderPath(String folderPath, Errors errors) {
+		if (folderPath == null) {
+			errors.reject("file.path.blank", "路径不能为空");
+			return;
+		}
+		String clean = FileService.cleanPath(folderPath);
+		if (clean.indexOf(FileService.SPLIT_CHAR) != -1) {
+			validFolderPath(folderPath.split(FileService.SPLIT_CHAR), errors);
+		}
+	}
+
+	/**
+	 * @param path
+	 * @param errors
+	 */
+	public static void validFilePath(String filePath, Errors errors) {
+		if (Validators.isEmptyOrNull(filePath, true)) {
+			errors.reject("file.path.blank", "路径不能为空");
+			return;
+		}
+		String path = FileService.cleanPath(filePath);
+		String fileName;
+		if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
+			fileName = path;
+		} else {
+			String[] toCopy = path.split(FileService.SPLIT_CHAR);
+			String[] pathArray = new String[toCopy.length - 1];
+			System.arraycopy(toCopy, 0, pathArray, 0, toCopy.length - 1);
+
+			validFolderPath(pathArray, errors);
+			if (errors.hasErrors()) {
+				return;
+			}
+
+			fileName = toCopy[toCopy.length - 1];
+		}
+
+		if (Validators.isEmptyOrNull(fileName, true)) {
+			errors.reject("file.name.blank", "文件名不能为空");
+			return;
+		}
+		if (fileName.length() > MAX_FILE_NAME_LENGTH) {
+			errors.reject("file.name.toolong", new Object[] { fileName, MAX_FILE_NAME_LENGTH },
+					"文件名不能超过" + MAX_FILE_NAME_LENGTH + "个字符");
+			return;
+		}
+
+		if (!checkPath(fileName)) {
+			errors.reject("file.fileName.valid", new Object[] { fileName },
+					"文件名" + fileName + "无效，文件名必须为字母数字或者汉字或者_和-");
+			return;
+		}
+	}
+
+	private static void validFolderPath(String[] pathArray, Errors errors) {
+		for (String _path : pathArray) {
+			validPath(_path, errors);
+			if (errors.hasErrors()) {
+				break;
+			}
+		}
+	}
+
+	public static void validPath(String path, Errors errors) {
+		if (Validators.isEmptyOrNull(path, true)) {
+			errors.reject("file.path.blank", "路径不能为空");
+			return;
+		}
+		if (path.length() > MAX_PATH_LENGTH) {
+			errors.reject("file.path.toolong", new Object[] { path, MAX_PATH_LENGTH },
+					"路径" + path + "不能超过" + MAX_PATH_LENGTH + "个字符");
+			return;
+		}
+		if (!checkPath(path)) {
+			errors.reject("file.path.valid", new Object[] { path }, "路径" + path + "无效，路径必须为字母数字或者_和-");
+			return;
+		}
+	}
+
+	private static boolean checkPath(String path) {
 		if (path.matches(PATH_PATTERN)) {
 			try {
 				new File(path).getCanonicalPath();

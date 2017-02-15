@@ -33,6 +33,14 @@ public class ExpandedCommonFile extends CommonFile {
 	private String url;
 	private String downloadUrl;
 
+	public ExpandedCommonFile() {
+		super();
+	}
+
+	public ExpandedCommonFile(CommonFile cf) {
+		super(cf);
+	}
+
 	public ThumbnailUrl getThumbnailUrl() {
 		return thumbnailUrl;
 	}

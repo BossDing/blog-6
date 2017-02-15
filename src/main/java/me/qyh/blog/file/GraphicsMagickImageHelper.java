@@ -119,7 +119,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	@Override
 	protected void doGetGifCover(File gif, File dest) throws IOException {
 		String ext = FileUtils.getFileExtension(dest.getName());
-		File _gif = FileUtils.temp(GIF);
+		File _gif = FileUtils.appTemp(GIF);
 		IMOperation op = new IMOperation();
 		op.addImage();
 		op.strip();
@@ -145,13 +145,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op2.strip();
 		op2.p_profile("*");
 		op2.addImage();
-		try {
-			run(op2, _gif.getAbsolutePath(), dest.getAbsolutePath());
-		} finally {
-			if (_gif.exists()) {
-				FileUtils.deleteQuietly(_gif);
-			}
-		}
+		run(op2, _gif.getAbsolutePath(), dest.getAbsolutePath());
 	}
 
 	@Override

@@ -366,6 +366,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.id AS art_id,
 		art.art_alias,
 		art.title,
+		art.space_id,
 		sp.space_alias,
 		sp.space_name
 		FROM
@@ -393,6 +394,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.id AS art_id,
 		art.art_alias,
 		art.title,
+		art.space_id,
 		sp.space_alias,
 		sp.space_name
 		FROM
@@ -413,6 +415,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		ORDER BY art.pubDate ASC,art.id ASC
 		LIMIT 0,1
+	</select>
+	
+	<select id="selectSimpleByIds" resultMap="ArticleDetail">
+		SELECT
+		art.id AS art_id,
+		art.title,
+		art.pubDate,
+		art.space_id,
+		art.art_alias,
+		sp.space_alias,
+		sp.space_name
+		FROM
+		blog_article art
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
+		WHERE art.id IN
+		<foreach collection="list" item="id" open="(" close=")"
+			separator=",">#{id}</foreach>
 	</select>
 
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">

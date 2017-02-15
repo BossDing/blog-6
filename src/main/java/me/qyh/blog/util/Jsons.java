@@ -348,15 +348,25 @@ public class Jsons {
 			this.ele = ele;
 		}
 
+		public ExpressionExecutor executeForExecutor(String expression) {
+			return new ExpressionExecutor(doExecute(expression));
+		}
+
 		public String execute(String expression) {
-			if (ele == JsonNull.INSTANCE) {
-				return null;
+			JsonElement executed = doExecute(expression);
+			return executed == JsonNull.INSTANCE ? null
+					: executed.isJsonPrimitive() ? executed.getAsString() : executed.toString();
+		}
+
+		private JsonElement doExecute(String expression) {
+			if (isNull()) {
+				return JsonNull.INSTANCE;
 			}
 			List<Expression> expressionList = parseExpressions(expression);
 			JsonElement executed = null;
 			for (Expression exp : expressionList) {
 				if (exp == NULL_EXPRESSION) {
-					return null;
+					return JsonNull.INSTANCE;
 				}
 				if (executed == null) {
 					executed = exp.get(ele);
@@ -364,8 +374,7 @@ public class Jsons {
 					executed = exp.get(executed);
 				}
 			}
-			return executed == JsonNull.INSTANCE ? null
-					: executed.isJsonPrimitive() ? executed.getAsString() : executed.toString();
+			return executed;
 		}
 
 		public boolean isNull() {
@@ -471,7 +480,12 @@ public class Jsons {
 
 		@Override
 		public String toString() {
-			return ele.toString();
+			return ele == JsonNull.INSTANCE ? null : ele.isJsonPrimitive() ? ele.getAsString() : ele.toString();
 		}
+	}
+
+	public static void main(String[] arggs) {
+		System.out.println(Jsons.read("http://cn.bing.com/HPImageArchive.aspx?format=js&idx=-1&n=1")
+				.executeForExecutor("images[0]").execute("url"));
 	}
 }

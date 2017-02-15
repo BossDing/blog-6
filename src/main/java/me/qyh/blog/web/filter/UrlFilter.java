@@ -49,7 +49,7 @@ public class UrlFilter extends OncePerRequestFilter {
 		if (Webs.isAction(req)) {
 			String host = req.getServerName();
 			if (urlHelper.maybeSpaceDomain(req)) {
-				String space = host.split(".")[0];
+				String space = host.split("\\.")[0];
 				LOGGER.debug("从空间域名请求中获取空间名:" + space);
 				// 如果开启了域名
 				if (urlHelper.isEnableSpaceDomain()) {
@@ -99,5 +99,4 @@ public class UrlFilter extends OncePerRequestFilter {
 	private String buildForwardUrl(HttpServletRequest request, String space) {
 		return "/space/" + space + request.getRequestURI().substring(request.getContextPath().length());
 	}
-
 }

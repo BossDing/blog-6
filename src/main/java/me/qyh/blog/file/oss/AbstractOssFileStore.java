@@ -17,6 +17,7 @@ package me.qyh.blog.file.oss;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -70,42 +71,36 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		String originalFilename = multipartFile.getOriginalFilename();
 		String extension = FileUtils.getFileExtension(originalFilename);
-		File tmp = FileUtils.temp(extension);
+		File tmp = FileUtils.appTemp(extension);
 		try {
 			Webs.save(multipartFile, tmp);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-		try {
-			CommonFile cf = new CommonFile();
+		CommonFile cf = new CommonFile();
 
-			String vkey = FileService.cleanPath(key);
-			doUpload(vkey, tmp);
+		String vkey = FileService.cleanPath(key);
+		doUpload(vkey, tmp);
 
-			cf.setExtension(extension);
+		cf.setExtension(extension);
 
-			if (ImageHelper.isSystemAllowedImage(extension)) {
-				try {
-					ImageInfo ii = this.readImage(vkey);
+		if (ImageHelper.isSystemAllowedImage(extension)) {
+			try {
+				ImageInfo ii = this.readImage(vkey);
 
-					cf.setWidth(ii.getWidth());
-					cf.setHeight(ii.getHeight());
-					cf.setExtension(ii.getExtension());
-				} catch (IOException e) {
-					LOGGER.debug(e.getMessage(), e);
-					throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
-				}
-			}
-
-			cf.setOriginalFilename(originalFilename);
-			cf.setSize(tmp.length());
-			cf.setStore(id);
-			return cf;
-		} finally {
-			if (tmp.exists()) {
-				FileUtils.deleteQuietly(tmp);
+				cf.setWidth(ii.getWidth());
+				cf.setHeight(ii.getHeight());
+				cf.setExtension(ii.getExtension());
+			} catch (IOException e) {
+				LOGGER.debug(e.getMessage(), e);
+				throw new LogicException(new Message("image.corrupt", "不是正确的图片文件或者图片已经损坏"));
 			}
 		}
+
+		cf.setOriginalFilename(originalFilename);
+		cf.setSize(tmp.length());
+		cf.setStore(id);
+		return cf;
 	}
 
 	private void doUpload(String key, File tmp) {
@@ -155,7 +150,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		String vkey = FileService.cleanPath(key);
 		boolean flag = doDeleteBatch(vkey);
 		if (flag) {
-			flag = deleteBackup(vkey);
+			deleteBackup(vkey);
 		}
 		return flag;
 	}
@@ -165,7 +160,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		String vkey = FileService.cleanPath(key);
 		boolean flag = doDelete(vkey);
 		if (flag) {
-			flag = deleteBackup(vkey);
+			deleteBackup(vkey);
 		}
 		return flag;
 	}
@@ -180,14 +175,27 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		return readOnly;
 	}
 
-	private boolean deleteBackup(String key) {
+	private void deleteBackup(String key) {
 		if (backupDir != null) {
 			File backup = new File(backupDir, key);
 			if (backup.exists()) {
-				return FileUtils.deleteQuietly(backup);
+				FileUtils.deleteQuietly(backup);
 			}
 		}
-		return true;
+	}
+
+	@Override
+	public boolean move(String oldPath, String path) {
+		String vo = FileService.cleanPath(oldPath);
+		String vp = FileService.cleanPath(path);
+		if (doCopy(vo, vp)) {
+			if (delete(vo)) {
+				return true;
+			} else {
+				delete(vp);
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -200,6 +208,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 				try {
 					FileUtils.copy(backup, new File(backupDir, vp));
 				} catch (IOException e) {
+					LOGGER.error("拷贝文件失败：" + e.getMessage(), e);
 					return false;
 				}
 			}
@@ -232,8 +241,12 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
 		if (isSystemAllowedImage(key)) {
 			String small = buildThumbnailUrl(key, smallResize);
+			Objects.requireNonNull(small);
 			String middle = buildThumbnailUrl(key, middleResize);
+			Objects.requireNonNull(middle);
 			String large = buildThumbnailUrl(key, largeResize);
+			Objects.requireNonNull(large);
+
 			return Optional.of(new ThumbnailUrl(small, middle, large));
 		}
 		return Optional.empty();

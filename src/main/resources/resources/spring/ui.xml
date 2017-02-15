@@ -67,7 +67,7 @@
 				
 				<bean class="me.qyh.blog.ui.data.FilesDataTagProcessor">
 					<constructor-arg index="0" value="文件查询" />
-					<constructor-arg index="1" value="files" />
+					<constructor-arg index="1" value="filePage" />
 				</bean>
 			</list>
 		</property>

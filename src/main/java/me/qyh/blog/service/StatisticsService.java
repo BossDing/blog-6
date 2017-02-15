@@ -79,7 +79,7 @@ public interface StatisticsService {
 		private Timestamp lastModifyDate;// 最后修改日期
 		private Timestamp lastPubDate;
 		private int totalHits;// 点击总数
-		private Integer totalArticles;// 文章总数
+		private int totalArticles;// 文章总数
 
 		public ArticleStatistics() {
 			super();
@@ -117,13 +117,14 @@ public interface StatisticsService {
 			this.lastPubDate = lastPubDate;
 		}
 
-		public Integer getTotalArticles() {
+		public int getTotalArticles() {
 			return totalArticles;
 		}
 
-		public void setTotalArticles(Integer totalArticles) {
+		public void setTotalArticles(int totalArticles) {
 			this.totalArticles = totalArticles;
 		}
+
 	}
 
 	public class ArticleDetailStatistics extends ArticleStatistics {
