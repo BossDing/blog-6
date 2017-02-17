@@ -109,6 +109,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 					Environment.setSpace(space);
 				}
 
+				Environment.setIP(Webs.getIp(request));
+
 				csrfCheck(request, response);
 
 			} catch (AuthencationException e) {

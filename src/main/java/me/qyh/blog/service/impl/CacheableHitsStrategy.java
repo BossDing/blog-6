@@ -41,6 +41,7 @@ import me.qyh.blog.evt.ArticleEvent;
 import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.evt.EventType;
 import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.impl.ArticleServiceImpl.HitsStrategy;
 
 /**
@@ -69,9 +70,17 @@ public final class CacheableHitsStrategy
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CacheableHitsStrategy.class);
 
-	private final Map<Integer, LongAdder> hitsMap = new ConcurrentHashMap<>();
+	private final Map<Integer, HitsHandler> hitsMap = new ConcurrentHashMap<>();
 
 	private final int flushSeconds;
+
+	/**
+	 * 如果该项为true，那么在flush之前，相同的ip点击只算一次点击量
+	 * <p>
+	 * 例如我点击一次增加了一次点击量，一分钟后flush，那么我在这一分钟内(ip的不变的情况下)，无论我点击了多少次，都只算一次
+	 * </p>
+	 */
+	private boolean validIp = true;
 
 	public CacheableHitsStrategy(int flushSeconds) {
 		if (flushSeconds < 1) {
@@ -89,22 +98,20 @@ public final class CacheableHitsStrategy
 	public void hit(Article article) {
 		// increase
 		hitsMap.computeIfAbsent(article.getId(), k -> {
-			LongAdder adder = new LongAdder();
-			adder.add(article.getHits());
-			return adder;
-		}).increment();
+			return validIp ? new IPBasedHitsHandler(article.getHits()) : new DefaultHitsHandler(article.getHits());
+		}).hit();
 	}
 
-	// not atomic ???
 	private void flush() {
 		if (!hitsMap.isEmpty()) {
 			List<HitsWrapper> wrappers = new ArrayList<>();
-			for (Iterator<Entry<Integer, LongAdder>> iter = hitsMap.entrySet().iterator(); iter.hasNext();) {
-				Entry<Integer, LongAdder> entry = iter.next();
+			// not atomic ???
+			for (Iterator<Entry<Integer, HitsHandler>> iter = hitsMap.entrySet().iterator(); iter.hasNext();) {
+				Entry<Integer, HitsHandler> entry = iter.next();
 				Integer key = entry.getKey();
 				hitsMap.compute(key, (ck, cv) -> {
 					if (cv != null) {
-						wrappers.add(new HitsWrapper(key, cv.intValue()));
+						wrappers.add(new HitsWrapper(key, cv.getHits()));
 					}
 					return null;
 				});
@@ -140,7 +147,56 @@ public final class CacheableHitsStrategy
 			this.id = id;
 			this.hits = hits;
 		}
+	}
 
+	private interface HitsHandler {
+		void hit();
+
+		int getHits();
+	}
+
+	private final class DefaultHitsHandler implements HitsHandler {
+
+		private final LongAdder adder;
+
+		private DefaultHitsHandler(int init) {
+			adder = new LongAdder();
+			adder.add(init);
+		}
+
+		@Override
+		public void hit() {
+			adder.increment();
+		}
+
+		@Override
+		public int getHits() {
+			return adder.intValue();
+		}
+	}
+
+	private final class IPBasedHitsHandler implements HitsHandler {
+		private final Map<String, Boolean> ips = new ConcurrentHashMap<String, Boolean>();
+		private final LongAdder adder;
+
+		private IPBasedHitsHandler(int init) {
+			adder = new LongAdder();
+			adder.add(init);
+		}
+
+		@Override
+		public void hit() {
+			Environment.getIP().ifPresent(ip -> {
+				if (ips.putIfAbsent(ip, Boolean.TRUE) == null) {
+					adder.increment();
+				}
+			});
+		}
+
+		@Override
+		public int getHits() {
+			return adder.intValue();
+		}
 	}
 
 	/**
@@ -166,5 +222,9 @@ public final class CacheableHitsStrategy
 		if (EventType.DELETE.equals(event.getEventType())) {
 			event.getArticles().stream().map(Article::getId).forEach(hitsMap::remove);
 		}
+	}
+
+	public void setValidIp(boolean validIp) {
+		this.validIp = validIp;
 	}
 }

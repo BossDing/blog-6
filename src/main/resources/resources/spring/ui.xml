@@ -69,6 +69,11 @@
 					<constructor-arg index="0" value="文件查询" />
 					<constructor-arg index="1" value="filePage" />
 				</bean>
+				
+				<bean class="me.qyh.blog.ui.data.UserDataTagProcessor">
+					<constructor-arg index="0" value="用户信息" />
+					<constructor-arg index="1" value="myInfo" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragments">

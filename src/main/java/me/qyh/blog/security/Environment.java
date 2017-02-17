@@ -26,6 +26,7 @@ public final class Environment {
 
 	private static final ThreadLocal<User> userLocal = new ThreadLocal<>();
 	private static final ThreadLocal<Space> spaceLocal = new ThreadLocal<>();
+	private static final ThreadLocal<String> ipLocal = new ThreadLocal<>();
 
 	public static Optional<User> getUser() {
 		return Optional.ofNullable(userLocal.get());
@@ -129,10 +130,29 @@ public final class Environment {
 	}
 
 	/**
+	 * 获取当前访问的IP
+	 * 
+	 * @return
+	 */
+	public static Optional<String> getIP() {
+		return Optional.ofNullable(ipLocal.get());
+	}
+
+	/**
+	 * 设置当前访问IP
+	 * 
+	 * @param ip
+	 */
+	public static void setIP(String ip) {
+		ipLocal.set(ip);
+	}
+
+	/**
 	 * 清空所有的上下文
 	 */
 	public static void remove() {
 		userLocal.remove();
 		spaceLocal.remove();
+		ipLocal.remove();
 	}
 }
