@@ -259,11 +259,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return (!file.exists() || file.isDirectory()) ? Optional.empty() : Optional.of(file);
 	}
 
-	protected Optional<File> findByKey(String key) {
-		File dest = new File(absFolder, key);
-		return dest.exists() ? Optional.of(dest) : Optional.empty();
-	}
-
 	protected Optional<String> getPathFromRequest(HttpServletRequest request) {
 		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 		if (path == null) {

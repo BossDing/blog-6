@@ -35,6 +35,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.Thumbnails.Builder;
+import net.coobird.thumbnailator.filters.ImageFilter;
 
 /**
  * 基于java的图片处理，可能会消耗大量的内存和cpu
@@ -43,6 +44,8 @@ import net.coobird.thumbnailator.Thumbnails.Builder;
  *
  */
 public class JavaImageHelper extends ImageHelper {
+
+	private static final WhiteBgFilter WHITE_BG_FILTER = new WhiteBgFilter();
 
 	@Override
 	protected void doResize(Resize resize, File src, File dest) throws IOException {
@@ -120,12 +123,7 @@ public class JavaImageHelper extends ImageHelper {
 			}
 			// PNG to Other Format
 			BufferedImage readed = ImageIO.read(png);
-			BufferedImage newBufferedImage = new BufferedImage(readed.getWidth(), readed.getHeight(),
-					BufferedImage.TYPE_INT_RGB);
-			Graphics2D g2d = newBufferedImage.createGraphics();
-			g2d.drawImage(readed, 0, 0, Color.WHITE, null);
-			g2d.dispose();
-			writeImg(newBufferedImage, destExt, dest);
+			writeImg(WHITE_BG_FILTER.apply(readed), destExt, dest);
 		}
 	}
 
@@ -139,15 +137,13 @@ public class JavaImageHelper extends ImageHelper {
 			} catch (IOException e) {
 				throw new SystemException(e.getMessage(), e);
 			}
+			return;
 		}
 		if (isGIF(ext)) {
 			doGetGifCover(src, dest);
 		} else {
 			BufferedImage readed = ImageIO.read(src);
-			BufferedImage newBufferedImage = new BufferedImage(readed.getWidth(), readed.getHeight(),
-					BufferedImage.TYPE_INT_RGB);
-			newBufferedImage.createGraphics().drawImage(readed, 0, 0, Color.WHITE, null);
-			writeImg(newBufferedImage, destExt, dest);
+			writeImg(WHITE_BG_FILTER.apply(readed), destExt, dest);
 		}
 	}
 
@@ -184,11 +180,30 @@ public class JavaImageHelper extends ImageHelper {
 		}
 		String destExt = FileUtils.getFileExtension(dest.getName());
 		Builder<BufferedImage> builder = Thumbnails.of(originalImage);
+		// 如果输出格式不支持透明背景，设置白色背景
 		if (!maybeTransparentBg(destExt)) {
-			// 防止红色背景
-			builder = builder.imageType(BufferedImage.TYPE_INT_RGB);
+			builder.addFilter(WHITE_BG_FILTER);
 		}
-		return builder.size(resizeWidth, resizeHeight).asBufferedImage();
+		return builder.forceSize(resizeWidth, resizeHeight).asBufferedImage();
+	}
+
+	private static final class WhiteBgFilter implements ImageFilter {
+
+		@Override
+		public BufferedImage apply(BufferedImage img) {
+
+			int width = img.getWidth();
+			int height = img.getHeight();
+
+			BufferedImage finalImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+			Graphics2D g = finalImage.createGraphics();
+			g.drawImage(img, 0, 0, Color.WHITE, null);
+			g.dispose();
+
+			return finalImage;
+		}
+
 	}
 
 	@Override

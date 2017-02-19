@@ -15,11 +15,13 @@
  */
 package me.qyh.blog.file.local;
 
+import static me.qyh.blog.file.ImageHelper.JPEG;
+import static me.qyh.blog.file.ImageHelper.PNG;
+import static me.qyh.blog.file.ImageHelper.WEBP;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,11 +54,7 @@ import me.qyh.blog.web.Webs;
  */
 public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
-	private static final Set<String> errorThumbPaths = new HashSet<>();// 当缩略图制作失败时存放路径，防止下次再次读取
 	private static final String WEBP_ACCEPT = "image/webp";
-	private static final String WEBP_EXT = ".webp";
-	private static final String JPEG_EXT = ".jpeg";
-	private static final String PNG_EXT = ".png";
 	private static final char CONCAT_CHAR = 'X';
 	private static final char FORCE_CHAR = '!';
 
@@ -148,60 +146,69 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
-		// 从链接中获取缩放信息
+
+		// 判断是否是原图
+		Optional<File> optionaLocalFile = super.getFile(path);
+		String extension = FileUtils.getFileExtension(path);
+		if (optionaLocalFile.isPresent()) {
+			// 如果是GIF文件或者没有原图保护，直接输出
+			if (ImageHelper.isGIF(extension) || !sourceProtected) {
+				return Optional.of(new PathResource(optionaLocalFile.get().toPath()));
+			}
+			return Optional.empty();
+		}
+
+		// 原图不存在，从链接中获取缩放信息
 		Optional<Resize> optionalResize = getResizeFromPath(path);
-		if (sourceProtected && !optionalResize.isPresent()) {
-			String ext = FileUtils.getFileExtension(path);
-			// 如果是GIF图片,直接输出原图
-			if (!ImageHelper.isGIF(ext)) {
+		if (!optionalResize.isPresent()) {
+			// 如果连接中不包含缩略图信息
+			return Optional.empty();
+		}
+		Resize resize = optionalResize.get();
+		String sourcePath = getSourcePathByResizePath(path);
+		String ext = FileUtils.getFileExtension(sourcePath);
+		// 构造缩略图路径
+		Optional<String> optionalThumbPath = getThumbPath(ext, path, request);
+
+		// 如果缩略图路径无法被接受
+		if (!optionalThumbPath.isPresent()) {
+			return Optional.empty();
+		}
+
+		String thumbPath = optionalThumbPath.get();
+		// 缩略图是否已经存在
+		File file = findThumbByPath(thumbPath);
+
+		// 缩略图不存在，寻找原图
+		if (!file.exists()) {
+
+			Optional<File> optionalFile = super.getFile(sourcePath);
+			// 源文件也不存在
+			if (!optionalFile.isPresent()) {
 				return Optional.empty();
 			}
-		}
-		boolean detectSupportWebp = supportWebp(request);
-		if (optionalResize.isPresent()) {
-			Resize resize = optionalResize.get();
-			String ext = FileUtils.getFileExtension(getSourcePathByResizePath(path));
-			String thumbPath = path + (detectSupportWebp ? WEBP_EXT
-					: (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext)) ? PNG_EXT : JPEG_EXT);
-			// 缩略图是否已经存在
-			File file = findThumbByPath(thumbPath);
-			// 缩略图不存在，寻找原图
-			if (!file.exists()) {
-				String sourcePath = getSourcePathByResizePath(path);
-				Optional<File> optionalFile = super.findByKey(sourcePath);
-				if (!optionalFile.isPresent()) {
-					// 源文件也不存在
-					return Optional.empty();
-				}
-				// 如果原图存在，进行缩放
-				File local = optionalFile.get();
-				// 如果已经缩放失败过，直接返回原图
-				if (errorThumbPaths.contains(thumbPath)) {
-					return Optional.of(new PathResource(local.toPath()));
-				}
-				// 如果支持文件格式(防止ImageHelper变更)
-				if (ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(local.getName()))) {
-					try {
-						return Optional.of(new PathResource(doResize(local, resize, file, sourcePath).toPath()));
-					} catch (IOException e) {
-						IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
-						errorThumbPaths.add(thumbPath);
-						return Optional.of(new PathResource(local.toPath()));
-					}
-				} else {
-					// 不支持的文件格式
-					// 可能更改了ImageHelper
-					// 这里直接输出源文件
-					return Optional.of(new PathResource(local.toPath()));
-				}
 
+			// 如果原图存在，进行缩放
+			File local = optionalFile.get();
+			// 如果支持文件格式(防止ImageHelper变更)
+			if (ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(local.getName()))) {
+				try {
+					return Optional.of(new PathResource(doResize(local, resize, file, sourcePath).toPath()));
+				} catch (IOException e) {
+					IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
+					return Optional.of(new PathResource(local.toPath()));
+				}
 			} else {
-				// 直接返回缩略图
-				return Optional.of(new PathResource(file.toPath()));
+				// 不支持的文件格式
+				// 可能更改了ImageHelper
+				// 这里直接输出源文件
+				return Optional.of(new PathResource(local.toPath()));
 			}
+
+		} else {
+			// 直接返回缩略图
+			return Optional.of(new PathResource(file.toPath()));
 		}
-		// 寻找源文件
-		return findByKey(path).map(file -> new PathResource(file.toPath()));
 	}
 
 	@Override
@@ -304,13 +311,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		File thumbFolder = new File(thumbAbsFolder, key);
 
 		String thumbFilename = FileUtils.getNameWithoutExtension(key);
-		String coverExt = (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG_EXT : JPEG_EXT);
+		String coverExt = "." + (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG : JPEG);
 
 		File cover = new File(thumbFolder, thumbFilename + coverExt);
-		// 这里不直接写入cover文件
-		// 因为在使用GraphicsMagick的情况下，会先生成一个空的文件
-		// 如果两个线程同时生成缩略图，其中一个线程可能会读取到空的封面
-		// 所以这里先写入再重命名，确保cover是一个被写入完毕的文件
 		lock.lock();
 		try {
 			if (!cover.exists()) {
@@ -354,10 +357,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected Optional<Resize> getResizeFromPath(String path) {
-		String extension = FileUtils.getFileExtension(path);
-		if (!extension.isEmpty()) {
-			return Optional.empty();
-		}
 		Resize resize = null;
 		String baseName = FileUtils.getNameWithoutExtension(path);
 		try {
@@ -434,6 +433,32 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * 获取缩略图格式
+	 * 
+	 * @param sourceExt
+	 * @param ext
+	 *            访问连接后缀
+	 * @param request
+	 *            请求
+	 * @return
+	 */
+	private Optional<String> getThumbPath(String sourceExt, String path, HttpServletRequest request) {
+		boolean supportWebp = supportWebp(request);
+		String ext = FileUtils.getFileExtension(path);
+		boolean extEmpty = ext.trim().isEmpty();
+		if (extEmpty) {
+			return Optional.of(path + "." + (supportWebp ? WEBP : JPEG));
+		} else {
+			// 如果为png并且原图可能为透明
+			if (ImageHelper.isPNG(ext) && ImageHelper.maybeTransparentBg(sourceExt)) {
+				String basePath = path.substring(0, path.length() - ext.length() - 1);
+				return Optional.of(basePath + "." + PNG);
+			}
+		}
+		return Optional.empty();
 	}
 
 	public void setThumbAbsPath(String thumbAbsPath) {
