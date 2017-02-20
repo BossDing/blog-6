@@ -27,7 +27,7 @@ import me.qyh.blog.exception.SystemException;
  * @author Administrator
  *
  */
-public class LocalResourceHttpRequestHandlerHolder {
+class LocalResourceHttpRequestHandlerHolder {
 
 	private static Map<String, Object> urlMap = new HashMap<>();
 

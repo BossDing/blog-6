@@ -41,7 +41,8 @@ public class Messages {
 	 * @return 信息
 	 */
 	public String getMessage(Message message) {
-		return messageSource.getMessage(message, getLocale());
+		//to ignore NoSuchMessageException
+		return messageSource.getMessage(message.getCodes()[0], null, message.getDefaultMessage(), getLocale());
 	}
 
 	/**

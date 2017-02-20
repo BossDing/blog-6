@@ -208,18 +208,19 @@ public class MetaweblogHandler {
 	private MultipartFile structToFile(final Struct struct) throws LogicException, ParseException {
 		String name = struct.getString("name");
 		if (Validators.isEmptyOrNull(name, true)) {
-			throw new LogicException("file.uploadfiles.blank");
+			throw new LogicException("file.uploadfiles.blank", "需要上传文件为空");
 		}
 		name = StringUtils.cleanPath(name);
 		if (name.indexOf('/') != -1) {
 			name = name.substring(name.lastIndexOf('/') + 1, name.length());
 		}
 		if (name.length() > BlogFileValidator.MAX_FILE_NAME_LENGTH) {
-			throw new LogicException("file.name.toolong", BlogFileValidator.MAX_FILE_NAME_LENGTH);
+			throw new LogicException("file.name.toolong", "文件名不能超过" + BlogFileValidator.MAX_FILE_NAME_LENGTH + "个字符",
+					BlogFileValidator.MAX_FILE_NAME_LENGTH);
 		}
 		byte[] bits = struct.getBase64("bits");
 		if (bits == null) {
-			throw new LogicException("file.content.blank");
+			throw new LogicException("file.content.blank", "文件内容不能为空");
 		}
 		return new MetaweblogFile(bits, name);
 	}
@@ -285,19 +286,21 @@ public class MetaweblogHandler {
 		}
 		String title = struct.getString("title");
 		if (Validators.isEmptyOrNull(title, true)) {
-			throw new LogicException("article.title.blank");
+			throw new LogicException("article.title.blank", "文章标题不能为空");
 		}
 		if (title.length() > ArticleValidator.MAX_TITLE_LENGTH) {
-			throw new LogicException("article.title.toolong");
+			throw new LogicException("article.title.toolong", "文章标题不能超过" + ArticleValidator.MAX_TITLE_LENGTH + "个字符",
+					ArticleValidator.MAX_TITLE_LENGTH);
 		}
 		article.setTitle(title);
 
 		String content = struct.getString("description");
 		if (Validators.isEmptyOrNull(content, true)) {
-			throw new LogicException("article.content.blank");
+			throw new LogicException("article.content.blank", "文章内容不能为空");
 		}
 		if (content.length() > ArticleValidator.MAX_CONTENT_LENGTH) {
-			throw new LogicException("article.content.toolong");
+			throw new LogicException("article.content.toolong",
+					"文章内容不能超过" + ArticleValidator.MAX_CONTENT_LENGTH + "个字符", ArticleValidator.MAX_CONTENT_LENGTH);
 		}
 		article.setContent(content);
 

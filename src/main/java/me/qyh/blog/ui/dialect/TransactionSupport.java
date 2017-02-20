@@ -53,10 +53,11 @@ public abstract class TransactionSupport extends AbstractElementTagProcessor {
 		return transactionManager;
 	}
 
-	protected TransactionStatus getTransactionStatus(ITemplateContext context) {
+	protected TransactionStatus getTransactionStatus(ITemplateContext context,int isolationLevel) {
 		checkTransactionManager(context);
 		DefaultTransactionDefinition defaultTransactionDefinition = new DefaultTransactionDefinition();
 		defaultTransactionDefinition.setReadOnly(true);
+		defaultTransactionDefinition.setIsolationLevel(isolationLevel);
 		return transactionManager.getTransaction(defaultTransactionDefinition);
 	}
 

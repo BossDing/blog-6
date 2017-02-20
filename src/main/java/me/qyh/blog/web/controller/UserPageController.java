@@ -32,7 +32,7 @@ public class UserPageController {
 	@RequestMapping(value = { "page/{alias}", "space/{alias}/page/{alias}" }, method = RequestMethod.GET)
 	public Page index(@PathVariable("alias") String alias) throws LogicException {
 		if (!PageValidator.validateUserPageAlias(alias)) {
-			throw new LogicException("page.user.notExists");
+			throw new LogicException("page.user.notExists", "页面不存在");
 		}
 		return new UserPage(Environment.getSpace().orElse(null), alias);
 	}

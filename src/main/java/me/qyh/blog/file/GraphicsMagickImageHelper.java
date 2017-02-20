@@ -67,17 +67,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 */
 	private boolean doInterlace = true;
 
-	/**
-	 * <p>
-	 * 用来指定缩放后的文件信息,如果指定了纵横比但同时指定了缩略图宽度和高度，将会以宽度或者长度为准(具体图片不同),如果只希望将长度(或宽度进行缩放)
-	 * ， 那么只要将另一个长度置位 <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/>
-	 * <strong>缩略图将只会返回jpg格式的图片 </strong><br/>
-	 * <strong>默认情况下总是缩放(即比原图小)</strong>
-	 * </p>
-	 * 
-	 * @author Administrator
-	 *
-	 */
 	@Override
 	protected void doResize(Resize resize, File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
@@ -95,7 +84,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 		op.addImage();
 
-		run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		File temp = FileUtils.appTemp(ext);
+		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
+		FileUtils.move(temp, dest);
 	}
 
 	@Override
@@ -109,7 +100,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
 			localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
 			return localIdentifyCmd;
-		}, localIMOperation, file.getAbsolutePath() + "[0]");
+		}, localIMOperation, file.getAbsolutePath());
 
 		List<String> atts = localArrayListOutputConsumer.getOutput();
 		Iterator<String> it = atts.iterator();
@@ -117,50 +108,36 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected void doGetGifCover(File gif, File dest) throws IOException {
-		String ext = FileUtils.getFileExtension(dest.getName());
-		File _gif = FileUtils.appTemp(GIF);
-		IMOperation op = new IMOperation();
-		op.addImage();
-		op.strip();
-		op.p_profile("*");
-		op.addImage();
-		try {
-			run(op, gif.getAbsolutePath() + "[0]", _gif.getAbsolutePath());
-		} catch (IOException e) {
-			LOGGER.debug("GraphicsMagick无法获取" + gif.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
-			getGifCoverUseJava(gif, _gif);
-		}
-		if (FileUtils.getFileExtension(dest.getName()).equalsIgnoreCase(GIF)) {
-			// copy
-			FileUtils.copy(_gif, dest);
-			return;
-		}
-		// png to dest
-		IMOperation op2 = new IMOperation();
-		op2.addImage();
-		if (!maybeTransparentBg(ext)) {
-			setWhiteBg(op2);
-		}
-		op2.strip();
-		op2.p_profile("*");
-		op2.addImage();
-		run(op2, _gif.getAbsolutePath(), dest.getAbsolutePath());
-	}
-
-	@Override
 	protected void doFormat(File src, File dest) throws IOException {
+		String srcExt = FileUtils.getFileExtension(src.getName());
+		if (isGIF(srcExt)) {
+			File _gif = FileUtils.appTemp(GIF);
+			IMOperation op = new IMOperation();
+			op.addImage();
+			op.strip();
+			op.p_profile("*");
+			op.addImage();
+			try {
+				run(op, src.getAbsolutePath(), _gif.getAbsolutePath());
+			} catch (IOException e) {
+				LOGGER.debug("GraphicsMagick无法获取" + src.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
+				getGifCoverUseJava(src, _gif);
+			}
+			src = _gif;
+		}
+		String ext = FileUtils.getFileExtension(dest.getName());
 		IMOperation op = new IMOperation();
 		op.addImage();
-		String ext = FileUtils.getFileExtension(dest.getName());
-		String srcExt = FileUtils.getFileExtension(src.getName());
 		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
 			setWhiteBg(op);
 		}
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
-		run(op, src.getAbsolutePath() + "[0]", dest.getAbsolutePath());
+		
+		File temp = FileUtils.appTemp(ext);
+		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
+		FileUtils.move(temp, dest);
 	}
 
 	@Override

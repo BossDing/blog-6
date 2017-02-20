@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.file;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -24,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -33,13 +35,14 @@ import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
-import net.coobird.thumbnailator.Thumbnails;
-import net.coobird.thumbnailator.Thumbnails.Builder;
-import net.coobird.thumbnailator.filters.ImageFilter;
 
 /**
  * 基于java的图片处理，可能会消耗大量的内存和cpu
+ * <p>
+ * <b>这个类仅供测试使用，实际请使用<code>GraphicsMagickImageHelper</code></b>
+ * </p>
  * 
+ * @see GraphicsMagickImageHelper
  * @author Administrator
  *
  */
@@ -58,7 +61,7 @@ public class JavaImageHelper extends ImageHelper {
 			doGetGifCover(src, tmp);
 			todo = tmp;
 		}
-		BufferedImage bi = doWithThumbnailator(todo, dest, resize);
+		BufferedImage bi = doResize(todo, dest, resize);
 		writeImg(bi, FileUtils.getFileExtension(dest.getName()), dest);
 	}
 
@@ -99,8 +102,7 @@ public class JavaImageHelper extends ImageHelper {
 		}
 	}
 
-	@Override
-	protected void doGetGifCover(File gif, File dest) throws IOException {
+	private void doGetGifCover(File gif, File dest) throws IOException {
 		File png = null;
 		try (InputStream is = new FileInputStream(gif)) {
 			GifDecoder gd = new GifDecoder();
@@ -131,14 +133,6 @@ public class JavaImageHelper extends ImageHelper {
 	protected void doFormat(File src, File dest) throws IOException {
 		String ext = FileUtils.getFileExtension(src.getName());
 		String destExt = FileUtils.getFileExtension(dest.getName());
-		if (sameFormat(ext, destExt)) {
-			try {
-				FileUtils.copy(src, dest);
-			} catch (IOException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-			return;
-		}
 		if (isGIF(ext)) {
 			doGetGifCover(src, dest);
 		} else {
@@ -153,7 +147,7 @@ public class JavaImageHelper extends ImageHelper {
 		bi.flush();
 	}
 
-	private BufferedImage doWithThumbnailator(File todo, File dest, Resize resize) throws IOException {
+	private BufferedImage doResize(File todo, File dest, Resize resize) throws IOException {
 		BufferedImage originalImage = ImageIO.read(todo);
 		int width = originalImage.getWidth();
 		int height = originalImage.getHeight();
@@ -172,22 +166,30 @@ public class JavaImageHelper extends ImageHelper {
 			}
 		} else {
 			if (resize.isKeepRatio()) {
-				return doWithThumbnailator(todo, dest, new Resize(Math.max(resize.getWidth(), resize.getHeight())));
+				return doResize(todo, dest, new Resize(Math.max(resize.getWidth(), resize.getHeight())));
 			} else {
 				resizeWidth = (resize.getWidth() > width) ? width : resize.getWidth();
 				resizeHeight = (resize.getHeight() > height) ? height : resize.getHeight();
 			}
 		}
 		String destExt = FileUtils.getFileExtension(dest.getName());
-		Builder<BufferedImage> builder = Thumbnails.of(originalImage);
-		// 如果输出格式不支持透明背景，设置白色背景
-		if (!maybeTransparentBg(destExt)) {
-			builder.addFilter(WHITE_BG_FILTER);
+
+		boolean maybeTransparentBy = maybeTransparentBg(destExt);
+		int imageType = maybeTransparentBy ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+		BufferedImage scaledBI = new BufferedImage(resizeWidth, resizeHeight, imageType);
+		Graphics2D g = scaledBI.createGraphics();
+		if (!maybeTransparentBy) {
+			g.setComposite(AlphaComposite.Src);
+			g.drawImage(originalImage, 0, 0, resizeWidth, resizeHeight, Color.WHITE, null);
+		} else {
+			g.drawImage(originalImage, 0, 0, resizeWidth, resizeHeight, null);
 		}
-		return builder.forceSize(resizeWidth, resizeHeight).asBufferedImage();
+		g.dispose();
+
+		return scaledBI;
 	}
 
-	private static final class WhiteBgFilter implements ImageFilter {
+	private static final class WhiteBgFilter implements Function<BufferedImage, BufferedImage> {
 
 		@Override
 		public BufferedImage apply(BufferedImage img) {
@@ -196,14 +198,12 @@ public class JavaImageHelper extends ImageHelper {
 			int height = img.getHeight();
 
 			BufferedImage finalImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
 			Graphics2D g = finalImage.createGraphics();
 			g.drawImage(img, 0, 0, Color.WHITE, null);
 			g.dispose();
 
 			return finalImage;
 		}
-
 	}
 
 	@Override

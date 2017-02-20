@@ -15,7 +15,9 @@
  */
 package me.qyh.blog.ui.dialect;
 
+import org.springframework.transaction.TransactionDefinition;
 import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -35,6 +37,7 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 
 	private static final String TAG_NAME = "begin";
 	private static final int PRECEDENCE = 1;
+	private static final String ISOLATION_LEVEL = "isolationLevel";
 
 	public TransactionBeginTagProcessor(String dialectPrefix) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
@@ -48,9 +51,19 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
+		int isolationLevel = TransactionDefinition.ISOLATION_DEFAULT;
+		String levelStr = tag.getAttributeValue(ISOLATION_LEVEL);
+		if (levelStr != null) {
+			try {
+				isolationLevel = Integer.parseInt(levelStr);
+			} catch (Exception e) {
+			}
+		}
 		try {
-			if (!ParseContext.isPreview() && ParseContext.getTransactionStatus() == null) {
-				ParseContext.setTransactionStatus(getTransactionStatus(context));
+			if (ParseContext.getTransactionStatus() == null) {
+				ParseContext.setTransactionStatus(getTransactionStatus(context, isolationLevel));
+			} else {
+				throw new TemplateProcessingException("在开启一个事务前，应该先结束已经存在的事务");
 			}
 		} finally {
 			structureHandler.removeElement();

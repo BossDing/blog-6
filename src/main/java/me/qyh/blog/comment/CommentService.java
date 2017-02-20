@@ -604,11 +604,11 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	private void validContentLength(String content) throws LogicException {
 		if (Validators.isEmptyOrNull(content, true)) {
-			throw new LogicException("comment.content.blank");
+			throw new LogicException("comment.content.blank", "评论内容不能为空");
 		}
 		// 再次检查content的长度
 		if (content.length() > MAX_COMMENT_LENGTH) {
-			throw new LogicException("comment.content.toolong", "回复的内容不能超过" + MAX_COMMENT_LENGTH + "个字符",
+			throw new LogicException("comment.content.toolong", "评论的内容不能超过" + MAX_COMMENT_LENGTH + "个字符",
 					MAX_COMMENT_LENGTH);
 		}
 	}
