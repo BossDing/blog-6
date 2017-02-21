@@ -73,8 +73,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.addImage();
 		setResize(resize, op);
 		String ext = FileUtils.getFileExtension(dest.getName());
-		String srcExt = FileUtils.getFileExtension(src.getName());
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
+		if (!maybeTransparentBg(ext)) {
 			setWhiteBg(op);
 		}
 		op.strip();
@@ -134,7 +133,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.strip();
 		op.p_profile("*");
 		op.addImage();
-		
+
 		File temp = FileUtils.appTemp(ext);
 		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
 		FileUtils.move(temp, dest);
@@ -142,11 +141,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (WINDOWS && Validators.isEmptyOrNull(magickPath, true)) {
-			throw new SystemException("windows下必须设置GraphicsMagick的主目录");
-		}
-
 		if (WINDOWS) {
+			if (Validators.isEmptyOrNull(magickPath, true)) {
+				throw new SystemException("windows下必须设置GraphicsMagick的主目录");
+			}
 			ProcessStarter.setGlobalSearchPath(magickPath);
 		}
 	}
@@ -187,17 +185,17 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	protected void setResize(Resize resize, IMOperation op) {
 		if (resize.getSize() != null) {
-			op.resize(resize.getSize(), resize.getSize(), '>');
+			op.thumbnail(resize.getSize(), resize.getSize(), '>');
 		} else {
 			if (!resize.isKeepRatio()) {
-				op.resize(resize.getWidth(), resize.getHeight(), '!');
+				op.thumbnail(resize.getWidth(), resize.getHeight(), '!');
 			} else {
 				if (resize.getWidth() <= 0) {
-					op.resize(Integer.MAX_VALUE, resize.getHeight(), '>');
+					op.thumbnail(Integer.MAX_VALUE, resize.getHeight(), '>');
 				} else if (resize.getHeight() <= 0) {
-					op.resize(resize.getWidth(), Integer.MAX_VALUE, '>');
+					op.thumbnail(resize.getWidth(), Integer.MAX_VALUE, '>');
 				} else {
-					op.resize(resize.getWidth(), resize.getHeight(), '>');
+					op.thumbnail(resize.getWidth(), resize.getHeight(), '>');
 				}
 			}
 		}

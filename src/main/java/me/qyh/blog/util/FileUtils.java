@@ -113,8 +113,9 @@ public class FileUtils {
 		if (file == null || !file.exists()) {
 			return true;
 		}
+		Path path = file.toPath();
 		try {
-			Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					Files.delete(file);

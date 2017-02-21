@@ -21,8 +21,10 @@ import static me.qyh.blog.file.ImageHelper.WEBP;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,14 +32,12 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -58,7 +58,8 @@ import me.qyh.blog.web.Webs;
  * @author Administrator
  *
  */
-public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
+public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore
+		implements ApplicationListener<ContextClosedEvent> {
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final char CONCAT_CHAR = 'X';
@@ -85,19 +86,33 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize middleResize;
 	private Resize largeResize;
 
-	/**
-	 * 如果为true，那么将会允许同时缩放多个文件
-	 */
-	private boolean asyncResize = true;
-
 	private ResizeStrategy resizeStrategy;
+	/**
+	 * 最多允许缩放线程数
+	 * <p>
+	 * 默认为5
+	 * </p>
+	 */
+	private final ExecutorService executor;
 
 	public ImageResourceStore(String urlPatternPrefix) {
+		this(urlPatternPrefix, 5);
+	}
+
+	public ImageResourceStore(String urlPatternPrefix, int max) {
 		super(urlPatternPrefix);
+		if (max < 0) {
+			throw new SystemException("最大执行线程数不能小于" + max);
+		}
+		executor = Executors.newFixedThreadPool(max);
 	}
 
 	public ImageResourceStore() {
-		super("image");
+		this("image", 5);
+	}
+
+	public ImageResourceStore(int max) {
+		this("image", max);
 	}
 
 	@Override
@@ -205,7 +220,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				try {
 					doResize(local, resize, file, sourcePath);
 					return file.exists() ? Optional.of(new PathResource(file.toPath())) : Optional.empty();
-				} catch (IOException e) {
+				} catch (Exception e) {
 					IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
 					return Optional.of(new PathResource(local.toPath()));
 				}
@@ -302,8 +317,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (!imageHelper.supportWebp()) {
 			supportWebp = false;
 		}
-
-		this.resizeStrategy = asyncResize ? new CacheResizeStrategy() : new SynchronizedResizeStrategy();
+		if (resizeStrategy == null) {
+			resizeStrategy = new DefaultResizeStrategy();
+		}
 	}
 
 	private void validateResize(Resize resize) {
@@ -319,8 +335,18 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	protected void doResize(File local, Resize resize, File thumb, String key) throws IOException {
-		resizeStrategy.doResize(local, thumb, resize, key);
+	protected void doResize(File local, Resize resize, File thumb, String key) {
+		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				resizeStrategy.doResize(local, thumb, resize);
+			} catch (IOException e) {
+				if (local.exists()) {
+					throw new SystemException(e.getMessage(), e);
+				}
+			}
+			return null;
+		},executor);
+		future.join();
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
@@ -426,116 +452,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	private interface ResizeStrategy {
-		void doResize(File local, File thumb, Resize resize, String key) throws IOException;
-	}
-
-	/**
-	 * 在短时间内将近期访问过的图片缓存起来
-	 * <p>
-	 * 这将会导致某些文件物理覆盖之后缩略图刷新存在一定时间的'延迟'
-	 * </p>
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	private final class CacheResizeStrategy implements ResizeStrategy {
-
-		/**
-		 * 过期时间
-		 */
-		private static final int EXPIRE_SECOND = 60;
-		private final ThreadLocal<ResizeParam> paramLocal = new ThreadLocal<>();
-
-		private final LoadingCache<String, File> coverCache = Caffeine.newBuilder()
-				.expireAfterWrite(EXPIRE_SECOND, TimeUnit.SECONDS).build(new CacheLoader<String, File>() {
-					@Override
-					public File load(String key) throws Exception {
-						ResizeParam param = paramLocal.get();
-						File cover = param.cover;
-						if (cover.exists()) {
-							return cover;
-						}
-						File local = param.local;
-						FileUtils.forceMkdir(cover.getParentFile());
-						imageHelper.format(local, cover);
-						return cover;
-					}
-				});
-
-		private final LoadingCache<ThumbKey, File> fileCache = Caffeine.newBuilder()
-				.removalListener((k, v, c) -> coverCache.invalidate(((ThumbKey) k).cover))
-				.expireAfterWrite(EXPIRE_SECOND, TimeUnit.SECONDS).build(new CacheLoader<ThumbKey, File>() {
-
-					@Override
-					public File load(ThumbKey key) throws Exception {
-						File thumb = new File(key.thumb);
-						if (thumb.exists()) {
-							return thumb;
-						}
-						ResizeParam param = paramLocal.get();
-						File cover = coverCache.get(key.cover);
-						FileUtils.forceMkdir(thumb.getParentFile());
-						imageHelper.resize(param.resize, cover, thumb);
-						return thumb;
-					}
-				});
-
-		@Override
-		public void doResize(File local, File thumb, Resize resize, String key) throws IOException {
-			String ext = FileUtils.getFileExtension(key);
-			File thumbFolder = new File(thumbAbsFolder, key);
-
-			String thumbFilename = FileUtils.getNameWithoutExtension(key);
-			String coverExt = "." + (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG : JPEG);
-
-			File cover = new File(thumbFolder, thumbFilename + coverExt);
-
-			paramLocal.set(new ResizeParam(local, cover, resize));
-			try {
-				fileCache.get(new ThumbKey(cover.getCanonicalPath(), thumb.getCanonicalPath()));
-			} finally {
-				paramLocal.remove();
-			}
-		}
-
-		private final class ResizeParam {
-			private final File local;
-			private final File cover;
-			private final Resize resize;
-
-			public ResizeParam(File local, File cover, Resize resize) {
-				super();
-				this.local = local;
-				this.cover = cover;
-				this.resize = resize;
-			}
-		}
-
-		private final class ThumbKey {
-			private final String cover;
-			private final String thumb;
-
-			public ThumbKey(String cover, String thumb) {
-				super();
-				this.cover = cover;
-				this.thumb = thumb;
-			}
-
-			@Override
-			public int hashCode() {
-				return Objects.hash(thumb, cover);
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				if (Validators.baseEquals(this, obj)) {
-					ThumbKey rhs = (ThumbKey) obj;
-					return Objects.equals(this.thumb, rhs.thumb) && Objects.equals(this.cover, this.cover);
-				}
-				return false;
-			}
-		}
+	public interface ResizeStrategy {
+		void doResize(File local, File thumb, Resize resize) throws IOException;
 	}
 
 	/**
@@ -544,25 +462,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * @author mhlx
 	 *
 	 */
-	private final class SynchronizedResizeStrategy implements ResizeStrategy {
+	private final class DefaultResizeStrategy implements ResizeStrategy {
 
 		@Override
-		public void doResize(File local, File thumb, Resize resize, String key) throws IOException {
-			synchronized (this) {
-				String ext = FileUtils.getFileExtension(local.getName());
-				File thumbFolder = new File(thumbAbsFolder, key);
-
-				String thumbFilename = FileUtils.getNameWithoutExtension(key);
-				String coverExt = "." + (ImageHelper.isGIF(ext) || ImageHelper.isPNG(ext) ? PNG : JPEG);
-
-				File cover = new File(thumbFolder, thumbFilename + coverExt);
-				if (!cover.exists()) {
-					FileUtils.forceMkdir(thumbFolder);
-					imageHelper.format(local, cover);
-				}
-				FileUtils.forceMkdir(thumb.getParentFile());
-				imageHelper.resize(resize, cover, thumb);
+		public void doResize(File local, File thumb, Resize resize) throws IOException {
+			String ext = FileUtils.getFileExtension(local.getName());
+			String coverExt = "." + (ImageHelper.maybeTransparentBg(ext) ? PNG : JPEG);
+			File cover = new File(thumb.getParentFile(), FileUtils.getNameWithoutExtension(local.getName()) + coverExt);
+			if (!cover.exists()) {
+				FileUtils.forceMkdir(cover.getParentFile());
+				imageHelper.format(local, cover);
 			}
+			FileUtils.forceMkdir(thumb.getParentFile());
+			imageHelper.resize(resize, cover, thumb);
 		}
 	}
 
@@ -624,7 +536,17 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		this.largeResize = largeResize;
 	}
 
-	public void setAsyncResize(boolean asyncResize) {
-		this.asyncResize = asyncResize;
+	public void setResizeStrategy(ResizeStrategy resizeStrategy) {
+		this.resizeStrategy = resizeStrategy;
+	}
+
+	@Override
+	public void onApplicationEvent(ContextClosedEvent evt) {
+		executor.shutdown();
+		try {
+			executor.awaitTermination(60, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 	}
 }
