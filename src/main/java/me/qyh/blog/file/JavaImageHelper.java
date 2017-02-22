@@ -37,9 +37,9 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
 
 /**
- * 基于java的图片处理，可能会消耗大量的内存和cpu
+ * 基于java的图片处理
  * <p>
- * <b>这个类仅供测试使用，实际请使用<code>GraphicsMagickImageHelper</code></b>
+ * <b>这个类仅供测试使用，请勿在实际项目中使用
  * </p>
  * 
  * @see GraphicsMagickImageHelper
@@ -130,14 +130,17 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	@Override
-	protected void doFormat(File src, File dest) throws IOException {
+	protected void doCompress(File src, File dest) throws IOException {
 		String ext = FileUtils.getFileExtension(src.getName());
 		String destExt = FileUtils.getFileExtension(dest.getName());
 		if (isGIF(ext)) {
 			doGetGifCover(src, dest);
 		} else {
 			BufferedImage readed = ImageIO.read(src);
-			writeImg(WHITE_BG_FILTER.apply(readed), destExt, dest);
+			if (!isPNG(destExt)) {
+				readed = WHITE_BG_FILTER.apply(readed);
+			}
+			writeImg(readed, destExt, dest);
 		}
 	}
 

@@ -483,9 +483,4 @@ public class Jsons {
 			return ele == JsonNull.INSTANCE ? null : ele.isJsonPrimitive() ? ele.getAsString() : ele.toString();
 		}
 	}
-
-	public static void main(String[] arggs) {
-		System.out.println(Jsons.read("http://cn.bing.com/HPImageArchive.aspx?format=js&idx=-1&n=1")
-				.executeForExecutor("images[0]").execute("url"));
-	}
 }

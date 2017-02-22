@@ -21,8 +21,10 @@ import static me.qyh.blog.file.ImageHelper.WEBP;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +88,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private Resize middleResize;
 	private Resize largeResize;
 
-	private ResizeStrategy resizeStrategy;
 	/**
 	 * 最多允许缩放线程数
 	 * <p>
@@ -94,6 +95,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * </p>
 	 */
 	private final ExecutorService executor;
+
+	/**
+	 * 防止同时生成相同的缩略图和压缩图
+	 */
+	private final Map<String, Boolean> fileMap = new ConcurrentHashMap<>();
+	private final Map<String, Boolean> coverMap = new ConcurrentHashMap<>();
 
 	public ImageResourceStore(String urlPatternPrefix) {
 		this(urlPatternPrefix, 5);
@@ -216,18 +223,19 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			// 如果原图存在，进行缩放
 			File local = optionalFile.get();
 			// 如果支持文件格式(防止ImageHelper变更)
-			if (ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(local.getName()))) {
+			if (ImageHelper.isSystemAllowedImage(ext)) {
 				try {
-					doResize(local, resize, file, sourcePath);
+					doResize(local, resize, file);
 					return file.exists() ? Optional.of(new PathResource(file.toPath())) : Optional.empty();
 				} catch (Exception e) {
 					IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
-					return Optional.of(new PathResource(local.toPath()));
+					// 缩放失败
+					return Optional.empty();
 				}
 			} else {
 				// 不支持的文件格式
 				// 可能更改了ImageHelper
-				// 这里直接输出源文件
+				// 返回原文件
 				return Optional.of(new PathResource(local.toPath()));
 			}
 
@@ -317,9 +325,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (!imageHelper.supportWebp()) {
 			supportWebp = false;
 		}
-		if (resizeStrategy == null) {
-			resizeStrategy = new DefaultResizeStrategy();
-		}
 	}
 
 	private void validateResize(Resize resize) {
@@ -335,18 +340,54 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	protected void doResize(File local, Resize resize, File thumb, String key) {
+	protected void doResize(File local, Resize resize, File thumb) {
 		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
 			try {
-				resizeStrategy.doResize(local, thumb, resize);
+				executeResize(local, thumb, resize);
 			} catch (IOException e) {
 				if (local.exists()) {
 					throw new SystemException(e.getMessage(), e);
 				}
 			}
 			return null;
-		},executor);
+		}, executor);
 		future.join();
+	}
+
+	public void executeResize(File local, File thumb, Resize resize) throws IOException {
+		String ext = FileUtils.getFileExtension(local.getName());
+		String coverExt = "." + (ImageHelper.maybeTransparentBg(ext) ? PNG : JPEG);
+		File cover = new File(thumb.getParentFile(), FileUtils.getNameWithoutExtension(local.getName()) + coverExt);
+
+		String coverCanonicalPath = cover.getCanonicalPath();
+		String thumbCanonicalPath = thumb.getCanonicalPath();
+
+		fileMap.compute(thumbCanonicalPath, (k, v) -> {
+			if (!thumb.exists()) {
+				coverMap.compute(coverCanonicalPath, (ck, cv) -> {
+					if (!cover.exists()) {
+						FileUtils.forceMkdir(cover.getParentFile());
+						try {
+							imageHelper.compress(local, cover);
+						} catch (IOException e) {
+							if (local.exists()) {
+								throw new SystemException(e.getMessage(), e);
+							}
+						}
+					}
+					return null;
+				});
+				FileUtils.forceMkdir(thumb.getParentFile());
+				try {
+					imageHelper.resize(resize, cover, thumb);
+				} catch (IOException e) {
+					if (cover.exists()) {
+						throw new SystemException(e.getMessage(), e);
+					}
+				}
+			}
+			return null;
+		});
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
@@ -452,32 +493,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	public interface ResizeStrategy {
-		void doResize(File local, File thumb, Resize resize) throws IOException;
-	}
-
-	/**
-	 * 同步缩放策略，适合图片较少的情况
-	 * 
-	 * @author mhlx
-	 *
-	 */
-	private final class DefaultResizeStrategy implements ResizeStrategy {
-
-		@Override
-		public void doResize(File local, File thumb, Resize resize) throws IOException {
-			String ext = FileUtils.getFileExtension(local.getName());
-			String coverExt = "." + (ImageHelper.maybeTransparentBg(ext) ? PNG : JPEG);
-			File cover = new File(thumb.getParentFile(), FileUtils.getNameWithoutExtension(local.getName()) + coverExt);
-			if (!cover.exists()) {
-				FileUtils.forceMkdir(cover.getParentFile());
-				imageHelper.format(local, cover);
-			}
-			FileUtils.forceMkdir(thumb.getParentFile());
-			imageHelper.resize(resize, cover, thumb);
-		}
-	}
-
 	/**
 	 * 获取缩略图格式
 	 * 
@@ -534,10 +549,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	public void setLargeResize(Resize largeResize) {
 		this.largeResize = largeResize;
-	}
-
-	public void setResizeStrategy(ResizeStrategy resizeStrategy) {
-		this.resizeStrategy = resizeStrategy;
 	}
 
 	@Override

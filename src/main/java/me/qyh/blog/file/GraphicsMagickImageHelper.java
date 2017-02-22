@@ -76,11 +76,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (!maybeTransparentBg(ext)) {
 			setWhiteBg(op);
 		}
-		op.strip();
-		op.p_profile("*");
 		if (interlace(dest)) {
 			op.interlace("Line");
 		}
+		addCompressOp(op, ext);
 		op.addImage();
 
 		File temp = FileUtils.appTemp(ext);
@@ -107,7 +106,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected void doFormat(File src, File dest) throws IOException {
+	protected void doCompress(File src, File dest) throws IOException {
 		String srcExt = FileUtils.getFileExtension(src.getName());
 		if (isGIF(srcExt)) {
 			File _gif = FileUtils.appTemp(GIF);
@@ -131,12 +130,24 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			setWhiteBg(op);
 		}
 		op.strip();
-		op.p_profile("*");
+		addCompressOp(op, ext);
 		op.addImage();
 
 		File temp = FileUtils.appTemp(ext);
 		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
 		FileUtils.move(temp, dest);
+	}
+
+	private void addCompressOp(IMOperation op, String ext) {
+		if (isJPEG(ext)) {
+			op.interlace("Plane");
+			op.quality(85D);
+		}
+		if (isPNG(ext)) {
+			op.define("png:compression-filter=2");
+			op.define("png:compression-level=9");
+			op.define("png:compression-strategy=1");
+		}
 	}
 
 	@Override
