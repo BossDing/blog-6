@@ -21,10 +21,10 @@ import static me.qyh.blog.file.ImageHelper.WEBP;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -99,8 +99,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	/**
 	 * 防止同时生成相同的缩略图和压缩图
 	 */
-	private final Map<String, Boolean> fileMap = new ConcurrentHashMap<>();
-	private final Map<String, Boolean> coverMap = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CountDownLatch> fileMap = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CountDownLatch> coverMap = new ConcurrentHashMap<>();
 
 	public ImageResourceStore(String urlPatternPrefix) {
 		this(urlPatternPrefix, 5);
@@ -295,6 +295,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (resize == null) {
 			return getUrl(path);
 		}
+
 		return urlPrefix + Validators.cleanPath(generateResizePathFromPath(resize, path));
 	}
 
@@ -341,7 +342,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	}
 
 	protected void doResize(File local, Resize resize, File thumb) {
-		CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+		CompletableFuture.runAsync(() -> {
 			try {
 				executeResize(local, thumb, resize);
 			} catch (IOException e) {
@@ -349,12 +350,14 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 					throw new SystemException(e.getMessage(), e);
 				}
 			}
-			return null;
-		}, executor);
-		future.join();
+		}, executor).join();
 	}
 
-	public void executeResize(File local, File thumb, Resize resize) throws IOException {
+	/*
+	 * https://www.qyh.me/space/java/article/graphicsmagick-error-137
+	 * 在这种情境下比computIfAbsent(k,Function,null)快
+	 */
+	private void executeResize(File local, File thumb, Resize resize) throws IOException {
 		String ext = FileUtils.getFileExtension(local.getName());
 		String coverExt = "." + (ImageHelper.maybeTransparentBg(ext) ? PNG : JPEG);
 		File cover = new File(thumb.getParentFile(), FileUtils.getNameWithoutExtension(local.getName()) + coverExt);
@@ -362,32 +365,44 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		String coverCanonicalPath = cover.getCanonicalPath();
 		String thumbCanonicalPath = thumb.getCanonicalPath();
 
-		fileMap.compute(thumbCanonicalPath, (k, v) -> {
-			if (!thumb.exists()) {
-				coverMap.compute(coverCanonicalPath, (ck, cv) -> {
-					if (!cover.exists()) {
-						FileUtils.forceMkdir(cover.getParentFile());
-						try {
-							imageHelper.compress(local, cover);
-						} catch (IOException e) {
-							if (local.exists()) {
-								throw new SystemException(e.getMessage(), e);
-							}
-						}
-					}
-					return null;
-				});
-				FileUtils.forceMkdir(thumb.getParentFile());
-				try {
-					imageHelper.resize(resize, cover, thumb);
-				} catch (IOException e) {
-					if (cover.exists()) {
-						throw new SystemException(e.getMessage(), e);
-					}
+		if (coverMap.putIfAbsent(coverCanonicalPath, new CountDownLatch(1)) == null) {
+			try {
+				if (!cover.exists()) {
+					FileUtils.forceMkdir(cover.getParentFile());
+					imageHelper.compress(local, cover);
 				}
+			} finally {
+				coverMap.get(coverCanonicalPath).countDown();
+				coverMap.remove(coverCanonicalPath);
 			}
-			return null;
-		});
+		} else {
+			wait(coverMap.get(coverCanonicalPath));
+		}
+
+		if (fileMap.putIfAbsent(thumbCanonicalPath, new CountDownLatch(1)) == null) {
+			try {
+				if (!thumb.exists()) {
+					FileUtils.forceMkdir(thumb.getParentFile());
+					imageHelper.resize(resize, cover, thumb);
+				}
+			} finally {
+				fileMap.get(thumbCanonicalPath).countDown();
+				fileMap.remove(thumbCanonicalPath);
+			}
+		} else {
+			wait(fileMap.get(thumbCanonicalPath));
+		}
+	}
+
+	private void wait(CountDownLatch cdl) {
+		if (cdl != null) {
+			try {
+				cdl.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new SystemException(e.getMessage(), e);
+			}
+		}
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {

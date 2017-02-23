@@ -46,7 +46,7 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 
 	private List<PingService> pingServices = new ArrayList<>();
 	private final String blogName;
-	
+
 	private int awaitSeconds;
 
 	private ExecutorService executor;
@@ -70,13 +70,12 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 	}
 
 	private void ping(Article article) {
-		pingServices.stream().forEach(pingService -> CompletableFuture.supplyAsync(() -> {
+		pingServices.stream().forEach(pingService -> CompletableFuture.runAsync(() -> {
 			try {
 				pingService.ping(article, blogName);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
 			}
-			return null;
 		}, executor));
 	}
 

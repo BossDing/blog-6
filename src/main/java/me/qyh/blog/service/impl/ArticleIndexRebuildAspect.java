@@ -42,7 +42,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Before("@annotation(ArticleIndexRebuild)")
-	public void before(JoinPoint joinPoint) throws InterruptedException {
+	public void before(JoinPoint joinPoint) {
 		if (TransactionSynchronizationManager.isSynchronizationActive()
 				&& !TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
 			TransactionSynchronizationManager.registerSynchronization(this);
