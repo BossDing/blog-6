@@ -273,7 +273,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *            文章数
 	 * @return
 	 */
-	public List<Article> querySimilar(Article article,boolean queryPrivate, ArticlesDetailQuery dquery, int limit) {
+	public List<Article> querySimilar(Article article, boolean queryPrivate, ArticlesDetailQuery dquery, int limit) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
@@ -286,7 +286,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			Builder builder = new Builder();
 			builder.add(likeQuery, Occur.MUST);
 			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
-			if(!queryPrivate){
+			if (!queryPrivate) {
 				builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
 				builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
 			}
@@ -480,14 +480,14 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		String[] tags = doc.getValues(TAG);
 
 		getHightlight(new Highlighter(titleFormatter, new QueryScorer(query)), TITLE, title)
-				.ifPresent(hl -> article.setTitle(hl));
+				.ifPresent(article::setTitle);
 		Optional<String> summaryHl = getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), SUMMARY,
 				summary);
 		if (summaryHl.isPresent()) {
 			article.setSummary(summaryHl.get());
 		} else {
 			getHightlight(new Highlighter(summaryFormatter, new QueryScorer(query)), CONTENT, content)
-					.ifPresent(hl -> article.setSummary(hl));
+					.ifPresent(article::setSummary);
 		}
 		if (tags != null && tags.length > 0) {
 			for (String tag : tags) {
@@ -495,7 +495,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				if (optionalTag.isPresent()) {
 					Tag _tag = optionalTag.get();
 					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, _tag.getName())
-							.ifPresent(hl -> _tag.setName(hl));
+							.ifPresent( _tag::setName);
 				}
 			}
 		}

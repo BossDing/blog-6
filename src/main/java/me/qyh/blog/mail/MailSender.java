@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -29,6 +27,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
@@ -50,8 +49,9 @@ public class MailSender implements InitializingBean {
 	private JavaMailSender javaMailSender;
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
-	private static final Executor executor = Executors.newCachedThreadPool();
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
 	private static final int LIMIT_SEC = 10;
@@ -63,7 +63,10 @@ public class MailSender implements InitializingBean {
 	private Limit limit;
 	private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);
 
-	private static final File sdfile = new File(FileUtils.getHomeDir(), "message_shutdown.dat");
+	/**
+	 * 江应用关闭时未发送的信息存入文件中
+	 */
+	private final File sdfile = new File(FileUtils.getHomeDir(), "message_shutdown.dat");
 
 	private TimeCount timeCount;
 
@@ -111,7 +114,7 @@ public class MailSender implements InitializingBean {
 	}
 
 	protected void sendMail(final MessageBean mb, final MailSendCallBack callBack) {
-		executor.execute(() -> {
+		threadPoolTaskExecutor.execute(() -> {
 			try {
 				String email = mb.to;
 				if (Validators.isEmptyOrNull(email, true)) {

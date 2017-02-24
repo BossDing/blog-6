@@ -78,32 +78,9 @@ public abstract class ImageHelper {
 
 	}
 
-	/**
-	 * 压缩图片
-	 * <p>
-	 * <b>GIF无法压缩成GIF图片</b>
-	 * </p>
-	 * 
-	 * @param src
-	 *            原文件
-	 * @param dest
-	 *            目标文件
-	 * @throws IOException
-	 *             读写异常
-	 */
-	public final void compress(File src, File dest) throws IOException {
-		String srcExt = FileUtils.getFileExtension(src.getName());
-		String destExt = FileUtils.getFileExtension(dest.getName());
-		formatCheck(srcExt);
-		formatCheck(destExt);
-		doCompress(src, dest);
-	}
-
 	protected abstract void doResize(Resize resize, File src, File dest) throws IOException;
 
 	protected abstract ImageInfo doRead(File file) throws IOException;
-
-	protected abstract void doCompress(File src, File dest) throws IOException;
 
 	/**
 	 * 是否支持webp格式
@@ -238,14 +215,15 @@ public abstract class ImageHelper {
 	 * @return
 	 */
 	public static boolean isSystemAllowedImage(String ext) {
-		return Arrays.stream(ALLOWED_IMG_EXTENSIONS).anyMatch(_ext -> _ext.equalsIgnoreCase(ext));
+		return ext != null && Arrays.stream(ALLOWED_IMG_EXTENSIONS).anyMatch(ext::equalsIgnoreCase);
 	}
 
-	private void formatCheck(String extension) throws IOException {
-		if (isWEBP(extension) && supportWebp()) {
-			return;
-		}
-		if (!isSystemAllowedImage(extension)) {
+	public void formatCheck(String extension) throws IOException {
+		if (isWEBP(extension)) {
+			if (!supportWebp()) {
+				throw new IOException("文件格式" + extension + "不被支持");
+			}
+		} else if (!isSystemAllowedImage(extension)) {
 			throw new IOException("文件格式" + extension + "不被支持");
 		}
 	}

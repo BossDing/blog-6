@@ -30,8 +30,7 @@ public class AllowTags {
 
 	public void addSimpleTags(String[] simpleTags) {
 		if (simpleTags != null && simpleTags.length > 0) {
-			Arrays.stream(simpleTags).filter(name -> !name.isEmpty()).distinct().map(Tag::new)
-					.forEach(tag -> tags.add(tag));
+			Arrays.stream(simpleTags).filter(name -> !name.isEmpty()).distinct().map(Tag::new).forEach(tags::add);
 		}
 	}
 

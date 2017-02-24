@@ -34,8 +34,6 @@ import org.im4java.core.ImageCommand;
 import org.im4java.core.Operation;
 import org.im4java.process.ArrayListOutputConsumer;
 import org.im4java.process.ProcessStarter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.madgag.gif.fmsware.GifDecoder;
@@ -53,8 +51,6 @@ import me.qyh.blog.util.Validators;
  */
 public class GraphicsMagickImageHelper extends ImageHelper implements InitializingBean {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(GraphicsMagickImageHelper.class);
-
 	/**
 	 * 在windows环境下，必须设置这个路径
 	 */
@@ -64,13 +60,24 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	/**
 	 * 如果为true，那么将会以渐进的方式显示出来，但在有些浏览器，例如EDGE则会先显示空白后再显示图片
+	 * <p>
+	 * 该选项会使图片增大
+	 * </p>
 	 */
-	private boolean doInterlace = true;
+	private boolean doInterlace = false;
+
+	/**
+	 * <p>
+	 * JPEG格式图片质量
+	 * </p>
+	 */
+	private double quality = 75d;
 
 	@Override
 	protected void doResize(Resize resize, File src, File dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
+		op.strip();
 		setResize(resize, op);
 		String ext = FileUtils.getFileExtension(dest.getName());
 		if (!maybeTransparentBg(ext)) {
@@ -83,8 +90,17 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		op.addImage();
 
 		File temp = FileUtils.appTemp(ext);
-		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
-		FileUtils.move(temp, dest);
+		try {
+			run(op, src.getAbsolutePath(), temp.getAbsolutePath());
+			FileUtils.move(temp, dest);
+		} catch (IOException e) {
+			// 如果原图是gif图像
+			if (isGIF(FileUtils.getFileExtension(src.getName()))) {
+				doResize(resize, getGifCoverUseJava(src), dest);
+			} else {
+				throw e;
+			}
+		}
 	}
 
 	@Override
@@ -105,43 +121,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
 	}
 
-	@Override
-	protected void doCompress(File src, File dest) throws IOException {
-		String srcExt = FileUtils.getFileExtension(src.getName());
-		if (isGIF(srcExt)) {
-			File _gif = FileUtils.appTemp(GIF);
-			IMOperation op = new IMOperation();
-			op.addImage();
-			op.strip();
-			op.p_profile("*");
-			op.addImage();
-			try {
-				run(op, src.getAbsolutePath(), _gif.getAbsolutePath());
-			} catch (IOException e) {
-				LOGGER.debug("GraphicsMagick无法获取" + src.getAbsolutePath() + "这张图片的封面，尝试用GifDecoder来获取", e);
-				getGifCoverUseJava(src, _gif);
-			}
-			src = _gif;
-		}
-		String ext = FileUtils.getFileExtension(dest.getName());
-		IMOperation op = new IMOperation();
-		op.addImage();
-		if (!maybeTransparentBg(ext) || !maybeTransparentBg(srcExt)) {
-			setWhiteBg(op);
-		}
-		op.strip();
-		addCompressOp(op, ext);
-		op.addImage();
-
-		File temp = FileUtils.appTemp(ext);
-		run(op, src.getAbsolutePath(), temp.getAbsolutePath());
-		FileUtils.move(temp, dest);
-	}
-
 	private void addCompressOp(IMOperation op, String ext) {
 		if (isJPEG(ext)) {
 			op.interlace("Plane");
-			op.quality(85D);
+			op.quality(quality);
 		}
 		if (isPNG(ext)) {
 			op.define("png:compression-filter=2");
@@ -152,6 +135,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		if (quality < 0 || quality > 100) {
+			throw new SystemException("图片质量应该在(0~100]之间");
+		}
 		if (WINDOWS) {
 			if (Validators.isEmptyOrNull(magickPath, true)) {
 				throw new SystemException("windows下必须设置GraphicsMagick的主目录");
@@ -166,18 +152,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 		String ext = FileUtils.getFileExtension(dest.getName());
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
-	}
-
-	private void getGifCoverUseJava(File gif, File _gif) throws IOException {
-		GifDecoder gd = new GifDecoder();
-		try (InputStream is = new FileInputStream(gif)) {
-			int flag = gd.read(is);
-			if (flag != GifDecoder.STATUS_OK) {
-				throw new IOException(gif + "文件无法获取封面");
-			}
-			BufferedImage bi = gd.getFrame(0);
-			ImageIO.write(bi, GIF, _gif);
-		}
 	}
 
 	private void setWhiteBg(IMOperation op) {
@@ -230,6 +204,32 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	@Override
 	public boolean supportWebp() {
 		return true;
+	}
+
+	public void setQuality(double quality) {
+		this.quality = quality;
+	}
+
+	/**
+	 * 有些gif图片GM无法处理，此时尝试用java提取gif图的封面
+	 * 
+	 * @param gif
+	 * @param _gif
+	 * @return PNG格式的图片
+	 * @throws IOException
+	 */
+	private File getGifCoverUseJava(File gif) throws IOException {
+		GifDecoder gd = new GifDecoder();
+		try (InputStream is = new FileInputStream(gif)) {
+			int flag = gd.read(is);
+			if (flag != GifDecoder.STATUS_OK) {
+				throw new IOException(gif + "文件无法获取封面");
+			}
+			File tmp = FileUtils.appTemp(PNG);
+			BufferedImage bi = gd.getFrame(0);
+			ImageIO.write(bi, GIF, tmp);
+			return tmp;
+		}
 	}
 
 }

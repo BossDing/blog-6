@@ -61,8 +61,7 @@ public class TplResolver extends SpringResourceTemplateResolver {
 			}
 		}
 		if (TemplateUtils.isFragmentTemplate(template)) {
-			Optional<FragmentResource> optional = ParseContext.getFragment(template)
-					.map(fragment -> new FragmentResource(fragment));
+			Optional<FragmentResource> optional = ParseContext.getFragment(template).map(FragmentResource::new);
 			if (optional.isPresent()) {
 				return optional.get();
 			}

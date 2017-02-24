@@ -118,7 +118,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	public Optional<Space> selectSpaceByAlias(String alias, boolean lockCheck) {
 		Optional<Space> spaceOptional = spaceCache.getSpace(alias);
 		if (lockCheck) {
-			spaceOptional.ifPresent(space -> lockManager.openLock(space));
+			spaceOptional.ifPresent(lockManager::openLock);
 		}
 		return spaceOptional;
 	}

@@ -32,6 +32,8 @@ import me.qyh.blog.util.Validators;
 @Component
 public class UrlConfig implements InitializingBean {
 
+	private static final String LOCAL_HOST = "localhost";
+
 	@Value("${app.contextPath:''}")
 	private String contextPath;
 
@@ -83,7 +85,7 @@ public class UrlConfig implements InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (Validators.isEmptyOrNull(domain, true)) {
-			domain = "localhost";
+			domain = LOCAL_HOST;
 		}
 		domain = domain.toLowerCase();
 		if (domain.indexOf('.') == -1) {
@@ -111,5 +113,23 @@ public class UrlConfig implements InitializingBean {
 		if (!contextPath.isEmpty() && !contextPath.startsWith("/")) {
 			contextPath = "/" + contextPath;
 		}
+	}
+
+	/**
+	 * 判断是否是本地环境
+	 * 
+	 * @return
+	 */
+	public boolean isLocalDomain() {
+		return LOCAL_HOST.equalsIgnoreCase(this.domain);
+	}
+
+	/**
+	 * 判断是否https
+	 * 
+	 * @return
+	 */
+	public boolean isSecure() {
+		return "https".equalsIgnoreCase(this.schema);
 	}
 }

@@ -40,21 +40,22 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		super.contextInitialized(event);
 		WebApplicationContext ctx = super.getCurrentWebApplicationContext();
 		UrlConfig helper = ctx.getBean(UrlConfig.class);
-		String domain = helper.getRootDomain();
 		ServletContext sc = event.getServletContext();
+		SessionCookieConfig config = sc.getSessionCookieConfig();
+		config.setHttpOnly(true);
+		config.setSecure(helper.isSecure());
+		config.setDomain(helper.getRootDomain());
+		String contextPath = helper.getContextPath();
+		if (contextPath.isEmpty()) {
+			config.setPath("/");
+		} else {
+			config.setPath(contextPath);
+		}
 		if (helper.isEnableSpaceDomain()) {
 			LOGGER.debug("开启了多域名支持，添加UrlFilter以转发请求,添加CORSFilter以处理跨域");
 			Class<? extends Filter> corsFilter = CORSFilter.class;
 			sc.addFilter(corsFilter.getName(), corsFilter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST),
 					true, "/*");
-			SessionCookieConfig config = sc.getSessionCookieConfig();
-			config.setDomain(domain);
-			String contextPath = sc.getContextPath();
-			if (contextPath.isEmpty()) {
-				config.setPath("/");
-			} else {
-				config.setPath(contextPath);
-			}
 		}
 	}
 }

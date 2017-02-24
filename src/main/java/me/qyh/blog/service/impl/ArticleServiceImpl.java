@@ -406,7 +406,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			return Collections.emptyList();
 		}
 		Map<Integer, Article> map = articles.stream().collect(Collectors.toMap(Article::getId, article -> article));
-		return ids.stream().map(id -> map.get(id)).filter(Objects::nonNull).collect(Collectors.toList());
+		return ids.stream().map(map::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@Override
@@ -528,8 +528,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (!Environment.match(article.getSpace())) {
 			return Collections.emptyList();
 		}
-		return articleIndexer.querySimilar(article, Environment.isLogin(),
-				articleIds -> articleDao.selectSimpleByIds(articleIds), limit).stream().collect(Collectors.toList());
+		return articleIndexer.querySimilar(article, Environment.isLogin(), articleDao::selectSimpleByIds, limit)
+				.stream().collect(Collectors.toList());
 	}
 
 	@Override

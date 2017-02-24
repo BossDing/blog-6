@@ -141,11 +141,12 @@ public class StatisticsServiceImpl implements StatisticsService {
 		fileStatistics.setTypeCountMap(blogFileDao.selectSubBlogFileCount(root).stream()
 				.collect(Collectors.toMap(BlogFileCount::getType, BlogFileCount::getCount)));
 		fileStatistics.setStoreCountMap(blogFileDao.selectFileCount().stream()
-				.collect(Collectors.toMap(fcb -> wrap(fcb.getFileStore()), FileCountBean::getFileCount)));
+				.collect(Collectors.toMap(this::wrap, FileCountBean::getFileCount)));
 		return fileStatistics;
 	}
 
-	private FileStoreBean wrap(Integer fileStore) {
+	private FileStoreBean wrap(FileCountBean fcb) {
+		int fileStore = fcb.getFileStore();
 		return fileManager.getFileStore(fileStore).map(FileStoreBean::new)
 				.orElseThrow(() -> new SystemException("文件存储器:" + fileStore + "不存在"));
 	}

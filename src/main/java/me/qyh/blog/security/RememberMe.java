@@ -26,17 +26,16 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Optional;
 
+import javax.servlet.SessionCookieConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.config.UrlConfig;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 
@@ -56,9 +55,6 @@ public class RememberMe {
 	private static final String COOKIE_NAME = "remember-me";
 	private static final String DELIMITER = ":";
 	private static final Logger LOGGER = LoggerFactory.getLogger(RememberMe.class);
-
-	@Autowired
-	private UrlConfig urlConfig;
 
 	public void save(User user, HttpServletRequest request, HttpServletResponse response) {
 		long expiryTime = System.currentTimeMillis();
@@ -115,19 +111,16 @@ public class RememberMe {
 	public void remove(HttpServletRequest request, HttpServletResponse response) {
 		Cookie cookie = new Cookie(COOKIE_NAME, null);
 		cookie.setMaxAge(0);
-		cookie.setSecure(true);
 		setCookie(cookie, request);
 		response.addCookie(cookie);
 	}
 
 	private void setCookie(Cookie cookie, HttpServletRequest request) {
-		cookie.setDomain(urlConfig.getRootDomain());
-		String contextPath = request.getContextPath();
-		if (contextPath.isEmpty()) {
-			cookie.setPath("/");
-		} else {
-			cookie.setPath(contextPath);
-		}
+		SessionCookieConfig scg = request.getServletContext().getSessionCookieConfig();
+		cookie.setDomain(scg.getDomain());
+		cookie.setHttpOnly(scg.isHttpOnly());
+		cookie.setSecure(scg.isSecure());
+		cookie.setPath(scg.getPath());
 	}
 
 	protected String makeTokenSignature(long tokenExpiryTime, User user) {
@@ -150,7 +143,6 @@ public class RememberMe {
 		Cookie cookie = new Cookie(COOKIE_NAME, cookieValue);
 		cookie.setMaxAge(maxAge);
 		setCookie(cookie, request);
-		cookie.setSecure(request.isSecure());
 		response.addCookie(cookie);
 	}
 

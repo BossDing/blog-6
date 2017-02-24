@@ -213,7 +213,7 @@ public final class CacheableHitsStrategy
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.taskScheduler.scheduleAtFixedRate(() -> flush(), flushSeconds * 1000);
+		this.taskScheduler.scheduleAtFixedRate(this::flush, flushSeconds * 1000);
 	}
 
 	// inner bean EventListener not work ???

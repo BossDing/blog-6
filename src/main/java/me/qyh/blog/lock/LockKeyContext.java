@@ -38,8 +38,6 @@ public class LockKeyContext {
 	/**
 	 * 从上下文中获取钥匙
 	 * 
-	 * @param id
-	 *            资源id
 	 * @return 如果不存在返回null
 	 */
 	public static Optional<LockKey> getKey(String resourceId, String lockId) {

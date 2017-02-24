@@ -129,21 +129,6 @@ public class JavaImageHelper extends ImageHelper {
 		}
 	}
 
-	@Override
-	protected void doCompress(File src, File dest) throws IOException {
-		String ext = FileUtils.getFileExtension(src.getName());
-		String destExt = FileUtils.getFileExtension(dest.getName());
-		if (isGIF(ext)) {
-			doGetGifCover(src, dest);
-		} else {
-			BufferedImage readed = ImageIO.read(src);
-			if (!isPNG(destExt)) {
-				readed = WHITE_BG_FILTER.apply(readed);
-			}
-			writeImg(readed, destExt, dest);
-		}
-	}
-
 	private void writeImg(BufferedImage bi, String ext, File dest) throws IOException {
 		FileUtils.deleteQuietly(dest);
 		ImageIO.write(bi, ext, dest);

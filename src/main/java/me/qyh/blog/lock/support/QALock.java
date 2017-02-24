@@ -87,7 +87,7 @@ public class QALock extends SysLock {
 
 	private boolean isCorrectAnswer(String answer) {
 		Objects.requireNonNull(answers);
-		return Arrays.stream(answers.split(",")).anyMatch(corretAnswer -> corretAnswer.equals(answer));
+		return Arrays.stream(answers.split(",")).anyMatch(answer::equals);
 	}
 
 	public String getQuestion() {

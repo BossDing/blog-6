@@ -144,7 +144,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 * @return 存在：true，不存在：false
 	 */
 	public boolean checkLockTypeExists(String lockType) {
-		return Arrays.stream(LOCK_TYPES).anyMatch(_lockType -> _lockType.equals(lockType));
+		return lockType != null && Arrays.stream(LOCK_TYPES).anyMatch(lockType::equals);
 	}
 
 	/**

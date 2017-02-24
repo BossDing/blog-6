@@ -26,7 +26,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
@@ -79,7 +80,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 */
 	private boolean sourceProtected;
 
-	private boolean supportWebp = false;
+	private boolean supportWebp;
 
 	private String thumbAbsPath;
 	private File thumbAbsFolder;
@@ -97,10 +98,14 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private final ExecutorService executor;
 
 	/**
+	 * 缩放线程池等待队列最多数量
+	 */
+	private static final int MAX_EXECUTOR_QUEUE_SIZE = 100;
+
+	/**
 	 * 防止同时生成相同的缩略图和压缩图
 	 */
 	private final ConcurrentHashMap<String, CountDownLatch> fileMap = new ConcurrentHashMap<>();
-	private final ConcurrentHashMap<String, CountDownLatch> coverMap = new ConcurrentHashMap<>();
 
 	public ImageResourceStore(String urlPatternPrefix) {
 		this(urlPatternPrefix, 5);
@@ -111,7 +116,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (max < 0) {
 			throw new SystemException("最大执行线程数不能小于" + max);
 		}
-		executor = Executors.newFixedThreadPool(max);
+		executor = new ThreadPoolExecutor(max, max, 0L, TimeUnit.MILLISECONDS,
+				new LinkedBlockingQueue<>(MAX_EXECUTOR_QUEUE_SIZE));
 	}
 
 	public ImageResourceStore() {
@@ -341,16 +347,18 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		return new File(thumbDir, name);
 	}
 
-	protected void doResize(File local, Resize resize, File thumb) {
-		CompletableFuture.runAsync(() -> {
-			try {
-				executeResize(local, thumb, resize);
-			} catch (IOException e) {
-				if (local.exists()) {
-					throw new SystemException(e.getMessage(), e);
+	protected void doResize(File local, Resize resize, File thumb) throws IOException {
+		if (!wait(fileMap.get(thumb.getCanonicalPath()))) {
+			CompletableFuture.runAsync(() -> {
+				try {
+					executeResize(local, thumb, resize);
+				} catch (IOException e) {
+					if (local.exists()) {
+						throw new SystemException(e.getMessage(), e);
+					}
 				}
-			}
-		}, executor).join();
+			}, executor).join();
+		}
 	}
 
 	/*
@@ -358,32 +366,13 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * 在这种情境下比computIfAbsent(k,Function,null)快
 	 */
 	private void executeResize(File local, File thumb, Resize resize) throws IOException {
-		String ext = FileUtils.getFileExtension(local.getName());
-		String coverExt = "." + (ImageHelper.maybeTransparentBg(ext) ? PNG : JPEG);
-		File cover = new File(thumb.getParentFile(), FileUtils.getNameWithoutExtension(local.getName()) + coverExt);
-
-		String coverCanonicalPath = cover.getCanonicalPath();
 		String thumbCanonicalPath = thumb.getCanonicalPath();
-
-		if (coverMap.putIfAbsent(coverCanonicalPath, new CountDownLatch(1)) == null) {
-			try {
-				if (!cover.exists()) {
-					FileUtils.forceMkdir(cover.getParentFile());
-					imageHelper.compress(local, cover);
-				}
-			} finally {
-				coverMap.get(coverCanonicalPath).countDown();
-				coverMap.remove(coverCanonicalPath);
-			}
-		} else {
-			wait(coverMap.get(coverCanonicalPath));
-		}
 
 		if (fileMap.putIfAbsent(thumbCanonicalPath, new CountDownLatch(1)) == null) {
 			try {
 				if (!thumb.exists()) {
 					FileUtils.forceMkdir(thumb.getParentFile());
-					imageHelper.resize(resize, cover, thumb);
+					imageHelper.resize(resize, local, thumb);
 				}
 			} finally {
 				fileMap.get(thumbCanonicalPath).countDown();
@@ -394,7 +383,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	private void wait(CountDownLatch cdl) {
+	private boolean wait(CountDownLatch cdl) {
 		if (cdl != null) {
 			try {
 				cdl.await();
@@ -403,6 +392,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				throw new SystemException(e.getMessage(), e);
 			}
 		}
+		return cdl != null;
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {

@@ -51,6 +51,6 @@ public final class ExceptionUtils {
 	}
 
 	private static boolean matchType(Throwable th, Class<?>... types) {
-		return Arrays.stream(types).anyMatch(type -> th.getClass().equals(type));
+		return th != null && Arrays.stream(types).anyMatch(th.getClass()::equals);
 	}
 }

@@ -104,7 +104,7 @@ public class Webs {
 	 * @return
 	 */
 	public static String getIp(HttpServletRequest request) {
-		return Arrays.stream(HEADERS_TO_TRY).map(header -> request.getHeader(header))
+		return Arrays.stream(HEADERS_TO_TRY).map(request::getHeader)
 				.filter(ip -> (!Validators.isEmptyOrNull(ip, true) && !"unknown".equalsIgnoreCase(ip))).findFirst()
 				.orElse(request.getRemoteAddr());
 	}
