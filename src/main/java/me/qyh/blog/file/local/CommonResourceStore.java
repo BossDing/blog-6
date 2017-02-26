@@ -48,5 +48,5 @@ public class CommonResourceStore extends AbstractLocalResourceRequestHandlerFile
 	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
 		return getFile(path).map(file -> new PathResource(file.toPath()));
 	}
-
+	
 }

@@ -82,6 +82,21 @@ public final class CacheableHitsStrategy
 	 */
 	private boolean validIp = true;
 
+	/**
+	 * 每篇文章允许最多允许保存的ip数，如果ip超过这个数量，文章点击量将被立即更新
+	 * 
+	 * @see IPBasedHitsHandler
+	 */
+	private int maxIps = 100;
+
+	/**
+	 * 最多保存的文章数，如果超过该数目，将会立即更新
+	 * <p>
+	 * <b>因为没有批量更新的功能，所以这个值应该设置的较小</b>
+	 * </p>
+	 */
+	private int maxArticles = 10;
+
 	public CacheableHitsStrategy(int flushSeconds) {
 		if (flushSeconds < 1) {
 			throw new SystemException("刷新时间不能小于1秒");
@@ -98,8 +113,30 @@ public final class CacheableHitsStrategy
 	public void hit(Article article) {
 		// increase
 		hitsMap.computeIfAbsent(article.getId(), k -> {
-			return validIp ? new IPBasedHitsHandler(article.getHits()) : new DefaultHitsHandler(article.getHits());
-		}).hit();
+			return validIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
+					: new DefaultHitsHandler(article.getHits());
+		}).hit(article);
+
+		/**
+		 * 并不会在hitsMap.size()刚刚超过maxArticles的执行，也有可能会在hitsMap.size()远远大于maxArticles的时候执行
+		 * 
+		 * 1.8 ConcurrentHashMap的size方法性能跟HashMap差不多
+		 * https://stackoverflow.com/questions/10754675/concurrent-hashmap-size-method-complexity/22996395#22996395
+		 */
+		if (hitsMap.size() > maxArticles) {
+			flush();
+		}
+	}
+
+	private void flush(Integer id) {
+		List<HitsWrapper> wrappers = new ArrayList<>();
+		hitsMap.compute(id, (ck, cv) -> {
+			if (cv != null) {
+				wrappers.add(new HitsWrapper(id, cv.getHits()));
+			}
+			return null;
+		});
+		doFlush(wrappers);
 	}
 
 	private void flush() {
@@ -116,24 +153,28 @@ public final class CacheableHitsStrategy
 					return null;
 				});
 			}
-			if (!wrappers.isEmpty()) {
-				TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
-				try {
-					for (HitsWrapper wrapper : wrappers) {
-						articleDao.updateHits(wrapper.id, wrapper.hits);
-						Article art = articleCache.getArticle(wrapper.id);
-						if (art != null) {
-							art.setHits(wrapper.hits);
-							articleIndexer.addOrUpdateDocument(art);
-						}
+			doFlush(wrappers);
+		}
+	}
+
+	private void doFlush(List<HitsWrapper> wrappers) {
+		if (!wrappers.isEmpty()) {
+			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
+			try {
+				for (HitsWrapper wrapper : wrappers) {
+					articleDao.updateHits(wrapper.id, wrapper.hits);
+					Article art = articleCache.getArticle(wrapper.id);
+					if (art != null) {
+						art.setHits(wrapper.hits);
+						articleIndexer.addOrUpdateDocument(art);
 					}
-				} catch (RuntimeException | Error e) {
-					ts.setRollbackOnly();
-					LOGGER.error(e.getMessage(), e);
-					applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
-				} finally {
-					transactionManager.commit(ts);
 				}
+			} catch (RuntimeException | Error e) {
+				ts.setRollbackOnly();
+				LOGGER.error(e.getMessage(), e);
+				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+			} finally {
+				transactionManager.commit(ts);
 			}
 		}
 	}
@@ -150,7 +191,7 @@ public final class CacheableHitsStrategy
 	}
 
 	private interface HitsHandler {
-		void hit();
+		void hit(Article article);
 
 		int getHits();
 	}
@@ -165,7 +206,7 @@ public final class CacheableHitsStrategy
 		}
 
 		@Override
-		public void hit() {
+		public void hit(Article article) {
 			adder.increment();
 		}
 
@@ -178,19 +219,25 @@ public final class CacheableHitsStrategy
 	private final class IPBasedHitsHandler implements HitsHandler {
 		private final Map<String, Boolean> ips = new ConcurrentHashMap<String, Boolean>();
 		private final LongAdder adder;
+		private final int maxIps;
 
-		private IPBasedHitsHandler(int init) {
+		private IPBasedHitsHandler(int init, int maxIps) {
 			adder = new LongAdder();
 			adder.add(init);
+			this.maxIps = maxIps;
 		}
 
 		@Override
-		public void hit() {
+		public void hit(Article article) {
 			Environment.getIP().ifPresent(ip -> {
 				if (ips.putIfAbsent(ip, Boolean.TRUE) == null) {
 					adder.increment();
 				}
 			});
+
+			if (ips.size() > maxIps) {
+				flush(article.getId());
+			}
 		}
 
 		@Override
@@ -226,5 +273,19 @@ public final class CacheableHitsStrategy
 
 	public void setValidIp(boolean validIp) {
 		this.validIp = validIp;
+	}
+
+	public void setMaxIps(int maxIps) {
+		if (maxIps <= 0) {
+			throw new SystemException("每篇文章允许最多允许保存的ip数应该大于0");
+		}
+		this.maxIps = maxIps;
+	}
+
+	public void setMaxArticles(int maxArticles) {
+		if (maxArticles <= 0) {
+			throw new SystemException("最多保存的文章数应该大于0");
+		}
+		this.maxArticles = maxArticles;
 	}
 }

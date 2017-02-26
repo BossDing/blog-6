@@ -415,7 +415,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	@EventListener
 	public void handleUserPageEvent(UserPageEvent event) {
 		if (event.getType().equals(EventType.DELETE)) {
-			deleteComment(new CommentModule(ModuleType.USERPAGE, event.getDeleted().getId()));
+			deleteComment(new CommentModule(ModuleType.USERPAGE, event.getPage().getId()));
 		}
 	}
 

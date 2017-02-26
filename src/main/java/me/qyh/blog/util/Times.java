@@ -84,6 +84,21 @@ public class Times {
 	}
 
 	/**
+	 * 通过指定的pattern解析日期
+	 * 
+	 * @param text
+	 * @param pattern
+	 * @return
+	 */
+	public static Optional<LocalDateTime> parse(String text, String pattern) {
+		try {
+			return Optional.of(LocalDateTime.parse(text, DATE_TIME_FORMATTER_CACHE.get(pattern)));
+		} catch (DateTimeParseException e) {
+			return Optional.empty();
+		}
+	}
+
+	/**
 	 * 解析日期
 	 * 
 	 * @param text
@@ -142,7 +157,18 @@ public class Times {
 	 * @return 如果解析失败，返回null
 	 */
 	public static Date parseAndGetDate(String text) {
-		LocalDateTime time = parseAndGet(text);
-		return time == null ? null : Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
+		Optional<LocalDateTime> time = parse(text);
+		return time.isPresent() ? toDate(time.get()) : null;
+	}
+
+	/**
+	 * 将LocalDateTime转化为date
+	 * 
+	 * @param time
+	 * @return
+	 */
+	public static Date toDate(LocalDateTime time) {
+		Objects.requireNonNull(time);
+		return Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
 	}
 }

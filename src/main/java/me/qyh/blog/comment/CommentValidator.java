@@ -39,7 +39,6 @@ public class CommentValidator implements Validator {
 	}
 
 	@Override
-	// TODO message.properties
 	public void validate(Object target, Errors errors) {
 		Comment comment = (Comment) target;
 		if (comment == null) {

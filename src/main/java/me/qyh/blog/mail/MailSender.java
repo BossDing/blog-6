@@ -16,22 +16,22 @@
 package me.qyh.blog.mail;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.config.Limit;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.SerializationUtils;
@@ -43,7 +43,7 @@ import me.qyh.blog.util.Validators;
  * @author Administrator
  *
  */
-public class MailSender implements InitializingBean {
+public class MailSender implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 
 	@Autowired
 	private JavaMailSender javaMailSender;
@@ -54,66 +54,46 @@ public class MailSender implements InitializingBean {
 
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
-	private static final int LIMIT_SEC = 10;
-	private static final int LIMIT_COUNT = 1;
-
-	private int limitSec = LIMIT_SEC;
-	private int limitCount = LIMIT_COUNT;
-
-	private Limit limit;
 	private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);
 
 	/**
-	 * 江应用关闭时未发送的信息存入文件中
+	 * 应用关闭时未发送的信息存入文件中
 	 */
 	private final File sdfile = new File(FileUtils.getHomeDir(), "message_shutdown.dat");
 
-	private TimeCount timeCount;
+	/**
+	 * 处理队列的时间(ms)
+	 */
+	private int processQueueDelay = 1000;
 
 	/**
-	 * 发送邮件
+	 * 将邮件加入发送队列
 	 * 
 	 * @param mb
 	 *            邮件对象
 	 */
 	public void send(MessageBean mb) {
-		doSend(mb, true, null);
+		queue.add(mb);
 	}
 
-	/**
-	 * 发送邮件
-	 * 
-	 * @param mb
-	 *            邮件对象
-	 * @param callback
-	 *            发送成功|失败回调
-	 */
-	public void send(MessageBean mb, MailSendCallBack callback) {
-		doSend(mb, true, callback);
-	}
-
-	private synchronized boolean doSend(MessageBean mb, boolean pull, MailSendCallBack callBack) {
-		long current = System.currentTimeMillis();
-		if (timeCount == null) {
-			timeCount = new TimeCount(current, 1);
-		} else {
-			timeCount.count++;
-			if (timeCount.exceed(current)) {
-				if (pull) {
-					LOGGER.debug("在" + (current - timeCount.start) + "毫秒内，发送邮件数量达到了" + limit.getCount() + "封，放入队列中");
-					queue.add(mb);
-				}
-				return false;
-			}
-			if (timeCount.reset(current)) {
-				this.timeCount = new TimeCount(current, 1);
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (sdfile.exists()) {
+			LOGGER.debug("发现序列化文件，执行反序列化操作");
+			queue = SerializationUtils.deserialize(sdfile);
+			if (!FileUtils.deleteQuietly(sdfile)) {
+				LOGGER.warn("删除序列文件失败");
 			}
 		}
-		sendMail(mb, callBack);
-		return true;
+		threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
+			MessageBean mb = queue.poll();
+			if (mb != null) {
+				sendMail(mb);
+			}
+		}, processQueueDelay);
 	}
 
-	protected void sendMail(final MessageBean mb, final MailSendCallBack callBack) {
+	private void sendMail(final MessageBean mb) {
 		threadPoolTaskExecutor.execute(() -> {
 			try {
 				String email = mb.to;
@@ -131,72 +111,10 @@ public class MailSender implements InitializingBean {
 					helper.setSubject(mb.subject);
 					mimeMessage.setFrom();
 				});
-				if (callBack != null) {
-					callBack.callBack(mb, true);
-				}
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
-				if (callBack != null) {
-					callBack.callBack(mb, false);
-				}
 			}
 		});
-	}
-
-	private final class TimeCount {
-		private final long start;
-		private int count;
-
-		private TimeCount(long start, int count) {
-			super();
-			this.start = start;
-			this.count = count;
-		}
-
-		private boolean exceed(long current) {
-			return (limit.toMill() + start) >= current && (count > limit.getCount());
-		}
-
-		private boolean reset(long current) {
-			return (limit.toMill() + start) < current;
-		}
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		if (limitSec < 0) {
-			limitSec = LIMIT_SEC;
-		}
-		if (limitCount < 0) {
-			limitCount = LIMIT_COUNT;
-		}
-		limit = new Limit(limitCount, limitSec, TimeUnit.SECONDS);
-		if (sdfile.exists()) {
-			LOGGER.debug("发现序列化文件，执行反序列化操作");
-			queue = SerializationUtils.deserialize(sdfile);
-			if (!FileUtils.deleteQuietly(sdfile)) {
-				LOGGER.warn("删除序列文件失败");
-			}
-		}
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			for (Iterator<MessageBean> iterator = queue.iterator(); iterator.hasNext();) {
-				MessageBean mb = iterator.next();
-				if (!doSend(mb, false, null)) {
-					break;
-				}
-				iterator.remove();
-			}
-		}, 1000);
-	}
-
-	/**
-	 * 关闭
-	 */
-	public void shutdown() throws Exception {
-		if (!queue.isEmpty()) {
-			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
-			SerializationUtils.serialize(queue, sdfile);
-		}
 	}
 
 	/**
@@ -242,12 +160,20 @@ public class MailSender implements InitializingBean {
 
 	}
 
-	public void setLimitSec(int limitSec) {
-		this.limitSec = limitSec;
+	@Override
+	public void onApplicationEvent(ContextClosedEvent event) {
+		if (!queue.isEmpty()) {
+			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
+			try {
+				SerializationUtils.serialize(queue, sdfile);
+			} catch (IOException e) {
+				LOGGER.error(e.getMessage(), e);
+			}
+		}
 	}
 
-	public void setLimitCount(int limitCount) {
-		this.limitCount = limitCount;
+	public void setProcessQueueDelay(int processQueueDelay) {
+		this.processQueueDelay = processQueueDelay;
 	}
 
 }

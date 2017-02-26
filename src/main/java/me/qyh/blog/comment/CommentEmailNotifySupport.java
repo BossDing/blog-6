@@ -108,11 +108,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 	}
 
-	protected final void add(Comment comment) {
-		toProcesses.add(comment);
-	}
-
-	protected final void sendMail(List<Comment> comments, String to) {
+	private void sendMail(List<Comment> comments, String to) {
 		Context context = new Context();
 		context.setVariable("urls", urlHelper.getUrls());
 		context.setVariable("comments", comments);
@@ -216,12 +212,12 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		this.messageTipCount = messageTipCount;
 	}
 
-	public void handle(Comment comment) {
+	public final void handle(Comment comment) {
 		Comment parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
 		// 如果回复了管理员
 		if (!comment.getAdmin() && (parent == null || parent.getAdmin())) {
-			add(comment);
+			toProcesses.add(comment);
 		}
 		// 如果父评论不是管理员的评论
 		// 如果回复是管理员

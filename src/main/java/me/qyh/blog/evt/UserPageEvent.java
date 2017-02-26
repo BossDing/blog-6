@@ -25,20 +25,20 @@ public class UserPageEvent extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 	private final EventType type;
-	private final UserPage deleted;
+	private final UserPage page;
 
-	public UserPageEvent(Object source, EventType type, UserPage deleted) {
+	public UserPageEvent(Object source, EventType type, UserPage page) {
 		super(source);
 		this.type = type;
-		this.deleted = deleted;
+		this.page = page;
 	}
 
 	public EventType getType() {
 		return type;
 	}
 
-	public UserPage getDeleted() {
-		return deleted;
+	public UserPage getPage() {
+		return page;
 	}
 
 }

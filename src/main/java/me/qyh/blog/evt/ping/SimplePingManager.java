@@ -18,15 +18,14 @@ package me.qyh.blog.evt.ping;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.entity.Article;
@@ -47,9 +46,8 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 	private List<PingService> pingServices = new ArrayList<>();
 	private final String blogName;
 
-	private int awaitSeconds;
-
-	private ExecutorService executor;
+	@Autowired
+	private ThreadPoolTaskExecutor taskExecutor;
 
 	public SimplePingManager(String blogName) {
 		super();
@@ -76,20 +74,11 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
 			}
-		}, executor));
+		}, taskExecutor));
 	}
 
 	public void setPingServices(List<PingService> pingServices) {
 		this.pingServices = pingServices;
-	}
-
-	public void close() {
-		executor.shutdown();
-		try {
-			executor.awaitTermination(awaitSeconds, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
 	}
 
 	@Override
@@ -97,14 +86,6 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 		if (CollectionUtils.isEmpty(pingServices)) {
 			throw new SystemException("ping服务不能为空");
 		}
-		if (awaitSeconds <= 0) {
-			awaitSeconds = 60;
-		}
-		executor = Executors.newFixedThreadPool(pingServices.size());
-	}
-
-	public void setAwaitSeconds(int awaitSeconds) {
-		this.awaitSeconds = awaitSeconds;
 	}
 
 }

@@ -87,7 +87,7 @@
 	</bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean class="me.qyh.blog.mail.MailSender" destroy-method="shutdown"></bean>
+	<bean class="me.qyh.blog.mail.MailSender" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
@@ -182,8 +182,7 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.evt.ping.SimplePingManager"
-		destroy-method="close">
+	<bean class="me.qyh.blog.evt.ping.SimplePingManager">
 		<constructor-arg value="钱宇豪的个人博客" />
 		<property name="pingServices">
 			<list>

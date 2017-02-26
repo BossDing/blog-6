@@ -16,8 +16,7 @@
 package me.qyh.blog.api.metaweblog;
 
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -25,12 +24,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -42,7 +43,7 @@ import me.qyh.blog.util.Validators;
  */
 public class RequestXmlParser {
 
-	private static DateFormat ISO8601_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+	private static final String ISO_8601_PATTERN = "yyyyMMdd'T'HH:mm:ss";
 	private static final String[] VALUES = new String[] { "i4", "int", "boolean", "string", "double",
 			"dateTime.iso8601", "base64", "struct", "array" };
 
@@ -159,7 +160,8 @@ public class RequestXmlParser {
 		} else if (v instanceof Double || v instanceof Float) {
 			sb.append("<double>").append(v).append("</double>");
 		} else if (v instanceof Date) {
-			sb.append("<dateTime.iso8601>").append(ISO8601_FORMAT.format((Date) v)).append("</dateTime.iso8601>");
+			sb.append("<dateTime.iso8601>").append(Times.format(Times.toLocalDateTime((Date) v), ISO_8601_PATTERN))
+					.append("</dateTime.iso8601>");
 		} else if (v instanceof byte[]) {
 			sb.append("<base64>").append("<![CDATA[").append(Base64.getEncoder().encodeToString((byte[]) v))
 					.append("]]>").append("</base64>");
@@ -249,11 +251,11 @@ public class RequestXmlParser {
 				throw new ParseException("解析失败:" + e.getMessage(), e);
 			}
 		case "dateTime.iso8601":
-			try {
-				return ISO8601_FORMAT.parse(v);
-			} catch (java.text.ParseException e) {
-				throw new ParseException("解析失败:" + e.getMessage(), e);
+			Optional<LocalDateTime> parsed = Times.parse(v, ISO_8601_PATTERN);
+			if (parsed.isPresent()) {
+				return Times.toDate(parsed.get());
 			}
+			throw new ParseException("无法将字符串:" + v + ",解析为日期");
 		case "base64":
 			try {
 				return Base64.getDecoder().decode(v.getBytes());

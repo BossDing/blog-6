@@ -25,20 +25,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,8 +56,7 @@ import me.qyh.blog.web.Webs;
  * @author Administrator
  *
  */
-public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore
-		implements ApplicationListener<ContextClosedEvent> {
+public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final char CONCAT_CHAR = 'X';
@@ -95,12 +89,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * 默认为5
 	 * </p>
 	 */
-	private final ExecutorService executor;
-
-	/**
-	 * 缩放线程池等待队列最多数量
-	 */
-	private static final int MAX_EXECUTOR_QUEUE_SIZE = 100;
+	private ThreadPoolTaskExecutor executor;
 
 	/**
 	 * 防止同时生成相同的缩略图和压缩图
@@ -108,24 +97,11 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private final ConcurrentHashMap<String, CountDownLatch> fileMap = new ConcurrentHashMap<>();
 
 	public ImageResourceStore(String urlPatternPrefix) {
-		this(urlPatternPrefix, 5);
-	}
-
-	public ImageResourceStore(String urlPatternPrefix, int max) {
 		super(urlPatternPrefix);
-		if (max < 0) {
-			throw new SystemException("最大执行线程数不能小于" + max);
-		}
-		executor = new ThreadPoolExecutor(max, max, 0L, TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<>(MAX_EXECUTOR_QUEUE_SIZE));
 	}
 
 	public ImageResourceStore() {
-		this("image", 5);
-	}
-
-	public ImageResourceStore(int max) {
-		this("image", max);
+		this("image");
 	}
 
 	@Override
@@ -307,6 +283,9 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public void moreAfterPropertiesSet() {
+		if (executor == null) {
+			throw new SystemException("请提供图片缩放线程池");
+		}
 		if (thumbAbsPath == null) {
 			throw new SystemException("缩略图存储路径不能为null");
 		}
@@ -556,13 +535,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		this.largeResize = largeResize;
 	}
 
-	@Override
-	public void onApplicationEvent(ContextClosedEvent evt) {
-		executor.shutdown();
-		try {
-			executor.awaitTermination(60, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
+	public void setExecutor(ThreadPoolTaskExecutor executor) {
+		this.executor = executor;
 	}
 }

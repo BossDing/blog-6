@@ -28,6 +28,12 @@ import me.qyh.blog.entity.Editor;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
 
+/**
+ * 评论
+ * 
+ * @author Administrator
+ *
+ */
 public class Comment extends BaseEntity {
 	/**
 	 * 

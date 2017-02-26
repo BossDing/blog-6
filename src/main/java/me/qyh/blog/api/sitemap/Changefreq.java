@@ -15,6 +15,12 @@
  */
 package me.qyh.blog.api.sitemap;
 
+/**
+ * 更新频率
+ * 
+ * @author Administrator
+ *
+ */
 public enum Changefreq {
 	ALWAYS, HOURlY, DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
 }

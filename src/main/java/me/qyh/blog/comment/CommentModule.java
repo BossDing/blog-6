@@ -20,6 +20,12 @@ import java.util.Objects;
 
 import me.qyh.blog.util.Validators;
 
+/**
+ * 评论区域
+ * 
+ * @author Administrator
+ *
+ */
 public class CommentModule implements Serializable {
 	/**
 	 * 
