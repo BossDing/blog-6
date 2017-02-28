@@ -24,7 +24,6 @@ import java.util.Map;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.util.Validators;
 
 public abstract class DataTagProcessor<T> {
@@ -72,12 +71,12 @@ public abstract class DataTagProcessor<T> {
 	 * @return
 	 * @throws LogicException
 	 */
-	public final DataBind<T> getData(ContextVariables variables, Map<String, String> attributes) throws LogicException {
+	public final DataBind<T> getData(Map<String, String> attributes) throws LogicException {
 		if (attributes == null) {
 			attributes = new HashMap<>();
 		}
 		Attributes atts = new Attributes(attributes);
-		T result = query(variables, atts);
+		T result = query(atts);
 		DataBind<T> bind = new DataBind<>();
 		bind.setData(result);
 		String dataNameAttV = atts.get(DATA_NAME);
@@ -119,7 +118,7 @@ public abstract class DataTagProcessor<T> {
 	 */
 	protected abstract T buildPreviewData(Attributes attributes);
 
-	protected abstract T query(ContextVariables variables, Attributes attributes) throws LogicException;
+	protected abstract T query(Attributes attributes) throws LogicException;
 
 	public String getName() {
 		return name;
@@ -160,27 +159,6 @@ public abstract class DataTagProcessor<T> {
 		public String toString() {
 			return "Attributes [attMap=" + attMap + "]";
 		}
-	}
-
-	/**
-	 * 依次从attributes，pathVariable,param中获取属性
-	 * 
-	 * @param variables
-	 * @param attributes
-	 * @return 如果不存在，返回null
-	 */
-	protected String getVariables(String name, ContextVariables variables, Attributes attributes) {
-		String result = attributes.get(name);
-		if (result == null) {
-			Object pathVariable = variables.getPathVariable(name);
-			if (pathVariable != null) {
-				result = pathVariable.toString();
-			}
-		}
-		if (result == null) {
-			result = variables.getParam(name);
-		}
-		return result;
 	}
 
 	private boolean validDataName(String dataName) {

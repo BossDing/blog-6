@@ -27,6 +27,9 @@ import me.qyh.blog.config.Constants;
 
 public final class Resources {
 
+	private Resources() {
+	}
+
 	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	/**
@@ -36,30 +39,44 @@ public final class Resources {
 	 * @throws IOException
 	 */
 	public static String readResourceToString(Resource resource) throws IOException {
-		return readResource(resource, Resources::read);
+		return applyResource(resource, Resources::read);
 	}
 
 	/**
-	 * 读取resource中的内容
+	 * 读取resource内容
+	 * 
+	 * @param resource
+	 * @param reader
+	 * @throws IOException
+	 */
+	public static void readResource(Resource resource, ResourceConsumer consumer) throws IOException {
+		try (InputStream is = resource.getInputStream()) {
+			consumer.accept(is);
+		}
+	}
+
+	/**
+	 * 转化resource中的内容
 	 * 
 	 * @param resource
 	 * @param reader
 	 * @return
 	 * @throws IOException
 	 */
-	public static <T> T readResource(Resource resource, ResourceReader<T> reader) throws IOException {
+	public static <T> T applyResource(Resource resource, ResourceFunction<T> fun) throws IOException {
 		try (InputStream is = resource.getInputStream()) {
-			return reader.read(is);
+			return fun.apply(is);
 		}
 	}
 
 	@FunctionalInterface
-	public interface ResourceReader<R> {
-		R read(InputStream is) throws IOException;
+	public interface ResourceFunction<R> {
+		R apply(InputStream is) throws IOException;
 	}
 
-	private Resources() {
-
+	@FunctionalInterface
+	public interface ResourceConsumer {
+		void accept(InputStream is) throws IOException;
 	}
 
 	/**
@@ -75,5 +92,4 @@ public final class Resources {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is, Constants.CHARSET));
 		return reader.lines().collect(Collectors.joining(LINE_SEPARATOR));
 	}
-
 }

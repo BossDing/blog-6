@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.ui.dialect;
 
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +22,6 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.context.ApplicationContext;
-import org.springframework.web.servlet.View;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -35,7 +33,6 @@ import org.thymeleaf.templatemode.TemplateMode;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ParseContext;
 import me.qyh.blog.ui.data.DataBind;
@@ -78,45 +75,31 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			}
 
 			IWebContext webContext = (IWebContext) context;
-			Optional<DataBind<?>> optional = queryDataBind(dataTag, buildContextVariables(webContext));
+			Optional<DataBind<?>> optional = queryDataBind(dataTag);
 			if (optional.isPresent()) {
 				DataBind<?> bind = optional.get();
 				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
 				}
-				webContext.getRequest().setAttribute(bind.getDataName(), bind.getData());
+				request.setAttribute(bind.getDataName(), bind.getData());
 			}
 		} finally {
 			structureHandler.removeElement();
 		}
 	}
 
-	private Optional<DataBind<?>> queryDataBind(DataTag dataTag, ContextVariables contextVariables) {
+	private Optional<DataBind<?>> queryDataBind(DataTag dataTag) {
 		if (ParseContext.isPreview()) {
 			return uiService.queryPreviewData(dataTag);
 		} else {
 			try {
-				return ParseContext.onlyCallable() ? uiService.queryCallableData(dataTag, contextVariables)
-						: uiService.queryData(dataTag, contextVariables);
+				return ParseContext.onlyCallable() ? uiService.queryCallableData(dataTag)
+						: uiService.queryData(dataTag);
 			} catch (LogicException e) {
 				throw new RuntimeLogicException(e);
 			}
 		}
-	}
-
-	private ContextVariables buildContextVariables(IWebContext webContext) {
-		HttpServletRequest request = webContext.getRequest();
-		@SuppressWarnings("unchecked")
-		Map<String, Object> pathVariables = (Map<String, Object>) request.getAttribute(View.PATH_VARIABLES);
-		Map<String, String[]> paramsMap = request.getParameterMap();
-		Map<String, Object> attributes = new HashMap<>();
-		Enumeration<String> enAttr = request.getAttributeNames();
-		while (enAttr.hasMoreElements()) {
-			String attributeName = enAttr.nextElement();
-			attributes.put(attributeName, request.getAttribute(attributeName));
-		}
-		return new ContextVariables(attributes, paramsMap, pathVariables);
 	}
 
 	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
@@ -143,5 +126,4 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			throw new TemplateProcessingException("没有可用的UIService");
 		}
 	}
-
 }

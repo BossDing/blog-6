@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -23,12 +23,16 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
 
+import me.qyh.blog.comment.Comment;
 import me.qyh.blog.comment.Comment.CommentStatus;
+import me.qyh.blog.comment.CommentConfig;
+import me.qyh.blog.comment.CommentModule;
 import me.qyh.blog.comment.CommentModule.ModuleType;
+import me.qyh.blog.comment.CommentPageResult;
+import me.qyh.blog.comment.CommentQueryParam;
+import me.qyh.blog.comment.CommentService;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.ContextVariables;
-import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired
@@ -60,17 +64,17 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	}
 
 	@Override
-	protected CommentPageResult query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected CommentPageResult query(Attributes attributes) throws LogicException {
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
 
 		try {
-			ModuleType type = ModuleType.valueOf(super.getVariables("moduleType", variables, attributes).toUpperCase());
-			Integer id = Integer.parseInt(super.getVariables("moduleId", variables, attributes));
+			ModuleType type = ModuleType.valueOf(attributes.get(Constants.MODULE_TYPE).toUpperCase());
+			Integer id = Integer.parseInt(attributes.get(Constants.MODULE_ID));
 			param.setModule(new CommentModule(type, id));
 		} catch (Exception e) {
 		}
-		String currentPageStr = super.getVariables("currentPage", variables, attributes);
+		String currentPageStr = attributes.get(Constants.CURRENT_PAGE);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));

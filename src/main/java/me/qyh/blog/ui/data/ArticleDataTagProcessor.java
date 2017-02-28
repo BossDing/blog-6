@@ -29,7 +29,6 @@ import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 /**
  * 文章详情数据数据器
@@ -41,8 +40,6 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 
 	@Autowired
 	private ArticleService articleService;
-
-	private static final String ID_OR_ALIAS = "idOrAlias";
 
 	public ArticleDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -76,20 +73,9 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected Article query(Attributes attributes) throws LogicException {
 		// 首先从属性中获取
-		String idOrAlias = attributes.get(ID_OR_ALIAS);
-		if (idOrAlias == null) {
-			// 从PathVariable中获取
-			Object variable = variables.getPathVariable(ID_OR_ALIAS);
-			if (variable != null) {
-				idOrAlias = variable.toString();
-			}
-		}
-		if (idOrAlias == null) {
-			// 从参数中获取
-			idOrAlias = variables.getParam(ID_OR_ALIAS);
-		}
+		String idOrAlias = attributes.get(Constants.ID_OR_ALIAS);
 		if (idOrAlias == null) {
 			throw new LogicException("article.notExists", "文章不存在");
 		}

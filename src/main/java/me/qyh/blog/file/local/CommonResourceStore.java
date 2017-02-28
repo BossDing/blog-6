@@ -15,12 +15,6 @@
  */
 package me.qyh.blog.file.local;
 
-import java.util.Optional;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.core.io.PathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -43,10 +37,4 @@ public class CommonResourceStore extends AbstractLocalResourceRequestHandlerFile
 	public boolean canStore(MultipartFile multipartFile) {
 		return true;
 	}
-
-	@Override
-	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
-		return getFile(path).map(file -> new PathResource(file.toPath()));
-	}
-	
 }

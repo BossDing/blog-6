@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.ui.data;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -24,19 +24,18 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
 
+import me.qyh.blog.comment.Comment;
 import me.qyh.blog.comment.Comment.CommentStatus;
+import me.qyh.blog.comment.CommentModule;
 import me.qyh.blog.comment.CommentModule.ModuleType;
+import me.qyh.blog.comment.CommentService;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.ContextVariables;
-import me.qyh.blog.ui.data.DataTagProcessor;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 
 	private static final Integer DEFAULT_LIMIT = 10;
 	private static final String LIMIT = "limit";
 	private static final String QUERY_ADMIN = "queryAdmin";
-	private static final String MODULE_TYPE = "moduleType";
-	private static final String MODULE_ID = "moduleId";
 
 	private static final int MAX_LIMIT = 50;
 
@@ -66,25 +65,25 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	}
 
 	@Override
-	protected List<Comment> query(ContextVariables variables, Attributes attributes) throws LogicException {
-		ModuleType type = getModuleType(variables, attributes);
+	protected List<Comment> query(Attributes attributes) throws LogicException {
+		ModuleType type = getModuleType(attributes);
 		if (type == null) {
 			return Collections.emptyList();
 		}
-		return commentService.queryLastComments(new CommentModule(type, getModuleId(variables, attributes)),
-				getLimit(attributes), getQueryAdmin(variables, attributes));
+		return commentService.queryLastComments(new CommentModule(type, getModuleId(attributes)), getLimit(attributes),
+				getQueryAdmin(attributes));
 	}
 
-	private ModuleType getModuleType(ContextVariables variables, Attributes attributes) {
+	private ModuleType getModuleType(Attributes attributes) {
 		try {
-			return ModuleType.valueOf(super.getVariables(MODULE_TYPE, variables, attributes).toUpperCase());
+			return ModuleType.valueOf(attributes.get(Constants.MODULE_TYPE).toUpperCase());
 		} catch (Exception e) {
 			return null;
 		}
 	}
 
-	private Integer getModuleId(ContextVariables variables, Attributes attributes) {
-		String moduleIdStr = super.getVariables(MODULE_ID, variables, attributes);
+	private Integer getModuleId(Attributes attributes) {
+		String moduleIdStr = attributes.get(Constants.MODULE_ID);
 		if (moduleIdStr != null) {
 			try {
 				return Integer.parseInt(moduleIdStr);
@@ -95,8 +94,8 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 		return null;
 	}
 
-	private boolean getQueryAdmin(ContextVariables variables, Attributes attributes) {
-		return Boolean.parseBoolean(super.getVariables(QUERY_ADMIN, variables, attributes));
+	private boolean getQueryAdmin(Attributes attributes) {
+		return Boolean.parseBoolean(attributes.get(QUERY_ADMIN));
 	}
 
 	private int getLimit(Attributes attributes) {

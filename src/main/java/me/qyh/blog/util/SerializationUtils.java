@@ -1,6 +1,5 @@
 package me.qyh.blog.util;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -8,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import me.qyh.blog.exception.SystemException;
 
@@ -57,12 +57,12 @@ public final class SerializationUtils {
 	 * 
 	 * @param obj
 	 *            本身或者其实现类必须实现<code>java.io.Serializable</code>接口
-	 * @param file
+	 * @param path
 	 *            文件，如果不存在，则会被创建
 	 * @throws IOException
 	 */
-	public static void serialize(Object obj, File file) throws IOException {
-		try (OutputStream os = Files.newOutputStream(file.toPath())) {
+	public static void serialize(Object obj, Path path) throws IOException {
+		try (OutputStream os = Files.newOutputStream(path)) {
 			serialize(obj, os);
 		}
 	}
@@ -70,13 +70,13 @@ public final class SerializationUtils {
 	/**
 	 * 反序列化
 	 * 
-	 * @param file
+	 * @param path
 	 *            文件
 	 * @return
 	 * @throws IOException
 	 */
-	public static <T> T deserialize(File file) throws IOException {
-		try (InputStream is = Files.newInputStream(file.toPath())) {
+	public static <T> T deserialize(Path path) throws IOException {
+		try (InputStream is = Files.newInputStream(path)) {
 			return deserialize(is);
 		}
 	}

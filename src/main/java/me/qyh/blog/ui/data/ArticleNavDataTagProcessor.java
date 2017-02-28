@@ -21,14 +21,11 @@ import me.qyh.blog.bean.ArticleNav;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 
 	@Autowired
 	private ArticleService articleService;
-
-	private static final String ID_OR_ALIAS = "idOrAlias";
 
 	public ArticleNavDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -47,15 +44,12 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	}
 
 	@Override
-	protected ArticleNav query(ContextVariables variables, Attributes attributes) throws LogicException {
-		Article article = (Article) variables.getAttribute("article");
-		if (article == null) {
-			String idOrAlias = super.getVariables(ID_OR_ALIAS, variables, attributes);
-			if (idOrAlias != null) {
-				return articleService.getArticleNav(idOrAlias).orElse(null);
-			}
+	protected ArticleNav query(Attributes attributes) throws LogicException {
+		String idOrAlias = attributes.get(Constants.ID_OR_ALIAS);
+		if (idOrAlias != null) {
+			return articleService.getArticleNav(idOrAlias).orElse(null);
 		}
-		return articleService.getArticleNav(article).orElse(null);
+		return null;
 	}
 
 }

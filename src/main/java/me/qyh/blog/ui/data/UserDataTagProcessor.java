@@ -3,7 +3,6 @@ package me.qyh.blog.ui.data;
 import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.ContextVariables;
 
 public class UserDataTagProcessor extends DataTagProcessor<User> {
 
@@ -17,8 +16,7 @@ public class UserDataTagProcessor extends DataTagProcessor<User> {
 	}
 
 	@Override
-	protected User query(ContextVariables variables, DataTagProcessor<User>.Attributes attributes)
-			throws LogicException {
+	protected User query(DataTagProcessor<User>.Attributes attributes) throws LogicException {
 		return getUser();
 	}
 

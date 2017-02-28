@@ -31,6 +31,7 @@ import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.ConfigService;
+import me.qyh.blog.util.Resources;
 
 @Service
 public class ConfigServiceImpl implements ConfigService, InitializingBean {
@@ -116,9 +117,8 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		// 加载config.properties
 		resource = new ClassPathResource("resources/config.properties");
-		config.load(resource.getInputStream());
+		Resources.readResource(resource, config::load);
 	}
 
 }

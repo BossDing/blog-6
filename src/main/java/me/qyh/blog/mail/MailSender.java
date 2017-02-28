@@ -15,9 +15,10 @@
  */
 package me.qyh.blog.mail;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
@@ -28,7 +29,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
@@ -49,8 +49,6 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	private JavaMailSender javaMailSender;
 	@Autowired
 	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-	@Autowired
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
@@ -59,7 +57,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	/**
 	 * 应用关闭时未发送的信息存入文件中
 	 */
-	private final File sdfile = new File(FileUtils.getHomeDir(), "message_shutdown.dat");
+	private final Path sdfile = FileUtils.sub(FileUtils.getHomeDir(), "message_shutdown.dat");
 
 	/**
 	 * 处理队列的时间(ms)
@@ -78,7 +76,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (sdfile.exists()) {
+		if (Files.exists(sdfile)) {
 			LOGGER.debug("发现序列化文件，执行反序列化操作");
 			queue = SerializationUtils.deserialize(sdfile);
 			if (!FileUtils.deleteQuietly(sdfile)) {
@@ -94,26 +92,20 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	}
 
 	private void sendMail(final MessageBean mb) {
-		threadPoolTaskExecutor.execute(() -> {
-			try {
-				String email = mb.to;
-				if (Validators.isEmptyOrNull(email, true)) {
-					email = UserConfig.get().getEmail();
-				}
-				if (Validators.isEmptyOrNull(email, true)) {
-					LOGGER.error("接受人邮箱为空，无法发送邮件");
-					return;
-				}
-				javaMailSender.send((mimeMessage) -> {
-					MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
-					helper.setText(mb.text, mb.html);
-					helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
-					helper.setSubject(mb.subject);
-					mimeMessage.setFrom();
-				});
-			} catch (Exception e) {
-				LOGGER.error(e.getMessage(), e);
-			}
+		String email = mb.to;
+		if (Validators.isEmptyOrNull(email, true)) {
+			email = UserConfig.get().getEmail();
+		}
+		if (Validators.isEmptyOrNull(email, true)) {
+			LOGGER.error("接受人邮箱为空，无法发送邮件");
+			return;
+		}
+		javaMailSender.send((mimeMessage) -> {
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
+			helper.setText(mb.text, mb.html);
+			helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
+			helper.setSubject(mb.subject);
+			mimeMessage.setFrom();
 		});
 	}
 
@@ -163,7 +155,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
 		if (!queue.isEmpty()) {
-			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile.getAbsolutePath());
+			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile);
 			try {
 				SerializationUtils.serialize(queue, sdfile);
 			} catch (IOException e) {

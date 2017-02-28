@@ -26,7 +26,6 @@ import me.qyh.blog.bean.TagCount;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>> {
 
@@ -58,7 +57,7 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 	}
 
 	@Override
-	protected List<TagCount> query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected List<TagCount> query(Attributes attributes) throws LogicException {
 		return articleService.queryTags();
 	}
 

@@ -29,8 +29,15 @@
 		<property name="username" value="${jdbc.user}" />
 		<property name="password" value="${jdbc.password}" />
 		<property name="poolName" value="blogCP" />
-		<property name="maximumPoolSize" value="${jdbc.maxPoolSize}" />
 		<property name="maxLifetime" value="${jdbc.maxLifetime}" />
+		<property name="dataSourceProperties">
+			<props>
+				<prop key="cachePrepStmts">true</prop>
+				<prop key="prepStmtCacheSize">250</prop>
+				<prop key="prepStmtCacheSqlLimit">2048</prop>
+				<prop key="useServerPrepStmts">true</prop>
+			</props>
+		</property>
 	</bean>
 
 	<!-- 配置SqlSessionFactory -->
@@ -130,6 +137,7 @@
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
 		destroy-method="destroy">
+		<property name="awaitTerminationSeconds" value="60" />
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>
 
@@ -137,6 +145,7 @@
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
 		destroy-method="destroy">
 		<property name="poolSize" value="5" />
+		<property name="awaitTerminationSeconds" value="60" />
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>
 

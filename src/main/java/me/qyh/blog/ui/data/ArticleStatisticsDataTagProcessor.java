@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.StatisticsService;
 import me.qyh.blog.service.StatisticsService.ArticleStatistics;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleStatisticsDataTagProcessor extends DataTagProcessor<ArticleStatistics> {
 
@@ -44,7 +43,7 @@ public class ArticleStatisticsDataTagProcessor extends DataTagProcessor<ArticleS
 	}
 
 	@Override
-	protected ArticleStatistics query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected ArticleStatistics query(Attributes attributes) throws LogicException {
 		return statisticsService.queryArticleStatistics();
 	}
 

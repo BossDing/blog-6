@@ -15,49 +15,20 @@
  */
 package me.qyh.blog.web.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import me.qyh.blog.entity.Article.ArticleStatus;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.security.Environment;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
-import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 @Controller
 @RequestMapping("article")
 public class ArticleController {
 
-	@Autowired
-	private ArticleQueryParamValidator articleQueryParamValidator;
-
-	@InitBinder(value = "articleQueryParam")
-	protected void initQueryBinder(WebDataBinder binder) {
-		binder.setValidator(articleQueryParamValidator);
-	}
-
 	@RequestMapping(value = "list")
-	public Page list(@Validated ArticleQueryParam articleQueryParam, BindingResult result, ModelMap model)
-			throws LogicException {
-		if (result.hasErrors()) {
-			articleQueryParam = new ArticleQueryParam();
-			articleQueryParam.setCurrentPage(1);
-		}
-		articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
-		articleQueryParam.setSpace(null);
-		articleQueryParam.setIgnoreLevel(false);
-		articleQueryParam.setQueryPrivate(Environment.isLogin());
-
-		model.addAttribute(ArticleQueryParam.class.getName(), articleQueryParam);
+	public Page list() throws LogicException {
 		return new SysPage(null, PageTarget.ARTICLE_LIST);
 	}
 

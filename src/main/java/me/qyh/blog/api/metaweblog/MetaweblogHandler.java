@@ -238,7 +238,7 @@ public class MetaweblogHandler {
 
 		@Override
 		public void transferTo(File dest) throws IOException, IllegalStateException {
-			FileUtils.write(bits, dest);
+			FileUtils.write(bits, dest.toPath());
 		}
 
 		@Override

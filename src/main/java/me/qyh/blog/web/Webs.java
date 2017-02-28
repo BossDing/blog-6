@@ -15,12 +15,12 @@
  */
 package me.qyh.blog.web;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 
@@ -119,9 +119,9 @@ public class Webs {
 	 *            保存的位置
 	 * @throws IOException
 	 */
-	public static void save(MultipartFile mf, File file) throws IOException {
+	public static void save(MultipartFile mf, Path file) throws IOException {
 		try (InputStream is = mf.getInputStream()) {
-			Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(is, file, StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 }

@@ -159,15 +159,6 @@ public interface ArticleService {
 	/**
 	 * 上一篇，下一篇文章
 	 * 
-	 * @param article
-	 *            当前文章
-	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
-	 */
-	Optional<ArticleNav> getArticleNav(Article article);
-
-	/**
-	 * 上一篇，下一篇文章
-	 * 
 	 * @param idOrAlias
 	 *            文章的id或者别名
 	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
@@ -215,17 +206,6 @@ public interface ArticleService {
 	 */
 	List<Article> findSimilar(String idOrAlias, int limit) throws LogicException;
 
-	/**
-	 * 查询类似文章
-	 * 
-	 * @param article
-	 *            当前文章
-	 * @param limit
-	 *            最大返回条目
-	 * @return 类似文章集合
-	 * @throws LogicException
-	 */
-	List<Article> findSimilar(Article article, int limit) throws LogicException;
 
 	/**
 	 * 用来处理预览文章，比如将markdown转化为html

@@ -36,8 +36,8 @@ import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.util.Times;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 
 /**
@@ -91,34 +91,29 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	}
 
 	@Override
-	protected PageResult<Article> query(ContextVariables variables, Attributes attributes) throws LogicException {
-		ArticleQueryParam param = (ArticleQueryParam) variables.getAttribute(ArticleQueryParam.class.getName());
-		if (param == null) {
-			param = parseParam(variables, attributes);
-		}
-		param.setStatus(ArticleStatus.PUBLISHED);
-		param.setQueryPrivate(Environment.isLogin());
+	protected PageResult<Article> query(Attributes attributes) throws LogicException {
+		ArticleQueryParam param = parseParam(attributes);
 		return articleService.queryArticle(param);
 	}
 
-	private ArticleQueryParam parseParam(ContextVariables variables, Attributes attributes) {
+	private ArticleQueryParam parseParam(Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setSpace(getCurrentSpace());
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setCurrentPage(1);
 
-		String beginStr = super.getVariables("begin", variables, attributes);
-		String endStr = super.getVariables("end", variables, attributes);
+		String beginStr = attributes.get("begin");
+		String endStr = attributes.get("end");
 		if (beginStr != null && endStr != null) {
 			param.setBegin(Times.parseAndGetDate(beginStr));
 			param.setEnd(Times.parseAndGetDate(endStr));
 		}
-		String query = super.getVariables("query", variables, attributes);
-		if (query != null) {
+		String query = attributes.get("query");
+		if (!Validators.isEmptyOrNull(query, true)) {
 			param.setQuery(query);
 		}
 
-		String fromStr = super.getVariables("from", variables, attributes);
+		String fromStr = attributes.get("from");
 		if (fromStr != null) {
 			try {
 				param.setFrom(ArticleFrom.valueOf(fromStr.toUpperCase()));
@@ -127,12 +122,12 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		String tag = super.getVariables("tag", variables, attributes);
+		String tag = attributes.get("tag");
 		if (tag != null) {
 			param.setTag(tag);
 		}
 
-		String sortStr = super.getVariables("sort", variables, attributes);
+		String sortStr = attributes.get("sort");
 		if (sortStr != null) {
 			try {
 				param.setSort(Sort.valueOf(sortStr.toUpperCase()));
@@ -141,7 +136,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		String currentPageStr = super.getVariables("currentPage", variables, attributes);
+		String currentPageStr = attributes.get(Constants.CURRENT_PAGE);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));
@@ -150,27 +145,30 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
-		String highlightStr = super.getVariables("highlight", variables, attributes);
+		String highlightStr = attributes.get("highlight");
 		if (highlightStr != null) {
 			param.setHighlight(Boolean.parseBoolean(highlightStr));
 		}
 
 		if (Environment.isLogin()) {
-			String ignoreLevelStr = super.getVariables("ignoreLevel", variables, attributes);
+			String ignoreLevelStr = attributes.get("ignoreLevel");
 			if (ignoreLevelStr != null) {
 				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
 			}
 
-			String queryPrivateStr = super.getVariables("queryPrivate", variables, attributes);
+			String queryPrivateStr = attributes.get("queryPrivate");
 			if (queryPrivateStr != null) {
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 			}
 
-			String queryLockStr = super.getVariables("queryLock", variables, attributes);
+			String queryLockStr = attributes.get("queryLock");
 			if (queryLockStr != null) {
 				param.setQueryLock(Boolean.parseBoolean(queryLockStr));
 			}
 		}
+
+		param.setStatus(ArticleStatus.PUBLISHED);
+		param.setSpace(getCurrentSpace());
 
 		ArticleQueryParamValidator.validate(param);
 		return param;

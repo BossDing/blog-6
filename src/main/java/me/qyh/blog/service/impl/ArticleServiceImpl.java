@@ -144,7 +144,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void hit(Integer id) {
 		articleHitManager.hit(id);
 	}
@@ -153,6 +152,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article writeArticle(MetaweblogArticle mba) throws LogicException {
 		Space space = mba.getSpace() == null ? spaceDao.selectDefault() : spaceDao.selectByName(mba.getSpace());
@@ -180,6 +180,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article writeArticle(Article article) throws LogicException {
 		Space space = spaceCache.checkSpace(article.getSpace().getId());
@@ -483,22 +484,19 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<ArticleNav> getArticleNav(Article article) {
-		Objects.requireNonNull(article);
-		if (!Environment.match(article.getSpace())) {
-			return Optional.empty();
-		}
-		boolean queryPrivate = Environment.isLogin();
-		Article previous = articleDao.getPreviousArticle(article, queryPrivate);
-		Article next = articleDao.getNextArticle(article, queryPrivate);
-		return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	public Optional<ArticleNav> getArticleNav(String idOrAlias) {
-		Optional<Article> article = getCheckedArticle(idOrAlias);
-		return article.isPresent() ? getArticleNav(article.get()) : Optional.empty();
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
+		if (optionalArticle.isPresent()) {
+			Article article = optionalArticle.get();
+			if (!Environment.match(article.getSpace())) {
+				return Optional.empty();
+			}
+			boolean queryPrivate = Environment.isLogin();
+			Article previous = articleDao.getPreviousArticle(article, queryPrivate);
+			Article next = articleDao.getNextArticle(article, queryPrivate);
+			return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
+		}
+		return Optional.empty();
 	}
 
 	@Override
@@ -517,19 +515,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
-		Optional<Article> article = getCheckedArticle(idOrAlias);
-		return article.isPresent() ? findSimilar(article.get(), limit) : Collections.emptyList();
-	}
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 
-	@Override
-	@Transactional(readOnly = true)
-	public List<Article> findSimilar(Article article, int limit) throws LogicException {
-		Objects.requireNonNull(article);
-		if (!Environment.match(article.getSpace())) {
-			return Collections.emptyList();
+		if (optionalArticle.isPresent()) {
+			Article article = optionalArticle.get();
+			if (!Environment.match(article.getSpace())) {
+				return Collections.emptyList();
+			}
+			return articleIndexer.querySimilar(article, Environment.isLogin(), articleDao::selectSimpleByIds, limit)
+					.stream().collect(Collectors.toList());
 		}
-		return articleIndexer.querySimilar(article, Environment.isLogin(), articleDao::selectSimpleByIds, limit)
-				.stream().collect(Collectors.toList());
+
+		return Collections.emptyList();
 	}
 
 	@Override

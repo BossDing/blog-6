@@ -15,8 +15,9 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +45,7 @@ import me.qyh.blog.util.SerializationUtils;
 @Service
 public class ExtraStorageService implements InitializingBean {
 
-	private final File dataFile = new File(FileUtils.getHomeDir(), "extra.dat");
+	private final Path dataFile = FileUtils.sub(FileUtils.getHomeDir(), "extra.dat");
 
 	private Map<String, String> dataMap = Collections.synchronizedMap(new HashMap<>());
 
@@ -87,7 +88,7 @@ public class ExtraStorageService implements InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		// load map from dataFile
-		if (dataFile.exists()) {
+		if (Files.exists(dataFile)) {
 			dataMap = SerializationUtils.deserialize(dataFile);
 		}
 	}

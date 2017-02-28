@@ -17,9 +17,10 @@ package me.qyh.blog.file;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
@@ -74,12 +75,12 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	private double quality = 75d;
 
 	@Override
-	protected void doResize(Resize resize, File src, File dest) throws IOException {
+	protected void doResize(Resize resize, Path src, Path dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
 		op.strip();
 		setResize(resize, op);
-		String ext = FileUtils.getFileExtension(dest.getName());
+		String ext = FileUtils.getFileExtension(dest);
 		if (!maybeTransparentBg(ext)) {
 			setWhiteBg(op);
 		}
@@ -89,13 +90,13 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		addCompressOp(op, ext);
 		op.addImage();
 
-		File temp = FileUtils.appTemp(ext);
+		Path temp = FileUtils.appTemp(ext);
 		try {
-			run(op, src.getAbsolutePath(), temp.getAbsolutePath());
+			run(op, src.toAbsolutePath().toString(), temp.toAbsolutePath().toString());
 			FileUtils.move(temp, dest);
 		} catch (IOException e) {
 			// 如果原图是gif图像
-			if (isGIF(FileUtils.getFileExtension(src.getName()))) {
+			if (isGIF(FileUtils.getFileExtension(src))) {
 				doResize(resize, getGifCoverUseJava(src), dest);
 			} else {
 				throw e;
@@ -104,7 +105,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	}
 
 	@Override
-	protected ImageInfo doRead(File file) throws IOException {
+	protected ImageInfo doRead(Path file) throws IOException {
 		IMOperation localIMOperation = new IMOperation();
 		localIMOperation.ping();
 		localIMOperation.format("%w\n%h\n%m\n");
@@ -114,7 +115,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
 			localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
 			return localIdentifyCmd;
-		}, localIMOperation, file.getAbsolutePath());
+		}, localIMOperation, file.toAbsolutePath().toString());
 
 		List<String> atts = localArrayListOutputConsumer.getOutput();
 		Iterator<String> it = atts.iterator();
@@ -146,11 +147,11 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 	}
 
-	private boolean interlace(File dest) {
+	private boolean interlace(Path dest) {
 		if (!doInterlace) {
 			return false;
 		}
-		String ext = FileUtils.getFileExtension(dest.getName());
+		String ext = FileUtils.getFileExtension(dest);
 		return isGIF(ext) || isPNG(ext) || isJPEG(ext);
 	}
 
@@ -218,16 +219,16 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	 * @return PNG格式的图片
 	 * @throws IOException
 	 */
-	private File getGifCoverUseJava(File gif) throws IOException {
+	private Path getGifCoverUseJava(Path gif) throws IOException {
 		GifDecoder gd = new GifDecoder();
-		try (InputStream is = new FileInputStream(gif)) {
+		try (InputStream is = Files.newInputStream(gif)) {
 			int flag = gd.read(is);
 			if (flag != GifDecoder.STATUS_OK) {
 				throw new IOException(gif + "文件无法获取封面");
 			}
-			File tmp = FileUtils.appTemp(PNG);
+			Path tmp = FileUtils.appTemp(PNG);
 			BufferedImage bi = gd.getFrame(0);
-			ImageIO.write(bi, GIF, tmp);
+			ImageIO.write(bi, GIF, tmp.toFile());
 			return tmp;
 		}
 	}

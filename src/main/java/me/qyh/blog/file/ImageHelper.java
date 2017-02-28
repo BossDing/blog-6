@@ -15,8 +15,8 @@
  */
 package me.qyh.blog.file;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import me.qyh.blog.util.FileUtils;
@@ -56,9 +56,9 @@ public abstract class ImageHelper {
 	 * @throws IOException
 	 *             文件读写失败
 	 */
-	public final void resize(Resize resize, File src, File dest) throws IOException {
-		formatCheck(FileUtils.getFileExtension(src.getName()));
-		formatCheck(FileUtils.getFileExtension(dest.getName()));
+	public final void resize(Resize resize, Path src, Path dest) throws IOException {
+		formatCheck(FileUtils.getFileExtension(src));
+		formatCheck(FileUtils.getFileExtension(src));
 		doResize(resize, src, dest);
 	}
 
@@ -71,16 +71,16 @@ public abstract class ImageHelper {
 	 * @throws IOException
 	 *             文件读取失败
 	 */
-	public final ImageInfo read(File file) throws IOException {
-		formatCheck(FileUtils.getFileExtension(file.getName()));
+	public final ImageInfo read(Path file) throws IOException {
+		formatCheck(FileUtils.getFileExtension(file));
 		ImageInfo ii = doRead(file);
 		return ii;
 
 	}
 
-	protected abstract void doResize(Resize resize, File src, File dest) throws IOException;
+	protected abstract void doResize(Resize resize, Path src, Path dest) throws IOException;
 
-	protected abstract ImageInfo doRead(File file) throws IOException;
+	protected abstract ImageInfo doRead(Path file) throws IOException;
 
 	/**
 	 * 是否支持webp格式

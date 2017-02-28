@@ -25,7 +25,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
@@ -163,7 +162,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException;
+	Optional<DataBind<?>> queryData(DataTag dataTag) throws LogicException;
 
 	/**
 	 * 查询可被外部调用(ajax)的dataBind
@@ -173,7 +172,7 @@ public interface UIService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Optional<DataBind<?>> queryCallableData(DataTag dataTag, ContextVariables variables) throws LogicException;
+	Optional<DataBind<?>> queryCallableData(DataTag dataTag) throws LogicException;
 
 	/**
 	 * 通过DATA_TAG标签查询预览数据

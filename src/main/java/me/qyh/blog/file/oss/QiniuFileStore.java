@@ -17,6 +17,7 @@ package me.qyh.blog.file.oss;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -87,10 +88,10 @@ public class QiniuFileStore extends AbstractOssFileStore {
 	}
 
 	@Override
-	protected void upload(String key, File file) throws IOException {
+	protected void upload(String key, Path file) throws IOException {
 		UploadManager uploadManager = new UploadManager();
 		try {
-			Response resp = uploadManager.put(file, key, getUpToken());
+			Response resp = uploadManager.put(file.toFile(), key, getUpToken());
 			if (!resp.isOK()) {
 				throw new IOException("七牛云上传失败，异常信息:" + resp.toString() + ",响应信息:" + resp.bodyString());
 			}

@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.StatisticsService;
 import me.qyh.blog.service.StatisticsService.CommentStatistics;
-import me.qyh.blog.ui.ContextVariables;
 
 public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentStatistics> {
 
@@ -40,7 +39,7 @@ public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentS
 	}
 
 	@Override
-	protected CommentStatistics query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected CommentStatistics query(Attributes attributes) throws LogicException {
 		return statisticsService.queryCommentStatistics();
 	}
 

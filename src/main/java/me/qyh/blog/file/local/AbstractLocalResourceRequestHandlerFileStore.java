@@ -15,8 +15,11 @@
  */
 package me.qyh.blog.file.local;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 
 import javax.servlet.ServletException;
@@ -26,12 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import me.qyh.blog.config.Constants;
@@ -64,7 +66,7 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	private String name;
 	protected String absPath;
 	protected String urlPrefix;
-	protected File absFolder;
+	protected Path absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
 	private final String urlPatternPrefix;
 	private boolean enableDownloadHandler = true;
@@ -91,14 +93,14 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException {
-		File dest = new File(absFolder, key);
-		if (dest.exists() && !FileUtils.deleteQuietly(dest)) {
-			throw new LogicException("file.store.exists", "文件" + dest.getAbsolutePath() + "已经存在",
-					dest.getAbsolutePath());
+		Path dest = FileUtils.sub(absFolder, key);
+		if (Files.exists(dest) && !FileUtils.deleteQuietly(dest)) {
+			String absPath = dest.toAbsolutePath().toString();
+			throw new LogicException("file.store.exists", "文件" + absPath + "已经存在", absPath);
 		}
 		String originalFilename = mf.getOriginalFilename();
 		try {
-			FileUtils.forceMkdir(dest.getParentFile());
+			FileUtils.forceMkdir(dest.getParent());
 			Webs.save(mf, dest);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
@@ -114,9 +116,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public boolean delete(String key) {
-		File dest = new File(absFolder, key);
-		if (dest.exists()) {
-			return FileUtils.deleteQuietly(dest);
+		Path p = FileUtils.sub(absFolder, key);
+		if (Files.exists(p)) {
+			return FileUtils.deleteQuietly(p);
 		}
 		return true;
 	}
@@ -154,11 +156,15 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
-	protected final Resource getResource(HttpServletRequest request) {
+	protected final Resource getResource(HttpServletRequest request) throws IOException {
 		if (requestMatcher != null && !requestMatcher.match(request)) {
 			return null;
 		}
-		return getPathFromRequest(request).flatMap(path -> getResource(path, request)).orElse(null);
+		return this.findResource(request);
+	}
+
+	protected Resource findResource(HttpServletRequest request) throws IOException {
+		return super.getResource(request);
 	}
 
 	@Override
@@ -168,10 +174,10 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public boolean copy(String oldPath, String path) {
-		Optional<File> optionalOld = getFile(oldPath);
+		Optional<Path> optionalOld = getFile(oldPath);
 		if (optionalOld.isPresent()) {
 			try {
-				FileUtils.copy(optionalOld.get(), new File(absFolder, path));
+				FileUtils.copy(optionalOld.get(), FileUtils.sub(absFolder, path));
 				return true;
 			} catch (IOException e) {
 				LOGGER.error("拷贝文件失败:" + e.getMessage(), e);
@@ -183,10 +189,10 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Override
 	public boolean move(String oldPath, String path) {
-		Optional<File> optionalOld = getFile(oldPath);
+		Optional<Path> optionalOld = getFile(oldPath);
 		if (optionalOld.isPresent()) {
 			try {
-				FileUtils.move(optionalOld.get(), new File(absFolder, path));
+				FileUtils.move(optionalOld.get(), FileUtils.sub(absFolder, path));
 				return true;
 			} catch (IOException e) {
 				LOGGER.error("移动文件失败:" + e.getMessage(), e);
@@ -196,30 +202,28 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return false;
 	}
 
-	/**
-	 * 获取资源文件
-	 * 
-	 * @param path
-	 * @return
-	 */
-	protected abstract Optional<Resource> getResource(String path, HttpServletRequest request);
+	protected Optional<Path> getFile(String oldPath) {
+		Path p = FileUtils.sub(absFolder, oldPath);
+		if (Files.exists(p) && Files.isRegularFile(p)) {
+			return Optional.of(p);
+		}
+		return Optional.empty();
+	}
 
 	@Override
 	public final void afterPropertiesSet() throws Exception {
 
-		/**
-		 * spring 4.3 fix
-		 */
-		super.afterPropertiesSet();
-
-		// 忽略location的警告
-		moreAfterPropertiesSet();
-
 		if (absPath == null) {
 			throw new SystemException("文件存储路径不能为null");
 		}
-		absFolder = new File(absPath);
+
+		absFolder = Paths.get(absPath);
 		FileUtils.forceMkdir(absFolder);
+
+		setLocations(Arrays.asList(new PathResource(absFolder)));
+
+		// 忽略location的警告
+		moreAfterPropertiesSet();
 
 		if (urlPrefix == null || !UrlUtils.isAbsoluteUrl(urlPrefix)) {
 			urlPrefix = urlHelper.getUrl() + urlPatternPrefix;
@@ -229,6 +233,11 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		if (enableDownloadHandler) {
 			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "_download/**", new DownloadHandler());
 		}
+
+		/**
+		 * spring 4.3 fix
+		 */
+		super.afterPropertiesSet();
 	}
 
 	@Override
@@ -249,25 +258,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	}
 
-	protected String getFilename(String originalName) {
-		// 保持原名
-		return originalName;
-	}
-
-	protected Optional<File> getFile(String path) {
-		File file = new File(absFolder, path);
-		return (!file.exists() || file.isDirectory()) ? Optional.empty() : Optional.of(file);
-	}
-
-	protected Optional<String> getPathFromRequest(HttpServletRequest request) {
-		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-		if (path == null) {
-			throw new SystemException("Required request attribute '"
-					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
-		}
-		return (!StringUtils.hasText(path) || isInvalidPath(path)) ? Optional.empty() : Optional.of(path);
-	}
-
 	private final class DownloadHandler implements HttpRequestHandler {
 
 		@Override
@@ -277,25 +267,20 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
-			Optional<String> path = getPathFromRequest(request);
-			if (!path.isPresent()) {
+			Resource resource = AbstractLocalResourceRequestHandlerFileStore.this.getResource(request);
+			if (resource == null) {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
-			Optional<File> optionalFile = getFile(path.get());
-			if (!optionalFile.isPresent()) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			File file = optionalFile.get();
-			long length = file.length();
+			long length = resource.contentLength();
 			response.setContentLength((int) length);
 			response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
 			response.setHeader("Content-Disposition",
 					// 中文乱码
-					"attachment; filename=" + new String(file.getName().getBytes(Constants.CHARSET), "iso-8859-1"));
+					"attachment; filename="
+							+ new String(resource.getFilename().getBytes(Constants.CHARSET), "iso-8859-1"));
 			try {
-				FileUtils.write(file, response.getOutputStream());
+				FileUtils.write(resource.getInputStream(), response.getOutputStream());
 			} catch (IOException e) {
 				LOGGER.error(e.getMessage(), e);
 			}
@@ -329,5 +314,4 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
 	}
-
 }

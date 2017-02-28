@@ -41,13 +41,13 @@
 					<constructor-arg index="1" value="spaces" />
 				</bean>
 
-				<bean class="me.qyh.blog.comment.CommentsDataTagProcessor">
+				<bean class="me.qyh.blog.ui.data.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
 					<property name="callable" value="true" />
 				</bean>
 
-				<bean class="me.qyh.blog.comment.LastCommentsDataTagProcessor">
+				<bean class="me.qyh.blog.ui.data.LastCommentsDataTagProcessor">
 					<constructor-arg index="0" value="最近评论" />
 					<constructor-arg index="1" value="comments" />
 				</bean>

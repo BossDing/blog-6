@@ -15,8 +15,10 @@
  */
 package me.qyh.blog.file.oss;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -34,7 +36,6 @@ import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.service.FileService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.web.Webs;
 
@@ -49,7 +50,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	private final int id;
 	private final String name;
 	private String backupAbsPath;
-	private File backupDir;
+	private Path backupDir;
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractOssFileStore.class);
 
@@ -71,7 +72,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		String originalFilename = multipartFile.getOriginalFilename();
 		String extension = FileUtils.getFileExtension(originalFilename);
-		File tmp = FileUtils.appTemp(extension);
+		Path tmp = FileUtils.appTemp(extension);
 		try {
 			Webs.save(multipartFile, tmp);
 		} catch (IOException e) {
@@ -79,7 +80,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 		CommonFile cf = new CommonFile();
 
-		String vkey = FileService.cleanPath(key);
+		String vkey = FileUtils.cleanPath(key);
 		doUpload(vkey, tmp);
 
 		cf.setExtension(extension);
@@ -98,17 +99,17 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 
 		cf.setOriginalFilename(originalFilename);
-		cf.setSize(tmp.length());
+		cf.setSize(multipartFile.getSize());
 		cf.setStore(id);
 		return cf;
 	}
 
-	private void doUpload(String key, File tmp) {
-		File backup = null;
+	private void doUpload(String key, Path tmp) {
+		Path backup = null;
 		try {
 			if (backupDir != null) {
-				backup = new File(backupDir, key);
-				FileUtils.forceMkdir(backup.getParentFile());
+				backup = FileUtils.sub(backupDir, key);
+				FileUtils.forceMkdir(backup.getParent());
 				FileUtils.copy(tmp, backup);
 			}
 			upload(key, tmp);
@@ -120,7 +121,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		}
 	}
 
-	protected abstract void upload(String key, File file) throws IOException;
+	protected abstract void upload(String key, Path file) throws IOException;
 
 	/**
 	 * 读取图片信息
@@ -140,14 +141,14 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (backupAbsPath != null) {
-			backupDir = new File(backupAbsPath);
+			backupDir = Paths.get(backupAbsPath);
 			FileUtils.forceMkdir(backupDir);
 		}
 	}
 
 	@Override
 	public final boolean deleteBatch(String key) {
-		String vkey = FileService.cleanPath(key);
+		String vkey = FileUtils.cleanPath(key);
 		boolean flag = doDeleteBatch(vkey);
 		if (flag) {
 			deleteBackup(vkey);
@@ -157,7 +158,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public final boolean delete(String key) {
-		String vkey = FileService.cleanPath(key);
+		String vkey = FileUtils.cleanPath(key);
 		boolean flag = doDelete(vkey);
 		if (flag) {
 			deleteBackup(vkey);
@@ -177,8 +178,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	private void deleteBackup(String key) {
 		if (backupDir != null) {
-			File backup = new File(backupDir, key);
-			if (backup.exists()) {
+			Path backup = FileUtils.sub(backupDir, key);
+			if (Files.exists(backup)) {
 				FileUtils.deleteQuietly(backup);
 			}
 		}
@@ -186,8 +187,8 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public boolean move(String oldPath, String path) {
-		String vo = FileService.cleanPath(oldPath);
-		String vp = FileService.cleanPath(path);
+		String vo = FileUtils.cleanPath(oldPath);
+		String vp = FileUtils.cleanPath(path);
 		if (doCopy(vo, vp)) {
 			if (delete(vo)) {
 				return true;
@@ -200,13 +201,13 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	@Override
 	public final boolean copy(String oldPath, String path) {
-		String vo = FileService.cleanPath(oldPath);
-		String vp = FileService.cleanPath(path);
+		String vo = FileUtils.cleanPath(oldPath);
+		String vp = FileUtils.cleanPath(path);
 		if (backupDir != null) {
-			File backup = new File(backupDir, vo);
-			if (backup.exists()) {
+			Path backup = FileUtils.sub(backupDir, vo);
+			if (Files.exists(backup)) {
 				try {
-					FileUtils.copy(backup, new File(backupDir, vp));
+					FileUtils.copy(backup, FileUtils.sub(backupDir, vp));
 				} catch (IOException e) {
 					LOGGER.error("拷贝文件失败：" + e.getMessage(), e);
 					return false;

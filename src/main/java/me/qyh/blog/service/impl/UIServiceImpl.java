@@ -42,6 +42,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +74,6 @@ import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.UICacheManager;
@@ -203,6 +203,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private List<Fragment> fragments = new ArrayList<>();
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void insertUserFragment(UserFragment userFragment) throws LogicException {
 		checkSpace(userFragment);
@@ -236,6 +237,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateUserFragment(UserFragment userFragment) throws LogicException {
 		checkSpace(userFragment);
@@ -329,6 +331,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void buildTpl(UserPage userPage) throws LogicException {
 		checkSpace(userPage);
@@ -440,14 +443,14 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<DataBind<?>> queryData(DataTag dataTag, ContextVariables variables) throws LogicException {
-		return doQuery(dataTag, variables, false);
+	public Optional<DataBind<?>> queryData(DataTag dataTag) throws LogicException {
+		return doQuery(dataTag, false);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<DataBind<?>> queryCallableData(DataTag dataTag, ContextVariables variables) throws LogicException {
-		return doQuery(dataTag, variables, true);
+	public Optional<DataBind<?>> queryCallableData(DataTag dataTag) throws LogicException {
+		return doQuery(dataTag, true);
 	}
 
 	@Override
@@ -522,8 +525,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
-	public List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption) {
-		TransactionStatus ts = platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
+	public synchronized List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages,
+			ImportOption importOption) {
+		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
+		td.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+		TransactionStatus ts = platformTransactionManager.getTransaction(td);
 		try {
 			if (CollectionUtils.isEmpty(exportPages)) {
 				return new ArrayList<>();
@@ -762,14 +768,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny();
 	}
 
-	private Optional<DataBind<?>> doQuery(DataTag dataTag, ContextVariables variables, boolean onlyCallable)
-			throws LogicException {
+	private Optional<DataBind<?>> doQuery(DataTag dataTag, boolean onlyCallable) throws LogicException {
 		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
 		if (onlyCallable) {
 			processor = processor.filter(DataTagProcessor::isCallable);
 		}
 		if (processor.isPresent()) {
-			return Optional.of(processor.get().getData(variables, dataTag.getAttrs()));
+			return Optional.of(processor.get().getData(dataTag.getAttrs()));
 		}
 		return Optional.empty();
 	}

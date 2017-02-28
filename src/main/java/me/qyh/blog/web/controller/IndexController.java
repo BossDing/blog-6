@@ -33,7 +33,6 @@ import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
@@ -67,8 +66,7 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		return uiService.queryCallableData(tag, new ContextVariables()).map(bind -> new JsonResult(true, bind))
-				.orElse(new JsonResult(false));
+		return uiService.queryCallableData(tag).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
 	}
 
 	@RequestMapping(value = { "fragment/{fragment}", "space/{alias}/fragment/{fragment}" }, method = RequestMethod.GET)

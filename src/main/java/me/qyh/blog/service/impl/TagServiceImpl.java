@@ -37,7 +37,6 @@ import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
 @Service
-@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 public class TagServiceImpl implements TagService, InitializingBean, ApplicationEventPublisherAware {
 
 	@Autowired
@@ -61,6 +60,8 @@ public class TagServiceImpl implements TagService, InitializingBean, Application
 
 	@Override
 	@CacheEvict(value = "hotTags", allEntries = true)
+	@Sync
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateTag(Tag tag, boolean merge) throws LogicException {
 		Tag db = tagDao.selectById(tag.getId());
 		if (db == null) {
@@ -87,6 +88,7 @@ public class TagServiceImpl implements TagService, InitializingBean, Application
 
 	@Override
 	@CacheEvict(value = "hotTags", allEntries = true)
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteTag(Integer id) throws LogicException {
 		Tag db = tagDao.selectById(id);
 		if (db == null) {

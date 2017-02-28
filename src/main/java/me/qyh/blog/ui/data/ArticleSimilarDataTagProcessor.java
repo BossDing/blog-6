@@ -29,7 +29,6 @@ import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Tag;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Article>> {
 
@@ -43,16 +42,10 @@ public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Articl
 	}
 
 	@Override
-	protected List<Article> query(ContextVariables variables, Attributes attributes) throws LogicException {
-		Article article = (Article) variables.getAttribute("article");
-		if (article == null) {
-			String idOrAlias = super.getVariables("idOrAlias", variables, attributes);
-			if (idOrAlias != null) {
-				return articleService.findSimilar(idOrAlias, limit);
-			}
-		}
-		if (article != null) {
-			return articleService.findSimilar(article, limit);
+	protected List<Article> query(Attributes attributes) throws LogicException {
+		String idOrAlias = attributes.get(Constants.ID_OR_ALIAS);
+		if (idOrAlias != null) {
+			return articleService.findSimilar(idOrAlias, limit);
 		}
 		return new ArrayList<>();
 	}

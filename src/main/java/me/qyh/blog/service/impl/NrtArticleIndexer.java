@@ -495,7 +495,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				if (optionalTag.isPresent()) {
 					Tag _tag = optionalTag.get();
 					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, _tag.getName())
-							.ifPresent( _tag::setName);
+							.ifPresent(_tag::setName);
 				}
 			}
 		}
@@ -577,18 +577,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}, commitPeriod);
 	}
 
-	public void setTitleFormatter(Formatter titleFormatter) {
-		this.titleFormatter = titleFormatter;
-	}
-
-	public void setTagFormatter(Formatter tagFormatter) {
-		this.tagFormatter = tagFormatter;
-	}
-
-	public void setSummaryFormatter(Formatter summaryFormatter) {
-		this.summaryFormatter = summaryFormatter;
-	}
-
 	private static final class DefaultFormatter implements Formatter {
 		private String classes;
 
@@ -628,6 +616,18 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 
 	public void setCommitPeriod(int commitPeriod) {
 		this.commitPeriod = commitPeriod;
+	}
+
+	public void setTitleFormatter(Formatter titleFormatter) {
+		this.titleFormatter = titleFormatter;
+	}
+
+	public void setTagFormatter(Formatter tagFormatter) {
+		this.tagFormatter = tagFormatter;
+	}
+
+	public void setSummaryFormatter(Formatter summaryFormatter) {
+		this.summaryFormatter = summaryFormatter;
 	}
 
 }

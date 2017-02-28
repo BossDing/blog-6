@@ -15,30 +15,31 @@
  */
 package me.qyh.blog.web.listener;
 
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.EnumSet;
-import java.util.Enumeration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.SessionCookieConfig;
-import javax.servlet.SessionTrackingMode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.config.UrlConfig;
 import me.qyh.blog.web.filter.CORSFilter;
 
-public class AppContextLoaderListener extends ContextLoaderListener {
+/**
+ * {@link http://docs.oracle.com/cd/E17952_01/connector-j-relnotes-en/news-5-1-23.html
+ * }
+ * 
+ * @author Administrator
+ *
+ */
+public class MysqlCloseableContextLoaderListener extends AppContextLoaderListener {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AppContextLoaderListener.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(MysqlCloseableContextLoaderListener.class);
 
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
@@ -46,10 +47,6 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		WebApplicationContext ctx = super.getCurrentWebApplicationContext();
 		UrlConfig helper = ctx.getBean(UrlConfig.class);
 		ServletContext sc = event.getServletContext();
-		/**
-		 * 去除静态资源中的jsessionid
-		 */
-		sc.setSessionTrackingModes(EnumSet.of(SessionTrackingMode.COOKIE));
 		SessionCookieConfig config = sc.getSessionCookieConfig();
 		config.setHttpOnly(true);
 		config.setSecure(helper.isSecure());
@@ -71,21 +68,12 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 	@Override
 	public void contextDestroyed(ServletContextEvent event) {
 		super.contextDestroyed(event);
-
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
-		Enumeration<Driver> drivers = DriverManager.getDrivers();
-		while (drivers.hasMoreElements()) {
-			Driver driver = drivers.nextElement();
-			if (driver.getClass().getClassLoader() == cl) {
-				try {
-					DriverManager.deregisterDriver(driver);
-				} catch (SQLException e) {
-					LOGGER.warn("注销driver失败：" + e.getMessage(), e);
-				}
-			}
+		try {
+			com.mysql.jdbc.AbandonedConnectionCleanupThread.shutdown();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOGGER.warn(e.getMessage(), e);
 		}
-
 	}
 
 }

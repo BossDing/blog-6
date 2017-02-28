@@ -20,7 +20,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.config.UploadConfig;
-import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 
 @Component
@@ -36,7 +36,7 @@ public class UploadConfigValidator implements Validator {
 		UploadConfig config = (UploadConfig) target;
 		String path = config.getPath();
 		if (!Validators.isEmptyOrNull(path, true)) {
-			path = FileService.cleanPath(path);
+			path = FileUtils.cleanPath(path);
 			BlogFileValidator.validFolderPath(path, errors);
 			if (errors.hasErrors()) {
 				return;

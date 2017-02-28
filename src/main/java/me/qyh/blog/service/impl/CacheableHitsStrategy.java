@@ -288,4 +288,5 @@ public final class CacheableHitsStrategy
 		}
 		this.maxArticles = maxArticles;
 	}
+
 }

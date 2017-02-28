@@ -46,7 +46,6 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 	protected void processAttribute(final ITemplateContext context, IProcessableElementTag tag,
 			Map<String, String> attMap) {
 		for (final IAttribute attribute : tag.getAllAttributes()) {
-
 			String completeName = attribute.getAttributeCompleteName();
 			if (completeName.startsWith(DYNAMIC_ATT_PREFIX)) {
 				processDefaultAttribute(context, tag, attribute, attMap);

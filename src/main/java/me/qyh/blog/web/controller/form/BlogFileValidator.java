@@ -23,6 +23,7 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.entity.BlogFile;
 import me.qyh.blog.service.FileService;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 
 @Component
@@ -61,7 +62,7 @@ public class BlogFileValidator implements Validator {
 			errors.reject("file.path.blank", "路径不能为空");
 			return;
 		}
-		String clean = FileService.cleanPath(folderPath);
+		String clean = FileUtils.cleanPath(folderPath);
 		if (clean.indexOf(FileService.SPLIT_CHAR) != -1) {
 			validFolderPath(folderPath.split(FileService.SPLIT_CHAR), errors);
 		}
@@ -76,7 +77,7 @@ public class BlogFileValidator implements Validator {
 			errors.reject("file.path.blank", "路径不能为空");
 			return;
 		}
-		String path = FileService.cleanPath(filePath);
+		String path = FileUtils.cleanPath(filePath);
 		String fileName;
 		if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
 			fileName = path;

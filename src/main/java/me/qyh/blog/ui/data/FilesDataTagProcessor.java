@@ -12,13 +12,11 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.BlogFileQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.service.FileService;
-import me.qyh.blog.ui.ContextVariables;
 import me.qyh.blog.util.Validators;
 
 public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>> {
 
 	private static final String PATH = "path";
-	private static final String PAGE = "currentPage";
 	private static final String EXTENSIONS = "extensions";
 
 	private static final int MAX_EXTENSION_LENGTH = 5;
@@ -39,11 +37,11 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 	}
 
 	@Override
-	protected PageResult<BlogFile> query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected PageResult<BlogFile> query(Attributes attributes) throws LogicException {
 
 		int currentPage = 0;
 
-		String currentPageStr = super.getVariables(PAGE, variables, attributes);
+		String currentPageStr = attributes.get(Constants.CURRENT_PAGE);
 		if (currentPageStr != null) {
 			try {
 				currentPage = Integer.parseInt(currentPageStr);
@@ -55,13 +53,13 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 		}
 
 		Set<String> extensions = null;
-		String extensionStr = super.getVariables(EXTENSIONS, variables, attributes);
+		String extensionStr = attributes.get(EXTENSIONS);
 		if (!Validators.isEmptyOrNull(extensionStr, true)) {
 			extensions = Arrays.stream(extensionStr.split(",")).map(ext -> ext.trim())
 					.filter(ext -> !ext.trim().isEmpty()).limit(MAX_EXTENSION_LENGTH).collect(Collectors.toSet());
 		}
 
-		String path = super.getVariables(PATH, variables, attributes);
+		String path = attributes.get(PATH);
 		return fileService.queryFiles(path, extensions, currentPage);
 	}
 }

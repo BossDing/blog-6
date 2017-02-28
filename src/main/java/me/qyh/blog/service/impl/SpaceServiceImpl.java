@@ -56,6 +56,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void addSpace(Space space) throws LogicException {
 		lockManager.ensureLockvailable(space.getLockId());
@@ -80,6 +81,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());

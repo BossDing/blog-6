@@ -21,6 +21,11 @@ import static me.qyh.blog.file.ImageHelper.WEBP;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +41,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.HandlerMapping;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -45,7 +51,6 @@ import me.qyh.blog.file.ImageHelper.ImageInfo;
 import me.qyh.blog.file.Resize;
 import me.qyh.blog.file.ResizeValidator;
 import me.qyh.blog.file.ThumbnailUrl;
-import me.qyh.blog.service.FileService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.Webs;
@@ -77,7 +82,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	private boolean supportWebp;
 
 	private String thumbAbsPath;
-	private File thumbAbsFolder;
+	private Path thumbAbsFolder;
 
 	private Resize smallResize;
 	private Resize middleResize;
@@ -106,21 +111,21 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException {
-		File dest = new File(absFolder, key);
+		Path dest = FileUtils.sub(absFolder, key);
 		checkFileStoreable(dest);
 		// 先写入临时文件
 		String originalFilename = mf.getOriginalFilename();
-		File tmp = FileUtils.appTemp(FileUtils.getFileExtension(originalFilename));
+		Path tmp = FileUtils.appTemp(FileUtils.getFileExtension(originalFilename));
 		try {
 			Webs.save(mf, tmp);
 		} catch (IOException e1) {
 			throw new SystemException(e1.getMessage(), e1);
 		}
-		File finalFile = tmp;
+		Path finalFile = tmp;
 		try {
 			ImageInfo ii = readImage(tmp);
 			String extension = ii.getExtension();
-			FileUtils.forceMkdir(dest.getParentFile());
+			FileUtils.forceMkdir(dest.getParent());
 			FileUtils.move(finalFile, dest);
 			CommonFile cf = new CommonFile();
 			cf.setExtension(extension);
@@ -139,18 +144,32 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	private void checkFileStoreable(File dest) throws LogicException {
-		if (dest.exists() && !FileUtils.deleteQuietly(dest)) {
-			throw new LogicException("file.store.exists", "文件" + dest.getAbsolutePath() + "已经存在",
-					dest.getAbsolutePath());
+	@Override
+	protected Resource findResource(HttpServletRequest request) throws IOException {
+		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+		if (path == null) {
+			throw new SystemException("Required request attribute '"
+					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
+		}
+		path = processPath(path);
+		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
+			return null;
+		}
+		return findResource(path, request).orElse(null);
+	}
+
+	private void checkFileStoreable(Path dest) throws LogicException {
+		if (Files.exists(dest) && !FileUtils.deleteQuietly(dest)) {
+			String absPath = dest.toAbsolutePath().toString();
+			throw new LogicException("file.store.exists", "文件" + absPath + "已经存在", absPath);
 		}
 		if (inThumbDir(dest)) {
-			throw new LogicException("file.inThumb", "文件" + dest.getAbsolutePath() + "不能被存放在缩略图文件夹下",
-					dest.getAbsolutePath());
+			String absPath = dest.toAbsolutePath().toString();
+			throw new LogicException("file.inThumb", "文件" + absPath + "不能被存放在缩略图文件夹下", absPath);
 		}
 	}
 
-	private ImageInfo readImage(File tmp) throws LogicException {
+	private ImageInfo readImage(Path tmp) throws LogicException {
 		try {
 			return imageHelper.read(tmp);
 		} catch (IOException e) {
@@ -159,16 +178,15 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	@Override
-	protected Optional<Resource> getResource(String path, HttpServletRequest request) {
+	private Optional<Resource> findResource(String path, HttpServletRequest request) {
 
 		// 判断是否是原图
-		Optional<File> optionaLocalFile = super.getFile(path);
+		Optional<Path> optionaLocalFile = super.getFile(path);
 		String extension = FileUtils.getFileExtension(path);
 		if (optionaLocalFile.isPresent()) {
 			// 如果是GIF文件或者没有原图保护，直接输出
 			if (ImageHelper.isGIF(extension) || !sourceProtected) {
-				return Optional.of(new PathResource(optionaLocalFile.get().toPath()));
+				return Optional.of(new PathResource(optionaLocalFile.get()));
 			}
 			return Optional.empty();
 		}
@@ -192,23 +210,23 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 		String thumbPath = optionalThumbPath.get();
 		// 缩略图是否已经存在
-		File file = findThumbByPath(thumbPath);
+		Path file = findThumbByPath(thumbPath);
 		// 缩略图不存在，寻找原图
-		if (!file.exists()) {
+		if (!Files.exists(file)) {
 
-			Optional<File> optionalFile = super.getFile(sourcePath);
+			Optional<Path> optionalFile = super.getFile(sourcePath);
 			// 源文件也不存在
 			if (!optionalFile.isPresent()) {
 				return Optional.empty();
 			}
 
 			// 如果原图存在，进行缩放
-			File local = optionalFile.get();
+			Path local = optionalFile.get();
 			// 如果支持文件格式(防止ImageHelper变更)
 			if (ImageHelper.isSystemAllowedImage(ext)) {
 				try {
 					doResize(local, resize, file);
-					return file.exists() ? Optional.of(new PathResource(file.toPath())) : Optional.empty();
+					return Files.exists(file) ? Optional.of(new PathResource(file)) : Optional.empty();
 				} catch (Exception e) {
 					IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
 					// 缩放失败
@@ -218,12 +236,12 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				// 不支持的文件格式
 				// 可能更改了ImageHelper
 				// 返回原文件
-				return Optional.of(new PathResource(local.toPath()));
+				return Optional.of(new PathResource(local));
 			}
 
 		} else {
 			// 直接返回缩略图
-			return Optional.of(new PathResource(file.toPath()));
+			return Optional.of(new PathResource(file));
 		}
 	}
 
@@ -231,8 +249,8 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	public boolean delete(String key) {
 		boolean flag = super.delete(key);
 		if (flag) {
-			File thumbDir = new File(thumbAbsFolder, key);
-			if (thumbDir.exists()) {
+			Path thumbDir = FileUtils.sub(thumbAbsFolder, key);
+			if (Files.exists(thumbDir)) {
 				flag = FileUtils.deleteQuietly(thumbDir);
 			}
 		}
@@ -283,22 +301,17 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 	@Override
 	public void moreAfterPropertiesSet() {
+
+		validateResize(smallResize);
+		validateResize(middleResize);
+		validateResize(largeResize);
+
 		if (executor == null) {
 			throw new SystemException("请提供图片缩放线程池");
 		}
 		if (thumbAbsPath == null) {
 			throw new SystemException("缩略图存储路径不能为null");
 		}
-		thumbAbsFolder = new File(thumbAbsPath);
-		FileUtils.forceMkdir(thumbAbsFolder);
-
-		if (resizeValidator == null) {
-			resizeValidator = resize -> true;
-		}
-
-		validateResize(smallResize);
-		validateResize(middleResize);
-		validateResize(largeResize);
 
 		if (sourceProtected && (smallResize == null && middleResize == null && largeResize == null)) {
 			throw new SystemException("开启原图保护必须提供默认缩放尺寸");
@@ -308,8 +321,23 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 			setEnableDownloadHandler(false);
 		}
 
+		List<Resource> resources = new ArrayList<>();
+		resources.add(new PathResource(Paths.get(thumbAbsPath)));
+		if (sourceProtected) {
+			resources.add(new PathResource(Paths.get(absPath)));
+		}
+
+		super.setLocations(resources);
+
 		if (!imageHelper.supportWebp()) {
 			supportWebp = false;
+		}
+
+		thumbAbsFolder = Paths.get(thumbAbsPath);
+		FileUtils.forceMkdir(thumbAbsFolder);
+
+		if (resizeValidator == null) {
+			resizeValidator = resize -> true;
 		}
 	}
 
@@ -319,20 +347,23 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	private File findThumbByPath(String path) {
+	private Path findThumbByPath(String path) {
 		String southPath = getSourcePathByResizePath(path);
-		File thumbDir = new File(thumbAbsFolder, southPath);
+		Path thumbDir = FileUtils.sub(thumbAbsFolder, southPath);
 		String name = new File(path).getName();
-		return new File(thumbDir, name);
+		return FileUtils.sub(thumbDir, name);
 	}
 
-	protected void doResize(File local, Resize resize, File thumb) throws IOException {
-		if (!wait(fileMap.get(thumb.getCanonicalPath()))) {
+	protected void doResize(Path local, Resize resize, Path thumb) throws IOException {
+		CountDownLatch cdl = fileMap.get(thumb.normalize().toString());
+		if (cdl != null) {
+			wait(cdl);
+		} else {
 			CompletableFuture.runAsync(() -> {
 				try {
 					executeResize(local, thumb, resize);
 				} catch (IOException e) {
-					if (local.exists()) {
+					if (Files.exists(local)) {
 						throw new SystemException(e.getMessage(), e);
 					}
 				}
@@ -344,13 +375,13 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * https://www.qyh.me/space/java/article/graphicsmagick-error-137
 	 * 在这种情境下比computIfAbsent(k,Function,null)快
 	 */
-	private void executeResize(File local, File thumb, Resize resize) throws IOException {
-		String thumbCanonicalPath = thumb.getCanonicalPath();
+	private void executeResize(Path local, Path thumb, Resize resize) throws IOException {
+		String thumbCanonicalPath = thumb.normalize().toString();
 
 		if (fileMap.putIfAbsent(thumbCanonicalPath, new CountDownLatch(1)) == null) {
 			try {
-				if (!thumb.exists()) {
-					FileUtils.forceMkdir(thumb.getParentFile());
+				if (!Files.exists(thumb)) {
+					FileUtils.forceMkdir(thumb.getParent());
 					imageHelper.resize(resize, local, thumb);
 				}
 			} finally {
@@ -362,7 +393,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		}
 	}
 
-	private boolean wait(CountDownLatch cdl) {
+	private void wait(CountDownLatch cdl) {
 		if (cdl != null) {
 			try {
 				cdl.await();
@@ -371,7 +402,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 				throw new SystemException(e.getMessage(), e);
 			}
 		}
-		return cdl != null;
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
@@ -457,7 +487,7 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 		if (idOf != -1) {
 			sourcePath = path.substring(0, path.lastIndexOf('/'));
 		}
-		return FileService.cleanPath(sourcePath);
+		return FileUtils.cleanPath(sourcePath);
 	}
 
 	/**
@@ -466,10 +496,10 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 	 * @param dest
 	 * @return
 	 */
-	private boolean inThumbDir(File dest) {
+	private boolean inThumbDir(Path dest) {
 		try {
-			String canonicalP = thumbAbsFolder.getCanonicalPath();
-			String canonicalC = dest.getCanonicalPath();
+			String canonicalP = thumbAbsFolder.toFile().getCanonicalPath();
+			String canonicalC = dest.toFile().getCanonicalPath();
 			return canonicalP.equals(canonicalC)
 					|| canonicalC.regionMatches(false, 0, canonicalP, 0, canonicalP.length());
 		} catch (IOException e) {

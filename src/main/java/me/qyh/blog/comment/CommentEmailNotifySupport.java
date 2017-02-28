@@ -15,7 +15,8 @@
  */
 package me.qyh.blog.comment;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,8 +63,8 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private String mailTemplate;
 	private String mailSubject;
 
-	private File toSendSdfile = new File(FileUtils.getHomeDir(), "toSendSdfile.dat");
-	private File toProcessesSdfile = new File(FileUtils.getHomeDir(), "toProcessesSdfile.dat");
+	private Path toSendSdfile = FileUtils.sub(FileUtils.getHomeDir(), "toSendSdfile.dat");
+	private Path toProcessesSdfile = FileUtils.sub(FileUtils.getHomeDir(), "toProcessesSdfile.dat");
 
 	/**
 	 * 每隔5秒从评论队列中获取评论放入待发送列表
@@ -149,17 +150,17 @@ public class CommentEmailNotifySupport implements InitializingBean {
 			messageTipCount = MESSAGE_TIP_COUNT;
 		}
 
-		if (toSendSdfile.exists()) {
+		if (Files.exists(toSendSdfile)) {
 			this.toSend = SerializationUtils.deserialize(toSendSdfile);
 			if (!FileUtils.deleteQuietly(toSendSdfile)) {
-				LOGGER.warn("删除文件:" + toSendSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+				LOGGER.warn("删除文件:" + toSendSdfile + "失败，这会导致邮件重复发送");
 			}
 		}
 
-		if (toProcessesSdfile.exists()) {
+		if (Files.exists(toProcessesSdfile)) {
 			this.toProcesses = SerializationUtils.deserialize(toProcessesSdfile);
 			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
-				LOGGER.warn("删除文件:" + toProcessesSdfile.getAbsolutePath() + "失败，这会导致邮件重复发送");
+				LOGGER.warn("删除文件:" + toProcessesSdfile + "失败，这会导致邮件重复发送");
 			}
 		}
 

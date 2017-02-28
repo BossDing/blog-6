@@ -17,7 +17,6 @@ package me.qyh.blog.comment;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -69,6 +68,7 @@ import me.qyh.blog.security.input.Markdown2Html;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 
 public class CommentService implements InitializingBean, CommentServer {
@@ -136,11 +136,8 @@ public class CommentService implements InitializingBean, CommentServer {
 			};
 		}
 
-		// 读取配置文件内容
-		try (InputStream is = configResource.getInputStream()) {
-			pros.load(is);
-			loadConfig();
-		}
+		Resources.readResource(configResource, pros::load);
+		loadConfig();
 	}
 
 	/**

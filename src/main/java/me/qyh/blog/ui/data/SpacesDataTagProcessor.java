@@ -25,7 +25,6 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.ui.ContextVariables;
 
 /**
  * 查询所有的空间
@@ -48,7 +47,7 @@ public class SpacesDataTagProcessor extends DataTagProcessor<List<Space>> {
 	}
 
 	@Override
-	protected List<Space> query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected List<Space> query(Attributes attributes) throws LogicException {
 		SpaceQueryParam param = new SpaceQueryParam();
 		param.setQueryPrivate(Environment.isLogin());
 		return spaceService.querySpace(param);

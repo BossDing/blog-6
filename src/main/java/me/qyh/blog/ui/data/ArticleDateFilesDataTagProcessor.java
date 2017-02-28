@@ -24,7 +24,6 @@ import me.qyh.blog.bean.ArticleDateFiles;
 import me.qyh.blog.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDateFiles> {
 
@@ -59,14 +58,14 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 	}
 
 	@Override
-	protected ArticleDateFiles query(ContextVariables variables, Attributes attributes) throws LogicException {
-		ArticleDateFileMode mode = getMode(variables, attributes);
+	protected ArticleDateFiles query(Attributes attributes) throws LogicException {
+		ArticleDateFileMode mode = getMode(attributes);
 		return articleService.queryArticleDateFiles(mode);
 	}
 
-	private ArticleDateFileMode getMode(ContextVariables variables, Attributes attributes) {
+	private ArticleDateFileMode getMode(Attributes attributes) {
 		ArticleDateFileMode mode = ArticleDateFileMode.YM;
-		String v = super.getVariables(MODE, variables, attributes);
+		String v = attributes.get(MODE);
 		if (v != null) {
 			try {
 				mode = ArticleDateFileMode.valueOf(v);

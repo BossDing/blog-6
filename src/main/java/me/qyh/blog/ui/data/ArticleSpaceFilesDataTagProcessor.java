@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.bean.ArticleSpaceFile;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.ContextVariables;
 
 public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<ArticleSpaceFile>> {
 
@@ -47,7 +46,7 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 	}
 
 	@Override
-	protected List<ArticleSpaceFile> query(ContextVariables variables, Attributes attributes) throws LogicException {
+	protected List<ArticleSpaceFile> query(Attributes attributes) throws LogicException {
 		return articleService.queryArticleSpaceFiles();
 	}
 

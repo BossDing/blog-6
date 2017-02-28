@@ -15,9 +15,9 @@
  */
 package me.qyh.blog.file.oss;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -170,8 +170,8 @@ public class AliyunFileStore extends AbstractOssFileStore {
 	 * @see OSSUtils#validateObjectKey(String)
 	 */
 	@Override
-	protected void upload(String key, File file) throws IOException {
-		ossClient.putObject(bucket, key, Files.newInputStream(file.toPath()));
+	protected void upload(String key, Path file) throws IOException {
+		ossClient.putObject(bucket, key, Files.newInputStream(file));
 	}
 
 	@Override

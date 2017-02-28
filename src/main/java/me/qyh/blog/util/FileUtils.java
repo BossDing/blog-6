@@ -17,10 +17,12 @@ package me.qyh.blog.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -32,20 +34,19 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.impl.FileClearJob;
 
 public class FileUtils {
-
-	private FileUtils() {
-
-	}
-
-	private static final File HOME_DIR = new File(System.getProperty("user.home"));
+	private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
 
 	/**
 	 * 博客用来存放临时文件的文件夹
 	 */
-	private static final File TEMP_DIR = new File(HOME_DIR, "blog_temp");
+	private static final Path TEMP_DIR = HOME_DIR.resolve("blog_temp");
 
 	static {
 		forceMkdir(TEMP_DIR);
+	}
+
+	private FileUtils() {
+
 	}
 
 	/**
@@ -57,26 +58,24 @@ public class FileUtils {
 	 * @see FileUtils#clearAppTemp(Predicate)
 	 * @see FileClearJob#doJob()
 	 */
-	public static File appTemp(String ext) {
+	public static Path appTemp(String ext) {
 		String name = StringUtils.uuid() + "." + ext;
 		try {
-			File temp = new File(TEMP_DIR, name);
-			Files.createFile(temp.toPath());
-			return temp;
+			return Files.createFile(TEMP_DIR.resolve(name));
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * write bits to file
+	 * write bits to path
 	 * 
 	 * @param bytes
 	 * @param file
 	 * @throws IOException
 	 */
-	public static void write(byte[] bytes, File file) throws IOException {
-		Files.write(file.toPath(), bytes, StandardOpenOption.WRITE);
+	public static void write(byte[] bytes, Path path) throws IOException {
+		Files.write(path, bytes, StandardOpenOption.WRITE);
 	}
 
 	/**
@@ -87,6 +86,18 @@ public class FileUtils {
 	 */
 	public static String getFileExtension(String fullName) {
 		String fileName = new File(fullName).getName();
+		int dotIndex = fileName.lastIndexOf('.');
+		return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
+	}
+
+	/**
+	 * 获取文件的后缀名
+	 * 
+	 * @param fullName
+	 * @return
+	 */
+	public static String getFileExtension(Path path) {
+		String fileName = path.getFileName().toString();
 		int dotIndex = fileName.lastIndexOf('.');
 		return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
 	}
@@ -109,11 +120,10 @@ public class FileUtils {
 	 * @param file
 	 * @return
 	 */
-	public static boolean deleteQuietly(File file) {
-		if (file == null || !file.exists()) {
+	public static boolean deleteQuietly(Path path) {
+		if (path == null || !Files.exists(path)) {
 			return true;
 		}
-		Path path = file.toPath();
 		try {
 			Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
 				@Override
@@ -139,13 +149,18 @@ public class FileUtils {
 	 * 
 	 * @param parentFile
 	 */
-	public static void forceMkdir(File dir) {
-		if (dir.exists()) {
-			return;
-		}
+	public static void forceMkdir(Path path) {
 		synchronized (FileUtils.class) {
-			if (!dir.exists() && !dir.mkdirs()) {
-				throw new SystemException("创建文件夹：" + dir.getAbsolutePath() + "失败");
+			if (!Files.exists(path)) {
+				try {
+					Files.createDirectories(path);
+				} catch (IOException e) {
+					throw new SystemException("创建文件夹：" + path + "失败:" + e.getMessage(), e);
+				}
+			} else {
+				if (!Files.isDirectory(path)) {
+					throw new SystemException("目标位置" + path + "已经存在文件，但不是文件夹");
+				}
 			}
 		}
 	}
@@ -157,9 +172,9 @@ public class FileUtils {
 	 * @param target
 	 * @throws IOException
 	 */
-	public static void copy(File source, File target) throws IOException {
-		forceMkdir(target.getParentFile());
-		Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	public static void copy(Path source, Path target) throws IOException {
+		forceMkdir(target.getParent());
+		Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	/**
@@ -169,21 +184,35 @@ public class FileUtils {
 	 * @param dest
 	 * @throws IOException
 	 */
-	public static void move(File source, File target) throws IOException {
-		forceMkdir(target.getParentFile());
-		Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	public static void move(Path source, Path target) throws IOException {
+		forceMkdir(target.getParent());
+		Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	/**
-	 * write file to outputstream
+	 * is write to os
 	 * 
-	 * @param file
-	 * @param outputStream
+	 * @param is
+	 * @param os
 	 * @throws IOException
 	 */
-	public static void write(File file, OutputStream outputStream) throws IOException {
-		Files.copy(file.toPath(), outputStream);
-		outputStream.flush();
+	// copied from Files
+	public static void write(InputStream source, OutputStream sink) throws IOException {
+		Objects.nonNull(source);
+		Objects.nonNull(sink);
+		try {
+			byte[] buf = new byte[8192];
+			int n;
+			while ((n = source.read(buf)) > 0) {
+				sink.write(buf, 0, n);
+			}
+			sink.flush();
+		} finally {
+			try {
+				source.close();
+			} catch (IOException e) {
+			}
+		}
 	}
 
 	/**
@@ -191,8 +220,25 @@ public class FileUtils {
 	 * 
 	 * @return
 	 */
-	public static File getHomeDir() {
+	public static Path getHomeDir() {
 		return HOME_DIR;
+	}
+
+	/**
+	 * 获取子文件
+	 * <p>
+	 * eg:sub(Paths.get("h:/123"), "/123/414\\wqeqw") ==>
+	 * h:\123\123\414\wqeqw(windows)
+	 * </p>
+	 * 
+	 * @param p
+	 * @param sub
+	 * @return
+	 */
+	public static Path sub(Path p, String sub) {
+		Objects.requireNonNull(p);
+		Objects.requireNonNull(sub);
+		return p.resolve(cleanPath(sub));
 	}
 
 	/**
@@ -203,7 +249,7 @@ public class FileUtils {
 	public static void clearAppTemp(Predicate<Path> predicate) {
 		Objects.requireNonNull(predicate);
 		try {
-			Files.walkFileTree(TEMP_DIR.toPath(), new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(TEMP_DIR, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 
@@ -224,5 +270,29 @@ public class FileUtils {
 		} catch (IOException e) {
 			// ignore
 		}
+	}
+
+	/**
+	 * 删除连续的 '/'，开头和结尾的'/'
+	 * 
+	 * <pre>
+	 * clean("\\\\////123/\\\\////456//\\\\////789.txt") = '123/456/789.txt';
+	 * </pre>
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static String cleanPath(String path) {
+		String cleaned = Validators.cleanPath(path);
+		if ("/".equals(path)) {
+			return "";
+		}
+		if (cleaned.startsWith("/")) {
+			cleaned = cleaned.substring(1, cleaned.length());
+		}
+		if (cleaned.endsWith("/")) {
+			cleaned = cleaned.substring(0, cleaned.length() - 1);
+		}
+		return cleaned;
 	}
 }
