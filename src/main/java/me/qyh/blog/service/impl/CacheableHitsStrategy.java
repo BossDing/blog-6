@@ -16,6 +16,7 @@
 package me.qyh.blog.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,23 +24,18 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.ArticleIndexRebuildEvent;
-import me.qyh.blog.evt.EventType;
+import me.qyh.blog.evt.listener.ArticleEventHandlerRegister;
+import me.qyh.blog.evt.listener.EventHandlerAdapter;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.impl.ArticleServiceImpl.HitsStrategy;
@@ -54,10 +50,8 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.HitsStrategy;
  *
  */
 public final class CacheableHitsStrategy
-		implements HitsStrategy, ApplicationEventPublisherAware, InitializingBean, ApplicationListener<ArticleEvent> {
+		implements HitsStrategy, InitializingBean, ApplicationListener<ContextClosedEvent> {
 
-	@Autowired
-	private ThreadPoolTaskScheduler taskScheduler;
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
@@ -65,14 +59,19 @@ public final class CacheableHitsStrategy
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
-	private NRTArticleIndexer articleIndexer;
-	private ApplicationEventPublisher applicationEventPublisher;
+	private ArticleIndexer articleIndexer;
+	@Autowired
+	private ArticleEventHandlerRegister articleEventHandlerRegister;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(CacheableHitsStrategy.class);
-
+	/**
+	 * 存储所有文章的点击数
+	 */
 	private final Map<Integer, HitsHandler> hitsMap = new ConcurrentHashMap<>();
 
-	private final int flushSeconds;
+	/**
+	 * 储存待刷新点击数的文章
+	 */
+	private final Map<Integer, Boolean> flushMap = new ConcurrentHashMap<>();
 
 	/**
 	 * 如果该项为true，那么在flush之前，相同的ip点击只算一次点击量
@@ -80,75 +79,66 @@ public final class CacheableHitsStrategy
 	 * 例如我点击一次增加了一次点击量，一分钟后flush，那么我在这一分钟内(ip的不变的情况下)，无论我点击了多少次，都只算一次
 	 * </p>
 	 */
-	private boolean validIp = true;
+	private boolean validIp = false;
 
 	/**
-	 * 每篇文章允许最多允许保存的ip数，如果ip超过这个数量，文章点击量将被立即更新
-	 * 
-	 * @see IPBasedHitsHandler
+	 * 最多保存的文章数，如果达到或超过该数目，将会立即更新
 	 */
 	private int maxIps = 100;
 
 	/**
-	 * 最多保存的文章数，如果超过该数目，将会立即更新
+	 * 做多保存文章数，如果达到或超过该数目，将会立即刷新
 	 * <p>
 	 * <b>因为没有批量更新的功能，所以这个值应该设置的较小</b>
 	 * </p>
 	 */
 	private int maxArticles = 10;
 
-	public CacheableHitsStrategy(int flushSeconds) {
-		if (flushSeconds < 1) {
-			throw new SystemException("刷新时间不能小于1秒");
-		}
-
-		this.flushSeconds = flushSeconds;
-	}
-
-	public CacheableHitsStrategy() {
-		this(600);
-	}
-
 	@Override
 	public void hit(Article article) {
 		// increase
 		hitsMap.computeIfAbsent(article.getId(), k -> {
-			return validIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
+			return (validIp && maxArticles > 1) ? new IPBasedHitsHandler(article.getHits(), maxIps)
 					: new DefaultHitsHandler(article.getHits());
 		}).hit(article);
 
+		flushMap.putIfAbsent(article.getId(), Boolean.TRUE);
+
 		/**
-		 * 并不会在hitsMap.size()刚刚超过maxArticles的执行，也有可能会在hitsMap.size()远远大于maxArticles的时候执行
+		 * 并不会在flushMap.size()刚刚超过maxArticles的执行，也有可能会在flushMap.size()远远大于maxArticles的时候执行
 		 * 
 		 * 1.8 ConcurrentHashMap的size方法性能跟HashMap差不多
 		 * https://stackoverflow.com/questions/10754675/concurrent-hashmap-size-method-complexity/22996395#22996395
 		 */
-		if (hitsMap.size() > maxArticles) {
-			flush();
+		if (flushMap.size() >= maxArticles) {
+			synchronized (this) {
+				if (flushMap.size() >= maxArticles) {
+					flush();
+				}
+			}
 		}
 	}
 
-	private void flush(Integer id) {
+	private synchronized void flush(Integer id) {
 		List<HitsWrapper> wrappers = new ArrayList<>();
-		hitsMap.compute(id, (ck, cv) -> {
+		flushMap.compute(id, (ck, cv) -> {
 			if (cv != null) {
-				wrappers.add(new HitsWrapper(id, cv.getHits()));
+				wrappers.add(new HitsWrapper(id, hitsMap.get(id).getHits()));
 			}
 			return null;
 		});
 		doFlush(wrappers);
 	}
 
-	private void flush() {
-		if (!hitsMap.isEmpty()) {
+	public synchronized void flush() {
+		if (!flushMap.isEmpty()) {
 			List<HitsWrapper> wrappers = new ArrayList<>();
-			// not atomic ???
-			for (Iterator<Entry<Integer, HitsHandler>> iter = hitsMap.entrySet().iterator(); iter.hasNext();) {
-				Entry<Integer, HitsHandler> entry = iter.next();
+			for (Iterator<Entry<Integer, Boolean>> iter = flushMap.entrySet().iterator(); iter.hasNext();) {
+				Entry<Integer, Boolean> entry = iter.next();
 				Integer key = entry.getKey();
-				hitsMap.compute(key, (ck, cv) -> {
+				flushMap.compute(key, (ck, cv) -> {
 					if (cv != null) {
-						wrappers.add(new HitsWrapper(key, cv.getHits()));
+						wrappers.add(new HitsWrapper(key, hitsMap.get(key).getHits()));
 					}
 					return null;
 				});
@@ -159,22 +149,27 @@ public final class CacheableHitsStrategy
 
 	private void doFlush(List<HitsWrapper> wrappers) {
 		if (!wrappers.isEmpty()) {
+			List<Article> articles = new ArrayList<>();
+			Map<Integer, Integer> hitsMap = new HashMap<>();
 			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
 			try {
 				for (HitsWrapper wrapper : wrappers) {
 					articleDao.updateHits(wrapper.id, wrapper.hits);
 					Article art = articleCache.getArticle(wrapper.id);
 					if (art != null) {
-						art.setHits(wrapper.hits);
-						articleIndexer.addOrUpdateDocument(art);
+						articles.add(art);
 					}
+					hitsMap.put(wrapper.id, wrapper.hits);
 				}
 			} catch (RuntimeException | Error e) {
 				ts.setRollbackOnly();
-				LOGGER.error(e.getMessage(), e);
-				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+				throw e;
 			} finally {
 				transactionManager.commit(ts);
+			}
+			for (Article art : articles) {
+				art.setHits(hitsMap.get(art.getId()));
+				articleIndexer.addOrUpdateDocument(art);
 			}
 		}
 	}
@@ -235,8 +230,12 @@ public final class CacheableHitsStrategy
 				}
 			});
 
-			if (ips.size() > maxIps) {
-				flush(article.getId());
+			if (ips.size() >= maxIps) {
+				synchronized (this) {
+					if (ips.size() >= maxIps) {
+						flush(article.getId());
+					}
+				}
 			}
 		}
 
@@ -246,29 +245,30 @@ public final class CacheableHitsStrategy
 		}
 	}
 
-	/**
-	 * destroy method
-	 */
-	public void close() {
+	@Override
+	public void onApplicationEvent(ContextClosedEvent event) {
 		flush();
 	}
 
 	@Override
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		this.applicationEventPublisher = applicationEventPublisher;
-	}
-
-	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.taskScheduler.scheduleAtFixedRate(this::flush, flushSeconds * 1000);
+
+		articleEventHandlerRegister.registerTransactionalEventHandler(new EventHandlerAdapter<List<Article>>() {
+
+			@Override
+			public void handleDelete(List<Article> articles) {
+				articles.stream().map(Article::getId).forEach(id -> {
+					flushMap.remove(id);
+					hitsMap.remove(id);
+				});
+			}
+
+		});
 	}
 
-	// inner bean EventListener not work ???
 	@Override
-	public void onApplicationEvent(ArticleEvent event) {
-		if (EventType.DELETE.equals(event.getEventType())) {
-			event.getArticles().stream().map(Article::getId).forEach(hitsMap::remove);
-		}
+	public int getCurrentHits(Article article) {
+		return article.getHits();
 	}
 
 	public void setValidIp(boolean validIp) {
@@ -283,10 +283,6 @@ public final class CacheableHitsStrategy
 	}
 
 	public void setMaxArticles(int maxArticles) {
-		if (maxArticles <= 0) {
-			throw new SystemException("最多保存的文章数应该大于0");
-		}
 		this.maxArticles = maxArticles;
 	}
-
 }

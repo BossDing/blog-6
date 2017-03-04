@@ -19,6 +19,13 @@ import org.springframework.context.ApplicationEvent;
 
 /**
  * 文章索引重建事件
+ * <p>
+ * 这个事件应该在事务提交|回滚后推送，例如
+ * 
+ * <pre>
+ * Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+ * </pre>
+ * </p>
  * 
  * @author Administrator
  *

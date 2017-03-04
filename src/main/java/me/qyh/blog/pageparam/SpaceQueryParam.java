@@ -17,17 +17,7 @@ package me.qyh.blog.pageparam;
 
 public class SpaceQueryParam {
 
-	private String alias;
-	private String name;
 	private boolean queryPrivate = true;
-
-	public String getAlias() {
-		return alias;
-	}
-
-	public void setAlias(String alias) {
-		this.alias = alias;
-	}
 
 	public boolean getQueryPrivate() {
 		return queryPrivate;
@@ -35,14 +25,6 @@ public class SpaceQueryParam {
 
 	public void setQueryPrivate(boolean queryPrivate) {
 		this.queryPrivate = queryPrivate;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 }

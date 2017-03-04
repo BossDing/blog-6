@@ -98,7 +98,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
-	private NRTArticleIndexer articleIndexer;
+	private ArticleIndexer articleIndexer;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -123,6 +123,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 			Article clone = new Article(optionalArticle.get());
 			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(clone.getId()).orElse(0));
+			clone.setHits(articleHitManager.getCurrentHits(clone));
 
 			if (articleContentHandler != null) {
 				articleContentHandler.handle(clone);
@@ -192,7 +193,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			lockManager.ensureLockvailable(article.getLockId());
 		}
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-		if (article.hasId()) {
+		boolean update = article.hasId();
+		if (update) {
 			Article articleDb = articleDao.selectById(article.getId());
 			if (articleDb == null) {
 				throw new LogicException("article.notExists", "文章不存在");
@@ -237,11 +239,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleTagDao.deleteByArticle(articleDb);
 
 			articleDao.update(article);
-
-			insertTags(article);
-			articleIndexer.deleteDocument(article.getId());
-			// 由于alias的存在，硬编码删除cache
-			articleCache.evit(articleDb);
+			Transactions.afterCommit(() -> articleCache.evit(articleDb));
 		} else {
 			if (article.getAlias() != null) {
 				Article aliasDb = articleDao.selectByAlias(article.getAlias());
@@ -269,18 +267,26 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			article.setPubDate(pubDate);
 
 			articleDao.insert(article);
-			insertTags(article);
 		}
 
-		Article updated = articleDao.selectById(article.getId());
-		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(updated);
-		}
+		boolean rebuildIndexWhenTagChange = insertTags(article);
 		if (article.isSchedule()) {
 			scheduleManager.update();
 		}
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, updated, EventType.UPDATE));
-		return updated;
+
+		Article requery = articleDao.selectById(article.getId());
+		if (update) {
+			articleIndexer.deleteDocument(article.getId());
+		}
+		if (article.isPublished()) {
+			articleIndexer.addOrUpdateDocument(requery);
+		}
+		if (rebuildIndexWhenTagChange) {
+			Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+		}
+		applicationEventPublisher
+				.publishEvent(new ArticleEvent(this, requery, update ? EventType.UPDATE : EventType.INSERT));
+		return requery;
 	}
 
 	@Override
@@ -306,10 +312,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}
 
-	private void insertTags(Article article) {
+	private boolean insertTags(Article article) {
 		Set<Tag> tags = article.getTags();
+		boolean rebuildIndexWhenTagChange = false;
 		if (!CollectionUtils.isEmpty(tags)) {
-			boolean rebuildIndex = false;
 			for (Tag tag : tags) {
 				Tag tagDb = tagDao.selectByName(cleanTag(tag.getName()));
 				ArticleTag articleTag = new ArticleTag();
@@ -321,16 +327,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
 					articleIndexer.addTags(tag.getName());
-					rebuildIndex = true;
+					rebuildIndexWhenTagChange = true;
 				} else {
 					articleTag.setTag(tagDb);
 				}
 				articleTagDao.insert(articleTag);
 			}
-			if (rebuildIndex) {
-				this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
-			}
 		}
+		return rebuildIndexWhenTagChange;
 	}
 
 	@Override
@@ -356,7 +360,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@ArticleIndexRebuild
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		GlobalConfig globalConfig = configService.getGlobalConfig();
 		if (param.getSpace() == null) {
@@ -375,9 +378,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		PageResult<Article> page;
 		if (param.hasQuery()) {
-			page = articleIndexer.query(param, (List<Integer> articleIds) -> {
-				return CollectionUtils.isEmpty(articleIds) ? new ArrayList<>() : selectByIds(articleIds);
-			});
+			page = articleIndexer.query(param);
 		} else {
 			int count = articleDao.selectCount(param);
 			List<Article> datas = articleDao.selectPage(param);
@@ -399,17 +400,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return page;
 	}
 
-	private List<Article> selectByIds(List<Integer> ids) {
-		// mysql can use order by field
-		// but h2 can not
-		List<Article> articles = articleDao.selectByIds(ids);
-		if (articles.isEmpty()) {
-			return Collections.emptyList();
-		}
-		Map<Integer, Article> map = articles.stream().collect(Collectors.toMap(Article::getId, article -> article));
-		return ids.stream().map(map::get).filter(Objects::nonNull).collect(Collectors.toList());
-	}
-
 	@Override
 	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
@@ -425,8 +415,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
-		articleCache.evit(article);
 		articleIndexer.deleteDocument(id);
+		Transactions.afterCommit(() -> articleCache.evit(article));
+
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}
 
@@ -457,7 +448,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -477,9 +467,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
 			@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0") })
-	@ArticleIndexRebuild
-	public int pushScheduled() {
-		return scheduleManager.push();
+	public int publishScheduled() {
+		return scheduleManager.publish();
 	}
 
 	@Override
@@ -522,8 +511,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (!Environment.match(article.getSpace())) {
 				return Collections.emptyList();
 			}
-			return articleIndexer.querySimilar(article, Environment.isLogin(), articleDao::selectSimpleByIds, limit)
-					.stream().collect(Collectors.toList());
+			return articleIndexer.querySimilar(article, Environment.isLogin(), limit).stream()
+					.collect(Collectors.toList());
 		}
 
 		return Collections.emptyList();
@@ -546,7 +535,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (rebuildIndex) {
-			this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+			this.articleIndexer.rebuildIndex();
 		}
 
 		if (hitsStrategy == null) {
@@ -595,7 +584,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private final class ScheduleManager {
 		private Timestamp start;
 
-		public int push() {
+		public int publish() {
 			if (start == null) {
 				LOGGER.debug("没有待发布的文章");
 				return 0;
@@ -606,31 +595,29 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				return 0;
 			} else {
 				LOGGER.debug("开始查询发布文章");
+				List<Article> articles;
 				Timestamp startCopy = new Timestamp(start.getTime());
 				TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
 				try {
-					List<Article> articles = articleDao.selectScheduled(new Timestamp(now));
+					articles = articleDao.selectScheduled(new Timestamp(now));
 					if (!articles.isEmpty()) {
 						for (Article article : articles) {
 							article.setStatus(ArticleStatus.PUBLISHED);
 							articleDao.update(article);
-							articleIndexer.addOrUpdateDocument(article);
 						}
 						LOGGER.debug("发布了" + articles.size() + "篇文章");
 						applicationEventPublisher.publishEvent(new ArticleEvent(this, articles, EventType.UPDATE));
 					}
 					start = articleDao.selectMinimumScheduleDate();
-					return articles.size();
-				} catch (Throwable e) {
+				} catch (RuntimeException | Error e) {
 					start = startCopy;
 					status.setRollbackOnly();
-
-					applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
-					LOGGER.error("发布预发布文章过程中发生异常:" + e.getMessage(), e);
 					throw e;
 				} finally {
 					transactionManager.commit(status);
 				}
+				articleIndexer.addOrUpdateDocument(articles);
+				return articles.size();
 			}
 		}
 
@@ -659,11 +646,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				}
 			} catch (RuntimeException | Error e) {
 				ts.setRollbackOnly();
-				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 				throw e;
 			} finally {
 				transactionManager.commit(ts);
 			}
+		}
+
+		int getCurrentHits(Article article) {
+			return hitsStrategy.getCurrentHits(article);
 		}
 
 		private boolean validHit(Article article) {
@@ -690,16 +680,30 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		 * @see DefaultHitsStrategy
 		 */
 		void hit(Article article);
+
+		/**
+		 * 获取文章当前点击数
+		 * 
+		 * @param article
+		 * @return
+		 */
+		int getCurrentHits(Article article);
 	}
 
 	private final class DefaultHitsStrategy implements HitsStrategy {
 
 		@Override
 		public void hit(Article article) {
-			Integer id = article.getId();
-			articleDao.addHits(id, 1);
-			article.setHits(articleDao.selectHits(article.getId()));
-			articleIndexer.addOrUpdateDocument(article);
+			synchronized (this) {
+				Integer id = article.getId();
+				articleDao.addHits(id, 1);
+				articleIndexer.addOrUpdateDocument(article);
+			}
+		}
+
+		@Override
+		public int getCurrentHits(Article article) {
+			return articleDao.selectHits(article.getId());
 		}
 	}
 
@@ -713,8 +717,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	 * @return
 	 */
 	protected boolean nochange(Article newArticle, Article old) {
-		Objects.nonNull(newArticle);
-		Objects.nonNull(old);
+		Objects.requireNonNull(newArticle);
+		Objects.requireNonNull(old);
 		return Objects.equals(newArticle.getAlias(), old.getAlias())
 				&& Objects.equals(newArticle.getAllowComment(), old.getAllowComment())
 				&& Objects.equals(newArticle.getContent(), old.getContent())

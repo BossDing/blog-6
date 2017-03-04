@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
@@ -67,6 +66,7 @@ import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.security.input.Markdown2Html;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.service.impl.ArticleCache;
+import me.qyh.blog.service.impl.Transactions;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
@@ -88,9 +88,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	private UserPageDao userPageDao;
 	@Autowired
 	private Markdown2Html markdown2Html;
-	@Autowired
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
+	@Autowired(required = false)
 	private CommentEmailNotifySupport commentEmailNotifySupport;
 
 	/**
@@ -301,7 +299,9 @@ public class CommentService implements InitializingBean, CommentServer {
 		commentDao.insert(comment);
 
 		if (commentEmailNotifySupport != null) {
-			threadPoolTaskExecutor.execute(() -> commentEmailNotifySupport.handle(comment));
+			commentEmailNotifySupport.handle(comment);
+
+			Transactions.afterCommit(() -> commentEmailNotifySupport.handle(comment));
 		}
 		return comment;
 	}
@@ -683,10 +683,6 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	public void setCommentChecker(CommentChecker commentChecker) {
 		this.commentChecker = commentChecker;
-	}
-
-	public void setCommentEmailNotifySupport(CommentEmailNotifySupport commentEmailNotifySupport) {
-		this.commentEmailNotifySupport = commentEmailNotifySupport;
 	}
 
 	private final class CollectFilteredFilter implements Predicate<Comment> {

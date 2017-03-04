@@ -18,7 +18,6 @@ package me.qyh.blog.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -35,7 +34,6 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.form.SpaceQueryParamValidator;
 import me.qyh.blog.web.controller.form.SpaceValidator;
 
 @Controller
@@ -46,24 +44,14 @@ public class SpaceMgrController extends BaseMgrController {
 	private SpaceService spaceService;
 	@Autowired
 	private SpaceValidator spaceValidator;
-	@Autowired
-	private SpaceQueryParamValidator spaceQueryParamValidator;
 
 	@InitBinder(value = "space")
 	protected void initBinder(WebDataBinder binder) {
 		binder.setValidator(spaceValidator);
 	}
 
-	@InitBinder(value = "spaceQueryParam")
-	protected void initSpaceQueryParamBinder(WebDataBinder binder) {
-		binder.setValidator(spaceQueryParamValidator);
-	}
-
 	@RequestMapping(value = "index", method = RequestMethod.GET)
-	public String index(@Validated SpaceQueryParam spaceQueryParam, BindingResult br, Model model) {
-		if (br.hasErrors()) {
-			spaceQueryParam = new SpaceQueryParam();
-		}
+	public String index(SpaceQueryParam spaceQueryParam, Model model) {
 		model.addAttribute("spaces", spaceService.querySpace(spaceQueryParam));
 		return "mgr/user/space";
 	}

@@ -17,7 +17,6 @@ package me.qyh.blog.service.impl;
 
 import java.util.List;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,7 +36,7 @@ import me.qyh.blog.service.ConfigService;
 import me.qyh.blog.service.TagService;
 
 @Service
-public class TagServiceImpl implements TagService, InitializingBean, ApplicationEventPublisherAware {
+public class TagServiceImpl implements TagService, ApplicationEventPublisherAware {
 
 	@Autowired
 	private TagDao tagDao;
@@ -46,7 +45,7 @@ public class TagServiceImpl implements TagService, InitializingBean, Application
 	@Autowired
 	private ConfigService configSerivce;
 	@Autowired
-	private NRTArticleIndexer articleIndexer;
+	private ArticleIndexer articleIndexer;
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
@@ -71,19 +70,25 @@ public class TagServiceImpl implements TagService, InitializingBean, Application
 			return;
 		}
 		Tag newTag = tagDao.selectByName(tag.getName());
+		boolean removeTag = false;
 		if (newTag != null) {
 			if (!merge) {
 				throw new LogicException("tag.exists", "标签已经存在");
 			} else {
 				articleTagDao.merge(db, newTag);
 				tagDao.deleteById(db.getId());
-				articleIndexer.removeTag(db.getName());
+				removeTag = true;
 			}
 		} else {
 			tagDao.update(tag);
+			removeTag = true;
+		}
+		if (removeTag) {
+			articleIndexer.removeTags(db.getName());
 		}
 		articleIndexer.addTags(tag.getName());
-		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+
+		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}
 
 	@Override
@@ -96,15 +101,9 @@ public class TagServiceImpl implements TagService, InitializingBean, Application
 		}
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
-		articleIndexer.removeTag(db.getName());
-		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
-	}
+		articleIndexer.removeTags(db.getName());
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		for (Tag tag : tagDao.selectAll()) {
-			articleIndexer.addTags(tag.getName());
-		}
+		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}
 
 	@Override

@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.service.impl.FileClearJob;
 
 public class FileUtils {
 	private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
@@ -56,7 +55,6 @@ public class FileUtils {
 	 *            文件后缀
 	 * @return 临时文件
 	 * @see FileUtils#clearAppTemp(Predicate)
-	 * @see FileClearJob#doJob()
 	 */
 	public static Path appTemp(String ext) {
 		String name = StringUtils.uuid() + "." + ext;
@@ -198,8 +196,8 @@ public class FileUtils {
 	 */
 	// copied from Files
 	public static void write(InputStream source, OutputStream sink) throws IOException {
-		Objects.nonNull(source);
-		Objects.nonNull(sink);
+		Objects.requireNonNull(source);
+		Objects.requireNonNull(sink);
 		try {
 			byte[] buf = new byte[8192];
 			int n;

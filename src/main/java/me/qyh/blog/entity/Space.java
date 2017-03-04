@@ -67,6 +67,21 @@ public class Space extends BaseLockResource {
 		this.alias = alias;
 	}
 
+	/**
+	 * clone
+	 * 
+	 * @param space
+	 */
+	public Space(Space space) {
+		this.id = space.id;
+		this.alias = space.alias;
+		this.articlePageSize = space.articlePageSize;
+		this.createDate = space.createDate;
+		this.isDefault = space.isDefault;
+		this.isPrivate = space.isPrivate;
+		this.name = space.name;
+	}
+
 	public String getAlias() {
 		return alias;
 	}

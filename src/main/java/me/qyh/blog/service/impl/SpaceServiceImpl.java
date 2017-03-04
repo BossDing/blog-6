@@ -17,7 +17,6 @@ package me.qyh.blog.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,8 +40,6 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.impl.SpaceCache.SpacesCacheKey;
-import me.qyh.blog.util.Validators;
 
 @Service
 public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisherAware {
@@ -74,11 +71,10 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 			spaceDao.resetDefault();
 		}
 		spaceDao.insert(space);
-		spaceCache.evit(space);
+		spaceCache.init();
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	@Sync
@@ -111,9 +107,8 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		}
 
 		spaceDao.update(space);
-		spaceCache.evit(db);
-
-		this.applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+		spaceCache.init();
+		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}
 
 	@Override
@@ -136,10 +131,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		if (param.getQueryPrivate() && !Environment.isLogin()) {
 			param.setQueryPrivate(false);
 		}
-		if (Validators.isEmptyOrNull(param.getAlias(), true) && Validators.isEmptyOrNull(param.getName(), true)) {
-			return new ArrayList<>(spaceCache.getSpaces(new SpacesCacheKey(param.getQueryPrivate())));
-		}
-		return spaceDao.selectByParam(param);
+		return spaceCache.getSpaces(param.getQueryPrivate());
 	}
 
 	@EventListener

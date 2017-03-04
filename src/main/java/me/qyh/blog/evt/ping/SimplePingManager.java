@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.entity.Article;
@@ -39,7 +39,7 @@ import me.qyh.blog.exception.SystemException;
  * @author Administrator
  *
  */
-public class SimplePingManager implements ApplicationListener<ArticleEvent>, InitializingBean {
+public class SimplePingManager implements InitializingBean {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(SimplePingManager.class);
 
@@ -55,8 +55,8 @@ public class SimplePingManager implements ApplicationListener<ArticleEvent>, Ini
 	}
 
 	@Async
-	@Override
-	public void onApplicationEvent(ArticleEvent event) {
+	@TransactionalEventListener
+	public void handleArticleEvent(ArticleEvent event) {
 		List<Article> articles = event.getArticles();
 		articles.stream().filter(article -> needPing(event.getEventType(), article)).forEach(this::ping);
 	}

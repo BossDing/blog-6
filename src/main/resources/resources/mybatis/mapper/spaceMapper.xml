@@ -67,14 +67,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectByParam" resultMap="SpaceDetail">
 		<include refid="spaceDetailSql"></include>
 		<where>
-			<if test="name != null and name != ''">
-				space_name LIKE CONCAT('%', #{name},'%')
-			</if>
-			<if test="alias != null and alias != ''">
-				AND space_alias LIKE CONCAT('%', #{alias},'%')
-			</if>
 			<if test="!queryPrivate">
-				AND is_private = FALSE
+				is_private = FALSE
 			</if>
 		</where>
 		ORDER BY createDate DESC,bs.id DESC

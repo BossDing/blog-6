@@ -23,7 +23,7 @@ import me.qyh.blog.entity.Article;
  * 可以为空
  * </p>
  * 
- * @see NRTArticleIndexer
+ * @see ArticleIndexer
  * @see ArticleServiceImpl
  * 
  * @author Administrator

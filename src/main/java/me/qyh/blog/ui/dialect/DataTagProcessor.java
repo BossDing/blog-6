@@ -21,13 +21,11 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
-import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.exception.LogicException;
@@ -35,6 +33,7 @@ import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.ParseContext;
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.util.Validators;
 
@@ -66,7 +65,9 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			check(context, tag);
+			if (uiService == null) {
+				uiService = TemplateUtils.getRequireBean(context, UIService.class);
+			}
 
 			DataTag dataTag = buildDataTag(context, tag);
 
@@ -112,18 +113,5 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			return null;
 		}
 		return new DataTag(name, attMap);
-	}
-
-	private void check(ITemplateContext context, IProcessableElementTag tag) {
-
-		if (uiService == null) {
-			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
-			if (ctx != null) {
-				uiService = ctx.getBean(UIService.class);
-			}
-		}
-		if (uiService == null) {
-			throw new TemplateProcessingException("没有可用的UIService");
-		}
 	}
 }

@@ -87,11 +87,13 @@ public class UIRender {
 		View view = thymeleafViewResolver.resolveViewName(templateName, request.getLocale());
 		uiExposeHelper.addVariables(request);
 		long start = System.currentTimeMillis();
+
+		ParseContext.remove();
+		ParseContext.setPage(page);
+		ParseContext.setConfig(config);
+		ResponseWrapper wrapper = new ResponseWrapper(response);
+
 		try {
-			ParseContext.remove();
-			ParseContext.setPage(page);
-			ParseContext.setConfig(config);
-			ResponseWrapper wrapper = new ResponseWrapper(response);
 			view.render(model, request, wrapper);
 			return wrapper.getRendered();
 		} catch (Throwable e) {

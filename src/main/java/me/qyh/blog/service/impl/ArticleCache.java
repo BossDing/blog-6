@@ -16,11 +16,14 @@
 package me.qyh.blog.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
@@ -28,31 +31,86 @@ import me.qyh.blog.entity.Article;
 @Component
 public class ArticleCache {
 
-	private static final String CACHE_NAME = "articleCache";
-
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
-	private CacheManager cacheManager;
+	private PlatformTransactionManager platformTransactionManager;
 
-	@Cacheable(value = CACHE_NAME, key = "'article-'+#alias", unless = "#result == null || !#result.isPublished()")
-	@Transactional(readOnly = true)
 	public Article getArticle(String alias) {
-		return articleDao.selectByAlias(alias);
+		Integer id = aliasCache.get(alias);
+		if (id != null) {
+			return getArticle(id);
+		}
+		return null;
 	}
 
-	@Cacheable(value = CACHE_NAME, key = "'article-'+#id", unless = "#result == null || !#result.isPublished()")
 	public Article getArticle(Integer id) {
-		return articleDao.selectById(id);
+		Article article = idCache.get(id);
+		if (article != null) {
+			return new Article(article);
+		}
+		return null;
 	}
 
-	public void evit(Article article) {
-		Cache cache = cacheManager.getCache(CACHE_NAME);
-		if (cache != null) {
-			if (article.getAlias() != null) {
-				cache.evict("article-" + article.getAlias());
+	public synchronized void evit(Article article) {
+		Article art = idCache.getIfPresent(article.getId());
+		if (art != null) {
+			String alias = art.getAlias();
+			if (alias != null) {
+				aliasCache.invalidate(alias);
 			}
-			cache.evict("article-" + article.getId());
+			idCache.invalidate(article.getId());
 		}
 	}
+
+	private final LoadingCache<String, Integer> aliasCache = Caffeine.newBuilder()
+			.build(new CacheLoader<String, Integer>() {
+
+				@Override
+				public Integer load(String key) throws Exception {
+					DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+					dtd.setReadOnly(true);
+					TransactionStatus status = platformTransactionManager.getTransaction(dtd);
+					try {
+						Article article = articleDao.selectByAlias(key);
+						if (article != null && article.isPublished()) {
+							idCache.put(article.getId(), article);
+							return article.getId();
+						}
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
+					} finally {
+						platformTransactionManager.commit(status);
+					}
+					return null;
+				}
+			});
+
+	private final LoadingCache<Integer, Article> idCache = Caffeine.newBuilder()
+			.build(new CacheLoader<Integer, Article>() {
+
+				@Override
+				public Article load(Integer key) throws Exception {
+					DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+					dtd.setReadOnly(true);
+					TransactionStatus status = platformTransactionManager.getTransaction(dtd);
+					try {
+						Article article = articleDao.selectById(key);
+						if (article != null && article.isPublished()) {
+							String alias = article.getAlias();
+							if (alias != null) {
+								aliasCache.put(article.getAlias(), article.getId());
+							}
+							return article;
+						}
+						return null;
+					} catch (RuntimeException | Error e) {
+						status.setRollbackOnly();
+						throw e;
+					} finally {
+						platformTransactionManager.commit(status);
+					}
+				}
+			});
 }

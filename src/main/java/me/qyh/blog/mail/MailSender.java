@@ -29,7 +29,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UserConfig;
@@ -47,8 +46,6 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 
 	@Autowired
 	private JavaMailSender javaMailSender;
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
@@ -58,11 +55,6 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	 * 应用关闭时未发送的信息存入文件中
 	 */
 	private final Path sdfile = FileUtils.sub(FileUtils.getHomeDir(), "message_shutdown.dat");
-
-	/**
-	 * 处理队列的时间(ms)
-	 */
-	private int processQueueDelay = 1000;
 
 	/**
 	 * 将邮件加入发送队列
@@ -83,12 +75,19 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 				LOGGER.warn("删除序列文件失败");
 			}
 		}
-		threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
-			MessageBean mb = queue.poll();
-			if (mb != null) {
-				sendMail(mb);
-			}
-		}, processQueueDelay);
+	}
+
+	/**
+	 * 发送队列中的第一封邮件
+	 * <p>
+	 * <b>仅供定时任务调用</b>
+	 * </p>
+	 */
+	public void sendMailFromQueue() {
+		MessageBean mb = queue.poll();
+		if (mb != null) {
+			sendMail(mb);
+		}
 	}
 
 	private void sendMail(final MessageBean mb) {
@@ -163,9 +162,4 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 			}
 		}
 	}
-
-	public void setProcessQueueDelay(int processQueueDelay) {
-		this.processQueueDelay = processQueueDelay;
-	}
-
 }

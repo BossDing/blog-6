@@ -15,18 +15,16 @@
  */
 package me.qyh.blog.ui.dialect;
 
-import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
-import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.lock.SimpleLockResource;
 import me.qyh.blog.security.Environment;
+import me.qyh.blog.ui.TemplateUtils;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -55,7 +53,9 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		checkLockManager(context);
+		if (lockManager == null) {
+			lockManager = TemplateUtils.getRequireBean(context, LockManager.class);
+		}
 		try {
 			String lockId = tag.getAttributeValue(ID);
 			if (lockId != null && !Environment.isLogin()) {
@@ -64,18 +64,6 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 			}
 		} finally {
 			structureHandler.removeElement();
-		}
-	}
-
-	private void checkLockManager(ITemplateContext context) {
-		if (lockManager == null) {
-			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
-			if (ctx != null) {
-				lockManager = ctx.getBean(LockManager.class);
-			}
-		}
-		if (lockManager == null) {
-			throw new TemplateProcessingException("没有可用的LockManager");
 		}
 	}
 }

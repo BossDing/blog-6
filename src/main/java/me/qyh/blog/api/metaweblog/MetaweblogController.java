@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,8 +62,6 @@ public class MetaweblogController extends BaseController implements Initializing
 	private static final int DEFAULT_SEC = 60;
 	private static final int DEFAILT_COUNT = 5;
 	private static final int DEFAULT_INVALID_SEC = 300;
-	private static final int DEFAULT_INVALID_IP_CLEAR_SEC = 5;
-	private static final int DEFAULT_FAIL_CLEAR_SEC = 100;
 
 	private static final Message BAD_REQUEST = new Message("metaweblog.400", "错误的请求");
 	private static final Message HANDLE_ERROR = new Message("metaweblog.500", "系统异常");
@@ -72,15 +69,11 @@ public class MetaweblogController extends BaseController implements Initializing
 	private int sec = DEFAULT_SEC;
 	private int count = DEFAILT_COUNT;
 	private int invalidSec = DEFAULT_INVALID_SEC;
-	private int invalidIpClearSec = DEFAULT_INVALID_IP_CLEAR_SEC;
-	private int failClearSec = DEFAULT_FAIL_CLEAR_SEC;
 
 	private Limit limit;
 
 	@Autowired
 	private MetaweblogHandler handler;
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
 	/**
 	 * 处理用户发送的xml报文
@@ -211,24 +204,17 @@ public class MetaweblogController extends BaseController implements Initializing
 		this.invalidSec = invalidSec;
 	}
 
-	public void setInvalidIpClearSec(int invalidIpClearSec) {
-		this.invalidIpClearSec = invalidIpClearSec;
+	public void clearInvalidIp() {
+		invalidIpMap.values().removeIf(x -> (System.currentTimeMillis() - x) > invalidSec * 1000L);
 	}
 
-	public void setFailClearSec(int failClearSec) {
-		this.failClearSec = failClearSec;
+	public void clearFail() {
+		authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.limit = new Limit(count, sec, TimeUnit.SECONDS);
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			invalidIpMap.values().removeIf(x -> (System.currentTimeMillis() - x) > invalidSec * 1000L);
-		}, invalidIpClearSec * 1000L);
-
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			authFailMap.values().removeIf(x -> x.overtime(System.currentTimeMillis()));
-		}, failClearSec * 1000L);
 	}
 
 }

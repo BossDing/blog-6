@@ -23,7 +23,7 @@ import org.lionsoul.jcseg.tokenizer.core.ILexicon;
 import org.lionsoul.jcseg.tokenizer.core.IWord;
 import org.lionsoul.jcseg.tokenizer.core.JcsegTaskConfig;
 
-public class JcsegArticleIndexer extends NRTArticleIndexer {
+public class JcsegArticleIndexer extends ArticleIndexer {
 
 	public enum JcsegMode {
 
@@ -45,7 +45,7 @@ public class JcsegArticleIndexer extends NRTArticleIndexer {
 	}
 
 	@Override
-	public synchronized void removeTag(String... tags) {
+	public void doRemoveTags(String... tags) {
 		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
 		for (String tag : tags) {
 			dict.remove(ILexicon.CJK_WORD, tag);
@@ -53,7 +53,7 @@ public class JcsegArticleIndexer extends NRTArticleIndexer {
 	}
 
 	@Override
-	public synchronized void addTags(String... tags) {
+	public void doAddTags(String... tags) {
 		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
 		for (String tag : tags) {
 			dict.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);

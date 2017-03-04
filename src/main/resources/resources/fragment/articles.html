@@ -38,9 +38,6 @@
 		<div style="margin-top: 5px; margin-bottom: 10px">
 			 <span
 				th:text="'发布日期：'+${messages.getMessage(timeDiffParser.parseDiff(article.pubDate))}"></span>
-			&nbsp;&nbsp;&nbsp;&nbsp; <span
-				th:if="${article.lastModifyDate != null}"
-				th:text="'最近更新：'+${messages.getMessage(timeDiffParser.parseDiff(article.lastModifyDate))}"></span>
 		</div>
 
 		<div style="margin-top: 5px; margin-bottom: 10px">

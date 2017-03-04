@@ -145,13 +145,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 								return fragment;
 							}
 						}
-						throw new LogicException(new Message("fragment.not.exists", "模板片段不存在"));
 					} catch (RuntimeException | Error e) {
 						status.setRollbackOnly();
 						throw e;
 					} finally {
 						platformTransactionManager.commit(status);
 					}
+					throw new LogicException(new Message("fragment.not.exists", "模板片段不存在"));
 				}
 			});
 
@@ -300,7 +300,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			throw new LogicException(USER_PAGE_NOT_EXISTS);
 		}
 		userPageDao.deleteById(id);
-		clearPageCache(db);
+		evitPageCache(db);
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
 	}
 
@@ -327,7 +327,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		} else {
 			sysPageDao.insert(sysPage);
 		}
-		clearPageCache(sysPage);
+		evitPageCache(sysPage);
 	}
 
 	@Override
@@ -351,10 +351,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			userPage.setId(db.getId());
 			userPageDao.update(userPage);
 
-			clearPageCache(db);
+			evitPageCache(db);
 
-			this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.UPDATE,
-					(UserPage) queryPage(TemplateUtils.getTemplateName(userPage))));
 		} else {
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
@@ -362,10 +360,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 			userPageDao.insert(userPage);
-
-			this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.INSERT,
-					(UserPage) queryPage(TemplateUtils.getTemplateName(userPage))));
 		}
+
+		UserPage requery = (UserPage) queryPage(TemplateUtils.getTemplateName(userPage));
+		EventType type = update ? EventType.UPDATE : EventType.INSERT;
+		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, requery));
 	}
 
 	@Override
@@ -376,7 +375,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		if (page != null) {
 			sysPageDao.deleteById(page.getId());
 
-			clearPageCache(page);
+			evitPageCache(page);
 		}
 	}
 
@@ -394,7 +393,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		} else {
 			lockPageDao.insert(lockPage);
 		}
-		clearPageCache(lockPage);
+		evitPageCache(lockPage);
 	}
 
 	@Override
@@ -404,7 +403,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		LockPage page = lockPageDao.selectBySpaceAndLockType(space, lockType);
 		if (page != null) {
 			lockPageDao.deleteById(page.getId());
-			clearPageCache(page);
+			evitPageCache(page);
 		}
 	}
 
@@ -427,7 +426,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			errorPageDao.insert(errorPage);
 		}
 
-		clearPageCache(errorPage);
+		evitPageCache(errorPage);
 	}
 
 	@Override
@@ -437,18 +436,16 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		ErrorPage page = errorPageDao.selectBySpaceAndErrorCode(space, errorCode);
 		if (page != null) {
 			errorPageDao.deleteById(page.getId());
-			clearPageCache(page);
+			evitPageCache(page);
 		}
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public Optional<DataBind<?>> queryData(DataTag dataTag) throws LogicException {
 		return doQuery(dataTag, false);
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public Optional<DataBind<?>> queryCallableData(DataTag dataTag) throws LogicException {
 		return doQuery(dataTag, true);
 	}
@@ -538,6 +535,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			try {
 				space = spaceCache.checkSpace(spaceId);
 			} catch (LogicException e) {
+				ts.setRollbackOnly();
 				return Arrays.asList(new ImportRecord(false, e.getLogicMessage()));
 			}
 			if (importOption == null) {
@@ -564,6 +562,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 							userPage.setDescription("");
 							userPage.setName(userPage.getAlias());
 							userPage.setSpace(space);
+							userPage.setAllowComment(false);
 							userPageDao.insert(userPage);
 							records.add(new ImportRecord(true, new Message("import.insert.tpl.success",
 									"插入模板" + templateName + "成功", templateName)));
@@ -670,19 +669,17 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					fragmentEvitKeySet.add(fragment.getName());
 				}
 			}
-			// 清空缓存
-			for (String pageEvitKey : pageEvitKeySet) {
-				clearPageCache(pageEvitKey);
-			}
-			for (String fragmentEvitKey : fragmentEvitKeySet) {
+			evitPageCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
 
+			final Space evitSpace = space;
+			UserFragment[] evits = fragmentEvitKeySet.stream().map(fragmentEvitKey -> {
 				UserFragment userFragment = new UserFragment();
 				userFragment.setGlobal(false);
 				userFragment.setName(fragmentEvitKey);
-				userFragment.setSpace(space);
-
-				evitFragmentCache(userFragment);
-			}
+				userFragment.setSpace(evitSpace);
+				return userFragment;
+			}).toArray(i -> new UserFragment[i]);
+			evitFragmentCache(evits);
 			return records;
 		} catch (RuntimeException | Error e) {
 			ts.setRollbackOnly();
@@ -793,16 +790,20 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 	}
 
-	private void clearPageCache(String templateName) {
-		pageCache.invalidate(templateName);
-		UICacheManager.clearCachesFor(templateName);
+	private synchronized void evitPageCache(String... templateNames) {
+		Transactions.afterCommit(() -> {
+			for (String templateName : templateNames) {
+				pageCache.invalidate(templateName);
+				UICacheManager.clearCachesFor(templateName);
+			}
+		});
 	}
 
-	private void clearPageCache(Page page) {
-		clearPageCache(TemplateUtils.getTemplateName(page));
+	private void evitPageCache(Page... pages) {
+		evitPageCache(Arrays.stream(pages).map(TemplateUtils::getTemplateName).toArray(i -> new String[i]));
 	}
 
-	private void clearFragmentCache(Fragment fragment) {
+	private void evitUIFragmentCache(Fragment fragment) {
 		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(fragment));
 		if (fragment instanceof UserFragment) {
 			UserFragment userFragment = (UserFragment) fragment;
@@ -841,15 +842,17 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 	}
 
-	private void evitFragmentCache(Fragment... fragments) {
-		if (fragments == null || fragments.length == 0) {
-			return;
-		}
-		fragmentCache.asMap().keySet()
-				.removeIf(x -> Arrays.stream(fragments).anyMatch(fragment -> x.name.equals(fragment.getName())));
-		for (Fragment fragment : fragments) {
-			clearFragmentCache(fragment);
-		}
+	private synchronized void evitFragmentCache(Fragment... fragments) {
+		Transactions.afterCommit(() -> {
+			if (fragments == null || fragments.length == 0) {
+				return;
+			}
+			fragmentCache.asMap().keySet()
+					.removeIf(x -> Arrays.stream(fragments).anyMatch(fragment -> x.name.equals(fragment.getName())));
+			for (Fragment fragment : fragments) {
+				evitUIFragmentCache(fragment);
+			}
+		});
 	}
 
 	private SysPage querySysPage(Space space, PageTarget target) {

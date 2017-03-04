@@ -8,7 +8,7 @@
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 	<!-- 图片处理 -->
 	<bean class="me.qyh.blog.file.GraphicsMagickImageHelper">
-		<property name="magickPath" value="C:\\Program Files\\GraphicsMagick-1.3.23-Q8" />
+		<property name="magickPath" value="E:/GraphicsMagick-1.3.23-Q8" />
 	</bean>
 	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ -->
 	<!-- 文件服务 -->
@@ -61,9 +61,9 @@
 							<property name="maxPoolSize" value="5" />
 							<property name="queueCapacity" value="50" />
 							<property name="rejectedExecutionHandler">
-								<bean class="java.util.concurrent.ThreadPoolExecutor$DiscardPolicy"/>
+								<bean class="java.util.concurrent.ThreadPoolExecutor$DiscardPolicy" />
 							</property>
- 						</bean>
+						</bean>
 					</property>
 				</bean>
 				<bean class="me.qyh.blog.file.local.CommonResourceStore">
@@ -83,9 +83,7 @@
 		</property>
 	</bean>
 
-	<bean id="fileClearJob" class="me.qyh.blog.service.impl.FileClearJob" />
 	<task:scheduled-tasks scheduler="taskScheduler">
-		<task:scheduled ref="fileClearJob" method="doJob"
-			cron="0/5 * * * * ?" />
+		<task:scheduled ref="fileService" method="clear" cron="0 0 3 * * ?" />
 	</task:scheduled-tasks>
 </beans>      

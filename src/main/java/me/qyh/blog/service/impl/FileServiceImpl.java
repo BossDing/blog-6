@@ -15,6 +15,9 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -69,7 +72,7 @@ import me.qyh.blog.web.controller.form.BlogFileValidator;
  * @author Administrator
  *
  */
-@Service
+@Service("fileService")
 public class FileServiceImpl implements FileService, InitializingBean {
 
 	@Autowired
@@ -89,6 +92,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private static final Message NOT_EXISTS = new Message("file.notexists", "文件不存在");
 
 	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
+
+	private static final long MAX_MODIFY_TIME = 30 * 60 * 1000;
 
 	@Override
 	@Sync
@@ -534,7 +539,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void clearDeletedCommonFile() {
+	public void clear() {
+		// 删除超过一段时间的临时文件
+		FileUtils.clearAppTemp(this::overMaxModifyTime);
 		List<FileDelete> all = fileDeleteDao.selectAll();
 		for (FileDelete fd : all) {
 			try {
@@ -544,6 +551,15 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			}
 		}
 		blogFileDao.deleteUnassociateCommonFile();
+	}
+
+	private boolean overMaxModifyTime(Path path) {
+		try {
+			long lastModifyMill = Files.getLastModifiedTime(path).toMillis();
+			return System.currentTimeMillis() - lastModifyMill > MAX_MODIFY_TIME;
+		} catch (IOException e) {
+			return true;
+		}
 	}
 
 	/**

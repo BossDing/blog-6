@@ -58,7 +58,7 @@
 
 	<import resource="file.xml" />
 	<context:component-scan
-		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment" />
+		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment,me.qyh.blog.evt.listener" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
@@ -87,14 +87,13 @@
 		<property name="locale" value="zh_CN" />
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.JcsegArticleIndexer"
-		destroy-method="close">
+	<bean id="articleIndexer" class="me.qyh.blog.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="/web/blog_index" />
 		<constructor-arg index="1" value="SEARCH" />
 	</bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean class="me.qyh.blog.mail.MailSender" />
+	<bean id="mailSender" class="me.qyh.blog.mail.MailSender" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
@@ -123,16 +122,13 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.service.impl.ArticleServiceImpl">
-		<property name="hitsStrategy">
-			<bean class="me.qyh.blog.service.impl.CacheableHitsStrategy"
-				destroy-method="close" />
-		</property>
+	<!-- 缓存点击策略 -->
+	<bean id="cacheableHitsStrategy" class="me.qyh.blog.service.impl.CacheableHitsStrategy" />
+	<bean id="articleService" class="me.qyh.blog.service.impl.ArticleServiceImpl">
+		<property name="hitsStrategy" ref="cacheableHitsStrategy" />
 	</bean>
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
-
-	<bean class="me.qyh.blog.api.metaweblog.MetaweblogHandler" />
 
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
@@ -144,18 +140,11 @@
 	<bean id="taskScheduler"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
 		destroy-method="destroy">
+		<property name="errorHandler" ref="loggingErrorHandler" />
 		<property name="poolSize" value="5" />
 		<property name="awaitTerminationSeconds" value="60" />
 		<property name="waitForTasksToCompleteOnShutdown" value="true" />
 	</bean>
-
-	<!-- 查询是否存在待发表的计划中博客，如果存在则发表该博客 -->
-	<bean id="pushScheduledArticleJob" class="me.qyh.blog.service.impl.PushScheduledArticleJob" />
-	<task:scheduled-tasks scheduler="taskScheduler">
-		<!-- 默认5秒查询一次 -->
-		<task:scheduled ref="pushScheduledArticleJob" method="doJob"
-			cron="0/5 * * * * ?" />
-	</task:scheduled-tasks>
 
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
@@ -179,19 +168,54 @@
 	</bean>
 
 	<!-- 默认评论服务 -->
+	<!-- 评论服务邮件提醒 -->
+	<bean id="commentEmailNotifySupport" class="me.qyh.blog.comment.CommentEmailNotifySupport">
+		<property name="mailSubject" value="您有新的评论" />
+	</bean>
 	<bean class="me.qyh.blog.comment.CommentService">
 		<!-- html内容清理器 -->
 		<property name="htmlClean" ref="htmlClean" />
-		<property name="commentChecker" ref="simpleCommentChecker"></property>
-		<property name="commentEmailNotifySupport">
-			<bean class="me.qyh.blog.comment.CommentEmailNotifySupport"
-				destroy-method="shutdown">
-				<property name="mailSubject" value="您有新的评论" />
-			</bean>
-		</property>
+		<property name="commentChecker" ref="simpleCommentChecker" />
 	</bean>
 
-	<bean class="me.qyh.blog.evt.ping.SimplePingManager">
+
+	<!-- 定时任务 -->
+	<task:scheduled-tasks scheduler="taskScheduler">
+
+		<!-- 凌晨一点更新sitemap -->
+		<task:scheduled ref="xmlSiteMap" method="updateSitemap"
+			cron="0 0 1 * * ?" />
+
+		<!-- 如果配置了缓存点击量策略，那么每隔600s更新文章点击量 -->
+		<task:scheduled ref="cacheableHitsStrategy" method="flush"
+			fixed-rate="600000" />
+
+		<!-- 默认5秒查询一次 待发布的文章 -->
+		<task:scheduled ref="articleService" method="publishScheduled"
+			fixed-rate="5000" />
+
+		<!-- 如果配置了评论邮件通知服务 -->
+		<!-- 每隔5s中将队列中的评论取出来放到待发送列表中 -->
+		<task:scheduled ref="commentEmailNotifySupport" method="processToSend"
+			fixed-rate="5000" />
+		<!-- 每隔300s中发送待发送邮件 -->
+		<task:scheduled ref="commentEmailNotifySupport" method="forceSend"
+			fixed-rate="300000" />
+
+
+		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
+		<task:scheduled ref="mailSender" method="sendMailFromQueue"
+			fixed-delay="1000" />
+
+		<!-- 每隔30min将索引写入物理文件 -->
+		<task:scheduled ref="articleIndexer" method="commit"
+			fixed-rate="1800000" />
+	</task:scheduled-tasks>
+
+
+
+	<!-- 博客ping服务 -->
+	<bean id="pingManager" class="me.qyh.blog.evt.ping.SimplePingManager">
 		<constructor-arg value="钱宇豪的个人博客" />
 		<property name="pingServices">
 			<list>
@@ -201,12 +225,11 @@
 		</property>
 	</bean>
 
-	<!-- sitemap -->
-	<bean class="me.qyh.blog.api.sitemap.XmlSiteMap" id="xmlSiteMap" />
-	<task:scheduled-tasks scheduler="taskScheduler">
-		<!-- 凌晨一点更新sitemap -->
-		<task:scheduled ref="xmlSiteMap" method="updateSitemap"
-			cron="0 0 1 * * ?" />
-	</task:scheduled-tasks>
+	<!-- sitemap 服务 -->
+	<bean id="xmlSiteMap" class="me.qyh.blog.api.sitemap.XmlSiteMap" />
+
+
+	<!-- metaweblog服务 -->
+	<!-- <bean class="me.qyh.blog.api.metaweblog.MetaweblogHandler" /> -->
 
 </beans>      

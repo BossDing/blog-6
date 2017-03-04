@@ -97,7 +97,7 @@ public interface ArticleService {
 	 * @return 成功发表的数量
 	 * 
 	 */
-	int pushScheduled();
+	int publishScheduled();
 
 	/**
 	 * 插入|更新 文章

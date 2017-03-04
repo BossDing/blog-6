@@ -92,21 +92,13 @@ public interface FileService {
 	/**
 	 * 删除文件树节点(不会删除实际的物理文件)
 	 * 
-	 * @see FileService#clearDeletedCommonFile()
+	 * @see FileService#clear()
 	 * @param id
 	 *            文件id
 	 * @throws LogicException
 	 *             删除过程中逻辑异常
 	 */
 	void delete(Integer id) throws LogicException;
-
-	/**
-	 * 删除待删除状态的文件<br>
-	 * <strong>当前仅当物理文件删除成功后才执行删除记录操作</strong>
-	 * 
-	 * @see FileStore#delete(me.qyh.blog.file.CommonFile)
-	 */
-	void clearDeletedCommonFile();
 
 	/**
 	 * 保存metaweblog api 上传的文件
@@ -159,5 +151,11 @@ public interface FileService {
 	 * @throws LogicException
 	 */
 	void move(Integer sourceId, String newPath) throws LogicException;
+	
+
+	/**
+	 * 清理文件
+	 */
+	void clear();
 
 }

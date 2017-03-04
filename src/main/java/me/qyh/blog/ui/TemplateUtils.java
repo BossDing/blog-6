@@ -16,11 +16,17 @@
 package me.qyh.blog.ui;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.CollectionUtils;
+import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.exceptions.TemplateProcessingException;
+import org.thymeleaf.spring4.context.SpringContextUtils;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
@@ -320,6 +326,28 @@ public final class TemplateUtils {
 	 */
 	public static String buildDataTag(String name, Map<String, String> atts) {
 		return buildTag("data", name, atts);
+	}
+
+	/**
+	 * 获取spring bean
+	 * 
+	 * @param t
+	 * @throws TemplateProcessingException
+	 *             如果bean不存在或者ApplicationContext为null
+	 * @return
+	 */
+	public static <T> T getRequireBean(ITemplateContext context, Class<T> t) {
+		Objects.requireNonNull(context);
+		Objects.requireNonNull(t);
+		ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
+		if (ctx != null) {
+			try {
+				return ctx.getBean(t);
+			} catch (BeansException e) {
+				throw new TemplateProcessingException(e.getMessage(), e);
+			}
+		}
+		throw new TemplateProcessingException("ApplicationContext为null");
 	}
 
 	private static String buildTag(String tagName, String name, Map<String, String> atts) {

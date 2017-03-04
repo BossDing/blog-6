@@ -16,6 +16,7 @@
 package me.qyh.blog.dao;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -125,7 +126,7 @@ public interface ArticleDao {
 	 *            文章id集合
 	 * @return id集合对应的文章集合
 	 */
-	List<Article> selectByIds(List<Integer> ids);
+	List<Article> selectByIds(Collection<Integer> ids);
 	
 	/**
 	 * 根据指定id集合查询对应的文章，只会查询一些构建访问链接等必要的信息

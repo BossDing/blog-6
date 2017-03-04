@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.comment;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -28,9 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.annotation.Async;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
@@ -67,22 +70,10 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private Path toProcessesSdfile = FileUtils.sub(FileUtils.getHomeDir(), "toProcessesSdfile.dat");
 
 	/**
-	 * 每隔5秒从评论队列中获取评论放入待发送列表
-	 */
-	private static final Integer MESSAGE_PROCESS_SEC = 5;
-
-	/**
 	 * 如果待发送列表中有10或以上的评论，立即发送邮件
 	 */
 	private static final Integer MESSAGE_TIP_COUNT = 10;
 
-	/**
-	 * 如果发送列表中存在待发送评论，但是数量始终没有达到10条，那么每隔300秒会发送邮件同时清空发送列表
-	 */
-	private static final Integer MESSAGE_PROCESS_PERIOD_SEC = 300;
-
-	private int messageProcessSec = MESSAGE_PROCESS_SEC;
-	private int messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
 	private int messageTipCount = MESSAGE_TIP_COUNT;
 
 	/**
@@ -94,20 +85,6 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private UrlHelper urlHelper;
 	@Autowired
 	private Messages messages;
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-
-	/**
-	 * 系统关闭时序列化待发送列表和待处理列表
-	 */
-	public final void shutdown() throws Exception {
-		if (!toSend.isEmpty()) {
-			SerializationUtils.serialize(toSend, toSendSdfile);
-		}
-		if (!toProcesses.isEmpty()) {
-			SerializationUtils.serialize(toProcesses, toProcessesSdfile);
-		}
-	}
 
 	private void sendMail(List<Comment> comments, String to) {
 		Context context = new Context();
@@ -140,12 +117,6 @@ public class CommentEmailNotifySupport implements InitializingBean {
 
 		mailTemplate = Resources.readResourceToString(mailTemplateResource);
 
-		if (messageProcessPeriodSec <= 0) {
-			messageProcessPeriodSec = MESSAGE_PROCESS_PERIOD_SEC;
-		}
-		if (messageProcessSec <= 0) {
-			messageProcessSec = MESSAGE_PROCESS_SEC;
-		}
 		if (messageTipCount <= 0) {
 			messageTipCount = MESSAGE_TIP_COUNT;
 		}
@@ -163,34 +134,34 @@ public class CommentEmailNotifySupport implements InitializingBean {
 				LOGGER.warn("删除文件:" + toProcessesSdfile + "失败，这会导致邮件重复发送");
 			}
 		}
+	}
 
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			synchronized (toSend) {
-				int size = toSend.size();
-				for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
-					Comment toProcess = iterator.next();
-					toSend.add(toProcess);
-					size++;
-					iterator.remove();
-					if (size >= messageTipCount) {
-						LOGGER.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
-						sendMail(toSend, null);
-						toSend.clear();
-						break;
-					}
-				}
+	public void forceSend() {
+		synchronized (toSend) {
+			if (!toSend.isEmpty()) {
+				LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+				sendMail(toSend, null);
+				toSend.clear();
 			}
-		}, messageProcessSec * 1000L);
+		}
+	}
 
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			synchronized (toSend) {
-				if (!toSend.isEmpty()) {
-					LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+	public void processToSend() {
+		synchronized (toSend) {
+			int size = toSend.size();
+			for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
+				Comment toProcess = iterator.next();
+				toSend.add(toProcess);
+				size++;
+				iterator.remove();
+				if (size >= messageTipCount) {
+					LOGGER.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
 					sendMail(toSend, null);
 					toSend.clear();
+					break;
 				}
 			}
-		}, messageProcessPeriodSec * 1000L);
+		}
 	}
 
 	public void setMailTemplateResource(Resource mailTemplateResource) {
@@ -201,19 +172,12 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		this.mailSubject = mailSubject;
 	}
 
-	public void setMessageProcessSec(int messageProcessSec) {
-		this.messageProcessSec = messageProcessSec;
-	}
-
-	public void setMessageProcessPeriodSec(int messageProcessPeriodSec) {
-		this.messageProcessPeriodSec = messageProcessPeriodSec;
-	}
-
 	public void setMessageTipCount(int messageTipCount) {
 		this.messageTipCount = messageTipCount;
 	}
 
-	public final void handle(Comment comment) {
+	@Async
+	public void handle(Comment comment) {
 		Comment parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
 		// 如果回复了管理员
@@ -225,6 +189,20 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
 			// 直接邮件通知被回复对象
 			sendMail(Arrays.asList(comment), comment.getParent().getEmail());
+		}
+	}
+
+	@EventListener
+	public void handleContextClosedEvent(ContextClosedEvent event) {
+		try {
+			if (!toSend.isEmpty()) {
+				SerializationUtils.serialize(toSend, toSendSdfile);
+			}
+			if (!toProcesses.isEmpty()) {
+				SerializationUtils.serialize(toProcesses, toProcessesSdfile);
+			}
+		} catch (IOException e) {
+			LOGGER.warn(e.getMessage(), e);
 		}
 	}
 

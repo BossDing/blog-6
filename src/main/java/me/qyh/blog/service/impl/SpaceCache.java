@@ -15,129 +15,85 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.locks.StampedLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.util.Validators;
 
 @Component
-public class SpaceCache {
+public class SpaceCache implements InitializingBean {
 	@Autowired
 	private SpaceDao spaceDao;
-	@Autowired
-	private PlatformTransactionManager transactionManager;
 
-	private final LoadingCache<String, Space> aliasCache = Caffeine.newBuilder()
-			.build(new CacheLoader<String, Space>() {
+	private final List<Space> cache = new ArrayList<>();
+	private final StampedLock lock = new StampedLock();
 
-				@Override
-				public Space load(String key) throws Exception {
-					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-					definition.setReadOnly(true);
-					TransactionStatus status = transactionManager.getTransaction(definition);
-					try {
-						Space space = spaceDao.selectByAlias(key);
-						if (space == null) {
-							throw new LogicException(new Message("space.notExists", "空间不存在"));
-						}
-						return space;
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						transactionManager.commit(status);
-					}
-				}
-
-			});
-
-	private final LoadingCache<SpacesCacheKey, List<Space>> spacesCache = Caffeine.newBuilder()
-			.build(new CacheLoader<SpacesCacheKey, List<Space>>() {
-
-				@Override
-				public List<Space> load(SpacesCacheKey key) throws Exception {
-					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-					definition.setReadOnly(true);
-					TransactionStatus status = transactionManager.getTransaction(definition);
-					try {
-						SpaceQueryParam param = new SpaceQueryParam();
-						param.setQueryPrivate(key.queryPrivate);
-						return spaceDao.selectByParam(param);
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						transactionManager.commit(status);
-					}
-				}
-
-			});
-
-	private final LoadingCache<Integer, Space> idCache = Caffeine.newBuilder().build(new CacheLoader<Integer, Space>() {
-
-		@Override
-		public Space load(Integer key) throws Exception {
-			DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-			definition.setReadOnly(true);
-			TransactionStatus status = transactionManager.getTransaction(definition);
+	public List<Space> getSpaces(boolean queryPrivate) {
+		long stamp = lock.tryOptimisticRead();
+		List<Space> result = doQuery(queryPrivate);
+		if (!lock.validate(stamp)) {
+			stamp = lock.readLock();
 			try {
-				Space space = spaceDao.selectById(key);
-				if (space == null) {
-					throw new LogicException(new Message("space.notExists", "空间不存在"));
-				}
-				return space;
-			} catch (RuntimeException | Error e) {
-				status.setRollbackOnly();
-				throw e;
+				result = doQuery(queryPrivate);
 			} finally {
-				transactionManager.commit(status);
+				lock.unlockRead(stamp);
 			}
 		}
-
-	});
-
-	public List<Space> getSpaces(SpacesCacheKey key) {
-		return spacesCache.get(key);
+		return result;
 	}
 
+	/**
+	 * 根据别名查询空间
+	 * 
+	 * @param alias
+	 * @return
+	 */
 	public Optional<Space> getSpace(String alias) {
-		try {
-			return Optional.of(aliasCache.get(alias));
-		} catch (CompletionException e) {
-			if (e.getCause() instanceof LogicException) {
-				return Optional.empty();
+		long stamp = lock.tryOptimisticRead();
+		Optional<Space> result = queryByAlias(alias);
+		if (!lock.validate(stamp)) {
+			stamp = lock.readLock();
+			try {
+				result = queryByAlias(alias);
+			} finally {
+				lock.unlockRead(stamp);
 			}
-			throw new SystemException(e.getMessage(), e);
 		}
+		return result;
 	}
 
+	/**
+	 * 根据id查询空间
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public Optional<Space> getSpace(Integer id) {
-		try {
-			return Optional.of(idCache.get(id));
-		} catch (CompletionException e) {
-			if (e.getCause() instanceof LogicException) {
-				return Optional.empty();
+		long stamp = lock.tryOptimisticRead();
+		Optional<Space> result = queryById(id);
+		if (!lock.validate(stamp)) {
+			stamp = lock.readLock();
+			try {
+				result = queryById(id);
+			} finally {
+				lock.unlockRead(stamp);
 			}
-			throw new SystemException(e.getMessage(), e);
 		}
+		return result;
 	}
 
 	/**
@@ -155,49 +111,48 @@ public class SpaceCache {
 		return getSpace(spaceId).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
 	}
 
-	public void evit(Space db) {
-		if (db.hasId()) {
-			idCache.invalidate(db.getId());
+	/**
+	 * 重新查询所有空间并载入内存
+	 */
+	public void init() {
+
+		List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
+
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			throw new SystemException("必须在一个事务中");
 		}
-		if (db.getAlias() != null) {
-			aliasCache.invalidate(db.getAlias());
-		}
-		spacesCache.invalidateAll();
+
+		Transactions.afterCommit(() -> {
+			long stamp = lock.writeLock();
+			try {
+				cache.clear();
+				cache.addAll(spaces);
+			} finally {
+				lock.unlockWrite(stamp);
+			}
+		});
+
 	}
 
-	public static final class SpacesCacheKey {
-		private boolean queryPrivate;
-
-		public SpacesCacheKey() {
-			super();
+	private List<Space> doQuery(boolean queryPrivate) {
+		Stream<Space> stream = cache.stream();
+		if (!queryPrivate) {
+			stream.filter(space -> !space.getIsPrivate());
 		}
+		return stream.map(Space::new).collect(Collectors.toList());
+	}
 
-		public SpacesCacheKey(boolean queryPrivate) {
-			super();
-			this.queryPrivate = queryPrivate;
-		}
+	private Optional<Space> queryByAlias(String alias) {
+		return cache.stream().filter(space -> Objects.equals(alias, space.getAlias())).map(Space::new).findAny();
+	}
 
-		public boolean isQueryPrivate() {
-			return queryPrivate;
-		}
+	private Optional<Space> queryById(Integer id) {
+		return cache.stream().filter(space -> Objects.equals(id, space.getId())).map(Space::new).findAny();
+	}
 
-		public void setQueryPrivate(boolean queryPrivate) {
-			this.queryPrivate = queryPrivate;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.queryPrivate);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (Validators.baseEquals(this, obj)) {
-				SpacesCacheKey rhs = (SpacesCacheKey) obj;
-				return Objects.equals(this.queryPrivate, rhs.queryPrivate);
-			}
-			return false;
-		}
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		cache.addAll(spaceDao.selectByParam(new SpaceQueryParam()));
 	}
 
 }

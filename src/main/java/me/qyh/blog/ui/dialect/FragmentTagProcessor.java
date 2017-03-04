@@ -18,14 +18,12 @@ package me.qyh.blog.ui.dialect;
 import java.io.Writer;
 import java.util.Optional;
 
-import org.springframework.context.ApplicationContext;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
-import org.thymeleaf.spring4.context.SpringContextUtils;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
@@ -63,14 +61,7 @@ public class FragmentTagProcessor extends AbstractElementTagProcessor {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		if (uiService == null) {
-			ApplicationContext ctx = SpringContextUtils.getApplicationContext(context);
-			if (ctx != null) {
-				uiService = ctx.getBean(UIService.class);
-			}
-		}
-		if (uiService == null) {
-			structureHandler.removeElement();
-			return;
+			uiService = TemplateUtils.getRequireBean(context, UIService.class);
 		}
 		IAttribute nameAtt = tag.getAttribute(NAME);
 		if (nameAtt != null) {

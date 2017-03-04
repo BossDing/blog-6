@@ -269,7 +269,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
 		bt.id
 		WHERE art.id IN
-		<foreach collection="list" item="id" open="(" close=")"
+		<foreach collection="collection" item="id" open="(" close=")"
 			separator=",">#{id}</foreach>
 		GROUP BY art.id
 	</select>

@@ -73,7 +73,7 @@ public class IndexController {
 	@ResponseBody
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
-			HttpServletResponse response) throws LogicException {
+			HttpServletResponse response) {
 		Page page = new Page();
 		page.setTpl(TemplateUtils.buildFragmentTag(Webs.decode(fragment), allRequestParams));
 		try {

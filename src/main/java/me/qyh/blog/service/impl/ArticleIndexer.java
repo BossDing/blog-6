@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -26,8 +27,15 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -67,6 +75,7 @@ import org.apache.lucene.search.highlight.Formatter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.QueryScorer;
 import org.apache.lucene.search.highlight.TokenGroup;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -76,29 +85,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.dao.ArticleDao;
+import me.qyh.blog.dao.TagDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Article.ArticleFrom;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
+import me.qyh.blog.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 
 /**
- * 近实时文章索引
+ * 文章索引
  * <p>
  * 通过配置commitPeriod可以设置commit频率
+ * </p>
+ * <p>
+ * <b>所有的索引写操作都将被放到队列中，然后依次执行，比如新增一篇文章，写文章索引的操作将会被放到最后，因此在执行到该操作之前，该篇文章无法被搜索到</b>
  * </p>
  * 
  * @author Administrator
  *
  */
-public abstract class NRTArticleIndexer implements InitializingBean {
+public abstract class ArticleIndexer implements InitializingBean {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(NRTArticleIndexer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleIndexer.class);
 
 	private static final Comparator<Article> COMPARATOR = Comparator.comparing(Article::getPubDate).reversed()
 			.thenComparing(Comparator.comparing(Article::getId).reversed());
@@ -137,14 +156,40 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
-	private static final long DEFAULT_COMMIT_PERIOD = 30 * 60 * 1000L;
 
-	private long commitPeriod = DEFAULT_COMMIT_PERIOD;
-
-	@Autowired
-	private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 	@Autowired(required = false)
 	private ArticleContentHandler articleContentHandler;
+
+	@Autowired
+	private ArticleDao articleDao;
+	@Autowired
+	private TagDao tagDao;
+	@Autowired
+	private PlatformTransactionManager platformTransactionManager;
+
+	private ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MICROSECONDS,
+			new LinkedBlockingQueue<>()) {
+
+		@Override
+		protected void afterExecute(Runnable r, Throwable t) {
+			super.afterExecute(r, t);
+			if (t == null && r instanceof Future) {
+				try {
+					((Future<?>) r).get();
+				} catch (CancellationException ce) {
+					t = ce;
+				} catch (ExecutionException ee) {
+					t = ee.getCause();
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt(); // ignore/reset
+				}
+			}
+			if (t != null) {
+				LOGGER.error(t.getMessage(), t);
+			}
+		}
+
+	};
 
 	/**
 	 * 构造器
@@ -157,7 +202,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *             索引目录打开失败等
 	 * 
 	 */
-	public NRTArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
+	public ArticleIndexer(String indexDir, Analyzer analyzer) throws IOException {
 		this.dir = FSDirectory.open(Paths.get(indexDir));
 		this.analyzer = analyzer;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
@@ -170,7 +215,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}
 
 		writer = new TrackingIndexWriter(oriWriter);
-		searcherManager = new SearcherManager(writer.getIndexWriter(), new SearcherFactory());
+		searcherManager = new SearcherManager(oriWriter, new SearcherFactory());
 		reopenThread = new ControlledRealTimeReopenThread<>(writer, searcherManager, 0.5, 0.01);
 		reopenThread.setName("Article_Index_NRT");
 		reopenThread.setPriority(Math.min(Thread.currentThread().getPriority() + 2, Thread.MAX_PRIORITY));
@@ -178,14 +223,20 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		reopenThread.start();
 	}
 
-	public void close() {
+	@EventListener
+	public void handleCloseEvent(ContextClosedEvent event) {
+		executor.shutdown();
+		try {
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e1) {
+			Thread.currentThread().interrupt();
+		}
 		try {
 			searcherManager.maybeRefreshBlocking();
 			reopenThread.close();
-			writer.getIndexWriter().commit();
-			writer.getIndexWriter().close();
+			oriWriter.close();
 			dir.close();
-		} catch (IOException e) {
+		} catch (AlreadyClosedException | IOException e) {
 			LOGGER.warn(e.getMessage(), e);
 		}
 	}
@@ -236,15 +287,32 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * @param article
 	 *            要增加|更新索引的文章
 	 */
-	public void addOrUpdateDocument(Article article) {
-		try {
+	public synchronized void addOrUpdateDocument(Article article) {
+		executor.submit(() -> {
 			if (article.hasId()) {
-				deleteDocument(article.getId());
+				doDeleteDocument(article.getId());
 			}
 			writer.addDocument(buildDocument(article));
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+			return null;
+		});
+	}
+
+	/**
+	 * 增加|更新文章索引，如果文章索引存在，则先删除后增加索引
+	 * 
+	 * @param articles
+	 *            要增加|更新索引的文章集合
+	 */
+	public synchronized void addOrUpdateDocument(List<Article> articles) {
+		executor.submit(() -> {
+			for (Article article : articles) {
+				if (article.hasId()) {
+					doDeleteDocument(article.getId());
+				}
+				writer.addDocument(buildDocument(article));
+			}
+			return null;
+		});
 	}
 
 	/**
@@ -253,13 +321,31 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * @param id
 	 *            文章id
 	 */
-	public void deleteDocument(Integer id) {
+	public synchronized void deleteDocument(Integer id) {
+		executor.submit(() -> {
+			doDeleteDocument(id);
+			return null;
+		});
+	}
+
+	/**
+	 * 删除索引
+	 * 
+	 * @param id
+	 *            文章id
+	 */
+	public synchronized void deleteDocument(List<Integer> ids) {
+		executor.submit(() -> {
+			for (Integer id : ids) {
+				doDeleteDocument(id);
+			}
+			return null;
+		});
+	}
+
+	private void doDeleteDocument(Integer id) throws IOException {
 		Term term = new Term(ID, id.toString());
-		try {
-			writer.deleteDocuments(term);
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+		writer.deleteDocuments(term);
 	}
 
 	/**
@@ -273,7 +359,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *            文章数
 	 * @return
 	 */
-	public List<Article> querySimilar(Article article, boolean queryPrivate, ArticlesDetailQuery dquery, int limit) {
+	public List<Article> querySimilar(Article article, boolean queryPrivate, int limit) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
@@ -299,7 +385,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 			if (datas.isEmpty()) {
 				return new ArrayList<>();
 			}
-			List<Article> articles = dquery.query(datas);
+			List<Article> articles = selectByIds(datas);
 			if (!articles.isEmpty()) {
 				articles.sort(COMPARATOR);
 			}
@@ -349,7 +435,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 *            文章详情接口
 	 * @return 分页内容
 	 */
-	public PageResult<Article> query(ArticleQueryParam param, ArticlesDetailQuery dquery) {
+	public PageResult<Article> query(ArticleQueryParam param) {
 		IndexSearcher searcher = null;
 		try {
 			searcherManager.maybeRefresh();
@@ -401,7 +487,7 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 					datas.put(Integer.parseInt(doc.get(ID)), doc);
 				}
 			}
-			List<Article> articles = dquery.query(new ArrayList<>(datas.keySet()));
+			List<Article> articles = selectByIds(datas.keySet());
 			if (param.isHighlight() && optionalMultiFieldQuery.isPresent()) {
 				for (Article article : articles) {
 					doHightlight(article, datas.get(article.getId()), optionalMultiFieldQuery.get());
@@ -420,6 +506,20 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 				LOGGER.error(e.getMessage(), e);
 			}
 		}
+	}
+
+	private List<Article> selectByIds(Collection<Integer> ids) {
+		if (CollectionUtils.isEmpty(ids)) {
+			return Collections.emptyList();
+		}
+		// mysql can use order by field
+		// but h2 can not
+		List<Article> articles = articleDao.selectByIds(ids);
+		if (articles.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Map<Integer, Article> map = articles.stream().collect(Collectors.toMap(Article::getId, article -> article));
+		return ids.stream().map(map::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	protected Optional<Query> buildMultiFieldQuery(String query) {
@@ -510,17 +610,6 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}
 	}
 
-	/**
-	 * 删除所有已经存在的文章索引
-	 */
-	public void deleteAll() {
-		try {
-			oriWriter.deleteAll();
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
-
 	private String clean(String content) {
 		// 只需要纯文字的内容
 		return Jsoup.clean(content, Whitelist.none());
@@ -539,7 +628,12 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * @param tags
 	 *            要删除的标签名
 	 */
-	public abstract void removeTag(String... tags);
+	public synchronized void removeTags(String... tags) {
+		executor.submit(() -> {
+			doRemoveTags(tags);
+			return null;
+		});
+	}
 
 	/**
 	 * 增加标签
@@ -547,7 +641,55 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	 * @param tags
 	 *            标签名
 	 */
-	public abstract void addTags(String... tags);
+	public synchronized void addTags(String... tags) {
+		executor.submit(() -> {
+			doAddTags(tags);
+			return null;
+		});
+	}
+
+	/**
+	 * 重建索引
+	 */
+	public synchronized void rebuildIndex() {
+		executor.submit(() -> {
+			List<Article> articles;
+			long start = System.currentTimeMillis();
+			DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+			dtd.setReadOnly(true);
+			TransactionStatus status = platformTransactionManager.getTransaction(dtd);
+			try {
+				articles = articleDao.selectPublished(null);
+			} catch (RuntimeException | Error e) {
+				status.setRollbackOnly();
+				throw e;
+			} finally {
+				platformTransactionManager.commit(status);
+			}
+
+			writer.deleteAll();
+			for (Article article : articles) {
+				writer.addDocument(buildDocument(article));
+			}
+			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
+
+			return null;
+		});
+	}
+
+	/**
+	 * 应该只有在transaction完成之后才会被触发
+	 * 
+	 * @param event
+	 */
+	@EventListener
+	public synchronized void handleArticleIndexRebuildEvent(ArticleIndexRebuildEvent event) {
+		rebuildIndex();
+	}
+
+	protected abstract void doRemoveTags(String... tags);
+
+	protected abstract void doAddTags(String... tags);
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -565,16 +707,20 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		qboostMap.put(TITLE, boostMap.getOrDefault(TITLE, 7F));
 		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
-		if (commitPeriod <= 0) {
-			commitPeriod = DEFAULT_COMMIT_PERIOD;
-		}
-		threadPoolTaskScheduler.scheduleAtFixedRate(() -> {
-			try {
-				oriWriter.commit();
-			} catch (IOException e) {
-				LOGGER.error(e.getMessage(), e);
-			}
-		}, commitPeriod);
+		// 新增标签
+		addTags(tagDao.selectAll().stream().map(tag -> tag.getName()).toArray(i -> new String[i]));
+	}
+
+	/**
+	 * <p>
+	 * <b>仅供定时任务调用！！！</b>
+	 * </p>
+	 */
+	public synchronized void commit() {
+		executor.submit(() -> {
+			oriWriter.commit();
+			return null;
+		});
 	}
 
 	private static final class DefaultFormatter implements Formatter {
@@ -592,30 +738,8 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 		}
 	}
 
-	/**
-	 * 文章查询接口
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	@FunctionalInterface
-	public interface ArticlesDetailQuery {
-		/**
-		 * 通过id集合查询对应的文章
-		 * 
-		 * @param ids
-		 *            要查询的文章id集合
-		 * @return 文章集合
-		 */
-		List<Article> query(List<Integer> ids);
-	}
-
 	public void setBoostMap(Map<String, Float> boostMap) {
 		this.boostMap = boostMap;
-	}
-
-	public void setCommitPeriod(int commitPeriod) {
-		this.commitPeriod = commitPeriod;
 	}
 
 	public void setTitleFormatter(Formatter titleFormatter) {
@@ -629,5 +753,4 @@ public abstract class NRTArticleIndexer implements InitializingBean {
 	public void setSummaryFormatter(Formatter summaryFormatter) {
 		this.summaryFormatter = summaryFormatter;
 	}
-
 }

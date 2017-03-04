@@ -15,21 +15,20 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.annotation.Async;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Editor;
-import me.qyh.blog.evt.ArticleEvent;
-import me.qyh.blog.evt.EventType;
+import me.qyh.blog.evt.listener.ArticleEventHandlerRegister;
+import me.qyh.blog.evt.listener.EventHandlerAdapter;
 import me.qyh.blog.security.input.Markdown2Html;
 
 /**
@@ -37,14 +36,15 @@ import me.qyh.blog.security.input.Markdown2Html;
  * @author mhlx
  *
  */
-public class DefaultArticleContentHandler
-		implements ArticleContentHandler, ApplicationListener<ArticleEvent>, InitializingBean {
+public class DefaultArticleContentHandler implements ArticleContentHandler, InitializingBean {
 
 	private static final String DEFAULT_CACHESPECIFICATION = "maximumSize=500";
 	private String cacheSpecification = DEFAULT_CACHESPECIFICATION;
 
 	@Autowired
 	private Markdown2Html markdown2Html;
+	@Autowired
+	private ArticleEventHandlerRegister articleEventHandlerRegister;
 
 	private Cache<Integer, String> cache;
 
@@ -71,15 +71,6 @@ public class DefaultArticleContentHandler
 		}
 	}
 
-	@Async
-	@Override
-	public void onApplicationEvent(ArticleEvent event) {
-		EventType eventType = event.getEventType();
-		if (!EventType.INSERT.equals(eventType)) {
-			cache.invalidateAll(event.getArticles().stream().map(Article::getId).collect(Collectors.toList()));
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (cacheSpecification != null) {
@@ -87,6 +78,19 @@ public class DefaultArticleContentHandler
 		} else {
 			cache = Caffeine.newBuilder().build();
 		}
+		articleEventHandlerRegister.registerTransactionalEventHandler(new EventHandlerAdapter<List<Article>>() {
+
+			@Override
+			public void handleUpdate(List<Article> articles) {
+				cache.invalidateAll(articles.stream().map(Article::getId).collect(Collectors.toList()));
+			}
+
+			@Override
+			public void handleDelete(List<Article> articles) {
+				cache.invalidateAll(articles.stream().map(Article::getId).collect(Collectors.toList()));
+			}
+
+		});
 	}
 
 	public void setCacheSpecification(String cacheSpecification) {
