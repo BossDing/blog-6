@@ -52,14 +52,16 @@ public class ArticleCache {
 		return null;
 	}
 
-	public synchronized void evit(Article article) {
-		Article art = idCache.getIfPresent(article.getId());
-		if (art != null) {
-			String alias = art.getAlias();
-			if (alias != null) {
-				aliasCache.invalidate(alias);
+	public void evit(Integer... ids) {
+		for (Integer id : ids) {
+			Article art = idCache.getIfPresent(id);
+			if (art != null) {
+				String alias = art.getAlias();
+				if (alias != null) {
+					aliasCache.invalidate(alias);
+				}
+				idCache.invalidate(id);
 			}
-			idCache.invalidate(article.getId());
 		}
 	}
 

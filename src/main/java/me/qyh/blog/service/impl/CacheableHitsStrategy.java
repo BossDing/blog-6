@@ -16,7 +16,6 @@
 package me.qyh.blog.service.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +27,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -62,6 +62,8 @@ public final class CacheableHitsStrategy
 	private ArticleIndexer articleIndexer;
 	@Autowired
 	private ArticleEventHandlerRegister articleEventHandlerRegister;
+	@Autowired
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	/**
 	 * 存储所有文章的点击数
@@ -94,6 +96,8 @@ public final class CacheableHitsStrategy
 	 */
 	private int maxArticles = 10;
 
+	private final Object lock = new Object();
+
 	@Override
 	public void hit(Article article) {
 		// increase
@@ -111,11 +115,13 @@ public final class CacheableHitsStrategy
 		 * https://stackoverflow.com/questions/10754675/concurrent-hashmap-size-method-complexity/22996395#22996395
 		 */
 		if (flushMap.size() >= maxArticles) {
-			synchronized (this) {
-				if (flushMap.size() >= maxArticles) {
-					flush();
+			threadPoolTaskExecutor.submit(() -> {
+				synchronized (lock) {
+					if (flushMap.size() >= maxArticles) {
+						flush();
+					}
 				}
-			}
+			});
 		}
 	}
 
@@ -149,17 +155,10 @@ public final class CacheableHitsStrategy
 
 	private void doFlush(List<HitsWrapper> wrappers) {
 		if (!wrappers.isEmpty()) {
-			List<Article> articles = new ArrayList<>();
-			Map<Integer, Integer> hitsMap = new HashMap<>();
 			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
 			try {
 				for (HitsWrapper wrapper : wrappers) {
 					articleDao.updateHits(wrapper.id, wrapper.hits);
-					Article art = articleCache.getArticle(wrapper.id);
-					if (art != null) {
-						articles.add(art);
-					}
-					hitsMap.put(wrapper.id, wrapper.hits);
 				}
 			} catch (RuntimeException | Error e) {
 				ts.setRollbackOnly();
@@ -167,10 +166,9 @@ public final class CacheableHitsStrategy
 			} finally {
 				transactionManager.commit(ts);
 			}
-			for (Article art : articles) {
-				art.setHits(hitsMap.get(art.getId()));
-				articleIndexer.addOrUpdateDocument(art);
-			}
+			Integer[] ids = wrappers.stream().map(wrapper -> wrapper.id).toArray(i -> new Integer[i]);
+			articleCache.evit(ids);
+			articleIndexer.addOrUpdateDocument(ids);
 		}
 	}
 
@@ -231,11 +229,14 @@ public final class CacheableHitsStrategy
 			});
 
 			if (ips.size() >= maxIps) {
-				synchronized (this) {
-					if (ips.size() >= maxIps) {
-						flush(article.getId());
+				threadPoolTaskExecutor.submit(() -> {
+					synchronized (lock) {
+						if (ips.size() >= maxIps) {
+							flush(article.getId());
+						}
 					}
-				}
+				});
+
 			}
 		}
 

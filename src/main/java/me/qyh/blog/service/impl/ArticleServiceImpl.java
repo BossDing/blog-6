@@ -239,7 +239,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleTagDao.deleteByArticle(articleDb);
 
 			articleDao.update(article);
-			Transactions.afterCommit(() -> articleCache.evit(articleDb));
+			Transactions.afterCommit(() -> articleCache.evit(article.getId()));
 		} else {
 			if (article.getAlias() != null) {
 				Article aliasDb = articleDao.selectByAlias(article.getAlias());
@@ -274,19 +274,21 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			scheduleManager.update();
 		}
 
-		Article requery = articleDao.selectById(article.getId());
-		if (update) {
-			articleIndexer.deleteDocument(article.getId());
-		}
-		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(requery);
-		}
-		if (rebuildIndexWhenTagChange) {
-			Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
-		}
+		Transactions.afterCommit(() -> {
+			if (rebuildIndexWhenTagChange) {
+				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+			} else {
+				if (update) {
+					articleIndexer.deleteDocument(article.getId());
+				}
+				if (article.isPublished()) {
+					articleIndexer.addOrUpdateDocument(article.getId());
+				}
+			}
+		});
 		applicationEventPublisher
-				.publishEvent(new ArticleEvent(this, requery, update ? EventType.UPDATE : EventType.INSERT));
-		return requery;
+				.publishEvent(new ArticleEvent(this, article, update ? EventType.UPDATE : EventType.INSERT));
+		return article;
 	}
 
 	@Override
@@ -306,9 +308,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setPubDate(article.isSchedule() ? now : article.getPubDate() != null ? article.getPubDate() : now);
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
-		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(article);
-		}
+		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}
 
@@ -416,7 +416,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
 		articleIndexer.deleteDocument(id);
-		Transactions.afterCommit(() -> articleCache.evit(article));
+		Transactions.afterCommit(() -> articleCache.evit(id));
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}
@@ -440,9 +440,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		article.setStatus(status);
 		articleDao.update(article);
-		if (article.isPublished()) {
-			articleIndexer.addOrUpdateDocument(article);
-		}
+
+		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}
@@ -616,7 +615,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				} finally {
 					transactionManager.commit(status);
 				}
-				articleIndexer.addOrUpdateDocument(articles);
+				articleIndexer.addOrUpdateDocument(articles.stream().map(Article::getId).toArray(i -> new Integer[i]));
 				return articles.size();
 			}
 		}
@@ -676,7 +675,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		 * <p>
 		 * 
 		 * @param article
-		 *            可能来自于缓存，如果是实时的点击数更新必须要在缓存中有所体现
 		 * @see DefaultHitsStrategy
 		 */
 		void hit(Article article);
@@ -697,7 +695,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			synchronized (this) {
 				Integer id = article.getId();
 				articleDao.addHits(id, 1);
-				articleIndexer.addOrUpdateDocument(article);
+				Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 			}
 		}
 

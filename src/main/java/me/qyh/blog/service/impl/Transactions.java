@@ -10,9 +10,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * 用来处理一些事务<b>事务提交</b>之后的事情
  * <p>
- * 比如事务发布，<i>虽然spring4.2+提供了TransactionEventListener，但匿名注入的bean并不会触发，这样做为了更小的代码改动</i>
- * </p>
- * <p>
  * <b>这个方法必须在事务中使用，eg</b>
  * 
  * <pre>

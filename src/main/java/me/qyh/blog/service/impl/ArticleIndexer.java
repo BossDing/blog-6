@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -163,6 +164,8 @@ public abstract class ArticleIndexer implements InitializingBean {
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
+	private ArticleCache articleCache;
+	@Autowired
 	private TagDao tagDao;
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
@@ -284,33 +287,23 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 增加|更新文章索引，如果文章索引存在，则先删除后增加索引
 	 * 
-	 * @param article
-	 *            要增加|更新索引的文章
+	 * @param id
+	 *            要增加|更新索引的文章id
 	 */
-	public synchronized void addOrUpdateDocument(Article article) {
+	public synchronized void addOrUpdateDocument(Integer... ids) {
 		executor.submit(() -> {
-			if (article.hasId()) {
-				doDeleteDocument(article.getId());
+			if (ids == null || ids.length == 0) {
+				return null;
 			}
-			writer.addDocument(buildDocument(article));
-			return null;
-		});
-	}
-
-	/**
-	 * 增加|更新文章索引，如果文章索引存在，则先删除后增加索引
-	 * 
-	 * @param articles
-	 *            要增加|更新索引的文章集合
-	 */
-	public synchronized void addOrUpdateDocument(List<Article> articles) {
-		executor.submit(() -> {
-			for (Article article : articles) {
-				if (article.hasId()) {
-					doDeleteDocument(article.getId());
-				}
-				writer.addDocument(buildDocument(article));
-			}
+			Arrays.stream(ids).map(articleCache::getArticle).filter(Objects::nonNull).filter(Article::isPublished)
+					.forEach(art -> {
+						try {
+							doDeleteDocument(art.getId());
+							writer.addDocument(buildDocument(art));
+						} catch (IOException e) {
+							throw new SystemException(e.getMessage(), e);
+						}
+					});
 			return null;
 		});
 	}
@@ -321,20 +314,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * @param id
 	 *            文章id
 	 */
-	public synchronized void deleteDocument(Integer id) {
-		executor.submit(() -> {
-			doDeleteDocument(id);
-			return null;
-		});
-	}
-
-	/**
-	 * 删除索引
-	 * 
-	 * @param id
-	 *            文章id
-	 */
-	public synchronized void deleteDocument(List<Integer> ids) {
+	public synchronized void deleteDocument(Integer... ids) {
 		executor.submit(() -> {
 			for (Integer id : ids) {
 				doDeleteDocument(id);
