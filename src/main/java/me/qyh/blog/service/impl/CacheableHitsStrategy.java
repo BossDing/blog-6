@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +95,7 @@ public final class CacheableHitsStrategy
 	 * <b>因为没有批量更新的功能，所以这个值应该设置的较小</b>
 	 * </p>
 	 */
-	private int maxArticles = 10;
+	private int maxArticles = 20;
 
 	private final Object lock = new Object();
 
@@ -166,9 +167,10 @@ public final class CacheableHitsStrategy
 			} finally {
 				transactionManager.commit(ts);
 			}
-			Integer[] ids = wrappers.stream().map(wrapper -> wrapper.id).toArray(i -> new Integer[i]);
-			articleCache.evit(ids);
-			articleIndexer.addOrUpdateDocument(ids);
+			articleCache.updateHits(
+					wrappers.stream().collect(Collectors.toMap(wrapper -> wrapper.id, wrapper -> wrapper.hits)));
+			articleIndexer
+					.addOrUpdateDocument(wrappers.stream().map(wrapper -> wrapper.id).toArray(i -> new Integer[i]));
 		}
 	}
 
@@ -265,11 +267,6 @@ public final class CacheableHitsStrategy
 			}
 
 		});
-	}
-
-	@Override
-	public int getCurrentHits(Article article) {
-		return article.getHits();
 	}
 
 	public void setValidIp(boolean validIp) {

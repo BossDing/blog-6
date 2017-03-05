@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -50,6 +52,23 @@ public class ArticleCache {
 			return new Article(article);
 		}
 		return null;
+	}
+
+	/**
+	 * 更新文章点击数
+	 * <p>
+	 * 如果文章不存在于缓存，则会将文章载入缓存中后设置点击数
+	 * </p>
+	 * 
+	 * @param hitsMap
+	 */
+	public synchronized void updateHits(Map<Integer, Integer> hitsMap) {
+		for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
+			Article article = idCache.get(it.getKey());
+			if (article != null) {
+				article.setHits(it.getValue());
+			}
+		}
 	}
 
 	public void evit(Integer... ids) {

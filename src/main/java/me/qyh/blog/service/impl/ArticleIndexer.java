@@ -107,9 +107,6 @@ import me.qyh.blog.pageparam.PageResult;
 /**
  * 文章索引
  * <p>
- * 通过配置commitPeriod可以设置commit频率
- * </p>
- * <p>
  * <b>所有的索引写操作都将被放到队列中，然后依次执行，比如新增一篇文章，写文章索引的操作将会被放到最后，因此在执行到该操作之前，该篇文章无法被搜索到</b>
  * </p>
  * 
@@ -169,6 +166,11 @@ public abstract class ArticleIndexer implements InitializingBean {
 	private TagDao tagDao;
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+
+	/**
+	 * @see ControlledRealTimeReopenThread
+	 */
+	private long gen;
 
 	private ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MICROSECONDS,
 			new LinkedBlockingQueue<>()) {
@@ -239,6 +241,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			reopenThread.close();
 			oriWriter.close();
 			dir.close();
+			searcherManager.close();
 		} catch (AlreadyClosedException | IOException e) {
 			LOGGER.warn(e.getMessage(), e);
 		}
@@ -299,7 +302,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 					.forEach(art -> {
 						try {
 							doDeleteDocument(art.getId());
-							writer.addDocument(buildDocument(art));
+							gen = writer.addDocument(buildDocument(art));
 						} catch (IOException e) {
 							throw new SystemException(e.getMessage(), e);
 						}
@@ -325,7 +328,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private void doDeleteDocument(Integer id) throws IOException {
 		Term term = new Term(ID, id.toString());
-		writer.deleteDocuments(term);
+		gen = writer.deleteDocuments(term);
 	}
 
 	/**
@@ -342,7 +345,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	public List<Article> querySimilar(Article article, boolean queryPrivate, int limit) {
 		IndexSearcher searcher = null;
 		try {
-			searcherManager.maybeRefresh();
+			waitForGen();
 			searcher = searcherManager.acquire();
 
 			Query likeQuery = buildLikeQuery(article, searcher);
@@ -379,6 +382,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			try {
 				if (searcher != null) {
 					searcherManager.release(searcher);
+					searcher = null;
 				}
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
@@ -406,6 +410,15 @@ public abstract class ArticleIndexer implements InitializingBean {
 		return null;
 	}
 
+	private void waitForGen() {
+		try {
+			reopenThread.waitForGeneration(gen);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
 	/**
 	 * 查询文章
 	 * 
@@ -418,7 +431,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	public PageResult<Article> query(ArticleQueryParam param) {
 		IndexSearcher searcher = null;
 		try {
-			searcherManager.maybeRefresh();
+			waitForGen();
 			searcher = searcherManager.acquire();
 			Sort sort = buildSort(param);
 
@@ -481,6 +494,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			try {
 				if (searcher != null) {
 					searcherManager.release(searcher);
+					searcher = null;
 				}
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage(), e);
@@ -647,9 +661,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 				platformTransactionManager.commit(status);
 			}
 
-			writer.deleteAll();
+			gen = writer.deleteAll();
 			for (Article article : articles) {
-				writer.addDocument(buildDocument(article));
+				gen = writer.addDocument(buildDocument(article));
 			}
 			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
 
@@ -663,7 +677,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * @param event
 	 */
 	@EventListener
-	public synchronized void handleArticleIndexRebuildEvent(ArticleIndexRebuildEvent event) {
+	public void handleArticleIndexRebuildEvent(ArticleIndexRebuildEvent event) {
 		rebuildIndex();
 	}
 

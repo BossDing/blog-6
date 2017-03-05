@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -123,7 +124,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 			Article clone = new Article(optionalArticle.get());
 			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(clone.getId()).orElse(0));
-			clone.setHits(articleHitManager.getCurrentHits(clone));
 
 			if (articleContentHandler != null) {
 				articleContentHandler.handle(clone);
@@ -637,22 +637,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 
 		void hit(Integer id) {
-			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
-			try {
-				Article article = articleCache.getArticle(id);
-				if (article != null && validHit(article)) {
-					hitsStrategy.hit(article);
-				}
-			} catch (RuntimeException | Error e) {
-				ts.setRollbackOnly();
-				throw e;
-			} finally {
-				transactionManager.commit(ts);
+			Article article = articleCache.getArticle(id);
+			if (article != null && validHit(article)) {
+				hitsStrategy.hit(article);
 			}
-		}
-
-		int getCurrentHits(Article article) {
-			return hitsStrategy.getCurrentHits(article);
 		}
 
 		private boolean validHit(Article article) {
@@ -667,41 +655,57 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	}
 
+	/**
+	 * 文章缓存点击策略
+	 * <p>
+	 * 文章可能存在于缓存中，需要在合适的时机手动更新缓存和文章索引
+	 * </p>
+	 * 
+	 * @see ArticleCache#updateHits(Map)
+	 * @see ArticleIndexer#addOrUpdateDocument(Integer...)
+	 * 
+	 * @see DefaultHitsStrategy
+	 * @author mhlx
+	 *
+	 */
 	public interface HitsStrategy {
 		/**
 		 * 点击文章
-		 * <p>
-		 * <b>这个方法的执行处于事务中</b>
-		 * <p>
 		 * 
 		 * @param article
-		 * @see DefaultHitsStrategy
 		 */
 		void hit(Article article);
-
-		/**
-		 * 获取文章当前点击数
-		 * 
-		 * @param article
-		 * @return
-		 */
-		int getCurrentHits(Article article);
 	}
 
+	/**
+	 * 默认文章点击策略，文章的点击数将会实时显示
+	 * 
+	 * 
+	 * @see CacheableHitsStrategy
+	 * @author mhlx
+	 *
+	 */
 	private final class DefaultHitsStrategy implements HitsStrategy {
 
 		@Override
 		public void hit(Article article) {
 			synchronized (this) {
-				Integer id = article.getId();
-				articleDao.addHits(id, 1);
-				Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
+				TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
+				int hits = article.getHits() + 1;
+				try {
+					Integer id = article.getId();
+					articleDao.updateHits(id, hits);
+				} catch (RuntimeException | Error e) {
+					ts.setRollbackOnly();
+					throw e;
+				} finally {
+					transactionManager.commit(ts);
+				}
+				Map<Integer, Integer> hitsMap = new HashMap<>();
+				hitsMap.put(article.getId(), hits);
+				articleCache.updateHits(hitsMap);
+				articleIndexer.addOrUpdateDocument(article.getId());
 			}
-		}
-
-		@Override
-		public int getCurrentHits(Article article) {
-			return articleDao.selectHits(article.getId());
 		}
 	}
 
