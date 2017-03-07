@@ -124,9 +124,13 @@
 
 	<!-- 缓存点击策略 -->
 	<bean id="cacheableHitsStrategy" class="me.qyh.blog.service.impl.CacheableHitsStrategy" />
-	<bean id="articleService" class="me.qyh.blog.service.impl.ArticleServiceImpl">
-		<property name="hitsStrategy" ref="cacheableHitsStrategy" />
-	</bean>
+	
+	<!-- 纪录最近被访问的文章 -->
+	<bean class="me.qyh.blog.service.impl.SyncArticleViewdLogger"/>
+	
+	<!-- 文章缓存 -->
+	<bean class="me.qyh.blog.service.impl.ArticleCache"/>
+	<bean id="articleService" class="me.qyh.blog.service.impl.ArticleServiceImpl"/>
 
 	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
 

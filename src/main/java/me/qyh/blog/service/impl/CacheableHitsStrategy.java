@@ -24,19 +24,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
-import me.qyh.blog.evt.listener.ArticleEventHandlerRegister;
-import me.qyh.blog.evt.listener.EventHandlerAdapter;
+import me.qyh.blog.evt.ArticleEvent;
+import me.qyh.blog.evt.EventType;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.impl.ArticleServiceImpl.HitsStrategy;
@@ -50,8 +46,7 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.HitsStrategy;
  * @author Administrator
  *
  */
-public final class CacheableHitsStrategy
-		implements HitsStrategy, InitializingBean, ApplicationListener<ContextClosedEvent> {
+public final class CacheableHitsStrategy implements HitsStrategy {
 
 	@Autowired
 	private ArticleDao articleDao;
@@ -61,8 +56,6 @@ public final class CacheableHitsStrategy
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private ArticleIndexer articleIndexer;
-	@Autowired
-	private ArticleEventHandlerRegister articleEventHandlerRegister;
 	@Autowired
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -82,7 +75,7 @@ public final class CacheableHitsStrategy
 	 * 例如我点击一次增加了一次点击量，一分钟后flush，那么我在这一分钟内(ip的不变的情况下)，无论我点击了多少次，都只算一次
 	 * </p>
 	 */
-	private boolean validIp = false;
+	private boolean validIp = true;
 
 	/**
 	 * 最多保存的文章数，如果达到或超过该数目，将会立即更新
@@ -156,17 +149,11 @@ public final class CacheableHitsStrategy
 
 	private void doFlush(List<HitsWrapper> wrappers) {
 		if (!wrappers.isEmpty()) {
-			TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
-			try {
+			Transactions.executeInTransaction(transactionManager, status -> {
 				for (HitsWrapper wrapper : wrappers) {
 					articleDao.updateHits(wrapper.id, wrapper.hits);
 				}
-			} catch (RuntimeException | Error e) {
-				ts.setRollbackOnly();
-				throw e;
-			} finally {
-				transactionManager.commit(ts);
-			}
+			});
 			articleCache.updateHits(
 					wrappers.stream().collect(Collectors.toMap(wrapper -> wrapper.id, wrapper -> wrapper.hits)));
 			articleIndexer
@@ -248,25 +235,17 @@ public final class CacheableHitsStrategy
 		}
 	}
 
-	@Override
-	public void onApplicationEvent(ContextClosedEvent event) {
+	public void handleContextEvent(ContextClosedEvent event) {
 		flush();
 	}
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-
-		articleEventHandlerRegister.registerTransactionalEventHandler(new EventHandlerAdapter<List<Article>>() {
-
-			@Override
-			public void handleDelete(List<Article> articles) {
-				articles.stream().map(Article::getId).forEach(id -> {
-					flushMap.remove(id);
-					hitsMap.remove(id);
-				});
-			}
-
-		});
+	public void handleArticleEvent(ArticleEvent evt) {
+		if (EventType.DELETE.equals(evt.getEventType())) {
+			evt.getArticles().stream().map(Article::getId).forEach(id -> {
+				flushMap.remove(id);
+				hitsMap.remove(id);
+			});
+		}
 	}
 
 	public void setValidIp(boolean validIp) {

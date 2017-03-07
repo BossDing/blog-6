@@ -239,6 +239,7 @@ public class UrlHelper implements InitializingBean {
 	public class SpaceUrls extends Urls {
 
 		private Env env;
+		private final ArticlesUrlHelper articlesUrlHelper;
 
 		private SpaceUrls(String alias) {
 			// 空间域名
@@ -253,6 +254,7 @@ public class UrlHelper implements InitializingBean {
 			} else {
 				env.url = url;
 			}
+			articlesUrlHelper = new ArticlesUrlHelper(env.url, "/article/list");
 		}
 
 		public String getCurrentUrl() {
@@ -261,6 +263,64 @@ public class UrlHelper implements InitializingBean {
 
 		public String getSpace() {
 			return env.space;
+		}
+
+		public String getArticlesUrl(Tag tag) {
+			return articlesUrlHelper.getArticlesUrl(tag);
+		}
+
+		public String getArticlesUrl(String tag) {
+			return articlesUrlHelper.getArticlesUrl(tag);
+		}
+
+		public String getArticlesUrl(ArticleQueryParam param, String sortStr) {
+			return articlesUrlHelper.getArticlesUrl(param, sortStr);
+		}
+
+		public String getArticlesUrl(ArticleQueryParam param, int page) {
+			return articlesUrlHelper.getArticlesUrl(param, page);
+		}
+
+		public String getArticlesUrl(Date begin, Date end) {
+			return articlesUrlHelper.getArticlesUrl(begin, end);
+		}
+
+		public String getArticlesUrl(String begin, String end) {
+			return articlesUrlHelper.getArticlesUrl(begin, end);
+		}
+
+		/**
+		 * 获取指定路径的文章分页链接辅助
+		 * 
+		 * @param path
+		 * @return
+		 */
+		public ArticlesUrlHelper getArticlesUrlHelper(String path) {
+			if (Validators.isEmptyOrNull(path, true)) {
+				return articlesUrlHelper;
+			}
+			return new ArticlesUrlHelper(env.url, path);
+		}
+
+		private class Env {
+			private String space;
+			private String url;
+
+			public boolean isSpaceEnv() {
+				return space != null;
+			}
+		}
+	}
+
+	private final class ArticlesUrlHelper {
+
+		private final String url;
+		private final String path;
+
+		public ArticlesUrlHelper(String url, String path) {
+			super();
+			this.url = url;
+			this.path = path;
 		}
 
 		/**
@@ -313,7 +373,7 @@ public class UrlHelper implements InitializingBean {
 		}
 
 		/**
-		 * 获取文章的分页查询链接
+		 * 获取文章分页查询链接
 		 * 
 		 * @param param
 		 *            分页参数
@@ -322,8 +382,12 @@ public class UrlHelper implements InitializingBean {
 		 * @return 某个页面的分页链接
 		 */
 		public String getArticlesUrl(ArticleQueryParam param, int page) {
-			StringBuilder sb = new StringBuilder(env.url);
-			sb.append("/article/list?currentPage=").append(page);
+			StringBuilder sb = new StringBuilder(url);
+			if (!path.startsWith("/")) {
+				sb.append('/');
+			}
+			sb.append(path);
+			sb.append("?currentPage=").append(page);
 			Date begin = param.getBegin();
 			Date end = param.getEnd();
 			if (begin != null && end != null) {
@@ -383,15 +447,6 @@ public class UrlHelper implements InitializingBean {
 				param.setEnd(Times.parseAndGetDate(end));
 			}
 			return getArticlesUrl(param, 1);
-		}
-
-		private class Env {
-			private String space;
-			private String url;
-
-			public boolean isSpaceEnv() {
-				return space != null;
-			}
 		}
 	}
 

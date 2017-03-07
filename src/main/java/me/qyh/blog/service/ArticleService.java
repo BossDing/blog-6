@@ -206,7 +206,6 @@ public interface ArticleService {
 	 */
 	List<Article> findSimilar(String idOrAlias, int limit) throws LogicException;
 
-
 	/**
 	 * 用来处理预览文章，比如将markdown转化为html
 	 * 
@@ -214,5 +213,17 @@ public interface ArticleService {
 	 *            预览文章
 	 */
 	void preparePreview(Article article);
+
+	/**
+	 * 得到最近浏览过的文章
+	 * <p>
+	 * <b>只会返回非管理员浏览过的文章</b>
+	 * </p>
+	 * 
+	 * @param num
+	 *            最大记录数
+	 * @return
+	 */
+	List<Article> getRecentlyViewdArticle(int num);
 
 }

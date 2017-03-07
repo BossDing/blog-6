@@ -33,8 +33,6 @@ public class UICacheManager extends AbstractCacheManager {
 
 	private static final ICache<TemplateCacheKey, TemplateModel> templateCache = new UICache<>(
 			Caffeine.newBuilder().build());
-	private static final ICache<ExpressionCacheKey, Object> expressionCache = new UICache<>(
-			Caffeine.newBuilder().build());
 
 	@Override
 	protected ICache<TemplateCacheKey, TemplateModel> initializeTemplateCache() {
@@ -43,7 +41,7 @@ public class UICacheManager extends AbstractCacheManager {
 
 	@Override
 	protected ICache<ExpressionCacheKey, Object> initializeExpressionCache() {
-		return expressionCache;
+		return null;
 	}
 
 	public static void clearAll() {

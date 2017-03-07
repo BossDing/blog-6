@@ -70,6 +70,7 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 			try {
 				mode = ArticleDateFileMode.valueOf(v);
 			} catch (Exception e) {
+				LOGGER.debug(e.getMessage(), e);
 			}
 		}
 		return mode;

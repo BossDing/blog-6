@@ -73,12 +73,14 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 			Integer id = Integer.parseInt(attributes.get(Constants.MODULE_ID));
 			param.setModule(new CommentModule(type, id));
 		} catch (Exception e) {
+			LOGGER.debug(e.getMessage(), e);
 		}
 		String currentPageStr = attributes.get(Constants.CURRENT_PAGE);
 		if (currentPageStr != null) {
 			try {
 				param.setCurrentPage(Integer.parseInt(currentPageStr));
 			} catch (Exception e) {
+				LOGGER.debug(e.getMessage(), e);
 			}
 		}
 		if (param.getCurrentPage() < 0) {

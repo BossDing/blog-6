@@ -89,8 +89,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.dao.ArticleDao;
@@ -644,29 +642,21 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	/**
 	 * 重建索引
+	 * 
+	 * @param space
+	 *            空间 ，如果为null，则重建所有发布的文章
 	 */
-	public synchronized void rebuildIndex() {
+	public synchronized void rebuildIndex(Space space) {
 		executor.submit(() -> {
-			List<Article> articles;
 			long start = System.currentTimeMillis();
-			DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
-			dtd.setReadOnly(true);
-			TransactionStatus status = platformTransactionManager.getTransaction(dtd);
-			try {
-				articles = articleDao.selectPublished(null);
-			} catch (RuntimeException | Error e) {
-				status.setRollbackOnly();
-				throw e;
-			} finally {
-				platformTransactionManager.commit(status);
-			}
-
+			List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+				return articleDao.selectPublished(space);
+			});
 			gen = writer.deleteAll();
 			for (Article article : articles) {
 				gen = writer.addDocument(buildDocument(article));
 			}
 			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
-
 			return null;
 		});
 	}
@@ -678,7 +668,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 */
 	@EventListener
 	public void handleArticleIndexRebuildEvent(ArticleIndexRebuildEvent event) {
-		rebuildIndex();
+		rebuildIndex(event.getSpace());
 	}
 
 	protected abstract void doRemoveTags(String... tags);

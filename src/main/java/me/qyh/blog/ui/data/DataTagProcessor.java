@@ -21,6 +21,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
@@ -38,6 +41,8 @@ public abstract class DataTagProcessor<T> {
 	private boolean callable;// 是否可以被ajax调用
 
 	protected static final Space previewSpace = new Space();
+
+	protected static final Logger LOGGER = LoggerFactory.getLogger(DataTagProcessor.class);
 
 	static {
 		previewSpace.setAlias("preview");

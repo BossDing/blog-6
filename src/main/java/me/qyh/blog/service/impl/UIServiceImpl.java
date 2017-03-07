@@ -65,6 +65,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.evt.EventType;
 import me.qyh.blog.evt.UserPageEvent;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.exception.RuntimeLogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.message.Message;
@@ -129,10 +130,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 				@Override
 				public Fragment load(FragmentKey key) throws Exception {
-					DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-					definition.setReadOnly(true);
-					TransactionStatus status = platformTransactionManager.getTransaction(definition);
-					try {
+					Fragment loaded = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 						UserFragment userFragment = userFragmentDao.selectBySpaceAndName(key.space, key.name);
 						if (userFragment == null) { // 查找全局
 							userFragment = userFragmentDao.selectGlobalByName(key.name);
@@ -145,13 +143,15 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 								return fragment;
 							}
 						}
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						platformTransactionManager.commit(status);
+						return null;
+					});
+
+					if (loaded == null) {
+						throw new LogicException(new Message("fragment.not.exists", "模板片段不存在"));
 					}
-					throw new LogicException(new Message("fragment.not.exists", "模板片段不存在"));
+
+					evitFragmentUI(loaded);
+					return loaded;
 				}
 			});
 
@@ -159,15 +159,12 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 		@Override
 		public Page load(String templateName) throws Exception {
-			DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-			definition.setReadOnly(true);
-			TransactionStatus status = platformTransactionManager.getTransaction(definition);
-			try {
-				Page converted = TemplateUtils.convert(templateName);
-				Space space = converted.getSpace();
-				if (space != null) {
-					space = spaceCache.checkSpace(space.getId());
-				}
+			Page converted = TemplateUtils.convert(templateName);
+			Space space = converted.getSpace();
+			if (space != null) {
+				space = spaceCache.checkSpace(space.getId());
+			}
+			Page page = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 				switch (converted.getType()) {
 				case SYSTEM:
 					SysPage sysPage = (SysPage) converted;
@@ -177,23 +174,24 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
 				case LOCK:
 					LockPage lockPage = (LockPage) converted;
-					return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
+					try {
+						return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
+					} catch (LogicException e) {
+						throw new RuntimeLogicException(e);
+					}
 				case USER:
 					UserPage userPage = (UserPage) converted;
 					UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), userPage.getAlias());
 					if (db == null) {
-						throw new LogicException(USER_PAGE_NOT_EXISTS);
+						throw new RuntimeLogicException(USER_PAGE_NOT_EXISTS);
 					}
 					return db;
 				default:
 					throw new SystemException("无法确定" + converted.getType() + "的页面类型");
 				}
-			} catch (RuntimeException | Error e) {
-				status.setRollbackOnly();
-				throw e;
-			} finally {
-				platformTransactionManager.commit(status);
-			}
+			});
+			UICacheManager.clearCachesFor(templateName);
+			return page;
 		}
 	});
 
@@ -362,9 +360,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			userPageDao.insert(userPage);
 		}
 
-		UserPage requery = (UserPage) queryPage(TemplateUtils.getTemplateName(userPage));
 		EventType type = update ? EventType.UPDATE : EventType.INSERT;
-		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, requery));
+		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, userPage));
 	}
 
 	@Override
@@ -481,12 +478,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	public Page queryPage(String templateName) throws LogicException {
 		try {
 			return TemplateUtils.clone(pageCache.get(templateName));
-		} catch (CompletionException e) {
-			Throwable cause = e.getCause();
-			if (cause instanceof LogicException) {
-				throw (LogicException) cause;
-			}
-			throw new SystemException(e.getMessage(), e);
+		} catch (RuntimeLogicException e) {
+			throw e.getLogicException();
 		}
 	}
 
@@ -526,6 +519,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			ImportOption importOption) {
 		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
 		td.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+		td.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		TransactionStatus ts = platformTransactionManager.getTransaction(td);
 		try {
 			if (CollectionUtils.isEmpty(exportPages)) {
@@ -794,33 +788,12 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		Transactions.afterCommit(() -> {
 			for (String templateName : templateNames) {
 				pageCache.invalidate(templateName);
-				UICacheManager.clearCachesFor(templateName);
 			}
 		});
 	}
 
 	private void evitPageCache(Page... pages) {
 		evitPageCache(Arrays.stream(pages).map(TemplateUtils::getTemplateName).toArray(i -> new String[i]));
-	}
-
-	private void evitUIFragmentCache(Fragment fragment) {
-		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(fragment));
-		if (fragment instanceof UserFragment) {
-			UserFragment userFragment = (UserFragment) fragment;
-			// 如果不是全局的，清除可能存在的全局模板缓存
-			if (!userFragment.isGlobal()) {
-				UserFragment uf = new UserFragment();
-				uf.setGlobal(true);
-				uf.setName(userFragment.getName());
-				uf.setSpace(userFragment.getSpace());
-
-				UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(uf));
-			}
-		}
-		// 清除默认模板缓存
-		Fragment defaultFragment = new Fragment();
-		defaultFragment.setName(fragment.getName());
-		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(defaultFragment));
 	}
 
 	/*
@@ -842,16 +815,22 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 	}
 
-	private synchronized void evitFragmentCache(Fragment... fragments) {
+	private synchronized void evitFragmentCache(UserFragment... fragments) {
 		Transactions.afterCommit(() -> {
 			if (fragments == null || fragments.length == 0) {
 				return;
 			}
-			fragmentCache.asMap().keySet()
-					.removeIf(x -> Arrays.stream(fragments).anyMatch(fragment -> x.name.equals(fragment.getName())));
+
+			List<Space> spaces = spaceCache.getSpaces(true);
 			for (Fragment fragment : fragments) {
-				evitUIFragmentCache(fragment);
+				String name = fragment.getName();
+				fragmentCache.invalidate(new FragmentKey(null, name));
+				for (Space space : spaces) {
+					FragmentKey key = new FragmentKey(space, fragment.getName());
+					fragmentCache.invalidate(key);
+				}
 			}
+
 		});
 	}
 
@@ -960,5 +939,28 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			fillMap(fragmentMap, space, value.getTpl());
 		}
 		fragmentMap2.clear();
+	}
+
+	private void evitFragmentUI(Fragment result) {
+		if (result == null) {
+			return;
+		}
+		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(result));
+		if (result instanceof UserFragment) {
+			UserFragment userFragment = (UserFragment) result;
+			// 如果不是全局的，清除可能存在的全局模板缓存
+			if (!userFragment.isGlobal()) {
+				UserFragment uf = new UserFragment();
+				uf.setGlobal(true);
+				uf.setName(userFragment.getName());
+				uf.setSpace(userFragment.getSpace());
+
+				UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(uf));
+			}
+		}
+		// 清除默认模板缓存
+		Fragment defaultFragment = new Fragment();
+		defaultFragment.setName(result.getName());
+		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(defaultFragment));
 	}
 }

@@ -38,10 +38,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.event.EventListener;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.api.metaweblog.MetaweblogArticle;
@@ -112,9 +110,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	/**
 	 * 点击策略
 	 */
+	@Autowired(required = false)
 	private HitsStrategy hitsStrategy;
 
 	private ArticleHitManager articleHitManager;
+
+	@Autowired(required = false)
+	private ArticleViewedLogger articleViewedLogger;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -470,6 +472,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return scheduleManager.publish();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * <b>这个方法只提供根据发布时间排序的上下文章</b>
+	 * </p>
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<ArticleNav> getArticleNav(String idOrAlias) {
@@ -517,6 +526,21 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return Collections.emptyList();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过多文章
+	 * 
+	 * @param num
+	 *            记录数，该记录数受到 {@code ArticleViewdLogger}的限制
+	 * @see ArticleViewedLogger#getViewdArticles(int)
+	 * @see ArticleHitManager#hit(Integer)
+	 */
+	@Override
+	public List<Article> getRecentlyViewdArticle(int num) {
+		return articleViewedLogger == null ? Collections.emptyList() : articleViewedLogger.getViewdArticles(num);
+	}
+
 	@Override
 	public void preparePreview(Article article) {
 		if (articleContentHandler != null) {
@@ -534,7 +558,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (rebuildIndex) {
-			this.articleIndexer.rebuildIndex();
+			this.articleIndexer.rebuildIndex(null);
 		}
 
 		if (hitsStrategy == null) {
@@ -594,27 +618,21 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				return 0;
 			} else {
 				LOGGER.debug("开始查询发布文章");
-				List<Article> articles;
 				Timestamp startCopy = new Timestamp(start.getTime());
-				TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
-				try {
-					articles = articleDao.selectScheduled(new Timestamp(now));
-					if (!articles.isEmpty()) {
-						for (Article article : articles) {
+				List<Article> articles = Transactions.executeInTransaction(transactionManager, status -> {
+					Transactions.afterRollback(() -> start = startCopy);
+					List<Article> schedules = articleDao.selectScheduled(new Timestamp(now));
+					if (!schedules.isEmpty()) {
+						for (Article article : schedules) {
 							article.setStatus(ArticleStatus.PUBLISHED);
 							articleDao.update(article);
 						}
-						LOGGER.debug("发布了" + articles.size() + "篇文章");
-						applicationEventPublisher.publishEvent(new ArticleEvent(this, articles, EventType.UPDATE));
+						LOGGER.debug("发布了" + schedules.size() + "篇文章");
+						applicationEventPublisher.publishEvent(new ArticleEvent(this, schedules, EventType.UPDATE));
 					}
 					start = articleDao.selectMinimumScheduleDate();
-				} catch (RuntimeException | Error e) {
-					start = startCopy;
-					status.setRollbackOnly();
-					throw e;
-				} finally {
-					transactionManager.commit(status);
-				}
+					return schedules;
+				});
 				articleIndexer.addOrUpdateDocument(articles.stream().map(Article::getId).toArray(i -> new Integer[i]));
 				return articles.size();
 			}
@@ -640,6 +658,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			Article article = articleCache.getArticle(id);
 			if (article != null && validHit(article)) {
 				hitsStrategy.hit(article);
+
+				if (articleViewedLogger != null) {
+					articleViewedLogger.logViewd(article);
+				}
 			}
 		}
 
@@ -652,7 +674,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 			return hit;
 		}
-
 	}
 
 	/**
@@ -680,7 +701,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	/**
 	 * 默认文章点击策略，文章的点击数将会实时显示
 	 * 
-	 * 
 	 * @see CacheableHitsStrategy
 	 * @author mhlx
 	 *
@@ -690,23 +710,43 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		@Override
 		public void hit(Article article) {
 			synchronized (this) {
-				TransactionStatus ts = transactionManager.getTransaction(new DefaultTransactionDefinition());
 				int hits = article.getHits() + 1;
-				try {
+				Transactions.executeInTransaction(transactionManager, status -> {
 					Integer id = article.getId();
 					articleDao.updateHits(id, hits);
-				} catch (RuntimeException | Error e) {
-					ts.setRollbackOnly();
-					throw e;
-				} finally {
-					transactionManager.commit(ts);
-				}
+				});
+
 				Map<Integer, Integer> hitsMap = new HashMap<>();
 				hitsMap.put(article.getId(), hits);
 				articleCache.updateHits(hitsMap);
 				articleIndexer.addOrUpdateDocument(article.getId());
 			}
 		}
+	}
+
+	/**
+	 * 用来记录最近被访问的文章
+	 * 
+	 * @author Administrator
+	 *
+	 */
+	public interface ArticleViewedLogger {
+
+		/**
+		 * 查询最近被访问的文章
+		 * 
+		 * @param num
+		 *            文章数量
+		 * @return
+		 */
+		List<Article> getViewdArticles(int num);
+
+		/**
+		 * 记录文章
+		 * 
+		 * @param article
+		 */
+		void logViewd(Article article);
 	}
 
 	/**
@@ -738,9 +778,5 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
-	}
-
-	public void setHitsStrategy(HitsStrategy hitsStrategy) {
-		this.hitsStrategy = hitsStrategy;
 	}
 }

@@ -97,9 +97,7 @@ public class UIRender {
 			view.render(model, request, wrapper);
 			return wrapper.getRendered();
 		} catch (Throwable e) {
-			if (e instanceof RuntimeException || e instanceof Error) {
-				markRollBack();
-			}
+			markRollBack();
 			throw UIExceptionUtils.convert(templateName, e);
 		} finally {
 			commit();

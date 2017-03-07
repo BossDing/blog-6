@@ -127,7 +127,7 @@ public interface ArticleDao {
 	 * @return id集合对应的文章集合
 	 */
 	List<Article> selectByIds(Collection<Integer> ids);
-	
+
 	/**
 	 * 根据指定id集合查询对应的文章，只会查询一些构建访问链接等必要的信息
 	 * 
@@ -172,7 +172,7 @@ public interface ArticleDao {
 	 * @return
 	 */
 	int selectHits(Integer id);
-	
+
 	/**
 	 * 上一篇文章
 	 * 
@@ -253,5 +253,13 @@ public interface ArticleDao {
 	 * @return 如果当前没有任何带发表文章，那么返回null
 	 */
 	Timestamp selectMinimumScheduleDate();
+
+	/**
+	 * 根据alias查询文章的id
+	 * 
+	 * @param id
+	 * @return
+	 */
+	Integer selectIdByAlias(String alias);
 
 }

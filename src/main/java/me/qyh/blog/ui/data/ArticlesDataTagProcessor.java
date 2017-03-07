@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.entity.Article;
@@ -47,8 +45,6 @@ import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
  *
  */
 public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Article>> {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleDataTagProcessor.class);
 
 	@Autowired
 	private ArticleService articleService;

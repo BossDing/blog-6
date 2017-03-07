@@ -74,6 +74,12 @@
 					<constructor-arg index="0" value="用户信息" />
 					<constructor-arg index="1" value="myInfo" />
 				</bean>
+				
+				
+				<bean class="me.qyh.blog.ui.data.RecentlyViewdArticlesDataTagProcessor">
+					<constructor-arg index="0" value="最近被访问文章" />
+					<constructor-arg index="1" value="recentlyViewdArticles" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragments">
@@ -97,6 +103,7 @@
 						<entry key="评论统计"
 							value="classpath:resources/fragment/commentStatistics.html" />
 						<entry key="标签统计" value="classpath:resources/fragment/tagStatistics.html" />
+						<entry key="最近被访问文章" value="classpath:resources/fragment/recentlyViewdArticles.html" />
 					</map>
 				</property>
 				<property name="fragments">

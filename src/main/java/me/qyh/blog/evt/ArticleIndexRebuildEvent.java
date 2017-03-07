@@ -17,6 +17,8 @@ package me.qyh.blog.evt;
 
 import org.springframework.context.ApplicationEvent;
 
+import me.qyh.blog.entity.Space;
+
 /**
  * 文章索引重建事件
  * <p>
@@ -36,8 +38,19 @@ public class ArticleIndexRebuildEvent extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public ArticleIndexRebuildEvent(Object source) {
+	private final Space space;
+
+	public ArticleIndexRebuildEvent(Space space, Object source) {
 		super(source);
+		this.space = space;
+	}
+
+	public ArticleIndexRebuildEvent(Object source) {
+		this(null, source);
+	}
+
+	public Space getSpace() {
+		return space;
 	}
 
 }

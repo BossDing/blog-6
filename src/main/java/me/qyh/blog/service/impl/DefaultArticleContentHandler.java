@@ -15,20 +15,11 @@
  */
 package me.qyh.blog.service.impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.jsoup.Jsoup;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Editor;
-import me.qyh.blog.evt.listener.ArticleEventHandlerRegister;
-import me.qyh.blog.evt.listener.EventHandlerAdapter;
 import me.qyh.blog.security.input.Markdown2Html;
 
 /**
@@ -36,26 +27,14 @@ import me.qyh.blog.security.input.Markdown2Html;
  * @author mhlx
  *
  */
-public class DefaultArticleContentHandler implements ArticleContentHandler, InitializingBean {
-
-	private static final String DEFAULT_CACHESPECIFICATION = "maximumSize=500";
-	private String cacheSpecification = DEFAULT_CACHESPECIFICATION;
+public class DefaultArticleContentHandler implements ArticleContentHandler {
 
 	@Autowired
 	private Markdown2Html markdown2Html;
-	@Autowired
-	private ArticleEventHandlerRegister articleEventHandlerRegister;
-
-	private Cache<Integer, String> cache;
 
 	@Override
 	public void handle(Article article) {
-		String content = cache.getIfPresent(article.getId());
-		if (content == null) {
-			content = handleContent(article);
-			cache.put(article.getId(), content);
-		}
-		article.setContent(content);
+		article.setContent(handleContent(article));
 	}
 
 	@Override
@@ -70,31 +49,4 @@ public class DefaultArticleContentHandler implements ArticleContentHandler, Init
 			return Jsoup.parseBodyFragment(article.getContent()).html();
 		}
 	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		if (cacheSpecification != null) {
-			cache = Caffeine.from(cacheSpecification).build();
-		} else {
-			cache = Caffeine.newBuilder().build();
-		}
-		articleEventHandlerRegister.registerTransactionalEventHandler(new EventHandlerAdapter<List<Article>>() {
-
-			@Override
-			public void handleUpdate(List<Article> articles) {
-				cache.invalidateAll(articles.stream().map(Article::getId).collect(Collectors.toList()));
-			}
-
-			@Override
-			public void handleDelete(List<Article> articles) {
-				cache.invalidateAll(articles.stream().map(Article::getId).collect(Collectors.toList()));
-			}
-
-		});
-	}
-
-	public void setCacheSpecification(String cacheSpecification) {
-		this.cacheSpecification = cacheSpecification;
-	}
-
 }

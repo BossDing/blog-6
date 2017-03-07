@@ -2,20 +2,35 @@ package me.qyh.blog.service.impl;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 用来处理一些事务<b>事务提交</b>之后的事情
+ * 用来在新事务中执行一些操作或者处理一些事务<b>事务提交</b>之后的事情
  * <p>
- * <b>这个方法必须在事务中使用，eg</b>
+ * <b>事务提交后的操作必须在事务中使用，eg</b>
  * 
  * <pre>
  * TransactionStatus status = begin();
  * Transactions.afterCommit(() -&gt; System.out.println("commit"));
  * commit(status);
+ * </pre>
+ * 
+ * 或者配合新事务使用
+ * 
+ * <pre>
+ * Transactions.executeInReadOnlyTransaction(manager, status -&gt; {
+ * 	Transactions.afterCommit(() -&gt; System.out.println("commit"));
+ * })
  * </pre>
  * </p>
  * 
@@ -57,6 +72,15 @@ public final class Transactions {
 		});
 	}
 
+	/**
+	 * 事务完成之后回调
+	 * 
+	 * @see TransactionSynchronization#STATUS_COMMITTED
+	 * @see TransactionSynchronization#STATUS_ROLLED_BACK
+	 * @see TransactionSynchronization#STATUS_UNKNOWN
+	 * @param consumer
+	 * 
+	 */
 	public static void afterCompletion(Consumer<Integer> consumer) {
 		Objects.requireNonNull(consumer);
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -66,6 +90,83 @@ public final class Transactions {
 				consumer.accept(status);
 			}
 
+		});
+	}
+
+	/**
+	 * 在 <b><i>新的</i></b> 只读事务中执行操作，并且返回一个结果
+	 * 
+	 * @param platformTransactionManager
+	 * @param callback
+	 * @return
+	 */
+	public static <T> T executeInReadOnlyTransaction(PlatformTransactionManager platformTransactionManager,
+			Function<TransactionStatus, T> function) {
+		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		dtd.setReadOnly(true);
+		return executeInTransaction(platformTransactionManager, dtd, function);
+	}
+
+	/**
+	 * 在 <b><i>新的</i></b> 只读事务中执行操作
+	 * 
+	 * @param platformTransactionManager
+	 * @param consumer
+	 */
+	public static void executeInReadOnlyTransaction(PlatformTransactionManager platformTransactionManager,
+			Consumer<TransactionStatus> consumer) {
+		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		dtd.setReadOnly(true);
+		executeInTransaction(platformTransactionManager, dtd, status -> {
+			consumer.accept(status);
+			return null;
+		});
+	}
+
+	/**
+	 * 在 <b><i>新的</i></b> 默认事务中执行操作，并且返回一个结果
+	 * 
+	 * @param platformTransactionManager
+	 * @param callback
+	 * @see DefaultTransactionDefinition
+	 * @return
+	 */
+	public static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
+			Function<TransactionStatus, T> function) {
+		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		return executeInTransaction(platformTransactionManager, dtd, function);
+	}
+
+	/**
+	 * 在 <b><i>新的</i></b> 默认事务中执行操作
+	 * 
+	 * @param platformTransactionManager
+	 * @param callback
+	 * @see DefaultTransactionDefinition
+	 * @return
+	 */
+	public static void executeInTransaction(PlatformTransactionManager platformTransactionManager,
+			Consumer<TransactionStatus> consumer) {
+		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
+		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		executeInTransaction(platformTransactionManager, dtd, status -> {
+			consumer.accept(status);
+			return null;
+		});
+	}
+
+	private static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
+			TransactionDefinition definition, Function<TransactionStatus, T> function) {
+		TransactionTemplate template = new TransactionTemplate(platformTransactionManager, definition);
+		return template.execute(new TransactionCallback<T>() {
+
+			@Override
+			public T doInTransaction(TransactionStatus status) {
+				return function.apply(status);
+			}
 		});
 	}
 

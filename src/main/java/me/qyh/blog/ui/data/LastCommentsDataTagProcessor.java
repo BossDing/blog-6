@@ -88,6 +88,7 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 			try {
 				return Integer.parseInt(moduleIdStr);
 			} catch (NumberFormatException e) {
+				LOGGER.debug(e.getMessage(), e);
 				return null;
 			}
 		}

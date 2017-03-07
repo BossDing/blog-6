@@ -497,6 +497,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectMinimumScheduleDate" resultType="java.sql.Timestamp">
 		SELECT MIN(pubDate) FROM blog_article WHERE art_status = 1<!-- SCHEDULED -->
 	</select>
+	
+	<select id="selectIdByAlias" resultType="java.lang.Integer">
+		SELECT id FROM blog_article WHERE art_alias = #{alias}
+	</select>
 
 	<sql id="articleDetailSql">
 		SELECT

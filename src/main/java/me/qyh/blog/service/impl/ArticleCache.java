@@ -16,12 +16,11 @@
 package me.qyh.blog.service.impl;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -29,8 +28,13 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.exception.SystemException;
 
-@Component
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleCache {
 
 	@Autowired
@@ -38,14 +42,56 @@ public class ArticleCache {
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
 
+	private final LoadingCache<Integer, Article> idCache;
+
+	public ArticleCache(int expireAfterAccessSec) {
+		if (expireAfterAccessSec < 0) {
+			throw new SystemException("expireAfterAccessSec不能小于0");
+		}
+
+		idCache = Caffeine.newBuilder().expireAfterAccess(expireAfterAccessSec, TimeUnit.SECONDS)
+				.build(new CacheLoader<Integer, Article>() {
+
+					@Override
+					public Article load(Integer key) throws Exception {
+						return Transactions.executeInReadOnlyTransaction(platformTransactionManager, (status) -> {
+							Article article = articleDao.selectById(key);
+							if (article != null && article.isPublished()) {
+								return article;
+							}
+							return null;
+						});
+					}
+				});
+	}
+
+	public ArticleCache() {
+		this(30 * 60);
+	}
+
+	/**
+	 * 根据alias查询文章
+	 * 
+	 * @param alias
+	 * @return
+	 */
 	public Article getArticle(String alias) {
-		Integer id = aliasCache.get(alias);
+		Integer id = articleDao.selectIdByAlias(alias);
 		if (id != null) {
-			return getArticle(id);
+			Article art = articleDao.selectById(id);
+			if (art != null && Objects.equals(alias, art.getAlias())) {
+				return art;
+			}
 		}
 		return null;
 	}
 
+	/**
+	 * 根据id查询文章
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public Article getArticle(Integer id) {
 		Article article = idCache.get(id);
 		if (article != null) {
@@ -62,7 +108,7 @@ public class ArticleCache {
 	 * 
 	 * @param hitsMap
 	 */
-	public synchronized void updateHits(Map<Integer, Integer> hitsMap) {
+	public void updateHits(Map<Integer, Integer> hitsMap) {
 		for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
 			Article article = idCache.get(it.getKey());
 			if (article != null) {
@@ -71,67 +117,10 @@ public class ArticleCache {
 		}
 	}
 
-	public void evit(Integer... ids) {
+	public synchronized void evit(Integer... ids) {
 		for (Integer id : ids) {
-			Article art = idCache.getIfPresent(id);
-			if (art != null) {
-				String alias = art.getAlias();
-				if (alias != null) {
-					aliasCache.invalidate(alias);
-				}
-				idCache.invalidate(id);
-			}
+			idCache.invalidate(id);
 		}
 	}
 
-	private final LoadingCache<String, Integer> aliasCache = Caffeine.newBuilder()
-			.build(new CacheLoader<String, Integer>() {
-
-				@Override
-				public Integer load(String key) throws Exception {
-					DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
-					dtd.setReadOnly(true);
-					TransactionStatus status = platformTransactionManager.getTransaction(dtd);
-					try {
-						Article article = articleDao.selectByAlias(key);
-						if (article != null && article.isPublished()) {
-							idCache.put(article.getId(), article);
-							return article.getId();
-						}
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						platformTransactionManager.commit(status);
-					}
-					return null;
-				}
-			});
-
-	private final LoadingCache<Integer, Article> idCache = Caffeine.newBuilder()
-			.build(new CacheLoader<Integer, Article>() {
-
-				@Override
-				public Article load(Integer key) throws Exception {
-					DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
-					dtd.setReadOnly(true);
-					TransactionStatus status = platformTransactionManager.getTransaction(dtd);
-					try {
-						Article article = articleDao.selectById(key);
-						if (article != null && article.isPublished()) {
-							String alias = article.getAlias();
-							if (alias != null) {
-								aliasCache.put(article.getAlias(), article.getId());
-							}
-							return article;
-						}
-						return null;
-					} catch (RuntimeException | Error e) {
-						status.setRollbackOnly();
-						throw e;
-					} finally {
-						platformTransactionManager.commit(status);
-					}
-				}
-			});
 }

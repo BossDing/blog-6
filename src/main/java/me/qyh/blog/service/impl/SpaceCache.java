@@ -26,12 +26,11 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import me.qyh.blog.dao.SpaceDao;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 
 @Component
@@ -41,6 +40,9 @@ public class SpaceCache implements InitializingBean {
 
 	private final List<Space> cache = new ArrayList<>();
 	private final StampedLock lock = new StampedLock();
+
+	@Autowired
+	private PlatformTransactionManager platformTransactionManager;
 
 	public List<Space> getSpaces(boolean queryPrivate) {
 		long stamp = lock.tryOptimisticRead();
@@ -114,22 +116,19 @@ public class SpaceCache implements InitializingBean {
 	/**
 	 * 重新查询所有空间并载入内存
 	 */
-	public void init() {
-
-		List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
-
-		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-			throw new SystemException("必须在一个事务中");
-		}
+	public synchronized void init() {
 
 		Transactions.afterCommit(() -> {
-			long stamp = lock.writeLock();
-			try {
-				cache.clear();
-				cache.addAll(spaces);
-			} finally {
-				lock.unlockWrite(stamp);
-			}
+			Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+				long stamp = lock.writeLock();
+				try {
+					List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
+					cache.clear();
+					cache.addAll(spaces);
+				} finally {
+					lock.unlockWrite(stamp);
+				}
+			});
 		});
 
 	}
