@@ -50,7 +50,7 @@
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 
-	<bean class="me.qyh.blog.file.local.LocalResourceSimpleUrlHandlerMapping" />
+	<bean class="me.qyh.blog.web.AppSimpleUrlHandlerMapping" />
 
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.security.csrf.HttpSessionCsrfTokenRepository" />

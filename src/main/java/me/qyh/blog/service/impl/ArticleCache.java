@@ -117,10 +117,8 @@ public class ArticleCache {
 		}
 	}
 
-	public synchronized void evit(Integer... ids) {
-		for (Integer id : ids) {
-			idCache.invalidate(id);
-		}
+	public void evit(Integer id) {
+		idCache.invalidate(id);
 	}
 
 }

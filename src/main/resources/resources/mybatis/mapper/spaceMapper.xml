@@ -44,9 +44,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<update id="update">
 		UPDATE blog_space
 		<set>
-			<if test="alias != null">
-				space_alias = #{alias},
-			</if>
 			<if test="name != null">
 				space_name = #{name},
 			</if>

@@ -32,9 +32,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
 
@@ -80,7 +80,7 @@ public class LockManager implements InitializingBean {
 					throw new LockException(lock, lockResource, e.getLogicMessage());
 				} catch (Exception e) {
 					LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
-					throw new LockException(lock, lockResource, new Message("error.system", "系统异常"));
+					throw new LockException(lock, lockResource, Constants.SYSTEM_ERROR);
 				}
 			});
 		}));

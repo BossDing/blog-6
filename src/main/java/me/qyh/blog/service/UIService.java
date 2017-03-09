@@ -36,6 +36,7 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
 
 /**
  * 
@@ -109,7 +110,7 @@ public interface UIService {
 	 * @param id
 	 * @throws LogicException
 	 */
-	void deleteUserPage(Integer id) throws LogicException;
+	void deleteUserPage(Integer id, RequestMappingRegister register) throws LogicException;
 
 	/**
 	 * 保存页面模板
@@ -123,9 +124,11 @@ public interface UIService {
 	 * 保存页面模板
 	 * 
 	 * @param userPage
+	 * @param register
+	 *            路径注册器
 	 * @throws LogicException
 	 */
-	void buildTpl(UserPage userPage) throws LogicException;
+	void buildTpl(UserPage userPage, RequestMappingRegister register) throws LogicException;
 
 	/**
 	 * 删除系统挂件模板
@@ -267,7 +270,8 @@ public interface UIService {
 	 * @throws LogicException
 	 *             空间不存在
 	 */
-	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption);
+	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption,
+			RequestMappingRegister register);
 
 	/**
 	 * 查询可被外部调用的fragment
@@ -276,5 +280,12 @@ public interface UIService {
 	 * @return
 	 */
 	Optional<Fragment> queryCallableFragment(String name);
+
+	/**
+	 * 查询路径可被注册的页面
+	 * 
+	 * @return
+	 */
+	List<UserPage> selectRegistrableUserPages();
 
 }

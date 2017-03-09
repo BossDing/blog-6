@@ -18,6 +18,8 @@ package me.qyh.blog.config;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import me.qyh.blog.message.Message;
+
 /**
  * 系统常量
  * 
@@ -31,6 +33,7 @@ public class Constants {
 	public static final Charset CHARSET = StandardCharsets.UTF_8;
 	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
 	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
+	public static final Message SYSTEM_ERROR = new Message("error.system", "系统异常");
 
 	private Constants() {
 

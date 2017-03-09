@@ -58,6 +58,14 @@
 			</div>
 			<div class="checkbox">
 				<label
+					th:if="${page.registrable == null || !page.registrable}">
+					<input type="checkbox" id="registrable" />可注册的
+				</label> <label
+					th:if="${page.registrable != null && page.registrable}"><input
+					type="checkbox" id="registrable" checked="checked" />可注册的 </label>
+			</div>
+			<div class="checkbox">
+				<label
 					th:if="${page.allowComment == null || !page.allowComment}">
 					<input type="checkbox" id="allowComment" />允许评论
 				</label> <label

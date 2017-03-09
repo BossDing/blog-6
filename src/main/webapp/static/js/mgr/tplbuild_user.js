@@ -49,6 +49,7 @@ function preview() {
 		page.name=$("#name").val();
 		page.description=$("#description").val();
 		page.allowComment = $("#allowComment").prop("checked");
+		page.registrable = $("#registrable").prop("checked");
 		$.ajax({
 			type : "post",
 			url : basePath + '/mgr/page/user/preview',

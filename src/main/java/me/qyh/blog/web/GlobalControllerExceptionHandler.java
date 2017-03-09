@@ -288,7 +288,7 @@ public class GlobalControllerExceptionHandler {
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
 		LOGGER.error(e.getMessage(), e);
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("error.system", "系统异常")));
+			Webs.writeInfo(resp, new JsonResult(false, Constants.SYSTEM_ERROR));
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());

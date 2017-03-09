@@ -417,8 +417,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 		article.setStatus(ArticleStatus.DELETED);
 		articleDao.update(article);
-		articleIndexer.deleteDocument(id);
-		Transactions.afterCommit(() -> articleCache.evit(id));
+
+		Transactions.afterCommit(() -> {
+			articleCache.evit(id);
+			articleIndexer.deleteDocument(id);
+		});
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
 	}

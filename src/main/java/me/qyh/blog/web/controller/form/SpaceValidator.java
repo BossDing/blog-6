@@ -47,21 +47,23 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 
-		String alias = space.getAlias();
-		if (Validators.isEmptyOrNull(alias, true)) {
-			errors.reject("space.alias.blank", "别名为空");
-			return;
-		}
-		if (alias.length() > MAX_ALIAS_LENGTH) {
-			errors.reject("space.alias.toolong", new Object[] { MAX_ALIAS_LENGTH }, "别名不能超过" + MAX_NAME_LENGTH + "个字符");
-			return;
-		}
-		char[] chars = alias.toCharArray();
-		for (char ch : chars) {
-			if (!isAllowLetter(ch) && ch != '-') {
-				errors.reject("space.alias.invalid", "别名只能包含英文字母，数字和'-'");
+		if (!space.hasId()) {
+			String alias = space.getAlias();
+			if (Validators.isEmptyOrNull(alias, true)) {
+				errors.reject("space.alias.blank", "别名为空");
 				return;
 			}
+			if (alias.length() > MAX_ALIAS_LENGTH) {
+				errors.reject("space.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
+						"别名不能超过" + MAX_NAME_LENGTH + "个字符");
+				return;
+			}
+			if (!Validators.isLetterOrNum(alias)) {
+				errors.reject("space.alias.invalid", "别名只能包含英文字母和数字");
+				return;
+			}
+		} else {
+			space.setAlias(null);
 		}
 
 		if (space.getIsPrivate() == null) {
@@ -91,17 +93,4 @@ public class SpaceValidator implements Validator {
 			return;
 		}
 	}
-
-	/**
-	 * Character.isLetterOrDigit()无法判断中文
-	 * 
-	 * @param ch
-	 * @return
-	 * @see Character#isLetterOrDigit(char)
-	 */
-	private boolean isAllowLetter(char ch) {
-		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch)
-				|| ('_' == ch);
-	}
-
 }

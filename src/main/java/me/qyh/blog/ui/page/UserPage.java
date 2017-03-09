@@ -31,6 +31,7 @@ public class UserPage extends Page {
 	private Timestamp createDate;
 	private String alias;
 	private Boolean allowComment;// 是否允许评论
+	private boolean registrable;// 是否可注册，如果为true，那么将直接被注册到RequestMapping中
 
 	public UserPage() {
 		super();
@@ -45,8 +46,13 @@ public class UserPage extends Page {
 	}
 
 	public UserPage(Space space, String alias) {
+		this(space, alias, false);
+	}
+
+	public UserPage(Space space, String alias, boolean registrable) {
 		super(space);
 		this.alias = alias;
+		this.registrable = registrable;
 	}
 
 	public UserPage(UserPage page) {
@@ -56,6 +62,7 @@ public class UserPage extends Page {
 		this.createDate = page.createDate;
 		this.alias = page.alias;
 		this.allowComment = page.allowComment;
+		this.registrable = page.registrable;
 	}
 
 	public String getName() {
@@ -98,6 +105,14 @@ public class UserPage extends Page {
 		this.allowComment = allowComment;
 	}
 
+	public boolean isRegistrable() {
+		return registrable;
+	}
+
+	public void setRegistrable(boolean registrable) {
+		this.registrable = registrable;
+	}
+
 	@Override
 	public final PageType getType() {
 		return PageType.USER;
@@ -108,7 +123,14 @@ public class UserPage extends Page {
 		page.setTpl(getTpl());
 		page.setType(PageType.USER);
 		page.setAlias(alias);
+		page.setRegistrable(registrable);
 		return page;
+	}
+
+	@Override
+	public String toString() {
+		return "UserPage [name=" + name + ", description=" + description + ", createDate=" + createDate + ", alias="
+				+ alias + ", allowComment=" + allowComment + ", registrable=" + registrable + "]";
 	}
 
 }

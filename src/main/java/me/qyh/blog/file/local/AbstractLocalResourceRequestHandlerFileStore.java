@@ -46,6 +46,7 @@ import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.MappingRegister;
 import me.qyh.blog.web.Webs;
 
 /**
@@ -74,6 +75,8 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 
 	@Autowired
 	protected UrlHelper urlHelper;
+	@Autowired
+	private MappingRegister mappingRegister;
 
 	public AbstractLocalResourceRequestHandlerFileStore(String urlPatternPrefix) {
 		super();
@@ -229,9 +232,9 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			urlPrefix = urlHelper.getUrl() + urlPatternPrefix;
 		}
 
-		LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "/**", this);
+		mappingRegister.registerMapping(urlPatternPrefix + "/**", this);
 		if (enableDownloadHandler) {
-			LocalResourceHttpRequestHandlerHolder.put(urlPatternPrefix + "_download/**", new DownloadHandler());
+			mappingRegister.registerMapping(urlPatternPrefix + "_download/**", new DownloadHandler());
 		}
 
 		/**

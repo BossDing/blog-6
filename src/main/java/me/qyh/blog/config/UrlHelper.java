@@ -222,8 +222,9 @@ public class UrlHelper implements InitializingBean {
 		 */
 		public String getUrl(UserPage userPage) {
 			String alias = userPage.getAlias();
-			if (alias == null) {
-				return getUrl(userPage.getSpace()) + "/page/" + userPage.getId();
+			Objects.requireNonNull(alias);
+			if (userPage.isRegistrable()) {
+				return getUrl(userPage.getSpace()) + "/" + alias;
 			} else {
 				return getUrl(userPage.getSpace()) + "/page/" + alias;
 			}

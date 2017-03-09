@@ -33,11 +33,11 @@ public class PageMgrController extends BaseMgrController {
 	public String preview(HttpServletRequest request, Model model) {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			return "redirect:/mgr/tpl/build/index";
+			return "redirect:/mgr/page/sys/index";
 		} else {
 			String rendered = (String) session.getAttribute(Constants.TEMPLATE_PREVIEW_KEY);
 			if (rendered == null) {
-				return "redirect:/mgr/tpl/build/index";
+				return "redirect:/mgr/page/sys/index";
 			} else {
 				model.addAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 				return "mgr/page/preview";

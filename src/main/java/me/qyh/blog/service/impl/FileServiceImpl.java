@@ -42,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.bean.BlogFilePageResult;
 import me.qyh.blog.bean.ExpandedCommonFile;
 import me.qyh.blog.bean.UploadedFile;
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.dao.BlogFileDao;
 import me.qyh.blog.dao.CommonFileDao;
@@ -196,7 +197,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		} catch (RuntimeException | Error e) {
 			store.delete(key);
 			LOGGER.error(e.getMessage(), e);
-			throw new LogicException("error.system", "系统异常");
+			throw new LogicException(Constants.SYSTEM_ERROR);
 		}
 	}
 

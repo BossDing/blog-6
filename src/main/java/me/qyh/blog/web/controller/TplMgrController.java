@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.TemplateEngine;
 
@@ -48,11 +50,12 @@ import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Times;
+import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
 import me.qyh.blog.web.controller.form.ExportPageValidator;
 
 @Controller
 @RequestMapping("mgr/tpl")
-public class TplMgrController extends BaseMgrController {
+public class TplMgrController extends BaseMgrController implements InitializingBean {
 
 	@Autowired
 	private UIService uiService;
@@ -62,6 +65,10 @@ public class TplMgrController extends BaseMgrController {
 	private TemplateEngine templateEngine;
 	@Autowired
 	private ExportPageValidator exportPageValidator;
+	@Autowired
+	private RequestMappingHandlerMapping mapping;
+
+	private RequestMappingRegister requestMappingRegister;
 
 	@RequestMapping(value = "export", method = RequestMethod.POST)
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
@@ -115,7 +122,7 @@ public class TplMgrController extends BaseMgrController {
 			toImportPages.add(exportPage);
 			bindingResult.getTargetMap().clear();
 		}
-		records.addAll(uiService.importPage(spaceId, toImportPages, importOption));
+		records.addAll(uiService.importPage(spaceId, toImportPages, importOption, requestMappingRegister));
 		return new JsonResult(true, records);
 	}
 
@@ -141,6 +148,11 @@ public class TplMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult queryDatas() {
 		return new JsonResult(true, uiService.queryDataTags());
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		requestMappingRegister = new RequestMappingRegister(mapping);
 	}
 
 	private ResponseEntity<byte[]> download(List<ExportPage> pages, Space space) {

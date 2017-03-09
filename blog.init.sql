@@ -162,3 +162,5 @@ CREATE TABLE IF NOT EXISTS `blog_tag` (
   `create_date` datetime NOT NULL,
   PRIMARY KEY (`id`)
 );
+
+ALTER TABLE blog_page_user` add COLUMN page_registrable BOOLEAN NOT NULL DEFAULT FALSE;

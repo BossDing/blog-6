@@ -84,12 +84,6 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		if (db == null) {
 			throw new LogicException("space.notExists", "空间不存在");
 		}
-		Space aliasDb = spaceDao.selectByAlias(space.getAlias());
-		if (aliasDb != null && !aliasDb.equals(db)) {
-			throw new LogicException(
-					new Message("space.alias.exists", "别名为" + space.getAlias() + "的空间已经存在了", space.getAlias()));
-		}
-
 		Space nameDb = spaceDao.selectByName(space.getName());
 		if (nameDb != null && !nameDb.equals(db)) {
 			throw new LogicException(

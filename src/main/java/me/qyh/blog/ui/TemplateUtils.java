@@ -39,6 +39,7 @@ import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.FileUtils;
 
 public final class TemplateUtils {
 
@@ -137,7 +138,7 @@ public final class TemplateUtils {
 	 */
 	public static String getTemplateName(UserPage userPage) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(USERPAGE_PREFIX).append(userPage.getAlias());
+		sb.append(USERPAGE_PREFIX).append(cleanUserPageAlias(userPage.getAlias()));
 		Space space = userPage.getSpace();
 		if (space != null && space.hasId()) {
 			sb.append(SPLITER).append(space.getId());
@@ -238,7 +239,7 @@ public final class TemplateUtils {
 			return new UserPage(array[1]);
 		}
 		if (array.length == 3) {
-			return new UserPage(new Space(Integer.parseInt(array[2])), array[1]);
+			return new UserPage(new Space(Integer.parseInt(array[2])), cleanUserPageAlias(array[1]));
 		}
 		throw new SystemException(templateName + "无法转化为用户自定义页面");
 	}
@@ -348,6 +349,16 @@ public final class TemplateUtils {
 			}
 		}
 		throw new TemplateProcessingException("ApplicationContext为null");
+	}
+
+	/**
+	 * 清理自定义页面路径 删除连续的 '/'以及首尾的 '/'
+	 * 
+	 * @param alias
+	 * @return
+	 */
+	public static String cleanUserPageAlias(String alias) {
+		return FileUtils.cleanPath(alias);
 	}
 
 	private static String buildTag(String tagName, String name, Map<String, String> atts) {

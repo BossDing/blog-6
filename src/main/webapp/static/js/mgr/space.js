@@ -13,7 +13,6 @@ $(document).ready(function() {
 			if(data.success){
 				data = data.data;
 				modal.find('.modal-body input[name="name"]').val(data.name);
-				modal.find('.modal-body input[name="alias"]').val(data.alias);
 				modal.find('.modal-body input[name="articlePageSize"]').val(data.articlePageSize);
 				modal.find('.modal-body input[name="isPrivate"]').prop("checked",data.isPrivate);
 				modal.find('.modal-body input[name="isDefault"]').prop("checked",data.isDefault);

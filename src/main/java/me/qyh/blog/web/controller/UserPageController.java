@@ -15,13 +15,16 @@
  */
 package me.qyh.blog.web.controller;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.HandlerMapping;
 
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -29,11 +32,21 @@ import me.qyh.blog.web.controller.form.PageValidator;
 @Controller
 public class UserPageController {
 
-	@RequestMapping(value = { "page/{alias}", "space/{alias}/page/{alias}" }, method = RequestMethod.GET)
-	public Page index(@PathVariable("alias") String alias) throws LogicException {
-		if (!PageValidator.validateUserPageAlias(alias)) {
-			throw new LogicException("page.user.notExists", "页面不存在");
+	@RequestMapping(value = { "page/**", "space/{alias}/page/**" }, method = RequestMethod.GET)
+	public Page index(HttpServletRequest request) throws LogicException {
+		String alias = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+		if (alias != null) {
+			alias = TemplateUtils.cleanUserPageAlias(alias);
+			if (alias.startsWith("page")) {
+				alias = alias.substring(5);
+			} else {
+				// space length + 1 + page length + 1 + 1 = 12
+				alias = alias.substring(12 + Environment.getSpaceAlias().map(String::length).orElse(0));
+			}
+			if (PageValidator.validateUserPageAlias(alias, false)) {
+				return new UserPage(Environment.getSpace().orElse(null), alias);
+			}
 		}
-		return new UserPage(Environment.getSpace().orElse(null), alias);
+		throw new LogicException("page.user.notExists", "页面不存在");
 	}
 }

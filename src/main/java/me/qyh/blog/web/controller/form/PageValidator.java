@@ -19,13 +19,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
-import me.qyh.blog.util.Validators;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Validators;
 
 @Component
 public class PageValidator implements Validator {
@@ -34,7 +35,14 @@ public class PageValidator implements Validator {
 
 	protected static final int PAGE_NAME_MAX_LENGTH = 20;
 	protected static final int PAGE_DESCRIPTION_MAX_LENGTH = 500;
-	protected static final int PAGE_ALIAS_MAX_LENGTH = 30;
+	protected static final int PAGE_ALIAS_MAX_LENGTH = 255;
+
+	/**
+	 * 最长深度 String.split("/").length
+	 */
+	private static final int MAX_ALIAS_DEPTH = 10;
+
+	private static final String NO_REGISTRABLE_ALIAS_PATTERN = "^[A-Za-z0-9_-]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -103,7 +111,7 @@ public class PageValidator implements Validator {
 						"页面描述不能超过" + PAGE_DESCRIPTION_MAX_LENGTH + "个字符");
 				return;
 			}
-			String alias = userPage.getAlias();
+			String alias = TemplateUtils.cleanUserPageAlias(userPage.getAlias());
 			if (Validators.isEmptyOrNull(alias, true)) {
 				errors.reject("page.alias.blank", "页面别名不能为空");
 				return;
@@ -113,10 +121,12 @@ public class PageValidator implements Validator {
 						"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
 				return;
 			}
-			if (!validateUserPageAlias(alias)) {
+			if (!validateUserPageAlias(alias, userPage.isRegistrable())) {
 				errors.reject("page.alias.invalid", "页面别名不被允许");
 				return;
 			}
+
+			userPage.setAlias(alias);
 
 			if (userPage.getAllowComment() == null) {
 				errors.reject("page.allowComment", "是否允许评论不能为空");
@@ -126,23 +136,45 @@ public class PageValidator implements Validator {
 
 	}
 
-	public static boolean validateUserPageAlias(String alias) {
-		for (char ch : alias.toCharArray()) {
-			if (!allowChar(ch)) {
+	public static boolean validateUserPageAlias(String alias, boolean registrable) {
+
+		/**
+		 * 这里重复校验了，为了 UserPageController
+		 */
+		if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
+			return false;
+		}
+
+		if (alias.indexOf('/') == -1) {
+			return doValidateUserPageAlias(alias, registrable);
+		} else {
+
+			String[] aliasArray = alias.split("/");
+			if (aliasArray.length > MAX_ALIAS_DEPTH) {
 				return false;
 			}
+			for (String _alias : aliasArray) {
+				if (!doValidateUserPageAlias(_alias, registrable)) {
+					return false;
+				}
+			}
+			return true;
 		}
-		// 不能为纯数字，防止和id混淆
-		try {
-			Integer.parseInt(alias);
-			return false;
-		} catch (Exception e) {
-		}
-		return true;
 	}
 
-	private static boolean allowChar(char ch) {
-		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ('-' == ch)
-				|| ('_' == ch);
+	private static boolean doValidateUserPageAlias(String alias, boolean registrable) {
+		if (registrable) {
+			if (alias.startsWith("{")) {
+				if (!alias.endsWith("}")) {
+					return false;
+				}
+				String pattern = alias.substring(1, alias.length() - 1);
+				return Validators.isLetter(pattern);
+			} else {
+				return alias.matches(NO_REGISTRABLE_ALIAS_PATTERN);
+			}
+		} else {
+			return alias.matches(NO_REGISTRABLE_ALIAS_PATTERN);
+		}
 	}
 }

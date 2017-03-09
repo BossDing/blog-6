@@ -35,6 +35,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -56,6 +58,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.bean.ImportRecord;
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.LockPageDao;
 import me.qyh.blog.dao.SysPageDao;
@@ -91,6 +94,7 @@ import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
 import me.qyh.blog.web.controller.form.PageValidator;
 
 public class UIServiceImpl implements UIService, InitializingBean, ApplicationEventPublisherAware {
@@ -124,6 +128,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private List<DataTagProcessor<?>> processors = new ArrayList<>();
 
 	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(UIServiceImpl.class);
 
 	private final LoadingCache<FragmentKey, Fragment> fragmentCache = Caffeine.newBuilder()
 			.build(new CacheLoader<FragmentKey, Fragment>() {
@@ -159,35 +165,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 		@Override
 		public Page load(String templateName) throws Exception {
-			Page converted = TemplateUtils.convert(templateName);
-			Space space = converted.getSpace();
-			if (space != null) {
-				space = spaceCache.checkSpace(space.getId());
-			}
 			Page page = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				switch (converted.getType()) {
-				case SYSTEM:
-					SysPage sysPage = (SysPage) converted;
-					return querySysPage(sysPage.getSpace(), sysPage.getTarget());
-				case ERROR:
-					ErrorPage errorPage = (ErrorPage) converted;
-					return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
-				case LOCK:
-					LockPage lockPage = (LockPage) converted;
-					try {
-						return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
-					} catch (LogicException e) {
-						throw new RuntimeLogicException(e);
-					}
-				case USER:
-					UserPage userPage = (UserPage) converted;
-					UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), userPage.getAlias());
-					if (db == null) {
-						throw new RuntimeLogicException(USER_PAGE_NOT_EXISTS);
-					}
-					return db;
-				default:
-					throw new SystemException("无法确定" + converted.getType() + "的页面类型");
+				try {
+					return queryPageWithTemplateName(templateName);
+				} catch (LogicException e) {
+					throw new RuntimeLogicException(e);
 				}
 			});
 			UICacheManager.clearCachesFor(templateName);
@@ -292,14 +274,23 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteUserPage(Integer id) throws LogicException {
+	public void deleteUserPage(Integer id, RequestMappingRegister register) throws LogicException {
+		final UserPageMappingStatus status = new UserPageMappingStatus(register);
+		Transactions.afterRollback(() -> {
+			status.rollback();
+		});
 		UserPage db = userPageDao.selectById(id);
 		if (db == null) {
 			throw new LogicException(USER_PAGE_NOT_EXISTS);
 		}
 		userPageDao.deleteById(id);
-		evitPageCache(db);
+		String templateName = TemplateUtils.getTemplateName(db);
+		evitPageCache(templateName);
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
+		if (db.isRegistrable()) {
+			register.unregisterMapping(db);
+			status.regist = db;
+		}
 	}
 
 	@Override
@@ -331,7 +322,9 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void buildTpl(UserPage userPage) throws LogicException {
+	public void buildTpl(UserPage userPage, RequestMappingRegister register) throws LogicException {
+		final UserPageMappingStatus status = new UserPageMappingStatus(register);
+		Transactions.afterRollback(() -> status.rollback());
 		checkSpace(userPage);
 		String alias = userPage.getAlias();
 		userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -346,10 +339,15 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			if (aliasPage != null && !aliasPage.getId().equals(userPage.getId())) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
-			userPage.setId(db.getId());
 			userPageDao.update(userPage);
 
 			evitPageCache(db);
+
+			// 解除以前的mapping
+			if (db.isRegistrable()) {
+				register.unregisterMapping(db);
+				status.regist = db;
+			}
 
 		} else {
 			// 检查
@@ -360,8 +358,39 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			userPageDao.insert(userPage);
 		}
 
+		// 注册现在的页面
+		if (userPage.isRegistrable()) {
+			register.registerMapping(userPage);
+			status.unregist = userPage;
+		}
+
 		EventType type = update ? EventType.UPDATE : EventType.INSERT;
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, userPage));
+	}
+
+	private final class UserPageMappingStatus {
+
+		private UserPage unregist;
+		private UserPage regist;
+		private final RequestMappingRegister register;
+
+		public UserPageMappingStatus(RequestMappingRegister register) {
+			super();
+			this.register = register;
+		}
+
+		private void rollback() {
+			try {
+				if (regist != null) {
+					register.registerMapping(regist);
+				}
+				if (unregist != null) {
+					register.unregisterMapping(unregist);
+				}
+			} catch (Exception e) {
+				throw new SystemException(e.getMessage(), e);
+			}
+		}
 	}
 
 	@Override
@@ -515,16 +544,23 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public List<UserPage> selectRegistrableUserPages() {
+		return userPageDao.selectRegistrable();
+	}
+
+	@Override
 	public synchronized List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages,
-			ImportOption importOption) {
+			ImportOption importOption, RequestMappingRegister register) {
+		if (CollectionUtils.isEmpty(exportPages)) {
+			return new ArrayList<>();
+		}
 		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
 		td.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
 		td.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		TransactionStatus ts = platformTransactionManager.getTransaction(td);
+		List<ImportRecord> records = new ArrayList<>();
 		try {
-			if (CollectionUtils.isEmpty(exportPages)) {
-				return new ArrayList<>();
-			}
 			Space space = null;
 			try {
 				space = spaceCache.checkSpace(spaceId);
@@ -535,7 +571,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			if (importOption == null) {
 				importOption = new ImportOption();
 			}
-			List<ImportRecord> records = new ArrayList<>();
 			Set<String> pageEvitKeySet = new HashSet<>();
 			Set<String> fragmentEvitKeySet = new HashSet<>();
 			for (ExportPage exportPage : exportPages) {
@@ -545,7 +580,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 				Page current;
 				try {
 					// 查询当前页面
-					current = queryPage(templateName);
+					current = queryPageWithTemplateName(templateName);
 				} catch (LogicException e) {
 					// 如果用户页面不存在
 					if (USER_PAGE_NOT_EXISTS.getCodes()[0].equals(e.getLogicMessage().getCodes()[0])) {
@@ -557,7 +592,23 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 							userPage.setName(userPage.getAlias());
 							userPage.setSpace(space);
 							userPage.setAllowComment(false);
-							userPageDao.insert(userPage);
+
+							try {
+								buildTpl(userPage, register);
+							} catch (Throwable ex) {
+								if (ex instanceof LogicException) {
+									records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
+									if (importOption.isContinueOnFailure() && !userPage.isRegistrable()) {
+										continue;
+									}
+									ts.setRollbackOnly();
+									return records;
+								}
+								LOGGER.error(ex.getMessage(), ex);
+								records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+								return records;
+							}
+
 							records.add(new ImportRecord(true, new Message("import.insert.tpl.success",
 									"插入模板" + templateName + "成功", templateName)));
 							continue;
@@ -572,7 +623,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					return records;
 				}
 				// 如果页面内容没有改变
-				if (current.getTpl().equals(page.getTpl())) {
+				if (checkChangeWhenImport(current, page)) {
 					records.add(new ImportRecord(true,
 							new Message("import.tpl.nochange", "模板" + templateName + "内容没有发生变化，无需更新", templateName)));
 					continue;
@@ -610,7 +661,22 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					break;
 				case USER:
 					UserPage userPage = (UserPage) current;
-					userPageDao.update(userPage);
+					userPage.setRegistrable(((UserPage) page).isRegistrable());
+					try {
+						buildTpl(userPage, register);
+					} catch (Throwable ex) {
+						if (ex instanceof LogicException) {
+							records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
+							if (importOption.isContinueOnFailure() && !userPage.isRegistrable()) {
+								continue;
+							}
+							ts.setRollbackOnly();
+							return records;
+						}
+						LOGGER.error(ex.getMessage(), ex);
+						records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+						return records;
+					}
 					update = true;
 					break;
 				default:
@@ -677,10 +743,25 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			return records;
 		} catch (RuntimeException | Error e) {
 			ts.setRollbackOnly();
-			throw e;
+			LOGGER.error(e.getMessage(), e);
+			records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+			return records;
 		} finally {
 			platformTransactionManager.commit(ts);
 		}
+	}
+
+	private boolean checkChangeWhenImport(Page old, Page current) {
+		if (current.getTpl().equals(old.getTpl())) {
+			// 如果页面内容没有改变
+			if (old instanceof UserPage) {
+				UserPage oldUserPage = (UserPage) old;
+				UserPage currentUserPage = (UserPage) current;
+				return Objects.equals(oldUserPage.isRegistrable(), currentUserPage.isRegistrable());
+			}
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -832,6 +913,38 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			}
 
 		});
+	}
+
+	private Page queryPageWithTemplateName(String template) throws LogicException {
+		Page converted = TemplateUtils.convert(template);
+		Space space = converted.getSpace();
+		if (space != null) {
+			space = spaceCache.checkSpace(space.getId());
+		}
+		switch (converted.getType()) {
+		case SYSTEM:
+			SysPage sysPage = (SysPage) converted;
+			return querySysPage(sysPage.getSpace(), sysPage.getTarget());
+		case ERROR:
+			ErrorPage errorPage = (ErrorPage) converted;
+			return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
+		case LOCK:
+			LockPage lockPage = (LockPage) converted;
+			try {
+				return queryLockPage(lockPage.getSpace(), lockPage.getLockType());
+			} catch (LogicException e) {
+				throw new RuntimeLogicException(e);
+			}
+		case USER:
+			UserPage userPage = (UserPage) converted;
+			UserPage db = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), userPage.getAlias());
+			if (db == null) {
+				throw new LogicException(USER_PAGE_NOT_EXISTS);
+			}
+			return db;
+		default:
+			throw new SystemException("无法确定" + converted.getType() + "的页面类型");
+		}
 	}
 
 	private SysPage querySysPage(Space space, PageTarget target) {

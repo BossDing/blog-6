@@ -70,7 +70,7 @@
 					<h4 class="modal-title" id="spaceModalLabel">新的空间</h4>
 				</div>
 				<div class="modal-body">
-					<div class="alert alert-warning">空间一旦创建成功，将无法被删除，请慎重</div>
+					<div class="alert alert-warning">空间一旦创建成功，无法被删除，同时别名将无法被更改，请慎重</div>
 					<div class="tip"></div>
 					<form>
 						<div class="form-group">
@@ -88,8 +88,9 @@
 							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
 						<div class="form-group">
-							<label for="articlePageSize" class="control-label">文章每页显示数量(1~50):</label> <input
-								type="text" class="form-control" name="articlePageSize" value="10">
+							<label for="articlePageSize" class="control-label">文章每页显示数量(1~50):</label>
+							<input type="text" class="form-control" name="articlePageSize"
+								value="10">
 						</div>
 						<div class="lock_container"></div>
 					</form>
@@ -121,10 +122,6 @@
 							<label for="alias" class="control-label">空间名(1~20个字符):</label> <input
 								type="text" class="form-control" name="name">
 						</div>
-						<div class="form-group">
-							<label for="alias" class="control-label">别名(1~20个字母):</label> <input
-								type="text" class="form-control" name="alias">
-						</div>
 						<div class="checkbox">
 							<label><input type="checkbox" name="isDefault" />默认 </label>
 						</div>
@@ -132,8 +129,8 @@
 							<label><input type="checkbox" name="isPrivate" />私人 </label>
 						</div>
 						<div class="form-group">
-							<label for="articlePageSize" class="control-label">文章每页显示数量(1~50):</label> <input
-								type="text" class="form-control" name="articlePageSize">
+							<label for="articlePageSize" class="control-label">文章每页显示数量(1~50):</label>
+							<input type="text" class="form-control" name="articlePageSize">
 						</div>
 						<div class="lock_container"></div>
 					</form>
