@@ -36,14 +36,7 @@ public class ParseContext {
 	private static final ThreadLocal<TransactionStatus> transactionLocal = new ThreadLocal<>();
 	private static final ThreadLocal<Page> pageLocal = new ThreadLocal<>();
 	private static final ThreadLocal<ParseConfig> configLocal = new ThreadLocal<>();
-	private static final ThreadLocal<Map<String, Fragment>> fragmentsLocal = new ThreadLocal<Map<String, Fragment>>() {
-
-		@Override
-		protected Map<String, Fragment> initialValue() {
-			return new HashMap<>();
-		}
-
-	};
+	private static final ThreadLocal<Map<String, Fragment>> fragmentsLocal = ThreadLocal.withInitial(HashMap::new);
 
 	public static final ParseConfig DEFAULT_CONFIG = new ParseConfig();
 
@@ -153,5 +146,4 @@ public class ParseContext {
 			return disposible;
 		}
 	}
-
 }

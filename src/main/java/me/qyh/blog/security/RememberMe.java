@@ -117,7 +117,10 @@ public class RememberMe {
 
 	private void setCookie(Cookie cookie, HttpServletRequest request) {
 		SessionCookieConfig scg = request.getServletContext().getSessionCookieConfig();
-		cookie.setDomain(scg.getDomain());
+		String domain = scg.getDomain();
+		if (domain != null) {
+			cookie.setDomain(domain);
+		}
 		cookie.setHttpOnly(scg.isHttpOnly());
 		cookie.setSecure(scg.isSecure());
 		cookie.setPath(scg.getPath());

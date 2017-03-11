@@ -53,7 +53,9 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		SessionCookieConfig config = sc.getSessionCookieConfig();
 		config.setHttpOnly(true);
 		config.setSecure(helper.isSecure());
-		config.setDomain(helper.getRootDomain());
+		if (!helper.isLocalDomain()) {
+			config.setDomain(helper.getRootDomain());
+		}
 		String contextPath = helper.getContextPath();
 		if (contextPath.isEmpty()) {
 			config.setPath("/");

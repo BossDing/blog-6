@@ -273,6 +273,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteUserPage(Integer id, RequestMappingRegister register) throws LogicException {
 		final UserPageMappingStatus status = new UserPageMappingStatus(register);
@@ -550,8 +551,9 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
-	public synchronized List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages,
-			ImportOption importOption, RequestMappingRegister register) {
+	@Sync
+	public List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption,
+			RequestMappingRegister register) {
 		if (CollectionUtils.isEmpty(exportPages)) {
 			return new ArrayList<>();
 		}

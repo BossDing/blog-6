@@ -54,7 +54,7 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	}
 
 	@Override
-	public final Optional<String[]> getLockIds() {
+	public Optional<String[]> getLockIds() {
 		return lockId == null ? Optional.empty() : Optional.of(new String[] { lockId });
 	}
 
