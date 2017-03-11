@@ -4,7 +4,7 @@
 ## demo: https://www.qyh.me
 
 
-## detail: https://www.qyh.me/page/blog
+## detail: https://www.qyh.me/project/blog
 
 
 
