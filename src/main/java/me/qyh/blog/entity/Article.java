@@ -16,9 +16,7 @@
 package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -341,18 +339,6 @@ public class Article extends BaseLockResource {
 
 	public void setAllowComment(Boolean allowComment) {
 		this.allowComment = allowComment;
-	}
-
-	@Override
-	public final Optional<String[]> getLockIds() {
-		List<String> lockIdList = new ArrayList<>();
-		if (space != null && space.getLockId() != null) {
-			lockIdList.add(space.getLockId());
-		}
-		if (getLockId() != null) {
-			lockIdList.add(getLockId());
-		}
-		return lockIdList.isEmpty() ? Optional.empty() : Optional.of(lockIdList.toArray(new String[lockIdList.size()]));
 	}
 
 	@Override

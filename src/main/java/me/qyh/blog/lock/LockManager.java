@@ -68,8 +68,11 @@ public class LockManager implements InitializingBean {
 			return;
 		}
 		Optional<String[]> optionalLockIds = lockResource.getLockIds();
+		if (!optionalLockIds.isPresent()) {
+			return;
+		}
 		String resourceId = lockResource.getResourceId();
-		optionalLockIds.ifPresent(lockIds -> Arrays.stream(lockIds).forEach(lockId -> {
+		Arrays.stream(optionalLockIds.get()).forEach(lockId -> {
 			findLock(lockId).ifPresent(lock -> {
 				LockKey key = LockKeyContext.getKey(resourceId, lockId)
 						.orElseThrow(() -> new LockException(lock, lockResource, null));
@@ -83,7 +86,7 @@ public class LockManager implements InitializingBean {
 					throw new LockException(lock, lockResource, Constants.SYSTEM_ERROR);
 				}
 			});
-		}));
+		});
 	}
 
 	/**
