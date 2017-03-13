@@ -16,6 +16,8 @@
 package me.qyh.blog.api.sitemap;
 
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.springframework.web.util.HtmlUtils;
 
@@ -42,7 +44,10 @@ public class SiteMapUrlItem {
 		sb.append("<url>");
 		sb.append("<loc>").append(cleanUrl(loc)).append("</loc>");
 		if (lastmod != null) {
-			sb.append("<lastmod>").append(Times.format(lastmod.toLocalDateTime(), "yyyy-MM-dd")).append("</lastmod>");
+			sb.append("<lastmod>")
+					.append(Times.format(ZonedDateTime.of(lastmod.toLocalDateTime(), ZoneId.systemDefault()),
+							"yyyy-MM-dd'T'HH:mm:ssXXX"))
+					.append("</lastmod>");
 		}
 		if (changefreq != null) {
 			sb.append("<changefreq>").append(changefreq.name().toLowerCase()).append("</changefreq>");
@@ -56,5 +61,9 @@ public class SiteMapUrlItem {
 
 	private String cleanUrl(String url) {
 		return HtmlUtils.htmlEscape(url, Constants.CHARSET.name());
+	}
+
+	public Timestamp getLastmod() {
+		return lastmod;
 	}
 }

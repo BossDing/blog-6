@@ -287,6 +287,9 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
 		LOGGER.error(e.getMessage(), e);
+		if (resp.isCommitted()) {
+			return null;
+		}
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, Constants.SYSTEM_ERROR));
 			return null;
