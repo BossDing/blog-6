@@ -65,13 +65,11 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 
 	private ArticleDateFileMode getMode(Attributes attributes) {
 		ArticleDateFileMode mode = ArticleDateFileMode.YM;
-		String v = attributes.get(MODE);
-		if (v != null) {
-			try {
-				mode = ArticleDateFileMode.valueOf(v);
-			} catch (Exception e) {
-				LOGGER.debug(e.getMessage(), e);
-			}
+		String v = attributes.getOrDefault(MODE, ArticleDateFileMode.YM.name());
+		try {
+			mode = ArticleDateFileMode.valueOf(v);
+		} catch (Exception e) {
+			LOGGER.debug(e.getMessage(), e);
 		}
 		return mode;
 	}

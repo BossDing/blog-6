@@ -40,7 +40,6 @@ public class Space extends BaseLockResource {
 	private Boolean isPrivate;
 
 	private Boolean isDefault;
-	private Integer articlePageSize;
 
 	/**
 	 * default
@@ -75,7 +74,6 @@ public class Space extends BaseLockResource {
 	public Space(Space space) {
 		this.id = space.id;
 		this.alias = space.alias;
-		this.articlePageSize = space.articlePageSize;
 		this.createDate = space.createDate;
 		this.isDefault = space.isDefault;
 		this.isPrivate = space.isPrivate;
@@ -126,14 +124,6 @@ public class Space extends BaseLockResource {
 
 	public void setIsDefault(Boolean isDefault) {
 		this.isDefault = isDefault;
-	}
-
-	public Integer getArticlePageSize() {
-		return articlePageSize;
-	}
-
-	public void setArticlePageSize(Integer articlePageSize) {
-		this.articlePageSize = articlePageSize;
 	}
 
 	@Override

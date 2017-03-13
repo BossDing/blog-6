@@ -46,11 +46,12 @@
 			  <span class="glyphicon glyphicon-comment" title="评论数"
 				aria-hidden="true"></span>&nbsp;<span th:text="${article.comments}"> </span>
 		</div>
-
-		<div th:utext="${article.summary}"
-			th:unless="${article.hasLock() && user == null}"></div>
-		<div th:if="${article.hasLock() && user == null}">
-			<strong th:text="${messages.getMessage('article.locked','文章受锁保护')}"></strong>
+		<div th:if="${article.space == space || articlePage.param.hasQuery()}">
+			<div th:utext="${article.summary}"
+				th:unless="${article.hasLock() && user == null}"></div>
+			<div th:if="${article.hasLock() && user == null}">
+				<strong th:text="${messages.getMessage('article.locked','文章受锁保护')}"></strong>
+			</div>
 		</div>
 	</div>
 </div>

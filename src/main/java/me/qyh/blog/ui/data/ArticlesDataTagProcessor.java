@@ -141,26 +141,37 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
+		String pageSizeStr = attributes.get(Constants.PAGE_SIZE);
+		if (pageSizeStr != null) {
+			try {
+				param.setPageSize(Integer.parseInt(pageSizeStr));
+			} catch (Exception e) {
+				LOGGER.debug("当前分页数量:" + pageSizeStr + "无法被转化:" + e.getMessage(), e);
+			}
+		}
+
 		String highlightStr = attributes.get("highlight");
 		if (highlightStr != null) {
 			param.setHighlight(Boolean.parseBoolean(highlightStr));
 		}
 
+		String ignoreLevelStr = attributes.get("ignoreLevel");
+		if (ignoreLevelStr != null) {
+			param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
+		}
+
+		String queryLockStr = attributes.get("queryLock");
+		if (queryLockStr != null) {
+			param.setQueryLock(Boolean.parseBoolean(queryLockStr));
+		}
+
 		if (Environment.isLogin()) {
-			String ignoreLevelStr = attributes.get("ignoreLevel");
-			if (ignoreLevelStr != null) {
-				param.setIgnoreLevel(Boolean.parseBoolean(ignoreLevelStr));
-			}
 
 			String queryPrivateStr = attributes.get("queryPrivate");
 			if (queryPrivateStr != null) {
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 			}
 
-			String queryLockStr = attributes.get("queryLock");
-			if (queryLockStr != null) {
-				param.setQueryLock(Boolean.parseBoolean(queryLockStr));
-			}
 		}
 
 		param.setStatus(ArticleStatus.PUBLISHED);

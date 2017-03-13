@@ -2,7 +2,8 @@ var max = 3;
 var cp = 0;
 var login = $("#login").val() == 'true';
 var flag = false;
-var asc = false;
+var asc = $("#comment-asc").val() || false;
+var mode = $("#comment-mode").val() || "LIST";
 var moduleId = $("#moduleId").val();
 // 评论表单html
 
@@ -138,7 +139,9 @@ function queryComments(page) {
 		data : {
 			"currentPage" : page,
 			"moduleId" : moduleId,
-			"moduleType" : 'userpage'
+			"moduleType" : 'userpage',
+			"mode" : mode,
+			"asc" : asc
 		},
 		dataType : "json",
 		contentType : 'application/json',

@@ -46,7 +46,6 @@ public abstract class DataTagProcessor<T> {
 
 	static {
 		previewSpace.setAlias("preview");
-		previewSpace.setArticlePageSize(10);
 		previewSpace.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		previewSpace.setId(1);
 		previewSpace.setIsDefault(false);
@@ -158,6 +157,10 @@ public abstract class DataTagProcessor<T> {
 
 		public Attributes(Map<String, String> attMap) {
 			this.attMap = Collections.unmodifiableMap(attMap);
+		}
+		
+		public String getOrDefault(String key,String defaultValue){
+			return attMap.getOrDefault(key, defaultValue);
 		}
 
 		@Override

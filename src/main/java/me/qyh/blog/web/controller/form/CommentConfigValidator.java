@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.web.controller.form;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+
+import me.qyh.blog.config.CommentConfig;
 
 @Component
 public class CommentConfigValidator implements Validator {
@@ -35,16 +37,8 @@ public class CommentConfigValidator implements Validator {
 	@Override
 	public void validate(Object target, Errors errors) {
 		CommentConfig config = (CommentConfig) target;
-		if (config.getCommentMode() == null) {
-			errors.reject("commentConfig.commentMode.blank", "评论展现形式不能为空");
-			return;
-		}
 		if (config.getEditor() == null) {
 			errors.reject("commentConfig.editor.blank", "评论编辑器不能为空");
-			return;
-		}
-		if (config.getAsc() == null) {
-			errors.reject("commentConfig.asc.blank", "评论展现排序方式不能为空");
 			return;
 		}
 		if (config.getCheck() == null) {

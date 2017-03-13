@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.web.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -32,13 +32,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.comment.CommentModule.ModuleType;
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.CommentModule;
+import me.qyh.blog.entity.CommentModule.ModuleType;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.security.Environment;
+import me.qyh.blog.service.impl.CommentService;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.controller.BaseController;
+import me.qyh.blog.web.controller.form.CommentValidator;
 
 @Controller
 public class CommentController extends BaseController {

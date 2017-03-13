@@ -91,11 +91,6 @@
 		<property name="delta" value="0" />
 	</bean>
 
-	<!-- 默认评论服务 -->
-	<bean class="me.qyh.blog.comment.CommentMgrController" />
-	<bean class="me.qyh.blog.comment.CommentController" />
-
-
 	<!-- metaweblog -->
 	<!-- <bean id="metaweblogController" class="me.qyh.blog.api.metaweblog.MetaweblogController" 
 		/> <task:scheduled-tasks scheduler="taskScheduler"> <task:scheduled ref="metaweblogController" 

@@ -15,23 +15,19 @@
  */
 package me.qyh.blog.service.impl;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
+import me.qyh.blog.config.CommentConfig;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.exception.LogicException;
 
-@Component
-@Aspect
-@Order(value = Ordered.HIGHEST_PRECEDENCE)
-public class SyncInterceptor {
+public interface CommentChecker {
 
-	@Around("@annotation(Sync)")
-	public Object around(ProceedingJoinPoint pjp) throws Throwable {
-		synchronized (pjp.getTarget()) {
-			return pjp.proceed();
-		}
-	}
+	/**
+	 * 插入评论前检查
+	 * 
+	 * @param comment
+	 *            评论
+	 * @throws LogicException
+	 */
+	public void checkComment(Comment comment, CommentConfig config) throws LogicException;
 
 }

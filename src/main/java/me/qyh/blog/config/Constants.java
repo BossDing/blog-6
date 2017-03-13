@@ -34,6 +34,7 @@ public class Constants {
 	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
 	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
 	public static final Message SYSTEM_ERROR = new Message("error.system", "系统异常");
+	public static final int DEFAULT_PAGE_SIZE = 10;
 
 	private Constants() {
 

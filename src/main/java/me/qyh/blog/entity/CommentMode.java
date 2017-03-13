@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.entity;
 
-import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.message.Message;
 
-public interface CommentChecker {
+/**
+ * 展现方式
+ * 
+ * @author Administrator
+ *
+ */
+public enum CommentMode {
+	LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
 
-	/**
-	 * 插入评论前检查
-	 * 
-	 * @param comment
-	 *            评论
-	 * @throws LogicException
-	 */
-	public void checkComment(Comment comment, CommentConfig config) throws LogicException;
+	private Message message;
 
+	private CommentMode(Message message) {
+		this.message = message;
+	}
+
+	private CommentMode() {
+
+	}
+
+	public Message getMessage() {
+		return message;
+	}
 }

@@ -10,7 +10,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="createDate" property="createDate" />
 		<result column="space_name" property="name"/>
 		<result column="space_lock" property="lockId"/>
-		<result column="art_pagesize" property="articlePageSize"/>
 		<result column="is_default" property="isDefault"/>
 	</resultMap>
 	
@@ -37,8 +36,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 
 	<insert id="insert">
-		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,is_default,art_pagesize)
-		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{isDefault},#{articlePageSize})
+		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,is_default)
+		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{isDefault})
 	</insert>
 
 	<update id="update">
@@ -49,9 +48,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 			<if test="isPrivate != null">
 				is_private = #{isPrivate},
-			</if>
-			<if test="articlePageSize != null">
-				art_pagesize = #{articlePageSize},
 			</if>
 			<if test="isDefault != null">
 				is_default = #{isDefault},
@@ -89,8 +85,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			createDate,
 			space_name,
 			space_lock,
-			is_default,
-			art_pagesize
+			is_default
 		FROM
 			blog_space bs
 	</sql>

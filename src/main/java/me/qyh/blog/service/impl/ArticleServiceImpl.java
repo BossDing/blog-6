@@ -352,7 +352,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
+	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles() {
 		if (Environment.hasSpace()) {
 			return Collections.emptyList();
@@ -364,17 +364,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		GlobalConfig globalConfig = configService.getGlobalConfig();
-		if (param.getSpace() == null) {
-			param.setPageSize(globalConfig.getArticlePageSize());
-		} else {
-			Optional<Space> space = spaceCache.getSpace(param.getSpace().getId());
-			if (!space.isPresent()) {
-				param.setPageSize(globalConfig.getArticlePageSize());
-				return new PageResult<>(param, 0, Collections.emptyList());
-			} else {
-				param.setPageSize(space.get().getArticlePageSize());
-			}
-		}
+		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getArticlePageSize()));
 		if (param.isQueryPrivate() && !Environment.isLogin()) {
 			param.setQueryPrivate(false);
 		}

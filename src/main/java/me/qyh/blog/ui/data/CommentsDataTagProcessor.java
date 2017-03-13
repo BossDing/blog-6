@@ -23,20 +23,24 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
 
-import me.qyh.blog.comment.Comment;
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.comment.CommentConfig;
-import me.qyh.blog.comment.CommentModule;
-import me.qyh.blog.comment.CommentModule.ModuleType;
-import me.qyh.blog.comment.CommentPageResult;
-import me.qyh.blog.comment.CommentQueryParam;
-import me.qyh.blog.comment.CommentService;
+import me.qyh.blog.bean.CommentPageResult;
+import me.qyh.blog.config.CommentConfig;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.CommentMode;
+import me.qyh.blog.entity.Comment.CommentStatus;
+import me.qyh.blog.entity.CommentModule;
+import me.qyh.blog.entity.CommentModule.ModuleType;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.security.Environment;
+import me.qyh.blog.service.impl.CommentService;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired
 	private CommentService commentService;
+
+	private static final String MODE = "mode";
+	private static final String ASC = "asc";
 
 	public CommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -68,13 +72,27 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 		CommentQueryParam param = new CommentQueryParam();
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
 
+		String moduleTypeStr = attributes.get(Constants.MODULE_TYPE);
+		String moduleIdStr = attributes.get(Constants.MODULE_ID);
+		if (moduleIdStr != null && moduleTypeStr != null) {
+			try {
+				param.setModule(new CommentModule(ModuleType.valueOf(moduleTypeStr.toUpperCase()),
+						Integer.parseInt(moduleIdStr)));
+			} catch (Exception e) {
+				LOGGER.debug(e.getMessage(), e);
+			}
+		}
+
+		String modeStr = attributes.getOrDefault(MODE, CommentMode.LIST.name());
 		try {
-			ModuleType type = ModuleType.valueOf(attributes.get(Constants.MODULE_TYPE).toUpperCase());
-			Integer id = Integer.parseInt(attributes.get(Constants.MODULE_ID));
-			param.setModule(new CommentModule(type, id));
+			param.setMode(CommentMode.valueOf(modeStr));
 		} catch (Exception e) {
 			LOGGER.debug(e.getMessage(), e);
 		}
+
+		String ascStr = attributes.getOrDefault(ASC, "true");
+		param.setAsc(Boolean.parseBoolean(ascStr));
+
 		String currentPageStr = attributes.get(Constants.CURRENT_PAGE);
 		if (currentPageStr != null) {
 			try {

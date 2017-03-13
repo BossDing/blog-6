@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.web.controller.form;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import me.qyh.blog.entity.Comment;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.form.UserValidator;
 
 @Component
 public class CommentValidator implements Validator {

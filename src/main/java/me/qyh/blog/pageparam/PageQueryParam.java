@@ -17,6 +17,8 @@ package me.qyh.blog.pageparam;
 
 import java.io.Serializable;
 
+import me.qyh.blog.config.Constants;
+
 public abstract class PageQueryParam implements Serializable {
 
 	/**
@@ -41,12 +43,12 @@ public abstract class PageQueryParam implements Serializable {
 		this.pageSize = pageSize;
 	}
 
-	public int getOffset() {
-		return PageResult.countOffset(currentPage, pageSize);
+	public final int getOffset() {
+		return getPageSize() * (currentPage - 1);
 	}
 
-	public int getPageSize() {
-		return pageSize;
+	public final int getPageSize() {
+		return pageSize < 1 ? Constants.DEFAULT_PAGE_SIZE : pageSize;
 	}
 
 	public void setPageSize(int pageSize) {

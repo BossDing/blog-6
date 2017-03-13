@@ -51,11 +51,11 @@
 		
 		<typeAlias type="me.qyh.blog.service.StatisticsService$ArticleStatistics" alias="ArticleStatistics" />
 
-		<typeAlias type="me.qyh.blog.comment.Comment" alias="Comment" />
-		<typeAlias type="me.qyh.blog.comment.Comment$CommentStatus"
+		<typeAlias type="me.qyh.blog.entity.Comment" alias="Comment" />
+		<typeAlias type="me.qyh.blog.entity.Comment$CommentStatus"
 			alias="CommentStatus" />
-		<typeAlias type="me.qyh.blog.comment.CommentModule" alias="CommentModule" />
-		<typeAlias type="me.qyh.blog.comment.CommentModule$ModuleType" alias="ModuleType" />
+		<typeAlias type="me.qyh.blog.entity.CommentModule" alias="CommentModule" />
+		<typeAlias type="me.qyh.blog.entity.CommentModule$ModuleType" alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.mybatis.handler.TagsTypeHandler" />

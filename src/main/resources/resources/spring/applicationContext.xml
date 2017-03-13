@@ -55,12 +55,12 @@
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
-			value="me.qyh.blog.dao,me.qyh.blog.lock.support,me.qyh.blog.comment" />
+			value="me.qyh.blog.dao,me.qyh.blog.lock.support" />
 	</bean>
 
 	<import resource="file.xml" />
 	<context:component-scan
-		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.comment,me.qyh.blog.evt.listener" />
+		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.evt.listener" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
@@ -156,7 +156,7 @@
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<bean id="htmlClean" class="me.qyh.blog.security.input.DefaultHtmlClean" />
-	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.SimpleCommentChecker">
+	<bean id="simpleCommentChecker" class="me.qyh.blog.service.impl.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
 				<value>qyh</value>
@@ -175,10 +175,10 @@
 
 	<!-- 默认评论服务 -->
 	<!-- 评论服务邮件提醒 -->
-	<bean id="commentEmailNotifySupport" class="me.qyh.blog.comment.CommentEmailNotifySupport">
+	<bean id="commentEmailNotifySupport" class="me.qyh.blog.service.impl.CommentEmailNotifySupport">
 		<property name="mailSubject" value="您有新的评论" />
 	</bean>
-	<bean class="me.qyh.blog.comment.CommentService">
+	<bean class="me.qyh.blog.service.impl.CommentService">
 		<!-- html内容清理器 -->
 		<property name="htmlClean" ref="htmlClean" />
 		<property name="commentChecker" ref="simpleCommentChecker" />

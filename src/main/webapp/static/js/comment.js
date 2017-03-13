@@ -2,7 +2,8 @@ var max = 3;
 var cp = 0;
 var login = $("#login").val() == 'true';
 var flag = false;
-var asc = false;
+var asc = $("#comment-asc").val() || false;
+var mode = $("#comment-mode").val() || "LIST";
 var config;
 $.ajax({
 	type : "get",
@@ -153,7 +154,9 @@ function queryComments(page) {
 		data : {
 			"currentPage" : page,
 			"moduleType" : 'article',
-			'moduleId' : $("#articleId").val()
+			'moduleId' : $("#articleId").val(),
+			"mode" : mode,
+			"asc" : asc
 		},
 		dataType : "json",
 		contentType : 'application/json',

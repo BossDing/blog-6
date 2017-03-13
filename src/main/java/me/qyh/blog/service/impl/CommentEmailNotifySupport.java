@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.service.impl;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +39,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.entity.Comment;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.mail.MailSender;
 import me.qyh.blog.mail.MailSender.MessageBean;
@@ -122,16 +123,26 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 
 		if (Files.exists(toSendSdfile)) {
-			this.toSend = SerializationUtils.deserialize(toSendSdfile);
-			if (!FileUtils.deleteQuietly(toSendSdfile)) {
-				LOGGER.warn("删除文件:" + toSendSdfile + "失败，这会导致邮件重复发送");
+			try {
+				this.toSend = SerializationUtils.deserialize(toSendSdfile);
+			} catch (Exception e) {
+				LOGGER.warn("载入文件：" + toSendSdfile + "失败:" + e.getMessage(), e);
+			} finally {
+				if (!FileUtils.deleteQuietly(toSendSdfile)) {
+					LOGGER.warn("删除文件:" + toSendSdfile + "失败，这会导致邮件重复发送");
+				}
 			}
 		}
 
 		if (Files.exists(toProcessesSdfile)) {
-			this.toProcesses = SerializationUtils.deserialize(toProcessesSdfile);
-			if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
-				LOGGER.warn("删除文件:" + toProcessesSdfile + "失败，这会导致邮件重复发送");
+			try {
+				this.toProcesses = SerializationUtils.deserialize(toProcessesSdfile);
+			} catch (Exception e) {
+				LOGGER.warn("载入文件：" + toProcessesSdfile + "失败:" + e.getMessage(), e);
+			} finally {
+				if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
+					LOGGER.warn("删除文件:" + toProcessesSdfile + "失败，这会导致邮件重复发送");
+				}
 			}
 		}
 	}

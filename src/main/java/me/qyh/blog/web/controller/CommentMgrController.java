@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,9 +28,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
+import me.qyh.blog.config.CommentConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.web.controller.BaseMgrController;
+import me.qyh.blog.service.impl.CommentService;
+import me.qyh.blog.web.controller.form.CommentConfigValidator;
 
 @RequestMapping("mgr/comment")
 @Controller

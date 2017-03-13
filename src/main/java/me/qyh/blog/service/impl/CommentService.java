@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.service.impl;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -42,16 +42,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.util.HtmlUtils;
 
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.comment.CommentConfig.CommentMode;
-import me.qyh.blog.comment.CommentDao.ModuleCommentCount;
-import me.qyh.blog.comment.CommentModule.ModuleType;
+import me.qyh.blog.bean.CommentPageResult;
+import me.qyh.blog.config.CommentConfig;
 import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.Limit;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UserConfig;
+import me.qyh.blog.dao.CommentDao;
+import me.qyh.blog.dao.CommentDao.ModuleCommentCount;
 import me.qyh.blog.dao.UserPageDao;
 import me.qyh.blog.entity.Article;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.Comment.CommentStatus;
+import me.qyh.blog.entity.CommentMode;
+import me.qyh.blog.entity.CommentModule;
+import me.qyh.blog.entity.CommentModule.ModuleType;
 import me.qyh.blog.entity.Editor;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
@@ -61,15 +66,15 @@ import me.qyh.blog.evt.UserPageEvent;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockManager;
+import me.qyh.blog.pageparam.CommentQueryParam;
 import me.qyh.blog.security.Environment;
 import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.security.input.Markdown2Html;
 import me.qyh.blog.service.CommentServer;
-import me.qyh.blog.service.impl.ArticleCache;
-import me.qyh.blog.service.impl.Transactions;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.controller.form.CommentValidator;
 
 public class CommentService implements InitializingBean, CommentServer {
 
@@ -183,11 +188,9 @@ public class CommentService implements InitializingBean, CommentServer {
 	 */
 	public synchronized void updateCommentConfig(CommentConfig config) {
 		pros.setProperty(COMMENT_EDITOR, config.getEditor().name());
-		pros.setProperty(COMMENT_ASC, config.getAsc().toString());
 		pros.setProperty(COMMENT_CHECK, config.getCheck().toString());
 		pros.setProperty(COMMENT_LIMIT_COUNT, config.getLimitCount().toString());
 		pros.setProperty(COMMENT_LIMIT_SEC, config.getLimitSec().toString());
-		pros.setProperty(COMMENT_MODE, config.getCommentMode().name());
 		pros.setProperty(COMMENT_PAGESIZE, config.getPageSize() + "");
 		try (OutputStream os = new FileOutputStream(configResource.getFile())) {
 			pros.store(os, "");
@@ -308,7 +311,7 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	@Transactional(readOnly = true)
 	public CommentPageResult queryComment(CommentQueryParam param) {
-		param.setPageSize(config.getPageSize());
+		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
 		if (!param.complete()) {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
@@ -318,8 +321,9 @@ public class CommentService implements InitializingBean, CommentServer {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
 
+		CommentMode mode = param.getMode();
 		int count;
-		switch (config.getCommentMode()) {
+		switch (mode) {
 		case TREE:
 			count = commentDao.selectCountWithTree(param);
 			break;
@@ -331,7 +335,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		if (count == 0) {
 			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
 		}
-		boolean asc = config.getAsc();
+		boolean asc = param.isAsc();
 		if (param.getCurrentPage() <= 0) {
 			if (asc) {
 				param.setCurrentPage(count % pageSize == 0 ? count / pageSize : count / pageSize + 1);
@@ -339,15 +343,14 @@ public class CommentService implements InitializingBean, CommentServer {
 				param.setCurrentPage(1);
 			}
 		}
-		param.setAsc(asc);
 		List<Comment> datas;
-		switch (config.getCommentMode()) {
+		switch (mode) {
 		case TREE:
 			datas = commentDao.selectPageWithTree(param);
 			for (Comment comment : datas) {
 				completeComment(comment);
 			}
-			datas = handleTree(datas, config);
+			datas = handleTree(datas, param.isAsc());
 			break;
 		default:
 			datas = commentDao.selectPageWithList(param);
@@ -627,12 +630,12 @@ public class CommentService implements InitializingBean, CommentServer {
 		return parent;
 	}
 
-	private List<Comment> handleTree(List<Comment> comments, CommentConfig config) {
+	private List<Comment> handleTree(List<Comment> comments, boolean asc) {
 		if (comments.isEmpty()) {
 			return comments;
 		}
 		List<Comment> tree = buildTree(comments);
-		tree.sort(config.getAsc() ? ascCommentComparator : descCommentComparator);
+		tree.sort(asc ? ascCommentComparator : descCommentComparator);
 		return tree;
 	}
 
@@ -664,14 +667,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	private void loadConfig() {
 		config = new CommentConfig();
 		config.setEditor(Editor.valueOf(pros.getProperty(COMMENT_EDITOR, "MD")));
-		config.setAsc(Boolean.parseBoolean(pros.getProperty(COMMENT_ASC, "true")));
 		config.setCheck(Boolean.parseBoolean(pros.getProperty(COMMENT_CHECK, "false")));
-		String commentMode = pros.getProperty(COMMENT_MODE);
-		if (commentMode == null) {
-			config.setCommentMode(CommentMode.LIST);
-		} else {
-			config.setCommentMode(CommentMode.valueOf(commentMode));
-		}
 		config.setLimitCount(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_COUNT, "10")));
 		config.setLimitSec(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_SEC, "60")));
 		config.setPageSize(Integer.parseInt(pros.getProperty(COMMENT_PAGESIZE, "10")));

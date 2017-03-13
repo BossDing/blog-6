@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.ui.data;
 
 import java.util.Arrays;
@@ -46,6 +61,7 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 			try {
 				currentPage = Integer.parseInt(currentPageStr);
 			} catch (Exception e) {
+				LOGGER.debug(e.getMessage(), e);
 			}
 		}
 		if (currentPage <= 0) {
@@ -59,7 +75,20 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 					.filter(ext -> !ext.trim().isEmpty()).limit(MAX_EXTENSION_LENGTH).collect(Collectors.toSet());
 		}
 
+		BlogFileQueryParam param = new BlogFileQueryParam();
+		param.setCurrentPage(currentPage);
+		param.setExtensions(extensions);
+
+		String pageSizeStr = attributes.get(Constants.PAGE_SIZE);
+		if (pageSizeStr != null) {
+			try {
+				param.setPageSize(Integer.parseInt(pageSizeStr));
+			} catch (Exception e) {
+				LOGGER.debug(e.getMessage(), e);
+			}
+		}
+
 		String path = attributes.get(PATH);
-		return fileService.queryFiles(path, extensions, currentPage);
+		return fileService.queryFiles(path, param);
 	}
 }

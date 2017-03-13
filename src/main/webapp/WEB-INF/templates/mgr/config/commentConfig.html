@@ -31,25 +31,6 @@
 							</select>
 						</div>
 						<div class="form-group">
-							<label>评论展现方式</label> <select class="form-control"
-								name="commentMode">
-								<option th:value="${config.commentMode.name()}"
-									selected="selected"
-									th:text="'当前:'+${messages.getMessage(config.commentMode.getMessage())}"></option>
-								<option value="LIST">平铺</option>
-								<option value="TREE">嵌套</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label>评论展现顺序</label> <select class="form-control" name="asc">
-								<option th:value="${config.asc}"
-									selected="selected"
-									th:text="'当前:'+${config.asc ? '正序' : '倒叙'}"></option>
-								<option value="true">正序</option>
-								<option value="false">倒叙</option>
-							</select>
-						</div>
-						<div class="form-group">
 							<label for="">每页显示数量(1~50)</label> <input
 								class="form-control integer" placeholder="时间"
 								th:value="${config.pageSize}"

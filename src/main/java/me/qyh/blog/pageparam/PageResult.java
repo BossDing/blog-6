@@ -119,14 +119,6 @@ public class PageResult<T> {
 		this.datas = datas;
 	}
 
-	public static Integer countOffset(Integer currentPage, Integer pageSize) {
-		return pageSize * (currentPage - 1);
-	}
-
-	public static Integer countCurrentPage(Integer offset, Integer pageSize) {
-		return offset / pageSize + 1;
-	}
-
 	public boolean hasResult() {
 		return !CollectionUtils.isEmpty(datas);
 	}

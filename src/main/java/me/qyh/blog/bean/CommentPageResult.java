@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.bean;
 
 import java.util.List;
 
+import me.qyh.blog.config.CommentConfig;
+import me.qyh.blog.entity.Comment;
 import me.qyh.blog.pageparam.PageQueryParam;
 import me.qyh.blog.pageparam.PageResult;
 

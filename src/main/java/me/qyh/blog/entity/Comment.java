@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.entity;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -23,8 +23,6 @@ import java.util.Objects;
 
 import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.entity.BaseEntity;
-import me.qyh.blog.entity.Editor;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.util.Validators;
 

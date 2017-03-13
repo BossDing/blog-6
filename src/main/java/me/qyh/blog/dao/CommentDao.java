@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.dao;
 
 import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.comment.CommentModule.ModuleType;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.CommentModule;
 import me.qyh.blog.entity.Space;
+import me.qyh.blog.entity.CommentModule.ModuleType;
+import me.qyh.blog.pageparam.CommentQueryParam;
 
 /**
  * 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.PatternMatchUtils;
@@ -21,8 +21,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import me.qyh.blog.config.CommentConfig;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.config.UserConfig;
+import me.qyh.blog.entity.Comment;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;

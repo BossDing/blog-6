@@ -1,10 +1,10 @@
 <div th:unless="${#lists.isEmpty(commentPage.datas)}">
 	<iterator th:remove="tag" th:each="comment : ${commentPage.datas}">
-	<div th:if="${commentPage.commentConfig.commentMode.name() == 'TREE'}">
+	<div th:if="${commentPage.param.mode.name() == 'TREE'}">
 		<div
 			th:replace="fragment :: treeComment(${comment.parent},${comment},3)"></div>
 	</div>
-	<div th:if="${commentPage.commentConfig.commentMode.name() == 'LIST'}"
+	<div th:if="${commentPage.param.mode.name() == 'LIST'}"
 		th:id="'comment'+${comment.id}" class="media"
 		th:data-p="${comment.parent == null ? '' : comment.parent.id}">
 		<a class="pull-left"

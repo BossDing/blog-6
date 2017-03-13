@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.pageparam;
 
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.pageparam.PageQueryParam;
+import me.qyh.blog.entity.Comment.CommentStatus;
+import me.qyh.blog.entity.CommentMode;
+import me.qyh.blog.entity.CommentModule;
 
 public class CommentQueryParam extends PageQueryParam {
 
@@ -28,6 +29,7 @@ public class CommentQueryParam extends PageQueryParam {
 	private CommentStatus status;
 	private CommentModule module;
 	private boolean asc;
+	private CommentMode mode;
 
 	public CommentStatus getStatus() {
 		return status;
@@ -53,7 +55,20 @@ public class CommentQueryParam extends PageQueryParam {
 		this.module = module;
 	}
 
+	public CommentMode getMode() {
+		return mode == null ? CommentMode.LIST : mode;
+	}
+
+	public void setMode(CommentMode mode) {
+		this.mode = mode;
+	}
+
 	public boolean complete() {
 		return module != null && module.getType() != null && module.getId() != null;
+	}
+
+	@Override
+	public String toString() {
+		return "CommentQueryParam [status=" + status + ", module=" + module + ", asc=" + asc + ", mode=" + mode + "]";
 	}
 }

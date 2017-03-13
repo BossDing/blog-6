@@ -27,7 +27,6 @@ public class SpaceValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_ALIAS_LENGTH = 20;
-	private static final int[] ARTICLE_PAGE_SIZE_RANGE = GlobalConfigValidator.ARTICLE_PAGE_SIZE_RANGE;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -73,23 +72,6 @@ public class SpaceValidator implements Validator {
 
 		if (space.getIsDefault() == null) {
 			errors.reject("space.isDefault.blank", "是否是默认空间不能为空");
-			return;
-		}
-
-		Integer articlePageSize = space.getArticlePageSize();
-		if (articlePageSize == null) {
-			errors.reject("space.articlePageSize.blank", "文章每页显示数量不能为空");
-			return;
-		}
-		if (articlePageSize < ARTICLE_PAGE_SIZE_RANGE[0]) {
-			errors.reject("space.articlePageSize.toosmall", new Object[] { ARTICLE_PAGE_SIZE_RANGE[0] },
-					"文章每页数量不能小于" + ARTICLE_PAGE_SIZE_RANGE[0]);
-			return;
-		}
-
-		if (articlePageSize > ARTICLE_PAGE_SIZE_RANGE[1]) {
-			errors.reject("space.articlePageSize.toobig", new Object[] { ARTICLE_PAGE_SIZE_RANGE[1] },
-					"文章每页数量不能大于" + ARTICLE_PAGE_SIZE_RANGE[1]);
 			return;
 		}
 	}

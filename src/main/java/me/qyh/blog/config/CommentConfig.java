@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment;
+package me.qyh.blog.config;
 
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.config.Limit;
 import me.qyh.blog.entity.Editor;
-import me.qyh.blog.message.Message;
 
 /**
  * 
@@ -31,8 +29,6 @@ import me.qyh.blog.message.Message;
 public class CommentConfig {
 
 	private Editor editor;// 编辑器
-	private Boolean asc;
-	private CommentMode commentMode;
 	@Expose(serialize = false, deserialize = true)
 	private Integer limitCount;
 	@Expose(serialize = false, deserialize = true)
@@ -46,52 +42,10 @@ public class CommentConfig {
 
 	public CommentConfig(CommentConfig source) {
 		this.editor = source.editor;
-		this.asc = source.asc;
 		this.check = source.check;
-		this.commentMode = source.commentMode;
 		this.limitCount = source.limitCount;
 		this.limitSec = source.limitSec;
 		this.pageSize = source.pageSize;
-	}
-
-	/**
-	 * 展现方式
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public enum CommentMode {
-		LIST(new Message("article.commentMode.list", "平铺")), TREE(new Message("article.commentMode.tree", "嵌套"));
-
-		private Message message;
-
-		private CommentMode(Message message) {
-			this.message = message;
-		}
-
-		private CommentMode() {
-
-		}
-
-		public Message getMessage() {
-			return message;
-		}
-	}
-
-	public Boolean getAsc() {
-		return asc;
-	}
-
-	public void setAsc(Boolean asc) {
-		this.asc = asc;
-	}
-
-	public CommentMode getCommentMode() {
-		return commentMode;
-	}
-
-	public void setCommentMode(CommentMode commentMode) {
-		this.commentMode = commentMode;
 	}
 
 	public Integer getLimitSec() {

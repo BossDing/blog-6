@@ -24,12 +24,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
 
-import me.qyh.blog.comment.Comment;
-import me.qyh.blog.comment.Comment.CommentStatus;
-import me.qyh.blog.comment.CommentModule;
-import me.qyh.blog.comment.CommentModule.ModuleType;
-import me.qyh.blog.comment.CommentService;
+import me.qyh.blog.entity.Comment;
+import me.qyh.blog.entity.CommentModule;
+import me.qyh.blog.entity.Comment.CommentStatus;
+import me.qyh.blog.entity.CommentModule.ModuleType;
 import me.qyh.blog.exception.LogicException;
+import me.qyh.blog.service.impl.CommentService;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 

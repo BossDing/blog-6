@@ -70,9 +70,15 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	public void afterPropertiesSet() throws Exception {
 		if (Files.exists(sdfile)) {
 			LOGGER.debug("发现序列化文件，执行反序列化操作");
-			queue = SerializationUtils.deserialize(sdfile);
-			if (!FileUtils.deleteQuietly(sdfile)) {
-				LOGGER.warn("删除序列文件失败");
+
+			try {
+				queue = SerializationUtils.deserialize(sdfile);
+			} catch (Exception e) {
+				LOGGER.warn("载入文件：" + sdfile + "失败:" + e.getMessage(), e);
+			} finally {
+				if (!FileUtils.deleteQuietly(sdfile)) {
+					LOGGER.warn("删除序列文件失败");
+				}
 			}
 		}
 	}

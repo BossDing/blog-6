@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
@@ -48,6 +50,8 @@ public class ExtraStorageService implements InitializingBean {
 	private final Path dataFile = FileUtils.sub(FileUtils.getHomeDir(), "extra.dat");
 
 	private Map<String, String> dataMap = Collections.synchronizedMap(new HashMap<>());
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExtraStorageService.class);
 
 	/**
 	 * 存储键值对数据
@@ -89,7 +93,11 @@ public class ExtraStorageService implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		// load map from dataFile
 		if (Files.exists(dataFile)) {
-			dataMap = SerializationUtils.deserialize(dataFile);
+			try {
+				dataMap = SerializationUtils.deserialize(dataFile);
+			} catch (Exception e) {
+				LOGGER.warn("载入文件：" + dataFile + "失败:" + e.getMessage(), e);
+			}
 		}
 	}
 }

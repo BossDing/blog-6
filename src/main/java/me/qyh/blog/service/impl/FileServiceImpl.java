@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -570,10 +569,8 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page) {
-		BlogFileQueryParam param = new BlogFileQueryParam();
-		param.setCurrentPage(page);
-		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
+	public PageResult<BlogFile> queryFiles(String path, BlogFileQueryParam param) {
+		param.setPageSize(Math.min(configService.getGlobalConfig().getFilePageSize(), param.getPageSize()));
 		BlogFile parent = blogFileDao.selectRoot();
 		String cleanedPath = FileUtils.cleanPath(path.trim());
 		if (cleanedPath.isEmpty()) {
@@ -598,7 +595,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 		param.setType(BlogFileType.FILE);
 		param.setQuerySubDir(true);
-		param.setExtensions(extensions);
 
 		int count = blogFileDao.selectCount(param);
 		List<BlogFile> datas = blogFileDao.selectPage(param);

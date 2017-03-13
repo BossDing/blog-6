@@ -17,7 +17,6 @@ package me.qyh.blog.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -119,13 +118,11 @@ public interface FileService {
 	 * 
 	 * @param path
 	 *            路径，指向一个文件夹，如果为null或空或为/，查询根目录
-	 * @param extensions
-	 *            后缀，如果为null或者为空，查询所有后缀
-	 * @param page
-	 *            当前页
+	 * @param param
+	 *            查询参数
 	 * @return
 	 */
-	PageResult<BlogFile> queryFiles(String path, Set<String> extensions, int page);
+	PageResult<BlogFile> queryFiles(String path, BlogFileQueryParam param);
 
 	/**
 	 * 拷贝文件
@@ -151,7 +148,6 @@ public interface FileService {
 	 * @throws LogicException
 	 */
 	void move(Integer sourceId, String newPath) throws LogicException;
-	
 
 	/**
 	 * 清理文件
