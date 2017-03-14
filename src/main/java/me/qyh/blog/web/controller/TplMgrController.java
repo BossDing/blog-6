@@ -48,6 +48,7 @@ import me.qyh.blog.message.Message;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
+import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
@@ -103,6 +104,10 @@ public class TplMgrController extends BaseMgrController implements InitializingB
 		MapBindingResult bindingResult = new MapBindingResult(new HashMap<>(), "exportPage");
 		// validate
 		for (ExportPage exportPage : exportPages) {
+			Page page = exportPage.getPage();
+			if (page == null) {
+				continue;
+			}
 			exportPageValidator.validate(exportPage, bindingResult);
 			if (bindingResult.hasErrors()) {
 
@@ -111,10 +116,6 @@ public class TplMgrController extends BaseMgrController implements InitializingB
 					records.add(new ImportRecord(false,
 							new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
 					break;
-				}
-
-				if (importOption.isContinueOnFailure()) {
-					continue;
 				}
 
 				return new JsonResult(true, records);
@@ -136,12 +137,6 @@ public class TplMgrController extends BaseMgrController implements InitializingB
 	@RequestMapping(value = "clearCache", method = RequestMethod.GET)
 	public String clearCacheIndex() {
 		return "mgr/tpl/clearCache";
-	}
-
-	@RequestMapping("sysFragments")
-	@ResponseBody
-	public JsonResult querySysFragments() {
-		return new JsonResult(true, uiService.querySysFragments());
 	}
 
 	@RequestMapping("dataTags")

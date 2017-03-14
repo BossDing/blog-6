@@ -21,9 +21,6 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -62,12 +59,6 @@ public class LoginController extends BaseController {
 		binder.setValidator(loginBeanValidator);
 	}
 
-	@RequestMapping(value = "login", method = RequestMethod.GET)
-	public String login(Model ma) {
-		ma.addAttribute(new LoginBean());
-		return "login";
-	}
-
 	@RequestMapping(value = "/login", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult login(@RequestParam("validateCode") String validateCode,
@@ -88,38 +79,6 @@ public class LoginController extends BaseController {
 			rememberMe.remove(request, response);
 			return new JsonResult(false, new Message("user.loginFail", "登录失败"));
 		}
-	}
-
-	@RequestMapping(value = "login", method = RequestMethod.POST)
-	public String login(@RequestParam("validateCode") String validateCode, @Validated LoginBean loginBean,
-			BindingResult result, Model model, HttpServletRequest request, HttpServletResponse response) {
-		if (result.hasErrors()) {
-			for (ObjectError error : result.getAllErrors()) {
-				model.addAttribute(ERROR,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
-				return "login";
-			}
-		}
-		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session)) {
-			model.addAttribute(ERROR, new Message("validateCode.error", "验证码错误"));
-			return "login";
-		}
-		try {
-			login(loginBean, request, response);
-		} catch (LogicException e) {
-			rememberMe.remove(request, response);
-			model.addAttribute(ERROR, e.getLogicMessage());
-			return "login";
-		}
-
-		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-		String redirectUrl = "/";
-		if (lastAuthencationFailUrl != null) {
-			redirectUrl = lastAuthencationFailUrl;
-			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-		}
-		return "redirect:" + redirectUrl;
 	}
 
 	private void login(LoginBean loginBean, HttpServletRequest request, HttpServletResponse response)

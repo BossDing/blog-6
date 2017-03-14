@@ -13,16 +13,17 @@
 		<div id="navbar" class="navbar-collapse collapse">
 			<ul class="nav navbar-nav">
 				<li><a th:href="${urls.currentUrl}">主页</a></li>
-				<li><a th:href="${urls.currentUrl}+'/article/list'">文章列表</a></li>
-				<li th:if="${user != null}"><a th:href="${urls.url+'/mgr/article/index'}">管理台</a></li>
+				<li th:if="${user != null}"><a
+					th:href="${urls.url+'/mgr/article/index'}">管理台</a></li>
+				<li th:if="${user == null}"><a th:href="${urls.url+'/login'}">登录</a></li>
 			</ul>
 
-			<form class="navbar-form navbar-right" th:action="${urls.currentUrl}+'/article/list'" method="get" role="form" id="navSearchForm">
+			<form class="navbar-form navbar-right" th:action="${urls.currentUrl}"
+				method="get" role="form" id="navSearchForm">
 				<div class="input-group">
 					<input type="text" class="form-control" name="query"
 						placeholder="文章搜索" aria-describedby="basic-addon2"> <span
-						class="input-group-addon" id="basic-addon2"><a
-						href="###"
+						class="input-group-addon" id="basic-addon2"><a href="###"
 						onclick="document.getElementById('navSearchForm').submit()"> <span
 							class="glyphicon glyphicon-search" aria-hidden="true"></span>
 					</a></span>

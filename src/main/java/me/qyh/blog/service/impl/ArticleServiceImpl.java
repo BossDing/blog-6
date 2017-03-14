@@ -352,7 +352,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'spaceFiles-private-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))")
+	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+(T(me.qyh.blog.security.Environment).getSpace().orElse(null))+'-private-'+(T(me.qyh.blog.security.Environment).getUser().isPresent())")
 	public List<ArticleSpaceFile> queryArticleSpaceFiles() {
 		if (Environment.hasSpace()) {
 			return Collections.emptyList();

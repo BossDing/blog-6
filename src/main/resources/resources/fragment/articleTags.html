@@ -12,7 +12,7 @@
 			</thead>
 			<tbody>
 				<tr th:each="articleTag : ${articleTags}">
-					<td ><a th:href="${urls.getArticlesUrl(articleTag.tag.name)}" th:text="${articleTag.tag.name}"></a></td>
+					<td ><a th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articleTag.tag.name)}" th:text="${articleTag.tag.name}"></a></td>
 					<td th:text="${articleTag.count}"></td>
 				</tr>
 			</tbody>

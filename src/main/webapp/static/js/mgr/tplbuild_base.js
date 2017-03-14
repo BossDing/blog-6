@@ -54,28 +54,11 @@ file_mode = "HTML";
 			var html = '';
 			var id = $(e.target).attr('id');
 			switch(id){
-			case "sys-tab":
-				showSysFragment();
-				break;
-			case "user-tab":
-				showUserFragment(1)
-				break;
 			case "data-tab":
 				showDataTags();
 				break;
 			case "fragment-tab":
-				$("#fragmentTab").find('li').each(function(){
-					if($(this).hasClass('active')){
-						switch($(this).find('a').attr('id')){
-							case "sys-tab":
-								showSysFragment();
-								break;
-							case "user-tab":
-								showUserFragment(1)
-								break;
-						}
-					}
-				});
+				showUserFragment(1)
 				break;
 			}
 		});
@@ -168,31 +151,9 @@ file_mode = "HTML";
 		});
 	}
 	
-	function showSysFragment(){
-		var html = '';
-		$('[aria-labelledby="sys-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-		$.get(basePath+"/mgr/tpl/sysFragments",{},function(data){
-			if(!data.success){
-				bootbox.alert(data.message);
-				return ;
-			}
-			data = data.data;
-			html += '<div class=" table-responsive" style="margin-top:10px">';
-			html += '<table class="table">';
-			for(var i=0;i<data.length;i++){
-				html += '<tr>';
-				html += '<td>'+data[i].name+'</td>';
-				html += '<td><a onclick="addFragment(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
-				html += '</tr>';
-			}
-			html += '</table>';
-			html += '</div>';
-			$('[aria-labelledby="sys-tab"]').html(html);
-		});
-	}
 	function showUserFragment(i){
 		var html = '';
-		$('[aria-labelledby="user-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
+		$('#fragment').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
 		$.get(basePath+"/mgr/fragment/user/list",{"currentPage":i},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
@@ -221,7 +182,7 @@ file_mode = "HTML";
 				html += '</ul>';
 				html += '</div>';
 			}
-			$('[aria-labelledby="user-tab"]').html(html);
+			$('#fragment').html(html);
 		});
 	}
 	function showError(data){

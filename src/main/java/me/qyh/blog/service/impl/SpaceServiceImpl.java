@@ -107,15 +107,6 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	}
 
 	@Override
-	public Optional<Space> selectSpaceByAlias(String alias, boolean lockCheck) {
-		Optional<Space> spaceOptional = spaceCache.getSpace(alias);
-		if (lockCheck) {
-			spaceOptional.ifPresent(lockManager::openLock);
-		}
-		return spaceOptional;
-	}
-
-	@Override
 	public Optional<Space> getSpace(Integer id) {
 		return spaceCache.getSpace(id);
 	}

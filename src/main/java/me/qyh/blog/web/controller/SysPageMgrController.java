@@ -46,7 +46,6 @@ import me.qyh.blog.ui.ParseContext.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -77,7 +76,6 @@ public class SysPageMgrController extends BaseMgrController {
 		SpaceQueryParam param = new SpaceQueryParam();
 		List<Space> spaces = spaceService.querySpace(param);
 		model.addAttribute("spaces", spaces);
-		model.addAttribute("errorCodes", ErrorCode.values());
 		model.addAttribute("pageTargets", PageTarget.values());
 		model.addAttribute("lockTypes", lockManager.allTypes());
 		return "mgr/page/sys/index";

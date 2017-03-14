@@ -27,9 +27,8 @@ public class SysPage extends Page {
 
 	public enum PageTarget {
 		INDEX(new Message("page.index", "首页")), // 首页
-		ARTICLE_LIST(new Message("page.articleList", "文章列表页")), // 博客列表页
-		ARTICLE_DETAIL(new Message("page.articleDetail", "文章明细页")); // 博客明细页
-
+		ARTICLE_DETAIL(new Message("page.articleDetail", "文章明细页")), // 博客明细页
+		ERROR(new Message("page.error", "错误显示页面"));
 		private Message message;
 
 		private PageTarget(Message message) {
@@ -88,5 +87,10 @@ public class SysPage extends Page {
 		page.setType(PageType.SYSTEM);
 		page.setTarget(target);
 		return page;
+	}
+
+	@Override
+	public String toString() {
+		return "SysPage [target=" + target + "]";
 	}
 }

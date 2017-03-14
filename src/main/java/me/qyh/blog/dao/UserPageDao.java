@@ -102,10 +102,10 @@ public interface UserPageDao {
 	List<UserPage> selectBySpace(@Param("space") Space space);
 
 	/**
-	 * 查询可被注册的页面
+	 * 查询所有自定义页面
 	 * 
 	 * @return
 	 */
-	List<UserPage> selectRegistrable();
+	List<UserPage> selectAll();
 
 }

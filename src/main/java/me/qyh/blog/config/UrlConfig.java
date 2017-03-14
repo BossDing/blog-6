@@ -37,12 +37,6 @@ public class UrlConfig implements InitializingBean {
 	@Value("${app.contextPath:''}")
 	private String contextPath;
 
-	// 是否开启category级别的域名
-	// 如果当前域名为www.a.com
-	// 那么开启这个选项后，如果category为life，那么域名则为life.a.com
-	@Value("${app.enableSpaceDomain}")
-	private boolean enableSpaceDomain;
-
 	// 如果开启了enableCategoryDomain
 	// 必须提供这个域名，否则无法判断是否是category级别的访问
 	@Value("${app.domain:'localhost'}")
@@ -66,10 +60,6 @@ public class UrlConfig implements InitializingBean {
 		return contextPath;
 	}
 
-	public boolean isEnableSpaceDomain() {
-		return enableSpaceDomain;
-	}
-
 	public String getDomain() {
 		return domain;
 	}
@@ -89,9 +79,6 @@ public class UrlConfig implements InitializingBean {
 		}
 		domain = domain.toLowerCase();
 		if (domain.indexOf('.') == -1) {
-			if (enableSpaceDomain) {
-				throw new SystemException("错误的域名:" + domain);
-			}
 			rootDomain = domain;
 		} else {
 			String[] splitResult = domain.split("\\.");

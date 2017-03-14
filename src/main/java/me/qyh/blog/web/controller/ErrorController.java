@@ -18,52 +18,22 @@ package me.qyh.blog.web.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.Page;
+import me.qyh.blog.ui.page.SysPage;
+import me.qyh.blog.ui.page.SysPage.PageTarget;
 
 @Controller
-@RequestMapping(value = { "error", "space/{alias}/error" })
 public class ErrorController {
 
-	@RequestMapping("200")
-	public Page handler200() {
-		return handlerError(200);
+	@RequestMapping(value = { "error", "space/{alias}/error" })
+	public Page error() throws LogicException {
+		return new SysPage(Environment.getSpace().orElse(null), PageTarget.ERROR);
 	}
 
-	@RequestMapping("400")
-	public Page handler400() {
-		return handlerError(400);
-	}
-
-	@RequestMapping("403")
-	public Page handler403() {
-		return handlerError(403);
-	}
-
-	@RequestMapping("404")
-	public Page handler404() {
-		return handlerError(404);
-	}
-
-	@RequestMapping("405")
-	public Page handler405() {
-		return handlerError(405);
-	}
-
-	@RequestMapping("500")
-	public Page handler500() {
-		return handlerError(500);
-	}
-
-	@RequestMapping("ui")
+	@RequestMapping(value = { "error/ui" })
 	public String handlerUI() {
 		return "error/ui";
 	}
-
-	private Page handlerError(int error) {
-		return new ErrorPage(Environment.getSpace().orElse(null), ErrorCode.valueOf("ERROR_" + error));
-	}
-
 }

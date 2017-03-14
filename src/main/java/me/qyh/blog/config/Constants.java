@@ -28,13 +28,42 @@ import me.qyh.blog.message.Message;
  */
 public class Constants {
 
+	/**
+	 * session储存管理员的key
+	 */
 	public static final String USER_SESSION_KEY = "user";
+	/**
+	 * session储存验证码的key
+	 */
 	public static final String VALIDATE_CODE_SESSION_KEY = "captchaInSession";
+	/**
+	 * 默认编码
+	 */
 	public static final Charset CHARSET = StandardCharsets.UTF_8;
+	/**
+	 * session中储存最后一次认证失败的地址的key
+	 */
 	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
+	/**
+	 * session中储存预览模板内容的key
+	 */
 	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
+	/**
+	 * 系统异常消息
+	 */
 	public static final Message SYSTEM_ERROR = new Message("error.system", "系统异常");
+	/**
+	 * 系统默认分页条数
+	 */
 	public static final int DEFAULT_PAGE_SIZE = 10;
+	/**
+	 * 默认文章分页地址
+	 */
+	public static final String DEFAULT_ARTICLE_LIST_PATH = "article/list";
+	/**
+	 * 默认文章详情访问地址
+	 */
+	public static final String DEFAULT_ARTICLE_DETAIL_PATH = "space/{alias}/article/{idOrAlias}";
 
 	private Constants() {
 

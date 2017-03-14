@@ -32,8 +32,6 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -47,7 +45,6 @@ public final class TemplateUtils {
 	private static final String SYSPAGE_PREFIX = "Page:Sys" + SPLITER;
 	private static final String USERPAGE_PREFIX = "Page:User" + SPLITER;
 	private static final String LOCKPAGE_PREFIX = "Page:Lock" + SPLITER;
-	private static final String ERRORPAGE_PREFIX = "Page:Error" + SPLITER;
 
 	public static final String FRAGMENT_PREFIX = "Fragment" + SPLITER;
 
@@ -67,9 +64,6 @@ public final class TemplateUtils {
 		}
 		if (templateName.startsWith(LOCKPAGE_PREFIX)) {
 			return toLockPage(templateName);
-		}
-		if (templateName.startsWith(ERRORPAGE_PREFIX)) {
-			return toErrorPage(templateName);
 		}
 		throw new SystemException(templateName + "无法转化为具体的页面");
 	}
@@ -116,8 +110,6 @@ public final class TemplateUtils {
 			return "Page:";
 		}
 		switch (page.getType()) {
-		case ERROR:
-			return getTemplateName((ErrorPage) page);
 		case LOCK:
 			return getTemplateName((LockPage) page);
 		case SYSTEM:
@@ -182,23 +174,6 @@ public final class TemplateUtils {
 	}
 
 	/**
-	 * 获取错误页面模板名
-	 * 
-	 * @param errorPage
-	 *            错误页面
-	 * @return
-	 */
-	public static String getTemplateName(ErrorPage errorPage) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(ERRORPAGE_PREFIX).append(errorPage.getErrorCode().name());
-		Space space = errorPage.getSpace();
-		if (space != null && space.hasId()) {
-			sb.append(SPLITER).append(space.getId());
-		}
-		return sb.toString();
-	}
-
-	/**
 	 * 获取模板片段的模板名
 	 * 
 	 * @param fragment
@@ -255,17 +230,6 @@ public final class TemplateUtils {
 		throw new SystemException(templateName + "无法转化为系统页面");
 	}
 
-	private static ErrorPage toErrorPage(String templateName) {
-		String[] array = templateName.split(SPLITER);
-		if (array.length == 2) {
-			return new ErrorPage(ErrorCode.valueOf(array[1]));
-		}
-		if (array.length == 3) {
-			return new ErrorPage(new Space(Integer.parseInt(array[2])), ErrorCode.valueOf(array[1]));
-		}
-		throw new SystemException(templateName + "无法转化为错误页面");
-	}
-
 	/**
 	 * 复制一个页面
 	 * 
@@ -277,8 +241,6 @@ public final class TemplateUtils {
 			return new Page(page);
 		}
 		switch (page.getType()) {
-		case ERROR:
-			return new ErrorPage((ErrorPage) page);
 		case LOCK:
 			return new LockPage((LockPage) page);
 		case SYSTEM:

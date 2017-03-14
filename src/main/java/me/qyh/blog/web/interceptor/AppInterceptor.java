@@ -46,6 +46,7 @@ import me.qyh.blog.lock.LockException;
 import me.qyh.blog.lock.LockHelper;
 import me.qyh.blog.lock.LockKey;
 import me.qyh.blog.lock.LockKeyContext;
+import me.qyh.blog.lock.LockManager;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.EnsureLogin;
 import me.qyh.blog.security.Environment;
@@ -55,7 +56,7 @@ import me.qyh.blog.security.csrf.CsrfToken;
 import me.qyh.blog.security.csrf.CsrfTokenRepository;
 import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
 import me.qyh.blog.security.csrf.MissingCsrfTokenException;
-import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.service.impl.SpaceCache;
 import me.qyh.blog.ui.UIExposeHelper;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
@@ -73,7 +74,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private UIExposeHelper uiExposeHelper;
 	@Autowired
-	private SpaceService spaceService;
+	private SpaceCache spaceCache;
+	@Autowired
+	private LockManager lockManager;
+
 	@Autowired
 	private CsrfTokenRepository tokenRepository;
 
@@ -100,10 +104,15 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				setLockKeys(request);
 
 				if (spaceAlias != null) {
-					Space space = getSpace(request, spaceAlias);
+					Space space = spaceCache.getSpace(spaceAlias)
+							.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 
 					if (space.getIsPrivate()) {
 						Environment.doAuthencation();
+					}
+
+					if (space.hasLock() && !Webs.unlockRequest(request)) {
+						lockManager.openLock(space);
 					}
 
 					Environment.setSpace(space);
@@ -212,12 +221,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void removeContext() {
 		Environment.remove();
 		LockKeyContext.remove();
-	}
-
-	private Space getSpace(HttpServletRequest request, String spaceAlias) throws SpaceNotFoundException {
-		boolean needLockProtected = !Webs.unlockRequest(request);
-		return spaceService.selectSpaceByAlias(spaceAlias, needLockProtected)
-				.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 	}
 
 	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {

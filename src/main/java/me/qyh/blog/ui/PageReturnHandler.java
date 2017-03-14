@@ -18,8 +18,6 @@
 package me.qyh.blog.ui;
 
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,19 +29,13 @@ import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.springframework.web.servlet.View;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.UserPage;
 
 public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 
@@ -79,8 +71,6 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 		String templateName = TemplateUtils.getTemplateName(page);
 
 		Page db = uiService.queryPage(templateName);
-		
-		checkRegistrable(page, db);
 
 		String rendered;
 
@@ -90,20 +80,11 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 					ParseContext.DEFAULT_CONFIG);
 
 		} catch (Exception e) {
-			// 如果是错误页面发生了错误，不再跳转(防止死循环)
-			if ((db instanceof ErrorPage)) {
-				ErrorPage errorPage = (ErrorPage) db;
-				LOGGER.error("在错误页面" + errorPage.getErrorCode().name() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:"
-						+ e.getMessage(), e);
-				renderSysErrorPage(errorPage, nativeRequest, nativeResponse);
-				return;
-			}
 			// 解锁页面不能出现异常，不再跳转(防止死循环)
 			if (db instanceof LockPage) {
 				LockPage lockPage = (LockPage) db;
 				LOGGER.error(
 						"在解锁页面" + lockPage.getLockType() + "发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:" + e.getMessage(), e);
-				renderSysErrorPage(new ErrorPage(ErrorCode.ERROR_500), nativeRequest, nativeResponse);
 				return;
 			}
 
@@ -114,28 +95,5 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 		Writer writer = nativeResponse.getWriter();
 		writer.write(rendered);
 		writer.flush();
-	}
-
-	private void checkRegistrable(Page returnValue, Page db) throws LogicException {
-		if (returnValue instanceof UserPage) {
-			UserPage returnUserPage = (UserPage) returnValue;
-			UserPage dbUserPage = (UserPage) db;
-			if (!Objects.equals(returnUserPage.isRegistrable(), dbUserPage.isRegistrable())) {
-				throw new LogicException(new Message("page.user.notExists", "自定义页面不存在"));
-			}
-		}
-	}
-
-	private void renderSysErrorPage(ErrorPage errorPage, HttpServletRequest request, HttpServletResponse response) {
-		try {
-			// render /WEB-INF/templates/error/{errorCode}
-			View errorView = thymeleafViewResolver.resolveViewName("error/" + errorPage.getErrorCode().getCode(),
-					request.getLocale());
-			errorView.render(new HashMap<>(), request, response);
-		} catch (Throwable e) {
-			// 不能够在这里继续抛出异常!
-			LOGGER.error("/WEB-INF/templates/error/" + errorPage.getErrorCode().name() + "页面渲染异常！！！！！,异常信息:"
-					+ e.getMessage(), e);
-		}
 	}
 }

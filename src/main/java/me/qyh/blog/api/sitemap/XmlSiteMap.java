@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -34,7 +33,6 @@ import me.qyh.blog.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.dao.ArticleDao;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
-import me.qyh.blog.security.Environment;
 import me.qyh.blog.service.impl.Transactions;
 
 public class XmlSiteMap implements InitializingBean {
@@ -97,23 +95,19 @@ public class XmlSiteMap implements InitializingBean {
 		}
 	};
 
-	private Map<String, String> xmlCache = new ConcurrentHashMap<>();
+	private String siteMapXml;
 
 	public String getSiteMap() {
-		return xmlCache.compute(cacheKey(), (k, v) -> {
-			if (v == null) {
-				return buildSiteMapXml();
+		synchronized (this) {
+			if (siteMapXml == null) {
+				siteMapXml = buildSiteMapXml();
 			}
-			return v;
-		});
-	}
-
-	private String cacheKey() {
-		return "space" + Environment.getSpace().map(Space::getId).map(String::valueOf).orElse("");
+			return siteMapXml;
+		}
 	}
 
 	public synchronized void updateSitemap() {
-		xmlCache.clear();
+		this.siteMapXml = null;
 	}
 
 	private String buildSiteMapXml() {
@@ -134,7 +128,7 @@ public class XmlSiteMap implements InitializingBean {
 	private List<SiteMapUrlItem> querySiteMapItems() {
 
 		List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			return articleDao.selectPublished(Environment.getSpace().orElse(null));
+			return articleDao.selectPublished(null);
 		});
 
 		SpaceUrls urls = urlHelper.getUrlsBySpace(null);

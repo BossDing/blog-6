@@ -99,21 +99,6 @@ CREATE TABLE IF NOT EXISTS `blog_lock` (
   PRIMARY KEY (`id`)
 ) ;
 
-CREATE TABLE IF NOT EXISTS `blog_page_error` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `space_id` int(11) DEFAULT NULL,
-  `error_code` int(11) NOT NULL,
-  `page_tpl` mediumtext  NOT NULL,
-  PRIMARY KEY (`id`)
-);
-
-CREATE TABLE IF NOT EXISTS `blog_page_expanded` (
-  `id` int(11) NOT NULL,
-  `page_name` varchar(20)  NOT NULL,
-  `page_tpl` mediumtext  NOT NULL,
-  PRIMARY KEY (`id`)
-) ;
-
 CREATE TABLE IF NOT EXISTS `blog_page_lock` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `space_id` int(11) DEFAULT NULL,
@@ -162,5 +147,3 @@ CREATE TABLE IF NOT EXISTS `blog_tag` (
   `create_date` datetime NOT NULL,
   PRIMARY KEY (`id`)
 );
-
-ALTER TABLE blog_page_user` add COLUMN page_registrable BOOLEAN NOT NULL DEFAULT FALSE;

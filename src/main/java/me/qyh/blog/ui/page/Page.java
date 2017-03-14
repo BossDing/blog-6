@@ -30,7 +30,7 @@ public class Page extends BaseEntity {
 	private PageType type;
 
 	public enum PageType {
-		SYSTEM, USER, ERROR, LOCK
+		SYSTEM, USER, LOCK
 	}
 
 	public Page() {

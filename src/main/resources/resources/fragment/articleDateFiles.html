@@ -21,7 +21,7 @@
 				<tbody>
 					<tr th:each="articleDateFile : ${articleDateFiles.files}">
 						<td th:switch="${articleDateFiles.mode.name()}"><a
-							th:href="${urls.getArticlesUrl(articleDateFile.begin,articleDateFile.end)}">
+							th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articleDateFile.begin,articleDateFile.end)}">
 								<span th:case="YM"
 								th:text="${#dates.format(articleDateFile.begin, 'yyyy年MM月')}">&nbsp;</span>
 								<span th:case="Y"

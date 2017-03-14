@@ -28,8 +28,7 @@ public class SiteMapController {
 	@Autowired
 	private XmlSiteMap xmlSiteMap;
 
-	@RequestMapping(value = { "sitemap.xml", "space/{alias}/sitemap.xml" }, method = RequestMethod.GET, produces = {
-			MediaType.APPLICATION_XML_VALUE })
+	@RequestMapping(value = "sitemap.xml", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE })
 	@ResponseBody
 	public String siteMap() {
 		return xmlSiteMap.getSiteMap();

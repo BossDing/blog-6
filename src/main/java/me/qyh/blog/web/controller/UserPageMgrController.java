@@ -16,6 +16,8 @@
 package me.qyh.blog.web.controller;
 
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,8 +26,11 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -49,6 +54,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.message.Messages;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.SpaceService;
@@ -58,6 +64,8 @@ import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.Resources;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
 
@@ -77,8 +85,12 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 	private UIRender uiRender;
 	@Autowired
 	private RequestMappingHandlerMapping mapping;
+	@Autowired
+	private Messages messages;
 
 	private RequestMappingRegister requestMappingRegister;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserPageMgrController.class);
 
 	@InitBinder(value = "userPage")
 	protected void initBinder(WebDataBinder binder) {
@@ -209,12 +221,15 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 			return new RequestMappingInfo(prc, rmrc, null, null, null, null, null);
 		}
 
-		private boolean checkMappingExists(String lookupPath) {
+		boolean checkMappingExists(String lookupPath) {
 			String _lookupPath = "/" + lookupPath;
 			Set<RequestMappingInfo> rmSet = mapping.getHandlerMethods().keySet();
 			for (RequestMappingInfo rm : rmSet) {
 				if (!rm.getPatternsCondition().getMatchingPatterns(_lookupPath).isEmpty()) {
-					return true;
+					Set<RequestMethod> methods = rm.getMethodsCondition().getMethods();
+					if (methods.isEmpty() || methods.contains(RequestMethod.GET)) {
+						return true;
+					}
 				}
 			}
 			return false;
@@ -225,10 +240,40 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 	public void afterPropertiesSet() throws Exception {
 		requestMappingRegister = new RequestMappingRegister(mapping);
 
-		List<UserPage> registrables = uiService.selectRegistrableUserPages();
-		for (UserPage page : registrables) {
+		List<UserPage> allUserPages = uiService.selectAllUserPages();
+		for (UserPage page : allUserPages) {
+			if (requestMappingRegister.checkMappingExists(page.getAlias())) {
+				throw new SystemException("路径：" + page.getAlias() + "已经存在，来自于自定义页面[id=" + page.getId() + "]");
+			}
 			requestMappingRegister.registerMapping(page);
 		}
+
+		UserPage templatePage = new UserPage();
+		templatePage.setAllowComment(false);
+		templatePage.setCreateDate(Timestamp.valueOf(Times.now()));
+		templatePage.setDescription("");
+		templatePage.setSpace(null);
+
+		List<UserPage> userPages = new ArrayList<>();
+
+		if (!requestMappingRegister.checkMappingExists("login")) {
+			UserPage userPage = new UserPage(templatePage);
+			userPage.setName(messages.getMessage("userpage.login", "登录"));
+			userPage.setAlias("login");
+			userPage.setTpl(Resources.readResourceToString(new ClassPathResource("resources/page/LOGIN.html")));
+			userPages.add(userPage);
+		}
+
+		if (!userPages.isEmpty()) {
+			for (UserPage userPage : userPages) {
+				try {
+					uiService.buildTpl(userPage, requestMappingRegister);
+				} catch (LogicException e) {
+					LOGGER.debug(messages.getMessage(e.getLogicMessage()));
+				}
+			}
+		}
+
 	}
 
 }

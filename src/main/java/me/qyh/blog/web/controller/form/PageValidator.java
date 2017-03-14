@@ -20,11 +20,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Validators;
 
@@ -64,23 +61,6 @@ public class PageValidator implements Validator {
 			return;
 		}
 
-		if (page instanceof SysPage) {
-			SysPage sysPage = (SysPage) page;
-			if (sysPage.getTarget() == null) {
-				errors.reject("page.target.blank", "页面目标不能为空");
-				return;
-			}
-		}
-
-		if (page instanceof ErrorPage) {
-			ErrorPage errorPage = (ErrorPage) page;
-			ErrorCode errorCode = errorPage.getErrorCode();
-			if (errorCode == null) {
-				errors.reject("page.errorcode.null", "页面错误码不能为空");
-				return;
-			}
-		}
-
 		if (page instanceof LockPage) {
 			LockPage lockPage = (LockPage) page;
 			if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
@@ -111,8 +91,13 @@ public class PageValidator implements Validator {
 						"页面描述不能超过" + PAGE_DESCRIPTION_MAX_LENGTH + "个字符");
 				return;
 			}
-			String alias = TemplateUtils.cleanUserPageAlias(userPage.getAlias());
+			String alias = userPage.getAlias();
 			if (Validators.isEmptyOrNull(alias, true)) {
+				alias = "/";
+			} else {
+				alias = TemplateUtils.cleanUserPageAlias(alias);
+			}
+			if (alias.isEmpty()) {
 				errors.reject("page.alias.blank", "页面别名不能为空");
 				return;
 			}
@@ -121,7 +106,7 @@ public class PageValidator implements Validator {
 						"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
 				return;
 			}
-			if (!validateUserPageAlias(alias, userPage.isRegistrable())) {
+			if (!validateUserPageAlias(alias)) {
 				errors.reject("page.alias.invalid", "页面别名不被允许");
 				return;
 			}
@@ -136,17 +121,24 @@ public class PageValidator implements Validator {
 
 	}
 
-	public static boolean validateUserPageAlias(String alias, boolean registrable) {
+	public static boolean validateUserPageAlias(String alias) {
 
 		/**
 		 * 这里重复校验了，为了 UserPageController
 		 */
+		if (alias == null) {
+			return false;
+		}
 		if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
 			return false;
 		}
 
+		if (alias.equals("/")) {
+			return true;
+		}
+
 		if (alias.indexOf('/') == -1) {
-			return doValidateUserPageAlias(alias, registrable);
+			return doValidateUserPageAlias(alias);
 		} else {
 
 			String[] aliasArray = alias.split("/");
@@ -154,7 +146,7 @@ public class PageValidator implements Validator {
 				return false;
 			}
 			for (String _alias : aliasArray) {
-				if (!doValidateUserPageAlias(_alias, registrable)) {
+				if (!doValidateUserPageAlias(_alias)) {
 					return false;
 				}
 			}
@@ -162,17 +154,13 @@ public class PageValidator implements Validator {
 		}
 	}
 
-	private static boolean doValidateUserPageAlias(String alias, boolean registrable) {
-		if (registrable) {
-			if (alias.startsWith("{")) {
-				if (!alias.endsWith("}")) {
-					return false;
-				}
-				String pattern = alias.substring(1, alias.length() - 1);
-				return Validators.isLetter(pattern);
-			} else {
-				return alias.matches(NO_REGISTRABLE_ALIAS_PATTERN);
+	private static boolean doValidateUserPageAlias(String alias) {
+		if (alias.startsWith("{")) {
+			if (!alias.endsWith("}")) {
+				return false;
 			}
+			String pattern = alias.substring(1, alias.length() - 1);
+			return Validators.isLetter(pattern);
 		} else {
 			return alias.matches(NO_REGISTRABLE_ALIAS_PATTERN);
 		}

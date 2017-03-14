@@ -16,8 +16,7 @@
 package me.qyh.blog.bean;
 
 public final class ImportOption {
-	private boolean createUserPageIfNotExists ;
-	private boolean continueOnFailure;
+	private boolean createUserPageIfNotExists;
 
 	public boolean isCreateUserPageIfNotExists() {
 		return createUserPageIfNotExists;
@@ -25,14 +24,6 @@ public final class ImportOption {
 
 	public void setCreateUserPageIfNotExists(boolean createUserPageIfNotExists) {
 		this.createUserPageIfNotExists = createUserPageIfNotExists;
-	}
-
-	public boolean isContinueOnFailure() {
-		return continueOnFailure;
-	}
-
-	public void setContinueOnFailure(boolean continueOnFailure) {
-		this.continueOnFailure = continueOnFailure;
 	}
 
 }

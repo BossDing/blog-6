@@ -302,8 +302,6 @@ public class CommentService implements InitializingBean, CommentServer {
 		commentDao.insert(comment);
 
 		if (commentEmailNotifySupport != null) {
-			commentEmailNotifySupport.handle(comment);
-
 			Transactions.afterCommit(() -> commentEmailNotifySupport.handle(comment));
 		}
 		return comment;

@@ -50,15 +50,6 @@ public interface SpaceService {
 	void updateSpace(Space space) throws LogicException;
 
 	/**
-	 * 根据空间别名查询空间
-	 * 
-	 * @param alias
-	 *            空间别名
-	 * @return 空间，如果不存在，返回null
-	 */
-	Optional<Space> selectSpaceByAlias(String alia, boolean lockCheck);
-
-	/**
 	 * 查询空间
 	 * 
 	 * @param param

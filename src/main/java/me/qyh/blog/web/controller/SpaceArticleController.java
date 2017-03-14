@@ -65,9 +65,4 @@ public class SpaceArticleController extends BaseController {
 		return new JsonResult(true);
 	}
 
-	@RequestMapping(value = "list")
-	public Page list() throws LogicException {
-		return new SysPage(Environment.getSpace().orElse(null), PageTarget.ARTICLE_LIST);
-	}
-
 }

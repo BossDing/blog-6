@@ -107,7 +107,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	}
 
 	@Override
-	public final void afterPropertiesSet() throws Exception {
+	public void afterPropertiesSet() throws Exception {
 		if (mailSubject == null) {
 			throw new SystemException("邮件标题不能为空");
 		}

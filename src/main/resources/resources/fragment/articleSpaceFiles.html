@@ -18,7 +18,7 @@
 			<tbody>
 				<tr th:each="articleSpaceFile : ${articleSpaceFiles}">
 					<td><a
-						th:href="${urls.getArticlesUrl(articleSpaceFile.space)}"
+						th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articleSpaceFile.space)}"
 						th:text="${articleSpaceFile.space.name}"></a></td>
 					<td th:text="${articleSpaceFile.count}"></td>
 				</tr>

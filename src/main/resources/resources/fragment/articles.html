@@ -1,19 +1,3 @@
-<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 10px"
-	th:if="${showSortLab == null ? true : showSortLab}">
-	<li role="presentation"
-		th:attr="class=${articlePage.param.sort == null ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,null)}">默认</a></li>
-	<li role="presentation"
-		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'PUBDATE') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,'PUBDATE')}"
-		th:if="${articlePage.param.hasQuery()}">发布时间</a></li>
-	<li role="presentation"
-		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'LASTMODIFYDATE') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,'LASTMODIFYDATE')}">最近更新</a></li>
-	<li role="presentation"
-		th:attr="class=${(articlePage.param.sort != null && articlePage.param.sort.name() == 'HITS') ? 'active' : null}"><a
-		th:href="${urls.getArticlesUrl(articlePage.param,'HITS')}">点击量</a></li>
-</ul>
 <div th:if="${#lists.isEmpty(articlePage.datas)}">
 	<div class="alert alert-info">当前没有任何文章</div>
 </div>
@@ -32,7 +16,7 @@
 			th:unless="${#lists.isEmpty(article.tags)}">
 			<span class="glyphicon glyphicon-tag" aria-hidden="true"></span> <span
 				th:each="tag : ${article.tags}" style="margin-right: 10px"> <a
-				th:href=" ${urls.getArticlesUrl(tag)}" th:utext=" ${tag.name}"></a>
+				th:href=" ${urls.getArticlesUrlHelper().getArticlesUrl(tag)}" th:utext=" ${tag.name}"></a>
 			</span>
 		</div>
 		<div style="margin-top: 5px; margin-bottom: 10px">
@@ -61,6 +45,6 @@
 		<li
 			th:each=" i : ${#numbers.sequence(articlePage.listbegin, articlePage.listend-1)}"
 			th:class="${(i == articlePage.currentPage) ? 'active' : ''}"><a
-			th:href="${urls.getArticlesUrl(articlePage.param,i)}" th:text="${i}"></a>
+			th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articlePage.param,i)}" th:text="${i}"></a>
 	</ul>
 </div>

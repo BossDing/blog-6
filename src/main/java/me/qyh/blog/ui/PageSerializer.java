@@ -27,7 +27,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-import me.qyh.blog.ui.page.ErrorPage;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.Page.PageType;
@@ -49,12 +48,10 @@ public class PageSerializer implements JsonDeserializer<Page>, JsonSerializer<Pa
 				return null;
 			}
 			switch (type) {
-			case ERROR:
-				return Jsons.readValue(ErrorPage.class, json);
-			case LOCK:
-				return Jsons.readValue(LockPage.class, json);
 			case SYSTEM:
 				return Jsons.readValue(SysPage.class, json);
+			case LOCK:
+				return Jsons.readValue(LockPage.class, json);
 			case USER:
 				return Jsons.readValue(UserPage.class, json);
 			default:

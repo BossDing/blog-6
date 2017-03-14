@@ -84,10 +84,15 @@ public class GlobalControllerExceptionHandler {
 	@Autowired
 	private Messages messages;
 
+	private static final Message ERROR_403 = new Message("error.403", "权限不足");
+	private static final Message ERROR_400 = new Message("error.400", "请求异常");
+	private static final Message ERROR_405 = new Message("error.405", "请求方法不被允许");
+	private static final Message ERROR_404 = new Message("error.404", "请求不存在");
+
 	@ExceptionHandler(AuthencationException.class)
 	public String handleNoAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("noAuthencation", "权限不足")));
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_403));
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.FORBIDDEN.value());
@@ -95,7 +100,7 @@ public class GlobalControllerExceptionHandler {
 			if ("get".equalsIgnoreCase(request.getMethod())) {
 				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
 			}
-			return getErrorRedirect(request, 403);
+			return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 		}
 	}
 
@@ -109,7 +114,7 @@ public class GlobalControllerExceptionHandler {
 		} else {
 			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
 			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
-			return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error/ui";
+			return "redirect:" + urlHelper.getUrl() + "/error/ui";
 		}
 	}
 
@@ -128,11 +133,11 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(CsrfException.class)
 	public String handleCsrfAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("csrfAuthencation", "认证信息失效，请刷新页面后重试")));
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_403));
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.FORBIDDEN.value());
-			return getErrorRedirect(request, 403);
+			return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 		}
 	}
 
@@ -181,8 +186,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, ex.getLogicMessage()));
 			return null;
 		} else {
-			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, ex.getLogicMessage());
-			return getErrorRedirect(request, 200);
+			return getErrorRedirect(request, new ErrorInfo(ex.getLogicMessage(), 200));
 		}
 	}
 
@@ -205,29 +209,17 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ExceptionHandler({ MissingServletRequestParameterException.class, TypeMismatchException.class,
-			HttpMessageNotReadableException.class, BindException.class })
-	public String handlerBadRequest(HttpServletRequest request, HttpServletResponse resp, Exception ex)
-			throws IOException {
-		LOGGER.debug(ex.getMessage(), ex);
-		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidParameter", "数据格式异常")));
-			return null;
-		} else {
-			resp.setStatus(HttpStatus.BAD_REQUEST.value());
-			return getErrorRedirect(request, 400);
-		}
-	}
-
-	@ExceptionHandler({ HttpMediaTypeNotSupportedException.class, HttpMediaTypeNotAcceptableException.class })
+			HttpMessageNotReadableException.class, BindException.class, HttpMediaTypeNotSupportedException.class,
+			HttpMediaTypeNotAcceptableException.class })
 	public String handlerHttpMediaTypeException(HttpServletRequest request, HttpServletResponse resp, Exception ex)
 			throws IOException {
 		LOGGER.debug(ex.getMessage(), ex);
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("invalidMediaType", "不支持的媒体类型")));
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_400));
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.BAD_REQUEST.value());
-			return getErrorRedirect(request, 400);
+			return getErrorRedirect(request, new ErrorInfo(ERROR_400, 400));
 		}
 	}
 
@@ -247,11 +239,11 @@ public class GlobalControllerExceptionHandler {
 	public String handleHttpRequestMethodNotSupportedException(HttpServletRequest request, HttpServletResponse resp,
 			HttpRequestMethodNotSupportedException ex) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("error.405", "405")));
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_405));
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.METHOD_NOT_ALLOWED.value());
-			return getErrorRedirect(request, 405);
+			return getErrorRedirect(request, new ErrorInfo(ERROR_405, 405));
 		}
 	}
 
@@ -263,8 +255,8 @@ public class GlobalControllerExceptionHandler {
 					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize())));
 			return null;
 		} else {
-			resp.setStatus(HttpStatus.BAD_REQUEST.value());
-			return getErrorRedirect(req, 400);
+			return getErrorRedirect(req, new ErrorInfo(new Message("upload.overlimitsize",
+					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize()), 200));
 		}
 	}
 
@@ -277,11 +269,11 @@ public class GlobalControllerExceptionHandler {
 	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp,
 			NoHandlerFoundException ex) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("error.404", "404")));
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_404));
 			return null;
 		}
 		resp.setStatus(HttpStatus.NOT_FOUND.value());
-		return getErrorRedirect(request, 404);
+		return getErrorRedirect(request, new ErrorInfo(ERROR_404, 404));
 	}
 
 	@ExceptionHandler(value = Exception.class)
@@ -295,19 +287,38 @@ public class GlobalControllerExceptionHandler {
 			return null;
 		} else {
 			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-			return getErrorRedirect(request, 500);
+			return getErrorRedirect(request, new ErrorInfo(Constants.SYSTEM_ERROR, 500));
 		}
 	}
 
 	private String getFullUrl(HttpServletRequest request) {
-		String url = UrlUtils.buildFullRequestUrl(request);
-		if (urlHelper.maybeSpaceDomain(request)) {
-			url = UrlUtils.getUrlBeforeForward(request);
-		}
-		return url;
+		return UrlUtils.buildFullRequestUrl(request);
 	}
 
-	private String getErrorRedirect(HttpServletRequest request, int error) {
-		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error/" + error;
+	public static final class ErrorInfo {
+		private final Message message;
+		private final int code;
+
+		private ErrorInfo(Message message, int code) {
+			super();
+			this.message = message;
+			this.code = code;
+		}
+
+		public Message getMessage() {
+			return message;
+		}
+
+		public int getCode() {
+			return code;
+		}
+
+	}
+
+	private String getErrorRedirect(HttpServletRequest request, ErrorInfo error) {
+		if (error != null) {
+			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
+		}
+		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error";
 	}
 }

@@ -21,8 +21,6 @@ import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.Enumeration;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.SessionCookieConfig;
@@ -34,7 +32,6 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.config.UrlConfig;
-import me.qyh.blog.web.filter.CORSFilter;
 
 public class AppContextLoaderListener extends ContextLoaderListener {
 
@@ -61,12 +58,6 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 			config.setPath("/");
 		} else {
 			config.setPath(contextPath);
-		}
-		if (helper.isEnableSpaceDomain()) {
-			LOGGER.debug("开启了多域名支持，添加UrlFilter以转发请求,添加CORSFilter以处理跨域");
-			Class<? extends Filter> corsFilter = CORSFilter.class;
-			sc.addFilter(corsFilter.getName(), corsFilter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST),
-					true, "/*");
 		}
 	}
 

@@ -140,6 +140,18 @@ public class Times {
 	}
 
 	/**
+	 * 格式化日期
+	 * 
+	 * @param localDateTime
+	 *            日期
+	 * @return pattern
+	 */
+	public static String format(Date date, String pattern) {
+		Objects.requireNonNull(date);
+		return format(toLocalDateTime(date), pattern);
+	}
+
+	/**
 	 * 将Date转化为LocalDateTime
 	 * 
 	 * @param date

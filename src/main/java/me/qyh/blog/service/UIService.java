@@ -29,8 +29,6 @@ import me.qyh.blog.ui.DataTag;
 import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
@@ -141,24 +139,6 @@ public interface UIService {
 	void deleteSysPage(Integer spaceId, PageTarget target) throws LogicException;
 
 	/**
-	 * 保存更新错误页面模板
-	 * 
-	 * @param errorPage
-	 * @throws LogicException
-	 */
-	void buildTpl(ErrorPage errorPage) throws LogicException;
-
-	/**
-	 * 删除错误挂件模板
-	 * 
-	 * @param spaceId
-	 *            空间id
-	 * @param errorCode
-	 * @throws LogicException
-	 */
-	void deleteErrorPage(Integer spaceId, ErrorCode errorCode) throws LogicException;
-
-	/**
 	 * 通过DATA_TAG标签查询数据
 	 * 
 	 * @param dataTagStr
@@ -192,13 +172,6 @@ public interface UIService {
 	 * @return
 	 */
 	List<String> queryDataTags();
-
-	/**
-	 * 查询系统模板片段
-	 * 
-	 * @return
-	 */
-	List<Fragment> querySysFragments();
 
 	/**
 	 * 根据name查询fragment
@@ -282,10 +255,10 @@ public interface UIService {
 	Optional<Fragment> queryCallableFragment(String name);
 
 	/**
-	 * 查询路径可被注册的页面
+	 * 查询所有用户自定义页面
 	 * 
 	 * @return
 	 */
-	List<UserPage> selectRegistrableUserPages();
+	List<UserPage> selectAllUserPages();
 
 }

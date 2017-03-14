@@ -24,11 +24,8 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.ui.fragment.Fragment;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Validators;
 
@@ -85,23 +82,6 @@ public class ExportPageValidator implements Validator {
 				return;
 			}
 
-			if (page instanceof SysPage) {
-				SysPage sysPage = (SysPage) page;
-				if (sysPage.getTarget() == null) {
-					errors.reject("page.target.blank", "页面目标不能为空");
-					return;
-				}
-			}
-
-			if (page instanceof ErrorPage) {
-				ErrorPage errorPage = (ErrorPage) page;
-				ErrorCode errorCode = errorPage.getErrorCode();
-				if (errorCode == null) {
-					errors.reject("page.errorcode.null", "页面错误码不能为空");
-					return;
-				}
-			}
-
 			if (page instanceof LockPage) {
 				LockPage lockPage = (LockPage) page;
 				if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
@@ -122,7 +102,7 @@ public class ExportPageValidator implements Validator {
 							"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
 					return;
 				}
-				if (!validateUserPageAlias(alias, userPage.isRegistrable())) {
+				if (!validateUserPageAlias(alias)) {
 					errors.reject("page.alias.invalid", "页面别名不被允许");
 					return;
 				}

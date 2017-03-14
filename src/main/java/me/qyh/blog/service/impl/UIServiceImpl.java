@@ -19,7 +19,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,7 +58,6 @@ import me.qyh.blog.bean.ExportPage;
 import me.qyh.blog.bean.ImportOption;
 import me.qyh.blog.bean.ImportRecord;
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.dao.ErrorPageDao;
 import me.qyh.blog.dao.LockPageDao;
 import me.qyh.blog.dao.SysPageDao;
 import me.qyh.blog.dao.UserFragmentDao;
@@ -85,14 +83,13 @@ import me.qyh.blog.ui.data.DataBind;
 import me.qyh.blog.ui.data.DataTagProcessor;
 import me.qyh.blog.ui.fragment.Fragment;
 import me.qyh.blog.ui.fragment.UserFragment;
-import me.qyh.blog.ui.page.ErrorPage;
-import me.qyh.blog.ui.page.ErrorPage.ErrorCode;
 import me.qyh.blog.ui.page.LockPage;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.SysPage;
 import me.qyh.blog.ui.page.SysPage.PageTarget;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
 import me.qyh.blog.web.controller.form.PageValidator;
@@ -103,8 +100,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	private SysPageDao sysPageDao;
 	@Autowired
 	private UserPageDao userPageDao;
-	@Autowired
-	private ErrorPageDao errorPageDao;
 	@Autowired
 	private LockPageDao lockPageDao;
 	@Autowired
@@ -122,8 +117,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	private Map<PageTarget, Resource> sysPageDefaultTpls = new EnumMap<>(PageTarget.class);
 	private Map<PageTarget, String> sysPageDefaultParsedTpls = new EnumMap<>(PageTarget.class);
-	private Map<ErrorCode, Resource> errorPageDefaultTpls = new EnumMap<>(ErrorCode.class);
-	private Map<ErrorCode, String> errorPageDefaultParsedTpls = new EnumMap<>(ErrorCode.class);
 	private Map<String, String> lockPageDefaultTpls = new HashMap<>();
 	private List<DataTagProcessor<?>> processors = new ArrayList<>();
 
@@ -143,11 +136,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 						}
 						if (userFragment != null) {
 							return userFragment;
-						}
-						for (Fragment fragment : fragments) {
-							if (fragment.getName().equals(key.name)) {
-								return fragment;
-							}
 						}
 						return null;
 					});
@@ -288,20 +276,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		String templateName = TemplateUtils.getTemplateName(db);
 		evitPageCache(templateName);
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
-		if (db.isRegistrable()) {
-			register.unregisterMapping(db);
-			status.regist = db;
-		}
+		register.unregisterMapping(db);
+		status.regist = db;
 	}
 
 	@Override
 	public List<String> queryDataTags() {
 		return processors.stream().map(processor -> processor.getName()).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<Fragment> querySysFragments() {
-		return Collections.unmodifiableList(fragments);
 	}
 
 	@Override
@@ -345,10 +326,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			evitPageCache(db);
 
 			// 解除以前的mapping
-			if (db.isRegistrable()) {
-				register.unregisterMapping(db);
-				status.regist = db;
-			}
+			register.unregisterMapping(db);
+			status.regist = db;
 
 		} else {
 			// 检查
@@ -360,10 +339,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 
 		// 注册现在的页面
-		if (userPage.isRegistrable()) {
-			register.registerMapping(userPage);
-			status.unregist = userPage;
-		}
+		register.registerMapping(userPage);
+		status.unregist = userPage;
 
 		EventType type = update ? EventType.UPDATE : EventType.INSERT;
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, userPage));
@@ -441,33 +418,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void buildTpl(ErrorPage errorPage) throws LogicException {
-		checkSpace(errorPage);
-		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(errorPage.getSpace(), errorPage.getErrorCode());
-		boolean update = db != null;
-		if (update) {
-			errorPage.setId(db.getId());
-			errorPageDao.update(errorPage);
-		} else {
-			errorPageDao.insert(errorPage);
-		}
-
-		evitPageCache(errorPage);
-	}
-
-	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteErrorPage(Integer spaceId, ErrorCode errorCode) throws LogicException {
-		Space space = spaceCache.checkSpace(spaceId);
-		ErrorPage page = errorPageDao.selectBySpaceAndErrorCode(space, errorCode);
-		if (page != null) {
-			errorPageDao.deleteById(page.getId());
-			evitPageCache(page);
-		}
-	}
-
-	@Override
 	public Optional<DataBind<?>> queryData(DataTag dataTag) throws LogicException {
 		return doQuery(dataTag, false);
 	}
@@ -529,10 +479,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		for (PageTarget pageTarget : PageTarget.values()) {
 			exportPages.add(exportPage(TemplateUtils.getTemplateName(new SysPage(space, pageTarget))));
 		}
-		// error
-		for (ErrorCode errorCode : ErrorCode.values()) {
-			exportPages.add(exportPage(TemplateUtils.getTemplateName(new ErrorPage(space, errorCode))));
-		}
 		// lock
 		for (String lockType : lockManager.allTypes()) {
 			exportPages.add(exportPage(TemplateUtils.getTemplateName(new LockPage(space, lockType))));
@@ -546,8 +492,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<UserPage> selectRegistrableUserPages() {
-		return userPageDao.selectRegistrable();
+	public List<UserPage> selectAllUserPages() {
+		return userPageDao.selectAll();
 	}
 
 	@Override
@@ -600,9 +546,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 							} catch (Throwable ex) {
 								if (ex instanceof LogicException) {
 									records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
-									if (importOption.isContinueOnFailure() && !userPage.isRegistrable()) {
-										continue;
-									}
 									ts.setRollbackOnly();
 									return records;
 								}
@@ -617,10 +560,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 						}
 					}
 					records.add(new ImportRecord(false, e.getLogicMessage()));
-					// 如果忽略逻辑异常
-					if (importOption.isContinueOnFailure()) {
-						continue;
-					}
 					ts.setRollbackOnly();
 					return records;
 				}
@@ -643,15 +582,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 						sysPageDao.insert(sysPage);
 					}
 					break;
-				case ERROR:
-					ErrorPage errorPage = (ErrorPage) current;
-					if (errorPage.hasId()) {
-						errorPageDao.update(errorPage);
-						update = true;
-					} else {
-						errorPageDao.insert(errorPage);
-					}
-					break;
 				case LOCK:
 					LockPage lockPage = (LockPage) current;
 					if (current.hasId()) {
@@ -663,15 +593,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					break;
 				case USER:
 					UserPage userPage = (UserPage) current;
-					userPage.setRegistrable(((UserPage) page).isRegistrable());
 					try {
 						buildTpl(userPage, register);
 					} catch (Throwable ex) {
 						if (ex instanceof LogicException) {
 							records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
-							if (importOption.isContinueOnFailure() && !userPage.isRegistrable()) {
-								continue;
-							}
 							ts.setRollbackOnly();
 							return records;
 						}
@@ -755,12 +681,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	private boolean checkChangeWhenImport(Page old, Page current) {
 		if (current.getTpl().equals(old.getTpl())) {
-			// 如果页面内容没有改变
-			if (old instanceof UserPage) {
-				UserPage oldUserPage = (UserPage) old;
-				UserPage currentUserPage = (UserPage) current;
-				return Objects.equals(oldUserPage.isRegistrable(), currentUserPage.isRegistrable());
-			}
 			return true;
 		}
 		return false;
@@ -800,20 +720,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			}
 			sysPageDefaultParsedTpls.put(target, tpl);
 		}
-		for (ErrorCode code : ErrorCode.values()) {
-			Resource resource = errorPageDefaultTpls.get(code);
-			if (resource == null) {
-				resource = new ClassPathResource("resources/page/" + code.name() + ".html");
-			}
-			String tpl = Resources.readResourceToString(resource);
-			if (Validators.isEmptyOrNull(tpl, true)) {
-				throw new SystemException("错误页面：" + code + "模板不能为空");
-			}
-			if (tpl.length() > PageValidator.PAGE_TPL_MAX_LENGTH) {
-				throw new SystemException("错误页面：" + code + "模板不能超过" + PageValidator.PAGE_TPL_MAX_LENGTH + "个字符");
-			}
-			errorPageDefaultParsedTpls.put(code, tpl);
-		}
 		for (String lockType : lockManager.allTypes()) {
 			Resource resource = lockManager.getDefaultTemplateResource(lockType);
 			if (resource == null) {
@@ -828,10 +734,30 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			}
 			lockPageDefaultTpls.put(lockType, tpl);
 		}
-	}
 
-	public void setErrorPageDefaultTpls(Map<ErrorCode, Resource> errorPageDefaultTpls) {
-		this.errorPageDefaultTpls = errorPageDefaultTpls;
+		TransactionStatus status = platformTransactionManager.getTransaction(new DefaultTransactionDefinition());
+		try {
+			Timestamp now = Timestamp.valueOf(Times.now());
+			for (Fragment fragment : fragments) {
+				UserFragment userFragment = userFragmentDao.selectGlobalByName(fragment.getName());
+				if (userFragment == null) {
+					userFragment = new UserFragment();
+					userFragment.setCallable(fragment.isCallable());
+					userFragment.setCreateDate(now);
+					userFragment.setDescription("");
+					userFragment.setGlobal(true);
+					userFragment.setName(fragment.getName());
+					userFragment.setSpace(null);
+					userFragment.setTpl(fragment.getTpl());
+					userFragmentDao.insert(userFragment);
+				}
+			}
+		} catch (RuntimeException | Error e) {
+			status.setRollbackOnly();
+			throw e;
+		} finally {
+			platformTransactionManager.commit(status);
+		}
 	}
 
 	public void setSysPageDefaultTpls(Map<PageTarget, Resource> sysPageDefaultTpls) {
@@ -879,9 +805,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		evitPageCache(Arrays.stream(pages).map(TemplateUtils::getTemplateName).toArray(i -> new String[i]));
 	}
 
-	/*
-	 * 默认空间无法配置解锁页面和文章详情页
-	 */
 	private void checkPageTarget(Page page) throws LogicException {
 		if (page.getSpace() == null) {
 			switch (page.getType()) {
@@ -927,9 +850,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		case SYSTEM:
 			SysPage sysPage = (SysPage) converted;
 			return querySysPage(sysPage.getSpace(), sysPage.getTarget());
-		case ERROR:
-			ErrorPage errorPage = (ErrorPage) converted;
-			return queryErrorPage(errorPage.getSpace(), errorPage.getErrorCode());
 		case LOCK:
 			LockPage lockPage = (LockPage) converted;
 			try {
@@ -957,15 +877,6 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 		sysPage.setSpace(space);
 		return sysPage;
-	}
-
-	private ErrorPage queryErrorPage(Space space, ErrorCode code) {
-		ErrorPage db = errorPageDao.selectBySpaceAndErrorCode(space, code);
-		if (db == null) {
-			db = new ErrorPage(space, code);
-			db.setTpl(errorPageDefaultParsedTpls.get(code));
-		}
-		return db;
 	}
 
 	private LockPage queryLockPage(Space space, String lockType) throws LogicException {

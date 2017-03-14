@@ -48,11 +48,6 @@
 								id="createUserPageIfNotExists"> 创建自定义页面(如果不存在)
 							</label>
 						</div>
-						<div class="checkbox">
-							<label> <input type="checkbox" id="continueOnFailure">
-								发生逻辑异常后继续
-							</label>
-						</div>
 						<button type="button" id="import-btn" class="btn btn-default">导入模板</button>
 					</form>
 				</div>
@@ -112,7 +107,6 @@
 			$.post(basePath + '/mgr/tpl/import', {
 				"json" : result,
 				"createUserPageIfNotExists":$("#createUserPageIfNotExists").is(":checked"),
-				"continueOnFailure":$("#continueOnFailure").is(":checked"),
 				"spaceId" : $("#importSpaceId").val()
 			}, function callBack(data) {
 				if (data.success) {

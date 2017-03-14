@@ -32,24 +32,11 @@ import org.springframework.util.StringUtils;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.Tag;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.pageparam.ArticleQueryParam;
 import me.qyh.blog.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Times;
-import me.qyh.blog.util.Validators;
 
-/**
- * 取消了博客的分类，用空间来替代，一个博客可以设置多个空间<br/>
- * 以博客为例，访问博客(ID为1，位于空间java下)：
- * <ul>
- * <li>开启了多域名，路径为java.abc.com/article/1</li>
- * <li>没有开启多域名，路径为www.abc.com/space/java/article/1</li>
- * </ul>
- * 
- * @author Administrator
- *
- */
 @Component
 public class UrlHelper implements InitializingBean {
 
@@ -61,8 +48,8 @@ public class UrlHelper implements InitializingBean {
 
 	protected int rootDomainPCount;
 
-	private String url;// 首页schema://domain:port/contextPath
 	private Urls urls;
+	private String url;// 首页schema://domain:port/contextPath
 
 	/**
 	 * 获取当前请求的链接辅助对象
@@ -75,9 +62,6 @@ public class UrlHelper implements InitializingBean {
 		Objects.requireNonNull(request);
 		// 如果开启了空间域名
 		String space = null;
-		if (urlConfig.isEnableSpaceDomain() && maybeSpaceDomain(request)) {
-			space = request.getServerName().split("\\.")[0];
-		}
 		String requestUri = request.getRequestURI();
 		if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
 			String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
@@ -93,7 +77,7 @@ public class UrlHelper implements InitializingBean {
 			LOGGER.debug("错误的路径：" + request.getRequestURL().toString());
 			space = null;
 		}
-		return new SpaceUrls(space);
+		return getUrlsBySpace(space);
 	}
 
 	/**
@@ -115,24 +99,6 @@ public class UrlHelper implements InitializingBean {
 	}
 
 	/**
-	 * 判斷訪問域名是否為space域名
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public boolean maybeSpaceDomain(HttpServletRequest request) {
-		String host = request.getServerName();
-		if (!host.endsWith(urlConfig.getRootDomain())) {
-			return false;
-		}
-		int hostPCount = StringUtils.countOccurrencesOf(host, ".");
-		if (!(host.startsWith("www.") && hostPCount == 2) && (hostPCount == rootDomainPCount + 1)) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * 链接辅助类，用来获取配置的域名，根域名，链接，空间访问链接、文章链接等等
 	 * 
 	 * @author Administrator
@@ -142,23 +108,6 @@ public class UrlHelper implements InitializingBean {
 
 		private Urls() {
 			super();
-		}
-
-		/**
-		 * 判断能否从目标文章中拼接访问地址
-		 * 
-		 * @param article
-		 * @return
-		 */
-		public boolean detectArticleUrl(Article article) {
-			Space space = article.getSpace();
-			if (space == null || space.getAlias() == null) {
-				return false;
-			}
-			if (article.getAlias() == null && article.getId() == null) {
-				return false;
-			}
-			return true;
 		}
 
 		public String getDomain() {
@@ -184,11 +133,7 @@ public class UrlHelper implements InitializingBean {
 			if (space == null) {
 				return url;
 			}
-			String spaceAlias = space.getAlias();
-			if (Validators.isEmptyOrNull(spaceAlias, true)) {
-				throw new SystemException("必须指定空间名才能得到具体的空间地址");
-			}
-			return urlConfig.isEnableSpaceDomain() ? getSpaceUrl(spaceAlias) : url + SPACE_IN_URL + spaceAlias;
+			return url + "/space/" + space.getAlias();
 		}
 
 		/**
@@ -198,19 +143,8 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public String getUrl(Article article) {
-			return getUrl(article.getSpace()) + "/article/"
-					+ (article.getAlias() == null ? article.getId().toString() : article.getAlias());
-		}
-
-		/**
-		 * 获取某个空间下的空间文章列表页链接
-		 * 
-		 * @param space
-		 *            空间,别名不能为空
-		 * @return 该空间下文章列表页链接
-		 */
-		public String getArticlesUrl(Space space) {
-			return getUrl(space) + "/article/list";
+			String idOrAlias = article.getAlias() == null ? String.valueOf(article.getId()) : article.getAlias();
+			return getUrl(article.getSpace()) + "/article/" + idOrAlias;
 		}
 
 		/**
@@ -223,16 +157,12 @@ public class UrlHelper implements InitializingBean {
 		public String getUrl(UserPage userPage) {
 			String alias = userPage.getAlias();
 			Objects.requireNonNull(alias);
-			if (userPage.isRegistrable()) {
-				return getUrl(userPage.getSpace()) + "/" + alias;
-			} else {
-				return getUrl(userPage.getSpace()) + "/page/" + alias;
-			}
+			return getUrl(userPage.getSpace()) + "/" + alias;
 		}
 	}
 
 	/**
-	 * 当前请求的链接链接辅助类
+	 * 当前请求的链接辅助类
 	 * 
 	 * @author Administrator
 	 *
@@ -240,54 +170,24 @@ public class UrlHelper implements InitializingBean {
 	public class SpaceUrls extends Urls {
 
 		private Env env;
-		private final ArticlesUrlHelper articlesUrlHelper;
 
 		private SpaceUrls(String alias) {
 			// 空间域名
 			this.env = new Env();
 			env.space = alias;
 			if (env.isSpaceEnv()) {
-				if (urlConfig.isEnableSpaceDomain()) {
-					env.url = getSpaceUrl(env.space);
-				} else {
-					env.url = url + SPACE_IN_URL + env.space;
-				}
+				env.url = url + SPACE_IN_URL + env.space;
 			} else {
 				env.url = url;
 			}
-			articlesUrlHelper = new ArticlesUrlHelper(env.url, "/article/list");
-		}
-
-		public String getCurrentUrl() {
-			return env.url;
 		}
 
 		public String getSpace() {
 			return env.space;
 		}
 
-		public String getArticlesUrl(Tag tag) {
-			return articlesUrlHelper.getArticlesUrl(tag);
-		}
-
-		public String getArticlesUrl(String tag) {
-			return articlesUrlHelper.getArticlesUrl(tag);
-		}
-
-		public String getArticlesUrl(ArticleQueryParam param, String sortStr) {
-			return articlesUrlHelper.getArticlesUrl(param, sortStr);
-		}
-
-		public String getArticlesUrl(ArticleQueryParam param, int page) {
-			return articlesUrlHelper.getArticlesUrl(param, page);
-		}
-
-		public String getArticlesUrl(Date begin, Date end) {
-			return articlesUrlHelper.getArticlesUrl(begin, end);
-		}
-
-		public String getArticlesUrl(String begin, String end) {
-			return articlesUrlHelper.getArticlesUrl(begin, end);
+		public String getCurrentUrl() {
+			return env.url;
 		}
 
 		/**
@@ -297,10 +197,11 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public ArticlesUrlHelper getArticlesUrlHelper(String path) {
-			if (Validators.isEmptyOrNull(path, true)) {
-				return articlesUrlHelper;
-			}
 			return new ArticlesUrlHelper(env.url, path);
+		}
+
+		public ArticlesUrlHelper getArticlesUrlHelper() {
+			return getArticlesUrlHelper("");
 		}
 
 		private class Env {
@@ -313,7 +214,7 @@ public class UrlHelper implements InitializingBean {
 		}
 	}
 
-	private final class ArticlesUrlHelper {
+	protected final class ArticlesUrlHelper {
 
 		private final String url;
 		private final String path;
@@ -384,10 +285,12 @@ public class UrlHelper implements InitializingBean {
 		 */
 		public String getArticlesUrl(ArticleQueryParam param, int page) {
 			StringBuilder sb = new StringBuilder(url);
-			if (!path.startsWith("/")) {
-				sb.append('/');
+			if (!path.isEmpty()) {
+				if (!path.startsWith("/")) {
+					sb.append('/');
+				}
+				sb.append(path);
 			}
-			sb.append(path);
 			sb.append("?currentPage=").append(page);
 			Date begin = param.getBegin();
 			Date end = param.getEnd();
@@ -464,11 +367,6 @@ public class UrlHelper implements InitializingBean {
 			this.contextPath = urlConfig.getContextPath();
 		}
 
-		public UriBuilder setServerName(String serverName) {
-			this.serverName = serverName;
-			return this;
-		}
-
 		private boolean isDefaultPort() {
 			if ("https".equalsIgnoreCase(scheme)) {
 				return 443 == port;
@@ -493,14 +391,7 @@ public class UrlHelper implements InitializingBean {
 			}
 			return buildUrl;
 		}
-	}
 
-	public boolean isEnableSpaceDomain() {
-		return urlConfig.isEnableSpaceDomain();
-	}
-
-	private String getSpaceUrl(String space) {
-		return new UriBuilder(urlConfig).setServerName(space + "." + urlConfig.getRootDomain()).toUrl();
 	}
 
 	public UrlConfig getUrlConfig() {
@@ -511,6 +402,6 @@ public class UrlHelper implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		rootDomainPCount = StringUtils.countOccurrencesOf(urlConfig.getRootDomain(), ".");
 		url = new UriBuilder(urlConfig).toUrl();
-		urls = new Urls();
+		this.urls = new Urls();
 	}
 }
