@@ -371,7 +371,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 				String key = getFilePath(file);
 				FileStore fs = getFileStore(cf);
 				proMap.put("url", fs.getUrl(key));
-				proMap.put("downloadUrl", fs.getDownloadUrl(key));
 				proMap.put("thumbUrl", fs.getThumbnailUrl(key));
 				proMap.put("totalSize", cf.getSize());
 				if (cf.getWidth() != null) {
@@ -613,7 +612,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			FileStore fs = getFileStore(cf);
 			ExpandedCommonFile pcf = new ExpandedCommonFile(cf);
 			pcf.setThumbnailUrl(fs.getThumbnailUrl(key).orElse(null));
-			pcf.setDownloadUrl(fs.getDownloadUrl(key));
 			pcf.setUrl(fs.getUrl(key));
 			bf.setCf(pcf);
 		}

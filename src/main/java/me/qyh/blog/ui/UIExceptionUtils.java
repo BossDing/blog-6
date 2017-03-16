@@ -27,6 +27,7 @@ import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.lock.LockException;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.ui.TplRenderErrorDescription.TemplateErrorInfo;
+import me.qyh.blog.ui.dialect.RedirectException;
 import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.Validators;
 
@@ -43,7 +44,7 @@ public final class UIExceptionUtils {
 	public static Exception convert(String templateName, Throwable e) {
 		if (e instanceof TemplateProcessingException) {
 			Optional<Throwable> finded = ExceptionUtils.getFromChain(e, RuntimeLogicException.class,
-					LockException.class, AuthencationException.class);
+					LockException.class, AuthencationException.class, RedirectException.class);
 			if (finded.isPresent()) {
 				return (Exception) finded.get();
 			}

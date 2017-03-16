@@ -80,7 +80,7 @@
 															class="glyphicon glyphicon-eye-close" aria-hidden="true"
 															title="私人"></span></span> <a href="###"
 														th:title="${article.title}" data-toggle="tooltip"
-														th:text="${#strings.length(article.title) > 10  ? #strings.substring(article.title,0,10)+'...' : article.title}"></a></td>
+														th:utext="${#strings.length(article.title) > 10  ? #strings.substring(article.title,0,10)+'...' : article.title}"></a></td>
 													<td><a href="###" th:title="${article.tagStr}"
 														data-toggle="tooltip"
 														th:text="${#strings.length(article.tagStr) > 10  ? #strings.substring(article.tagStr,0,10)+'...' : article.tagStr}"></a></td>

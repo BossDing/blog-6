@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,6 +32,8 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -40,6 +44,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -91,7 +97,9 @@ import me.qyh.blog.ui.page.UserPage;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.UserPageMgrController.RequestMappingRegister;
+import me.qyh.blog.web.GetRequestMappingRegisterEvent;
+import me.qyh.blog.web.GetRequestMappingUnRegisterEvent;
+import me.qyh.blog.web.controller.UserPageController;
 import me.qyh.blog.web.controller.form.PageValidator;
 
 public class UIServiceImpl implements UIService, InitializingBean, ApplicationEventPublisherAware {
@@ -263,11 +271,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void deleteUserPage(Integer id, RequestMappingRegister register) throws LogicException {
-		final UserPageMappingStatus status = new UserPageMappingStatus(register);
-		Transactions.afterRollback(() -> {
-			status.rollback();
-		});
+	public void deleteUserPage(Integer id) throws LogicException {
+		final UserPageRequestMappingRegisterHelper helper = new UserPageRequestMappingRegisterHelper();
 		UserPage db = userPageDao.selectById(id);
 		if (db == null) {
 			throw new LogicException(USER_PAGE_NOT_EXISTS);
@@ -276,8 +281,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		String templateName = TemplateUtils.getTemplateName(db);
 		evitPageCache(templateName);
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
-		register.unregisterMapping(db);
-		status.regist = db;
+		helper.unregisterUserPage(db);
 	}
 
 	@Override
@@ -304,9 +308,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void buildTpl(UserPage userPage, RequestMappingRegister register) throws LogicException {
-		final UserPageMappingStatus status = new UserPageMappingStatus(register);
-		Transactions.afterRollback(() -> status.rollback());
+	public void buildTpl(UserPage userPage) throws LogicException {
+		final UserPageRequestMappingRegisterHelper helper = new UserPageRequestMappingRegisterHelper();
 		checkSpace(userPage);
 		String alias = userPage.getAlias();
 		userPage.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -326,9 +329,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			evitPageCache(db);
 
 			// 解除以前的mapping
-			register.unregisterMapping(db);
-			status.regist = db;
-
+			helper.unregisterUserPage(db);
 		} else {
 			// 检查
 			UserPage aliasPage = userPageDao.selectBySpaceAndAlias(userPage.getSpace(), alias);
@@ -339,36 +340,10 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 
 		// 注册现在的页面
-		register.registerMapping(userPage);
-		status.unregist = userPage;
+		helper.registerUserPage(userPage);
 
 		EventType type = update ? EventType.UPDATE : EventType.INSERT;
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, type, userPage));
-	}
-
-	private final class UserPageMappingStatus {
-
-		private UserPage unregist;
-		private UserPage regist;
-		private final RequestMappingRegister register;
-
-		public UserPageMappingStatus(RequestMappingRegister register) {
-			super();
-			this.register = register;
-		}
-
-		private void rollback() {
-			try {
-				if (regist != null) {
-					register.registerMapping(regist);
-				}
-				if (unregist != null) {
-					register.unregisterMapping(unregist);
-				}
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-		}
 	}
 
 	@Override
@@ -498,8 +473,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	@Override
 	@Sync
-	public List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption,
-			RequestMappingRegister register) {
+	public List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages, ImportOption importOption) {
 		if (CollectionUtils.isEmpty(exportPages)) {
 			return new ArrayList<>();
 		}
@@ -508,6 +482,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		td.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		TransactionStatus ts = platformTransactionManager.getTransaction(td);
 		List<ImportRecord> records = new ArrayList<>();
+		UserPageRequestMappingRegisterHelper helper = new UserPageRequestMappingRegisterHelper();
 		try {
 			Space space = null;
 			try {
@@ -541,16 +516,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 							userPage.setSpace(space);
 							userPage.setAllowComment(false);
 
+							userPageDao.insert(userPage);
+
 							try {
-								buildTpl(userPage, register);
-							} catch (Throwable ex) {
-								if (ex instanceof LogicException) {
-									records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
-									ts.setRollbackOnly();
-									return records;
-								}
-								LOGGER.error(ex.getMessage(), ex);
-								records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+								helper.registerUserPage(userPage);
+							} catch (LogicException ex) {
+								records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
+								ts.setRollbackOnly();
 								return records;
 							}
 
@@ -593,16 +565,13 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					break;
 				case USER:
 					UserPage userPage = (UserPage) current;
+					userPageDao.update(userPage);
+					helper.unregisterUserPage(userPage);
 					try {
-						buildTpl(userPage, register);
-					} catch (Throwable ex) {
-						if (ex instanceof LogicException) {
-							records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
-							ts.setRollbackOnly();
-							return records;
-						}
-						LOGGER.error(ex.getMessage(), ex);
-						records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+						helper.registerUserPage(userPage);
+					} catch (LogicException ex) {
+						records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
+						ts.setRollbackOnly();
 						return records;
 					}
 					update = true;
@@ -684,6 +653,30 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			return true;
 		}
 		return false;
+	}
+
+	@EventListener
+	public void handleContextRefreshEvent(ContextRefreshedEvent evt) throws IOException {
+		// servlet context
+		if (evt.getApplicationContext().getParent() != null) {
+
+			// insert login page
+			if (userPageDao.selectBySpaceAndAlias(null, "login") == null) {
+				UserPage page = new UserPage();
+				page.setAlias("login");
+				page.setName("login");
+				page.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
+				page.setDescription("");
+				page.setAllowComment(false);
+				page.setTpl(Resources.readResourceToString(new ClassPathResource("resources/page/LOGIN.html")));
+				userPageDao.insert(page);
+			}
+
+			List<UserPage> allPage = userPageDao.selectAll();
+			for (UserPage page : allPage) {
+				this.applicationEventPublisher.publishEvent(new UserPageGetRequestMappingRegisterEvent(this, page));
+			}
+		}
 	}
 
 	@Override
@@ -988,5 +981,98 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		Fragment defaultFragment = new Fragment();
 		defaultFragment.setName(result.getName());
 		UICacheManager.clearCachesFor(TemplateUtils.getTemplateName(defaultFragment));
+	}
+
+	private static String getRequestMappingPath(UserPage userPage) {
+		String registPath = TemplateUtils.cleanUserPageAlias(userPage.getAlias());
+		Space space = userPage.getSpace();
+		if (space != null) {
+			Objects.requireNonNull(space.getAlias());
+			registPath = "/space/" + space.getAlias() + "/" + registPath;
+		} else {
+			registPath = "/" + registPath;
+		}
+		return registPath;
+	}
+
+	private final class UserPageRequestMappingRegisterHelper {
+
+		private List<UserPage> unregistes = new ArrayList<>();
+		private List<UserPage> registes = new ArrayList<>();
+
+		public UserPageRequestMappingRegisterHelper() {
+			super();
+			Transactions.afterRollback(this::rollback);
+		}
+
+		void registerUserPage(UserPage page) throws LogicException {
+			try {
+				applicationEventPublisher
+						.publishEvent(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page));
+			} catch (RuntimeLogicException e) {
+				throw e.getLogicException();
+			}
+			unregistes.add(page);
+		}
+
+		void unregisterUserPage(UserPage page) {
+			applicationEventPublisher
+					.publishEvent(new UserPageGetRequestMappingUnRegisterEvent(UIServiceImpl.this, page));
+			registes.add(page);
+		}
+
+		private void rollback() {
+			try {
+				if (!registes.isEmpty()) {
+					for (UserPage page : registes) {
+						applicationEventPublisher
+								.publishEvent(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page));
+					}
+				}
+				if (!unregistes.isEmpty()) {
+					for (UserPage page : unregistes) {
+						applicationEventPublisher
+								.publishEvent(new UserPageGetRequestMappingUnRegisterEvent(UIServiceImpl.this, page));
+					}
+				}
+			} catch (Exception e) {
+				throw new SystemException(e.getMessage(), e);
+			}
+		}
+	}
+
+	private static final class UserPageGetRequestMappingUnRegisterEvent extends GetRequestMappingUnRegisterEvent {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public UserPageGetRequestMappingUnRegisterEvent(Object source, UserPage userPage) {
+			super(source, getRequestMappingPath(userPage));
+		}
+
+	}
+
+	private static final class UserPageGetRequestMappingRegisterEvent extends GetRequestMappingRegisterEvent {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private static final Method METHOD;
+
+		static {
+			try {
+				METHOD = UserPageController.class.getMethod("handleRequest", HttpServletRequest.class);
+			} catch (NoSuchMethodException | SecurityException e) {
+				throw new SystemException(e.getMessage(), e);
+			}
+		}
+
+		public UserPageGetRequestMappingRegisterEvent(Object source, UserPage userPage) {
+			super(source, getRequestMappingPath(userPage), new UserPageController(userPage), METHOD);
+		}
+
 	}
 }

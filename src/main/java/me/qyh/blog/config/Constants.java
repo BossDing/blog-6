@@ -56,14 +56,6 @@ public class Constants {
 	 * 系统默认分页条数
 	 */
 	public static final int DEFAULT_PAGE_SIZE = 10;
-	/**
-	 * 默认文章分页地址
-	 */
-	public static final String DEFAULT_ARTICLE_LIST_PATH = "article/list";
-	/**
-	 * 默认文章详情访问地址
-	 */
-	public static final String DEFAULT_ARTICLE_DETAIL_PATH = "space/{alias}/article/{idOrAlias}";
 
 	private Constants() {
 

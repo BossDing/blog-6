@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -57,6 +58,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	@Autowired
+	@Qualifier("taskExecutor")
 	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 	/**

@@ -26,14 +26,8 @@
 	<mvc:resources location="/static/" mapping="/static/**"
 		cache-period="31556926" />
 
-
-	<!-- 错误处理 -->
-	<bean class="me.qyh.blog.web.GlobalControllerExceptionHandler" />
-	<!-- rss viewe -->
-	<bean class="me.qyh.blog.web.RssView" />
-
 	<!-- 包扫描 -->
-	<context:component-scan base-package="me.qyh.blog.web.controller" />
+	<context:component-scan base-package="me.qyh.blog.web" />
 
 	<mvc:annotation-driven>
 		<mvc:message-converters>
@@ -49,8 +43,6 @@
 			<bean class="me.qyh.blog.ui.PageReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
-
-	<bean class="me.qyh.blog.web.AppSimpleUrlHandlerMapping" />
 
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.security.csrf.HttpSessionCsrfTokenRepository" />
@@ -96,7 +88,6 @@
 		/> <task:scheduled-tasks scheduler="taskScheduler"> <task:scheduled ref="metaweblogController" 
 		method="clearInvalidIp" fixed-rate="5000"/> <task:scheduled ref="metaweblogController" 
 		method="clearFail" fixed-rate="100000"/> </task:scheduled-tasks> -->
-
 
 	<!-- sitemap 服务 -->
 	<bean class="me.qyh.blog.api.sitemap.SiteMapController" />

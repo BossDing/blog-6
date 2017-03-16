@@ -92,22 +92,9 @@ public class PageValidator implements Validator {
 				return;
 			}
 			String alias = userPage.getAlias();
-			if (Validators.isEmptyOrNull(alias, true)) {
-				alias = "/";
-			} else {
-				alias = TemplateUtils.cleanUserPageAlias(alias);
-			}
-			if (alias.isEmpty()) {
-				errors.reject("page.alias.blank", "页面别名不能为空");
-				return;
-			}
-			if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
-				errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
-						"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
-				return;
-			}
-			if (!validateUserPageAlias(alias)) {
-				errors.reject("page.alias.invalid", "页面别名不被允许");
+
+			validateAlias(alias, errors);
+			if (errors.hasErrors()) {
 				return;
 			}
 
@@ -118,51 +105,71 @@ public class PageValidator implements Validator {
 				return;
 			}
 		}
-
 	}
 
-	public static boolean validateUserPageAlias(String alias) {
-
-		/**
-		 * 这里重复校验了，为了 UserPageController
-		 */
-		if (alias == null) {
-			return false;
+	public static void validateAlias(String alias, Errors errors) {
+		if (Validators.isEmptyOrNull(alias, true)) {
+			alias = "/";
+		} else {
+			alias = TemplateUtils.cleanUserPageAlias(alias);
+		}
+		if (alias.isEmpty()) {
+			errors.reject("page.alias.blank", "页面别名不能为空");
+			return;
 		}
 		if (alias.length() > PAGE_ALIAS_MAX_LENGTH) {
-			return false;
+			errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
+					"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
+			return;
 		}
+		validateUserPageAlias(alias, errors);
+
+		if (errors.hasErrors()) {
+			return;
+		}
+	}
+
+	private static void validateUserPageAlias(String alias, Errors errors) {
 
 		if (alias.equals("/")) {
-			return true;
+			return;
 		}
 
 		if (alias.indexOf('/') == -1) {
-			return doValidateUserPageAlias(alias);
+			doValidateUserPageAlias(alias, errors);
 		} else {
 
 			String[] aliasArray = alias.split("/");
 			if (aliasArray.length > MAX_ALIAS_DEPTH) {
-				return false;
+				errors.reject("page.alias.depth.overmax", new Object[] { MAX_ALIAS_DEPTH },
+						"路径最大深度不能超过" + MAX_ALIAS_DEPTH);
+				return;
 			}
 			for (String _alias : aliasArray) {
-				if (!doValidateUserPageAlias(_alias)) {
-					return false;
+				doValidateUserPageAlias(_alias, errors);
+				if (errors.hasErrors()) {
+					return;
 				}
 			}
-			return true;
 		}
 	}
 
-	private static boolean doValidateUserPageAlias(String alias) {
+	private static void doValidateUserPageAlias(String alias, Errors errors) {
 		if (alias.startsWith("{")) {
 			if (!alias.endsWith("}")) {
-				return false;
+				errors.reject("page.alias.pathVariable.invalid", "以{开头必须以}结尾");
+				return;
 			}
 			String pattern = alias.substring(1, alias.length() - 1);
-			return Validators.isLetter(pattern);
+			if (!Validators.isLetter(pattern)) {
+				errors.reject("page.alias.pathVariable.onlyLetter", "{}中间的内容必须为英文字母");
+				return;
+			}
 		} else {
-			return alias.matches(NO_REGISTRABLE_ALIAS_PATTERN);
+			if (!alias.matches(NO_REGISTRABLE_ALIAS_PATTERN)) {
+				errors.reject("page.alias.valid", "路径只能为英文字母，数字或者-和_");
+				return;
+			}
 		}
 	}
 }

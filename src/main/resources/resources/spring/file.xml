@@ -72,13 +72,6 @@
 					<property name="name" value="文件存储" />
 					<property name="cacheSeconds" value="31556926" />
 				</bean>
-				<bean class="me.qyh.blog.file.local.CommonResourceStore">
-					<constructor-arg value="file2" />
-					<property name="absPath" value="/web/file/blog_file2" />
-					<property name="id" value="3" />
-					<property name="name" value="文件存储2" />
-					<property name="cacheSeconds" value="31556926" />
-				</bean>
 			</list>
 		</property>
 	</bean>

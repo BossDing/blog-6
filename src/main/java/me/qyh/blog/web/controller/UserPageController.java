@@ -26,11 +26,11 @@ import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.ui.page.Page;
 import me.qyh.blog.ui.page.UserPage;
 
-public class RegistrUserPageController {
+public class UserPageController {
 
 	private final UserPage userPage;
 
-	public RegistrUserPageController(UserPage userPage) {
+	public UserPageController(UserPage userPage) {
 		super();
 		this.userPage = new UserPage(userPage.getSpace(), userPage.getAlias(), true);
 	}

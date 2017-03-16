@@ -81,15 +81,6 @@ public interface FileStore {
 	String getUrl(String key);
 
 	/**
-	 * 获取下载路径
-	 * 
-	 * @param key
-	 *            文件路径
-	 * @return
-	 */
-	String getDownloadUrl(String key);
-
-	/**
 	 * 获取缩略图路径
 	 * 
 	 * @param key

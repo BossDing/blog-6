@@ -41,24 +41,10 @@ public class ArticleValidator implements Validator {
 
 	public static final int MAX_SUMMARY_LENGTH = 500;
 	public static final int MAX_TITLE_LENGTH = 200;
-	private static final int MAX_ALIAS_LENGTH = 50;
+	private static final int MAX_ALIAS_LENGTH = 200;
 	public static final int MAX_CONTENT_LENGTH = 200000;
 	public static final int MAX_TAG_SIZE = 10;
 	private static final int[] LEVEL_RANGE = new int[] { 0, 100 };
-	private static final String[] ALIAS_KEY_WORDS = { "list" };
-
-	private static String KEY_WORD_STR = "";
-
-	static {
-		StringBuilder sb = new StringBuilder();
-		sb.append("[");
-		for (String keyword : ALIAS_KEY_WORDS) {
-			sb.append(keyword).append(",");
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		sb.append("]");
-		KEY_WORD_STR = sb.toString();
-	}
 
 	@Autowired
 	private TagValidator tagValidator;
@@ -183,13 +169,6 @@ public class ArticleValidator implements Validator {
 					errors.reject("article.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
 							"文章别名不能超过" + MAX_ALIAS_LENGTH + "个字符");
 					return;
-				}
-				for (String keyword : ALIAS_KEY_WORDS) {
-					if (keyword.equals(alias)) {
-						errors.reject("article.alias.keyword", new Object[] { KEY_WORD_STR },
-								"关键词不能为" + KEY_WORD_STR + "这些关键词");
-						return;
-					}
 				}
 				try {
 					if (!alias.equals(URLEncoder.encode(alias, Constants.CHARSET.name()))) {

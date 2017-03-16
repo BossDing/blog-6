@@ -22,21 +22,23 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.web.HttpRequestHandler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
-import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
@@ -46,22 +48,21 @@ import me.qyh.blog.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.MappingRegister;
+import me.qyh.blog.web.SimpleUrlMappingRegisterEvent;
 import me.qyh.blog.web.Webs;
 
 /**
- * 将资源存储和资源访问结合起来
+ * 将资源存储和资源访问结合起来，<b>这个类必须在Web环境中注册</b>
  * 
  * 
  * @see ResourceHttpRequestHandler
- * @see LocalResourceUrlMappingHolder
- * @see LocalResourceSimpleUrlHandlerMapping
  * @author mhlx
  *
  */
-abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler implements FileStore {
+class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
+		implements FileStore, ApplicationEventPublisherAware, ApplicationListener<ContextRefreshedEvent> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLocalResourceRequestHandlerFileStore.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
 	protected int id;
 	private String name;
@@ -70,15 +71,17 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	protected Path absFolder;
 	private RequestMatcher requestMatcher;// 防盗链处理
 	private final String urlPatternPrefix;
-	private boolean enableDownloadHandler = true;
 	private boolean readOnly;
 
 	@Autowired
 	protected UrlHelper urlHelper;
-	@Autowired
-	private MappingRegister mappingRegister;
 
-	public AbstractLocalResourceRequestHandlerFileStore(String urlPatternPrefix) {
+	@Autowired(required = false)
+	@Qualifier("downloadExecutor")
+	private ThreadPoolTaskExecutor downloadExecutor;
+	private ApplicationEventPublisher applicationEventPublisher;
+
+	public LocalResourceRequestHandlerFileStore(String urlPatternPrefix) {
 		super();
 		if (!Validators.isLetterOrNum(urlPatternPrefix)) {
 			throw new SystemException("处理器路径不能为空，且只能由字母或数字组成");
@@ -118,6 +121,14 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 	}
 
 	@Override
+	public void onApplicationEvent(ContextRefreshedEvent evt) {
+		if (evt.getApplicationContext().getParent() != null) {
+			this.applicationEventPublisher
+					.publishEvent(new SimpleUrlMappingRegisterEvent(this, urlPatternPrefix + "/**", this));
+		}
+	}
+
+	@Override
 	public boolean delete(String key) {
 		Path p = FileUtils.sub(absFolder, key);
 		if (Files.exists(p)) {
@@ -138,19 +149,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			path = "/" + key;
 		}
 		return urlPrefix + Validators.cleanPath(path);
-	}
-
-	@Override
-	public String getDownloadUrl(String key) {
-		if (enableDownloadHandler) {
-			String path = key;
-			if (!key.startsWith("/")) {
-				path = "/" + key;
-			}
-			return urlHelper.getUrl() + Validators.cleanPath(urlPatternPrefix + "_download/" + path);
-		} else {
-			return getUrl(key);
-		}
 	}
 
 	@Override
@@ -232,11 +230,6 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 			urlPrefix = urlHelper.getUrl() + urlPatternPrefix;
 		}
 
-		mappingRegister.registerMapping(urlPatternPrefix + "/**", this);
-		if (enableDownloadHandler) {
-			mappingRegister.registerMapping(urlPatternPrefix + "_download/**", new DownloadHandler());
-		}
-
 		/**
 		 * spring 4.3 fix
 		 */
@@ -257,37 +250,13 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		return name;
 	}
 
-	protected void moreAfterPropertiesSet() {
-
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
-	private final class DownloadHandler implements HttpRequestHandler {
+	protected void moreAfterPropertiesSet() {
 
-		@Override
-		public void handleRequest(HttpServletRequest request, HttpServletResponse response)
-				throws ServletException, IOException {
-			if (requestMatcher != null && requestMatcher.match(request)) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			Resource resource = AbstractLocalResourceRequestHandlerFileStore.this.getResource(request);
-			if (resource == null) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			long length = resource.contentLength();
-			response.setContentLength((int) length);
-			response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-			response.setHeader("Content-Disposition",
-					// 中文乱码
-					"attachment; filename="
-							+ new String(resource.getFilename().getBytes(Constants.CHARSET), "iso-8859-1"));
-			try {
-				FileUtils.write(resource.getInputStream(), response.getOutputStream());
-			} catch (IOException e) {
-				LOGGER.error(e.getMessage(), e);
-			}
-		}
 	}
 
 	public void setId(int id) {
@@ -306,15 +275,16 @@ abstract class AbstractLocalResourceRequestHandlerFileStore extends ResourceHttp
 		this.requestMatcher = requestMatcher;
 	}
 
-	public void setEnableDownloadHandler(boolean enableDownloadHandler) {
-		this.enableDownloadHandler = enableDownloadHandler;
-	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
 
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
+	}
+
+	@Override
+	public boolean canStore(MultipartFile multipartFile) {
+		return true;
 	}
 }

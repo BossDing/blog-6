@@ -15,22 +15,12 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -42,36 +32,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
-import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.bean.JsonResult;
 import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.message.Message;
-import me.qyh.blog.message.Messages;
 import me.qyh.blog.pageparam.SpaceQueryParam;
 import me.qyh.blog.pageparam.UserPageQueryParam;
 import me.qyh.blog.service.SpaceService;
 import me.qyh.blog.service.UIService;
 import me.qyh.blog.ui.ParseContext.ParseConfig;
-import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;
 import me.qyh.blog.ui.page.UserPage;
-import me.qyh.blog.util.Resources;
-import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
 
 @Controller
 @RequestMapping("mgr/page/user")
-public class UserPageMgrController extends BaseMgrController implements InitializingBean {
+public class UserPageMgrController extends BaseMgrController {
 
 	@Autowired
 	private UserPageQueryParamValidator userPageParamValidator;
@@ -83,14 +63,6 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 	private PageValidator pageValidator;
 	@Autowired
 	private UIRender uiRender;
-	@Autowired
-	private RequestMappingHandlerMapping mapping;
-	@Autowired
-	private Messages messages;
-
-	private RequestMappingRegister requestMappingRegister;
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(UserPageMgrController.class);
 
 	@InitBinder(value = "userPage")
 	protected void initBinder(WebDataBinder binder) {
@@ -116,7 +88,7 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated UserPage userPage, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		uiService.buildTpl(userPage, requestMappingRegister);
+		uiService.buildTpl(userPage);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}
 
@@ -159,121 +131,8 @@ public class UserPageMgrController extends BaseMgrController implements Initiali
 	@RequestMapping(value = "delete", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
-		uiService.deleteUserPage(id, requestMappingRegister);
+		uiService.deleteUserPage(id);
 		return new JsonResult(true, new Message("page.user.delete.success", "删除成功"));
-	}
-
-	public static final class RequestMappingRegister {
-		private final RequestMappingHandlerMapping mapping;
-
-		private static final Method method;
-
-		static {
-			try {
-				method = RegistrUserPageController.class.getMethod("handleRequest", HttpServletRequest.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-		}
-
-		public RequestMappingRegister(RequestMappingHandlerMapping mapping) {
-			super();
-			this.mapping = mapping;
-		}
-
-		/**
-		 * 注册一个基于pattern的<b><i>GET请求</i></b>mapping
-		 * 
-		 * @param page
-		 * @throws LogicException
-		 *             如果路径重复
-		 * @throws NullPointerException
-		 *             如果页面没有ID
-		 */
-		public synchronized void registerMapping(UserPage page) throws LogicException {
-			Objects.requireNonNull(page.getId());
-			String registPath = getMapping(page);
-			if (checkMappingExists(registPath)) {
-				throw new LogicException("userPage.registPath.exists", "路径" + registPath + "已经存在", registPath);
-			}
-			mapping.registerMapping(getMethodMapping(registPath), new RegistrUserPageController(page), method);
-		}
-
-		public synchronized void unregisterMapping(UserPage userPage) {
-			mapping.unregisterMapping(getMethodMapping(getMapping(userPage)));
-		}
-
-		private String getMapping(UserPage userPage) {
-			String registPath = TemplateUtils.cleanUserPageAlias(userPage.getAlias());
-			Space space = userPage.getSpace();
-			if (space != null) {
-				Objects.requireNonNull(space.getAlias());
-				registPath = "/space/" + space.getAlias() + "/" + registPath;
-			} else {
-				registPath = "/" + registPath;
-			}
-			return registPath;
-		}
-
-		private RequestMappingInfo getMethodMapping(String registPath) {
-			PatternsRequestCondition prc = new PatternsRequestCondition(registPath);
-			RequestMethodsRequestCondition rmrc = new RequestMethodsRequestCondition(RequestMethod.GET);
-			return new RequestMappingInfo(prc, rmrc, null, null, null, null, null);
-		}
-
-		boolean checkMappingExists(String lookupPath) {
-			String _lookupPath = "/" + lookupPath;
-			Set<RequestMappingInfo> rmSet = mapping.getHandlerMethods().keySet();
-			for (RequestMappingInfo rm : rmSet) {
-				if (!rm.getPatternsCondition().getMatchingPatterns(_lookupPath).isEmpty()) {
-					Set<RequestMethod> methods = rm.getMethodsCondition().getMethods();
-					if (methods.isEmpty() || methods.contains(RequestMethod.GET)) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		requestMappingRegister = new RequestMappingRegister(mapping);
-
-		List<UserPage> allUserPages = uiService.selectAllUserPages();
-		for (UserPage page : allUserPages) {
-			if (requestMappingRegister.checkMappingExists(page.getAlias())) {
-				throw new SystemException("路径：" + page.getAlias() + "已经存在，来自于自定义页面[id=" + page.getId() + "]");
-			}
-			requestMappingRegister.registerMapping(page);
-		}
-
-		UserPage templatePage = new UserPage();
-		templatePage.setAllowComment(false);
-		templatePage.setCreateDate(Timestamp.valueOf(Times.now()));
-		templatePage.setDescription("");
-		templatePage.setSpace(null);
-
-		List<UserPage> userPages = new ArrayList<>();
-
-		if (!requestMappingRegister.checkMappingExists("login")) {
-			UserPage userPage = new UserPage(templatePage);
-			userPage.setName(messages.getMessage("userpage.login", "登录"));
-			userPage.setAlias("login");
-			userPage.setTpl(Resources.readResourceToString(new ClassPathResource("resources/page/LOGIN.html")));
-			userPages.add(userPage);
-		}
-
-		if (!userPages.isEmpty()) {
-			for (UserPage userPage : userPages) {
-				try {
-					uiService.buildTpl(userPage, requestMappingRegister);
-				} catch (LogicException e) {
-					LOGGER.debug(messages.getMessage(e.getLogicMessage()));
-				}
-			}
-		}
-
 	}
 
 }

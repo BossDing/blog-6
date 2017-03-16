@@ -127,7 +127,6 @@ $(document).ready(function(){
 								html += '<p><strong>高</strong>：'+data.height+'</p>';
 							}
 							html += '<p><strong>访问路径</strong>：<a href="'+data.url+'" target="blank">'+data.url+'</a></p>';
-							html += '<p><strong>下载路径</strong>：<a href="'+data.downloadUrl+'" target="blank">'+data.downloadUrl+'</a></p>';
 						}
 						bootbox.alert(html);
 					}else{

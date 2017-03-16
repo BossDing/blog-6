@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.view.feed.AbstractRssFeedView;
 
 import com.rometools.rome.feed.rss.Channel;
@@ -36,6 +37,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.pageparam.PageResult;
 import me.qyh.blog.security.Environment;
 
+@Component
 public class RssView extends AbstractRssFeedView {
 
 	@Autowired

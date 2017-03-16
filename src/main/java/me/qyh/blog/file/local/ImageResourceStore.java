@@ -61,7 +61,7 @@ import me.qyh.blog.web.Webs;
  * @author Administrator
  *
  */
-public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileStore {
+public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	private static final Logger IMG_RESOURCE_LOGGER = LoggerFactory.getLogger(ImageResourceStore.class);
 	private static final String WEBP_ACCEPT = "image/webp";
 	private static final char CONCAT_CHAR = 'X';
@@ -315,10 +315,6 @@ public class ImageResourceStore extends AbstractLocalResourceRequestHandlerFileS
 
 		if (sourceProtected && (smallResize == null && middleResize == null && largeResize == null)) {
 			throw new SystemException("开启原图保护必须提供默认缩放尺寸");
-		}
-
-		if (sourceProtected) {
-			setEnableDownloadHandler(false);
 		}
 
 		List<Resource> resources = new ArrayList<>();

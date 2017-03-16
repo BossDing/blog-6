@@ -17,6 +17,7 @@ package me.qyh.blog.web;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -66,6 +68,7 @@ import me.qyh.blog.message.Messages;
 import me.qyh.blog.security.AuthencationException;
 import me.qyh.blog.security.csrf.CsrfException;
 import me.qyh.blog.ui.TplRenderException;
+import me.qyh.blog.ui.dialect.RedirectException;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.controller.BaseController;
 
@@ -75,6 +78,7 @@ import me.qyh.blog.web.controller.BaseController;
  * @author mhlx
  *
  */
+@Component
 @ControllerAdvice
 public class GlobalControllerExceptionHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GlobalControllerExceptionHandler.class);
@@ -138,6 +142,22 @@ public class GlobalControllerExceptionHandler {
 		} else {
 			resp.setStatus(HttpStatus.FORBIDDEN.value());
 			return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
+		}
+	}
+
+	@ExceptionHandler(RedirectException.class)
+	public void handleRedirectException(RedirectException ex, HttpServletRequest request, HttpServletResponse resp)
+			throws IOException {
+		if (Webs.isAjaxRequest(request)) {
+			Webs.writeInfo(resp, new RedirectJsonResult(ex.getUrl(), ex.isPermanently()));
+		} else {
+			if (ex.isPermanently()) {
+				// 301
+				resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+				resp.setHeader("Location", ex.getUrl());
+			} else {
+				resp.sendRedirect(ex.getUrl());
+			}
 		}
 	}
 
@@ -295,7 +315,18 @@ public class GlobalControllerExceptionHandler {
 		return UrlUtils.buildFullRequestUrl(request);
 	}
 
-	public static final class ErrorInfo {
+	private String getErrorRedirect(HttpServletRequest request, ErrorInfo error) {
+		if (error != null) {
+			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
+		}
+		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error";
+	}
+
+	public static final class ErrorInfo implements Serializable {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		private final Message message;
 		private final int code;
 
@@ -315,10 +346,24 @@ public class GlobalControllerExceptionHandler {
 
 	}
 
-	private String getErrorRedirect(HttpServletRequest request, ErrorInfo error) {
-		if (error != null) {
-			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
+	public static final class RedirectJsonResult extends JsonResult {
+
+		private final String url;
+		private final boolean permanently;
+
+		private RedirectJsonResult(String url, boolean permanently) {
+			super(true);
+			this.url = url;
+			this.permanently = permanently;
 		}
-		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error";
+
+		public boolean isPermanently() {
+			return permanently;
+		}
+
+		public String getUrl() {
+			return url;
+		}
+
 	}
 }

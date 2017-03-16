@@ -43,10 +43,8 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		WebApplicationContext ctx = super.getCurrentWebApplicationContext();
 		UrlConfig helper = ctx.getBean(UrlConfig.class);
 		ServletContext sc = event.getServletContext();
-		/**
-		 * 去除静态资源中的jsessionid
-		 */
-		sc.setSessionTrackingModes(EnumSet.of(SessionTrackingMode.COOKIE));
+		EnumSet<SessionTrackingMode> modes = EnumSet.of(SessionTrackingMode.COOKIE);
+		sc.setSessionTrackingModes(modes);
 		SessionCookieConfig config = sc.getSessionCookieConfig();
 		config.setHttpOnly(true);
 		config.setSecure(helper.isSecure());

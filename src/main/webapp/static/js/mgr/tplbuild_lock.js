@@ -17,9 +17,15 @@ function preview() {
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					var win = window.open(basePath + '/mgr/page/preview',
+					if(data.url){
+						var win = window.open(data.url,
 							'_blank');
-					win.focus();
+						win.focus();
+					}else{
+						var win = window.open(basePath + '/mgr/page/preview',
+							'_blank');
+						win.focus();
+					}
 				} else {
 					showError(data);
 				}

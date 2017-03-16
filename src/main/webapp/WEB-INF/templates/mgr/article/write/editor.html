@@ -33,7 +33,7 @@
 				<div class="col-md-12">
 					<div class="form-group">
 						<label>博客标题</label><input type="text" class="form-control"
-							placeholder="博客标题(1-50个字符)" maxlength="50" id="title"
+							placeholder="博客标题(1-200个字符)" maxlength="200" id="title"
 							th:value="${article.title}" />
 					</div>
 					<div class="form-group">
@@ -74,8 +74,8 @@
 					</div>
 					<div class="form-group">
 						<label>别名</label><input type="text" class="form-control"
-							placeholder="博客别名(1-50个字符，不能为纯数字以及包含'<'、'>','='和空格等字符)"
-							maxlength="50" id="alias" th:value="${article.alias}" />
+							placeholder="博客别名(1-200个字符，不能为纯数字以及包含'<'、'>','='和空格等字符)"
+							maxlength="200" id="alias" th:value="${article.alias}" />
 					</div>
 					<div class="form-group">
 						<label>摘要 </label>

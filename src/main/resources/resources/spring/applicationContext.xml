@@ -39,8 +39,6 @@
 			</props>
 		</property>
 	</bean>
-	
-	<bean class="me.qyh.blog.web.MappingRegister"/>
 
 	<!-- 配置SqlSessionFactory -->
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"

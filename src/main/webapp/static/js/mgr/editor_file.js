@@ -508,7 +508,7 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 				if(data.type == 'DIRECTORY'){
 					html += '<a href="###" data-page="1" data-parent="'+data.id+'" "><img src="'+basePath+'/static/fileicon/folder.png" class="img-responsive" style="height:100px"/></a>';
 				} else {
-					var url = data.cf.image ? data.cf.url : data.cf.downloadUrl;
+					var url =data.cf.url;
 					html += '<a href="###" data-extension="'+data.cf.extension+'"  data-url="'+url+'" data-description="'+data.cf.originalFilename+'">'
 					if(data.cf.thumbnailUrl){
 						html += '<img  src="'+data.cf.thumbnailUrl.small+'" data-middle="'+data.cf.thumbnailUrl.middle+'" class="img-responsive" style="height:100px"/>';

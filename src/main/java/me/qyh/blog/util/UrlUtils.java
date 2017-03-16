@@ -153,11 +153,4 @@ public final class UrlUtils {
 
 		return ABSOLUTE_URL.matcher(url).matches();
 	}
-
-	public static String getUrlBeforeForward(HttpServletRequest request) {
-		String requestUri = (String) request.getAttribute("javax.servlet.forward.request_uri");
-		String queryString = (String) request.getAttribute("javax.servlet.forward.query_string");
-		return buildFullRequestUrl(request.getScheme(), request.getServerName(), request.getServerPort(), requestUri,
-				queryString);
-	}
 }
