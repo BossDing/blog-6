@@ -164,9 +164,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		Optional<User> optionalUser = rememberMe.login(request, response);
 		if (optionalUser.isPresent()) {
 			LOGGER.debug("用户没有登录，自动登录成功");
-			User user = optionalUser.get();
-			user.setPassword(null);
-			request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
+			request.getSession().setAttribute(Constants.USER_SESSION_KEY, optionalUser.get());
 		}
 		return optionalUser;
 	}

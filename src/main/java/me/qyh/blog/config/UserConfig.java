@@ -18,9 +18,10 @@ package me.qyh.blog.config;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Properties;
 
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.PathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.util.DigestUtils;
@@ -29,12 +30,15 @@ import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.security.BCrypts;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 
 public final class UserConfig {
 
-	private static final EncodedResource userRes = new EncodedResource(
-			new ClassPathResource("resources/user.properties"), Constants.CHARSET);
+	private static final Path USER_RES_PATH = Constants.CONFIG_DIR.resolve("user.properties");
+
+	private static final EncodedResource USER_RES = new EncodedResource(new PathResource(USER_RES_PATH),
+			Constants.CHARSET);
 	private static final String USERNAME = "username";
 	private static final String PASSWORD = "password";
 	private static final String EMAIL = "email";
@@ -48,8 +52,9 @@ public final class UserConfig {
 	private static User user;
 
 	static {
+		FileUtils.createFile(USER_RES_PATH);
 		try {
-			pros = PropertiesLoaderUtils.loadProperties(userRes);
+			pros = PropertiesLoaderUtils.loadProperties(USER_RES);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
@@ -66,7 +71,7 @@ public final class UserConfig {
 		}
 		pros.setProperty(USERNAME, user.getName());
 		pros.setProperty(EMAIL, user.getEmail() == null ? "" : user.getEmail());
-		try (OutputStream os = new FileOutputStream(userRes.getResource().getFile())) {
+		try (OutputStream os = new FileOutputStream(USER_RES.getResource().getFile())) {
 			pros.store(os, "");
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);

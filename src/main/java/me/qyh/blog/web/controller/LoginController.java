@@ -91,7 +91,7 @@ public class LoginController extends BaseController {
 					rememberMe.save(user, request, response);
 				}
 
-				putInSession(user, request.getSession());
+				request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
 
 				changeCsrf(request, response);
 				return;
@@ -109,11 +109,6 @@ public class LoginController extends BaseController {
 			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
 			this.csrfTokenRepository.saveToken(newToken, request, response);
 		}
-	}
-
-	private void putInSession(User authenticated, HttpSession session) {
-		authenticated.setPassword(null);
-		session.setAttribute(Constants.USER_SESSION_KEY, authenticated);
 	}
 
 }

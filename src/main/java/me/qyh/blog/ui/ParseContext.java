@@ -32,17 +32,11 @@ import me.qyh.blog.ui.page.Page;
  */
 public class ParseContext {
 
-	private static final ThreadLocal<ParseStatus> statusLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Boolean> startLocal = new ThreadLocal<>();
 	private static final ThreadLocal<TransactionStatus> transactionLocal = new ThreadLocal<>();
 	private static final ThreadLocal<Page> pageLocal = new ThreadLocal<>();
-	private static final ThreadLocal<ParseConfig> configLocal = new ThreadLocal<>();
+	private static final ThreadLocal<ParseConfig> configLocal = ThreadLocal.withInitial(ParseConfig::new);
 	private static final ThreadLocal<Map<String, Fragment>> fragmentsLocal = ThreadLocal.withInitial(HashMap::new);
-
-	public static final ParseConfig DEFAULT_CONFIG = new ParseConfig();
-
-	public enum ParseStatus {
-		START, COMPLETE, BREAK;
-	}
 
 	public static void setTransactionStatus(TransactionStatus status) {
 		transactionLocal.set(status);
@@ -53,28 +47,20 @@ public class ParseContext {
 	}
 
 	public static void remove() {
-		statusLocal.remove();
+		startLocal.remove();
 		transactionLocal.remove();
 		pageLocal.remove();
 		configLocal.remove();
 		fragmentsLocal.remove();
 	}
 
-	public static ParseStatus getStatus() {
-		return statusLocal.get();
-	}
-
-	public static void setStatus(ParseStatus status) {
-		statusLocal.set(status);
-	}
-
 	public static void start() {
-		statusLocal.set(ParseStatus.START);
+		startLocal.set(Boolean.TRUE);
 	}
 
 	public static boolean isStart() {
-		ParseStatus status = statusLocal.get();
-		return status != null && status.equals(ParseStatus.START);
+		Boolean start = startLocal.get();
+		return start != null;
 	}
 
 	public static void removeTransactionStatus() {
@@ -82,15 +68,15 @@ public class ParseContext {
 	}
 
 	public static boolean isPreview() {
-		return getConfig().preview;
+		return getConfig().isPreview();
 	}
 
 	public static boolean onlyCallable() {
-		return getConfig().onlyCallable;
+		return getConfig().isOnlyCallable();
 	}
 
 	public static boolean isDisposible() {
-		return getConfig().disposible;
+		return getConfig().isDisposible();
 	}
 
 	public static Page getPage() {
@@ -114,36 +100,6 @@ public class ParseContext {
 	}
 
 	private static ParseConfig getConfig() {
-		ParseConfig inLocal = configLocal.get();
-		return inLocal == null ? DEFAULT_CONFIG : inLocal;
-	}
-
-	public static final class ParseConfig {
-		private final boolean preview;
-		private final boolean onlyCallable;
-		private final boolean disposible;
-
-		public ParseConfig(boolean preview, boolean onlyCallable, boolean disposible) {
-			super();
-			this.preview = preview;
-			this.onlyCallable = onlyCallable;
-			this.disposible = disposible;
-		}
-
-		public ParseConfig() {
-			this(false, false, false);
-		}
-
-		public boolean isPreview() {
-			return preview;
-		}
-
-		public boolean isOnlyCallable() {
-			return onlyCallable;
-		}
-
-		public boolean isDisposible() {
-			return disposible;
-		}
+		return configLocal.get();
 	}
 }

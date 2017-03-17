@@ -17,8 +17,10 @@ package me.qyh.blog.config;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import me.qyh.blog.message.Message;
+import me.qyh.blog.util.FileUtils;
 
 /**
  * 系统常量
@@ -56,6 +58,15 @@ public class Constants {
 	 * 系统默认分页条数
 	 */
 	public static final int DEFAULT_PAGE_SIZE = 10;
+
+	/**
+	 * 系统配置文件存放目录
+	 */
+	public static final Path CONFIG_DIR = FileUtils.sub(FileUtils.getHomeDir(), "/blog/config");
+
+	static {
+		FileUtils.forceMkdir(CONFIG_DIR);
+	}
 
 	private Constants() {
 

@@ -36,7 +36,7 @@ import me.qyh.blog.entity.Space;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
 import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ParseContext.ParseConfig;
+import me.qyh.blog.ui.ParseConfig;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.ui.TplRenderException;
 import me.qyh.blog.ui.UIRender;

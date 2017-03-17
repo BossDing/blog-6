@@ -143,6 +143,28 @@ public class FileUtils {
 	}
 
 	/**
+	 * 创建一个文件
+	 * 
+	 * @param path
+	 */
+	public static void createFile(Path path) {
+		synchronized (FileUtils.class) {
+			if (!Files.exists(path)) {
+				try {
+					Files.createDirectories(path.getParent());
+					Files.createFile(path);
+				} catch (IOException e) {
+					throw new SystemException("创建文件夹：" + path + "失败:" + e.getMessage(), e);
+				}
+			} else {
+				if (!Files.isRegularFile(path)) {
+					throw new SystemException("目标位置" + path + "已经存在文件，但不是文件");
+				}
+			}
+		}
+	}
+
+	/**
 	 * 创建一个文件夹，如果失败，抛出异常
 	 * 
 	 * @param parentFile

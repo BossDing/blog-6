@@ -76,8 +76,7 @@ public class PageReturnHandler implements HandlerMethodReturnValueHandler {
 
 		try {
 
-			rendered = uiRender.doRender(db, mavContainer.getModel(), nativeRequest, nativeResponse,
-					ParseContext.DEFAULT_CONFIG);
+			rendered = uiRender.doRender(db, mavContainer.getModel(), nativeRequest, nativeResponse, new ParseConfig());
 
 		} catch (Exception e) {
 			// 解锁页面不能出现异常，不再跳转(防止死循环)

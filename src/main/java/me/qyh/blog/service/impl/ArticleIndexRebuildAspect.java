@@ -34,7 +34,7 @@ import me.qyh.blog.util.ExceptionUtils;
 public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 		implements ApplicationEventPublisherAware {
 
-	private static final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
+	private final ThreadLocal<Throwable> throwableLocal = new ThreadLocal<>();
 
 	private static final Class<?>[] NO_NEED_REBUILD_EXCEPTIONS = new Class<?>[] { LogicException.class,
 			AuthencationException.class, LockException.class };

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.bean.JsonResult;
@@ -33,6 +34,7 @@ import me.qyh.blog.config.UserConfig;
 import me.qyh.blog.entity.User;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.message.Message;
+import me.qyh.blog.security.BCrypts;
 import me.qyh.blog.web.controller.form.UserValidator;
 
 @Controller
@@ -54,7 +56,11 @@ public class UserMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "update", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult update(@Validated @RequestBody User user, HttpSession session) throws LogicException {
+	public JsonResult update(@RequestParam(value = "oldPassword", defaultValue = "") String oldPassword,
+			@Validated @RequestBody User user, HttpSession session) throws LogicException {
+		if (!BCrypts.matches(oldPassword, UserConfig.get().getPassword())) {
+			return new JsonResult(false, new Message("user.update.authFail", "密码验证失败"));
+		}
 		UserConfig.update(user);
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		return new JsonResult(true, new Message("user.update.success", "更新成功"));

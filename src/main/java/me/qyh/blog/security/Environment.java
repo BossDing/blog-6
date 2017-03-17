@@ -17,43 +17,30 @@ package me.qyh.blog.security;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import me.qyh.blog.entity.Space;
 import me.qyh.blog.entity.User;
 
 public final class Environment {
 
-	private static final ThreadLocal<User> userLocal = new ThreadLocal<>();
-	private static final ThreadLocal<Space> spaceLocal = new ThreadLocal<>();
-	private static final ThreadLocal<String> ipLocal = new ThreadLocal<>();
+	private static final ThreadLocal<User> USER_LOCAL = new ThreadLocal<>();
+	private static final ThreadLocal<Space> SPACE_LOCAL = new ThreadLocal<>();
+	private static final ThreadLocal<String> IP_LOCAL = new ThreadLocal<>();
 
 	public static Optional<User> getUser() {
-		return Optional.ofNullable(userLocal.get());
+		return Optional.ofNullable(USER_LOCAL.get());
 	}
 
 	public static Optional<Space> getSpace() {
-		return Optional.ofNullable(spaceLocal.get());
+		return Optional.ofNullable(SPACE_LOCAL.get());
 	}
 
 	/**
 	 * 验证当前用户是否已经登录
 	 * 
-	 * @param authencation
-	 *            如果没有登录，抛出一个指定的AuthencationException
-	 */
-	public static void doAuthencation(Supplier<? extends AuthencationException> authencation) {
-		getUser().orElseThrow(authencation);
-	}
-
-	/**
-	 * 验证当前用户是否已经登录
-	 * 
-	 * @param authencation
-	 *            如果没有登录，抛出一个AuthencationException
 	 */
 	public static void doAuthencation() {
-		doAuthencation(AuthencationException::new);
+		getUser().orElseThrow(AuthencationException::new);
 	}
 
 	/**
@@ -76,14 +63,14 @@ public final class Environment {
 	 *            用户
 	 */
 	public static void setUser(User user) {
-		userLocal.set(user);
+		USER_LOCAL.set(user);
 	}
 
 	/**
 	 * 移除用户上下文
 	 */
 	public static void removeUser() {
-		userLocal.remove();
+		USER_LOCAL.remove();
 	}
 
 	/**
@@ -101,14 +88,14 @@ public final class Environment {
 	 * @param space
 	 */
 	public static void setSpace(Space space) {
-		spaceLocal.set(space);
+		SPACE_LOCAL.set(space);
 	}
 
 	/**
 	 * 移除空间上下文
 	 */
 	public static void removeSpace() {
-		spaceLocal.remove();
+		SPACE_LOCAL.remove();
 	}
 
 	/**
@@ -135,7 +122,7 @@ public final class Environment {
 	 * @return
 	 */
 	public static Optional<String> getIP() {
-		return Optional.ofNullable(ipLocal.get());
+		return Optional.ofNullable(IP_LOCAL.get());
 	}
 
 	/**
@@ -144,15 +131,15 @@ public final class Environment {
 	 * @param ip
 	 */
 	public static void setIP(String ip) {
-		ipLocal.set(ip);
+		IP_LOCAL.set(ip);
 	}
 
 	/**
 	 * 清空所有的上下文
 	 */
 	public static void remove() {
-		userLocal.remove();
-		spaceLocal.remove();
-		ipLocal.remove();
+		USER_LOCAL.remove();
+		SPACE_LOCAL.remove();
+		IP_LOCAL.remove();
 	}
 }

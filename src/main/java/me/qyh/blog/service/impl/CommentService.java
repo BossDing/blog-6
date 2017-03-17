@@ -18,6 +18,7 @@ package me.qyh.blog.service.impl;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +73,7 @@ import me.qyh.blog.security.input.HtmlClean;
 import me.qyh.blog.security.input.Markdown2Html;
 import me.qyh.blog.service.CommentServer;
 import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.CommentValidator;
@@ -122,10 +124,16 @@ public class CommentService implements InitializingBean, CommentServer {
 	/**
 	 * 评论配置文件位置
 	 */
-	private static final Resource configResource = new ClassPathResource("resources/commentConfig.properties");
+
+	private static final Path RES_PATH = Constants.CONFIG_DIR.resolve("commentConfig.properties");
+	private final Resource configResource = new PathResource(RES_PATH);
 	private final Properties pros = new Properties();
 
 	private CommentConfig config;
+
+	static {
+		FileUtils.createFile(RES_PATH);
+	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {

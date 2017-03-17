@@ -17,20 +17,23 @@ package me.qyh.blog.service.impl;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Properties;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.GlobalConfig;
 import me.qyh.blog.config.UploadConfig;
 import me.qyh.blog.exception.LogicException;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.ConfigService;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 
 @Service
@@ -46,7 +49,14 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String METAWEBLOG_UPLOAD_STORE = "metaweblog.upload.store";
 
 	private Properties config = new Properties();
-	private Resource resource;
+
+	private static final Path RES_PATH = Constants.CONFIG_DIR.resolve("config.properties");
+
+	static {
+		FileUtils.createFile(RES_PATH);
+	}
+
+	private Resource resource = new PathResource(RES_PATH);
 
 	@Override
 	@Cacheable(key = "'globalConfig'", value = "configCache", unless = "#result == null")
@@ -117,7 +127,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		resource = new ClassPathResource("resources/config.properties");
 		Resources.readResource(resource, config::load);
 	}
 

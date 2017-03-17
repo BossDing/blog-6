@@ -74,7 +74,7 @@
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
 
-	<bean class="me.qyh.blog.ui.UICompressRender" />
+	<bean class="me.qyh.blog.ui.UIRender" />
 
 
 	<!-- captcha -->
