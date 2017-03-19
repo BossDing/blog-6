@@ -126,11 +126,6 @@ public class AliyunFileStore extends AbstractOssFileStore {
 	}
 
 	@Override
-	public String getDownloadUrl(String key) {
-		return getUrl(key);
-	}
-
-	@Override
 	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
 		if (isSystemAllowedImage(key)) {
 			if (secret) {

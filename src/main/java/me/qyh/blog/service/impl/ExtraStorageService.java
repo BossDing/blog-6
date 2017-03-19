@@ -30,7 +30,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.util.SerializationUtils;
 
 /**
@@ -47,7 +47,7 @@ import me.qyh.blog.util.SerializationUtils;
 @Service
 public class ExtraStorageService implements InitializingBean {
 
-	private final Path dataFile = FileUtils.sub(FileUtils.getHomeDir(), "extra.dat");
+	private final Path dataFile = Constants.DAT_DIR.resolve("extra.dat");
 
 	private Map<String, String> dataMap = Collections.synchronizedMap(new HashMap<>());
 

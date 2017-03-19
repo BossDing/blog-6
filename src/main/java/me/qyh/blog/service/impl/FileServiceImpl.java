@@ -237,15 +237,14 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private void deleteOne(FileDelete fd) throws LogicException {
 		String key = fd.getKey();
 		Optional<FileStore> optionalFileStore = fileManager.getFileStore(fd.getStore());
-		if (!optionalFileStore.isPresent()) {
+		if (optionalFileStore.isPresent()) {
+			FileStore fs = optionalFileStore.get();
+			if (!fs.delete(key)) {
+				throw new LogicException("file.delete.fail", "文件删除失败，无法删除存储器" + fs.id() + "下" + key + "对应的文件", fs.id(),
+						key);
+			}
+		} else {
 			LOGGER.warn("无法找到id为" + fd.getStore() + "的存储器");
-			fileDeleteDao.deleteById(fd.getId());
-			return;
-		}
-		FileStore fs = optionalFileStore.get();
-		if (!fs.delete(key)) {
-			throw new LogicException("file.delete.fail", "文件删除失败，无法删除存储器" + fs.id() + "下" + key + "对应的文件", fs.id(),
-					key);
 		}
 		fileDeleteDao.deleteById(fd.getId());
 	}

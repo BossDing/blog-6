@@ -43,11 +43,16 @@ public class GetRequestMappingEventListener implements InitializingBean {
 
 		@Override
 		public synchronized void onApplicationEvent(GetRequestMappingRegisterEvent event) {
+			RequestMappingInfo info = getMethodMapping(event.getPath());
 			if (checkExists(event.getPath())) {
-				throw new RuntimeLogicException(
-						new Message("requestMapping.exists", "路径:" + event.getPath() + "存在", event.getPath()));
+				if (event.isForce()) {
+					mapping.unregisterMapping(info);
+				} else {
+					throw new RuntimeLogicException(
+							new Message("requestMapping.exists", "路径:" + event.getPath() + "存在", event.getPath()));
+				}
 			}
-			mapping.registerMapping(getMethodMapping(event.getPath()), event.getHandler(), event.getMethod());
+			mapping.registerMapping(info, event.getHandler(), event.getMethod());
 		}
 
 	}

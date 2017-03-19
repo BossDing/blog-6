@@ -33,6 +33,11 @@ public class GetRequestMappingRegisterEvent extends ApplicationEvent {
 	private final Object handler;
 	private final Method method;
 
+	/**
+	 * 如果为true，那么注册已经存在的mapping时候会先删除后注册
+	 */
+	private boolean force;
+
 	public GetRequestMappingRegisterEvent(Object source, String path, Object handler, Method method) {
 		super(source);
 		this.path = path;
@@ -50,6 +55,14 @@ public class GetRequestMappingRegisterEvent extends ApplicationEvent {
 
 	public Method getMethod() {
 		return method;
+	}
+
+	public boolean isForce() {
+		return force;
+	}
+
+	public void setForce(boolean force) {
+		this.force = force;
 	}
 
 }

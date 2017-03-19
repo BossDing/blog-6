@@ -78,7 +78,7 @@ public class ArticleCache {
 	public Article getArticle(String alias) {
 		Integer id = articleDao.selectIdByAlias(alias);
 		if (id != null) {
-			Article art = articleDao.selectById(id);
+			Article art = getArticle(id);
 			if (art != null && Objects.equals(alias, art.getAlias())) {
 				return art;
 			}

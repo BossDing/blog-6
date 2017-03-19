@@ -38,6 +38,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.config.UrlHelper;
 import me.qyh.blog.entity.Comment;
 import me.qyh.blog.exception.SystemException;
@@ -67,8 +68,8 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private String mailTemplate;
 	private String mailSubject;
 
-	private Path toSendSdfile = FileUtils.sub(FileUtils.getHomeDir(), "toSendSdfile.dat");
-	private Path toProcessesSdfile = FileUtils.sub(FileUtils.getHomeDir(), "toProcessesSdfile.dat");
+	private Path toSendSdfile = Constants.DAT_DIR.resolve("comment-toSendSdfile.dat");
+	private Path toProcessesSdfile = Constants.DAT_DIR.resolve("comment-toProcessesSdfile.dat");
 
 	/**
 	 * 如果待发送列表中有10或以上的评论，立即发送邮件

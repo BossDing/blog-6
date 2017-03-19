@@ -54,7 +54,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	/**
 	 * 应用关闭时未发送的信息存入文件中
 	 */
-	private final Path sdfile = FileUtils.sub(FileUtils.getHomeDir(), "message_shutdown.dat");
+	private final Path sdfile = Constants.DAT_DIR.resolve("message_shutdown.dat");
 
 	/**
 	 * 将邮件加入发送队列

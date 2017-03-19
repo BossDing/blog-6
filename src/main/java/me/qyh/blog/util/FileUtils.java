@@ -33,7 +33,7 @@ import java.util.function.Predicate;
 import me.qyh.blog.exception.SystemException;
 
 public class FileUtils {
-	private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
+	public static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
 
 	/**
 	 * 博客用来存放临时文件的文件夹
@@ -233,15 +233,6 @@ public class FileUtils {
 			} catch (IOException e) {
 			}
 		}
-	}
-
-	/**
-	 * 获取主目录
-	 * 
-	 * @return
-	 */
-	public static Path getHomeDir() {
-		return HOME_DIR;
 	}
 
 	/**

@@ -288,8 +288,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				}
 			}
 		});
-		applicationEventPublisher
-				.publishEvent(new ArticleEvent(this, article, update ? EventType.UPDATE : EventType.INSERT));
+		applicationEventPublisher.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()),
+				update ? EventType.UPDATE : EventType.INSERT));
 		return article;
 	}
 

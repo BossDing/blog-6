@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.file.oss;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -135,16 +134,6 @@ public class QiniuFileStore extends AbstractOssFileStore {
 		}
 		if (isSystemAllowedImage(key) && sourceProtected) {
 			return url + styleSplitChar + style;
-		}
-		return url;
-	}
-
-	// http://7xst8w.com1.z0.glb.clouddn.com/my-java.png?attname=
-	@Override
-	public String getDownloadUrl(String key) {
-		String url = urlPrefix + key + "?attname=";
-		if (secret || sourceProtected) {
-			return auth.privateDownloadUrl(url);
 		}
 		return url;
 	}

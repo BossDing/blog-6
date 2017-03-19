@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -639,8 +640,8 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			evitFragmentCache(evits);
 			return records;
 		} catch (RuntimeException | Error e) {
-			ts.setRollbackOnly();
 			LOGGER.error(e.getMessage(), e);
+			ts.setRollbackOnly();
 			records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
 			return records;
 		} finally {
@@ -997,8 +998,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 	private final class UserPageRequestMappingRegisterHelper {
 
-		private List<UserPage> unregistes = new ArrayList<>();
-		private List<UserPage> registes = new ArrayList<>();
+		private List<ApplicationEvent> rollBackEvents = new ArrayList<>();
 
 		public UserPageRequestMappingRegisterHelper() {
 			super();
@@ -1008,35 +1008,24 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		void registerUserPage(UserPage page) throws LogicException {
 			try {
 				applicationEventPublisher
-						.publishEvent(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page));
+						.publishEvent(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page, true));
 			} catch (RuntimeLogicException e) {
 				throw e.getLogicException();
 			}
-			unregistes.add(page);
+			rollBackEvents.add(new UserPageGetRequestMappingUnRegisterEvent(UIServiceImpl.this, page));
 		}
 
 		void unregisterUserPage(UserPage page) {
 			applicationEventPublisher
 					.publishEvent(new UserPageGetRequestMappingUnRegisterEvent(UIServiceImpl.this, page));
-			registes.add(page);
+			rollBackEvents.add(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page, true));
 		}
 
 		private void rollback() {
-			try {
-				if (!registes.isEmpty()) {
-					for (UserPage page : registes) {
-						applicationEventPublisher
-								.publishEvent(new UserPageGetRequestMappingRegisterEvent(UIServiceImpl.this, page));
-					}
+			if (!rollBackEvents.isEmpty()) {
+				for (ApplicationEvent evt : rollBackEvents) {
+					applicationEventPublisher.publishEvent(evt);
 				}
-				if (!unregistes.isEmpty()) {
-					for (UserPage page : unregistes) {
-						applicationEventPublisher
-								.publishEvent(new UserPageGetRequestMappingUnRegisterEvent(UIServiceImpl.this, page));
-					}
-				}
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
 			}
 		}
 	}
@@ -1072,6 +1061,11 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 
 		public UserPageGetRequestMappingRegisterEvent(Object source, UserPage userPage) {
 			super(source, getRequestMappingPath(userPage), new UserPageController(userPage), METHOD);
+		}
+
+		public UserPageGetRequestMappingRegisterEvent(Object source, UserPage userPage, boolean force) {
+			super(source, getRequestMappingPath(userPage), new UserPageController(userPage), METHOD);
+			setForce(force);
 		}
 
 	}

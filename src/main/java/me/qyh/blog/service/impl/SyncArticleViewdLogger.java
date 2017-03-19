@@ -15,22 +15,31 @@
  */
 package me.qyh.blog.service.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.concurrent.locks.StampedLock;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import me.qyh.blog.config.Constants;
 import me.qyh.blog.entity.Article;
 import me.qyh.blog.evt.ArticleEvent;
 import me.qyh.blog.exception.SystemException;
 import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleViewedLogger;
+import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.SerializationUtils;
 
 /**
  * 将最近访问的文章纪录在内存中
@@ -38,20 +47,23 @@ import me.qyh.blog.service.impl.ArticleServiceImpl.ArticleViewedLogger;
  * <b>可能文章状态可能会变更，所以实际返回的数量可能小于<i>max</i></b>
  * </p>
  * <p>
- * <b>重启应用会导致数据丢失</b>
  * </p>
  * 
  * @author Administrator
  *
  */
-public class SyncArticleViewdLogger implements ArticleViewedLogger {
+public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLogger {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SyncArticleViewdLogger.class);
 
 	private final int max;
-	private final Map<Integer, Boolean> articles;
+	private Map<Integer, Article> articles;
 	private StampedLock lock = new StampedLock();
 
-	@Autowired
-	private ArticleCache articleCache;
+	/**
+	 * 应用关闭时当前访问的文章存入文件中
+	 */
+	private final Path sdfile = Constants.DAT_DIR.resolve("sync_articles_viewd.dat");
 
 	private long timestamp = Long.MAX_VALUE;
 
@@ -61,7 +73,7 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 		}
 		this.max = max;
 
-		articles = new LinkedHashMap<Integer, Boolean>() {
+		articles = new LinkedHashMap<Integer, Article>() {
 
 			/**
 			 * 
@@ -69,7 +81,7 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected boolean removeEldestEntry(Entry<Integer, Boolean> eldest) {
+			protected boolean removeEldestEntry(Entry<Integer, Article> eldest) {
 				return size() > max;
 			}
 
@@ -80,6 +92,13 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 		this(10);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * <b>存在'延迟'，一些文章的更新操作不会被立即体现</b>
+	 * </p>
+	 */
 	@Override
 	public List<Article> getViewdArticles(int num) {
 		long stamp = lock.tryOptimisticRead();
@@ -96,8 +115,15 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 	}
 
 	private List<Article> getCurrentViewed(int num) {
-		return articles.keySet().stream().sorted(Collections.reverseOrder()).limit(Math.min(num, max))
-				.map(articleCache::getArticle).filter(Objects::nonNull).collect(Collectors.toList());
+		List<Article> result = new ArrayList<>(articles.values());
+		if (!result.isEmpty()) {
+			Collections.reverse(result);
+			int finalNum = Math.min(num, max);
+			if (result.size() > finalNum) {
+				result = result.subList(0, finalNum - 1);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -108,7 +134,7 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 				return;
 			}
 			articles.remove(article.getId());
-			articles.put(article.getId(), Boolean.TRUE);
+			articles.put(article.getId(), article);
 		} finally {
 			lock.unlockWrite(stamp);
 		}
@@ -129,6 +155,8 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 					boolean valid = art.isPublished() && !art.isPrivate();
 					if (!valid) {
 						articles.remove(art.getId());
+					} else {
+						articles.replace(art.getId(), new Article(art));
 					}
 				}
 				break;
@@ -138,6 +166,28 @@ public class SyncArticleViewdLogger implements ArticleViewedLogger {
 		} finally {
 			timestamp = Long.MAX_VALUE;
 			lock.unlockWrite(stamp);
+		}
+	}
+
+	@EventListener
+	public void handleContextCloseEvent(ContextClosedEvent evt) throws IOException {
+		if (!articles.isEmpty()) {
+			SerializationUtils.serialize(new LinkedHashMap<>(articles), sdfile);
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (Files.exists(sdfile)) {
+			try {
+				this.articles.putAll(SerializationUtils.deserialize(sdfile));
+			} catch (Exception e) {
+				LOGGER.warn("反序列化文件" + sdfile + "失败：" + e.getMessage(), e);
+			} finally {
+				if (!FileUtils.deleteQuietly(sdfile)) {
+					LOGGER.warn("删除文件" + sdfile + "失败");
+				}
+			}
 		}
 	}
 }

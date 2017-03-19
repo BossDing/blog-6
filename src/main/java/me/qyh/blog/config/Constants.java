@@ -62,10 +62,16 @@ public class Constants {
 	/**
 	 * 系统配置文件存放目录
 	 */
-	public static final Path CONFIG_DIR = FileUtils.sub(FileUtils.getHomeDir(), "/blog/config");
+	public static final Path CONFIG_DIR = FileUtils.HOME_DIR.resolve("blog/config");
+
+	/**
+	 * dat文件存放目录
+	 */
+	public static final Path DAT_DIR = FileUtils.HOME_DIR.resolve("blog/dat");
 
 	static {
 		FileUtils.forceMkdir(CONFIG_DIR);
+		FileUtils.forceMkdir(DAT_DIR);
 	}
 
 	private Constants() {
