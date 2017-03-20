@@ -474,7 +474,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<ArticleNav> getArticleNav(String idOrAlias) {
+	public Optional<ArticleNav> getArticleNav(String idOrAlias, boolean queryLock) {
 		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 		if (optionalArticle.isPresent()) {
 			Article article = optionalArticle.get();
@@ -482,8 +482,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				return Optional.empty();
 			}
 			boolean queryPrivate = Environment.isLogin();
-			Article previous = articleDao.getPreviousArticle(article, queryPrivate);
-			Article next = articleDao.getNextArticle(article, queryPrivate);
+			Article previous = articleDao.getPreviousArticle(article, queryPrivate, queryLock);
+			Article next = articleDao.getNextArticle(article, queryPrivate, queryLock);
 			return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
 		}
 		return Optional.empty();
@@ -522,7 +522,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过多文章
+	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过多的文章
 	 * 
 	 * @param num
 	 *            记录数，该记录数受到 {@code ArticleViewdLogger}的限制
@@ -532,6 +532,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public List<Article> getRecentlyViewdArticle(int num) {
 		return articleViewedLogger == null ? Collections.emptyList() : articleViewedLogger.getViewdArticles(num);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<Article> selectRandom(boolean queryLock) {
+		return Optional.ofNullable(
+				articleDao.selectRandom(Environment.getSpace().orElse(null), Environment.isLogin(), queryLock));
 	}
 
 	@Override

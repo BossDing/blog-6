@@ -83,9 +83,7 @@
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
-	<bean class="me.qyh.blog.message.Messages">
-		<property name="locale" value="zh_CN" />
-	</bean>
+	<bean class="me.qyh.blog.message.Messages"/>
 
 	<bean id="articleIndexer" class="me.qyh.blog.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="/web/blog_index" />

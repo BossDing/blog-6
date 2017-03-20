@@ -182,7 +182,8 @@ public interface ArticleDao {
 	 *            是否查询私有文章
 	 * @return 上一篇，如果不存在，返回null
 	 */
-	Article getPreviousArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
+	Article getPreviousArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate,
+			@Param("queryLock") boolean queryLock);
 
 	/**
 	 * 下一篇文章
@@ -193,7 +194,8 @@ public interface ArticleDao {
 	 *            是否查询私有文章
 	 * @return 下一篇文章，如果不存在，返回null
 	 */
-	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate);
+	Article getNextArticle(@Param("article") Article article, @Param("queryPrivate") boolean queryPrivate,
+			@Param("queryLock") boolean queryLock);
 
 	/**
 	 * 查询文章统计
@@ -261,5 +263,19 @@ public interface ArticleDao {
 	 * @return
 	 */
 	Integer selectIdByAlias(String alias);
+
+	/**
+	 * 查询随机文章
+	 * 
+	 * @param space
+	 *            空间
+	 * @param queryPrivate
+	 *            是否查询私人文章
+	 * @param queryLock
+	 *            是否查询被锁保护的文章
+	 * @return
+	 */
+	Article selectRandom(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,
+			@Param("queryLock") boolean queryLock);
 
 }

@@ -26,6 +26,7 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 
 	@Autowired
 	private ArticleService articleService;
+	private static final String QUERY_LOCK_ATTR = "queryLock";
 
 	public ArticleNavDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -47,7 +48,8 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 	protected ArticleNav query(Attributes attributes) throws LogicException {
 		String idOrAlias = attributes.get(Constants.ID_OR_ALIAS);
 		if (idOrAlias != null) {
-			return articleService.getArticleNav(idOrAlias).orElse(null);
+			return articleService.getArticleNav(idOrAlias, Boolean.parseBoolean(attributes.get(QUERY_LOCK_ATTR)))
+					.orElse(null);
 		}
 		return null;
 	}

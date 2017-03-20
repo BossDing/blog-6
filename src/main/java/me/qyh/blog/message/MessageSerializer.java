@@ -36,7 +36,7 @@ import me.qyh.blog.config.Constants;
  */
 public class MessageSerializer implements JsonSerializer<Message> {
 
-	@Autowired(required = false)
+	@Autowired
 	private Messages messages;
 
 	@Override

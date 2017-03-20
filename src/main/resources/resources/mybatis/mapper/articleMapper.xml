@@ -385,6 +385,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND art.isPrivate = false
 			AND sp.is_private = false
 		</if>
+		<if test="!queryLock">
+			AND art.art_lock IS NULL
+			AND sp.space_lock IS NULL
+		</if>
 		ORDER BY art.pubDate DESC,art.id DESC
 		LIMIT 0,1
 	</select>
@@ -412,6 +416,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
+		</if>
+		<if test="!queryLock">
+			AND art.art_lock IS NULL
+			AND sp.space_lock IS NULL
 		</if>
 		ORDER BY art.pubDate ASC,art.id ASC
 		LIMIT 0,1
@@ -500,6 +508,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectIdByAlias" resultType="java.lang.Integer">
 		SELECT id FROM blog_article WHERE art_alias = #{alias}
+	</select>
+	
+	<select id="selectRandom" resultMap="ArticleDetail">
+		SELECT
+		art.id AS art_id,
+		art.art_alias,
+		art.title,
+		art.space_id,
+		sp.space_alias,
+		sp.space_name
+		FROM
+		blog_article art
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
+		WHERE art.art_status = 0 <!-- PUBLISHED -->
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+			AND sp.is_private = false
+		</if>
+		<if test="!queryLock">
+			AND art.art_lock IS NULL
+			AND sp.space_lock IS NULL
+		</if>
+		ORDER BY RAND()
+		LIMIT 0,1
 	</select>
 
 	<sql id="articleDetailSql">

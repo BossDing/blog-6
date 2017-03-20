@@ -80,6 +80,11 @@
 					<constructor-arg index="0" value="最近被访问文章" />
 					<constructor-arg index="1" value="recentlyViewdArticles" />
 				</bean>
+				
+				<bean class="me.qyh.blog.ui.data.RandomArticleDataTagProcessor">
+					<constructor-arg index="0" value="随机文章" />
+					<constructor-arg index="1" value="randomArticle" />
+				</bean>
 			</list>
 		</property>
 		<property name="fragments">

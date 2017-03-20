@@ -11,9 +11,11 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.config.UrlHelper;
+import me.qyh.blog.message.Message;
 import me.qyh.blog.ui.TemplateUtils;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
 
 /**
@@ -39,6 +41,10 @@ public class RedirectProcessor extends DefaultAttributesTagProcessor {
 	private static final String URL_ATTR = "url";
 	// 是否是301跳转
 	private static final String MOVED_PERMANENTLY_ATTR = "permanently";
+	private static final String CODE_ATTR = "code";
+	private static final String ARGUMENT_SPLIT_ATTR = "argumentSpliter";
+	private static final String ARGUMENTS_ATTR = "arguments";
+	private static final String DEFAULT_MSG_ATTR = "defaultMsg";
 
 	public RedirectProcessor(String dialectPrefix) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
@@ -84,10 +90,23 @@ public class RedirectProcessor extends DefaultAttributesTagProcessor {
 			// ignore
 		}
 
-		String permanentlyAttr = attMap.get(MOVED_PERMANENTLY_ATTR);
-
 		if (_url != null) {
-			throw new RedirectException(_url.toString(), Boolean.parseBoolean(permanentlyAttr));
+			RedirectException ex = new RedirectException(_url.toString(),
+					Boolean.parseBoolean(attMap.get(MOVED_PERMANENTLY_ATTR)));
+			if (!ex.isPermanently()) {
+				String code = attMap.get(CODE_ATTR);
+				if (!Validators.isEmptyOrNull(code, true)) {
+					String defaultMsg = attMap.get(DEFAULT_MSG_ATTR);
+					String[] argumentsArray = {};
+					String arguments = attMap.get(ARGUMENTS_ATTR);
+					String argumentSpliter = attMap.getOrDefault(ARGUMENT_SPLIT_ATTR, ",");
+					if (arguments != null) {
+						argumentsArray = arguments.split(argumentSpliter);
+					}
+					ex.setRedirectMsg(new Message(code, defaultMsg, (Object[]) argumentsArray));
+				}
+			}
+			throw ex;
 		}
 	}
 

@@ -146,17 +146,23 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ExceptionHandler(RedirectException.class)
-	public void handleRedirectException(RedirectException ex, HttpServletRequest request, HttpServletResponse resp)
+	public String handleRedirectException(RedirectException ex, HttpServletRequest request, HttpServletResponse resp)
 			throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new RedirectJsonResult(ex.getUrl(), ex.isPermanently()));
+			return null;
 		} else {
 			if (ex.isPermanently()) {
 				// 301
 				resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
 				resp.setHeader("Location", ex.getUrl());
+				return null;
 			} else {
-				resp.sendRedirect(ex.getUrl());
+				Message redirectMsg = ex.getRedirectMsg();
+				if (redirectMsg != null) {
+					RequestContextUtils.getOutputFlashMap(request).put("redirect_page_msg", redirectMsg);
+				}
+				return "redirect:" + ex.getUrl();
 			}
 		}
 	}

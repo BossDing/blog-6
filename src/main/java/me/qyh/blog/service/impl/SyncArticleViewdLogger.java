@@ -44,7 +44,9 @@ import me.qyh.blog.util.SerializationUtils;
 /**
  * 将最近访问的文章纪录在内存中
  * <p>
- * <b>可能文章状态可能会变更，所以实际返回的数量可能小于<i>max</i></b>
+ * <b>可能文章状态可能会变更，所以实际返回的数量可能小于<i>max</i></b> <br>
+ * 
+ * <b>如果在记录日志的过程中文章状态发生了变更，并且记录过程发生在处理事件之后，那么被纪录的数据则为脏数据，但这种情况发生的概率非常小<b/>
  * </p>
  * <p>
  * </p>
@@ -64,8 +66,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	 * 应用关闭时当前访问的文章存入文件中
 	 */
 	private final Path sdfile = Constants.DAT_DIR.resolve("sync_articles_viewd.dat");
-
-	private long timestamp = Long.MAX_VALUE;
 
 	public SyncArticleViewdLogger(int max) {
 		if (max < 0) {
@@ -92,13 +92,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 		this(10);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * <b>存在'延迟'，一些文章的更新操作不会被立即体现</b>
-	 * </p>
-	 */
 	@Override
 	public List<Article> getViewdArticles(int num) {
 		long stamp = lock.tryOptimisticRead();
@@ -130,9 +123,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	public void logViewd(Article article) {
 		long stamp = lock.writeLock();
 		try {
-			if (timestamp <= System.currentTimeMillis()) {
-				return;
-			}
 			articles.remove(article.getId());
 			articles.put(article.getId(), article);
 		} finally {
@@ -143,8 +133,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	@TransactionalEventListener
 	public void handleArticleEvent(ArticleEvent evt) {
 		long stamp = lock.writeLock();
-		// 设置当前时间
-		timestamp = System.currentTimeMillis();
 		try {
 			switch (evt.getEventType()) {
 			case DELETE:
@@ -164,7 +152,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 				break;
 			}
 		} finally {
-			timestamp = Long.MAX_VALUE;
 			lock.unlockWrite(stamp);
 		}
 	}

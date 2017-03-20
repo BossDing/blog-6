@@ -161,9 +161,11 @@ public interface ArticleService {
 	 * 
 	 * @param idOrAlias
 	 *            文章的id或者别名
+	 * @param queryLock
+	 *            是否查询被锁保护的文章
 	 * @return 当前文章的上一篇下一篇，如果都没有，返回null
 	 */
-	Optional<ArticleNav> getArticleNav(String idOrAlias);
+	Optional<ArticleNav> getArticleNav(String idOrAlias, boolean queryLock);
 
 	/**
 	 * 查询<b>当前空间</b>被文章引用的标签数量
@@ -225,5 +227,17 @@ public interface ArticleService {
 	 * @return
 	 */
 	List<Article> getRecentlyViewdArticle(int num);
+
+	/**
+	 * 得到一篇随机文章
+	 * <p>
+	 * <b>这篇文章只会保留用于构造访问链接的基本属性，不能直接用于显示</b>
+	 * </p>
+	 * 
+	 * @param queryLock
+	 *            是否查询被锁保护的文章
+	 * @return 随机文章
+	 */
+	Optional<Article> selectRandom(boolean queryLock);
 
 }

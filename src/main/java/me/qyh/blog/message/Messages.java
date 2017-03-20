@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.message;
 
-import java.util.Locale;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -27,8 +25,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
  *
  */
 public class Messages {
-
-	private Locale locale;
 
 	@Autowired
 	private MessageSource messageSource;
@@ -41,8 +37,9 @@ public class Messages {
 	 * @return 信息
 	 */
 	public String getMessage(Message message) {
-		//to ignore NoSuchMessageException
-		return messageSource.getMessage(message.getCodes()[0], null, message.getDefaultMessage(), getLocale());
+		// to ignore NoSuchMessageException
+		return messageSource.getMessage(message.getCodes()[0], message.getArguments(), message.getDefaultMessage(),
+				LocaleContextHolder.getLocale());
 	}
 
 	/**
@@ -54,16 +51,8 @@ public class Messages {
 	 *            默认信息
 	 * @return 信心
 	 */
-	public String getMessage(String code, String defaultMessage) {
-		return messageSource.getMessage(code, null, defaultMessage, getLocale());
-	}
-
-	private Locale getLocale() {
-		return locale == null ? LocaleContextHolder.getLocale() : locale;
-	}
-
-	public void setLocale(Locale locale) {
-		this.locale = locale;
+	public String getMessage(String code, String defaultMessage, Object... args) {
+		return messageSource.getMessage(code, args, defaultMessage, LocaleContextHolder.getLocale());
 	}
 
 }
