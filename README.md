@@ -5,6 +5,3 @@
 
 
 ## detail: https://www.qyh.me/project/blog
-
-
-#  Fuck S.Korea
