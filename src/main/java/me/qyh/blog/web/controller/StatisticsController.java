@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.StatisticsService;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.service.StatisticsService;
 
 @Controller
 public class StatisticsController extends BaseMgrController {

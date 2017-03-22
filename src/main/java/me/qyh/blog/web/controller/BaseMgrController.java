@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.web.controller;
 
-import me.qyh.blog.security.EnsureLogin;
+import me.qyh.blog.core.security.EnsureLogin;
 
 @EnsureLogin
 public abstract class BaseMgrController extends BaseController {

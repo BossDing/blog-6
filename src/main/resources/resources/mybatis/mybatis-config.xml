@@ -5,59 +5,59 @@
 	<typeAliases>
 		<typeAlias type="org.apache.ibatis.type.EnumOrdinalTypeHandler"
 			alias="EnumOrdinalTypeHandler" />
-		<typeAlias type="me.qyh.blog.mybatis.handler.TagsTypeHandler"
+		<typeAlias type="me.qyh.blog.core.mybatis.handler.TagsTypeHandler"
 			alias="TagsTypeHandler" />
 
-		<typeAlias type="me.qyh.blog.entity.Article" alias="Article" />
-		<typeAlias type="me.qyh.blog.entity.Article$ArticleStatus"
+		<typeAlias type="me.qyh.blog.core.entity.Article" alias="Article" />
+		<typeAlias type="me.qyh.blog.core.entity.Article$ArticleStatus"
 			alias="ArticleStatus" />
-		<typeAlias type="me.qyh.blog.entity.Article$ArticleFrom"
+		<typeAlias type="me.qyh.blog.core.entity.Article$ArticleFrom"
 			alias="ArticleFrom" />
-		<typeAlias type="me.qyh.blog.entity.Editor" alias="Editor" />
-		<typeAlias type="me.qyh.blog.entity.Tag" alias="Tag" />
+		<typeAlias type="me.qyh.blog.core.entity.Editor" alias="Editor" />
+		<typeAlias type="me.qyh.blog.core.entity.Tag" alias="Tag" />
 
-		<typeAlias type="me.qyh.blog.entity.Space" alias="Space" />
+		<typeAlias type="me.qyh.blog.core.entity.Space" alias="Space" />
 
-		<typeAlias type="me.qyh.blog.entity.BlogFile" alias="BlogFile" />
-		<typeAlias type="me.qyh.blog.entity.BlogFile$BlogFileType"
+		<typeAlias type="me.qyh.blog.core.entity.BlogFile" alias="BlogFile" />
+		<typeAlias type="me.qyh.blog.core.entity.BlogFile$BlogFileType"
 			alias="BlogFileType" />
-		<typeAlias type="me.qyh.blog.file.CommonFile" alias="CommonFile" />
-		<typeAlias type="me.qyh.blog.entity.FileDelete" alias="FileDelete" />
+		<typeAlias type="me.qyh.blog.core.file.CommonFile" alias="CommonFile" />
+		<typeAlias type="me.qyh.blog.core.entity.FileDelete" alias="FileDelete" />
 
-		<typeAlias type="me.qyh.blog.lock.support.SysLock" alias="SysLock" />
-		<typeAlias type="me.qyh.blog.lock.support.SysLock$SysLockType"
+		<typeAlias type="me.qyh.blog.core.lock.SysLock" alias="SysLock" />
+		<typeAlias type="me.qyh.blog.core.lock.SysLock$SysLockType"
 			alias="LockType" />
-		<typeAlias type="me.qyh.blog.lock.support.PasswordLock"
+		<typeAlias type="me.qyh.blog.core.lock.PasswordLock"
 			alias="PasswordLock" />
-		<typeAlias type="me.qyh.blog.lock.support.QALock" alias="QALock" />
+		<typeAlias type="me.qyh.blog.core.lock.QALock" alias="QALock" />
 
-		<typeAlias type="me.qyh.blog.bean.BlogFileCount" alias="BlogFileCount" />
+		<typeAlias type="me.qyh.blog.core.bean.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.ui.page.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.ui.page.Page$PageType" alias="PageType" />
-		<typeAlias type="me.qyh.blog.ui.page.UserPage" alias="UserPage" />
-		<typeAlias type="me.qyh.blog.ui.page.SysPage" alias="SysPage" />
-		<typeAlias type="me.qyh.blog.ui.page.SysPage$PageTarget"
+		<typeAlias type="me.qyh.blog.core.ui.page.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.core.ui.page.Page$PageType" alias="PageType" />
+		<typeAlias type="me.qyh.blog.core.ui.page.UserPage" alias="UserPage" />
+		<typeAlias type="me.qyh.blog.core.ui.page.SysPage" alias="SysPage" />
+		<typeAlias type="me.qyh.blog.core.ui.page.SysPage$PageTarget"
 			alias="PageTarget" />
-		<typeAlias type="me.qyh.blog.ui.page.LockPage" alias="LockPage" />
-		<typeAlias type="me.qyh.blog.ui.fragment.UserFragment"
+		<typeAlias type="me.qyh.blog.core.ui.page.LockPage" alias="LockPage" />
+		<typeAlias type="me.qyh.blog.core.ui.fragment.UserFragment"
 			alias="UserFragment" />
 
-		<typeAlias type="me.qyh.blog.bean.ArticleDateFile" alias="ArticleDateFile" />
-		<typeAlias type="me.qyh.blog.bean.ArticleSpaceFile" alias="ArticleSpaceFile" />
+		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile" alias="ArticleDateFile" />
+		<typeAlias type="me.qyh.blog.core.bean.ArticleSpaceFile" alias="ArticleSpaceFile" />
 
-		<typeAlias type="me.qyh.blog.service.StatisticsService$ArticleStatistics"
+		<typeAlias type="me.qyh.blog.core.service.StatisticsService$ArticleStatistics"
 			alias="ArticleStatistics" />
 
-		<typeAlias type="me.qyh.blog.entity.Comment" alias="Comment" />
-		<typeAlias type="me.qyh.blog.entity.Comment$CommentStatus"
+		<typeAlias type="me.qyh.blog.core.entity.Comment" alias="Comment" />
+		<typeAlias type="me.qyh.blog.core.entity.Comment$CommentStatus"
 			alias="CommentStatus" />
-		<typeAlias type="me.qyh.blog.entity.CommentModule" alias="CommentModule" />
-		<typeAlias type="me.qyh.blog.entity.CommentModule$ModuleType"
+		<typeAlias type="me.qyh.blog.core.entity.CommentModule" alias="CommentModule" />
+		<typeAlias type="me.qyh.blog.core.entity.CommentModule$ModuleType"
 			alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
-		<typeHandler handler="me.qyh.blog.mybatis.handler.TagsTypeHandler" />
+		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />
 	</typeHandlers>
 	<mappers>
 		<mapper resource="resources/mybatis/mapper/spaceMapper.xml" />

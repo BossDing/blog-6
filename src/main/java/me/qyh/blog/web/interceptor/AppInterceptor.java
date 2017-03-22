@@ -36,32 +36,32 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.User;
-import me.qyh.blog.exception.SpaceNotFoundException;
-import me.qyh.blog.file.local.RequestMatcher;
-import me.qyh.blog.lock.LockException;
-import me.qyh.blog.lock.LockHelper;
-import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.lock.LockKeyContext;
-import me.qyh.blog.lock.LockManager;
-import me.qyh.blog.security.AuthencationException;
-import me.qyh.blog.security.EnsureLogin;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.security.RememberMe;
-import me.qyh.blog.security.csrf.CsrfException;
-import me.qyh.blog.security.csrf.CsrfToken;
-import me.qyh.blog.security.csrf.CsrfTokenRepository;
-import me.qyh.blog.security.csrf.InvalidCsrfTokenException;
-import me.qyh.blog.security.csrf.MissingCsrfTokenException;
-import me.qyh.blog.service.impl.SpaceCache;
-import me.qyh.blog.ui.UIExposeHelper;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.User;
+import me.qyh.blog.core.exception.SpaceNotFoundException;
+import me.qyh.blog.core.lock.LockException;
+import me.qyh.blog.core.lock.LockHelper;
+import me.qyh.blog.core.lock.LockKey;
+import me.qyh.blog.core.lock.LockKeyContext;
+import me.qyh.blog.core.lock.LockManager;
+import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.security.EnsureLogin;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.security.RememberMe;
+import me.qyh.blog.core.service.impl.SpaceCache;
+import me.qyh.blog.core.ui.TemplateExposeHelper;
+import me.qyh.blog.support.file.local.RequestMatcher;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.security.CsrfException;
+import me.qyh.blog.web.security.CsrfToken;
+import me.qyh.blog.web.security.CsrfTokenRepository;
+import me.qyh.blog.web.security.InvalidCsrfTokenException;
+import me.qyh.blog.web.security.MissingCsrfTokenException;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 
@@ -72,7 +72,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private RememberMe rememberMe;
 	@Autowired
-	private UIExposeHelper uiExposeHelper;
+	private TemplateExposeHelper uiExposeHelper;
 	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired

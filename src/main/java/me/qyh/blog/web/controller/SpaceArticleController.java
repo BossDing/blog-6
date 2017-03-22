@@ -26,13 +26,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.SysPage;
-import me.qyh.blog.ui.page.SysPage.PageTarget;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.ui.page.SysPage;
+import me.qyh.blog.core.ui.page.SysPage.PageTarget;
 
 @Controller
 @RequestMapping("space/{alias}/article")
@@ -45,7 +45,7 @@ public class SpaceArticleController extends BaseController {
 
 	@RequestMapping("{idOrAlias}")
 	public Page article(@PathVariable(value = "idOrAlias") String idOrAlias) throws LogicException {
-		return new SysPage(Environment.getSpace().orElse(null), PageTarget.ARTICLE_DETAIL);
+		return new SysPage(Environment.getSpace(), PageTarget.ARTICLE_DETAIL);
 	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
@@ -53,7 +53,7 @@ public class SpaceArticleController extends BaseController {
 	public JsonResult hit(@PathVariable("id") Integer id, @RequestHeader("referer") String referer) {
 		try {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(referer).build();
-			if (!apm.match("/space/" + Environment.getSpaceAlias().get() + "/article/*", uc.getPath())
+			if (!apm.match("/space/" + Environment.getSpaceAlias() + "/article/*", uc.getPath())
 					&& !apm.match("/article/*", uc.getPath())) {
 				return new JsonResult(false);
 			}

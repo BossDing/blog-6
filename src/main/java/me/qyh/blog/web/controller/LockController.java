@@ -27,17 +27,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.Lock;
-import me.qyh.blog.lock.LockBean;
-import me.qyh.blog.lock.LockHelper;
-import me.qyh.blog.lock.LockKey;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.page.LockPage;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.lock.Lock;
+import me.qyh.blog.core.lock.LockBean;
+import me.qyh.blog.core.lock.LockHelper;
+import me.qyh.blog.core.lock.LockKey;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.ui.page.LockPage;
 import me.qyh.blog.web.Webs;
 
 @Controller
@@ -50,7 +50,7 @@ public class LockController extends BaseController {
 	public LockPage unlock(Model model, HttpServletRequest request) throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		model.addAttribute("lock", lockBean.getLock());
-		return new LockPage(Environment.getSpace().orElse(null), lockBean.getLock().getLockType());
+		return new LockPage(Environment.getSpace(), lockBean.getLock().getLockType());
 	}
 
 	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)

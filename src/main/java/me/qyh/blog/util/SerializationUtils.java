@@ -24,7 +24,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.core.exception.SystemException;
 
 public final class SerializationUtils {
 

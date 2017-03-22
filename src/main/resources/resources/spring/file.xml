@@ -7,15 +7,15 @@
 		   					 http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 	<!-- 图片处理 -->
-	<bean class="me.qyh.blog.file.GraphicsMagickImageHelper">
+	<bean class="me.qyh.blog.core.file.GraphicsMagickImageHelper">
 		<property name="magickPath" value="E:/GraphicsMagick-1.3.23-Q8" />
 	</bean>
 	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ -->
 	<!-- 文件服务 -->
-	<bean class="me.qyh.blog.file.DefaultFileManager">
+	<bean class="me.qyh.blog.core.file.DefaultFileManager">
 		<property name="stores">
 			<list>
-				<bean class="me.qyh.blog.file.local.ImageResourceStore">
+				<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
 					<property name="absPath" value="/web/file/blog_image/" />
 					<property name="id" value="1" />
 					<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />
@@ -23,22 +23,22 @@
 					<property name="supportWebp" value="true" />
 					<property name="name" value="图片存储" />
 					<property name="smallResize">
-						<bean class="me.qyh.blog.file.Resize">
+						<bean class="me.qyh.blog.core.file.Resize">
 							<constructor-arg value="200" />
 						</bean>
 					</property>
 					<property name="middleResize">
-						<bean class="me.qyh.blog.file.Resize">
+						<bean class="me.qyh.blog.core.file.Resize">
 							<constructor-arg value="600" />
 						</bean>
 					</property>
 					<property name="largeResize">
-						<bean class="me.qyh.blog.file.Resize">
+						<bean class="me.qyh.blog.core.file.Resize">
 							<constructor-arg value="900" />
 						</bean>
 					</property>
 					<property name="resizeValidator">
-						<bean class="me.qyh.blog.file.DefaultResizeValidator">
+						<bean class="me.qyh.blog.core.file.DefaultResizeValidator">
 							<property name="allowSizes">
 								<array>
 									<value>64</value>
@@ -66,7 +66,7 @@
 						</bean>
 					</property>
 				</bean>
-				<bean class="me.qyh.blog.file.local.CommonResourceStore">
+				<bean class="me.qyh.blog.support.file.local.CommonResourceStore">
 					<property name="absPath" value="/web/file/blog_file" />
 					<property name="id" value="2" />
 					<property name="name" value="文件存储" />

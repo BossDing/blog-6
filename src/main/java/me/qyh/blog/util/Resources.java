@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 
-import me.qyh.blog.config.Constants;
+import me.qyh.blog.core.config.Constants;
 
 public final class Resources {
 

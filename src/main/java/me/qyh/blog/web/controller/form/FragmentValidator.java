@@ -18,7 +18,7 @@ package me.qyh.blog.web.controller.form;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.ui.fragment.Fragment;
+import me.qyh.blog.core.ui.fragment.Fragment;
 import me.qyh.blog.util.Validators;
 
 public class FragmentValidator implements Validator {

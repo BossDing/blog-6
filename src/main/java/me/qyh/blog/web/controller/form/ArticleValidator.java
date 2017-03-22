@@ -28,12 +28,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.entity.Tag;
-import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Tag;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.Validators;
 
 @Component

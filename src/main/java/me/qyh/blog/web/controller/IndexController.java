@@ -29,31 +29,31 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.DataTag;
-import me.qyh.blog.ui.ParseConfig;
-import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.SysPage;
-import me.qyh.blog.ui.page.SysPage.PageTarget;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.DataTag;
+import me.qyh.blog.core.ui.ParseConfig;
+import me.qyh.blog.core.ui.TplRenderException;
+import me.qyh.blog.core.ui.TemplateRender;
+import me.qyh.blog.core.ui.fragment.Fragment;
+import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.ui.page.SysPage;
+import me.qyh.blog.core.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.Webs;
 
 @Controller
 public class IndexController {
 
 	@Autowired
-	private UIRender uiRender;
+	private TemplateRender uiRender;
 	@Autowired
 	private UIService uiService;
 
 	@RequestMapping(value = { "/", "space/{alias}/", "", "space/{alias}" })
 	public Page index() throws LogicException {
-		return new SysPage(Environment.getSpace().orElse(null), PageTarget.INDEX);
+		return new SysPage(Environment.getSpace(), PageTarget.INDEX);
 	}
 
 	@RequestMapping(value = { "data/{tagName}", "space/{alias}/data/{tagName}" }, method = RequestMethod.GET)
@@ -66,7 +66,7 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		return uiService.queryCallableData(tag).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
+		return uiService.queryData(tag, true).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
 	}
 
 	@RequestMapping(value = { "fragment/{fragment}", "space/{alias}/fragment/{fragment}" }, method = RequestMethod.GET)
@@ -74,10 +74,10 @@ public class IndexController {
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) {
-		Page page = new Page();
-		page.setTpl(TemplateUtils.buildFragmentTag(Webs.decode(fragment), allRequestParams));
 		try {
-			return new JsonResult(true, uiRender.render(page, request, response, new ParseConfig(false, true, true)));
+			return new JsonResult(true,
+					uiRender.render(new Fragment(Webs.decode(fragment), Environment.getSpace()).getTemplateName(), null,
+							request, response, new ParseConfig(false, true)));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}

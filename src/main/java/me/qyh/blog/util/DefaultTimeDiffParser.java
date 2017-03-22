@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import me.qyh.blog.exception.SystemException;
-import me.qyh.blog.message.Message;
+import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.message.Message;
 
 public class DefaultTimeDiffParser extends TimeDiffParser {
 

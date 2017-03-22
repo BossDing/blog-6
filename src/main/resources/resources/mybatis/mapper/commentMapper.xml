@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="me.qyh.blog.dao.CommentDao">
+<mapper namespace="me.qyh.blog.core.dao.CommentDao">
 	
 	<resultMap type="Comment" id="CommentDetail">
 		<id property="id" column="id"/>
@@ -36,7 +36,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 	
-	<resultMap type="me.qyh.blog.dao.CommentDao$ModuleCommentCount" id="ModuleCommentCountDetail">
+	<resultMap type="me.qyh.blog.core.dao.CommentDao$ModuleCommentCount" id="ModuleCommentCountDetail">
 		<id column="module_sign"/>
 		<result column="comments" property="comments"/>
 		<association property="module" javaType="CommentModule">

@@ -30,7 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.core.exception.SystemException;
 
 public class FileUtils {
 	public static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));

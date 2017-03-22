@@ -23,7 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import me.qyh.blog.config.Constants;
+import me.qyh.blog.core.config.Constants;
 
 @Controller
 @RequestMapping("mgr/page")

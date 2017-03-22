@@ -21,13 +21,13 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.View;
 
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.service.ArticleService;
+import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.pageparam.ArticleQueryParam;
+import me.qyh.blog.core.pageparam.PageResult;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.web.RssView;
 
 @Controller
@@ -47,7 +47,7 @@ public class RssController {
 
 		ArticleQueryParam param = new ArticleQueryParam();
 		param.setCurrentPage(1);
-		Space space = Environment.getSpace().orElse(null);
+		Space space = Environment.getSpace();
 		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setSpace(space);
 		param.setIgnoreLevel(true);

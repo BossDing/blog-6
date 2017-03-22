@@ -30,12 +30,12 @@ import com.rometools.rome.feed.rss.Channel;
 import com.rometools.rome.feed.rss.Content;
 import com.rometools.rome.feed.rss.Item;
 
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.pageparam.PageResult;
-import me.qyh.blog.security.Environment;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.pageparam.PageResult;
+import me.qyh.blog.core.security.Environment;
 
 @Component
 public class RssView extends AbstractRssFeedView {
@@ -70,7 +70,7 @@ public class RssView extends AbstractRssFeedView {
 			feed.setDescription(domain);
 			feed.setTitle(domain);
 		} else {
-			Space space = Environment.getSpace().get();
+			Space space = Environment.getSpace();
 			feed.setTitle(space.getName());
 			feed.setDescription(space.getName());
 			feed.setLink(urlHelper.getUrls().getUrl(space));

@@ -28,13 +28,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.config.UserConfig;
-import me.qyh.blog.entity.User;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.security.BCrypts;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UserConfig;
+import me.qyh.blog.core.entity.User;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.BCrypts;
 import me.qyh.blog.web.controller.form.UserValidator;
 
 @Controller

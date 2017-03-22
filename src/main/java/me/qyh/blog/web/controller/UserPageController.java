@@ -22,9 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.HandlerMapping;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.ui.page.UserPage;
 
 public class UserPageController {
 

@@ -30,17 +30,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ParseConfig;
-import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.page.LockPage;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.TplRenderException;
+import me.qyh.blog.core.ui.TemplateRender;
+import me.qyh.blog.core.ui.page.LockPage;
 import me.qyh.blog.web.controller.form.PageValidator;
 
 @RequestMapping("mgr/page/lock")
@@ -50,8 +48,7 @@ public class LockPageMgrController extends BaseMgrController {
 	@Autowired
 	private UIService uiService;
 	@Autowired
-	private UIRender uiRender;
-
+	private TemplateRender uiRender;
 	@Autowired
 	private PageValidator pageValidator;
 
@@ -63,8 +60,8 @@ public class LockPageMgrController extends BaseMgrController {
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("lockType") String lockType,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
-		model.addAttribute("page", uiService.queryPage(
-				TemplateUtils.getTemplateName(new LockPage(spaceId == null ? null : new Space(spaceId), lockType))));
+		model.addAttribute("page", uiService
+				.queryTemplate(new LockPage(spaceId == null ? null : new Space(spaceId), lockType).getTemplateName()));
 		return "mgr/page/lock/build";
 	}
 
@@ -82,7 +79,7 @@ public class LockPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(lockPage, request, response, new ParseConfig(true, false, true));
+			rendered = uiRender.renderPreview(lockPage, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

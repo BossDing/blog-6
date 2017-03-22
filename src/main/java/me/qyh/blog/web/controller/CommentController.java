@@ -31,15 +31,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.UrlHelper;
-import me.qyh.blog.entity.Comment;
-import me.qyh.blog.entity.CommentModule;
-import me.qyh.blog.entity.CommentModule.ModuleType;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.service.impl.CommentService;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.entity.Comment;
+import me.qyh.blog.core.entity.CommentModule;
+import me.qyh.blog.core.entity.CommentModule.ModuleType;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.form.CommentValidator;
 

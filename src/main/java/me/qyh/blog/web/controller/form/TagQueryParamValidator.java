@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.pageparam.TagQueryParam;
+import me.qyh.blog.core.pageparam.TagQueryParam;
 
 @Component
 public class TagQueryParamValidator implements Validator {

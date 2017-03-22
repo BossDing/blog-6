@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.pageparam.UserFragmentQueryParam;
+import me.qyh.blog.core.pageparam.UserFragmentQueryParam;
 import me.qyh.blog.util.Validators;
 
 @Component

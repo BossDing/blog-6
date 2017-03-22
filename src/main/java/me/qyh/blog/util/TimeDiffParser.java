@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
-import me.qyh.blog.message.Message;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.util.Times;
 
 public abstract class TimeDiffParser {

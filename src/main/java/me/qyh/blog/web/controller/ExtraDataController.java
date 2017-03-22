@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.service.impl.ExtraStorageService;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.service.impl.ExtraStorageService;
 import me.qyh.blog.util.Validators;
 
 @Controller

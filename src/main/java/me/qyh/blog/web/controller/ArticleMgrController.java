@@ -35,17 +35,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.entity.Article;
-import me.qyh.blog.entity.Article.ArticleStatus;
-import me.qyh.blog.entity.Editor;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.pageparam.ArticleQueryParam;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.service.ArticleService;
-import me.qyh.blog.service.SpaceService;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Editor;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.ArticleQueryParam;
+import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 

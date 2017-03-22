@@ -20,8 +20,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import me.qyh.blog.entity.Comment;
-import me.qyh.blog.security.Environment;
+import me.qyh.blog.core.entity.Comment;
+import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.util.Validators;
 
 @Component

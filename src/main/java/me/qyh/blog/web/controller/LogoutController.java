@@ -25,11 +25,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.security.RememberMe;
-import me.qyh.blog.security.csrf.CsrfTokenRepository;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.security.RememberMe;
+import me.qyh.blog.web.security.CsrfTokenRepository;
 
 @Controller
 public class LogoutController extends BaseController {

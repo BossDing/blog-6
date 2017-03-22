@@ -1,0 +1,74 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package me.qyh.blog.core.ui.dialect;
+
+import org.thymeleaf.context.IEngineContext;
+import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.engine.AbstractTemplateHandler;
+import org.thymeleaf.engine.TemplateData;
+import org.thymeleaf.exceptions.TemplateProcessingException;
+import org.thymeleaf.templateresource.ITemplateResource;
+
+import me.qyh.blog.core.exception.RuntimeLogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.ui.ParseContext;
+import me.qyh.blog.core.ui.Template;
+import me.qyh.blog.core.ui.TemplateUtils;
+import me.qyh.blog.core.ui.TemplateResolver.TemplateResource;
+
+/**
+ * 不希望通过replace等方式再次渲染页面
+ * 
+ * @author mhlx
+ *
+ */
+public final class PreTemplateHandler extends AbstractTemplateHandler {
+	public PreTemplateHandler() {
+		super();
+	}
+
+	@Override
+	public void setContext(ITemplateContext context) {
+		TemplateData templateData = context.getTemplateData();
+		String templateName = templateData.getTemplate();
+		if (TemplateUtils.isTemplate(templateName)) {
+			ITemplateResource templateResource = templateData.getTemplateResource();
+
+			if (templateResource instanceof TemplateResource) {
+				Template template = ((TemplateResource) templateResource).getTemplate().cloneTemplate();
+
+				Template root = ParseContext.getRoot();
+				// 如果主模板不存在，设置主模板
+				if (root == null) {
+					ParseContext.setRoot(template);
+				} else {
+					// 如果已经存在主模板，那么查看当前待解析的模板是否是'主模板'
+					if (template.isRoot()) {
+						throw new TemplateProcessingException("无法再次处理模板:" + templateName);
+					}
+				}
+
+				if (!ParseContext.getRoot().isCallable() && ParseContext.onlyCallable()) {
+					throw new RuntimeLogicException(new Message("template.notCallable", "模板无法被调用"));
+				}
+
+				((IEngineContext) context).setVariable("this", template);
+			}
+		}
+		super.setContext(context);
+	}
+
+}

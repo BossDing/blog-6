@@ -18,18 +18,18 @@ package me.qyh.blog.web.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.security.Environment;
-import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.SysPage;
-import me.qyh.blog.ui.page.SysPage.PageTarget;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.ui.page.SysPage;
+import me.qyh.blog.core.ui.page.SysPage.PageTarget;
 
 @Controller
 public class ErrorController {
 
 	@RequestMapping(value = { "error", "space/{alias}/error" })
 	public Page error() throws LogicException {
-		return new SysPage(Environment.getSpace().orElse(null), PageTarget.ERROR);
+		return new SysPage(Environment.getSpace(), PageTarget.ERROR);
 	}
 
 	@RequestMapping(value = { "error/ui" })

@@ -28,12 +28,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.entity.Tag;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.pageparam.TagQueryParam;
-import me.qyh.blog.service.TagService;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.entity.Tag;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.TagQueryParam;
+import me.qyh.blog.core.service.TagService;
 import me.qyh.blog.web.controller.form.TagQueryParamValidator;
 import me.qyh.blog.web.controller.form.TagValidator;
 

@@ -20,8 +20,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.lock.LockManager;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.lock.LockManager;
 
 @Controller
 @RequestMapping("mgr/lock")

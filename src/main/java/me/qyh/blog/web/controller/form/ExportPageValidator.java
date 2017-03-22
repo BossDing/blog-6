@@ -22,11 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.bean.ExportPage;
-import me.qyh.blog.ui.fragment.Fragment;
-import me.qyh.blog.ui.page.LockPage;
-import me.qyh.blog.ui.page.Page;
-import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.core.bean.ExportPage;
+import me.qyh.blog.core.ui.fragment.Fragment;
+import me.qyh.blog.core.ui.page.LockPage;
+import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.ui.page.UserPage;
 import me.qyh.blog.util.Validators;
 
 @Component

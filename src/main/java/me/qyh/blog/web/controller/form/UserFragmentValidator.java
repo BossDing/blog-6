@@ -18,7 +18,7 @@ package me.qyh.blog.web.controller.form;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 
-import me.qyh.blog.ui.fragment.UserFragment;
+import me.qyh.blog.core.ui.fragment.UserFragment;
 
 @Component
 public class UserFragmentValidator extends FragmentValidator {

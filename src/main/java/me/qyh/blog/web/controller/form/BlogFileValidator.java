@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.entity.BlogFile;
-import me.qyh.blog.service.FileService;
+import me.qyh.blog.core.entity.BlogFile;
+import me.qyh.blog.core.service.FileService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 

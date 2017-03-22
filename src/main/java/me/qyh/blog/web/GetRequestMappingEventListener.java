@@ -14,8 +14,8 @@ import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondit
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import me.qyh.blog.exception.RuntimeLogicException;
-import me.qyh.blog.message.Message;
+import me.qyh.blog.core.exception.RuntimeLogicException;
+import me.qyh.blog.core.message.Message;
 
 /**
  * 用来监听Root ApplicationContext发布的RequestMappingEvent事件，这个类必须注册在servlet

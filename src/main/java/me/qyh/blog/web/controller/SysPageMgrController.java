@@ -33,21 +33,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.entity.Space;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.lock.LockManager;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ParseConfig;
-import me.qyh.blog.ui.TemplateUtils;
-import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.page.SysPage;
-import me.qyh.blog.ui.page.SysPage.PageTarget;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.lock.LockManager;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.TplRenderException;
+import me.qyh.blog.core.ui.TemplateRender;
+import me.qyh.blog.core.ui.page.SysPage;
+import me.qyh.blog.core.ui.page.SysPage.PageTarget;
 import me.qyh.blog.web.controller.form.PageValidator;
 
 @RequestMapping("mgr/page/sys")
@@ -61,7 +59,7 @@ public class SysPageMgrController extends BaseMgrController {
 	@Autowired
 	private LockManager lockManager;
 	@Autowired
-	private UIRender uiRender;
+	private TemplateRender uiRender;
 
 	@Autowired
 	private PageValidator pageValidator;
@@ -84,8 +82,8 @@ public class SysPageMgrController extends BaseMgrController {
 	@RequestMapping(value = "build", method = RequestMethod.GET)
 	public String build(@RequestParam("target") PageTarget target,
 			@RequestParam(required = false, value = "spaceId") Integer spaceId, Model model) throws LogicException {
-		model.addAttribute("page", uiService.queryPage(
-				TemplateUtils.getTemplateName(new SysPage(spaceId == null ? null : new Space(spaceId), target))));
+		model.addAttribute("page", uiService
+				.queryTemplate(new SysPage(spaceId == null ? null : new Space(spaceId), target).getTemplateName()));
 		return "mgr/page/sys/build";
 	}
 
@@ -103,7 +101,7 @@ public class SysPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(sysPage, request, response, new ParseConfig(true, false, true));
+			rendered = uiRender.renderPreview(sysPage, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

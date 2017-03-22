@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.config.UploadConfig;
+import me.qyh.blog.core.config.UploadConfig;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 

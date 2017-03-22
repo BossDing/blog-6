@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import me.qyh.blog.ui.UIExposeHelper;
+import me.qyh.blog.core.ui.TemplateExposeHelper;
 
 /**
  * 被标记为这个annotation的类将会被UIExposeHelper所用
@@ -30,7 +30,7 @@ import me.qyh.blog.ui.UIExposeHelper;
  * <b>但是只能调用其中的静态方法！！！</b>
  * </p>
  * 
- * @see UIExposeHelper
+ * @see TemplateExposeHelper
  * @author Administrator
  *
  */

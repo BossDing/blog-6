@@ -34,18 +34,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.pageparam.UserPageQueryParam;
-import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.ParseConfig;
-import me.qyh.blog.ui.TplRenderException;
-import me.qyh.blog.ui.UIRender;
-import me.qyh.blog.ui.page.UserPage;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.pageparam.UserPageQueryParam;
+import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.TplRenderException;
+import me.qyh.blog.core.ui.TemplateRender;
+import me.qyh.blog.core.ui.page.UserPage;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.UserPageQueryParamValidator;
 
@@ -62,7 +61,7 @@ public class UserPageMgrController extends BaseMgrController {
 	@Autowired
 	private PageValidator pageValidator;
 	@Autowired
-	private UIRender uiRender;
+	private TemplateRender uiRender;
 
 	@InitBinder(value = "userPage")
 	protected void initBinder(WebDataBinder binder) {
@@ -120,7 +119,7 @@ public class UserPageMgrController extends BaseMgrController {
 			HttpServletResponse response) throws LogicException {
 		String rendered;
 		try {
-			rendered = uiRender.render(userPage, request, response, new ParseConfig(true, false, true));
+			rendered = uiRender.renderPreview(userPage, request, response);
 			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
 			return new JsonResult(true, rendered);
 		} catch (TplRenderException e) {

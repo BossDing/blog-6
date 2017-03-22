@@ -29,14 +29,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.exception.LogicException;
-import me.qyh.blog.message.Message;
-import me.qyh.blog.pageparam.SpaceQueryParam;
-import me.qyh.blog.pageparam.UserFragmentQueryParam;
-import me.qyh.blog.service.SpaceService;
-import me.qyh.blog.service.UIService;
-import me.qyh.blog.ui.fragment.UserFragment;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.pageparam.UserFragmentQueryParam;
+import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.fragment.UserFragment;
 import me.qyh.blog.web.controller.form.UserFragmentQueryParamValidator;
 import me.qyh.blog.web.controller.form.UserFragmentValidator;
 

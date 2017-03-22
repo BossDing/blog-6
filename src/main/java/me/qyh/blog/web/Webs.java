@@ -32,9 +32,9 @@ import org.springframework.http.MediaType;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.bean.JsonResult;
-import me.qyh.blog.config.Constants;
-import me.qyh.blog.exception.SystemException;
+import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Validators;

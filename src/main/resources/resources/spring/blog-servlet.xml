@@ -15,8 +15,6 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
-	<context:property-placeholder location="classpath:resources/app.properties" />
-
 	<mvc:view-controller path="/error" view-name="error/500" />
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
 
@@ -37,15 +35,15 @@
 			</bean>
 		</mvc:message-converters>
 		<mvc:argument-resolvers>
-			<bean class="me.qyh.blog.lock.LockArgumentResolver" />
+			<bean class="me.qyh.blog.core.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.ui.PageReturnHandler"></bean>
+			<bean class="me.qyh.blog.core.ui.PageReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 
 	<!-- csrf token store stragey -->
-	<bean class="me.qyh.blog.security.csrf.HttpSessionCsrfTokenRepository" />
+	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
 
 	<mvc:interceptors>
 		<mvc:interceptor>
@@ -55,16 +53,23 @@
 	</mvc:interceptors>
 
 
-	<bean id="templateResolver" class="me.qyh.blog.ui.TplResolver">
-		<property name="prefix" value="/WEB-INF/templates/" />
-		<property name="suffix" value=".html" />
-		<property name="templateMode" value="HTML" />
-		<property name="characterEncoding" value="utf-8" />
-	</bean>
-
-	<bean id="templateEngine" class="me.qyh.blog.ui.UITemplateEngine">
-		<property name="templateResolver" ref="templateResolver" />
+	<bean id="templateEngine" class="me.qyh.blog.core.ui.TemplateEngine">
+		<property name="templateResolvers">
+			<set>
+				<bean
+					class="org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver">
+					<property name="prefix" value="/WEB-INF/templates/" />
+					<property name="suffix" value=".html" />
+					<property name="templateMode" value="HTML" />
+					<property name="characterEncoding" value="utf-8" />
+				</bean>
+				<bean class="me.qyh.blog.core.ui.TemplateResolver"/>
+			</set>
+		</property>
 		<property name="enableSpringELCompiler" value="true" />
+		<property name="cacheManager">
+			<bean class="me.qyh.blog.core.ui.TemplateCacheManager"/>
+		</property>
 	</bean>
 
 
@@ -74,21 +79,21 @@
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
 
-	<bean class="me.qyh.blog.ui.UIRender" />
+	<bean class="me.qyh.blog.core.ui.TemplateRender" />
 
 
 	<!-- captcha -->
-	<bean class="me.qyh.blog.security.CaptchaController">
+	<bean class="me.qyh.blog.core.security.CaptchaController">
 		<property name="num" value="4" />
 		<property name="delta" value="0" />
 	</bean>
 
 	<!-- metaweblog -->
-	<!-- <bean id="metaweblogController" class="me.qyh.blog.api.metaweblog.MetaweblogController" 
+	<!-- <bean id="metaweblogController" class="me.qyh.blog.support.metaweblog.MetaweblogController" 
 		/> <task:scheduled-tasks scheduler="taskScheduler"> <task:scheduled ref="metaweblogController" 
 		method="clearInvalidIp" fixed-rate="5000"/> <task:scheduled ref="metaweblogController" 
 		method="clearFail" fixed-rate="100000"/> </task:scheduled-tasks> -->
 
 	<!-- sitemap 服务 -->
-	<bean class="me.qyh.blog.api.sitemap.SiteMapController" />
+	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
 </beans>

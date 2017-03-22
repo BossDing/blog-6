@@ -53,12 +53,12 @@
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
-			value="me.qyh.blog.dao,me.qyh.blog.lock.support" />
+			value="me.qyh.blog.core.dao,me.qyh.blog.core.lock" />
 	</bean>
 
 	<import resource="file.xml" />
 	<context:component-scan
-		base-package="me.qyh.blog.service,me.qyh.blog.config,me.qyh.blog.evt.listener" />
+		base-package="me.qyh.blog.core.service,me.qyh.blog.core.config,me.qyh.blog.core.security,me.qyh.blog.core.lock" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
@@ -68,30 +68,20 @@
 		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 
-	<!-- 锁 -->
-	<bean class="me.qyh.blog.lock.LockManager" />
-	<bean class="me.qyh.blog.lock.SysLockProvider" />
-
-	<!-- 登录验证 -->
-	<bean class="me.qyh.blog.security.EnsureLoginAspect" />
-	<!-- 自动登录 -->
-	<bean class="me.qyh.blog.security.RememberMe" />
-
 	<bean id="messageSource"
 		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
 		<property name="basenames" value="classpath:resources/messages/message" />
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
-	<bean class="me.qyh.blog.message.Messages"/>
+	<bean class="me.qyh.blog.core.message.Messages"/>
 
-	<bean id="articleIndexer" class="me.qyh.blog.service.impl.JcsegArticleIndexer">
-		<constructor-arg index="0" value="/web/blog_index" />
-		<constructor-arg index="1" value="SEARCH" />
+	<bean id="articleIndexer" class="me.qyh.blog.core.service.impl.JcsegArticleIndexer">
+		<constructor-arg index="0" value="SEARCH" />
 	</bean>
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="mailSender" class="me.qyh.blog.mail.MailSender" />
+	<bean id="mailSender" class="me.qyh.blog.support.mail.MailSender" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
@@ -108,29 +98,24 @@
 		</property>
 	</bean>
 
-	<!-- markdown to html -->
-	<bean class="me.qyh.blog.security.input.CommonMarkdown2Html" />
-
 	<!-- article content handler -->
-	<bean class="me.qyh.blog.service.impl.ArticleContentHandlers">
+	<bean class="me.qyh.blog.core.service.impl.ArticleContentHandlers">
 		<property name="handlers">
 			<list>
-				<bean class="me.qyh.blog.service.impl.DefaultArticleContentHandler" />
+				<bean class="me.qyh.blog.core.service.impl.DefaultArticleContentHandler" />
 			</list>
 		</property>
 	</bean>
 
 	<!-- 缓存点击策略 -->
-	<bean id="cacheableHitsStrategy" class="me.qyh.blog.service.impl.CacheableHitsStrategy" />
+	<bean id="cacheableHitsStrategy" class="me.qyh.blog.core.service.impl.CacheableHitsStrategy" />
 	
 	<!-- 纪录最近被访问的文章 -->
-	<bean class="me.qyh.blog.service.impl.SyncArticleViewdLogger"/>
+	<bean class="me.qyh.blog.core.service.impl.SyncArticleViewdLogger"/>
 	
 	<!-- 文章缓存 -->
-	<bean class="me.qyh.blog.service.impl.ArticleCache"/>
-	<bean id="articleService" class="me.qyh.blog.service.impl.ArticleServiceImpl"/>
-
-	<bean class="me.qyh.blog.service.impl.ArticleIndexRebuildAspect" />
+	<bean class="me.qyh.blog.core.service.impl.ArticleCache"/>
+	<bean id="articleService" class="me.qyh.blog.core.service.impl.ArticleServiceImpl"/>
 
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
@@ -151,8 +136,8 @@
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
 
-	<bean id="htmlClean" class="me.qyh.blog.security.input.DefaultHtmlClean" />
-	<bean id="simpleCommentChecker" class="me.qyh.blog.service.impl.SimpleCommentChecker">
+	<bean id="htmlClean" class="me.qyh.blog.core.security.input.DefaultHtmlClean" />
+	<bean id="simpleCommentChecker" class="me.qyh.blog.core.service.impl.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
 				<value>qyh</value>
@@ -171,14 +156,10 @@
 
 	<!-- 默认评论服务 -->
 	<!-- 评论服务邮件提醒 -->
-	<bean id="commentEmailNotifySupport" class="me.qyh.blog.service.impl.CommentEmailNotifySupport">
+	<bean id="commentEmailNotifySupport" class="me.qyh.blog.core.service.impl.CommentEmailNotifySupport">
 		<property name="mailSubject" value="您有新的评论" />
 	</bean>
-	<bean class="me.qyh.blog.service.impl.CommentService">
-		<!-- html内容清理器 -->
-		<property name="htmlClean" ref="htmlClean" />
-		<property name="commentChecker" ref="simpleCommentChecker" />
-	</bean>
+	<bean class="me.qyh.blog.core.service.impl.CommentService"/>
 
 
 	<!-- 定时任务 -->
@@ -217,21 +198,21 @@
 
 
 	<!-- 博客ping服务 -->
-	<bean id="pingManager" class="me.qyh.blog.evt.ping.SimplePingManager">
+	<bean id="pingManager" class="me.qyh.blog.support.ping.SimplePingManager">
 		<constructor-arg value="钱宇豪的个人博客" />
 		<property name="pingServices">
 			<list>
-				<bean class="me.qyh.blog.evt.ping.GoogleBlogPingService" />
-				<bean class="me.qyh.blog.evt.ping.BaiduBlogPingService" />
+				<bean class="me.qyh.blog.support.ping.GoogleBlogPingService" />
+				<bean class="me.qyh.blog.support.ping.BaiduBlogPingService" />
 			</list>
 		</property>
 	</bean>
 
 	<!-- sitemap 服务 -->
-	<bean id="xmlSiteMap" class="me.qyh.blog.api.sitemap.XmlSiteMap" />
+	<bean id="xmlSiteMap" class="me.qyh.blog.support.sitemap.XmlSiteMap" />
 
 
 	<!-- metaweblog服务 -->
-	<!-- <bean class="me.qyh.blog.api.metaweblog.MetaweblogHandler" /> -->
+	<!-- <bean class="me.qyh.blog.support.metaweblog.MetaweblogHandler" /> -->
 
 </beans>      
