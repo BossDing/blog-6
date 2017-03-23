@@ -26,8 +26,8 @@ import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.ui.ParseContext;
 import me.qyh.blog.core.ui.Template;
-import me.qyh.blog.core.ui.TemplateUtils;
 import me.qyh.blog.core.ui.TemplateResolver.TemplateResource;
+import me.qyh.blog.core.ui.TemplateUtils;
 
 /**
  * 不希望通过replace等方式再次渲染页面
@@ -49,7 +49,7 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 
 			if (templateResource instanceof TemplateResource) {
 				Template template = ((TemplateResource) templateResource).getTemplate().cloneTemplate();
-
+				
 				Template root = ParseContext.getRoot();
 				// 如果主模板不存在，设置主模板
 				if (root == null) {
@@ -70,5 +70,4 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 		}
 		super.setContext(context);
 	}
-
 }

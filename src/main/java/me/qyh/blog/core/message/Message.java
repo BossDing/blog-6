@@ -16,6 +16,8 @@
 package me.qyh.blog.core.message;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
 
 import org.springframework.context.MessageSourceResolvable;
 
@@ -33,7 +35,7 @@ public class Message implements MessageSourceResolvable, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private String code;
-	private transient Object[] arguments;
+	private String[] arguments;
 	private String defaultMessage;
 
 	/**
@@ -47,7 +49,8 @@ public class Message implements MessageSourceResolvable, Serializable {
 	 */
 	public Message(String code, String defaultMessage, Object... arguments) {
 		this.code = code;
-		this.arguments = arguments;
+		this.arguments = Arrays.stream(arguments).filter(Objects::nonNull).map(Object::toString)
+				.toArray(i -> new String[i]);
 		this.defaultMessage = defaultMessage;
 	}
 
@@ -72,5 +75,4 @@ public class Message implements MessageSourceResolvable, Serializable {
 	public Object[] getArguments() {
 		return arguments;
 	}
-
 }

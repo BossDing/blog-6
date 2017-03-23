@@ -17,6 +17,7 @@ package me.qyh.blog.core.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import me.qyh.blog.core.bean.ExportPage;
 import me.qyh.blog.core.bean.ImportOption;
@@ -220,5 +221,17 @@ public interface UIService {
 	 * @return
 	 */
 	List<UserPage> selectAllUserPages();
+
+	/**
+	 * 检查template是否和当前的template一致
+	 * <p>
+	 * <b> 这个方法执行期间的时候不应该出现写操作并行执行 所以consumer应该简短</b>
+	 * </p>
+	 * 
+	 * @param templateName
+	 * @param template
+	 * @param consumer
+	 */
+	void compareTemplate(String templateName, Template template, Consumer<Boolean> consumer);
 
 }

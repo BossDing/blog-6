@@ -15,10 +15,13 @@
  */
 package me.qyh.blog.core.ui.page;
 
+import java.util.Objects;
+
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.ui.Template;
+import me.qyh.blog.util.Validators;
 
 public class Page extends BaseEntity implements Template {
 
@@ -107,6 +110,15 @@ public class Page extends BaseEntity implements Template {
 
 	@Override
 	public final boolean isCallable() {
+		return false;
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (Validators.baseEquals(this, other)) {
+			Page rhs = (Page) other;
+			return Objects.equals(space, rhs.space) && Objects.equals(tpl, rhs.tpl) && Objects.equals(type, rhs.type);
+		}
 		return false;
 	}
 }

@@ -19,7 +19,6 @@ import java.sql.Timestamp;
 import java.util.Objects;
 
 import me.qyh.blog.core.ui.Template;
-import me.qyh.blog.util.Validators;
 
 public class UserFragment extends Fragment {
 
@@ -82,21 +81,17 @@ public class UserFragment extends Fragment {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(this.getName());
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (Validators.baseEquals(this, obj)) {
-			UserFragment other = (UserFragment) obj;
-			return Objects.equals(this.getName(), other.getName());
-		}
-		return false;
-	}
-
-	@Override
 	public Template cloneTemplate() {
 		return new UserFragment(this);
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (super.equalsTo(other)) {
+			UserFragment rhs = (UserFragment) other;
+			return Objects.equals(this.createDate, rhs.createDate) && Objects.equals(this.description, rhs.description)
+					&& Objects.equals(this.global, rhs.global) && Objects.equals(this.id, rhs.id);
+		}
+		return false;
 	}
 }

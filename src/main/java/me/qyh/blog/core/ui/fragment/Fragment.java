@@ -142,7 +142,22 @@ public class Fragment implements Serializable, Template {
 	}
 
 	@Override
+	public String toString() {
+		return "Fragment [name=" + name + ",  space=" + space + ", callable=" + callable + "]";
+	}
+
+	@Override
 	public Template cloneTemplate() {
 		return new Fragment(this);
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (Validators.baseEquals(this, other)) {
+			Fragment rhs = (Fragment) other;
+			return Objects.equals(this.callable, rhs.callable) && Objects.equals(this.name, rhs.name)
+					&& Objects.equals(this.space, rhs.space) && Objects.equals(this.tpl, rhs.tpl);
+		}
+		return false;
 	}
 }

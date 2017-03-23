@@ -57,9 +57,12 @@ public class TemplateResolver implements ITemplateResolver {
 		}
 		boolean cached = false;
 		ITemplateResource templateResource = null;
-		if (ParseContext.isPreview()) {
+
+		if (TemplateUtils.isPreview(templateName)) {
 			templateResource = new TemplateResource(ParseContext.getPreview());
-		} else {
+		}
+
+		if (templateResource == null) {
 			Template template = uiService.queryTemplate(templateName);
 			if (template != null) {
 				templateResource = new TemplateResource(template);

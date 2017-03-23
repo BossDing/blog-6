@@ -1,5 +1,10 @@
 package me.qyh.blog.core.ui;
 
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public interface Template {
 
 	/**
@@ -43,4 +48,10 @@ public interface Template {
 	 */
 	boolean isCallable();
 
+	/**
+	 * 判断是否和另一个Template等价
+	 * 
+	 * @return
+	 */
+	boolean equalsTo(Template other);
 }

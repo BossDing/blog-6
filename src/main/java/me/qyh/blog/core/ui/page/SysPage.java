@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.core.ui.page;
 
+import java.util.Objects;
+
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.ui.Template;
@@ -91,11 +93,6 @@ public class SysPage extends Page {
 		return page;
 	}
 
-	@Override
-	public String toString() {
-		return "SysPage [target=" + target + "]";
-	}
-
 	public String getTemplateName() {
 		return TemplateUtils.getTemplateName(this);
 	}
@@ -103,5 +100,14 @@ public class SysPage extends Page {
 	@Override
 	public Template cloneTemplate() {
 		return new SysPage(this);
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (super.equalsTo(other)) {
+			SysPage rhs = (SysPage) other;
+			return Objects.equals(target, rhs.target);
+		}
+		return false;
 	}
 }

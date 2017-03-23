@@ -16,6 +16,7 @@
 package me.qyh.blog.core.ui.page;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.ui.Template;
@@ -124,5 +125,16 @@ public class UserPage extends Page {
 	@Override
 	public Template cloneTemplate() {
 		return new UserPage(this);
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (super.equalsTo(other)) {
+			UserPage rhs = (UserPage) other;
+			return Objects.equals(name, rhs.name) && Objects.equals(description, rhs.description)
+					&& Objects.equals(createDate, rhs.createDate) && Objects.equals(alias, rhs.alias)
+					&& Objects.equals(allowComment, rhs.allowComment);
+		}
+		return false;
 	}
 }

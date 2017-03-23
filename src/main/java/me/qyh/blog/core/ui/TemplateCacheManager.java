@@ -17,32 +17,48 @@ package me.qyh.blog.core.ui;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.thymeleaf.cache.AbstractCacheManager;
 import org.thymeleaf.cache.ExpressionCacheKey;
 import org.thymeleaf.cache.ICache;
 import org.thymeleaf.cache.ICacheEntryValidityChecker;
 import org.thymeleaf.cache.TemplateCacheKey;
+import org.thymeleaf.engine.TemplateData;
 import org.thymeleaf.engine.TemplateModel;
+import org.thymeleaf.templateresource.ITemplateResource;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class TemplateCacheManager extends AbstractCacheManager
-		implements InitializingBean, ApplicationListener<TemplateEvitEvent> {
+import me.qyh.blog.core.service.UIService;
+import me.qyh.blog.core.ui.TemplateResolver.TemplateResource;
+
+public class TemplateCacheManager extends AbstractCacheManager implements InitializingBean {
 
 	@Autowired
 	private ApplicationContext applicationContext;
 
-	private final ICache<TemplateCacheKey, TemplateModel> templateCache = new UICache<>(Caffeine.newBuilder().build());
-	private final ICache<ExpressionCacheKey, Object> expressionCache = new UICache<>(
-			Caffeine.newBuilder().expireAfterAccess(30, TimeUnit.MINUTES).build());
+	@Autowired
+	private UIService uiService;
+
+	private final ICache<TemplateCacheKey, TemplateModel> templateCache = new TemplateCache();
+	private final ICache<ExpressionCacheKey, Object> expressionCache = new ExpressionCache();
+
+	private final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
+			new LinkedBlockingQueue<Runnable>(100));
+
+	public TemplateCacheManager() {
+		tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+	}
 
 	@Override
 	protected ICache<TemplateCacheKey, TemplateModel> initializeTemplateCache() {
@@ -54,9 +70,118 @@ public class TemplateCacheManager extends AbstractCacheManager
 		return expressionCache;
 	}
 
-	@Override
-	public void onApplicationEvent(TemplateEvitEvent event) {
-		synchronized (this) {
+	private final class TemplateCache implements ICache<TemplateCacheKey, TemplateModel> {
+
+		private Cache<TemplateCacheKey, TemplateModel> cache = Caffeine.newBuilder().build();
+
+		@Override
+		public void put(TemplateCacheKey key, TemplateModel value) {
+			TemplateData templateData = value.getTemplateData();
+			ITemplateResource resource = templateData.getTemplateResource();
+			if (resource instanceof TemplateResource) {
+				Template template = ((TemplateResource) resource).getTemplate();
+				String templateName = templateData.getTemplate();
+				tpe.execute(() -> {
+					/**
+					 * 如果是Template，此时应该和当前的Template进行比对，如果一致才放入缓存
+					 * 因为如果读写操作并发执行的话，此时的数据可能是旧的数据
+					 * 
+					 * 这个操作可能是同步的，因此在首次载入时效率可能非常低
+					 */
+
+					uiService.compareTemplate(templateName, template, flag -> {
+						if (flag) {
+							cache.put(key, value);
+						}
+					});
+				});
+			} else {
+				cache.put(key, value);
+			}
+		}
+
+		@Override
+		public TemplateModel get(TemplateCacheKey key) {
+			return cache.getIfPresent(key);
+		}
+
+		@Override
+		public TemplateModel get(TemplateCacheKey key,
+				ICacheEntryValidityChecker<? super TemplateCacheKey, ? super TemplateModel> validityChecker) {
+			return cache.getIfPresent(key);
+		}
+
+		@Override
+		public void clear() {
+			cache.invalidateAll();
+		}
+
+		@Override
+		public void clearKey(TemplateCacheKey key) {
+			cache.invalidate(key);
+		}
+
+		@Override
+		public Set<TemplateCacheKey> keySet() {
+			return cache.asMap().keySet();
+		}
+
+	}
+
+	private final class ExpressionCache implements ICache<ExpressionCacheKey, Object> {
+
+		private final Cache<ExpressionCacheKey, Object> cache = Caffeine.newBuilder()
+				.expireAfterAccess(30, TimeUnit.MINUTES).build();
+
+		public ExpressionCache() {
+			super();
+		}
+
+		@Override
+		public void put(ExpressionCacheKey key, Object value) {
+			cache.put(key, value);
+		}
+
+		@Override
+		public Object get(ExpressionCacheKey key) {
+			return cache.getIfPresent(key);
+		}
+
+		@Override
+		public Object get(ExpressionCacheKey key,
+				ICacheEntryValidityChecker<? super ExpressionCacheKey, ? super Object> validityChecker) {
+			return cache.getIfPresent(key);
+		}
+
+		@Override
+		public void clear() {
+			cache.invalidateAll();
+		}
+
+		@Override
+		public void clearKey(ExpressionCacheKey key) {
+			cache.invalidate(key);
+		}
+
+		@Override
+		public Set<ExpressionCacheKey> keySet() {
+			return cache.asMap().keySet();
+		}
+	}
+
+	private final class ContextCloseListener implements ApplicationListener<ContextClosedEvent> {
+
+		@Override
+		public void onApplicationEvent(ContextClosedEvent event) {
+			tpe.shutdownNow();
+		}
+
+	}
+
+	private final class EvitListener implements ApplicationListener<TemplateEvitEvent> {
+
+		@Override
+		public void onApplicationEvent(TemplateEvitEvent event) {
 			String[] templateNames = event.getTemplateNames();
 			final Set<TemplateCacheKey> keysToBeRemoved = new HashSet<>(4 * templateNames.length);
 			final Set<TemplateCacheKey> templateCacheKeys = templateCache.keySet();
@@ -80,49 +205,10 @@ public class TemplateCacheManager extends AbstractCacheManager
 		}
 	}
 
-	private final class UICache<K, V> implements ICache<K, V> {
-
-		private final Cache<K, V> cache;
-
-		public UICache(Cache<K, V> cache) {
-			super();
-			this.cache = cache;
-		}
-
-		@Override
-		public void put(K key, V value) {
-			cache.put(key, value);
-		}
-
-		@Override
-		public V get(K key) {
-			return cache.getIfPresent(key);
-		}
-
-		@Override
-		public V get(K key, ICacheEntryValidityChecker<? super K, ? super V> validityChecker) {
-			return get(key);
-		}
-
-		@Override
-		public void clear() {
-			cache.invalidateAll();
-		}
-
-		@Override
-		public void clearKey(K key) {
-			cache.invalidate(key);
-		}
-
-		@Override
-		public Set<K> keySet() {
-			return cache.asMap().keySet();
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext.getParent();
-		appContext.addApplicationListener(this);
+		appContext.addApplicationListener(new EvitListener());
+		appContext.addApplicationListener(new ContextCloseListener());
 	}
 }

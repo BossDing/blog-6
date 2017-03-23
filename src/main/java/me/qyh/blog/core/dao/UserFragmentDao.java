@@ -100,5 +100,4 @@ public interface UserFragmentDao {
 	 * @return 如果不存在，返回null
 	 */
 	UserFragment selectGlobalByName(String name);
-
 }

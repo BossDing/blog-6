@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.core.ui.page;
 
+import java.util.Objects;
+
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.ui.Template;
 import me.qyh.blog.core.ui.TemplateUtils;
@@ -78,5 +80,14 @@ public class LockPage extends Page {
 	@Override
 	public Template cloneTemplate() {
 		return new LockPage(this);
+	}
+
+	@Override
+	public boolean equalsTo(Template other) {
+		if (super.equalsTo(other)) {
+			LockPage rhs = (LockPage) other;
+			return Objects.equals(lockType, rhs.lockType);
+		}
+		return false;
 	}
 }

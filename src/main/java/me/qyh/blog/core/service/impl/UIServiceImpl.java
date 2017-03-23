@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -156,6 +157,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteUserFragment(Integer id) throws LogicException {
 		UserFragment userFragment = userFragmentDao.selectById(id);
@@ -237,7 +239,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 		userPageDao.deleteById(id);
 		String templateName = db.getTemplateName();
-		evitTemplateCache(templateName);
+		evitPageCache(templateName);
 		this.applicationEventPublisher.publishEvent(new UserPageEvent(this, EventType.DELETE, db));
 		helper.unregisterUserPage(db);
 	}
@@ -248,6 +250,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void buildTpl(SysPage sysPage) throws LogicException {
 		checkPageTarget(sysPage);
@@ -260,7 +263,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		} else {
 			sysPageDao.insert(sysPage);
 		}
-		evitTemplateCache(sysPage);
+		evitPageCache(sysPage);
 	}
 
 	@Override
@@ -284,7 +287,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 			}
 			userPageDao.update(userPage);
 
-			evitTemplateCache(db);
+			evitPageCache(db);
 
 			// 解除以前的mapping
 			helper.unregisterUserPage(db);
@@ -305,6 +308,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteSysPage(Integer spaceId, PageTarget target) throws LogicException {
 		Space space = spaceCache.checkSpace(spaceId);
@@ -312,11 +316,12 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		if (page != null) {
 			sysPageDao.deleteById(page.getId());
 
-			evitTemplateCache(page);
+			evitPageCache(page);
 		}
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void buildTpl(LockPage lockPage) throws LogicException {
 		checkPageTarget(lockPage);
@@ -330,17 +335,18 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		} else {
 			lockPageDao.insert(lockPage);
 		}
-		evitTemplateCache(lockPage);
+		evitPageCache(lockPage);
 	}
 
 	@Override
+	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteLockPage(Integer spaceId, String lockType) throws LogicException {
 		Space space = spaceCache.checkSpace(spaceId);
 		LockPage page = lockPageDao.selectBySpaceAndLockType(space, lockType);
 		if (page != null) {
 			lockPageDao.deleteById(page.getId());
-			evitTemplateCache(page);
+			evitPageCache(page);
 		}
 	}
 
@@ -407,6 +413,20 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 	@Transactional(readOnly = true)
 	public List<UserPage> selectAllUserPages() {
 		return userPageDao.selectAll();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @see SyncInterceptor
+	 */
+	@Override
+	@Sync
+	@Transactional(readOnly = true)
+	public void compareTemplate(String templateName, Template template, Consumer<Boolean> consumer) {
+		Template current = queryTemplate(templateName);
+		boolean equalsTo = current != null && template != null && current.equalsTo(template);
+		consumer.accept(equalsTo);
 	}
 
 	@Override
@@ -557,7 +577,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 					fragmentEvitKeySet.add(fragment.getName());
 				}
 			}
-			evitTemplateCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
+			evitPageCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
 			evitFragmentCache(fragmentEvitKeySet.stream().toArray(i -> new String[i]));
 			return records;
 		} catch (RuntimeException | Error e) {
@@ -697,14 +717,14 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 	}
 
-	private synchronized void evitTemplateCache(String... templateNames) {
+	private void evitPageCache(String... templateNames) {
 		Transactions.afterCommit(() -> {
 			this.applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateNames));
 		});
 	}
 
-	private void evitTemplateCache(Page... pages) {
-		evitTemplateCache(Arrays.stream(pages).map(Page::getTemplateName).toArray(i -> new String[i]));
+	private void evitPageCache(Page... pages) {
+		evitPageCache(Arrays.stream(pages).map(Page::getTemplateName).toArray(i -> new String[i]));
 	}
 
 	private void checkPageTarget(Page page) throws LogicException {
@@ -723,7 +743,7 @@ public class UIServiceImpl implements UIService, InitializingBean, ApplicationEv
 		}
 	}
 
-	private synchronized void evitFragmentCache(String... names) {
+	private void evitFragmentCache(String... names) {
 		Transactions.afterCommit(() -> {
 			if (names == null || names.length == 0) {
 				return;
