@@ -50,6 +50,7 @@ public class Message implements MessageSourceResolvable, Serializable {
 	public Message(String code, String defaultMessage, Object... arguments) {
 		this.code = code;
 		this.arguments = (arguments == null || arguments.length == 0) ? null
+				: Arrays.stream(arguments).map(Objects::toString).toArray(i -> new String[i]);
 		this.defaultMessage = defaultMessage;
 	}
 
