@@ -15,9 +15,15 @@
  */
 package me.qyh.blog.core.bean;
 
+import java.io.Serializable;
+
 import me.qyh.blog.core.message.Message;
 
-public class ImportRecord {
+public class ImportRecord implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final boolean success;
 	private final Message message;
 

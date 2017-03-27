@@ -27,12 +27,8 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.core.bean.JsonResult;
-import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.ui.page.Page;
-import me.qyh.blog.core.ui.page.SysPage;
-import me.qyh.blog.core.ui.page.SysPage.PageTarget;
 
 @Controller
 @RequestMapping("space/{alias}/article")
@@ -42,11 +38,6 @@ public class SpaceArticleController extends BaseController {
 	private ArticleService articleService;
 
 	private static final AntPathMatcher apm = new AntPathMatcher();
-
-	@RequestMapping("{idOrAlias}")
-	public Page article(@PathVariable(value = "idOrAlias") String idOrAlias) throws LogicException {
-		return new SysPage(Environment.getSpace(), PageTarget.ARTICLE_DETAIL);
-	}
 
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
 	@ResponseBody

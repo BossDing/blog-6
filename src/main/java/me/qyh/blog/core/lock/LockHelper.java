@@ -49,22 +49,22 @@ public final class LockHelper {
 	 * 
 	 * @param request
 	 *            请求
-	 * @return
+	 * @return null 如果不存在或者空间不匹配
 	 */
 	public static LockBean getLockBean(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			LockBean lockBean = (LockBean) session.getAttribute(LAST_LOCK_SESSION_KEY);
 			if (lockBean == null) {
-				throw new MissLockException();
+				return null;
 			}
 			String alias = lockBean.getSpaceAlias();
-			if (!Environment.match(new Space(alias))) {
-				throw new MissLockException();
+			if (!Environment.match(alias == null ? null : new Space(alias))) {
+				return null;
 			}
 			return lockBean;
 		}
-		throw new MissLockException();
+		return null;
 	}
 
 	/**

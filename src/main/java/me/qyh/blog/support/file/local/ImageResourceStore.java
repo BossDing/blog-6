@@ -163,7 +163,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 			String absPath = dest.toAbsolutePath().toString();
 			throw new LogicException("file.store.exists", "文件" + absPath + "已经存在", absPath);
 		}
-		if (inThumbDir(dest)) {
+		if (FileUtils.isSub(dest, thumbAbsFolder)) {
 			String absPath = dest.toAbsolutePath().toString();
 			throw new LogicException("file.inThumb", "文件" + absPath + "不能被存放在缩略图文件夹下", absPath);
 		}
@@ -484,23 +484,6 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 			sourcePath = path.substring(0, path.lastIndexOf('/'));
 		}
 		return FileUtils.cleanPath(sourcePath);
-	}
-
-	/**
-	 * 要创建的文件是否在缩略图文件夹中
-	 * 
-	 * @param dest
-	 * @return
-	 */
-	private boolean inThumbDir(Path dest) {
-		try {
-			String canonicalP = thumbAbsFolder.toFile().getCanonicalPath();
-			String canonicalC = dest.toFile().getCanonicalPath();
-			return canonicalP.equals(canonicalC)
-					|| canonicalC.regionMatches(false, 0, canonicalP, 0, canonicalP.length());
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
 	}
 
 	/**

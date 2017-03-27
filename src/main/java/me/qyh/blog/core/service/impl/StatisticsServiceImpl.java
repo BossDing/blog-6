@@ -28,18 +28,18 @@ import me.qyh.blog.core.bean.FileStoreBean;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.BlogFileDao;
-import me.qyh.blog.core.dao.TagDao;
-import me.qyh.blog.core.dao.UserPageDao;
 import me.qyh.blog.core.dao.BlogFileDao.FileCountBean;
+import me.qyh.blog.core.dao.PageDao;
+import me.qyh.blog.core.dao.TagDao;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.file.FileManager;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.TagQueryParam;
-import me.qyh.blog.core.pageparam.UserPageQueryParam;
+import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.CommentServer;
@@ -60,7 +60,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 	@Autowired
 	private CommentServer commentServer;
 	@Autowired
-	private UserPageDao userPageDao;
+	private PageDao pageDao;
 	@Autowired
 	private FileManager fileManager;
 	@Autowired
@@ -107,7 +107,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 		CommentStatistics commentStatistics = new CommentStatistics();
 		boolean queryPrivate = Environment.isLogin();
 		commentStatistics.setTotalArticleComments(commentServer.queryArticlesTotalCommentCount(space, queryPrivate));
-		commentStatistics.setTotalUserPageComments(commentServer.queryUserPagesTotalCommentCount(space, queryPrivate));
+		commentStatistics.setTotalPageComments(commentServer.queryPagesTotalCommentCount(space, queryPrivate));
 		return commentStatistics;
 	}
 
@@ -153,9 +153,9 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 	private PageStatistics queryPageStatistics(Space space) {
 		PageStatistics pageStatistics = new PageStatistics();
-		UserPageQueryParam param = new UserPageQueryParam();
+		TemplatePageQueryParam param = new TemplatePageQueryParam();
 		param.setSpace(space);
-		pageStatistics.setUserPageCount(userPageDao.selectCount(param));
+		pageStatistics.setPageCount(pageDao.selectCount(param));
 
 		return pageStatistics;
 	}

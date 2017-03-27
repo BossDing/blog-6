@@ -36,7 +36,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.TemplateEngine;
 
 import me.qyh.blog.core.bean.ExportPage;
-import me.qyh.blog.core.bean.ImportOption;
 import me.qyh.blog.core.bean.ImportRecord;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
@@ -45,8 +44,8 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.core.service.UIService;
-import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.thymeleaf.TemplateService;
+import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.ExportPageValidator;
@@ -56,7 +55,7 @@ import me.qyh.blog.web.controller.form.ExportPageValidator;
 public class TplMgrController extends BaseMgrController {
 
 	@Autowired
-	private UIService uiService;
+	private TemplateService uiService;
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
@@ -84,7 +83,7 @@ public class TplMgrController extends BaseMgrController {
 	@RequestMapping(value = "import", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult importPage(@RequestParam("json") String json,
-			@RequestParam(value = "spaceId", required = false) Integer spaceId, ImportOption importOption) {
+			@RequestParam(value = "spaceId", required = false) Integer spaceId) {
 		List<ImportRecord> records = new ArrayList<>();
 		List<ExportPage> exportPages = new ArrayList<>();
 		try {
@@ -116,7 +115,7 @@ public class TplMgrController extends BaseMgrController {
 			toImportPages.add(exportPage);
 			bindingResult.getTargetMap().clear();
 		}
-		records.addAll(uiService.importPage(spaceId, toImportPages, importOption));
+		records.addAll(uiService.importPage(spaceId, toImportPages));
 		return new JsonResult(true, records);
 	}
 

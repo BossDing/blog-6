@@ -56,6 +56,6 @@ public interface CommentServer {
 	 *            空间，如果为空，查询全部
 	 * @return
 	 */
-	int queryUserPagesTotalCommentCount(Space space, boolean queryPrivate);
+	int queryPagesTotalCommentCount(Space space, boolean queryPrivate);
 
 }

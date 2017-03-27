@@ -65,8 +65,8 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setArticlePageSize(getInt(PAGE_SIZE_ARICLE, 5));
 		config.setFilePageSize(getInt(PAGE_SIZE_FILE, 5));
 		config.setTagPageSize(getInt(PAGE_SIZE_TAG, 5));
-		config.setUserPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
-		config.setUserFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
+		config.setPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
+		config.setFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
 
 		return config;
 	}
@@ -77,8 +77,8 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setProperty(PAGE_SIZE_FILE, Integer.toString(globalConfig.getFilePageSize()));
 		config.setProperty(PAGE_SIZE_TAG, Integer.toString(globalConfig.getTagPageSize()));
 		config.setProperty(PAGE_SIZE_ARICLE, Integer.toString(globalConfig.getArticlePageSize()));
-		config.setProperty(PAGE_SIZE_USERFRAGEMENT, Integer.toString(globalConfig.getUserFragmentPageSize()));
-		config.setProperty(PAGE_SIZE_USERPAGE, Integer.toString(globalConfig.getUserPagePageSize()));
+		config.setProperty(PAGE_SIZE_USERFRAGEMENT, Integer.toString(globalConfig.getFragmentPageSize()));
+		config.setProperty(PAGE_SIZE_USERPAGE, Integer.toString(globalConfig.getPagePageSize()));
 		store();
 		return globalConfig;
 	}

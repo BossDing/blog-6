@@ -23,10 +23,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.core.bean.ExportPage;
-import me.qyh.blog.core.ui.fragment.Fragment;
-import me.qyh.blog.core.ui.page.LockPage;
-import me.qyh.blog.core.ui.page.Page;
-import me.qyh.blog.core.ui.page.UserPage;
+import me.qyh.blog.core.thymeleaf.template.Fragment;
+import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.Validators;
 
 @Component
@@ -70,32 +68,31 @@ public class ExportPageValidator implements Validator {
 		@Override
 		public void validate(Object target, Errors errors) {
 			Page page = (Page) target;
+			String name = page.getName();
+			if (Validators.isEmptyOrNull(name, true)) {
+				errors.reject("page.name.blank", "页面名称不能为空");
+				return;
+			}
+			if (name.length() > PAGE_NAME_MAX_LENGTH) {
+				errors.reject("page.name.toolong", new Object[] { PAGE_NAME_MAX_LENGTH },
+						"页面名称不能超过" + PAGE_NAME_MAX_LENGTH + "个字符");
+				return;
+			}
 			String pageTpl = page.getTpl();
 			if (Validators.isEmptyOrNull(pageTpl, true)) {
 				errors.reject("page.tpl.null", "页面模板不能为空");
 				return;
 			}
-
 			if (pageTpl.length() > PAGE_TPL_MAX_LENGTH) {
 				errors.reject("page.tpl.toolong", new Object[] { PAGE_TPL_MAX_LENGTH },
 						"页面模板不能超过" + PAGE_TPL_MAX_LENGTH + "个字符");
 				return;
 			}
-
-			if (page instanceof LockPage) {
-				LockPage lockPage = (LockPage) page;
-				if (Validators.isEmptyOrNull(lockPage.getLockType(), true)) {
-					errors.reject("page.locktype.empty", "页面锁类型不能为空");
-					return;
-				}
+			String alias = validateAlias(page.getAlias(), errors);
+			if (errors.hasErrors()) {
+				return;
 			}
-
-			if (page instanceof UserPage) {
-				UserPage userPage = (UserPage) page;
-				String alias = userPage.getAlias();
-				validateAlias(alias, errors);
-				userPage.setAlias(alias);
-			}
+			page.setAlias(alias);
 		}
 
 	}

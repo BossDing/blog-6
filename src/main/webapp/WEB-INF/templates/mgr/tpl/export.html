@@ -45,7 +45,7 @@
 						</div>
 						<div class="checkbox">
 							<label> <input type="checkbox"
-								id="createUserPageIfNotExists"> 创建自定义页面(如果不存在)
+								id="createPageIfNotExists"> 创建自定义页面(如果不存在)
 							</label>
 						</div>
 						<button type="button" id="import-btn" class="btn btn-default">导入模板</button>
@@ -106,7 +106,7 @@
 			var result = event.target.result;
 			$.post(basePath + '/mgr/tpl/import', {
 				"json" : result,
-				"createUserPageIfNotExists":$("#createUserPageIfNotExists").is(":checked"),
+				"createPageIfNotExists":$("#createPageIfNotExists").is(":checked"),
 				"spaceId" : $("#importSpaceId").val()
 			}, function callBack(data) {
 				if (data.success) {

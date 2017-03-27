@@ -15,7 +15,9 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
-	<mvc:view-controller path="/error" view-name="error/500" />
+
+	<import resource="ui.xml" />
+
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
 
 	<bean id="multipartResolver"
@@ -27,6 +29,8 @@
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web" />
 
+	<!-- 
+	USE TemplateWebConfig instead
 	<mvc:annotation-driven>
 		<mvc:message-converters>
 			<bean
@@ -38,22 +42,25 @@
 			<bean class="me.qyh.blog.core.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.core.ui.PageReturnHandler"></bean>
+			<bean class="me.qyh.blog.core.thymeleaf.TemplateReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
-
+	 -->
+	 
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
+
+	<bean id="appInterceptor" class="me.qyh.blog.web.interceptor.AppInterceptor" />
 
 	<mvc:interceptors>
 		<mvc:interceptor>
 			<mvc:mapping path="/**" />
-			<bean class="me.qyh.blog.web.interceptor.AppInterceptor" />
+			<ref bean="appInterceptor" />
 		</mvc:interceptor>
 	</mvc:interceptors>
 
 
-	<bean id="templateEngine" class="me.qyh.blog.core.ui.TemplateEngine">
+	<bean id="templateEngine" class="me.qyh.blog.core.thymeleaf.TemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -63,12 +70,12 @@
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.core.ui.TemplateResolver"/>
+				<bean class="me.qyh.blog.core.thymeleaf.TemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
 		<property name="cacheManager">
-			<bean class="me.qyh.blog.core.ui.TemplateCacheManager"/>
+			<bean class="me.qyh.blog.core.thymeleaf.TemplateCacheManager" />
 		</property>
 	</bean>
 
@@ -79,7 +86,7 @@
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
 
-	<bean class="me.qyh.blog.core.ui.TemplateRender" />
+	<bean class="me.qyh.blog.core.thymeleaf.TemplateRender" />
 
 
 	<!-- captcha -->

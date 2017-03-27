@@ -18,8 +18,8 @@ package me.qyh.blog.core.bean;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.qyh.blog.core.ui.fragment.Fragment;
-import me.qyh.blog.core.ui.page.Page;
+import me.qyh.blog.core.thymeleaf.template.Fragment;
+import me.qyh.blog.core.thymeleaf.template.Page;
 
 public class ExportPage {
 	private Page page;

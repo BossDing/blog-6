@@ -50,7 +50,7 @@ import me.qyh.blog.core.config.Limit;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.dao.CommentDao;
-import me.qyh.blog.core.dao.UserPageDao;
+import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.dao.CommentDao.ModuleCommentCount;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Comment;
@@ -63,7 +63,7 @@ import me.qyh.blog.core.entity.Comment.CommentStatus;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.evt.ArticleEvent;
 import me.qyh.blog.core.evt.EventType;
-import me.qyh.blog.core.evt.UserPageEvent;
+import me.qyh.blog.core.evt.PageEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.lock.LockManager;
@@ -72,7 +72,7 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.input.HtmlClean;
 import me.qyh.blog.core.security.input.Markdown2Html;
 import me.qyh.blog.core.service.CommentServer;
-import me.qyh.blog.core.ui.page.UserPage;
+import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
@@ -93,7 +93,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	@Autowired
 	private LockManager lockManager;
 	@Autowired
-	private UserPageDao userPageDao;
+	private PageDao pageDao;
 	@Autowired
 	private Markdown2Html markdown2Html;
 	@Autowired(required = false)
@@ -229,7 +229,7 @@ public class CommentService implements InitializingBean, CommentServer {
 			doArticleCommentValid(module.getId());
 			break;
 		case USERPAGE:
-			doUserPageCommmentValid(module.getId());
+			doPageCommmentValid(module.getId());
 			break;
 		default:
 			throw new SystemException("无效的ModuleType:" + comment.getCommentModule().getType());
@@ -416,7 +416,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	}
 
 	@EventListener
-	public void handleUserPageEvent(UserPageEvent event) {
+	public void handlePageEvent(PageEvent event) {
 		if (event.getType().equals(EventType.DELETE)) {
 			deleteComment(new CommentModule(ModuleType.USERPAGE, event.getPage().getId()));
 		}
@@ -476,9 +476,9 @@ public class CommentService implements InitializingBean, CommentServer {
 			}
 			break;
 		case USERPAGE:
-			UserPage userPage = userPageDao.selectById(module.getId());
-			if (userPage != null) {
-				link = urlHelper.getUrls().getUrl(userPage);
+			Page page = pageDao.selectById(module.getId());
+			if (page != null) {
+				link = urlHelper.getUrls().getUrl(page);
 			}
 			break;
 		default:
@@ -511,7 +511,7 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	@Override
 	@Transactional(readOnly = true)
-	public int queryUserPagesTotalCommentCount(Space space, boolean queryPrivate) {
+	public int queryPagesTotalCommentCount(Space space, boolean queryPrivate) {
 		return commentDao.selectTotalCommentCount(ModuleType.USERPAGE, space, queryPrivate);
 	}
 
@@ -534,7 +534,7 @@ public class CommentService implements InitializingBean, CommentServer {
 			valid = doValidaBeforeQueryArticleComment(module.getId());
 			break;
 		case USERPAGE:
-			valid = doValidaBeforeQueryUserPageComment(module.getId());
+			valid = doValidaBeforeQueryPageComment(module.getId());
 			break;
 		default:
 			throw new SystemException("无效的ModuleType:" + module.getType());
@@ -557,8 +557,8 @@ public class CommentService implements InitializingBean, CommentServer {
 		return true;
 	}
 
-	private boolean doValidaBeforeQueryUserPageComment(Integer moduleId) {
-		UserPage page = userPageDao.selectById(moduleId);
+	private boolean doValidaBeforeQueryPageComment(Integer moduleId) {
+		Page page = pageDao.selectById(moduleId);
 		if (page == null || !Environment.match(page.getSpace())) {
 			return false;
 		}
@@ -581,8 +581,8 @@ public class CommentService implements InitializingBean, CommentServer {
 		lockManager.openLock(article);
 	}
 
-	private void doUserPageCommmentValid(Integer moduleId) throws LogicException {
-		UserPage page = userPageDao.selectById(moduleId);
+	private void doPageCommmentValid(Integer moduleId) throws LogicException {
+		Page page = pageDao.selectById(moduleId);
 		if (page == null) {
 			throw new LogicException("page.user.notExists", "页面不存在");
 		}

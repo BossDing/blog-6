@@ -60,12 +60,11 @@ import me.qyh.blog.core.lock.Lock;
 import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockException;
 import me.qyh.blog.core.lock.LockHelper;
-import me.qyh.blog.core.lock.MissLockException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.core.ui.TplRenderException;
-import me.qyh.blog.core.ui.dialect.RedirectException;
+import me.qyh.blog.core.thymeleaf.TplRenderException;
+import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
 import me.qyh.blog.support.metaweblog.FaultException;
 import me.qyh.blog.support.metaweblog.RequestXmlParser;
 import me.qyh.blog.util.UrlUtils;
@@ -92,6 +91,7 @@ public class GlobalControllerExceptionHandler {
 	private static final Message ERROR_400 = new Message("error.400", "请求异常");
 	private static final Message ERROR_405 = new Message("error.405", "请求方法不被允许");
 	private static final Message ERROR_404 = new Message("error.404", "请求不存在");
+	private static final Message ERROR_NO_ERROR_MAPPING = new Message("error.noErrorMapping", "发生了一个错误，但是没有可供显示的错误页面");
 
 	@ExceptionHandler(AuthencationException.class)
 	public String handleNoAuthencation(HttpServletRequest request, HttpServletResponse resp) throws IOException {
@@ -165,23 +165,6 @@ public class GlobalControllerExceptionHandler {
 				return "redirect:" + ex.getUrl();
 			}
 		}
-	}
-
-	/**
-	 * 锁丢失异常
-	 * 
-	 * @param ex
-	 * @return
-	 * @throws IOException
-	 */
-	@ExceptionHandler(MissLockException.class)
-	public String handleMissLockException(HttpServletRequest request, HttpServletResponse resp, MissLockException ex)
-			throws IOException {
-		if (Webs.isAjaxRequest(request)) {
-			Webs.writeInfo(resp, new JsonResult(false, new Message("lock.miss", "锁缺失")));
-			return null;
-		} else
-			return "redirect:" + urlHelper.getUrl();
 	}
 
 	@ExceptionHandler(LockException.class)
@@ -298,8 +281,23 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_404));
 			return null;
 		}
-		resp.setStatus(HttpStatus.NOT_FOUND.value());
-		return getErrorRedirect(request, new ErrorInfo(ERROR_404, 404));
+		// 防止找不到错误页面重定向
+		String mapping = request.getServletPath();
+		SpaceUrls urls = urlHelper.getUrls(request);
+		String space = urls.getSpace();
+		String redirectMapping = "";
+		if (space != null) {
+			redirectMapping = "/space/" + space + "/error";
+		} else {
+			redirectMapping = "/error";
+		}
+		if (redirectMapping.equals(mapping)) {
+			Webs.writeInfo(resp, new JsonResult(false, ERROR_NO_ERROR_MAPPING));
+			return null;
+		} else {
+			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, new ErrorInfo(ERROR_404, 404));
+			return "redirect:" + urls.getCurrentUrl() + "/error";
+		}
 	}
 
 	@ExceptionHandler(value = Exception.class)

@@ -23,9 +23,9 @@ $(document).ready(
 			$("#pageForm").submit();
 		})
 		$('[data-toggle="tooltip"]').tooltip();
-		$("#createUserFragmentModal").on("show.bs.modal", function() {
+		$("#createFragmentModal").on("show.bs.modal", function() {
 			clearTip();
-			$("#createUserFragmentModal").find("form")[0].reset();
+			$("#createFragmentModal").find("form")[0].reset();
 		}).on("shown.bs.modal",function(){
 			if(!editor){
 				editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
@@ -38,14 +38,14 @@ $(document).ready(
 			}
 		}).on('hidden.bs.modal', function() {
 		});
-		$("#updateUserFragmentModal").on("show.bs.modal", function() {
+		$("#updateFragmentModal").on("show.bs.modal", function() {
 			clearTip();
-			$("#updateUserFragmentModal").find("form")[0].reset();
+			$("#updateFragmentModal").find("form")[0].reset();
 		}).on("shown.bs.modal",function(){
 		}).on('hidden.bs.modal', function() {
 		});
 		$("#show-create").click(function(){
-			$('#createUserFragmentModal').modal('show')
+			$('#createFragmentModal').modal('show')
 		})
 	$("[data-action='remove']").click(function(){
 		var me = $(this);
@@ -55,7 +55,7 @@ $(document).ready(
 			}
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/fragment/user/delete",
+				url : basePath+"/mgr/fragment/delete",
 				data : {"id":me.attr("data-id")},
 				success : function(data){
 					if(data.success){
@@ -72,28 +72,28 @@ $(document).ready(
 			});
 		});
 	});
-		$("#updateUserFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
+		$("#updateFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
 			if($(this).prop("checked")){
-				$("#updateUserFragmentModal").find("form").find("select[name=space]").parent().hide();
+				$("#updateFragmentModal").find("form").find("select[name=space]").parent().hide();
 			}else{
-				$("#updateUserFragmentModal").find("form").find("select[name=space]").parent().show();
+				$("#updateFragmentModal").find("form").find("select[name=space]").parent().show();
 			}
 		})
-		$("#createUserFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
+		$("#createFragmentModal").find("form").find("input[type=checkbox]").eq(0).change(function(){
 			if($(this).prop("checked")){
-				$("#createUserFragmentModal").find("form").find("select[name=space]").parent().hide();
+				$("#createFragmentModal").find("form").find("select[name=space]").parent().hide();
 			}else{
-				$("#createUserFragmentModal").find("form").find("select[name=space]").parent().show();
+				$("#createFragmentModal").find("form").find("select[name=space]").parent().show();
 			}
 		})
 	$("[data-action='edit']").click(function(){
-		$.get(basePath+"/mgr/fragment/user/get/"+$(this).attr("data-id"),{},function(data){
+		$.get(basePath+"/mgr/fragment/get/"+$(this).attr("data-id"),{},function(data){
 			if(!data.success){
 				bootbox.alert("要更新的挂件不存在");
 			} else {
 				data = data.data;
-				$("#updateUserFragmentModal").modal("show");
-				var form = $("#updateUserFragmentModal").find('form');
+				$("#updateFragmentModal").modal("show");
+				var form = $("#updateFragmentModal").find('form');
 				form.find("input[name='name']").val(data.name);
 				form.find("input[name='id']").val(data.id);
 				form.find("input[type=checkbox]").eq(0).prop("checked",data.global);
@@ -102,28 +102,28 @@ $(document).ready(
 					form.find("select[name='space']").val(data.space.id);
 				}
 				if(data.global)
-					$("#updateUserFragmentModal").find("form").find("select[name=space]").parent().hide();					
+					$("#updateFragmentModal").find("form").find("select[name=space]").parent().hide();					
 				form.find("textarea[name='description']").val(data.description);
 				upeditor.setValue(data.tpl);
 			}
 		});
 	});
 	
-	$("#updateUserFragment").click(
+	$("#updateFragment").click(
 			function() {
-				$("#updateUserFragment").prop("disabled", true);
-				var data = $("#updateUserFragmentModal").find("form").serializeObject();
+				$("#updateFragment").prop("disabled", true);
+				var data = $("#updateFragmentModal").find("form").serializeObject();
 				delete data['upeditor-markdown-doc'];
 				var space = data.space;
 				delete data['space'];
-				data.global = $("#updateUserFragmentModal").find("form").find("input[type=checkbox]").prop("checked");
+				data.global = $("#updateFragmentModal").find("form").find("input[type=checkbox]").prop("checked");
 				if(space != ''){
 					data.space = {"id":space};
 				}
 				data.tpl = upeditor.getValue();
 				$.ajax({
 					type : "post",
-					url : basePath + "/mgr/fragment/user/update",
+					url : basePath + "/mgr/fragment/update",
 					data : JSON.stringify(data),
 					dataType : "json",
 					contentType : 'application/json',
@@ -138,27 +138,27 @@ $(document).ready(
 						}
 					},
 					complete : function() {
-						$("#updateUserFragment").prop("disabled",
+						$("#updateFragment").prop("disabled",
 								false);
 					}
 				});
 			});
 
-	$("#createUserFragment").click(
+	$("#createFragment").click(
 			function() {
-				$("#createUserFragment").prop("disabled", true);
-				var data = $("#createUserFragmentModal").find("form").serializeObject();
+				$("#createFragment").prop("disabled", true);
+				var data = $("#createFragmentModal").find("form").serializeObject();
 				delete data['editor-markdown-doc'];
 				var space = data.space;
 				delete data['space'];
 				if(space != ''){
 					data.space = {"id":space};
 				}
-				data.global = $("#createUserFragmentModal").find("form").find("input[type=checkbox]").prop("checked");
+				data.global = $("#createFragmentModal").find("form").find("input[type=checkbox]").prop("checked");
 				data.tpl = editor.getValue();
 				$.ajax({
 					type : "post",
-					url : basePath + "/mgr/fragment/user/create",
+					url : basePath + "/mgr/fragment/create",
 					data : JSON.stringify(data),
 					dataType : "json",
 					contentType : 'application/json',
@@ -173,7 +173,7 @@ $(document).ready(
 						}
 					},
 					complete : function() {
-						$("#createUserFragment").prop("disabled",
+						$("#createFragment").prop("disabled",
 								false);
 					}
 				});

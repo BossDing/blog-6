@@ -31,12 +31,12 @@ public class GlobalConfig {
 	/**
 	 * 用户模板片段管理分页数量
 	 */
-	private int userFragmentPageSize;
+	private int fragmentPageSize;
 
 	/**
 	 * 用户自定义页面分页数量
 	 */
-	private int userPagePageSize;
+	private int pagePageSize;
 
 	/**
 	 * 文章页面分页数量
@@ -56,20 +56,20 @@ public class GlobalConfig {
 		this.filePageSize = filePageSize;
 	}
 
-	public int getUserFragmentPageSize() {
-		return userFragmentPageSize;
+	public int getFragmentPageSize() {
+		return fragmentPageSize;
 	}
 
-	public void setUserFragmentPageSize(int userFragmentPageSize) {
-		this.userFragmentPageSize = userFragmentPageSize;
+	public void setFragmentPageSize(int fragmentPageSize) {
+		this.fragmentPageSize = fragmentPageSize;
 	}
 
-	public int getUserPagePageSize() {
-		return userPagePageSize;
+	public int getPagePageSize() {
+		return pagePageSize;
 	}
 
-	public void setUserPagePageSize(int userPagePageSize) {
-		this.userPagePageSize = userPagePageSize;
+	public void setPagePageSize(int pagePageSize) {
+		this.pagePageSize = pagePageSize;
 	}
 
 	public int getArticlePageSize() {

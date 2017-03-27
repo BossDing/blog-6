@@ -1,7 +1,7 @@
 function preview() {
 		var page = {"tpl":editor.getValue()};
 		page.tpls = fragments;
-		var space = $("#space").val();
+		var space = $("#spaceSelect").val();
 		if(space != null && $.trim(space) != ''){
 			page.space = {"id":space}
 		}
@@ -15,7 +15,7 @@ function preview() {
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/user/preview',
+			url : basePath + '/mgr/page/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
@@ -57,7 +57,7 @@ function preview() {
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/user/preview',
+			url : basePath + '/mgr/page/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
@@ -65,7 +65,7 @@ function preview() {
 				if (data.success) {
 					$.ajax({
 						type : "post",
-						url : basePath + '/mgr/page/user/build',
+						url : basePath + '/mgr/page/build',
 						data : JSON.stringify(page),
 						dataType : "json",
 						contentType : 'application/json',

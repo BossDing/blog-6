@@ -32,15 +32,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.service.UIService;
-import me.qyh.blog.core.ui.DataTag;
-import me.qyh.blog.core.ui.ParseConfig;
-import me.qyh.blog.core.ui.TplRenderException;
-import me.qyh.blog.core.ui.TemplateRender;
-import me.qyh.blog.core.ui.fragment.Fragment;
-import me.qyh.blog.core.ui.page.Page;
-import me.qyh.blog.core.ui.page.SysPage;
-import me.qyh.blog.core.ui.page.SysPage.PageTarget;
+import me.qyh.blog.core.thymeleaf.DataTag;
+import me.qyh.blog.core.thymeleaf.ParseConfig;
+import me.qyh.blog.core.thymeleaf.TemplateRender;
+import me.qyh.blog.core.thymeleaf.TemplateService;
+import me.qyh.blog.core.thymeleaf.TplRenderException;
+import me.qyh.blog.core.thymeleaf.template.Fragment;
 import me.qyh.blog.web.Webs;
 
 @Controller
@@ -49,12 +46,7 @@ public class IndexController {
 	@Autowired
 	private TemplateRender uiRender;
 	@Autowired
-	private UIService uiService;
-
-	@RequestMapping(value = { "/", "space/{alias}/", "", "space/{alias}" })
-	public Page index() throws LogicException {
-		return new SysPage(Environment.getSpace(), PageTarget.INDEX);
-	}
+	private TemplateService uiService;
 
 	@RequestMapping(value = { "data/{tagName}", "space/{alias}/data/{tagName}" }, method = RequestMethod.GET)
 	@ResponseBody

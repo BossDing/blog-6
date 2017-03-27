@@ -154,7 +154,7 @@ file_mode = "HTML";
 	function showUserFragment(i){
 		var html = '';
 		$('#fragment').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-		$.get(basePath+"/mgr/fragment/user/list",{"currentPage":i},function(data){
+		$.get(basePath+"/mgr/fragment/list",{"currentPage":i},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;

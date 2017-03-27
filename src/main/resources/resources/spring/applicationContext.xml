@@ -44,7 +44,6 @@
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
-	<import resource="ui.xml" />
 
 	<bean id="txManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"

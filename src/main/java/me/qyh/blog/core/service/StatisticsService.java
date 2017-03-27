@@ -215,7 +215,7 @@ public interface StatisticsService {
 
 	public class CommentStatistics {
 		private int totalArticleComments;
-		private int totalUserPageComments;
+		private int totalPageComments;
 
 		public int getTotalArticleComments() {
 			return totalArticleComments;
@@ -225,24 +225,24 @@ public interface StatisticsService {
 			this.totalArticleComments = totalArticleComments;
 		}
 
-		public int getTotalUserPageComments() {
-			return totalUserPageComments;
+		public int getTotalPageComments() {
+			return totalPageComments;
 		}
 
-		public void setTotalUserPageComments(int totalUserPageComments) {
-			this.totalUserPageComments = totalUserPageComments;
+		public void setTotalPageComments(int totalPageComments) {
+			this.totalPageComments = totalPageComments;
 		}
 	}
 
 	public class PageStatistics {
-		private int userPageCount;// 自定义页面数量
+		private int pageCount;// 自定义页面数量
 
-		public int getUserPageCount() {
-			return userPageCount;
+		public int getPageCount() {
+			return pageCount;
 		}
 
-		public void setUserPageCount(int userPageCount) {
-			this.userPageCount = userPageCount;
+		public void setPageCount(int pageCount) {
+			this.pageCount = pageCount;
 		}
 	}
 

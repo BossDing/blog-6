@@ -51,7 +51,7 @@ import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.RememberMe;
 import me.qyh.blog.core.service.impl.SpaceCache;
-import me.qyh.blog.core.ui.TemplateExposeHelper;
+import me.qyh.blog.core.thymeleaf.TemplateExposeHelper;
 import me.qyh.blog.support.file.local.RequestMatcher;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;

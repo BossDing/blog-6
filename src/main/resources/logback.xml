@@ -9,7 +9,7 @@
 		</filter>
 	</appender>
 
-	<appender name="mailAppender" class="me.qyh.blog.mail.MailAppendar">
+	<appender name="mailAppender" class="me.qyh.blog.support.mail.MailAppendar">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
 			</pattern>
@@ -56,12 +56,12 @@
 	</appender>
 
 
-	<logger name="me.qyh.blog.ui.UIRender" level="DEBUG" additivity="false">
+	<logger name="me.qyh.blog.core.thymeleaf.TemplateRender" level="DEBUG" additivity="false">
 		<appender-ref ref="fileAppender" />
 	</logger>
 
 	<!-- 如果采用了MailAppender来纪录日志，那么必须单独配置MailSender的日志记录，防止MailAppender陷入死循环 -->
-	<logger name="me.qyh.blog.mail.MailSender" level="ERROR"
+	<logger name="me.qyh.blog.support.mail.MailSender" level="ERROR"
 		additivity="false">
 		<appender-ref ref="errorDailyRollingFileAppender" />
 		<appender-ref ref="consoleAppender" />

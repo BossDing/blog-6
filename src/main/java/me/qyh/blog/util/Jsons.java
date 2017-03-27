@@ -41,12 +41,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.core.entity.DateDeserializer;
-import me.qyh.blog.core.lock.SysLock;
 import me.qyh.blog.core.lock.LockArgumentResolver.SysLockDeserializer;
+import me.qyh.blog.core.lock.SysLock;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.MessageSerializer;
-import me.qyh.blog.core.ui.PageSerializer;
-import me.qyh.blog.core.ui.page.Page;
 
 /**
  * json处理工具类
@@ -96,8 +94,7 @@ public class Jsons {
 			.addDeserializationExclusionStrategy(DESERIALIZATION_EXCLUSION_STRATEGY).enableComplexMapKeySerialization()
 			.registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
-			.registerTypeAdapter(SysLock.class, new SysLockDeserializer())
-			.registerTypeAdapter(Page.class, new PageSerializer()).create();
+			.registerTypeAdapter(SysLock.class, new SysLockDeserializer()).create();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Jsons.class);
 	private static final String SPLIT_STR = "->";

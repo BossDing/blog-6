@@ -50,7 +50,7 @@ public class GlobalConfigValidator implements Validator {
 					"文件每页数量不能大于" + FILE_PAGE_SIZE_RANGE[1]);
 			return;
 		}
-		int userWidgetPageSize = config.getUserFragmentPageSize();
+		int userWidgetPageSize = config.getFragmentPageSize();
 		if (userWidgetPageSize < USER_FRAGEMENT_PAGE_SIZE_RANGE[0]) {
 			errors.reject("global.userWidget.toosmall", new Object[] { USER_FRAGEMENT_PAGE_SIZE_RANGE[0] },
 					"用户挂件每页数量不能小于" + USER_FRAGEMENT_PAGE_SIZE_RANGE[0]);
@@ -63,15 +63,15 @@ public class GlobalConfigValidator implements Validator {
 			return;
 		}
 
-		int userPagePageSize = config.getUserPagePageSize();
-		if (userPagePageSize < USER_PAGE_PAGE_SIZE_RANGE[0]) {
-			errors.reject("global.userPage.toosmall", new Object[] { USER_PAGE_PAGE_SIZE_RANGE[0] },
+		int pagePageSize = config.getPagePageSize();
+		if (pagePageSize < USER_PAGE_PAGE_SIZE_RANGE[0]) {
+			errors.reject("global.page.toosmall", new Object[] { USER_PAGE_PAGE_SIZE_RANGE[0] },
 					"用户自定义页面每页数量不能小于" + USER_PAGE_PAGE_SIZE_RANGE[0]);
 			return;
 		}
 
-		if (userPagePageSize > USER_PAGE_PAGE_SIZE_RANGE[1]) {
-			errors.reject("global.userPage.toobig", new Object[] { USER_PAGE_PAGE_SIZE_RANGE[1] },
+		if (pagePageSize > USER_PAGE_PAGE_SIZE_RANGE[1]) {
+			errors.reject("global.page.toobig", new Object[] { USER_PAGE_PAGE_SIZE_RANGE[1] },
 					"用户自定义页面每页数量不能大于" + USER_PAGE_PAGE_SIZE_RANGE[1]);
 			return;
 		}

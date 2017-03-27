@@ -27,32 +27,29 @@
 		<typeAlias type="me.qyh.blog.core.lock.SysLock" alias="SysLock" />
 		<typeAlias type="me.qyh.blog.core.lock.SysLock$SysLockType"
 			alias="LockType" />
-		<typeAlias type="me.qyh.blog.core.lock.PasswordLock"
-			alias="PasswordLock" />
+		<typeAlias type="me.qyh.blog.core.lock.PasswordLock" alias="PasswordLock" />
 		<typeAlias type="me.qyh.blog.core.lock.QALock" alias="QALock" />
 
 		<typeAlias type="me.qyh.blog.core.bean.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.core.ui.page.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.core.ui.page.Page$PageType" alias="PageType" />
-		<typeAlias type="me.qyh.blog.core.ui.page.UserPage" alias="UserPage" />
-		<typeAlias type="me.qyh.blog.core.ui.page.SysPage" alias="SysPage" />
-		<typeAlias type="me.qyh.blog.core.ui.page.SysPage$PageTarget"
-			alias="PageTarget" />
-		<typeAlias type="me.qyh.blog.core.ui.page.LockPage" alias="LockPage" />
-		<typeAlias type="me.qyh.blog.core.ui.fragment.UserFragment"
-			alias="UserFragment" />
+		<typeAlias type="me.qyh.blog.core.thymeleaf.template.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.core.thymeleaf.template.Fragment"
+			alias="Fragment" />
 
-		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile" alias="ArticleDateFile" />
-		<typeAlias type="me.qyh.blog.core.bean.ArticleSpaceFile" alias="ArticleSpaceFile" />
+		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile"
+			alias="ArticleDateFile" />
+		<typeAlias type="me.qyh.blog.core.bean.ArticleSpaceFile"
+			alias="ArticleSpaceFile" />
 
-		<typeAlias type="me.qyh.blog.core.service.StatisticsService$ArticleStatistics"
+		<typeAlias
+			type="me.qyh.blog.core.service.StatisticsService$ArticleStatistics"
 			alias="ArticleStatistics" />
 
 		<typeAlias type="me.qyh.blog.core.entity.Comment" alias="Comment" />
 		<typeAlias type="me.qyh.blog.core.entity.Comment$CommentStatus"
 			alias="CommentStatus" />
-		<typeAlias type="me.qyh.blog.core.entity.CommentModule" alias="CommentModule" />
+		<typeAlias type="me.qyh.blog.core.entity.CommentModule"
+			alias="CommentModule" />
 		<typeAlias type="me.qyh.blog.core.entity.CommentModule$ModuleType"
 			alias="ModuleType" />
 	</typeAliases>
@@ -71,10 +68,8 @@
 
 		<mapper resource="resources/mybatis/mapper/lockMapper.xml" />
 
-		<mapper resource="resources/mybatis/mapper/userFragmentMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/userPageMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/lockPageMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/sysPageMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/fragmentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/pageMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
 

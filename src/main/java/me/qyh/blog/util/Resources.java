@@ -30,7 +30,7 @@ public final class Resources {
 	private Resources() {
 	}
 
-	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	/**
 	 * 读取Resource资源内容

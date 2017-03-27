@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 
 public class FileUtils {
@@ -305,5 +306,33 @@ public class FileUtils {
 			cleaned = cleaned.substring(0, cleaned.length() - 1);
 		}
 		return cleaned;
+	}
+
+	/**
+	 * 要创建的文件是否在缩略图文件夹中
+	 * 
+	 * @param dest
+	 * @param parent
+	 * @return
+	 */
+	public static boolean isSub(Path dest, Path parent) {
+		try {
+			String canonicalP = parent.toFile().getCanonicalPath();
+			String canonicalC = dest.toFile().getCanonicalPath();
+			return canonicalP.equals(canonicalC)
+					|| canonicalC.regionMatches(false, 0, canonicalP, 0, canonicalP.length());
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Path to string
+	 * 
+	 * @param is
+	 * @return
+	 */
+	public static String toString(Path path) throws IOException {
+		return new String(Files.readAllBytes(path), Constants.CHARSET);
 	}
 }

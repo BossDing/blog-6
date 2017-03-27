@@ -20,7 +20,6 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,8 +35,6 @@ import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.lock.LockKey;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.ui.page.LockPage;
 import me.qyh.blog.web.Webs;
 
 @Controller
@@ -46,17 +43,13 @@ public class LockController extends BaseController {
 	@Autowired
 	private UrlHelper urlHelper;
 
-	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.GET)
-	public LockPage unlock(Model model, HttpServletRequest request) throws LogicException {
-		LockBean lockBean = LockHelper.getLockBean(request);
-		model.addAttribute("lock", lockBean.getLock());
-		return new LockPage(Environment.getSpace(), lockBean.getLock().getLockType());
-	}
-
 	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)
 	public String unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request,
 			RedirectAttributes ra) {
 		LockBean lockBean = LockHelper.getLockBean(request);
+		if (lockBean == null) {
+			return "redirect:" + urlHelper.getUrl();
+		}
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session)) {
@@ -89,6 +82,9 @@ public class LockController extends BaseController {
 	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
 			throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
+		if (lockBean == null) {
+			return new JsonResult(false, new Message("lock.miss", "锁缺失"));
+		}
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session)) {

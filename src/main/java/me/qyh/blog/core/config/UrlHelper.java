@@ -34,7 +34,7 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.ArticleQueryParam.Sort;
-import me.qyh.blog.core.ui.page.UserPage;
+import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.Times;
 
 @Component
@@ -150,14 +150,14 @@ public class UrlHelper implements InitializingBean {
 		/**
 		 * 获取用户自定义页面的访问链接
 		 * 
-		 * @param userPage
+		 * @param page
 		 *            用户自定义页面
 		 * @return 如果存在别名，返回/page/{别名}，否则返回/page/{id}
 		 */
-		public String getUrl(UserPage userPage) {
-			String alias = userPage.getAlias();
+		public String getUrl(Page page) {
+			String alias = page.getAlias();
 			Objects.requireNonNull(alias);
-			return getUrl(userPage.getSpace()) + "/" + alias;
+			return getUrl(page.getSpace()) + "/" + alias;
 		}
 	}
 

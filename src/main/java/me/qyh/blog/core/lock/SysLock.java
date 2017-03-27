@@ -83,6 +83,6 @@ public class SysLock extends Lock {
 
 	@Override
 	public String getLockType() {
-		return type.name();
+		return type.name().toLowerCase();
 	}
 }
