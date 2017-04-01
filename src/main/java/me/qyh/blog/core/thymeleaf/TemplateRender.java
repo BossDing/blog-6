@@ -32,7 +32,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.AbstractTemplateView;
 import org.thymeleaf.IEngineConfiguration;
@@ -91,8 +91,7 @@ public final class TemplateRender {
 			throws TplRenderException {
 		try {
 			ParseContext.setPreview(preview);
-			return render(TemplateUtils.getPreviewTemplateName(), null, request, response,
-					new ParseConfig(true, false));
+			return render(Template.PREVIEW, null, request, response, new ParseConfig(true, false));
 		} finally {
 			ParseContext.remove();
 		}
@@ -133,20 +132,21 @@ public final class TemplateRender {
 
 	// ### copied from ThymeleafView
 
-	private static final String pathVariablesSelector = View.PATH_VARIABLES;
-
 	private String doRender(String viewTemplateName, final Map<String, ?> model, final HttpServletRequest request,
 			final HttpServletResponse response) throws Exception {
 
 		Locale locale = LocaleContextHolder.getLocale();
 
 		final Map<String, Object> mergedModel = new HashMap<String, Object>(30);
-		if (pathVariablesSelector != null) {
-			@SuppressWarnings("unchecked")
-			final Map<String, Object> pathVars = (Map<String, Object>) request.getAttribute(pathVariablesSelector);
-			if (pathVars != null) {
-				mergedModel.putAll(pathVars);
-			}
+		@SuppressWarnings("unchecked")
+
+		// View.PATH_VARIABLES 只能获取被PathVariable annotation属性标记的属性
+		// 这里需要获取optional PathVariable
+		final Map<String, Object> pathVars = (Map<String, Object>) request
+				.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+
+		if (pathVars != null) {
+			mergedModel.putAll(pathVars);
 		}
 		if (model != null) {
 			mergedModel.putAll(model);

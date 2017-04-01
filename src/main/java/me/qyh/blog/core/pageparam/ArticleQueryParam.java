@@ -24,6 +24,12 @@ import me.qyh.blog.core.entity.Article.ArticleFrom;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.util.Validators;
 
+/**
+ * 文章分页查询参数
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleQueryParam extends PageQueryParam {
 
 	/**

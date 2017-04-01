@@ -15,12 +15,17 @@
  */
 package me.qyh.blog.web.controller.form;
 
+import java.util.Arrays;
+
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+import org.springframework.web.servlet.view.AbstractTemplateView;
+import org.thymeleaf.spring4.naming.SpringContextVariableNames;
 
 import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Validators;
 
 @Component
@@ -38,6 +43,9 @@ public class PageValidator implements Validator {
 	public static final int MAX_ALIAS_DEPTH = 6;
 
 	private static final String NO_REGISTRABLE_ALIAS_PATTERN = "^[A-Za-z0-9_-]+$";
+
+	private static final String[] ALIAS_KEY_WORDS = { SpringContextVariableNames.SPRING_REQUEST_CONTEXT,
+			AbstractTemplateView.SPRING_MACRO_REQUEST_CONTEXT_ATTRIBUTE };
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -144,6 +152,16 @@ public class PageValidator implements Validator {
 					return;
 				}
 			}
+
+			// 如果为PathVariable路径，判断variable是否相同
+			String[] variableArray = StringUtils.substringsBetween(alias, "{", "}");
+
+			if (variableArray != null && variableArray.length > 1
+					&& Arrays.stream(variableArray).allMatch(s -> s.equals(variableArray[0]))) {
+				errors.reject("page.alias.variable.same", "多个{}中间的内容不能相同");
+				return;
+			}
+
 		}
 	}
 
@@ -153,10 +171,17 @@ public class PageValidator implements Validator {
 				errors.reject("page.alias.pathVariable.invalid", "以{开头必须以}结尾");
 				return;
 			}
-			String pattern = alias.substring(1, alias.length() - 1);
-			if (!Validators.isLetter(pattern)) {
+			String variable = alias.substring(1, alias.length() - 1);
+			if (!Validators.isLetter(variable)) {
 				errors.reject("page.alias.pathVariable.onlyLetter", "{}中间的内容必须为英文字母");
 				return;
+			}
+			// variable 不能为key word
+			for (String keyword : ALIAS_KEY_WORDS) {
+				if (variable.equals(keyword)) {
+					errors.reject("page.alias.variable.keyword", new Object[] { keyword }, "{}中间的内容不能为" + keyword);
+					return;
+				}
 			}
 		} else {
 			if (!alias.matches(NO_REGISTRABLE_ALIAS_PATTERN)) {

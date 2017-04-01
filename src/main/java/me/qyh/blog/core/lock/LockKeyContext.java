@@ -29,7 +29,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class LockKeyContext {
 
-	private static final ThreadLocal<Map<String, List<LockKey>>> keysLocal = new ThreadLocal<>();
+	private static final ThreadLocal<Map<String, List<LockKey>>> KEYS_LOCAL = new ThreadLocal<>();
 
 	private LockKeyContext() {
 		super();
@@ -41,7 +41,7 @@ public class LockKeyContext {
 	 * @return 如果不存在返回null
 	 */
 	public static Optional<LockKey> getKey(String resourceId, String lockId) {
-		Map<String, List<LockKey>> keyMap = keysLocal.get();
+		Map<String, List<LockKey>> keyMap = KEYS_LOCAL.get();
 		if (CollectionUtils.isEmpty(keyMap)) {
 			return Optional.empty();
 		}
@@ -54,7 +54,7 @@ public class LockKeyContext {
 	 * 清理上下文
 	 */
 	public static void remove() {
-		keysLocal.remove();
+		KEYS_LOCAL.remove();
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class LockKeyContext {
 	 * @param keysMap
 	 */
 	public static void set(Map<String, List<LockKey>> keysMap) {
-		keysLocal.set(keysMap);
+		KEYS_LOCAL.set(keysMap);
 	}
 
 }

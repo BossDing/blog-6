@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Optional;
 
 /**
+ * 被锁的资源
  * 
  * @author Administrator
  *

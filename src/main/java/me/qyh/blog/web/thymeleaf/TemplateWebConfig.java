@@ -61,6 +61,8 @@ public class TemplateWebConfig extends WebMvcConfigurationSupport {
 		if (toRemove != null) {
 			converters.remove(toRemove);
 		}
+
+		// 替代默认的GsonHttpMessageConverter
 		GsonHttpMessageConverter msgConverter = new GsonHttpMessageConverter();
 		msgConverter.setGson(Jsons.getGson());
 		converters.add(msgConverter);

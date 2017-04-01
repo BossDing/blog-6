@@ -31,6 +31,16 @@ import me.qyh.blog.core.lock.LockException;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.util.ExceptionUtils;
 
+/**
+ * 当回滚时用来重建构建文章索引，只有处于事务中时才会生效
+ * <p>
+ * <b>{@code LogicException},{@code AuthencationException}以及{@code LockException}等异常引起的回滚不会被重新建立索引，因此索引的变更之后不应该再抛出上述异常</b>
+ * </p>
+ * 
+ * @see ArticleIndexRebuild
+ * @author Administrator
+ *
+ */
 @Component
 @Aspect
 public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter

@@ -18,6 +18,7 @@ package me.qyh.blog.core.file;
 import me.qyh.blog.core.entity.BaseEntity;
 
 /**
+ * 系统存储的文件
  * 
  * @author Administrator
  *
@@ -30,7 +31,7 @@ public class CommonFile extends BaseEntity {
 	private static final long serialVersionUID = 1L;
 	private long size;// 文件大小，该大小仅仅是本服务上的文件大小，并不代表其他存储服务上的文件大小
 	private String extension;// 后缀名
-	private int store;
+	private int store;// 文件存储器
 	private String originalFilename;// 原始文件名
 
 	private Integer width;// 图片等文件

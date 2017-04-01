@@ -15,12 +15,7 @@
  */
 package me.qyh.blog.web.controller;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.servlet.HandlerMapping;
 
 import me.qyh.blog.web.TemplateView;
 
@@ -34,21 +29,6 @@ public class TemplateController {
 	}
 
 	public TemplateView handleRequest(HttpServletRequest request) {
-		@SuppressWarnings("unchecked")
-		Map<String, Object> pathVariables = (Map<String, Object>) request
-				.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-		if (!CollectionUtils.isEmpty(pathVariables)) {
-			for (Map.Entry<String, Object> it : pathVariables.entrySet()) {
-				if (request.getAttribute(it.getKey()) != null) {
-					continue;
-				}
-				Object v = it.getValue();
-				if (v == null) {
-					continue;
-				}
-				request.setAttribute(it.getKey(), v);
-			}
-		}
 		return new TemplateView(templateName);
 	}
 

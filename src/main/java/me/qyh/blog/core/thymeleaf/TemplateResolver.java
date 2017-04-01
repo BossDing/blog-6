@@ -38,7 +38,7 @@ import me.qyh.blog.core.thymeleaf.template.Template;
 public class TemplateResolver implements ITemplateResolver {
 
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 
 	static final int ORDER = 1;
 
@@ -55,18 +55,18 @@ public class TemplateResolver implements ITemplateResolver {
 	@Override
 	public TemplateResolution resolveTemplate(IEngineConfiguration configuration, String ownerTemplate,
 			String templateName, Map<String, Object> templateResolutionAttributes) {
-		if (!TemplateUtils.isTemplate(templateName)) {
+		if (!Template.isTemplate(templateName)) {
 			return null;
 		}
 		boolean cached = false;
 		ITemplateResource templateResource = null;
 
-		if (TemplateUtils.isPreview(templateName)) {
+		if (Template.isPreview(templateName)) {
 			templateResource = new TemplateResource(ParseContext.getPreview());
 		}
 
 		if (templateResource == null) {
-			Optional<Template> optional = uiService.queryTemplate(templateName);
+			Optional<Template> optional = templateService.queryTemplate(templateName);
 			if (optional.isPresent()) {
 				templateResource = new TemplateResource(optional.get());
 				cached = true;

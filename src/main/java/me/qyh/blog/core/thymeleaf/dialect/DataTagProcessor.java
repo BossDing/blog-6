@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -33,7 +34,6 @@ import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.thymeleaf.DataTag;
 import me.qyh.blog.core.thymeleaf.ParseContext;
 import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 import me.qyh.blog.core.thymeleaf.data.DataBind;
 import me.qyh.blog.util.Validators;
 
@@ -49,9 +49,9 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME_ATTR = "name";
 
-	private TemplateService uiService;
+	private final TemplateService templateService;
 
-	public DataTagProcessor(String dialectPrefix) {
+	public DataTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
 												// for matching
 				TAG_NAME, // Tag name: match specifically this tag
@@ -59,15 +59,13 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 				null, // No attribute name: will match by tag name
 				false, // No prefix to be applied to attribute name
 				PRECEDENCE); // Precedence (inside dialect's own precedence)
+		this.templateService = applicationContext.getBean(TemplateService.class);
 	}
 
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			if (uiService == null) {
-				uiService = TemplateUtils.getRequireBean(context, TemplateService.class);
-			}
 
 			DataTag dataTag = buildDataTag(context, tag);
 
@@ -92,10 +90,10 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private Optional<DataBind<?>> queryDataBind(DataTag dataTag) {
 		if (ParseContext.isPreview()) {
-			return uiService.queryPreviewData(dataTag);
+			return templateService.queryPreviewData(dataTag);
 		} else {
 			try {
-				return uiService.queryData(dataTag, ParseContext.onlyCallable());
+				return templateService.queryData(dataTag, ParseContext.onlyCallable());
 			} catch (LogicException e) {
 				throw new RuntimeLogicException(e);
 			}

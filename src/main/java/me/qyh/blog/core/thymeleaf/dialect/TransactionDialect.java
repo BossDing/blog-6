@@ -19,19 +19,23 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.dialect.AbstractProcessorDialect;
 import org.thymeleaf.processor.IProcessor;
 
 public class TransactionDialect extends AbstractProcessorDialect {
 
-	public TransactionDialect() {
+	private final ApplicationContext applicationContext;
+
+	public TransactionDialect(ApplicationContext applicationContext) {
 		super("Transaction Dialect", "transaction", 1);
+		this.applicationContext = applicationContext;
 	}
 
 	@Override
 	public Set<IProcessor> getProcessors(String dialectPrefix) {
-		return new HashSet<>(Arrays.asList(new TransactionBeginTagProcessor(dialectPrefix),
-				new TransactionEndTagProcessor(dialectPrefix)));
+		return new HashSet<>(Arrays.asList(new TransactionBeginTagProcessor(dialectPrefix, applicationContext),
+				new TransactionEndTagProcessor(dialectPrefix, applicationContext)));
 	}
 
 }

@@ -204,8 +204,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 构造器
 	 * 
-	 * @param indexDir
-	 *            索引文件目录
 	 * @param analyzer
 	 *            分析器
 	 * @throws IOException
@@ -288,7 +286,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		return doc;
 	}
 
-	protected String timeToString(Date date) {
+	private String timeToString(Date date) {
 		return DateTools.timeToString(date.getTime(), Resolution.MILLISECOND);
 	}
 
@@ -429,8 +427,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * 
 	 * @param param
 	 *            查询参数
-	 * @param dquery
-	 *            文章详情接口
 	 * @return 分页内容
 	 */
 	public PageResult<Article> query(ArticleQueryParam param) {

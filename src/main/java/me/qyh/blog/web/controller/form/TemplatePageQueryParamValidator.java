@@ -19,18 +19,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.pageparam.PageQueryParam;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.util.Validators;
 
 @Component
 public class TemplatePageQueryParamValidator implements Validator {
 
-	private static final int MAX_NAME_LENGTH = 5;
+	private static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_ALIAS_LENGTH = 255;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return PageQueryParam.class.isAssignableFrom(clazz);
+		return TemplatePageQueryParam.class.isAssignableFrom(clazz);
 	}
 
 	@Override
@@ -42,6 +42,11 @@ public class TemplatePageQueryParamValidator implements Validator {
 		String name = param.getName();
 		if (!Validators.isEmptyOrNull(name, true) && param.getName().length() > MAX_NAME_LENGTH) {
 			param.setName(param.getName().substring(0, MAX_NAME_LENGTH));
+		}
+
+		String alias = param.getAlias();
+		if (!Validators.isEmptyOrNull(alias, true) && param.getAlias().length() > MAX_ALIAS_LENGTH) {
+			param.setAlias(param.getAlias().substring(0, MAX_ALIAS_LENGTH));
 		}
 	}
 }

@@ -20,6 +20,7 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
 /**
+ * 用于验证{@code EnsureLogin}的aop
  * 
  * @author Administrator
  *

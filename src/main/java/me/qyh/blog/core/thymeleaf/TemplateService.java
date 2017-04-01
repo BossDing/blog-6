@@ -214,11 +214,13 @@ public interface TemplateService {
 	public interface PathTemplateService {
 
 		/**
-		 * 获取所有的物理文件模板
+		 * 查询物理文件模板
 		 * 
+		 * @param pattern
+		 *            查询表达式(正则)，如果为空或者为null则查询全局
 		 * @return
 		 */
-		List<PathTemplate> getPathTemplates();
+		List<PathTemplate> queryPathTemplates(String pattern);
 
 		/**
 		 * 刷新路径
@@ -234,6 +236,16 @@ public interface TemplateService {
 		 * @return
 		 */
 		Optional<PathTemplate> getPathTemplate(String templateName);
+
+		/**
+		 * 根据路径获取一个模板的预览页面
+		 * 
+		 * @param path
+		 * @return
+		 * @throws LogicException
+		 *             预览页面不存在，或者页面不能被预览
+		 */
+		PathTemplate getPreview(String path) throws LogicException;
 	}
 
 }

@@ -35,15 +35,27 @@
 		<div class="container-fluid">
 			<div class="row" style="margin-bottom: 10px">
 				<div class="col-md-12">
-					<button class="btn btn-primary" id="show-create">新建挂件</button>
+					<button class="btn btn-default" id="show-create">新建挂件</button>
+					<button class="btn btn-default" data-toggle="modal"
+						data-target="#queryModal">查询</button>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-md-12">
-					<form style="display: none" th:action="@{/mgr/fragment/index}"
-						id="pageForm">
+					<form style="display: none"
+						th:action="@{/mgr/template/fragment/index}" id="pageForm">
 						<input type="hidden" th:value="${page.currentPage}"
-							name="currentPage" />
+							name="currentPage" /> <input type="hidden"
+							th:value="${page.param.name}" th:if="${page.param.name != null}"
+							name="name" /> <input type="hidden"
+							th:value="${page.param.global}"
+							th:if="${page.param.global != null}" name="global"
+							id="pageFormGlobal" /> <input type="hidden"
+							th:value="${page.param.callable}"
+							th:if="${page.param.callable != null}" name="callable"
+							id="pageFormCallable" /> <input type="hidden"
+							th:if="${page.param.space != null}" name="space.id"
+							th:value="${page.param.space.id}" id="pageFormSpaceId" />
 					</form>
 					<div class="alert alert-info" th:if="${#lists.isEmpty(page.datas)}">当前没有任何自定义挂件</div>
 					<div th:unless="${#lists.isEmpty(page.datas)}">
@@ -99,9 +111,8 @@
 	</div>
 	<div th:replace="base/foot_source"></div>
 
-	<div class="modal" id="createFragmentModal" tabindex="-1"
-		role="dialog" aria-labelledby="createFragmentModalLabel"
-		data-backdrop="static">
+	<div class="modal" id="createFragmentModal" tabindex="-1" role="dialog"
+		aria-labelledby="createFragmentModalLabel" data-backdrop="static">
 		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -128,8 +139,8 @@
 							</label>
 						</div>
 						<div class="checkbox">
-							<label><input type="checkbox" name="callable" value="true" />外部调用
-							</label>
+							<label><input type="checkbox" name="callable"
+								value="true" />外部调用 </label>
 						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" name="space">
@@ -146,17 +157,15 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary"
-						id="createFragment">创建</button>
+					<button type="button" class="btn btn-primary" id="createFragment">创建</button>
 				</div>
 			</div>
 		</div>
 	</div>
 
 
-	<div class="modal" id="updateFragmentModal" tabindex="-1"
-		role="dialog" aria-labelledby="updateFragmentModalLabel"
-		data-backdrop="static">
+	<div class="modal" id="updateFragmentModal" tabindex="-1" role="dialog"
+		aria-labelledby="updateFragmentModalLabel" data-backdrop="static">
 		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -184,8 +193,8 @@
 							</label>
 						</div>
 						<div class="checkbox">
-							<label><input type="checkbox" name="callable" value="true" />外部调用
-							</label>
+							<label><input type="checkbox" name="callable"
+								value="true" />外部调用 </label>
 						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" name="space">
@@ -202,13 +211,64 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary"
-						id="updateFragment">更新</button>
+					<button type="button" class="btn btn-primary" id="updateFragment">更新</button>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div th:replace="mgr/page/source"></div>
-	<script th:src="@{/static/js/mgr/fragment.js}"></script>
+
+
+	<div class="modal " id="queryModal" tabindex="-1" role="dialog"
+		aria-labelledby="queryModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="queryModalLabel">查询</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<form>
+							<div class="form-group">
+								<div class="checkbox">
+									<label> <input type="checkbox"
+										id="query-space-checkbox"> 查询空间
+									</label>
+								</div>
+								<select class="form-control" id="space" style="display: none">
+									<option value="">主空间</option>
+									<option th:each="space : ${spaces}" th:value="${space.id}"
+										th:text="${space.name}"></option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>名称</label> <input type="text" class="form-control"
+									id="query-name" name="name"
+									th:attr="value=${page.param.name != null ? page.param.name : null}"
+									placeholder="名称">
+							</div>
+							<div class="form-group">
+								<div class="checkbox">
+									<label><input type="checkbox" id="query-global" />只查询全局
+									</label>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="checkbox">
+									<label><input type="checkbox" id="query-callable" />只查询外部调用
+									</label>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="query-btn">查询</button>
+				</div>
+			</div>
+		</div>
+
+		<div th:replace="mgr/template/source"></div>
+		<script th:src="@{/static/js/mgr/fragment.js}"></script>
 </body>
 </html>

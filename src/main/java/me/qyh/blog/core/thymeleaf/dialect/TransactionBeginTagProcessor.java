@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.thymeleaf.dialect;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.TransactionDefinition;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -39,13 +40,14 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 	private static final int PRECEDENCE = 1;
 	private static final String ISOLATION_LEVEL = "isolationLevel";
 
-	public TransactionBeginTagProcessor(String dialectPrefix) {
+	public TransactionBeginTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
 				TAG_NAME, // Tag name: match specifically this tag
 				true, // Apply dialect prefix to tag name
 				null, // No attribute name: will match by tag name
 				false, // No prefix to be applied to attribute name
-				PRECEDENCE); // Precedence (inside dialect's own precedence)
+				PRECEDENCE, applicationContext); // Precedence (inside dialect's
+													// own precedence)
 	}
 
 	@Override

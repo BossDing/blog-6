@@ -86,10 +86,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				fragment_name LIKE CONCAT('%', #{name},'%')
 			</if>
 			<if test="space != null">
-				AND space_id = #{space.id}
+				<choose>
+					<when test="space.id == null">
+						AND space_id IS NULL
+					</when>
+					<otherwise>
+						AND space_id = #{space.id}
+					</otherwise>
+				</choose>
 			</if>
 			<if test="global != null">
 				AND is_global = #{global}
+			</if>
+			<if test="callable != null">
+				AND is_callable = #{callable}
 			</if>
 		</where>
 		ORDER BY fragment_create_date DESC
@@ -106,10 +116,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				fragment_name LIKE CONCAT('%', #{name},'%')
 			</if>
 			<if test="space != null">
-				AND space_id = #{space.id}
+				<choose>
+					<when test="space.id == null">
+						AND space_id IS NULL
+					</when>
+					<otherwise>
+						AND space_id = #{space.id}
+					</otherwise>
+				</choose>
 			</if>
 			<if test="global != null">
 				AND is_global = #{global}
+			</if>
+			<if test="callable != null">
+				AND is_callable = #{callable}
 			</if>
 		</where>
 	</select>

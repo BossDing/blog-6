@@ -27,7 +27,7 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.core.exception.SystemException;
 
 /**
- * 默认文件服务管理器
+ * 默认文件存储管理器
  * 
  * @author Administrator
  *

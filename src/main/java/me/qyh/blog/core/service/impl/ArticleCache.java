@@ -31,6 +31,7 @@ import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.SystemException;
 
 /**
+ * 文章缓存
  * 
  * @author Administrator
  *
@@ -108,7 +109,7 @@ public class ArticleCache {
 	 * 
 	 * @param hitsMap
 	 */
-	public void updateHits(Map<Integer, Integer> hitsMap) {
+	public synchronized void updateHits(Map<Integer, Integer> hitsMap) {
 		for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
 			Article article = idCache.get(it.getKey());
 			if (article != null) {

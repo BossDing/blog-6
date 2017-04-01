@@ -17,6 +17,9 @@ package me.qyh.blog.core.exception;
 
 /**
  * 系统异常
+ * <p>
+ * 同时用来将checked exception转化为unchecked exception
+ * </p>
  * 
  * @author Administrator
  *

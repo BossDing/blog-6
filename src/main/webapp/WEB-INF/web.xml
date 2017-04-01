@@ -14,7 +14,7 @@
 	</error-page>
 	
 	<context-param>
-	    <param-name>contextConfigLocation</param-name>
+		<param-name>contextConfigLocation</param-name>
 	    <param-value>
 	    	classpath:resources/spring/applicationContext.xml
 	    </param-value>
@@ -24,7 +24,7 @@
 	       me.qyh.blog.web.listener.MysqlCloseableContextLoaderListener
 	    </listener-class>
 	</listener>
-    
+	
     <filter>
         <filter-name>CharacterEncodingFilter</filter-name>
         <filter-class>

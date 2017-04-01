@@ -44,10 +44,12 @@
 					<li><a href="javascript:;" data-toggle="collapse"
 						data-target="#tplMgr"> 模板管理</a>
 						<ul id="tplMgr" class="nav nav-second-level collapse in">
-							<li><a th:class="${tag == 'tpl-user'}? active:''"
-								th:href="@{/mgr/page/index}">页面管理</a></li>
+							<li><a th:class="${tag == 'tpl-page'}? active:''"
+								th:href="@{/mgr/template/page/index}">页面管理</a></li>
+							<li><a th:class="${tag == 'tpl-path'}? active:''"
+								th:href="@{/mgr/template/path/index}">物理文件模板管理</a></li>
 							<li><a th:class="${tag == 'tpl-fragment'}? active:''"
-								th:href="@{/mgr/fragment/index}">模板片段管理</a></li>
+								th:href="@{/mgr/template/fragment/index}">模板片段管理</a></li>
 							<li><a th:class="${tag == 'tpl-export'}? active:''"
 								th:href="@{/mgr/tpl/export}">模板导入导出</a></li>
 							<li><a th:class="${tag == 'tpl-clearCache'}? active:''"

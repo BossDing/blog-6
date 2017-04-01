@@ -29,6 +29,15 @@ import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.FragmentValidator;
 
+/**
+ * 初始化fragments
+ * <p>
+ * 全局的
+ * </p>
+ * 
+ * @author Administrator
+ *
+ */
 public class FragmentsFactoryBean implements FactoryBean<List<Fragment>> {
 
 	private Map<String, Resource> tplMap = new HashMap<>();

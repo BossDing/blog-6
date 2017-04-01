@@ -18,6 +18,7 @@ package me.qyh.blog.core.bean;
 import me.qyh.blog.core.entity.BlogFile.BlogFileType;
 
 /**
+ * 文件类型对应的文件数量
  * 
  * @author Administrator
  *

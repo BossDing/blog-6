@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -55,9 +56,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.MapBindingResult;
@@ -85,13 +85,12 @@ import me.qyh.blog.core.pageparam.FragmentQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.service.ConfigService;
+import me.qyh.blog.core.service.impl.LogicExecutor;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
 import me.qyh.blog.core.thymeleaf.DataTag;
 import me.qyh.blog.core.thymeleaf.TemplateEvitEvent;
 import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
-import me.qyh.blog.core.thymeleaf.TemplateUtils.PathTemplateInfo;
 import me.qyh.blog.core.thymeleaf.data.DataBind;
 import me.qyh.blog.core.thymeleaf.data.DataTagProcessor;
 import me.qyh.blog.core.thymeleaf.template.Fragment;
@@ -101,6 +100,7 @@ import me.qyh.blog.core.thymeleaf.template.Template;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.Times;
+import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.TemplateController;
 import me.qyh.blog.web.controller.form.FragmentValidator;
@@ -145,7 +145,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	private Map<String, SystemTemplate> defaultTemplates;
 
-	private final AntPathMatcher apm = new AntPathMatcher();
+	private final List<TemplateProcessor> templateProcessors = new ArrayList<>();
 
 	@Override
 	public synchronized void insertFragment(Fragment fragment) throws LogicException {
@@ -316,7 +316,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 * @throws LogicException
 	 */
 	private void enablePageAliasNotContainsSpace(String alias) throws LogicException {
-		if (apm.match("space/{alias}/**", alias)) {
+		if (UrlUtils.match("space/*/**", alias)) {
 			throw new LogicException("page.alias.containsSpace", "路径中不能包含space信息");
 		}
 	}
@@ -341,20 +341,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public Optional<Template> queryTemplate(String templateName) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			Template template = null;
-			if (TemplateUtils.isPageTemplate(templateName)) {
-				template = queryPageWithTemplateName(templateName).orElse(null);
+			Optional<? extends Template> optional = null;
+			for (TemplateProcessor processor : templateProcessors) {
+				if (processor.canProcess(templateName)) {
+					optional = processor.getTemplate(templateName);
+				}
 			}
-			if (TemplateUtils.isFragmentTemplate(templateName)) {
-				template = queryFragmentWithTemplateName(templateName).orElse(null);
+			if (optional == null) {
+				throw new SystemException("无法处理模板名：" + templateName + "对应的模板");
 			}
-			if (enablePathTemplate && TemplateUtils.isPathTemplate(templateName)) {
-				template = pathTemplateService.getPathTemplate(templateName).orElse(null);
-			}
-			if (TemplateUtils.isSystemTemplate(templateName)) {
-				template = defaultTemplates.get(TemplateUtils.getPathFromSystemTemplateName(templateName));
-			}
-			return Optional.ofNullable(template);
+			return Optional.ofNullable(optional.orElse(null));
 		});
 	}
 
@@ -392,7 +388,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			Optional<Template> current = queryTemplate(templateName);
 			boolean equalsTo = current.isPresent() && template != null && current.get().equalsTo(template);
 			consumer.accept(equalsTo);
-			return null;
 		});
 	}
 
@@ -417,8 +412,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			Set<String> pageEvitKeySet = new HashSet<>();
 			Set<String> fragmentEvitKeySet = new HashSet<>();
-			for (ExportPage exportPage : exportPages) {
-				Page page = exportPage.getPage();
+
+			List<Page> pages = exportPages.stream().map(ExportPage::getPage).collect(Collectors.toList());
+			List<Fragment> fragments = exportPages.stream().flatMap(ep -> ep.getFragments().stream()).distinct()
+					.collect(Collectors.toList());
+
+			for (Page page : pages) {
 				try {
 					enablePageAliasNotContainsSpace(page.getAlias());
 				} catch (LogicException e) {
@@ -447,6 +446,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 					records.add(new ImportRecord(true, new Message("import.insert.page.success",
 							"插入页面" + page.getName() + "[" + page.getAlias() + "]成功", page.getName(), page.getAlias())));
+					pageEvitKeySet.add(templateName);
 				} else {
 					Page current = optional.get();
 					// 如果页面内容发生了改变
@@ -474,38 +474,37 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 								page.getAlias())));
 					}
 				}
+			}
 
-				for (Fragment fragment : exportPage.getFragments()) {
-					String fragmentName = fragment.getName();
-					if (fragmentEvitKeySet.contains(fragmentName)) {
-						continue;
-					}
-					fragment.setSpace(space);
-					// 查询当前的fragment
-					Optional<Fragment> optionalFragment = queryFragmentWithTemplateName(fragment.getTemplateName());
-					if (!optionalFragment.isPresent()) {
-						// 插入fragment
-						insertFragmentWhenImport(fragment, records);
+			for (Fragment fragment : fragments) {
+				String fragmentName = fragment.getName();
+				fragment.setSpace(space);
+				// 查询当前的fragment
+				Optional<Fragment> optionalFragment = queryFragmentWithTemplateName(fragment.getTemplateName());
+				if (!optionalFragment.isPresent()) {
+					// 插入fragment
+					insertFragmentWhenImport(fragment, records);
+					fragmentEvitKeySet.add(fragmentName);
+				} else {
+					Fragment currentFragment = optionalFragment.get();
+					if (currentFragment.getTpl().equals(fragment.getTpl())) {
+						records.add(new ImportRecord(true, new Message("import.fragment.nochange",
+								"模板片段" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
 					} else {
-						Fragment currentFragment = optionalFragment.get();
-						if (currentFragment.getTpl().equals(fragment.getTpl())) {
-							records.add(new ImportRecord(true, new Message("import.fragment.nochange",
-									"模板片段" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
+						// 如果用户存在同名的fragment，但是是global的，则插入space级别的
+						if (currentFragment.isGlobal()) {
+							insertFragmentWhenImport(fragment, records);
 						} else {
-							// 如果用户存在同名的fragment，但是是global的，则插入space级别的
-							if (currentFragment.isGlobal()) {
-								insertFragmentWhenImport(fragment, records);
-							} else {
-								currentFragment.setTpl(fragment.getTpl());
-								fragmentDao.update(currentFragment);
-								records.add(new ImportRecord(true, new Message("import.update.fragment.success",
-										"模板片段" + fragmentName + "更新成功", fragmentName)));
-							}
+							currentFragment.setTpl(fragment.getTpl());
+							fragmentDao.update(currentFragment);
+							records.add(new ImportRecord(true, new Message("import.update.fragment.success",
+									"模板片段" + fragmentName + "更新成功", fragmentName)));
 						}
+						fragmentEvitKeySet.add(fragmentName);
 					}
-					fragmentEvitKeySet.add(fragment.getName());
 				}
 			}
+
 			evitPageCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
 			evitFragmentCache(fragmentEvitKeySet.stream().toArray(i -> new String[i]));
 			return records;
@@ -620,6 +619,77 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 		});
+
+		// System Template Processor
+		this.templateProcessors.add(new TemplateProcessor() {
+
+			@Override
+			public Optional<? extends Template> getTemplate(String templateName) {
+				String[] array = templateName.split(Template.SPLITER);
+				String path;
+				if (array.length == 3) {
+					path = array[2];
+				} else if (array.length == 2) {
+					path = "";
+				} else {
+					throw new SystemException("无法从" + templateName + "中获取路径");
+				}
+				Template template = defaultTemplates.get(path);
+				if (template != null) {
+					template = template.cloneTemplate();
+				}
+				return Optional.ofNullable(template);
+			}
+
+			@Override
+			public boolean canProcess(String templateName) {
+				return SystemTemplate.isSystemTemplate(templateName);
+			}
+		});
+
+		// Page Template Processor
+		this.templateProcessors.add(new TemplateProcessor() {
+
+			@Override
+			public Optional<? extends Template> getTemplate(String templateName) {
+				return queryPageWithTemplateName(templateName);
+			}
+
+			@Override
+			public boolean canProcess(String templateName) {
+				return Page.isPageTemplate(templateName);
+			}
+		});
+
+		// Fragment Template Processor
+		this.templateProcessors.add(new TemplateProcessor() {
+
+			@Override
+			public Optional<? extends Template> getTemplate(String templateName) {
+				return queryFragmentWithTemplateName(templateName);
+			}
+
+			@Override
+			public boolean canProcess(String templateName) {
+				return Fragment.isFragmentTemplate(templateName);
+			}
+		});
+
+		// PathTemplate Processor
+		if (enablePathTemplate) {
+			this.templateProcessors.add(new TemplateProcessor() {
+
+				@Override
+				public Optional<? extends Template> getTemplate(String templateName) {
+					return pathTemplateService.getPathTemplate(templateName);
+				}
+
+				@Override
+				public boolean canProcess(String templateName) {
+					return PathTemplate.isPathTemplate(templateName);
+				}
+			});
+		}
 	}
 
 	/**
@@ -698,18 +768,38 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		});
 	}
 
-	private Optional<Fragment> queryFragmentWithTemplateName(String template) {
-		Fragment fromTemplateName = TemplateUtils.toFragment(template);
-		Fragment fragment = fragmentDao.selectBySpaceAndName(fromTemplateName.getSpace(), fromTemplateName.getName());
+	private Optional<Fragment> queryFragmentWithTemplateName(String templateName) {
+		String[] array = templateName.split(Template.SPLITER);
+		String name;
+		Space space = null;
+		if (array.length == 3) {
+			name = array[2];
+		} else if (array.length == 4) {
+			name = array[2];
+			space = new Space(Integer.parseInt(array[3]));
+		} else {
+			throw new SystemException(templateName + "无法转化为Fragment");
+		}
+		Fragment fragment = fragmentDao.selectBySpaceAndName(space, name);
 		if (fragment == null) { // 查找全局
-			fragment = fragmentDao.selectGlobalByName(fromTemplateName.getName());
+			fragment = fragmentDao.selectGlobalByName(name);
 		}
 		return Optional.ofNullable(fragment);
 	}
 
-	private Optional<Page> queryPageWithTemplateName(String template) {
-		Page page = TemplateUtils.toPage(template);
-		return Optional.ofNullable(pageDao.selectBySpaceAndAlias(page.getSpace(), page.getAlias()));
+	private Optional<Page> queryPageWithTemplateName(String templateName) {
+		Page page = null;
+		String[] array = templateName.split(Template.SPLITER);
+		if (array.length == 2) {
+			page = pageDao.selectBySpaceAndAlias(null, "");
+		} else if (array.length == 3) {
+			page = pageDao.selectBySpaceAndAlias(null, array[2]);
+		} else if (array.length == 4) {
+			page = pageDao.selectBySpaceAndAlias(new Space(Integer.parseInt(array[3])), array[2]);
+		} else {
+			throw new SystemException(templateName + "无法转化为用户自定义页面");
+		}
+		return Optional.ofNullable(page);
 	}
 
 	private ExportPage export(Page page) {
@@ -753,41 +843,110 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		private static final String PATH_TEMPLATE_SUFFIX = ".html";
 		private static final String PATH_TEMPLATE_REG_SUFFIX = ".reg.html";
 		private static final String PUBLIC_FRAGMENT_TEMPLATE_SUFFIX = ".pub.html";
+		private static final String PREVIEW_SUFFIX = ".preview.html";
 
 		private final Map<String, PathTemplate> pathTemplates = new ConcurrentHashMap<>();
 		private final Map<String, PathTemplate> publicFragments = new ConcurrentHashMap<>();
 
 		@Override
-		public List<PathTemplate> getPathTemplates() {
-			return Collections.unmodifiableList(new ArrayList<>(pathTemplates.values()));
+		public List<PathTemplate> queryPathTemplates(String pattern) {
+			if (Validators.isEmptyOrNull(pattern, true)) {
+				List<PathTemplate> templates = new ArrayList<>(pathTemplates.values());
+				templates.addAll(publicFragments.values());
+				return Collections.unmodifiableList(templates);
+			}
+
+			PatternFilter filter = new PatternFilter(pattern);
+			List<PathTemplate> templates = new ArrayList<>(
+					pathTemplates.values().parallelStream().filter(filter).collect(Collectors.toList()));
+			templates.addAll(publicFragments.values().parallelStream().filter(filter).collect(Collectors.toList()));
+			return templates;
+		}
+
+		@Override
+		public PathTemplate getPreview(String path) throws LogicException {
+			String cleanPath = FileUtils.cleanPath(path);
+			Path lookupPath = pathTemplateRoot.resolve(cleanPath);
+			if (!Files.exists(lookupPath)) {
+				throw new LogicException("pathTemplate.preview.sourceNotExists", "文件不存在");
+			}
+			if (!FileUtils.isSub(lookupPath, pathTemplateRoot)) {
+				throw new LogicException("pathTemplate.preview.notInRoot", "文件不在模板主目录中");
+			}
+			if (!Files.isRegularFile(lookupPath)) {
+				throw new LogicException("pathTemplate.preview.notFile", "文件夹不能被预览");
+			}
+			String relativePath = getPathTemplatePath(lookupPath);
+			PathTemplate template = pathTemplates.get(relativePath);
+			if (template == null) {
+				throw new LogicException("pathTemplate.preview.notAssociate", "文件没有被注册");
+			}
+			if (!template.isRegistrable()) {
+				throw new LogicException("pathTemplate.preview.notRegistrable", "模板片段不能被预览");
+			}
+			// 查找preview
+			Path previewPath = pathTemplateRoot.resolve(relativePath + PREVIEW_SUFFIX);
+			if (!Files.exists(previewPath)) {
+				throw new LogicException("pathTemplate.preview.previewNotExists", "预览文件不存在");
+			}
+			if (!Files.isRegularFile(previewPath)) {
+				throw new LogicException("pathTemplate.preview.previewNotFile", "预览文件不是一个文件");
+			}
+			if (!Files.isReadable(previewPath)) {
+				throw new LogicException("pathTemplate.preview.previewNotReadable", "预览文件不可读");
+			}
+			return new PathTemplate(previewPath, true, relativePath);
 		}
 
 		@Override
 		public Optional<PathTemplate> getPathTemplate(String templateName) {
-			PathTemplateInfo info = TemplateUtils.parsePathTemplateName(templateName);
+			String path;
+			String spaceAlias = null;
+			// Template%Path%path
+			// Template%Path%
+			// Template%Path%%space
+			// Template%Path%path%space
+			String[] array = templateName.split(Template.SPLITER);
+			if (array.length == 2) {
+				path = "";
+			} else if (array.length == 3) {
+				path = array[2];
+			} else if (array.length == 4) {
+				path = array[2];
+				spaceAlias = array[3];
+			} else {
+				throw new SystemException("无法从" + templateName + "中获取路径");
+			}
+
 			PathTemplate template = null;
-			String path = TemplateUtils.cleanTemplatePath(info.getPath());
+			path = FileUtils.cleanPath(path);
 			// 从空间中寻找
-			if (info.getSpaceAlias() == null) {
+			if (spaceAlias == null) {
 				// 如果是默认空间，无法加载其他空间的PathTemplate
-				if (!apm.match("space/{alias}/**", path)) {
+				if (!UrlUtils.match("space/*/**", path)) {
 					template = pathTemplates.get(path);
 				}
 			} else {
-				template = pathTemplates.get("space/" + info.getSpaceAlias() + (path.isEmpty() ? "" : "/" + path));
+				template = pathTemplates.get("space/" + spaceAlias + (path.isEmpty() ? "" : "/" + path));
 			}
 			// 从全局fragment中寻找
 			if (template == null) {
 				template = publicFragments.get(path);
+			}
+			if (template != null) {
+				template = new PathTemplate(template);
 			}
 			return Optional.ofNullable(template);
 		}
 
 		@Override
 		public List<PathTemplateLoadRecord> loadPathTemplateFile(String path) {
+			// 锁住Outer class，为了保证queryTemplate的时候没有其他写线程修改数据
 			synchronized (TemplateServiceImpl.this) {
+				// 获取RequestMapping的锁
 				long stamp = templateMappingRegister.lockWrite();
 				try {
+					// 定位需要载入的目录
 					Path loadPath = pathTemplateRoot.resolve(FileUtils.cleanPath(path));
 					if (!Files.exists(loadPath)) {
 						LOGGER.debug("文件" + loadPath + "不存在");
@@ -802,48 +961,51 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 					List<PathTemplateLoadRecord> records = new ArrayList<>();
 
-					// 查找被删除(期望解除注册)的文件
-					for (PathTemplate pathTemplate : pathTemplates.values()) {
-						Path associate = pathTemplate.getAssociate();
-						if (FileUtils.isSub(associate, loadPath) && !Files.exists(associate)) {
-							String relativePath = getPathTemplatePath(associate);
-							if (pathTemplate.isRegistrable()) {
-								// 如果是可注册的，删除mapping
-								templateMappingRegister.unregisterTemplateMapping(relativePath);
-							}
-							pathTemplates.remove(relativePath);
-							applicationEventPublisher
-									.publishEvent(new TemplateEvitEvent(this, pathTemplate.getTemplateName()));
-							LOGGER.debug("文件" + associate + "不存在，删除");
-							records.add(new PathTemplateLoadRecord(relativePath, true,
-									new Message("pathTemplate.load.removeSuccess", "删除成功")));
-						}
-					}
-					// 从公共fragment中删除
-					for (PathTemplate publicFragment : publicFragments.values()) {
-						Path associate = publicFragment.getAssociate();
-						if (FileUtils.isSub(associate, loadPath) && !Files.exists(associate)) {
-							String relativePath = getPathTemplatePath(associate);
-							publicFragments.remove(relativePath);
-							applicationEventPublisher
-									.publishEvent(new TemplateEvitEvent(this, publicFragment.getTemplateName()));
-							LOGGER.debug("文件" + associate + "不存在，删除");
-							records.add(new PathTemplateLoadRecord(relativePath, true,
-									new Message("pathTemplate.load.removeSuccess", "删除成功")));
-						}
-					}
-
 					if (Files.isRegularFile(loadPath)) {
-						records.add(this.loadPathTemplateFile(loadPath));
-					}
+						if (!isPreview(loadPath)) {
+							records.add(this.loadPathTemplateFile(loadPath));
+						}
+					} else {
+						// 查找被删除(期望解除注册)的文件
+						for (PathTemplate pathTemplate : pathTemplates.values()) {
+							Path associate = pathTemplate.getAssociate();
+							if (FileUtils.isSub(associate, loadPath) && !Files.exists(associate)) {
+								String relativePath = getPathTemplatePath(associate);
+								if (pathTemplate.isRegistrable()) {
+									// 如果是可注册的，删除mapping
+									templateMappingRegister.unregisterTemplateMapping(relativePath);
+								}
+								pathTemplates.remove(relativePath);
+								applicationEventPublisher
+										.publishEvent(new TemplateEvitEvent(this, pathTemplate.getTemplateName()));
+								LOGGER.debug("文件" + associate + "不存在，删除");
+								records.add(new PathTemplateLoadRecord(relativePath, true,
+										new Message("pathTemplate.load.removeSuccess", "删除成功")));
+							}
+						}
+						// 从公共fragment中删除
+						for (PathTemplate publicFragment : publicFragments.values()) {
+							Path associate = publicFragment.getAssociate();
+							if (FileUtils.isSub(associate, loadPath) && !Files.exists(associate)) {
+								String relativePath = getPathTemplatePath(associate);
+								publicFragments.remove(relativePath);
+								applicationEventPublisher
+										.publishEvent(new TemplateEvitEvent(this, publicFragment.getTemplateName()));
+								LOGGER.debug("文件" + associate + "不存在，删除");
+								records.add(new PathTemplateLoadRecord(relativePath, true,
+										new Message("pathTemplate.load.removeSuccess", "删除成功")));
+							}
+						}
 
-					try {
-						// 寻找文件夹下所有符合条件的路径
-						records.addAll(Files.walk(loadPath, PageValidator.MAX_ALIAS_DEPTH).filter(Files::isRegularFile)
-								.filter(this::isPathTemplate).map(this::loadPathTemplateFile)
-								.collect(Collectors.toList()));
-					} catch (IOException e) {
-						throw new SystemException(e.getMessage(), e);
+						try {
+							// 寻找文件夹下所有符合条件的路径
+							records.addAll(
+									Files.walk(loadPath, PageValidator.MAX_ALIAS_DEPTH).filter(Files::isRegularFile)
+											.filter(this::isPathTemplate).filter(p -> !isPreview(p))
+											.map(this::loadPathTemplateFile).collect(Collectors.toList()));
+						} catch (IOException e) {
+							throw new SystemException(e.getMessage(), e);
+						}
 					}
 
 					return records;
@@ -862,7 +1024,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				if (file.getFileName().toString().equals(exists.getAssociate().getFileName().toString())) {
 					// 如果是同一个文件
 					// 刷新缓存
-					String templateName = getTemplateName(relativePath);
+					String templateName = exists.getTemplateName();
 					applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateName));
 					// 如果是可注册的，尝试注册，因为当容器重启时路径会丢失
 					if (isRegPathTemplate(file)) {
@@ -887,7 +1049,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 			// 公共fragments中已经存在，此时不可能指向不同的文件，刷新缓存
 			if (publicFragments.containsKey(relativePath)) {
-				String templateName = getTemplateName(relativePath);
+				String templateName = publicFragments.get(relativePath).getTemplateName();
 				applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateName));
 				LOGGER.debug("文件" + file + "载入成功");
 				return new PathTemplateLoadRecord(relativePath, true,
@@ -915,7 +1077,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 							new Message(first.getCode(), first.getDefaultMessage(), first.getArguments()));
 				}
 
-				String templateName = getTemplateName(relativePath);
+				PathTemplate pathTemplate = new PathTemplate(file, true, relativePath);
+				String templateName = pathTemplate.getTemplateName();
 				try {
 					templateMappingRegister.registerTemplateMapping(templateName, relativePath);
 					LOGGER.debug("文件" + file + "，对应的映射路径:" + relativePath + "，注册成功");
@@ -925,7 +1088,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					return new PathTemplateLoadRecord(relativePath, false, e.getLogicMessage());
 				}
 
-				pathTemplates.put(relativePath, new PathTemplate(templateName, file, true));
+				pathTemplates.put(relativePath, pathTemplate);
 			} else {
 				// 不是可注册的
 				// fragment
@@ -933,7 +1096,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				boolean isPublic = isPublicFragment(file);
 				if (isPublic) {
 					// 全局fragment不能在space/x/文件夹下
-					if (apm.match("space/{alias}/**", relativePath)) {
+					if (UrlUtils.match("space/*/**", relativePath)) {
 						LOGGER.debug("全局fragment:" + relativePath + "不能在space/xx/文件夹下");
 						return new PathTemplateLoadRecord(relativePath, false,
 								new Message("pathTemplate.load.path.publicFragmentInSpace",
@@ -947,14 +1110,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					return new PathTemplateLoadRecord(relativePath, false,
 							new Message("pathTemplate.load.fragment.invalidName", "无效的名称:" + name, name));
 				}
+				PathTemplate pathTemplate = new PathTemplate(file, false, relativePath);
 
-				String templateName = getTemplateName(relativePath);
+				String templateName = pathTemplate.getTemplateName();
 				applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateName));
 
 				if (isPublic) {
-					publicFragments.put(relativePath, new PathTemplate(templateName, file, false));
+					publicFragments.put(relativePath, pathTemplate);
 				} else {
-					pathTemplates.put(relativePath, new PathTemplate(templateName, file, false));
+					pathTemplates.put(relativePath, pathTemplate);
 				}
 			}
 			LOGGER.debug("文件" + file + "载入成功");
@@ -967,6 +1131,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		private boolean isRegPathTemplate(Path path) {
 			return path.toString().endsWith(PATH_TEMPLATE_REG_SUFFIX);
+		}
+
+		private boolean isPreview(Path path) {
+			return path.toString().endsWith(PREVIEW_SUFFIX);
 		}
 
 		private boolean isPathTemplate(Path path) {
@@ -984,29 +1152,31 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			} else {
 				relativizePath = relativizePath.substring(0, relativizePath.length() - PATH_TEMPLATE_SUFFIX.length());
 			}
-			return TemplateUtils.cleanTemplatePath(relativizePath);
+			return FileUtils.cleanPath(relativizePath);
 		}
 
-		private String getTemplateName(String relativePath) {
-			if (relativePath.indexOf('/') == -1) {
-				return TemplateUtils.getPathTemplateName(relativePath, null);
-			} else {
-				if (relativePath.startsWith("space/")) {
-					String alias = relativePath.split("/")[1];
-					String rest = relativePath.substring(alias.length() + 6);
-					return TemplateUtils.getPathTemplateName(rest, alias);
-				} else {
-					return TemplateUtils.getPathTemplateName(relativePath, null);
-				}
+		private final class PatternFilter implements Predicate<PathTemplate> {
+
+			private final String pattern;
+
+			public PatternFilter(String pattern) {
+				super();
+				this.pattern = pattern;
 			}
+
+			@Override
+			public boolean test(PathTemplate t) {
+				return t.getRelativePath().matches(pattern);
+			}
+
 		}
 	}
 
-	private void executeInTransaction(TranasactionExecutor executor) throws LogicException {
+	private void executeInTransaction(LogicExecutor executor) throws LogicException {
 		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
 		TransactionStatus status = platformTransactionManager.getTransaction(td);
 		try {
-			executor.executeInTransaction();
+			executor.execute();
 		} catch (Throwable e) {
 			status.setRollbackOnly();
 			throw e;
@@ -1015,16 +1185,18 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 	}
 
-	private interface TranasactionExecutor {
-		void executeInTransaction() throws LogicException;
-	};
-
-	private String readClassPathResourceToString(String classPath) {
+	private static String readClassPathResourceToString(String classPath) {
 		try {
 			return Resources.readResourceToString(new ClassPathResource(classPath));
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
+	}
+
+	private interface TemplateProcessor {
+		boolean canProcess(String templateName);
+
+		Optional<? extends Template> getTemplate(String template);
 	}
 
 	/**
@@ -1072,7 +1244,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				Object object = handlerMethod.getBean();
 				if (object instanceof TemplateController) {
 					TemplateController templateController = (TemplateController) object;
-					if (TemplateUtils.isSystemTemplate(templateController.getTemplateName())) {
+					if (SystemTemplate.isSystemTemplate(templateController.getTemplateName())) {
 						requestMappingHandlerMapping.unregisterMappingUnsafe(info);
 						exists = false;
 					}
@@ -1085,7 +1257,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		public void unregisterTemplateMapping(String path) {
-			SystemTemplate template = defaultTemplates.get(TemplateUtils.cleanTemplatePath(path));
+			SystemTemplate template = defaultTemplates.get(FileUtils.cleanPath(path));
 			requestMappingHandlerMapping.unregisterMappingUnsafe(getMethodMapping(path));
 			// 插入默认系统模板
 			if (template != null) {
@@ -1124,18 +1296,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (!TransactionSynchronizationManager.isSynchronizationActive()) {
 				throw new SystemException(this.getClass().getName() + " 必须处于一个事务中");
 			}
+			// 锁住RequestMapping
 			this.stamp = templateMappingRegister.lockWrite();
-			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
 
-				@Override
-				public void afterCompletion(int status) {
-					try {
-						if (status == STATUS_ROLLED_BACK) {
-							rollback();
-						}
-					} finally {
-						templateMappingRegister.unlockWrite(stamp);
+			Transactions.afterCompletion(i -> {
+				try {
+					if (i == TransactionSynchronization.STATUS_ROLLED_BACK) {
+						rollback();
 					}
+				} finally {
+					templateMappingRegister.unlockWrite(stamp);
 				}
 			});
 		}
@@ -1165,7 +1335,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		private String getRequestMappingPath(Page page) {
-			String registPath = TemplateUtils.cleanTemplatePath(page.getAlias());
+			String registPath = FileUtils.cleanPath(page.getAlias());
 			Space space = page.getSpace();
 			if (space != null) {
 				Objects.requireNonNull(space.getAlias());
@@ -1175,10 +1345,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 	}
 
-	private final class SystemTemplate implements Template {
+	private static final class SystemTemplate implements Template {
 
+		private static final String SYSTEM_PREFIX = TEMPLATE_PREFIX + "System" + SPLITER;
 		private final String path;
-		private final String template;
+		private String template;
+		private String templateName;
 
 		private SystemTemplate(SystemTemplate systemTemplate) {
 			this.path = systemTemplate.path;
@@ -1203,7 +1375,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public String getTemplateName() {
-			return TemplateUtils.getSystemTemplateName(path);
+			if (templateName == null) {
+				templateName = SYSTEM_PREFIX + FileUtils.cleanPath(path);
+			}
+			return templateName;
 		}
 
 		@Override
@@ -1229,6 +1404,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return path;
 		}
 
+		@Override
+		public void clearTemplate() {
+			this.template = null;
+		}
+
+		public static boolean isSystemTemplate(String templateName) {
+			return templateName != null && templateName.startsWith(SYSTEM_PREFIX);
+		}
 	}
 
 	public void setProcessors(List<DataTagProcessor<?>> processors) {

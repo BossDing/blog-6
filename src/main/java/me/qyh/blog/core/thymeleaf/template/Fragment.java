@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 import me.qyh.blog.core.thymeleaf.data.DataTagProcessor;
 import me.qyh.blog.util.Validators;
 
@@ -39,6 +38,8 @@ public class Fragment extends BaseEntity implements Serializable, Template {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private static final String FRAGMENT_PREFIX = TEMPLATE_PREFIX + "Fragment" + SPLITER;
+
 	/**
 	 * 片段名，全局唯一
 	 */
@@ -54,6 +55,8 @@ public class Fragment extends BaseEntity implements Serializable, Template {
 	 * 是否能够被ajax调用
 	 */
 	private boolean callable;
+
+	private String templateName;
 
 	public Fragment() {
 		super();
@@ -150,7 +153,19 @@ public class Fragment extends BaseEntity implements Serializable, Template {
 
 	@Override
 	public String getTemplateName() {
-		return TemplateUtils.getFragmentTemplateName(this);
+		if (templateName == null) {
+			templateName = getTemplateName(name, space);
+		}
+		return templateName;
+	}
+
+	public static String getTemplateName(String name, Space space) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(FRAGMENT_PREFIX).append(name);
+		if (space != null && space.hasId()) {
+			sb.append(SPLITER).append(space.getId());
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -198,5 +213,14 @@ public class Fragment extends BaseEntity implements Serializable, Template {
 
 	public void setGlobal(boolean global) {
 		this.global = global;
+	}
+
+	@Override
+	public void clearTemplate() {
+		this.tpl = null;
+	}
+
+	public static boolean isFragmentTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(FRAGMENT_PREFIX);
 	}
 }

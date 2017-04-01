@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
@@ -27,7 +28,6 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
@@ -61,25 +61,22 @@ public class RedirectProcessor extends DefaultAttributesTagProcessor {
 	private static final String ARGUMENTS_ATTR = "arguments";
 	private static final String DEFAULT_MSG_ATTR = "defaultMsg";
 
-	public RedirectProcessor(String dialectPrefix) {
+	private final UrlHelper urlHelper;
+
+	public RedirectProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
 												// for matching
 				TAG_NAME, // Tag name: match specifically this tag
 				false, // Apply dialect prefix to tag name
 				null, // No attribute name: will match by tag name
 				false, // No prefix to be applied to attribute name
-				PRECEDENCE); // Precedence (inside dialect's own precedence)
+				PRECEDENCE); // Precedence (inside dialect's own precedence)\
+		this.urlHelper = applicationContext.getBean(UrlHelper.class);
 	}
-
-	private UrlHelper urlHelper;
 
 	@Override
 	protected void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-
-		if (urlHelper == null) {
-			urlHelper = TemplateUtils.getRequireBean(context, UrlHelper.class);
-		}
 
 		structureHandler.removeElement();
 

@@ -20,16 +20,33 @@ import java.util.Objects;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
 
+/**
+ * 当前环境，用于在上下文中获取用户、空间以及当前ip信息
+ * 
+ * @author Administrator
+ *
+ */
 public final class Environment {
 
 	private static final ThreadLocal<User> USER_LOCAL = new ThreadLocal<>();
 	private static final ThreadLocal<Space> SPACE_LOCAL = new ThreadLocal<>();
 	private static final ThreadLocal<String> IP_LOCAL = new ThreadLocal<>();
 
+	/**
+	 * 获取当前用户
+	 * 
+	 * @return 如果没有登录，返回null
+	 */
 	public static User getUser() {
 		return USER_LOCAL.get();
 	}
 
+	/**
+	 * 获取当前空间
+	 * 
+	 * @return 如果没有访问任何空间，返回null
+	 * 
+	 */
 	public static Space getSpace() {
 		return SPACE_LOCAL.get();
 	}

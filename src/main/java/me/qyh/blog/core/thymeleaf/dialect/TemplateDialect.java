@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.dialect.AbstractProcessorDialect;
 import org.thymeleaf.processor.IProcessor;
 import org.thymeleaf.standard.StandardDialect;
@@ -27,14 +28,19 @@ public class TemplateDialect extends AbstractProcessorDialect {
 
 	private static final String DIALECT_NAME = "Template Dialect";
 
-	public TemplateDialect() {
+	private final ApplicationContext applicationContext;
+
+	public TemplateDialect(ApplicationContext applicationContext) {
 		super(DIALECT_NAME, "template", StandardDialect.PROCESSOR_PRECEDENCE);
+		this.applicationContext = applicationContext;
 	}
 
+	@Override
 	public Set<IProcessor> getProcessors(final String dialectPrefix) {
-		return new HashSet<>(Arrays.asList(new DataTagProcessor(dialectPrefix), new FragmentTagProcessor(dialectPrefix),
-				new PathTagProcessor(dialectPrefix), new LockTagProcessor(dialectPrefix),
-				new RedirectProcessor(dialectPrefix)));
+		return new HashSet<>(Arrays.asList(new DataTagProcessor(dialectPrefix, applicationContext),
+				new FragmentTagProcessor(dialectPrefix), new PathTagProcessor(dialectPrefix),
+				new LockTagProcessor(dialectPrefix, applicationContext),
+				new RedirectProcessor(dialectPrefix, applicationContext)));
 	}
 
 }

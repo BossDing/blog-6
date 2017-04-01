@@ -19,6 +19,12 @@ import org.springframework.context.ApplicationEvent;
 
 import me.qyh.blog.core.thymeleaf.template.Page;
 
+/**
+ * 页面操作事件
+ * 
+ * @author Administrator
+ *
+ */
 public class PageEvent extends ApplicationEvent {
 	/**
 	 * 

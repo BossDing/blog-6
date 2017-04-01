@@ -63,6 +63,7 @@ import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.thymeleaf.TplRenderException;
 import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
 import me.qyh.blog.support.metaweblog.FaultException;
@@ -177,9 +178,9 @@ public class GlobalControllerExceptionHandler {
 		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put("error", error);
 		}
-		SpaceUrls urls = urlHelper.getUrls(request);
 		// 获取空间别名
-		String alias = urls.getSpace();
+		String alias = Webs.getSpaceFromRequest(request);
+		SpaceUrls urls = urlHelper.getUrlsBySpace(alias);
 		LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
 		if (alias != null) {
 			return "redirect:" + urls.getUrl(new Space(alias)) + "/unlock";
@@ -283,8 +284,8 @@ public class GlobalControllerExceptionHandler {
 		}
 		// 防止找不到错误页面重定向
 		String mapping = request.getServletPath();
-		SpaceUrls urls = urlHelper.getUrls(request);
-		String space = urls.getSpace();
+		String space = Webs.getSpaceFromRequest(request);
+		SpaceUrls urls = urlHelper.getUrlsBySpace(space);
 		String redirectMapping = "";
 		if (space != null) {
 			redirectMapping = "/space/" + space + "/error";
@@ -323,7 +324,11 @@ public class GlobalControllerExceptionHandler {
 		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
 		}
-		return "redirect:" + urlHelper.getUrls(request).getCurrentUrl() + "/error";
+		if (Environment.hasSpace()) {
+			return "redirect:/" + Environment.getSpaceAlias() + "/error";
+		} else {
+			return "redirect:/error";
+		}
 	}
 
 	public static final class ErrorInfo implements Serializable {
@@ -368,6 +373,5 @@ public class GlobalControllerExceptionHandler {
 		public String getUrl() {
 			return url;
 		}
-
 	}
 }

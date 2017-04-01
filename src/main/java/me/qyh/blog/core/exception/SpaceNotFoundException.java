@@ -41,4 +41,9 @@ public class SpaceNotFoundException extends Exception {
 		return alias;
 	}
 
+	@Override
+	public Throwable fillInStackTrace() {
+		return this;
+	}
+
 }

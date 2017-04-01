@@ -18,8 +18,6 @@ package me.qyh.blog.core.config;
 import java.util.Date;
 import java.util.Objects;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
@@ -37,6 +35,12 @@ import me.qyh.blog.core.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.Times;
 
+/**
+ * 链接辅助类，用来获取一些对象的访问链接
+ * 
+ * @author Administrator
+ *
+ */
 @Component
 public class UrlHelper implements InitializingBean {
 
@@ -46,39 +50,11 @@ public class UrlHelper implements InitializingBean {
 	@Autowired
 	protected UrlConfig urlConfig;
 
+	// 根域名中 . 的数量
 	protected int rootDomainPCount;
 
 	private Urls urls;
-	private String url;// 首页schema://domain:port/contextPath
-
-	/**
-	 * 获取当前请求的链接辅助对象
-	 * 
-	 * @param request
-	 *            当前请求
-	 * @return 链接辅助类
-	 */
-	public SpaceUrls getUrls(HttpServletRequest request) {
-		Objects.requireNonNull(request);
-		// 如果开启了空间域名
-		String space = null;
-		String requestUri = request.getRequestURI();
-		if (space == null && requestUri.startsWith(request.getContextPath() + SPACE_IN_URL)) {
-			String spaceStart = requestUri.substring(7 + request.getContextPath().length(), requestUri.length());
-			if (spaceStart.trim().isEmpty()) {
-				//
-				LOGGER.debug("不完整的路径：" + request.getRequestURL().toString());
-			} else {
-				int index = spaceStart.indexOf('/');
-				space = index == -1 ? spaceStart : spaceStart.substring(0, index);
-			}
-		}
-		if (space != null && space.trim().isEmpty()) {
-			LOGGER.debug("错误的路径：" + request.getRequestURL().toString());
-			space = null;
-		}
-		return getUrlsBySpace(space);
-	}
+	private String url;
 
 	/**
 	 * 获取空间地址辅助
@@ -110,14 +86,33 @@ public class UrlHelper implements InitializingBean {
 			super();
 		}
 
+		/**
+		 * 获取配置的域名
+		 * 
+		 * @return
+		 */
 		public String getDomain() {
 			return urlConfig.getDomain();
 		}
 
+		/**
+		 * 获取根域名
+		 * <p>
+		 * www.abc.com => abc.com <br>
+		 * abc.com => abc.com
+		 * </p>
+		 * 
+		 * @return
+		 */
 		public String getRootDomain() {
 			return urlConfig.getRootDomain();
 		}
 
+		/**
+		 * 获取系统主页地址(schema://domain:port/contextPath)
+		 * 
+		 * @return
+		 */
 		public String getUrl() {
 			return url;
 		}
@@ -149,6 +144,9 @@ public class UrlHelper implements InitializingBean {
 
 		/**
 		 * 获取用户自定义页面的访问链接
+		 * <p>
+		 * <b>不会替换PathVariable中的参数</b>
+		 * </p>
 		 * 
 		 * @param page
 		 *            用户自定义页面

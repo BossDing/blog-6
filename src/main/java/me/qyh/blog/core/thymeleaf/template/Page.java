@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
+import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 
 public class Page extends BaseEntity implements Template {
@@ -37,6 +37,10 @@ public class Page extends BaseEntity implements Template {
 	private Timestamp createDate;
 	private String alias;
 	private Boolean allowComment;// 是否允许评论
+
+	private String templateName;
+
+	private static final String PAGE_PREFIX = TEMPLATE_PREFIX + "Page" + SPLITER;
 
 	public Page() {
 		super();
@@ -136,7 +140,15 @@ public class Page extends BaseEntity implements Template {
 	}
 
 	public String getTemplateName() {
-		return TemplateUtils.getPageTemplateName(this);
+		if (templateName == null) {
+			StringBuilder sb = new StringBuilder();
+			sb.append(PAGE_PREFIX).append(FileUtils.cleanPath(alias));
+			if (space != null && space.hasId()) {
+				sb.append(SPLITER).append(space.getId());
+			}
+			templateName = sb.toString();
+		}
+		return templateName;
 	}
 
 	public Space getSpace() {
@@ -170,6 +182,21 @@ public class Page extends BaseEntity implements Template {
 	@Override
 	public String toString() {
 		return "Page [space=" + space + ", alias=" + alias + "]";
+	}
+
+	@Override
+	public void clearTemplate() {
+		this.tpl = null;
+	}
+
+	/**
+	 * 判断模板是否是页面模板
+	 * 
+	 * @param templateName
+	 * @return
+	 */
+	public static boolean isPageTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(PAGE_PREFIX);
 	}
 
 }

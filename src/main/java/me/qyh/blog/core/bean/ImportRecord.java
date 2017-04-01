@@ -19,6 +19,12 @@ import java.io.Serializable;
 
 import me.qyh.blog.core.message.Message;
 
+/**
+ * 导入纪录
+ * 
+ * @author Administrator
+ *
+ */
 public class ImportRecord implements Serializable {
 	/**
 	 * 

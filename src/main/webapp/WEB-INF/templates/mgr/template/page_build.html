@@ -1,12 +1,12 @@
 <!DOCTYPE HTML>
 <html>
-<head th:replace="mgr/page/head :: head('自定义页面页面模板编辑')"></head>
+<head th:replace="mgr/template/head :: head('自定义页面页面模板编辑')"></head>
 <body>
 	<nav th:replace="mgr/base/nav :: active('tpl-user')"></nav>
 	<div id="page-wrapper" style="padding: 10px">
 		<div class="container-fluid">
 			<div class="row">
-				<div th:replace="mgr/page/editor :: editor(${page.tpl})"></div>
+				<div th:replace="mgr/template/editor :: editor(${page.tpl})"></div>
 			</div>
 			<div class="row">
 				<div style="margin-top: 10px">
@@ -95,7 +95,7 @@
 	</div>
 <input type="hidden" id="editor_mode" value="HTML" />
 	<div th:replace="base/foot_source"></div>
-	<div th:replace="mgr/page/source"></div>
+	<div th:replace="mgr/template/source"></div>
 	<script type="text/javascript"
 		th:src="@{/static/js/mgr/tplbuild_base.js}"></script>
 	<script type="text/javascript"

@@ -62,7 +62,7 @@ public class TemplateExposeHelper implements InitializingBean {
 				request.setAttribute(it.getKey(), it.getValue());
 			}
 		}
-		request.setAttribute("urls", urlHelper.getUrls(request));
+		request.setAttribute("urls", urlHelper.getUrlsBySpace(Environment.getSpaceAlias()));
 		request.setAttribute("user", Environment.getUser());
 		request.setAttribute("messages", messages);
 		request.setAttribute("space", Environment.getSpace());

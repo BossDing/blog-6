@@ -55,7 +55,7 @@ import me.qyh.blog.web.controller.form.ExportPageValidator;
 public class TplMgrController extends BaseMgrController {
 
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
@@ -66,7 +66,7 @@ public class TplMgrController extends BaseMgrController {
 	@RequestMapping(value = "export", method = RequestMethod.POST)
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
 		try {
-			List<ExportPage> pages = uiService.exportPage(spaceId);
+			List<ExportPage> pages = templateService.exportPage(spaceId);
 			return download(pages, spaceId == null ? null : spaceService.getSpace(spaceId).get());
 		} catch (LogicException e) {
 			ra.addFlashAttribute(ERROR, e.getLogicMessage());
@@ -115,7 +115,7 @@ public class TplMgrController extends BaseMgrController {
 			toImportPages.add(exportPage);
 			bindingResult.getTargetMap().clear();
 		}
-		records.addAll(uiService.importPage(spaceId, toImportPages));
+		records.addAll(templateService.importPage(spaceId, toImportPages));
 		return new JsonResult(true, records);
 	}
 
@@ -134,7 +134,7 @@ public class TplMgrController extends BaseMgrController {
 	@RequestMapping("dataTags")
 	@ResponseBody
 	public JsonResult queryDatas() {
-		return new JsonResult(true, uiService.queryDataTags());
+		return new JsonResult(true, templateService.queryDataTags());
 	}
 
 	private ResponseEntity<byte[]> download(List<ExportPage> pages, Space space) {

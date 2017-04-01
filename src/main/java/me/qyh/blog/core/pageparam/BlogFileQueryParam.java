@@ -21,6 +21,12 @@ import java.util.Set;
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.entity.BlogFile.BlogFileType;
 
+/**
+ * 文件分页查询参数
+ * 
+ * @author Administrator
+ *
+ */
 public class BlogFileQueryParam extends PageQueryParam {
 
 	/**

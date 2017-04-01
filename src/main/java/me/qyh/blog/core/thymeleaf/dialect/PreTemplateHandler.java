@@ -25,7 +25,6 @@ import org.thymeleaf.templateresource.ITemplateResource;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.thymeleaf.ParseContext;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 import me.qyh.blog.core.thymeleaf.TemplateResolver.TemplateResource;
 import me.qyh.blog.core.thymeleaf.template.Template;
 
@@ -36,6 +35,7 @@ import me.qyh.blog.core.thymeleaf.template.Template;
  *
  */
 public final class PreTemplateHandler extends AbstractTemplateHandler {
+	
 	public PreTemplateHandler() {
 		super();
 	}
@@ -44,12 +44,13 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 	public void setContext(ITemplateContext context) {
 		TemplateData templateData = context.getTemplateData();
 		String templateName = templateData.getTemplate();
-		if (TemplateUtils.isTemplate(templateName)) {
+		if (Template.isTemplate(templateName)) {
 			ITemplateResource templateResource = templateData.getTemplateResource();
 
 			if (templateResource instanceof TemplateResource) {
+				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
 				Template template = ((TemplateResource) templateResource).getTemplate().cloneTemplate();
-				
+
 				Template root = ParseContext.getRoot();
 				// 如果主模板不存在，设置主模板
 				if (root == null) {

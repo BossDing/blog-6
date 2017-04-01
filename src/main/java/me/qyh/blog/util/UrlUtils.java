@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.util.AntPathMatcher;
+
 /**
  * Provides static methods for composing URLs.
  * <p>
@@ -29,6 +31,8 @@ import javax.servlet.http.HttpServletRequest;
  * @author Ben Alex
  */
 public final class UrlUtils {
+
+	private static final AntPathMatcher APM = new AntPathMatcher();
 
 	/**
 	 * private
@@ -152,5 +156,16 @@ public final class UrlUtils {
 		final Pattern ABSOLUTE_URL = Pattern.compile("\\A[a-z0-9.+-]+://.*", Pattern.CASE_INSENSITIVE);
 
 		return ABSOLUTE_URL.matcher(url).matches();
+	}
+
+	/**
+	 * 
+	 * @see AntPathMatcher
+	 * @param pattern
+	 * @param path
+	 * @return
+	 */
+	public static boolean match(String pattern, String path) {
+		return APM.match(pattern, path);
 	}
 }

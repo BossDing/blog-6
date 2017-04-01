@@ -16,6 +16,7 @@
 package me.qyh.blog.core.security;
 
 /**
+ * 权限校验异常
  * 
  * @author Administrator
  *

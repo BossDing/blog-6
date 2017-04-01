@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.thymeleaf.dialect;
 
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
@@ -24,7 +25,6 @@ import org.thymeleaf.templatemode.TemplateMode;
 import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.lock.SimpleLockResource;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -38,7 +38,7 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 	private static final int PRECEDENCE = 1000;
 	private static final String ID = "id";
 
-	public LockTagProcessor(String dialectPrefix) {
+	public LockTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, // This processor will apply only to HTML mode
 				dialectPrefix, // Prefix to be applied to name for matching
 				TAG_NAME, // Tag name: match specifically this tag
@@ -46,16 +46,14 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 				null, // No attribute name: will match by tag name
 				false, // No prefix to be applied to attribute name
 				PRECEDENCE); // Precedence (inside dialect's own precedence)
+		this.lockManager = applicationContext.getBean(LockManager.class);
 	}
 
-	private LockManager lockManager;
+	private final LockManager lockManager;
 
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		if (lockManager == null) {
-			lockManager = TemplateUtils.getRequireBean(context, LockManager.class);
-		}
 		try {
 			String lockId = tag.getAttributeValue(ID);
 			if (lockId != null && !Environment.isLogin()) {

@@ -50,7 +50,7 @@ import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.RememberMe;
-import me.qyh.blog.core.service.impl.SpaceCache;
+import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.thymeleaf.TemplateExposeHelper;
 import me.qyh.blog.support.file.local.RequestMatcher;
 import me.qyh.blog.util.UrlUtils;
@@ -74,7 +74,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Autowired
 	private TemplateExposeHelper uiExposeHelper;
 	@Autowired
-	private SpaceCache spaceCache;
+	private SpaceService spaceService;
 	@Autowired
 	private LockManager lockManager;
 
@@ -86,8 +86,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		String spaceAlias = urlHelper.getUrls(request).getSpace();
 		if (executeHandler(handler)) {
+			String spaceAlias = Webs.getSpaceFromRequest(request);
 			try {
 				HttpSession session = request.getSession(false);
 				User user = null;
@@ -104,7 +104,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				setLockKeys(request);
 
 				if (spaceAlias != null) {
-					Space space = spaceCache.getSpace(spaceAlias)
+					Space space = spaceService.getSpace(spaceAlias)
 							.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 
 					if (space.getIsPrivate()) {

@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.dialect.IPreProcessorDialect;
 import org.thymeleaf.preprocessor.IPreProcessor;
 import org.thymeleaf.preprocessor.PreProcessor;
@@ -29,12 +32,13 @@ import me.qyh.blog.core.thymeleaf.dialect.PreTemplateHandler;
 import me.qyh.blog.core.thymeleaf.dialect.TemplateDialect;
 import me.qyh.blog.core.thymeleaf.dialect.TransactionDialect;
 
-public class TemplateEngine extends SpringTemplateEngine {
+public class TemplateEngine extends SpringTemplateEngine implements InitializingBean {
+
+	@Autowired
+	private ApplicationContext applicationContext;
 
 	public TemplateEngine() {
 		super();
-		addDialect(new TemplateDialect());
-		addDialect(new TransactionDialect());
 		addDialect(new IPreProcessorDialect() {
 
 			@Override
@@ -53,6 +57,12 @@ public class TemplateEngine extends SpringTemplateEngine {
 				return 1000;
 			}
 		});
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		addDialect(new TemplateDialect(applicationContext));
+		addDialect(new TransactionDialect(applicationContext));
 	}
 
 }

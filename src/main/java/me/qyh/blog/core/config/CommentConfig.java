@@ -22,6 +22,7 @@ import com.google.gson.annotations.Expose;
 import me.qyh.blog.core.entity.Editor;
 
 /**
+ * 评论配置
  * 
  * @author Administrator
  *

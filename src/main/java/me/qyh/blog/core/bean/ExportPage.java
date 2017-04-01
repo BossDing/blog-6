@@ -21,6 +21,12 @@ import java.util.List;
 import me.qyh.blog.core.thymeleaf.template.Fragment;
 import me.qyh.blog.core.thymeleaf.template.Page;
 
+/**
+ * 用于文件导入
+ * 
+ * @author Administrator
+ *
+ */
 public class ExportPage {
 	private Page page;
 	private List<Fragment> fragments = new ArrayList<>();

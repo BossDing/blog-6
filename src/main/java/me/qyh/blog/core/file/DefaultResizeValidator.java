@@ -18,6 +18,7 @@ package me.qyh.blog.core.file;
 import java.util.Arrays;
 
 /**
+ * 默认缩放校验器
  * 
  * @author Administrator
  *

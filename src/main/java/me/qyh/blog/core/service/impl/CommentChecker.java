@@ -19,6 +19,12 @@ import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.exception.LogicException;
 
+/**
+ * 在插入评论前检查评论
+ * 
+ * @author Administrator
+ *
+ */
 public interface CommentChecker {
 
 	/**

@@ -18,11 +18,41 @@ package me.qyh.blog.core.thymeleaf.template;
 import java.io.IOException;
 
 /**
+ * 模板
  * 
  * @author Administrator
  *
  */
 public interface Template {
+
+	/**
+	 * 模板分割符
+	 */
+	static final String SPLITER = "%";
+
+	/**
+	 * 模板前缀，所有的模板名必须以这个开头
+	 */
+	static final String TEMPLATE_PREFIX = "Template" + SPLITER;
+
+	static boolean isTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(TEMPLATE_PREFIX);
+	}
+
+	/**
+	 * 预览模板路径
+	 */
+	static final String PREVIEW = TEMPLATE_PREFIX + "Preview";
+
+	/**
+	 * 判断页面是否预览模板
+	 * 
+	 * @param templateName
+	 * @return
+	 */
+	public static boolean isPreview(String templateName) {
+		return PREVIEW.equals(templateName);
+	}
 
 	/**
 	 * 是否是根模板
@@ -38,7 +68,7 @@ public interface Template {
 	 * 获取模板内容
 	 * 
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	String getTemplate() throws IOException;
 
@@ -72,4 +102,9 @@ public interface Template {
 	 * @return
 	 */
 	boolean equalsTo(Template other);
+
+	/**
+	 * 清除模板内容
+	 */
+	void clearTemplate();
 }

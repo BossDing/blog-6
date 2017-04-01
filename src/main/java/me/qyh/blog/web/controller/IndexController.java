@@ -46,7 +46,7 @@ public class IndexController {
 	@Autowired
 	private TemplateRender uiRender;
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 
 	@RequestMapping(value = { "data/{tagName}", "space/{alias}/data/{tagName}" }, method = RequestMethod.GET)
 	@ResponseBody
@@ -58,7 +58,7 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		return uiService.queryData(tag, true).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
+		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
 	}
 
 	@RequestMapping(value = { "fragment/{fragment}", "space/{alias}/fragment/{fragment}" }, method = RequestMethod.GET)

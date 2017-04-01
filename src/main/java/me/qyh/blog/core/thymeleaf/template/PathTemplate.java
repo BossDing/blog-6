@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
 public class PathTemplate implements Template, Serializable {
@@ -29,22 +30,28 @@ public class PathTemplate implements Template, Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private final String templateName;
 	private final Path associate;
 	private final boolean registrable;
+	private final String relativePath;
 
-	public PathTemplate(String templateName, Path associate, boolean registrable) {
+	private String template;
+
+	private String templateName;
+
+	private static final String PATH_PREFIX = TEMPLATE_PREFIX + "Path" + SPLITER;
+
+	public PathTemplate(Path associate, boolean registrable, String relativePath) {
 		super();
-		this.templateName = templateName;
 		this.associate = associate;
+		this.relativePath = relativePath;
 		this.registrable = registrable;
 	}
 
 	public PathTemplate(PathTemplate clone) {
 		super();
-		this.templateName = clone.templateName;
 		this.associate = clone.associate;
 		this.registrable = clone.registrable;
+		this.relativePath = clone.relativePath;
 	}
 
 	public Path getAssociate() {
@@ -62,15 +69,41 @@ public class PathTemplate implements Template, Serializable {
 
 	@Override
 	public String getTemplate() {
-		try {
-			return FileUtils.toString(associate);
-		} catch (IOException e) {
-			return "";
+		if (template == null) {
+			try {
+				template = FileUtils.toString(associate);
+			} catch (IOException e) {
+				template = "";
+			}
 		}
+		return template;
 	}
 
 	@Override
 	public String getTemplateName() {
+		if (templateName == null) {
+			String path;
+			String spaceAlias = null;
+			if (relativePath.indexOf('/') == -1) {
+				path = relativePath;
+			} else {
+				if (UrlUtils.match("space/*/**", relativePath)) {
+					spaceAlias = relativePath.split("/")[1];
+					path = relativePath.substring(spaceAlias.length() + 6);
+				} else {
+					path = relativePath;
+				}
+			}
+			templateName = getTemplateName(path, spaceAlias);
+		}
+		return templateName;
+	}
+
+	public static String getTemplateName(String path, String spaceAlias) {
+		String templateName = PATH_PREFIX + FileUtils.cleanPath(path);
+		if (spaceAlias != null) {
+			templateName += SPLITER + spaceAlias;
+		}
 		return templateName;
 	}
 
@@ -84,14 +117,28 @@ public class PathTemplate implements Template, Serializable {
 		return false;
 	}
 
+	public String getRelativePath() {
+		return relativePath;
+	}
+
 	@Override
 	public boolean equalsTo(Template other) {
 		if (Validators.baseEquals(this, other)) {
 			PathTemplate rhs = (PathTemplate) other;
-			return Objects.equals(this.associate, rhs.associate) && Objects.equals(this.templateName, rhs.templateName)
+			return Objects.equals(this.getTemplate(), rhs.getTemplate())
+					&& Objects.equals(this.getTemplateName(), rhs.getTemplateName())
 					&& Objects.equals(this.registrable, rhs.registrable);
 		}
 		return false;
+	}
+
+	@Override
+	public void clearTemplate() {
+		this.template = null;
+	}
+
+	public static boolean isPathTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(PATH_PREFIX);
 	}
 
 }

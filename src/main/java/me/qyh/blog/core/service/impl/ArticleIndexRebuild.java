@@ -22,6 +22,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * 文章索引重建
+ * <p>
+ * 当某个方法被该annotation标记之后，如果方法处于<b>事务</b>中，那么在事务回滚时，将会重建文章索引
+ * </p>
+ * 
+ * @see ArticleIndexRebuildAspect
+ * @author Administrator
+ *
+ */
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited

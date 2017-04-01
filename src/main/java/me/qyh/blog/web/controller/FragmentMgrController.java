@@ -41,11 +41,11 @@ import me.qyh.blog.web.controller.form.FragmentQueryParamValidator;
 import me.qyh.blog.web.controller.form.FragmentValidator;
 
 @Controller
-@RequestMapping("mgr/fragment")
+@RequestMapping("mgr/template/fragment")
 public class FragmentMgrController extends BaseMgrController {
 
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 	@Autowired
 	private FragmentQueryParamValidator fragmentParamValidator;
 	@Autowired
@@ -69,9 +69,9 @@ public class FragmentMgrController extends BaseMgrController {
 			fragmentQueryParam = new FragmentQueryParam();
 			fragmentQueryParam.setCurrentPage(1);
 		}
-		model.addAttribute("page", uiService.queryFragment(fragmentQueryParam));
+		model.addAttribute("page", templateService.queryFragment(fragmentQueryParam));
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
-		return "mgr/fragment/index";
+		return "mgr/template/fragment";
 	}
 
 	@RequestMapping("list")
@@ -82,7 +82,7 @@ public class FragmentMgrController extends BaseMgrController {
 			fragmentQueryParam = new FragmentQueryParam();
 			fragmentQueryParam.setCurrentPage(1);
 		}
-		return new JsonResult(true, uiService.queryFragment(fragmentQueryParam));
+		return new JsonResult(true, templateService.queryFragment(fragmentQueryParam));
 	}
 
 	@RequestMapping(value = "create", method = RequestMethod.POST)
@@ -91,14 +91,14 @@ public class FragmentMgrController extends BaseMgrController {
 		if (fragment.isGlobal()) {
 			fragment.setSpace(null);
 		}
-		uiService.insertFragment(fragment);
+		templateService.insertFragment(fragment);
 		return new JsonResult(true, new Message("fragment.user.create.success", "创建成功"));
 	}
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
-		uiService.deleteFragment(id);
+		templateService.deleteFragment(id);
 		return new JsonResult(true, new Message("fragment.user.delete.success", "删除成功"));
 	}
 
@@ -108,14 +108,14 @@ public class FragmentMgrController extends BaseMgrController {
 		if (fragment.isGlobal()) {
 			fragment.setSpace(null);
 		}
-		uiService.updateFragment(fragment);
+		templateService.updateFragment(fragment);
 		return new JsonResult(true, new Message("fragment.user.update.success", "更新成功"));
 	}
 
 	@RequestMapping(value = "get/{id}")
 	@ResponseBody
 	public JsonResult get(@PathVariable("id") Integer id) throws LogicException {
-		return uiService.queryFragment(id).map(fragment -> new JsonResult(true, fragment))
+		return templateService.queryFragment(id).map(fragment -> new JsonResult(true, fragment))
 				.orElse(new JsonResult(false));
 	}
 }

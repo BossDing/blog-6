@@ -18,6 +18,7 @@ package me.qyh.blog.core.bean;
 import me.qyh.blog.core.entity.Tag;
 
 /**
+ * 标签对应的引用数量
  * 
  * @author Administrator
  *

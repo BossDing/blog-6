@@ -112,6 +112,11 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	}
 
 	@Override
+	public Optional<Space> getSpace(String alias) {
+		return spaceCache.getSpace(alias);
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Space> querySpace(SpaceQueryParam param) {
 		if (param.getQueryPrivate() && !Environment.isLogin()) {
@@ -122,8 +127,6 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 	@EventListener
 	public void handleLockDeleteEvent(LockDeleteEvent event) {
-		// synchronized
-		// do not worry about transaction
 		spaceDao.deleteLock(event.getLockId());
 	}
 

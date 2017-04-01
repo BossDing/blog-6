@@ -15,7 +15,7 @@ function preview() {
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/preview',
+			url : basePath + '/mgr/template/page/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
@@ -26,7 +26,7 @@ function preview() {
 							'_blank');
 						win.focus();
 					}else{
-						var win = window.open(basePath + '/mgr/page/preview',
+						var win = window.open(basePath + '/mgr/template/preview',
 							'_blank');
 						win.focus();
 					}
@@ -57,7 +57,7 @@ function preview() {
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/page/preview',
+			url : basePath + '/mgr/template/page/preview',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
@@ -65,13 +65,16 @@ function preview() {
 				if (data.success) {
 					$.ajax({
 						type : "post",
-						url : basePath + '/mgr/page/build',
+						url : basePath + '/mgr/template/page/build',
 						data : JSON.stringify(page),
 						dataType : "json",
 						contentType : 'application/json',
 						success : function(data){
 							if (data.success) {
 								bootbox.alert(data.message);
+								setTimeout(function(){
+									window.location.href = basePath + '/mgr/template/page/index';
+								}, 500);
 							} else {
 								showError(data);
 							}

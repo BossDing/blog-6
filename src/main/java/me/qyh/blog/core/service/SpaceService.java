@@ -68,4 +68,13 @@ public interface SpaceService {
 	 */
 	Optional<Space> getSpace(Integer id);
 
+	/**
+	 * 根据别名查询空间
+	 * 
+	 * @param spaceAlias
+	 *            别名
+	 * @return
+	 */
+	Optional<Space> getSpace(String spaceAlias);
+
 }

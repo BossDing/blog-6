@@ -61,7 +61,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 	private static final CorsConfiguration ALLOW_CORS_CONFIG = new CorsConfiguration();
 
-	private StampedLock sl = new StampedLock();
+	private final StampedLock sl = new StampedLock();
 
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
 

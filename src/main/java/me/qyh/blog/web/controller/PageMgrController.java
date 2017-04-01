@@ -19,7 +19,6 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -52,13 +51,13 @@ import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.TemplatePageQueryParamValidator;
 
 @Controller
-@RequestMapping("mgr/page")
+@RequestMapping("mgr/template/page")
 public class PageMgrController extends BaseMgrController {
 
 	@Autowired
 	private TemplatePageQueryParamValidator pageParamValidator;
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
@@ -82,14 +81,15 @@ public class PageMgrController extends BaseMgrController {
 			templatePageQueryParam = new TemplatePageQueryParam();
 			templatePageQueryParam.setCurrentPage(1);
 		}
-		model.addAttribute("result", uiService.queryPage(templatePageQueryParam));
-		return "mgr/page/index";
+		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
+		model.addAttribute("result", templateService.queryPage(templatePageQueryParam));
+		return "mgr/template/page";
 	}
 
 	@RequestMapping(value = "build", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated Page page) throws LogicException {
-		uiService.buildTpl(page);
+		templateService.buildTpl(page);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}
 
@@ -98,21 +98,21 @@ public class PageMgrController extends BaseMgrController {
 		model.addAttribute("page", new Page());
 		SpaceQueryParam param = new SpaceQueryParam();
 		model.addAttribute("spaces", spaceService.querySpace(param));
-		return "mgr/page/build";
+		return "mgr/template/page_build";
 	}
 
 	@RequestMapping(value = "update")
 	public String update(@RequestParam("id") Integer id, Model model, RedirectAttributes ra) {
-		Optional<Page> optional = uiService.queryPage(id);
+		Optional<Page> optional = templateService.queryPage(id);
 		if (!optional.isPresent()) {
 			ra.addFlashAttribute(ERROR, new Message("page.user.notExists", "自定义页面不存在"));
-			return "redirect:/mgr/page/user/index";
+			return "redirect:/mgr/template/page";
 		}
 		Page page = optional.get();
 		model.addAttribute("page", page);
 		SpaceQueryParam param = new SpaceQueryParam();
 		model.addAttribute("spaces", spaceService.querySpace(param));
-		return "mgr/page/build";
+		return "mgr/template/page_build";
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
@@ -141,23 +141,7 @@ public class PageMgrController extends BaseMgrController {
 	@RequestMapping(value = "delete", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
-		uiService.deletePage(id);
+		templateService.deletePage(id);
 		return new JsonResult(true, new Message("page.user.delete.success", "删除成功"));
-	}
-
-	@RequestMapping(value = "preview", method = RequestMethod.GET)
-	public String preview(HttpServletRequest request, Model model) {
-		HttpSession session = request.getSession(false);
-		if (session == null) {
-			return "redirect:/mgr/page/sys/index";
-		} else {
-			String rendered = (String) session.getAttribute(Constants.TEMPLATE_PREVIEW_KEY);
-			if (rendered == null) {
-				return "redirect:/mgr/page/sys/index";
-			} else {
-				model.addAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
-				return "mgr/page/preview";
-			}
-		}
 	}
 }

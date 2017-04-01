@@ -17,7 +17,6 @@ package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.util.UrlUtils;
 
 @Controller
 @RequestMapping("space/{alias}/article")
@@ -37,15 +37,13 @@ public class SpaceArticleController extends BaseController {
 	@Autowired
 	private ArticleService articleService;
 
-	private static final AntPathMatcher apm = new AntPathMatcher();
-
 	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResult hit(@PathVariable("id") Integer id, @RequestHeader("referer") String referer) {
 		try {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(referer).build();
-			if (!apm.match("/space/" + Environment.getSpaceAlias() + "/article/*", uc.getPath())
-					&& !apm.match("/article/*", uc.getPath())) {
+			if (!UrlUtils.match("/space/" + Environment.getSpaceAlias() + "/article/*", uc.getPath())
+					&& !UrlUtils.match("/article/*", uc.getPath())) {
 				return new JsonResult(false);
 			}
 		} catch (Exception e) {

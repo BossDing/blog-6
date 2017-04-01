@@ -2,6 +2,46 @@ var editor;
 var upeditor;
 $(document).ready(
 	function() {
+		var spaceId = $("#pageFormSpaceId").val();
+		if(spaceId != undefined){
+			$("#query-space-checkbox").prop("checked",true);
+			$("#space").val(spaceId).show();
+		}
+		var global = $("#pageFormGlobal").val();
+		if(global && global == "true"){
+			$("#query-global").prop("checked",true);
+		}
+		
+		var callable = $("#pageFormCallable").val();
+		if(callable && callable == "true"){
+			$("#query-callable").prop("checked",true);
+		}
+		
+		$("#query-space-checkbox").click(function(){
+			$("#space").toggle();
+		})
+		$("#query-btn").click(function(){
+			var form = "";
+			$("#query-form").remove();
+			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/template/fragment/index" method="get">';
+			var name = $.trim($("#query-name").val());
+			if(name != ''){
+				form += '<input type="hidden" name="name" value="'+name+'"/>';
+			}
+			if($("#query-space-checkbox").is(":checked")){
+				form += '<input type="hidden" name="space.id" value="'+$("#space").val()+'"/>';
+			}
+			if($("#query-global").is(":checked")){
+				form += '<input type="hidden" name="global" value="true"/>';
+			}
+			if($("#query-callable").is(":checked")){
+				form += '<input type="hidden" name="callable" value="true"/>';
+			}
+			form += '</form>';
+			$("body").append(form);
+			$("#query-form").submit();
+		})
+		
 		var mixedMode = {
 		        name: "htmlmixed",
 		        scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
@@ -55,7 +95,7 @@ $(document).ready(
 			}
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/fragment/delete",
+				url : basePath+"/mgr/template/fragment/delete",
 				data : {"id":me.attr("data-id")},
 				success : function(data){
 					if(data.success){
@@ -87,7 +127,7 @@ $(document).ready(
 			}
 		})
 	$("[data-action='edit']").click(function(){
-		$.get(basePath+"/mgr/fragment/get/"+$(this).attr("data-id"),{},function(data){
+		$.get(basePath+"/mgr/template/fragment/get/"+$(this).attr("data-id"),{},function(data){
 			if(!data.success){
 				bootbox.alert("要更新的挂件不存在");
 			} else {
@@ -123,7 +163,7 @@ $(document).ready(
 				data.tpl = upeditor.getValue();
 				$.ajax({
 					type : "post",
-					url : basePath + "/mgr/fragment/update",
+					url : basePath + "/mgr/template/fragment/update",
 					data : JSON.stringify(data),
 					dataType : "json",
 					contentType : 'application/json',
@@ -158,7 +198,7 @@ $(document).ready(
 				data.tpl = editor.getValue();
 				$.ajax({
 					type : "post",
-					url : basePath + "/mgr/fragment/create",
+					url : basePath + "/mgr/template/fragment/create",
 					data : JSON.stringify(data),
 					dataType : "json",
 					contentType : 'application/json',

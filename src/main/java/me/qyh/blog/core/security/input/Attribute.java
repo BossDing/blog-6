@@ -16,6 +16,7 @@
 package me.qyh.blog.core.security.input;
 
 /**
+ * 标签属性
  * 
  * @author Administrator
  *

@@ -31,6 +31,7 @@ import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.support.metaweblog.MetaweblogArticle;
 
 /**
+ * 文章服务
  * 
  * @author Administrator
  *

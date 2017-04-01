@@ -78,9 +78,6 @@ public class CommentEmailNotifySupport implements InitializingBean {
 
 	private int messageTipCount = MESSAGE_TIP_COUNT;
 
-	/**
-	 * 邮件发送，用来提示管理员有新的回复或者评论
-	 */
 	@Autowired
 	private MailSender mailSender;
 	@Autowired

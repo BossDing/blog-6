@@ -22,6 +22,12 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.entity.Article;
 
+/**
+ * 用于支持多个ArticleContentHandler
+ * 
+ * @author Administrator
+ *
+ */
 public class ArticleContentHandlers implements ArticleContentHandler {
 
 	private List<ArticleContentHandler> handlers = new ArrayList<>();

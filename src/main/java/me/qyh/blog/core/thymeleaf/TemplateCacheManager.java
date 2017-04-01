@@ -39,7 +39,6 @@ import org.thymeleaf.templateresource.ITemplateResource;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import me.qyh.blog.core.thymeleaf.TemplateService;
 import me.qyh.blog.core.thymeleaf.TemplateResolver.TemplateResource;
 import me.qyh.blog.core.thymeleaf.template.Template;
 
@@ -49,7 +48,7 @@ public class TemplateCacheManager extends AbstractCacheManager implements Initia
 	private ApplicationContext applicationContext;
 
 	@Autowired
-	private TemplateService uiService;
+	private TemplateService templateService;
 
 	private final ICache<TemplateCacheKey, TemplateModel> templateCache = new TemplateCache();
 	private final ICache<ExpressionCacheKey, Object> expressionCache = new ExpressionCache();
@@ -80,7 +79,7 @@ public class TemplateCacheManager extends AbstractCacheManager implements Initia
 			TemplateData templateData = value.getTemplateData();
 			ITemplateResource resource = templateData.getTemplateResource();
 			if (resource instanceof TemplateResource) {
-				Template template = ((TemplateResource) resource).getTemplate();
+				final Template template = ((TemplateResource) resource).getTemplate();
 				String templateName = templateData.getTemplate();
 				tpe.execute(() -> {
 					/**
@@ -89,10 +88,11 @@ public class TemplateCacheManager extends AbstractCacheManager implements Initia
 					 * 
 					 * 这个操作可能是同步的，因此在首次载入时效率可能非常低
 					 */
-
-					uiService.compareTemplate(templateName, template, flag -> {
+					templateService.compareTemplate(templateName, template, flag -> {
 						if (flag) {
 							cache.put(key, value);
+							// 删除文本，不再需要在内存中一直保持
+							template.clearTemplate();
 						}
 					});
 				});

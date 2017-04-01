@@ -59,7 +59,7 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 		super.processAttribute(context, tag, attMap);
 		String name = attMap.get(NAME);
 		if (name != null) {
-			String templateName = new Fragment(name, Environment.getSpace()).getTemplateName();
+			String templateName = Fragment.getTemplateName(name, Environment.getSpace());
 			Writer writer = new FastStringWriter(200);
 			try {
 				context.getConfiguration().getTemplateManager().parseAndProcess(

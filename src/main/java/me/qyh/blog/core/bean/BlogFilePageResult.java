@@ -22,12 +22,16 @@ import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.pageparam.PageResult;
 
 /**
+ * 文章分页查询结果
  * 
  * @author Administrator
  *
  */
 public class BlogFilePageResult {
 
+	/**
+	 * 文章路径，例如 a-&gt;b-&gt;c
+	 */
 	private List<BlogFile> paths = new ArrayList<>();
 	private PageResult<BlogFile> page;
 

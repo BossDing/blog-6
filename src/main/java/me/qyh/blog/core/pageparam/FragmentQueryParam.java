@@ -26,6 +26,7 @@ public class FragmentQueryParam extends PageQueryParam {
 	private String name;
 	private Boolean global;
 	private Space space;
+	private Boolean callable;
 
 	public String getName() {
 		return name;
@@ -51,4 +52,12 @@ public class FragmentQueryParam extends PageQueryParam {
 		this.space = space;
 	}
 
+	public Boolean getCallable() {
+		return callable;
+	}
+
+	public void setCallable(Boolean callable) {
+		this.callable = callable;
+	}
+//
 }

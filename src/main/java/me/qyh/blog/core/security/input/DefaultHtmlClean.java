@@ -33,6 +33,7 @@ import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
 /**
+ * 默认的html文本清理器
  * 
  * @author Administrator
  *

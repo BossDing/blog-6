@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.http.MediaType;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -37,12 +36,14 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Jsons;
+import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
 public class Webs {
 
 	private static String[] HEADERS_TO_TRY = { "REMOTE_ADDR", "X-Forwarded-For", "X-Real-IP" };
-	private static final AntPathMatcher apm = new AntPathMatcher();
+
+	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
 
 	public static boolean matchValidateCode(String code, HttpSession session) {
 		if (code == null) {
@@ -88,13 +89,17 @@ public class Webs {
 
 	public static boolean unlockRequest(HttpServletRequest request) {
 		String path = request.getRequestURI();
-		return (apm.match("/unlock", path) || apm.match("/unlock/", path) || apm.match("/space/*/unlock", path)
-				|| apm.match("/space/*/unlock/", path));
+		for (String unlockPattern : UNLOCK_PATTERNS) {
+			if (UrlUtils.match(unlockPattern, path)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static boolean apisRequest(HttpServletRequest request) {
 		String path = request.getRequestURI();
-		return apm.match("/apis/**", path);
+		return UrlUtils.match("/apis/**", path);
 	}
 
 	/**
@@ -123,5 +128,20 @@ public class Webs {
 		try (InputStream is = mf.getInputStream()) {
 			Files.copy(is, file, StandardCopyOption.REPLACE_EXISTING);
 		}
+	}
+
+	/**
+	 * 从请求中获取space
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public static String getSpaceFromRequest(HttpServletRequest request) {
+		String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
+		String spaceAlias = null;
+		if (UrlUtils.match("space/*/**", path)) {
+			spaceAlias = path.split("/")[1];
+		}
+		return spaceAlias;
 	}
 }

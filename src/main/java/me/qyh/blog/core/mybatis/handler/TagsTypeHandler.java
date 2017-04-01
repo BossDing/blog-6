@@ -33,6 +33,7 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.Validators;
 
 /**
+ * 用来将mysql取出的tag 字符串转化为Set&lt;Tag&gt;
  * 
  * @author Administrator
  *

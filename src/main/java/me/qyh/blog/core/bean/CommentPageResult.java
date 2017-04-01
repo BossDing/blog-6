@@ -22,6 +22,12 @@ import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.pageparam.PageQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 
+/**
+ * 评论分页结果
+ * 
+ * @author Administrator
+ *
+ */
 public final class CommentPageResult extends PageResult<Comment> {
 	private final CommentConfig commentConfig;
 

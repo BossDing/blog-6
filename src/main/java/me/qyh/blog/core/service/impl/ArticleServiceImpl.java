@@ -343,8 +343,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
 	public ArticleDateFiles queryArticleDateFiles(ArticleDateFileMode mode) throws LogicException {
-		List<ArticleDateFile> files = articleDao.selectDateFiles(Environment.getSpace(), mode,
-				Environment.isLogin());
+		List<ArticleDateFile> files = articleDao.selectDateFiles(Environment.getSpace(), mode, Environment.isLogin());
 		ArticleDateFiles _files = new ArticleDateFiles(files, mode);
 		_files.calDate();
 		return _files;
@@ -522,7 +521,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过多的文章
+	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过的文章
 	 * 
 	 * @param num
 	 *            记录数，该记录数受到 {@code ArticleViewdLogger}的限制
@@ -537,8 +536,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> selectRandom(boolean queryLock) {
-		return Optional.ofNullable(
-				articleDao.selectRandom(Environment.getSpace(), Environment.isLogin(), queryLock));
+		return Optional.ofNullable(articleDao.selectRandom(Environment.getSpace(), Environment.isLogin(), queryLock));
 	}
 
 	@Override
@@ -550,8 +548,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@EventListener
 	public void handleLockDeleteEvent(LockDeleteEvent event) {
-		// synchronized
-		// do not worry about transaction
 		articleDao.deleteLock(event.getLockId());
 	}
 
@@ -700,6 +696,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	/**
 	 * 默认文章点击策略，文章的点击数将会实时显示
+	 * <p>
+	 * <b>这种策略下每次点击都会增加点击量</b>
+	 * </p>
 	 * 
 	 * @see CacheableHitsStrategy
 	 * @author mhlx
@@ -714,12 +713,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				Transactions.executeInTransaction(transactionManager, status -> {
 					Integer id = article.getId();
 					articleDao.updateHits(id, hits);
-				});
 
-				Map<Integer, Integer> hitsMap = new HashMap<>();
-				hitsMap.put(article.getId(), hits);
-				articleCache.updateHits(hitsMap);
-				articleIndexer.addOrUpdateDocument(article.getId());
+					Transactions.afterCommit(() -> {
+						Map<Integer, Integer> hitsMap = new HashMap<>();
+						hitsMap.put(article.getId(), hits);
+						articleCache.updateHits(hitsMap);
+						articleIndexer.addOrUpdateDocument(article.getId());
+					});
+				});
 			}
 		}
 	}

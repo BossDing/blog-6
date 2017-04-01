@@ -27,8 +27,8 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.thymeleaf.TemplateUtils;
 import me.qyh.blog.core.thymeleaf.UIStackoverflowError;
+import me.qyh.blog.core.thymeleaf.template.PathTemplate;
 
 public class PathTagProcessor extends DefaultAttributesTagProcessor {
 
@@ -53,7 +53,7 @@ public class PathTagProcessor extends DefaultAttributesTagProcessor {
 		super.processAttribute(context, tag, attMap);
 		String path = attMap.get(PATH);
 		if (path != null) {
-			String templateName = TemplateUtils.getPathTemplateName(path, Environment.getSpaceAlias());
+			String templateName = PathTemplate.getTemplateName(path, Environment.getSpaceAlias());
 			Writer writer = new FastStringWriter(200);
 			try {
 				context.getConfiguration().getTemplateManager().parseAndProcess(

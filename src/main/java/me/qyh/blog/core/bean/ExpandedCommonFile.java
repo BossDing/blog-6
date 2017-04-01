@@ -19,6 +19,7 @@ import me.qyh.blog.core.file.CommonFile;
 import me.qyh.blog.core.file.ThumbnailUrl;
 
 /**
+ * 拓展的common file
  * 
  * @author Administrator
  *
