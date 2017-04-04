@@ -17,9 +17,6 @@ package me.qyh.blog.web.controller;
 
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,17 +32,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.bean.JsonResult;
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
-import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.core.thymeleaf.TemplateRender;
 import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.core.thymeleaf.TplRenderException;
 import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.controller.form.TemplatePageQueryParamValidator;
@@ -63,7 +57,7 @@ public class PageMgrController extends BaseMgrController {
 	@Autowired
 	private PageValidator pageValidator;
 	@Autowired
-	private TemplateRender uiRender;
+	private UrlHelper urlHelper;
 
 	@InitBinder(value = "page")
 	protected void initBinder(WebDataBinder binder) {
@@ -117,25 +111,15 @@ public class PageMgrController extends BaseMgrController {
 
 	@RequestMapping(value = "preview", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResult preview(@RequestBody @Validated Page page, HttpServletRequest request,
-			HttpServletResponse response) throws LogicException {
-		String rendered;
-		try {
-			Space space = page.getSpace();
-			if (space != null) {
-				space = spaceService.getSpace(space.getId()).orElse(null);
-			}
-			try {
-				Environment.setSpace(space);
-				rendered = uiRender.renderPreview(page, request, response);
-				request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY, rendered);
-				return new JsonResult(true, rendered);
-			} finally {
-				Environment.setSpace(null);
-			}
-		} catch (TplRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
+	public JsonResult preview(@RequestBody @Validated Page page) throws LogicException {
+		Space space = page.getSpace();
+		if (space != null) {
+			space = spaceService.getSpace(space.getId()).orElse(null);
 		}
+		page.setSpace(space);
+
+		templateService.getPreviewService().registerPreview(page.getTemplatePath(), page);
+		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page)));
 	}
 
 	@RequestMapping(value = "delete", method = RequestMethod.POST)

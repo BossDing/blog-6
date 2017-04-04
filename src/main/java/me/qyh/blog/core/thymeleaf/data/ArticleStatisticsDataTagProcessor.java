@@ -15,9 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
@@ -31,15 +28,6 @@ public class ArticleStatisticsDataTagProcessor extends DataTagProcessor<ArticleS
 
 	public ArticleStatisticsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected ArticleStatistics buildPreviewData(Attributes attributes) {
-		ArticleStatistics preview = new ArticleStatistics();
-		preview.setLastModifyDate(Timestamp.valueOf(LocalDateTime.now()));
-		preview.setLastPubDate(Timestamp.valueOf(LocalDateTime.now()));
-		preview.setTotalHits(1);
-		return preview;
 	}
 
 	@Override

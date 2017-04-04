@@ -131,7 +131,7 @@ file_mode = "HTML";
 	function showDataTags(){
 		var html = '';
 		$('[aria-labelledby="data-tab"]').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-		$.get(basePath+"/mgr/tpl/dataTags",{},function(data){
+		$.get(basePath+"/mgr/template/dataTags",{},function(data){
 			if(!data.success){
 				bootbox.alert(data.message);
 				return ;

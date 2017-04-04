@@ -31,13 +31,6 @@ public class TagStatisticsDataTagProcessor extends DataTagProcessor<TagStatistic
 	}
 
 	@Override
-	protected TagStatistics buildPreviewData(Attributes attributes) {
-		TagStatistics ts = new TagStatistics();
-		ts.setArticleTagCount(1);
-		return ts;
-	}
-
-	@Override
 	protected TagStatistics query(Attributes attributes) throws LogicException {
 		return statisticsService.queryTagStatistics();
 	}

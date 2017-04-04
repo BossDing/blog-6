@@ -199,4 +199,18 @@ public class Page extends BaseEntity implements Template {
 		return templateName != null && templateName.startsWith(PAGE_PREFIX);
 	}
 
+	/**
+	 * 获取模板的访问路径
+	 * 
+	 * @return
+	 */
+	public String getTemplatePath() {
+		String templatePath = FileUtils.cleanPath(alias);
+		if (space != null) {
+			Objects.requireNonNull(space.getAlias());
+			templatePath = "space/" + space.getAlias() + (templatePath.isEmpty() ? "" : "/" + templatePath);
+		}
+		return templatePath;
+	}
+
 }

@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.thymeleaf.dialect;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.thymeleaf.context.ITemplateContext;
@@ -33,7 +34,13 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.EscapedAttributeUtils;
 import org.unbescape.html.HtmlEscape;
 
-public abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor {
+/**
+ * 用来处理动态属性
+ * 
+ * @author mhlx
+ *
+ */
+abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor {
 
 	private static final String DYNAMIC_ATT_PREFIX = "th:";
 
@@ -43,8 +50,15 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 				precedence);
 	}
 
-	protected void processAttribute(final ITemplateContext context, IProcessableElementTag tag,
-			Map<String, String> attMap) {
+	/**
+	 * 动态解析将th:开头的属性
+	 * 
+	 * @param context
+	 * @param tag
+	 * @return
+	 */
+	protected Map<String, String> processAttribute(final ITemplateContext context, IProcessableElementTag tag) {
+		Map<String, String> attMap = new HashMap<>();
 		for (final IAttribute attribute : tag.getAllAttributes()) {
 			String completeName = attribute.getAttributeCompleteName();
 			if (completeName.startsWith(DYNAMIC_ATT_PREFIX)) {
@@ -53,6 +67,8 @@ public abstract class DefaultAttributesTagProcessor extends AbstractElementTagPr
 				attMap.put(completeName, attribute.getValue());
 			}
 		}
+
+		return attMap;
 	}
 
 	/*

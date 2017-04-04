@@ -16,7 +16,6 @@
 package me.qyh.blog.core.thymeleaf.data;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,14 +40,6 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 
 	public FilesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected PageResult<BlogFile> buildPreviewData(Attributes attributes) {
-		BlogFileQueryParam param = new BlogFileQueryParam();
-		param.setCurrentPage(1);
-		param.setPageSize(10);
-		return new PageResult<>(param, 0, Collections.emptyList());
 	}
 
 	@Override

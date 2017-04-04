@@ -22,14 +22,25 @@ public class TplRenderException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private final String templateName;
 	private final TplRenderErrorDescription renderErrorDescription;
 
-	public TplRenderException(TplRenderErrorDescription description, Throwable ex) {
+	public TplRenderException(String templateName, TplRenderErrorDescription description, Throwable ex) {
 		super(ex);
 		this.renderErrorDescription = description;
+		this.templateName = templateName;
 	}
 
 	public TplRenderErrorDescription getRenderErrorDescription() {
 		return renderErrorDescription;
+	}
+
+	/**
+	 * root template name
+	 * 
+	 * @return
+	 */
+	public String getTemplateName() {
+		return templateName;
 	}
 }

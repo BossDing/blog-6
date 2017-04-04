@@ -17,7 +17,6 @@ package me.qyh.blog.core.thymeleaf.dialect;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.context.ApplicationContext;
@@ -80,9 +79,7 @@ public class RedirectProcessor extends DefaultAttributesTagProcessor {
 
 		structureHandler.removeElement();
 
-		Map<String, String> attMap = new HashMap<>();
-
-		processAttribute(context, tag, attMap);
+		Map<String, String> attMap = processAttribute(context, tag);
 
 		String url = attMap.get(URL_ATTR);
 		if (url == null) {

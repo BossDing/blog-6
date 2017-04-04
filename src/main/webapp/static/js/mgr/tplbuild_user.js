@@ -11,7 +11,9 @@ function preview() {
 		}
 		page.name="test";
 		page.description="";
-		page.alias = "test";
+		if($.trim($("#alias").val()) != ''){
+			page.alias = $.trim($("#alias").val());
+		}
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
@@ -21,12 +23,20 @@ function preview() {
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					if(data.url){
-						var win = window.open(data.url,
-							'_blank');
-						win.focus();
-					}else{
-						var win = window.open(basePath + '/mgr/template/preview',
+					var url = data.data;
+					if(url.hasPathVariable){
+						bootbox.dialog({
+							title : '预览地址',
+							message : '预览路径为<p><b>'+url.url+'</b></p><p>该地址中包含可变参数，请自行访问</p>',
+							buttons : {
+								success : {
+									label : "确定",
+									className : "btn-success"
+								}
+							}
+						});
+					} else {
+						var win = window.open(url.url,
 							'_blank');
 						win.focus();
 					}
@@ -57,31 +67,16 @@ function preview() {
 		page.allowComment = $("#allowComment").prop("checked");
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/template/page/preview',
+			url : basePath + '/mgr/template/page/build',
 			data : JSON.stringify(page),
 			dataType : "json",
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					$.ajax({
-						type : "post",
-						url : basePath + '/mgr/template/page/build',
-						data : JSON.stringify(page),
-						dataType : "json",
-						contentType : 'application/json',
-						success : function(data){
-							if (data.success) {
-								bootbox.alert(data.message);
-								setTimeout(function(){
-									window.location.href = basePath + '/mgr/template/page/index';
-								}, 500);
-							} else {
-								showError(data);
-							}
-						},
-						complete:function(){
-						}
-					});
+					bootbox.alert(data.message);
+					setTimeout(function(){
+						window.location.href = basePath + '/mgr/template/page/index';
+					}, 500);
 				} else {
 					showError(data);
 				}

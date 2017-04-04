@@ -29,7 +29,6 @@ public class ParseContext {
 
 	private static final ThreadLocal<TransactionStatus> TRANSACTION_LOCAL = new ThreadLocal<>();
 	private static final ThreadLocal<ParseConfig> CONFIG_LOCAL = ThreadLocal.withInitial(ParseConfig::new);
-	private static final ThreadLocal<Template> RREVIEW_LOCAL = new ThreadLocal<>();
 	private static final ThreadLocal<Template> ROOT_LOCAL = new ThreadLocal<>();
 
 	public static void setTransactionStatus(TransactionStatus status) {
@@ -44,15 +43,10 @@ public class ParseContext {
 		TRANSACTION_LOCAL.remove();
 		CONFIG_LOCAL.remove();
 		ROOT_LOCAL.remove();
-		RREVIEW_LOCAL.remove();
 	}
 
 	public static void removeTransactionStatus() {
 		TRANSACTION_LOCAL.remove();
-	}
-
-	public static boolean isPreview() {
-		return getConfig().isPreview();
 	}
 
 	public static boolean onlyCallable() {
@@ -65,14 +59,6 @@ public class ParseContext {
 
 	private static ParseConfig getConfig() {
 		return CONFIG_LOCAL.get();
-	}
-
-	public static void setPreview(Template preview) {
-		RREVIEW_LOCAL.set(preview);
-	}
-
-	public static Template getPreview() {
-		return RREVIEW_LOCAL.get();
 	}
 
 	public static Template getRoot() {

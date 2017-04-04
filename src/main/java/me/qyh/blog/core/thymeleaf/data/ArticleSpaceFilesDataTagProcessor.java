@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,18 +30,6 @@ public class ArticleSpaceFilesDataTagProcessor extends DataTagProcessor<List<Art
 
 	public ArticleSpaceFilesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected List<ArticleSpaceFile> buildPreviewData(Attributes attributes) {
-		List<ArticleSpaceFile> files = new ArrayList<>();
-
-		ArticleSpaceFile file1 = new ArticleSpaceFile();
-		file1.setSpace(getSpace());
-		file1.setCount(1);
-		files.add(file1);
-
-		return files;
 	}
 
 	@Override

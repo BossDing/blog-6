@@ -15,15 +15,11 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.bean.TagCount;
-import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
 
@@ -34,26 +30,6 @@ public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>>
 
 	public ArticleTagDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected List<TagCount> buildPreviewData(Attributes attributes) {
-		TagCount count1 = new TagCount();
-		Tag tag1 = new Tag();
-		tag1.setCreate(Timestamp.valueOf(LocalDateTime.now()));
-		tag1.setId(-1);
-		tag1.setName("预览标签1");
-		count1.setTag(tag1);
-		count1.setCount(1);
-
-		TagCount count2 = new TagCount();
-		Tag tag2 = new Tag();
-		tag2.setCreate(Timestamp.valueOf(LocalDateTime.now()));
-		tag2.setId(-2);
-		tag2.setName("预览标签2");
-		count2.setTag(tag2);
-		count2.setCount(2);
-		return Arrays.asList(count1, count2);
 	}
 
 	@Override

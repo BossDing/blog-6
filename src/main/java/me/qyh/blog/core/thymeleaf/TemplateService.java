@@ -128,15 +128,6 @@ public interface TemplateService {
 	Optional<DataBind<?>> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException;
 
 	/**
-	 * 通过DATA_TAG标签查询预览数据
-	 * 
-	 * @param dataTagStr
-	 * @return
-	 * @throws LogicException
-	 */
-	Optional<DataBind<?>> queryPreviewData(DataTag dataTag);
-
-	/**
 	 * 查询系统数据
 	 * 
 	 * @return
@@ -206,6 +197,14 @@ public interface TemplateService {
 	PathTemplateService getPathTemplateService() throws LogicException;
 
 	/**
+	 * 获取预览模板服务
+	 * 
+	 * @return 预览模板服务，不会为null
+	 * 
+	 */
+	PreviewService getPreviewService();
+
+	/**
 	 * 物理文件模板服务
 	 * 
 	 * @author Administrator
@@ -238,14 +237,47 @@ public interface TemplateService {
 		Optional<PathTemplate> getPathTemplate(String templateName);
 
 		/**
-		 * 根据路径获取一个模板的预览页面
+		 * 注册一个预览页面
 		 * 
 		 * @param path
 		 * @return
 		 * @throws LogicException
 		 *             预览页面不存在，或者页面不能被预览
 		 */
-		PathTemplate getPreview(String path) throws LogicException;
+		void registerPreview(String path) throws LogicException;
+	}
+
+	/**
+	 * 模板预览服务
+	 * <p>
+	 * <b>页面只能在用户登录的情况下才能被预览</b>
+	 * </p>
+	 * 
+	 * @author mhlx
+	 *
+	 */
+	public interface PreviewService {
+		/**
+		 * 注册一个预览页面
+		 * <p>
+		 * 如果路径对应的mapping不存在，那么将会注册一个preview
+		 * mapping，<b>但是只能注册一个不存在的预览mapping，</b>
+		 * </p>
+		 * <p>
+		 * 如果路径已经存在，那么访问path即可预览该页面
+		 * </p>
+		 * 
+		 * @param path
+		 *            模板映射路径
+		 * @param template
+		 *            用来预览的模板
+		 */
+		void registerPreview(String path, Template template);
+
+		/**
+		 * 清空预览页面，删除mapping
+		 */
+		void clearPreview();
 	}
 
 }

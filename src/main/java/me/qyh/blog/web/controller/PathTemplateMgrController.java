@@ -15,9 +15,6 @@
  */
 package me.qyh.blog.web.controller;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -25,20 +22,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.support.RequestContextUtils;
 
 import me.qyh.blog.core.bean.JsonResult;
-import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.core.thymeleaf.TemplateRender;
 import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.core.thymeleaf.TplRenderException;
-import me.qyh.blog.core.thymeleaf.template.PathTemplate;
-import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.util.FileUtils;
 
 @Controller
 @RequestMapping("mgr/template/path")
@@ -46,9 +35,7 @@ public class PathTemplateMgrController extends BaseMgrController {
 	@Autowired
 	private TemplateService templateService;
 	@Autowired
-	private TemplateRender templateRender;
-	@Autowired
-	private SpaceService spaceService;
+	private UrlHelper urlHelper;
 
 	@RequestMapping(value = "index", method = RequestMethod.GET)
 	public String index(ModelMap model, @RequestParam(value = "pattern", required = false) String pattern) {
@@ -67,33 +54,14 @@ public class PathTemplateMgrController extends BaseMgrController {
 	}
 
 	@RequestMapping(value = "preview", method = RequestMethod.GET)
-	public String preview(@RequestParam("path") String path, HttpServletRequest request, HttpServletResponse response)
-			throws LogicException {
+	public String preview(@RequestParam("path") String path, ModelMap model) throws LogicException {
 		// 设置空间
-		PathTemplate preview = templateService.getPathTemplateService().getPreview(path);
-		String alias = getSpaceAliasFromPath(path);
-		Space space = spaceService.getSpace(alias).orElse(null);
-		Environment.setSpace(space);
-		try {
-			request.getSession().setAttribute(Constants.TEMPLATE_PREVIEW_KEY,
-					templateRender.renderPreview(preview, request, response));
-			return "redirect:/mgr/template/preview";
-		} catch (TplRenderException e) {
-			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
-			return "redirect:/error/ui";
-		} finally {
-			Environment.setSpace(null);
+		templateService.getPathTemplateService().registerPreview(path);
+		PreviewUrl url = new PreviewUrl(urlHelper.getUrl() + "/" + FileUtils.cleanPath(path));
+		if (url.isHasPathVariable()) {
+			return "redirect:" + url.getUrl();
 		}
+		model.put("url", url.getUrl());
+		return "mgr/template/preview";
 	}
-
-	private String getSpaceAliasFromPath(String path) {
-		if (UrlUtils.match("space/*/**", path)) {
-			String alias = path.split("/")[1];
-			if (Validators.isLetterOrNum(alias)) {
-				return alias;
-			}
-		}
-		return null;
-	}
-
 }

@@ -26,11 +26,6 @@ public class UserDataTagProcessor extends DataTagProcessor<User> {
 	}
 
 	@Override
-	protected User buildPreviewData(DataTagProcessor<User>.Attributes attributes) {
-		return getUser();
-	}
-
-	@Override
 	protected User query(DataTagProcessor<User>.Attributes attributes) throws LogicException {
 		return getUser();
 	}

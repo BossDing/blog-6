@@ -138,10 +138,19 @@ public class Webs {
 	 */
 	public static String getSpaceFromRequest(HttpServletRequest request) {
 		String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
-		String spaceAlias = null;
+		return getSpaceFromPath(path);
+	}
+
+	/**
+	 * 从路径中获取space
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static String getSpaceFromPath(String path) {
 		if (UrlUtils.match("space/*/**", path)) {
-			spaceAlias = path.split("/")[1];
+			return path.split("/")[1];
 		}
-		return spaceAlias;
+		return null;
 	}
 }

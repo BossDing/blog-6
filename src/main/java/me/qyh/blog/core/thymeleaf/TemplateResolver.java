@@ -58,25 +58,17 @@ public class TemplateResolver implements ITemplateResolver {
 		if (!Template.isTemplate(templateName)) {
 			return null;
 		}
-		boolean cached = false;
-		ITemplateResource templateResource = null;
 
-		if (Template.isPreview(templateName)) {
-			templateResource = new TemplateResource(ParseContext.getPreview());
+		ITemplateResource templateResource;
+		Optional<Template> optional = templateService.queryTemplate(templateName);
+		if (optional.isPresent()) {
+			templateResource = new TemplateResource(optional.get());
+		} else {
+			templateResource = new StringTemplateResource("");
 		}
 
-		if (templateResource == null) {
-			Optional<Template> optional = templateService.queryTemplate(templateName);
-			if (optional.isPresent()) {
-				templateResource = new TemplateResource(optional.get());
-				cached = true;
-			} else {
-				templateResource = new StringTemplateResource("");
-			}
-		}
-
-		ICacheEntryValidity cacheEntryValidity = cached ? AlwaysValidCacheEntryValidity.INSTANCE
-				: NonCacheableCacheEntryValidity.INSTANCE;
+		ICacheEntryValidity cacheEntryValidity = Template.isPreviewTemplate(templateName)
+				? NonCacheableCacheEntryValidity.INSTANCE : AlwaysValidCacheEntryValidity.INSTANCE;
 
 		return new TemplateResolution(templateResource, false, TemplateMode.HTML, false, cacheEntryValidity);
 	}

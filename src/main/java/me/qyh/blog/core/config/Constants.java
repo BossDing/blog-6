@@ -47,10 +47,6 @@ public class Constants {
 	 */
 	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
 	/**
-	 * session中储存预览模板内容的key
-	 */
-	public static final String TEMPLATE_PREVIEW_KEY = "templatePreview";
-	/**
 	 * 系统异常消息
 	 */
 	public static final Message SYSTEM_ERROR = new Message("error.system", "系统异常");

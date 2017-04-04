@@ -32,14 +32,6 @@ public class RandomArticleDataTagProcessor extends DataTagProcessor<Article> {
 	}
 
 	@Override
-	protected Article buildPreviewData(Attributes attributes) {
-		Article random = new Article(-1);
-		random.setTitle("随机文章");
-		random.setSpace(getSpace());
-		return random;
-	}
-
-	@Override
 	protected Article query(Attributes attributes) throws LogicException {
 		return articleService.selectRandom(Boolean.parseBoolean(attributes.get(QUERY_LOCK_ATTR))).orElse(null);
 	}

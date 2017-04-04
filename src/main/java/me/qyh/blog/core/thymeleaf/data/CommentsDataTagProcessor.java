@@ -15,20 +15,12 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.DigestUtils;
 
 import me.qyh.blog.core.bean.CommentPageResult;
-import me.qyh.blog.core.config.CommentConfig;
-import me.qyh.blog.core.entity.Comment;
+import me.qyh.blog.core.entity.Comment.CommentStatus;
 import me.qyh.blog.core.entity.CommentMode;
 import me.qyh.blog.core.entity.CommentModule;
-import me.qyh.blog.core.entity.Comment.CommentStatus;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.CommentQueryParam;
@@ -44,27 +36,6 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 
 	public CommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected CommentPageResult buildPreviewData(Attributes attributes) {
-		List<Comment> comments = new ArrayList<>();
-		Comment comment = new Comment();
-		comment.setCommentDate(Timestamp.valueOf(LocalDateTime.now()));
-		comment.setContent("测试内容");
-		comment.setNickname("测试");
-		comment.setEmail("test@test.com");
-		comment.setGravatar(DigestUtils.md5DigestAsHex("test@test.com".getBytes()));
-		comment.setAdmin(true);
-		comment.setIp("127.0.0.1");
-		comment.setCommentModule(new CommentModule(ModuleType.ARTICLE, -1));
-		comment.setStatus(CommentStatus.NORMAL);
-		comments.add(comment);
-		CommentQueryParam param = new CommentQueryParam();
-		param.setCurrentPage(1);
-		CommentConfig config = commentService.getCommentConfig();
-		param.setPageSize(config.getPageSize());
-		return new CommentPageResult(param, config.getPageSize() + 1, comments, config);
 	}
 
 	@Override

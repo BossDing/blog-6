@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.template;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -31,7 +30,7 @@ import me.qyh.blog.util.Validators;
  * @author Administrator
  *
  */
-public class Fragment extends BaseEntity implements Serializable, Template {
+public class Fragment extends BaseEntity implements Template {
 
 	/**
 	 * 

@@ -51,9 +51,9 @@
 							<li><a th:class="${tag == 'tpl-fragment'}? active:''"
 								th:href="@{/mgr/template/fragment/index}">模板片段管理</a></li>
 							<li><a th:class="${tag == 'tpl-export'}? active:''"
-								th:href="@{/mgr/tpl/export}">模板导入导出</a></li>
-							<li><a th:class="${tag == 'tpl-clearCache'}? active:''"
-								th:href="@{/mgr/tpl/clearCache}">缓存清除</a></li>
+								th:href="@{/mgr/template/export}">模板导入导出</a></li>
+							<li><a th:class="${tag == 'tpl-other'}? active:''"
+								th:href="@{/mgr/template/other}">其他</a></li>
 						</ul> <!-- /.nav-second-level --></li>
 					<li><a th:href="@{/mgr/tag/index}"
 						th:class="${tag == 'tag'}? active:''"> 标签管理</a></li>

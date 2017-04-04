@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.dialect;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -89,21 +88,15 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 	}
 
 	private Optional<DataBind<?>> queryDataBind(DataTag dataTag) {
-		if (ParseContext.isPreview()) {
-			return templateService.queryPreviewData(dataTag);
-		} else {
-			try {
-				return templateService.queryData(dataTag, ParseContext.onlyCallable());
-			} catch (LogicException e) {
-				throw new RuntimeLogicException(e);
-			}
+		try {
+			return templateService.queryData(dataTag, ParseContext.onlyCallable());
+		} catch (LogicException e) {
+			throw new RuntimeLogicException(e);
 		}
 	}
 
 	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
-		Map<String, String> attMap = new HashMap<>();
-
-		processAttribute(context, tag, attMap);
+		Map<String, String> attMap = processAttribute(context, tag);
 
 		String name = attMap.get(NAME_ATTR);
 		if (Validators.isEmptyOrNull(name, true)) {

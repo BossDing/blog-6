@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +38,6 @@ public class SpacesDataTagProcessor extends DataTagProcessor<List<Space>> {
 
 	public SpacesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected List<Space> buildPreviewData(Attributes attributes) {
-		return Arrays.asList(getSpace());
 	}
 
 	@Override

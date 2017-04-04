@@ -16,7 +16,6 @@
 package me.qyh.blog.core.thymeleaf.dialect;
 
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.thymeleaf.TemplateSpec;
@@ -55,8 +54,7 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		Map<String, String> attMap = new HashMap<>();
-		super.processAttribute(context, tag, attMap);
+		Map<String, String> attMap = processAttribute(context, tag);
 		String name = attMap.get(NAME);
 		if (name != null) {
 			String templateName = Fragment.getTemplateName(name, Environment.getSpace());

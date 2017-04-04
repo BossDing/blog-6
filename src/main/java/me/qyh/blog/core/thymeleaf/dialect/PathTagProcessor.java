@@ -16,7 +16,6 @@
 package me.qyh.blog.core.thymeleaf.dialect;
 
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.thymeleaf.TemplateSpec;
@@ -49,8 +48,7 @@ public class PathTagProcessor extends DefaultAttributesTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		Map<String, String> attMap = new HashMap<>();
-		super.processAttribute(context, tag, attMap);
+		Map<String, String> attMap = processAttribute(context, tag);
 		String path = attMap.get(PATH);
 		if (path != null) {
 			String templateName = PathTemplate.getTemplateName(path, Environment.getSpaceAlias());

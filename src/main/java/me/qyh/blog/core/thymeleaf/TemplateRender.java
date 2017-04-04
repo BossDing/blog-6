@@ -48,7 +48,6 @@ import org.thymeleaf.standard.expression.StandardExpressionExecutionContext;
 import org.thymeleaf.standard.expression.StandardExpressions;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.thymeleaf.template.Template;
 
 /**
  * 用来将模板解析成字符串
@@ -84,16 +83,6 @@ public final class TemplateRender {
 			throw e;
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
-		}
-	}
-
-	public String renderPreview(Template preview, HttpServletRequest request, HttpServletResponse response)
-			throws TplRenderException {
-		try {
-			ParseContext.setPreview(preview);
-			return render(Template.PREVIEW, null, request, response, new ParseConfig(true, false));
-		} finally {
-			ParseContext.remove();
 		}
 	}
 

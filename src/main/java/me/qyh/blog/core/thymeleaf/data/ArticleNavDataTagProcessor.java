@@ -18,7 +18,6 @@ package me.qyh.blog.core.thymeleaf.data;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.bean.ArticleNav;
-import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
 
@@ -30,18 +29,6 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 
 	public ArticleNavDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected ArticleNav buildPreviewData(Attributes attributes) {
-		Article previous = new Article(-1);
-		previous.setTitle("预览博客-前一篇");
-		Article next = new Article(-2);
-		next.setTitle("预览博客-后一篇");
-		previous.setSpace(getSpace());
-		next.setSpace(getSpace());
-
-		return new ArticleNav(previous, next);
 	}
 
 	@Override

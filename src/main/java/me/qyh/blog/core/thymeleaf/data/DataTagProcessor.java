@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,19 +38,7 @@ public abstract class DataTagProcessor<T> {
 	private String dataName;// 默认数据绑定名，唯一
 	private boolean callable;// 是否可以被ajax调用
 
-	protected static final Space previewSpace = new Space();
-
 	protected static final Logger LOGGER = LoggerFactory.getLogger(DataTagProcessor.class);
-
-	static {
-		previewSpace.setAlias("preview");
-		previewSpace.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-		previewSpace.setId(1);
-		previewSpace.setIsDefault(false);
-		previewSpace.setIsPrivate(false);
-		previewSpace.setName("Preview");
-		previewSpace.setLockId(null);
-	}
 
 	/**
 	 * 构造器
@@ -92,36 +78,6 @@ public abstract class DataTagProcessor<T> {
 		return bind;
 	}
 
-	/**
-	 * 构造预览用数据
-	 * 
-	 * @param attributes
-	 * @return
-	 */
-	public final DataBind<T> previewData(Map<String, String> attributes) {
-		if (attributes == null) {
-			attributes = new HashMap<>();
-		}
-		Attributes atts = new Attributes(attributes);
-		T result = buildPreviewData(atts);
-		DataBind<T> bind = new DataBind<>();
-		bind.setData(result);
-		String dataNameAttV = atts.get(DATA_NAME);
-		if (validDataName(dataNameAttV)) {
-			bind.setDataName(dataNameAttV);
-		} else {
-			bind.setDataName(dataName);
-		}
-		return bind;
-	}
-
-	/**
-	 * 获取测试数据
-	 * 
-	 * @return
-	 */
-	protected abstract T buildPreviewData(Attributes attributes);
-
 	protected abstract T query(Attributes attributes) throws LogicException;
 
 	public String getName() {
@@ -138,11 +94,6 @@ public abstract class DataTagProcessor<T> {
 
 	public void setCallable(boolean callable) {
 		this.callable = callable;
-	}
-
-	protected Space getSpace() {
-		Space current = Environment.getSpace();
-		return current == null ? previewSpace : current;
 	}
 
 	protected Space getCurrentSpace() {

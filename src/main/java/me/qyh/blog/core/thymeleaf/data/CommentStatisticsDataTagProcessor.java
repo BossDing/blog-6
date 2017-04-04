@@ -31,14 +31,6 @@ public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentS
 	}
 
 	@Override
-	protected CommentStatistics buildPreviewData(Attributes attributes) {
-		CommentStatistics cs = new CommentStatistics();
-		cs.setTotalArticleComments(1);
-		cs.setTotalPageComments(1);
-		return cs;
-	}
-
-	@Override
 	protected CommentStatistics query(Attributes attributes) throws LogicException {
 		return statisticsService.queryCommentStatistics();
 	}

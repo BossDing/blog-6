@@ -16,7 +16,6 @@
 package me.qyh.blog.core.thymeleaf.template;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -24,7 +23,7 @@ import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 
-public class PathTemplate implements Template, Serializable {
+public class PathTemplate implements Template {
 
 	/**
 	 * 

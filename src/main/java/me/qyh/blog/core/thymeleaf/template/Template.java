@@ -16,6 +16,7 @@
 package me.qyh.blog.core.thymeleaf.template;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * 模板
@@ -23,7 +24,7 @@ import java.io.IOException;
  * @author Administrator
  *
  */
-public interface Template {
+public interface Template extends Serializable {
 
 	/**
 	 * 模板分割符
@@ -35,23 +36,29 @@ public interface Template {
 	 */
 	static final String TEMPLATE_PREFIX = "Template" + SPLITER;
 
+	/**
+	 * 预览模板前缀
+	 */
+	static final String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
+
+	/**
+	 * 判断是否是模板文件名
+	 * 
+	 * @param templateName
+	 * @return
+	 */
 	static boolean isTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(TEMPLATE_PREFIX);
 	}
 
 	/**
-	 * 预览模板路径
-	 */
-	static final String PREVIEW = TEMPLATE_PREFIX + "Preview";
-
-	/**
-	 * 判断页面是否预览模板
+	 * 判断是否是预览模板文件名
 	 * 
 	 * @param templateName
 	 * @return
 	 */
-	public static boolean isPreview(String templateName) {
-		return PREVIEW.equals(templateName);
+	static boolean isPreviewTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX);
 	}
 
 	/**

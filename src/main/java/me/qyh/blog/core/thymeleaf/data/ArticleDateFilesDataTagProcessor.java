@@ -15,11 +15,8 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import java.util.Calendar;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
-import me.qyh.blog.core.bean.ArticleDateFile;
 import me.qyh.blog.core.bean.ArticleDateFiles;
 import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.exception.LogicException;
@@ -34,27 +31,6 @@ public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDa
 
 	public ArticleDateFilesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
-	}
-
-	@Override
-	protected ArticleDateFiles buildPreviewData(Attributes attributes) {
-		ArticleDateFiles files = new ArticleDateFiles();
-		files.setMode(ArticleDateFileMode.YM);
-		Calendar cal = Calendar.getInstance();
-		ArticleDateFile file1 = new ArticleDateFile();
-		file1.setBegin(cal.getTime());
-		file1.setCount(1);
-		files.addArticleDateFile(file1);
-
-		ArticleDateFile file2 = new ArticleDateFile();
-		cal.add(Calendar.MONTH, -1);
-		file2.setBegin(cal.getTime());
-		file2.setCount(2);
-		files.addArticleDateFile(file2);
-
-		files.calDate();
-
-		return files;
 	}
 
 	@Override

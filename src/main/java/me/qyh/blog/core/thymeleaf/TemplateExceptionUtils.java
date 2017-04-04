@@ -48,11 +48,12 @@ public final class TemplateExceptionUtils {
 			if (finded.isPresent()) {
 				return (Exception) finded.get();
 			}
-			return new TplRenderException(fromException((TemplateProcessingException) e, templateName), e);
+			return new TplRenderException(templateName, fromException((TemplateProcessingException) e, templateName),
+					e);
 		}
 		if (e instanceof UIStackoverflowError) {
 			UIStackoverflowError error = (UIStackoverflowError) e;
-			return new TplRenderException(fromError(error), e);
+			return new TplRenderException(templateName, fromError(error), e);
 		}
 		return new SystemException(e.getMessage(), e);
 	}

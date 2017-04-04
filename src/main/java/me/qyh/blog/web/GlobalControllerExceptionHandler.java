@@ -64,8 +64,10 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.thymeleaf.TemplateNotFoundException;
 import me.qyh.blog.core.thymeleaf.TplRenderException;
 import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
+import me.qyh.blog.core.thymeleaf.template.Template;
 import me.qyh.blog.support.metaweblog.FaultException;
 import me.qyh.blog.support.metaweblog.RequestXmlParser;
 import me.qyh.blog.util.UrlUtils;
@@ -112,7 +114,9 @@ public class GlobalControllerExceptionHandler {
 	@ExceptionHandler(TplRenderException.class)
 	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TplRenderException e)
 			throws IOException {
-		LOGGER.error(e.getMessage(), e);
+		if (!Template.isPreviewTemplate(e.getTemplateName())) {
+			LOGGER.error(e.getMessage(), e);
+		}
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, e.getRenderErrorDescription()));
 			return null;
@@ -275,9 +279,12 @@ public class GlobalControllerExceptionHandler {
 
 	}
 
-	@ExceptionHandler(value = NoHandlerFoundException.class)
-	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp,
-			NoHandlerFoundException ex) throws IOException {
+	@ExceptionHandler(value = { NoHandlerFoundException.class, TemplateNotFoundException.class })
+	public String noHandlerFoundException(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+		return handleNotFound(request, resp);
+	}
+
+	private String handleNotFound(HttpServletRequest request, HttpServletResponse resp) throws IOException {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_404));
 			return null;

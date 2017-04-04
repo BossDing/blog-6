@@ -69,7 +69,7 @@ public class IndexController {
 		try {
 			return new JsonResult(true,
 					uiRender.render(new Fragment(Webs.decode(fragment), Environment.getSpace()).getTemplateName(), null,
-							request, response, new ParseConfig(false, true)));
+							request, response, new ParseConfig(true)));
 		} catch (TplRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}
