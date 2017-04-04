@@ -240,11 +240,11 @@ public interface TemplateService {
 		 * 注册一个预览页面
 		 * 
 		 * @param path
-		 * @return
+		 * @return 预览preview
 		 * @throws LogicException
 		 *             预览页面不存在，或者页面不能被预览
 		 */
-		void registerPreview(String path) throws LogicException;
+		PathTemplate registerPreview(String path) throws LogicException;
 	}
 
 	/**

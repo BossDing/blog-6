@@ -448,10 +448,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					// 如果页面内容发生了改变
 					if (!checkChangeWhenImport(current, page)) {
 						current.setTpl(page.getTpl());
-						pageDao.update(page);
-						helper.unregisterPage(page);
+						pageDao.update(current);
+						helper.unregisterPage(current);
 						try {
-							helper.registerPage(page);
+							helper.registerPage(current);
 						} catch (LogicException ex) {
 							records.add(new ImportRecord(true, ((LogicException) ex).getLogicMessage()));
 							ts.setRollbackOnly();
@@ -895,7 +895,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		@Override
-		public void registerPreview(String path) throws LogicException {
+		public PathTemplate registerPreview(String path) throws LogicException {
 			String cleanPath = FileUtils.cleanPath(path);
 			Path lookupPath = pathTemplateRoot.resolve(cleanPath);
 			if (!Files.exists(lookupPath)) {
@@ -928,6 +928,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			PathTemplate preview = new PathTemplate(previewPath, true, relativePath);
 			previewService.registerPreview(relativePath, preview);
+			return preview;
 		}
 
 		@Override

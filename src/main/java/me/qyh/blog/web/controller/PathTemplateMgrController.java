@@ -27,7 +27,7 @@ import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.util.FileUtils;
+import me.qyh.blog.core.thymeleaf.template.PathTemplate;
 
 @Controller
 @RequestMapping("mgr/template/path")
@@ -56,9 +56,9 @@ public class PathTemplateMgrController extends BaseMgrController {
 	@RequestMapping(value = "preview", method = RequestMethod.GET)
 	public String preview(@RequestParam("path") String path, ModelMap model) throws LogicException {
 		// 设置空间
-		templateService.getPathTemplateService().registerPreview(path);
-		PreviewUrl url = new PreviewUrl(urlHelper.getUrl() + "/" + FileUtils.cleanPath(path));
-		if (url.isHasPathVariable()) {
+		PathTemplate preview = templateService.getPathTemplateService().registerPreview(path);
+		PreviewUrl url = new PreviewUrl(urlHelper.getUrl() + "/" + preview.getRelativePath());
+		if (!url.isHasPathVariable()) {
 			return "redirect:" + url.getUrl();
 		}
 		model.put("url", url.getUrl());
