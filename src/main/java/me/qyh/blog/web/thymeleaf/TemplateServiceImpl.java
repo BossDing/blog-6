@@ -33,9 +33,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -147,6 +152,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	private final List<TemplateProcessor> templateProcessors = new ArrayList<>();
 	private PreviewServiceImpl previewService;
+
+	private final AtomicInteger templateIncrementId = new AtomicInteger(0);
 
 	@Override
 	public synchronized void insertFragment(Fragment fragment) throws LogicException {
@@ -337,16 +344,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public Optional<Template> queryTemplate(String templateName) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			Optional<? extends Template> optional = null;
 			for (TemplateProcessor processor : templateProcessors) {
 				if (processor.canProcess(templateName)) {
-					optional = processor.getTemplate(templateName);
+					return Optional.ofNullable(processor.getTemplate(templateName));
 				}
 			}
-			if (optional == null) {
-				throw new SystemException("无法处理模板名：" + templateName + "对应的模板");
-			}
-			return Optional.ofNullable(optional.orElse(null));
+			throw new SystemException("无法处理模板名：" + templateName + "对应的模板");
 		});
 	}
 
@@ -369,13 +372,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} finally {
 			platformTransactionManager.commit(status);
 		}
-	}
-
-	@Override
-	public List<Page> selectAllPages() {
-		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			return pageDao.selectAll();
-		});
 	}
 
 	@Override
@@ -625,7 +621,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		this.templateProcessors.add(new TemplateProcessor() {
 
 			@Override
-			public Optional<? extends Template> getTemplate(String templateName) {
+			public Template getTemplate(String templateName) {
 				String[] array = templateName.split(Template.SPLITER);
 				String path;
 				if (array.length == 3) {
@@ -639,7 +635,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				if (template != null) {
 					template = template.cloneTemplate();
 				}
-				return Optional.ofNullable(template);
+				return template;
 			}
 
 			@Override
@@ -652,8 +648,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		this.templateProcessors.add(new TemplateProcessor() {
 
 			@Override
-			public Optional<? extends Template> getTemplate(String templateName) {
-				return queryPageWithTemplateName(templateName);
+			public Template getTemplate(String templateName) {
+				return queryPageWithTemplateName(templateName).orElse(null);
 			}
 
 			@Override
@@ -666,8 +662,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		this.templateProcessors.add(new TemplateProcessor() {
 
 			@Override
-			public Optional<? extends Template> getTemplate(String templateName) {
-				return queryFragmentWithTemplateName(templateName);
+			public Template getTemplate(String templateName) {
+				return queryFragmentWithTemplateName(templateName).orElse(null);
 			}
 
 			@Override
@@ -681,8 +677,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			this.templateProcessors.add(new TemplateProcessor() {
 
 				@Override
-				public Optional<? extends Template> getTemplate(String templateName) {
-					return pathTemplateService.getPathTemplate(templateName);
+				public Template getTemplate(String templateName) {
+					return pathTemplateService.getPathTemplate(templateName).orElse(null);
 				}
 
 				@Override
@@ -692,28 +688,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			});
 		}
 
-		this.templateProcessors.add(new TemplateProcessor() {
-
-			@Override
-			public Optional<? extends Template> getTemplate(String template) {
-				return null;
-			}
-
-			@Override
-			public boolean canProcess(String templateName) {
-				return false;
-			}
-		});
-
 		// 预览文件模板服务
 		this.previewService = new PreviewServiceImpl();
 
 		this.templateProcessors.add(new TemplateProcessor() {
 
 			@Override
-			public Optional<? extends Template> getTemplate(String templateName) {
-				return Optional.ofNullable(
-						previewService.getTemplate(templateName.substring(Template.TEMPLATE_PREVIEW_PREFIX.length())));
+			public Template getTemplate(String templateName) {
+				return previewService.getTemplate(templateName).orElse(null);
 			}
 
 			@Override
@@ -933,6 +915,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public Optional<PathTemplate> getPathTemplate(String templateName) {
+			if (!PathTemplate.isPathTemplate(templateName)) {
+				return Optional.empty();
+			}
 			String path;
 			String spaceAlias = null;
 			// Template%Path%path
@@ -1206,41 +1191,108 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	private final class PreviewServiceImpl implements PreviewService {
 
-		private Map<String, Template> previewMap = new ConcurrentHashMap<>();
-		private Set<String> pathSet = new HashSet<>();
+		private Map<String, Template> previewMap = new HashMap<>();
+		private ReadWriteLock lock = new ReentrantReadWriteLock();
 
 		@Override
-		public void registerPreview(String path, Template template) {
-			long stamp = templateMappingRegister.lockWrite();
+		public void registerPreview(String path, Template template) throws LogicException {
+			lock.writeLock().lock();
 			try {
-				String cleanPath = FileUtils.cleanPath(path);
-				boolean newMapping = templateMappingRegister.registerPreviewMapping(template.getTemplateName(),
-						cleanPath);
-				previewMap.put(template.getTemplateName(), template);
-				// 注册了新的mapping，clearPreview时需要解除注册
-				if (newMapping) {
-					pathSet.add(cleanPath);
+				long stamp = templateMappingRegister.lockWrite();
+				try {
+					String cleanPath = FileUtils.cleanPath(path);
+					templateMappingRegister.registerPreviewMapping(template.getTemplateName(), cleanPath);
+					previewMap.put(cleanPath, template);
+				} finally {
+					templateMappingRegister.unlockWrite(stamp);
 				}
 			} finally {
-				templateMappingRegister.unlockWrite(stamp);
+				lock.writeLock().unlock();
 			}
 		}
 
 		@Override
 		public void clearPreview() {
-			previewMap.clear();
-			long stamp = templateMappingRegister.lockWrite();
+			lock.writeLock().lock();
 			try {
-				for (String path : pathSet) {
-					templateMappingRegister.unregisterPreviewMapping(path);
+				previewMap.clear();
+				long stamp = templateMappingRegister.lockWrite();
+				try {
+					for (String path : previewMap.keySet()) {
+						templateMappingRegister.unregisterPreviewMapping(path);
+					}
+				} finally {
+					templateMappingRegister.unlockWrite(stamp);
 				}
 			} finally {
-				templateMappingRegister.unlockWrite(stamp);
+				lock.writeLock().unlock();
 			}
 		}
 
-		Template getTemplate(String templateName) {
-			return previewMap.get(templateName);
+		@Override
+		public Optional<Template> getTemplate(String templateName) {
+			if (!Template.isPreviewTemplate(templateName)) {
+				return Optional.empty();
+			}
+			lock.readLock().lock();
+			try {
+				if (previewMap.isEmpty()) {
+					return Optional.empty();
+				}
+				String path = templateName.substring(Template.TEMPLATE_PREVIEW_PREFIX.length());
+				return Optional.ofNullable(previewMap.get(path));
+			} finally {
+				lock.readLock().unlock();
+			}
+		}
+
+		/**
+		 * <p>
+		 * 获取最匹配的preview路径<br>
+		 * 如果注册了space/test/{test}路径，那么访问space/test/apk将会匹配到该路径<br>
+		 * 但是如果space/test/apk已经存在，仍然不会进入space/test/apk这个mapping，而是进入space/test/{test}这个mapping<br>
+		 * 为了防止这种情况的发生，将当前被匹配到的path用于比对，如果preview中的path级别比当前path高，则用preview中的，否则用当前路径的<br>
+		 * </p>
+		 * 
+		 * @param currentPath
+		 * @param templateName
+		 * @return
+		 */
+		Optional<String> getBestMatchTemplateName(String currentPath, String templateName) {
+			if (!Template.isPreviewTemplate(templateName)) {
+				return Optional.empty();
+			}
+			lock.readLock().lock();
+			try {
+				if (previewMap.isEmpty()) {
+					return Optional.empty();
+				}
+				// 如果直接匹配成功
+				String path = templateName.substring(Template.TEMPLATE_PREVIEW_PREFIX.length());
+				Template template = previewMap.get(path);
+				if (template == null) {
+					// 没有直接匹配的path，只能遍历全部path，寻找最合适的path
+					Set<String> pathSet = new HashSet<>(previewMap.keySet());
+					if (currentPath != null) {
+						pathSet.add(currentPath);
+					}
+					PatternsRequestCondition condition = new PatternsRequestCondition(
+							pathSet.toArray(new String[pathSet.size()]));
+					List<String> matches = condition.getMatchingPatterns("/" + path);
+					if (!matches.isEmpty()) {
+						String bestMatch = matches.get(0).substring(1);
+						template = previewMap.get(bestMatch);
+						if (template != null) {
+							return Optional.of(Template.TEMPLATE_PREVIEW_PREFIX + bestMatch);
+						}
+					}
+					return Optional.empty();
+				} else {
+					return Optional.of(Template.TEMPLATE_PREVIEW_PREFIX + path);
+				}
+			} finally {
+				lock.readLock().unlock();
+			}
 		}
 	}
 
@@ -1266,9 +1318,22 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private interface TemplateProcessor {
+		/**
+		 * 是否能够处理该模板
+		 * 
+		 * @param templateName
+		 * @return
+		 */
 		boolean canProcess(String templateName);
 
-		Optional<? extends Template> getTemplate(String template);
+		/**
+		 * 根据模板名查询模板
+		 * 
+		 * @param templateName
+		 *            模板名
+		 * @return 模板，如果不存在，返回null
+		 */
+		Template getTemplate(String template);
 	}
 
 	/**
@@ -1287,12 +1352,30 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		private final Method method;
 		private final TemplateRequestMappingHandlerMapping requestMappingHandlerMapping;
+		private final PatternsRequestCondition condition;
 
 		private TemplateMappingRegister(TemplateRequestMappingHandlerMapping requestMappingHandlerMapping)
 				throws Exception {
 			super();
 			this.requestMappingHandlerMapping = requestMappingHandlerMapping;
-			method = TemplateController.class.getMethod("handleRequest");
+			method = TemplateController.class.getMethod("handleRequest", HttpServletRequest.class);
+			Set<String> patternSet = new HashSet<>();
+
+			// 遍历所有的系统默认路径
+			for (Map.Entry<RequestMappingInfo, HandlerMethod> it : requestMappingHandlerMapping
+					.getHandlerMethodsUnsafe().entrySet()) {
+				RequestMappingInfo info = it.getKey();
+				HandlerMethod method = it.getValue();
+				PatternsRequestCondition condition = info.getPatternsCondition();
+				if (!(method.getBean() instanceof TemplateController)) {
+					RequestMethodsRequestCondition methodsRequestCondition = info.getMethodsCondition();
+					if (methodsRequestCondition.isEmpty()
+							|| methodsRequestCondition.getMethods().contains(RequestMethod.GET)) {
+						patternSet.addAll(condition.getPatterns());
+					}
+				}
+			}
+			condition = new PatternsRequestCondition(patternSet.toArray(new String[patternSet.size()]));
 		}
 
 		public long lockWrite() {
@@ -1310,16 +1393,17 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *            路径
 		 */
 		public void unregisterPreviewMapping(String path) {
+			path = FileUtils.cleanPath(path);
+			if (isKeyPath(path)) {
+				return;
+			}
 			RequestMappingInfo mapping = getMethodMapping(path);
 			HandlerMethod handlerMethod = requestMappingHandlerMapping.getHandlerMethodsUnsafe().get(mapping);
 			if (handlerMethod != null) {
-				Object object = handlerMethod.getBean();
-				if (object instanceof TemplateController) {
-					TemplateController templateController = (TemplateController) object;
-					if (templateController.templateName.startsWith(Template.TEMPLATE_PREVIEW_PREFIX)) {
-						// 此时可以解除
-						requestMappingHandlerMapping.unregisterMappingUnsafe(mapping);
-					}
+				TemplateController templateController = (TemplateController) handlerMethod.getBean();
+				if (Template.isPreviewTemplate(templateController.templateName)) {
+					// 此时可以解除
+					requestMappingHandlerMapping.unregisterMappingUnsafe(mapping);
 				}
 			}
 		}
@@ -1331,22 +1415,30 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *            模板名
 		 * @param path
 		 *            路径
-		 * @return 是否注册新的mapping
 		 */
-		public boolean registerPreviewMapping(String templateName, String path) {
+		public void registerPreviewMapping(String templateName, String path) throws LogicException {
+			path = FileUtils.cleanPath(path);
+			// 判断是否是系统保留路径
+			if (isKeyPath(path)) {
+				throw new LogicException("requestMapping.preview.keyPath", "路径" + path + "是系统保留路径，无法被预览");
+			}
+			// 查找是否已经存在可以被映射的RequestMapping
+			// 此时应该遍历查找
+			// 因为space/{alias}和space/test是两个不同的RequestMapping
+			// 但是space/{alias}可以映射到space/test
+			String lookupPath = "/" + path;
+			for (Map.Entry<RequestMappingInfo, HandlerMethod> it : requestMappingHandlerMapping
+					.getHandlerMethodsUnsafe().entrySet()) {
+				HandlerMethod method = it.getValue();
+				if (method.getBean() instanceof TemplateController) {
+					PatternsRequestCondition condition = it.getKey().getPatternsCondition();
+					if (!condition.getMatchingPatterns(lookupPath).isEmpty()) {
+						return;
+					}
+				}
+			}
 			RequestMappingInfo info = getMethodMapping(path);
-			HandlerMethod handlerMethod = requestMappingHandlerMapping.getHandlerMethodsUnsafe().get(info);
-			if (handlerMethod != null) {
-				// HandlerMethod已经存在，尝试清除预览路径
-				unregisterPreviewMapping(path);
-			}
-			// 再次查找HandlerMethod 如果不存在，注册
-			handlerMethod = requestMappingHandlerMapping.getHandlerMethodsUnsafe().get(info);
-			if (handlerMethod == null) {
-				requestMappingHandlerMapping.registerMappingUnsafe(info, new PreviewTemplateController(templateName),
-						method);
-			}
-			return handlerMethod == null;
+			requestMappingHandlerMapping.registerMappingUnsafe(info, new PreviewTemplateController(path), method);
 		}
 
 		/**
@@ -1360,26 +1452,29 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *             路径已经存在并且无法清除
 		 */
 		public void registerTemplateMapping(String templateName, String path) throws LogicException {
+			path = FileUtils.cleanPath(path);
+			// 判断是否是系统保留路径
+			if (isKeyPath(path)) {
+				throw new LogicException("requestMapping.register.keyPath", "路径" + path + "是系统保留路径，无法被注册");
+			}
 			boolean exists = false;
 			RequestMappingInfo info = getMethodMapping(path);
 			HandlerMethod handlerMethod = requestMappingHandlerMapping.getHandlerMethodsUnsafe().get(info);
 			if (handlerMethod != null) {
 				exists = true;
-				Object object = handlerMethod.getBean();
-				if (object instanceof TemplateController) {
-					TemplateController templateController = (TemplateController) object;
-					// 如果是系统模板或者预览模板，删除后注册
-					if (SystemTemplate.isSystemTemplate(templateController.templateName)
-							|| templateController.templateName.startsWith(Template.TEMPLATE_PREVIEW_PREFIX)) {
-						requestMappingHandlerMapping.unregisterMappingUnsafe(info);
-						exists = false;
-					}
+				TemplateController templateController = (TemplateController) handlerMethod.getBean();
+				// 如果是系统模板或者预览模板，删除后注册
+				if (SystemTemplate.isSystemTemplate(templateController.templateName)
+						|| Template.isPreviewTemplate(templateController.templateName)) {
+					requestMappingHandlerMapping.unregisterMappingUnsafe(info);
+					exists = false;
 				}
 			}
 			if (exists) {
-				throw new LogicException(new Message("requestMapping.exists", "路径:" + path + "已经存在", path));
+				throw new LogicException(new Message("requestMapping.register.exists", "路径:" + path + "已经存在", path));
 			}
-			requestMappingHandlerMapping.registerMappingUnsafe(info, new TemplateController(templateName), method);
+			requestMappingHandlerMapping.registerMappingUnsafe(info, new TemplateController(templateName, path),
+					method);
 		}
 
 		/**
@@ -1389,13 +1484,17 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *            模板访问路径
 		 */
 		public void unregisterTemplateMapping(String path) {
-			SystemTemplate template = defaultTemplates.get(FileUtils.cleanPath(path));
+			path = FileUtils.cleanPath(path);
+			if (isKeyPath(path)) {
+				return;
+			}
+			SystemTemplate template = defaultTemplates.get(path);
 			requestMappingHandlerMapping.unregisterMappingUnsafe(getMethodMapping(path));
 			// 插入默认系统模板
 			if (template != null) {
 				String templateName = template.getTemplateName();
 				requestMappingHandlerMapping.registerMappingUnsafe(getMethodMapping(template.getPath()),
-						new TemplateController(templateName), method);
+						new TemplateController(templateName, path), method);
 			}
 		}
 
@@ -1408,9 +1507,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *            模板访问路径
 		 */
 		public void forceRegisterTemplateMapping(String templateName, String path) {
+			path = FileUtils.cleanPath(path);
+			if (isKeyPath(path)) {
+				return;
+			}
 			RequestMappingInfo info = getMethodMapping(path);
 			requestMappingHandlerMapping.unregisterMappingUnsafe(info);
-			requestMappingHandlerMapping.registerMappingUnsafe(info, new TemplateController(templateName), method);
+			requestMappingHandlerMapping.registerMappingUnsafe(info, new TemplateController(templateName, path),
+					method);
 		}
 
 		private RequestMappingInfo getMethodMapping(String registPath) {
@@ -1419,40 +1523,59 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return new RequestMappingInfo(prc, rmrc, null, null, null, null, null);
 		}
 
-		private class TemplateController {
-
-			protected final TemplateView templateView;
-			protected final String templateName;
-
-			public TemplateController(String templateName) {
-				super();
-				this.templateView = new TemplateView(templateName);
-				this.templateName = templateName;
-			}
-
-			@SuppressWarnings("unused")
-			public TemplateView handleRequest() {
-				// 如果用户登录状态并且预览服务中存在这个模板，那么返回预览模板名
-				if (Environment.isLogin() && (previewService.getTemplate(templateName) != null)) {
-					return new TemplateView(Template.TEMPLATE_PREVIEW_PREFIX + templateName);
-				}
-				return templateView;
-			}
+		private boolean isKeyPath(String path) {
+			String lookupPath = "/" + path;
+			return !condition.getMatchingPatterns(lookupPath).isEmpty();
 		}
 
 		private class PreviewTemplateController extends TemplateController {
 
-			public PreviewTemplateController(String templateName) {
-				super(Template.TEMPLATE_PREVIEW_PREFIX + templateName);
+			public PreviewTemplateController(String path) {
+				super(Template.TEMPLATE_PREVIEW_PREFIX + path, path);
 			}
 
-			public TemplateView handleRequest() {
+			public TemplateView handleRequest(HttpServletRequest request) {
 				if (Environment.isLogin()) {
 					return templateView;
 				} else {
 					throw new TemplateNotFoundException(templateName);
 				}
 			}
+		}
+	}
+
+	public class TemplateController {
+
+		protected final TemplateView templateView;
+		protected final String templateName;
+		protected final String path;
+		protected final Integer id;
+
+		public TemplateController(String templateName, String path) {
+			super();
+			this.templateView = new TemplateView(templateName);
+			this.templateName = templateName;
+			this.path = path;
+			this.id = templateIncrementId.incrementAndGet();
+		}
+
+		public TemplateView handleRequest(HttpServletRequest request) {
+			// 如果用户登录状态并且预览服务中存在这个模板，那么返回预览模板名
+			if (Environment.isLogin()) {
+				String path = FileUtils
+						.cleanPath(request.getRequestURI().substring(request.getContextPath().length() + 1));
+				String previewTemplateName = Template.TEMPLATE_PREVIEW_PREFIX + path;
+				Optional<String> bestTemplateName = previewService.getBestMatchTemplateName(this.path,
+						previewTemplateName);
+				if (bestTemplateName.isPresent()) {
+					return new TemplateView(bestTemplateName.get());
+				}
+			}
+			return templateView;
+		}
+
+		public Integer getId() {
+			return id;
 		}
 	}
 

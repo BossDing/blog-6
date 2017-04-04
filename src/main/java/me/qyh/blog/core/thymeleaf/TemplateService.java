@@ -169,13 +169,6 @@ public interface TemplateService {
 	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages);
 
 	/**
-	 * 查询所有用户自定义页面
-	 * 
-	 * @return
-	 */
-	List<Page> selectAllPages();
-
-	/**
 	 * 检查template是否和当前的template一致
 	 * <p>
 	 * <b> 这个方法执行期间的时候不应该出现写操作并行执行 所以consumer应该简短</b>
@@ -260,8 +253,7 @@ public interface TemplateService {
 		/**
 		 * 注册一个预览页面
 		 * <p>
-		 * 如果路径对应的mapping不存在，那么将会注册一个preview
-		 * mapping，<b>但是只能注册一个不存在的预览mapping，</b>
+		 * 如果路径对应的mapping不存在，那么将会注册一个preview mapping
 		 * </p>
 		 * <p>
 		 * 如果路径已经存在，那么访问path即可预览该页面
@@ -271,13 +263,24 @@ public interface TemplateService {
 		 *            模板映射路径
 		 * @param template
 		 *            用来预览的模板
+		 * @throws LogicException
+		 *             注册失败
 		 */
-		void registerPreview(String path, Template template);
+		void registerPreview(String path, Template template) throws LogicException;
 
 		/**
 		 * 清空预览页面，删除mapping
 		 */
 		void clearPreview();
+
+		/**
+		 * 根据模板名查询模板
+		 * 
+		 * @param templateName
+		 *            模板名
+		 * @return
+		 */
+		Optional<Template> getTemplate(String templateName);
 	}
 
 }

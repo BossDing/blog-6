@@ -41,6 +41,8 @@ import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import me.qyh.blog.web.thymeleaf.TemplateServiceImpl.TemplateController;
+
 /**
  * 一个提供注册TemplateRequestMapping的类
  * <p>
@@ -306,12 +308,28 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 				if (CorsUtils.isPreFlightRequest(request)) {
 					return PREFLIGHT_AMBIGUOUS_MATCH;
 				}
-				Match secondBestMatch = matches.get(1);
-				if (comparator.compare(bestMatch, secondBestMatch) == 0) {
-					Method m1 = bestMatch.handlerMethod.getMethod();
-					Method m2 = secondBestMatch.handlerMethod.getMethod();
-					throw new IllegalStateException("Ambiguous handler methods mapped for HTTP path '"
-							+ request.getRequestURL() + "': {" + m1 + ", " + m2 + "}");
+				// 这里找到了多个Match,
+				// 因为允许注册{test}和{testasd}之类的路径，需要额外判断
+				// 这里利用id来判断，id大的优先级高
+				for (int i = 1; i < matches.size(); i++) {
+					Match _bestMatch = matches.get(i);
+					if (comparator.compare(bestMatch, _bestMatch) == 0) {
+						Object bestMatchHandler = bestMatch.handlerMethod.getBean();
+						Object _bestMatchHandler = _bestMatch.handlerMethod.getBean();
+						if (bestMatchHandler instanceof TemplateController
+								&& _bestMatchHandler instanceof TemplateController) {
+							int id = ((TemplateController) bestMatchHandler).getId();
+							int _id = ((TemplateController) _bestMatchHandler).getId();
+							if (_id > id) {
+								bestMatch = _bestMatch;
+							}
+						} else {
+							Method m1 = bestMatch.handlerMethod.getMethod();
+							Method m2 = _bestMatch.handlerMethod.getMethod();
+							throw new IllegalStateException("Ambiguous handler methods mapped for HTTP path '"
+									+ request.getRequestURL() + "': {" + m1 + ", " + m2 + "}");
+						}
+					}
 				}
 			}
 			handleMatch(bestMatch.mapping, lookupPath, request);
