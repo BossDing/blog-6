@@ -63,58 +63,24 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 	private static final CorsConfiguration ALLOW_CORS_CONFIG = new CorsConfiguration();
 
-	private final StampedLock sl = new StampedLock();
-
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
 
 	/**
 	 * Return a (read-only) map with all mappings and HandlerMethod's.
 	 */
 	public Map<RequestMappingInfo, HandlerMethod> getHandlerMethods() {
-
-		long stamp = sl.tryOptimisticRead();
-		Map<RequestMappingInfo, HandlerMethod> map = getHandlerMethodsUnsafe();
-		if (!sl.validate(stamp)) {
-			stamp = sl.readLock();
+		StampedLock lock = mappingRegistry.getLock();
+		long stamp = lock.tryOptimisticRead();
+		Map<RequestMappingInfo, HandlerMethod> map = this.mappingRegistry.getMappings();
+		if (!lock.validate(stamp)) {
+			stamp = lock.readLock();
 			try {
-				map = getHandlerMethodsUnsafe();
+				map = this.mappingRegistry.getMappings();
 			} finally {
-				sl.unlockRead(stamp);
+				lock.unlockRead(stamp);
 			}
 		}
 		return Collections.unmodifiableMap(map);
-	}
-
-	/**
-	 * Return a (read-only) map with all mappings and HandlerMethod's.
-	 * 
-	 * <p>
-	 * <b>NOT THREAD SAFE</b>
-	 * </p>
-	 */
-	public Map<RequestMappingInfo, HandlerMethod> getHandlerMethodsUnsafe() {
-		return this.mappingRegistry.getMappings();
-	}
-
-	/**
-	 * 加锁
-	 * <p>
-	 * RegisterMapping时必须加锁
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public long lockWrite() {
-		return sl.writeLock();
-	}
-
-	/**
-	 * 解锁
-	 * 
-	 * @param stamp
-	 */
-	public void unlockWrite(long stamp) {
-		sl.unlockWrite(stamp);
 	}
 
 	/**
@@ -131,32 +97,13 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 *            the method
 	 */
 	public void registerMapping(RequestMappingInfo mapping, Object handler, Method method) {
-		long stamp = lockWrite();
+		StampedLock lock = mappingRegistry.getLock();
+		long stamp = lock.writeLock();
 		try {
-			registerMappingUnsafe(mapping, handler, method);
+			this.mappingRegistry.register(mapping, handler, method);
 		} finally {
-			unlockWrite(stamp);
+			lock.unlockWrite(stamp);
 		}
-	}
-
-	/**
-	 * Register the given mapping.
-	 * <p>
-	 * This method may be invoked at runtime after initialization has completed.
-	 * </p>
-	 * <p>
-	 * <b>NOT THREAD SAFE</b>
-	 * </p>
-	 * 
-	 * @param mapping
-	 *            the mapping for the handler method
-	 * @param handler
-	 *            the handler
-	 * @param method
-	 *            the method
-	 */
-	public void registerMappingUnsafe(RequestMappingInfo mapping, Object handler, Method method) {
-		this.mappingRegistry.register(mapping, handler, method);
 	}
 
 	/**
@@ -170,29 +117,13 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 *            the mapping to unregister
 	 */
 	public void unregisterMapping(RequestMappingInfo mapping) {
-		long stamp = lockWrite();
+		StampedLock lock = mappingRegistry.getLock();
+		long stamp = lock.writeLock();
 		try {
-			unregisterMappingUnsafe(mapping);
+			this.mappingRegistry.unregister(mapping);
 		} finally {
-			unlockWrite(stamp);
+			lock.unlockWrite(stamp);
 		}
-	}
-
-	/**
-	 * Un-register the given mapping.
-	 * <p>
-	 * This method may be invoked at runtime after initialization has completed.
-	 * </p>
-	 * <p>
-	 * <b>NOT THREAD SAFE</b>
-	 * </p>
-	 * 
-	 * @see #lockWrite()
-	 * @param mapping
-	 *            the mapping to unregister
-	 */
-	public void unregisterMappingUnsafe(RequestMappingInfo mapping) {
-		this.mappingRegistry.unregister(mapping);
 	}
 
 	/**
@@ -210,12 +141,22 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 *             mapping
 	 */
 	protected void registerHandlerMethod(Object handler, Method method, RequestMappingInfo mapping) {
-		long stamp = lockWrite();
+		StampedLock lock = mappingRegistry.getLock();
+		long stamp = lock.writeLock();
 		try {
 			this.mappingRegistry.register(mapping, handler, method);
 		} finally {
-			unlockWrite(stamp);
+			lock.unlockWrite(stamp);
 		}
+	}
+
+	/**
+	 * 获取MappingRegistry
+	 * 
+	 * @return
+	 */
+	public MappingRegistry getPublicMappingRegistry() {
+		return mappingRegistry;
 	}
 
 	/**
@@ -238,15 +179,16 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
+		StampedLock lock = mappingRegistry.getLock();
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
-		long stamp = sl.tryOptimisticRead();
+		long stamp = lock.tryOptimisticRead();
 		HandlerMethod handlerMethod = lookupHandlerMethod(lookupPath, request);
-		if (!sl.validate(stamp)) {
-			stamp = sl.readLock();
+		if (!lock.validate(stamp)) {
+			stamp = lock.readLock();
 			try {
 				handlerMethod = lookupHandlerMethod(lookupPath, request);
 			} finally {
-				sl.unlockRead(stamp);
+				lock.unlockRead(stamp);
 			}
 		}
 		return (handlerMethod != null ? handlerMethod.createWithResolvedBean() : null);
@@ -386,7 +328,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 		}
 	}
 
-	class MappingRegistry {
+	public class MappingRegistry {
 
 		private final Map<RequestMappingInfo, MappingRegistration> registry = new HashMap<RequestMappingInfo, MappingRegistration>();
 
@@ -398,10 +340,30 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 		private final Map<HandlerMethod, CorsConfiguration> corsLookup = new ConcurrentHashMap<HandlerMethod, CorsConfiguration>();
 
+		private final StampedLock sl = new StampedLock();
+
+		private MappingRegistry() {
+			super();
+		}
+
 		/**
-		 * Return all mappings and handler methods. Not thread-safe.
+		 * 获取锁
 		 * 
-		 * @see #acquireReadLock()
+		 * @see StampedLock
+		 * @return
+		 */
+		public StampedLock getLock() {
+			return sl;
+		}
+
+		/**
+		 * Return all mappings and handler methods
+		 * <p>
+		 * <b>NOT THREAD SAFE</b>
+		 * </p>
+		 * 
+		 * @see #getLock()
+		 * 
 		 */
 		public Map<RequestMappingInfo, HandlerMethod> getMappings() {
 			return this.mappingLookup;
@@ -432,6 +394,17 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 			return this.corsLookup.get(original != null ? original : handlerMethod);
 		}
 
+		/**
+		 * 注册一个RequestMapping
+		 * <p>
+		 * <b>NOT THREAD SAFE</b>
+		 * </p>
+		 * 
+		 * @see #getLock()
+		 * @param mapping
+		 * @param handler
+		 * @param method
+		 */
 		public void register(RequestMappingInfo mapping, Object handler, Method method) {
 			HandlerMethod handlerMethod = createHandlerMethod(handler, method);
 			assertUniqueMethodMapping(handlerMethod, mapping);
@@ -493,6 +466,15 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 			this.nameLookup.put(name, newList);
 		}
 
+		/**
+		 * 解除注册一个RequestMapping
+		 * <p>
+		 * <b>NOT THREAD SAFE</b>
+		 * </p>
+		 * 
+		 * @see #getLock()
+		 * @param mapping
+		 */
 		public void unregister(RequestMappingInfo mapping) {
 			MappingRegistration definition = this.registry.remove(mapping);
 			if (definition == null) {
