@@ -21,8 +21,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -39,13 +38,13 @@ public class LogoutController extends BaseController {
 	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
 
-	@RequestMapping(value = "logout", method = RequestMethod.POST)
+	@PostMapping("logout")
 	public String logout(HttpServletRequest request, HttpServletResponse response) {
 		clearAuthencation(request, response);
 		return "redirect:/";
 	}
 
-	@RequestMapping(value = "logout", method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
+	@PostMapping(value = "logout", headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult ajaxLogout(HttpServletRequest request, HttpServletResponse response) {
 		clearAuthencation(request, response);

@@ -21,10 +21,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -58,7 +59,7 @@ public class TagMgrController extends BaseMgrController {
 		binder.setValidator(tagQueryParamValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(@Validated TagQueryParam tagQueryParam, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			tagQueryParam = new TagQueryParam();
@@ -68,14 +69,14 @@ public class TagMgrController extends BaseMgrController {
 		return "mgr/tag/index";
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST)
+	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		tagService.deleteTag(id);
 		return new JsonResult(true, new Message("tag.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@RequestBody @Validated Tag tag,
 			@RequestParam(defaultValue = "false", required = false) boolean merge) throws LogicException {

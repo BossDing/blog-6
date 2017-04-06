@@ -29,11 +29,12 @@ import org.springframework.validation.MapBindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -80,7 +81,7 @@ public class FileMgrController extends BaseMgrController {
 		binder.setValidator(blogFileValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(@Validated BlogFileQueryParam blogFileQueryParam, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			blogFileQueryParam = new BlogFileQueryParam();
@@ -97,14 +98,14 @@ public class FileMgrController extends BaseMgrController {
 		return "mgr/file/index";
 	}
 
-	@RequestMapping("stores")
+	@GetMapping("stores")
 	@ResponseBody
 	public List<FileStoreBean> allServers() {
 		List<FileStore> stores = fileService.allStorableStores();
 		return stores.stream().map(FileStoreBean::new).collect(Collectors.toList());
 	}
 
-	@RequestMapping("query")
+	@GetMapping("query")
 	@ResponseBody
 	public JsonResult query(@Validated BlogFileQueryParam blogFileQueryParam, BindingResult result)
 			throws LogicException {
@@ -117,7 +118,7 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
 
-	@RequestMapping(value = "upload", method = RequestMethod.POST)
+	@PostMapping("upload")
 	@ResponseBody
 	public JsonResult upload(@Validated BlogFileUpload blogFileUpload, BindingResult result) throws LogicException {
 		if (result.hasErrors()) {
@@ -131,20 +132,20 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, uploadedFiles);
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST)
+	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		fileService.delete(id);
 		return new JsonResult(true, new Message("file.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "{id}/pro", method = RequestMethod.GET)
+	@GetMapping("{id}/pro")
 	@ResponseBody
 	public JsonResult pro(@PathVariable("id") int id) throws LogicException {
 		return new JsonResult(true, fileService.getBlogFileProperty(id));
 	}
 
-	@RequestMapping(value = "createFolder", method = RequestMethod.POST)
+	@PostMapping("createFolder")
 	@ResponseBody
 	public JsonResult createFolder(@RequestBody @Validated BlogFile blogFile) throws LogicException {
 		blogFile.setCf(null);
@@ -153,7 +154,7 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("file.create.success", "创建成功"));
 	}
 
-	@RequestMapping(value = "copy", method = RequestMethod.POST)
+	@PostMapping("copy")
 	@ResponseBody
 	public JsonResult copy(@RequestParam("sourceId") Integer sourceId, @RequestParam("folderPath") String folderPath)
 			throws LogicException {
@@ -170,7 +171,7 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("file.copy.success", "拷贝成功"));
 	}
 
-	@RequestMapping(value = "move", method = RequestMethod.POST)
+	@PostMapping("move")
 	@ResponseBody
 	public JsonResult move(@RequestParam("sourceId") Integer sourceId, @RequestParam("destPath") String destPath)
 			throws LogicException {

@@ -28,8 +28,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.MapBindingResult;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -63,7 +64,7 @@ public class TemplateMgrController extends BaseMgrController {
 	@Autowired
 	private ExportPageValidator exportPageValidator;
 
-	@RequestMapping(value = "export", method = RequestMethod.POST)
+	@PostMapping("export")
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
 		try {
 			List<ExportPage> pages = templateService.exportPage(spaceId);
@@ -74,13 +75,13 @@ public class TemplateMgrController extends BaseMgrController {
 		}
 	}
 
-	@RequestMapping(value = "export", method = RequestMethod.GET)
+	@GetMapping("export")
 	public String export(ModelMap model) {
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		return "mgr/template/export";
 	}
 
-	@RequestMapping(value = "import", method = RequestMethod.POST)
+	@PostMapping("import")
 	@ResponseBody
 	public JsonResult importPage(@RequestParam("json") String json,
 			@RequestParam(value = "spaceId", required = false) Integer spaceId) {
@@ -119,26 +120,26 @@ public class TemplateMgrController extends BaseMgrController {
 		return new JsonResult(true, records);
 	}
 
-	@RequestMapping(value = "clearCache", method = RequestMethod.POST)
+	@PostMapping("clearCache")
 	@ResponseBody
 	public JsonResult clearPageCache() {
 		templateEngine.getConfiguration().getTemplateManager().clearCaches();
 		return new JsonResult(true, new Message("clearPageCache.success", "清除缓存成功"));
 	}
 
-	@RequestMapping(value = "clearPreview", method = RequestMethod.POST)
+	@PostMapping("clearPreview")
 	@ResponseBody
 	public JsonResult clearPreview() {
 		templateService.getPreviewService().clearPreview();
 		return new JsonResult(true, new Message("clearPreview.success", "清除预览页面成功"));
 	}
 
-	@RequestMapping(value = "other", method = RequestMethod.GET)
+	@GetMapping("other")
 	public String other() {
 		return "mgr/template/other";
 	}
 
-	@RequestMapping("dataTags")
+	@GetMapping("dataTags")
 	@ResponseBody
 	public JsonResult queryDatas() {
 		return new JsonResult(true, templateService.queryDataTags());

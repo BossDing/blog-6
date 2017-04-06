@@ -17,10 +17,11 @@ package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -33,13 +34,13 @@ public class ExtraDataController extends BaseMgrController {
 	@Autowired
 	private ExtraStorageService extraStorageService;
 
-	@RequestMapping(value = "get/{key}", method = RequestMethod.GET)
+	@GetMapping("get/{key}")
 	@ResponseBody
 	public JsonResult get(@PathVariable("key") String key) {
 		return extraStorageService.get(key).map(data -> new JsonResult(true, data)).orElse(new JsonResult(false));
 	}
 
-	@RequestMapping(value = "put", method = RequestMethod.POST)
+	@PostMapping("put")
 	@ResponseBody
 	public JsonResult put(@RequestBody ExtraDataValue value) {
 		if (Validators.isEmptyOrNull(value.key, true)) {
@@ -52,7 +53,7 @@ public class ExtraDataController extends BaseMgrController {
 		return new JsonResult(true);
 	}
 
-	@RequestMapping(value = "remove/{key}", method = RequestMethod.POST)
+	@PostMapping("remove/{key}")
 	@ResponseBody
 	public JsonResult remove(@PathVariable("key") String key) {
 		extraStorageService.remove(key);

@@ -29,15 +29,13 @@ public class PathTemplate implements Template {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private static final String PATH_PREFIX = TEMPLATE_PREFIX + "Path" + SPLITER;
+
 	private final Path associate;
 	private final boolean registrable;
 	private final String relativePath;
-
 	private String template;
-
 	private String templateName;
-
-	private static final String PATH_PREFIX = TEMPLATE_PREFIX + "Path" + SPLITER;
 
 	public PathTemplate(Path associate, boolean registrable, String relativePath) {
 		super();
@@ -139,5 +137,4 @@ public class PathTemplate implements Template {
 	public static boolean isPathTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(PATH_PREFIX);
 	}
-
 }

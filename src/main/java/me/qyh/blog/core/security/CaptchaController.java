@@ -26,8 +26,7 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.github.cage.Cage;
@@ -47,7 +46,7 @@ public class CaptchaController implements InitializingBean {
 	private Cage cage;
 
 	@ResponseBody
-	@RequestMapping(value = "/captcha", method = RequestMethod.GET, produces = MediaType.IMAGE_JPEG_VALUE)
+	@GetMapping(value = "captcha", produces = MediaType.IMAGE_JPEG_VALUE)
 	public byte[] draw(HttpSession session) {
 		String capText = cage.getTokenGenerator().next();
 		session.setAttribute(Constants.VALIDATE_CODE_SESSION_KEY, capText);

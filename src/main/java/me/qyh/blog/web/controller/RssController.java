@@ -18,12 +18,12 @@ package me.qyh.blog.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.View;
 
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.Environment;
@@ -42,7 +42,7 @@ public class RssController {
 		return rssView;
 	}
 
-	@RequestMapping(value = { "rss", "space/{alias}/rss" })
+	@GetMapping({ "rss", "space/{alias}/rss" })
 	public View rss(ModelMap model) {
 
 		ArticleQueryParam param = new ArticleQueryParam();

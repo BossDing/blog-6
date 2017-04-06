@@ -20,11 +20,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -50,13 +51,13 @@ public class SpaceMgrController extends BaseMgrController {
 		binder.setValidator(spaceValidator);
 	}
 
-	@RequestMapping(value = "index", method = RequestMethod.GET)
+	@GetMapping("index")
 	public String index(SpaceQueryParam spaceQueryParam, Model model) {
 		model.addAttribute("spaces", spaceService.querySpace(spaceQueryParam));
 		return "mgr/user/space";
 	}
 
-	@RequestMapping(value = "add", method = RequestMethod.POST)
+	@PostMapping("add")
 	@ResponseBody
 	public JsonResult add(@RequestBody @Validated Space space) throws LogicException {
 		if (Validators.isEmptyOrNull(space.getLockId(), true)) {
@@ -66,7 +67,7 @@ public class SpaceMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("space.add.success", "新增成功"));
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@RequestBody @Validated Space space) throws LogicException {
 		if (Validators.isEmptyOrNull(space.getLockId(), true)) {
@@ -76,7 +77,7 @@ public class SpaceMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("space.update.success", "更新成功"));
 	}
 
-	@RequestMapping(value = "get/{id}", method = RequestMethod.GET)
+	@GetMapping("get/{id}")
 	@ResponseBody
 	public JsonResult get(@PathVariable("id") Integer id) {
 		return spaceService.getSpace(id).map(space -> new JsonResult(true, space))

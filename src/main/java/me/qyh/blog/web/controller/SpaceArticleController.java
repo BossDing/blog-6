@@ -18,9 +18,9 @@ package me.qyh.blog.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -37,7 +37,7 @@ public class SpaceArticleController extends BaseController {
 	@Autowired
 	private ArticleService articleService;
 
-	@RequestMapping(value = "hit/{id}", method = RequestMethod.POST)
+	@PostMapping("hit/{id}")
 	@ResponseBody
 	public JsonResult hit(@PathVariable("id") Integer id, @RequestHeader("referer") String referer) {
 		try {

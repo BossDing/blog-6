@@ -16,12 +16,12 @@
 package me.qyh.blog.web.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class ErrorController {
 
-	@RequestMapping(value = { "error/ui" })
+	@GetMapping("error/ui")
 	public String handlerUI() {
 		return "error/ui";
 	}

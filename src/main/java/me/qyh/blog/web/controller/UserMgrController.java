@@ -21,10 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -49,12 +50,12 @@ public class UserMgrController extends BaseMgrController {
 		binder.setValidator(userValidator);
 	}
 
-	@RequestMapping(value = "index")
+	@GetMapping("index")
 	public String index() {
 		return "mgr/user/index";
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@RequestParam(value = "oldPassword", defaultValue = "") String oldPassword,
 			@Validated @RequestBody User user, HttpSession session) throws LogicException {

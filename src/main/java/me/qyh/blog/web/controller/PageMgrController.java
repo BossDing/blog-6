@@ -23,10 +23,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -69,7 +70,7 @@ public class PageMgrController extends BaseMgrController {
 		binder.setValidator(pageParamValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(@Validated TemplatePageQueryParam templatePageQueryParam, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			templatePageQueryParam = new TemplatePageQueryParam();
@@ -80,14 +81,14 @@ public class PageMgrController extends BaseMgrController {
 		return "mgr/template/page";
 	}
 
-	@RequestMapping(value = "build", method = RequestMethod.POST)
+	@PostMapping("build")
 	@ResponseBody
 	public JsonResult build(@RequestBody @Validated Page page) throws LogicException {
 		templateService.buildTpl(page);
 		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
 	}
 
-	@RequestMapping(value = "new")
+	@GetMapping(value = "new")
 	public String build(Model model) {
 		model.addAttribute("page", new Page());
 		SpaceQueryParam param = new SpaceQueryParam();
@@ -95,7 +96,7 @@ public class PageMgrController extends BaseMgrController {
 		return "mgr/template/page_build";
 	}
 
-	@RequestMapping(value = "update")
+	@GetMapping(value = "update")
 	public String update(@RequestParam("id") Integer id, Model model, RedirectAttributes ra) {
 		Optional<Page> optional = templateService.queryPage(id);
 		if (!optional.isPresent()) {
@@ -109,7 +110,7 @@ public class PageMgrController extends BaseMgrController {
 		return "mgr/template/page_build";
 	}
 
-	@RequestMapping(value = "preview", method = RequestMethod.POST)
+	@PostMapping("preview")
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated Page page) throws LogicException {
 		Space space = page.getSpace();
@@ -122,7 +123,7 @@ public class PageMgrController extends BaseMgrController {
 		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page)));
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST)
+	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		templateService.deletePage(id);

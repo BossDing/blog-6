@@ -108,7 +108,6 @@ import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Times;
-import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.TemplateView;
 import me.qyh.blog.web.Webs;
@@ -116,6 +115,15 @@ import me.qyh.blog.web.controller.form.FragmentValidator;
 import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.thymeleaf.TemplateRequestMappingHandlerMapping.MappingRegistry;
 
+/**
+ * 模板服务类
+ * <p>
+ * 这个类所有对模板写操作的方法都是加锁的，因此在首次加载模板的时候效率很低
+ * </p>
+ * 
+ * @author mhlx
+ *
+ */
 public class TemplateServiceImpl implements TemplateService, ApplicationEventPublisherAware, InitializingBean {
 
 	@Autowired
@@ -227,6 +235,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		});
 	}
 
+	private void checkSpace(Fragment fragment) throws LogicException {
+		Space space = fragment.getSpace();
+		if (space != null) {
+			fragment.setSpace(spaceCache.checkSpace(space.getId()));
+		}
+	}
+
 	@Override
 	public PageResult<Fragment> queryFragment(FragmentQueryParam param) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
@@ -286,7 +301,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		executeInTransaction(() -> {
 			enablePageAliasNotContainsSpace(page.getAlias());
 			final PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
-			checkSpace(page);
+			Space space = page.getSpace();
+			if (space != null) {
+				page.setSpace(spaceCache.checkSpace(space.getId()));
+			}
 			String alias = page.getAlias();
 			page.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 			boolean update = page.hasId();
@@ -326,7 +344,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	/**
-	 * 确保用户自定页面路径中不包含space/{alias}或者类似space的信息
+	 * 确保用户自定页面路径中不包含space信息
 	 * 
 	 * @param alias
 	 * @throws LogicException
@@ -339,7 +357,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public Optional<DataBind<?>> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException {
-		Optional<DataTagProcessor<?>> processor = getTagProcessor(dataTag.getName());
+		Optional<DataTagProcessor<?>> processor = processors.stream()
+				.filter(pro -> pro.getName().equals(dataTag.getName())).findAny();
 		if (onlyCallable) {
 			processor = processor.filter(DataTagProcessor::isCallable);
 		}
@@ -396,46 +415,58 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		if (CollectionUtils.isEmpty(exportPages)) {
 			return new ArrayList<>();
 		}
+		// 如果导入的空间不存在，直接返回
+		Space space = null;
+		try {
+			space = spaceCache.checkSpace(spaceId);
+		} catch (LogicException e) {
+			return Arrays.asList(new ImportRecord(false, e.getLogicMessage()));
+		}
+		// 开启一个新的串行化事务
 		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
 		td.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
 		td.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		TransactionStatus ts = platformTransactionManager.getTransaction(td);
 		List<ImportRecord> records = new ArrayList<>();
+		// 设置一个新的页面mapping辅助类
+		// 此时锁住RequestMappingHandlerMapping
+		// 事务结束后自动解锁
 		PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 		try {
-			Space space = null;
-			try {
-				space = spaceCache.checkSpace(spaceId);
-			} catch (LogicException e) {
-				ts.setRollbackOnly();
-				return Arrays.asList(new ImportRecord(false, e.getLogicMessage()));
-			}
+			// 用于导入结束后清空缓存
 			Set<String> pageEvitKeySet = new HashSet<>();
 			Set<String> fragmentEvitKeySet = new HashSet<>();
 
+			// 从导入页面中获取页面
 			List<Page> pages = exportPages.stream().map(ExportPage::getPage).collect(Collectors.toList());
+			// 从导入页面中获取fragments，按照name去重
 			List<Fragment> fragments = exportPages.stream().flatMap(ep -> ep.getFragments().stream()).distinct()
 					.collect(Collectors.toList());
 
 			for (Page page : pages) {
 				try {
+					// 确保page的alias中不包含space信息
 					enablePageAliasNotContainsSpace(page.getAlias());
 				} catch (LogicException e) {
 					records.add(new ImportRecord(true, e.getLogicMessage()));
 					ts.setRollbackOnly();
 					return records;
 				}
+				// 设置空间，用于获取templateName
 				page.setSpace(space);
 				String templateName = page.getTemplateName();
+				// 利用templateName查询当前是否已经存在页面
 				Optional<Page> optional = queryPageWithTemplateName(templateName);
+				// 如果不存在，插入一个自定义页面
 				if (!optional.isPresent()) {
-					// 如果插入用户页面
 					page.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 					page.setDescription("");
 					page.setAllowComment(false);
 
 					pageDao.insert(page);
 
+					// 尝试注册mapping，如果此时存在了其他该路径的mapping(PathTemplate
+					// mapping)那么无法注册成功
 					try {
 						helper.registerPage(page);
 					} catch (LogicException ex) {
@@ -448,9 +479,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 							"插入页面" + page.getName() + "[" + page.getAlias() + "]成功", page.getName(), page.getAlias())));
 					pageEvitKeySet.add(templateName);
 				} else {
+					// 可能需要更新页面
 					Page current = optional.get();
-					// 如果页面内容发生了改变
-					if (!checkChangeWhenImport(current, page)) {
+					// 如果页面内容发生了改变，此时需要更新页面
+					if (!current.getTpl().equals(page.getTpl())) {
 						current.setTpl(page.getTpl());
 						pageDao.update(current);
 						helper.unregisterPage(current);
@@ -481,12 +513,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				fragment.setSpace(space);
 				// 查询当前的fragment
 				Optional<Fragment> optionalFragment = queryFragmentWithTemplateName(fragment.getTemplateName());
+				// 如果当前没有fragment，插入一个space级别的fragment
 				if (!optionalFragment.isPresent()) {
-					// 插入fragment
 					insertFragmentWhenImport(fragment, records);
 					fragmentEvitKeySet.add(fragmentName);
 				} else {
 					Fragment currentFragment = optionalFragment.get();
+					// 模版内容没有发生改变，无需变动
 					if (currentFragment.getTpl().equals(fragment.getTpl())) {
 						records.add(new ImportRecord(true, new Message("import.fragment.nochange",
 								"模板片段" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
@@ -504,7 +537,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					}
 				}
 			}
-
+			// 清空template 缓存
 			evitPageCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
 			evitFragmentCache(fragmentEvitKeySet.stream().toArray(i -> new String[i]));
 			return records;
@@ -516,33 +549,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} finally {
 			platformTransactionManager.commit(ts);
 		}
-	}
-
-	@Override
-	public PathTemplateService getPathTemplateService() throws LogicException {
-		if (!enablePathTemplate) {
-			throw new LogicException("pathTemplate.service.disable", "物理文件模板服务不可用");
-		}
-		return pathTemplateService;
-	}
-
-	@Override
-	public PreviewService getPreviewService() {
-		return previewService;
-	}
-
-	/**
-	 * 导入页面时判断页面是否需要更新
-	 * 
-	 * @param old
-	 * @param current
-	 * @return
-	 */
-	private boolean checkChangeWhenImport(Page old, Page current) {
-		if (current.getTpl().equals(old.getTpl())) {
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -564,6 +570,25 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				new Message("import.insert.tpl.success", "模板" + toImport.getName() + "插入成功", toImport.getName())));
 	}
 
+	@Override
+	public PathTemplateService getPathTemplateService() throws LogicException {
+		if (!enablePathTemplate) {
+			throw new LogicException("pathTemplate.service.disable", "物理文件模板服务不可用");
+		}
+		return pathTemplateService;
+	}
+
+	@Override
+	public PreviewService getPreviewService() {
+		return previewService;
+	}
+
+	/**
+	 * 容器重新启动时载入mapping
+	 * 
+	 * @param evt
+	 * @throws Exception
+	 */
 	@EventListener
 	public void handleContextRefreshEvent(ContextRefreshedEvent evt) throws Exception {
 		if (evt.getApplicationContext().getParent() != null) {
@@ -587,6 +612,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	}
 
+	/**
+	 * 清空缓存时删除预览模板
+	 * 
+	 * @param evt
+	 */
 	@EventListener
 	public void handleTemplateEvitEvent(TemplateEvitEvent evt) {
 		previewService.remove(evt.getTemplateNames());
@@ -612,6 +642,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			enablePathTemplate = true;
 		}
 
+		// 插入FragmentFactoryBean配置的全局fragment
 		executeInTransaction(() -> {
 			Timestamp now = Timestamp.valueOf(Times.now());
 			for (Fragment _fragment : fragments) {
@@ -725,16 +756,23 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 */
 	private void initSystemTemplates() throws Exception {
 		defaultTemplates = new HashMap<>();
+		// 博客主页
 		defaultTemplates.put("", new SystemTemplate("", "resources/page/PAGE_INDEX.html"));
+		// 博客登录页
 		defaultTemplates.put("login", new SystemTemplate("login", "resources/page/LOGIN.html"));
+		// 各个空间的主页
 		defaultTemplates.put("space/{alias}", new SystemTemplate("space/{alias}", "resources/page/PAGE_INDEX.html"));
+		// 主空间解锁页
 		defaultTemplates.put("unlock", new SystemTemplate("unlock", "resources/page/PAGE_LOCK.html"));
+		// 各个空间解锁页面
 		defaultTemplates.put("space/{alias}/unlock",
 				new SystemTemplate("space/{alias}/unlock", "resources/page/PAGE_LOCK.html"));
-
+		// 主空间错误显示页面
 		defaultTemplates.put("error", new SystemTemplate("error", "resources/page/PAGE_ERROR.html"));
+		// 各个空间错误显示页面
 		defaultTemplates.put("space/{alias}/error",
 				new SystemTemplate("space/{alias}/error", "resources/page/PAGE_ERROR.html"));
+		// 各个空间文章详情页面
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
 				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
 
@@ -745,24 +783,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		} finally {
 			templateMappingRegister.unlockWrite(stamp);
-		}
-	}
-
-	private Optional<DataTagProcessor<?>> getTagProcessor(String name) {
-		return processors.stream().filter(processor -> processor.getName().equals(name)).findAny();
-	}
-
-	private void checkSpace(Page page) throws LogicException {
-		Space space = page.getSpace();
-		if (space != null) {
-			page.setSpace(spaceCache.checkSpace(space.getId()));
-		}
-	}
-
-	private void checkSpace(Fragment fragment) throws LogicException {
-		Space space = fragment.getSpace();
-		if (space != null) {
-			fragment.setSpace(spaceCache.checkSpace(space.getId()));
 		}
 	}
 
@@ -781,6 +801,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (names == null || names.length == 0) {
 				return;
 			}
+
+			// fragment比较特殊，它是按照名称来区分的，尝试fragment的缓存时
+			// 需要删除各个空间中存在该名称的fragment缓存
 			List<Space> spaces = spaceCache.getSpaces(true);
 			Set<String> templateNames = new HashSet<>();
 			for (String name : names) {
@@ -886,7 +909,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			List<PathTemplate> templates = new ArrayList<>(
 					pathTemplates.values().parallelStream().filter(filter).collect(Collectors.toList()));
 			templates.addAll(publicFragments.values().parallelStream().filter(filter).collect(Collectors.toList()));
-			return templates;
+			return Collections.unmodifiableList(templates);
 		}
 
 		@Override
@@ -954,7 +977,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			// 从空间中寻找
 			if (spaceAlias == null) {
 				// 如果是默认空间，无法加载其他空间的PathTemplate
-				if (!UrlUtils.match("space/*/**", path)) {
+				if (Webs.getSpaceFromPath(path) == null) {
 					template = pathTemplates.get(path);
 				}
 			} else {
@@ -1127,8 +1150,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				boolean isPublic = isPublicFragment(file);
 				if (isPublic) {
 					// 全局fragment不能在space/x/文件夹下
-					if (UrlUtils.match("space/*/**", relativePath)) {
-						LOGGER.debug("全局fragment:" + relativePath + "不能在space/xx/文件夹下");
+					if (Webs.getSpaceFromPath(relativePath) != null) {
+						LOGGER.debug("全局fragment:" + relativePath + "不能在space/*/**文件夹下");
 						return new PathTemplateLoadRecord(relativePath, false,
 								new Message("pathTemplate.load.path.publicFragmentInSpace",
 										"路径:" + relativePath + "被标记为全局fragment，该路径不能位于space文件夹下", relativePath));
@@ -1467,7 +1490,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			String lookupPath = "/" + path;
 			boolean hasPathVariable = StringUtils.substringBetween(path, "{", "}") != null;
 
-			RequestMappingInfo info = getMethodMapping(path);
 			for (Map.Entry<RequestMappingInfo, HandlerMethod> it : mappingRegistry.getMappings().entrySet()) {
 				HandlerMethod method = it.getValue();
 				if (method.getBean() instanceof TemplateController) {
@@ -1487,6 +1509,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					}
 				}
 			}
+			RequestMappingInfo info = getMethodMapping(path);
 			// 再次判断是否存在RequestMappingInfo
 			// 因为/{test}和/{testasd}情况下，无法保证能够删除/{test} mapping，因为它可能不是预览mapping
 			if (mappingRegistry.getMappings().get(info) == null) {
@@ -1561,8 +1584,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (isKeyPath(path)) {
 				return;
 			}
-			SystemTemplate template = defaultTemplates.get(path);
 			mappingRegistry.unregister(getMethodMapping(path));
+			SystemTemplate template = defaultTemplates.get(path);
 			// 插入默认系统模板
 			if (template != null) {
 				String templateName = template.getTemplateName();

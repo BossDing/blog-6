@@ -20,8 +20,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -43,7 +42,7 @@ public class LockController extends BaseController {
 	@Autowired
 	private UrlHelper urlHelper;
 
-	@RequestMapping(value = { "space/{alias}/unlock", "/unlock" }, method = RequestMethod.POST)
+	@PostMapping({ "space/{alias}/unlock", "/unlock" })
 	public String unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request,
 			RedirectAttributes ra) {
 		LockBean lockBean = LockHelper.getLockBean(request);
@@ -76,8 +75,7 @@ public class LockController extends BaseController {
 		}
 	}
 
-	@RequestMapping(value = { "space/{alias}/unlock",
-			"/unlock" }, method = RequestMethod.POST, headers = "x-requested-with=XMLHttpRequest")
+	@PostMapping(value = { "space/{alias}/unlock", "/unlock" }, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
 			throws LogicException {

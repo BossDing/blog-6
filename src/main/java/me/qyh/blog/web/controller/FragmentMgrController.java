@@ -21,11 +21,12 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -63,7 +64,7 @@ public class FragmentMgrController extends BaseMgrController {
 		binder.setValidator(fragmentValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(@Validated FragmentQueryParam fragmentQueryParam, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			fragmentQueryParam = new FragmentQueryParam();
@@ -74,10 +75,9 @@ public class FragmentMgrController extends BaseMgrController {
 		return "mgr/template/fragment";
 	}
 
-	@RequestMapping("list")
+	@GetMapping("list")
 	@ResponseBody
-	public JsonResult listJson(@Validated FragmentQueryParam fragmentQueryParam, BindingResult result,
-			Model model) {
+	public JsonResult listJson(@Validated FragmentQueryParam fragmentQueryParam, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			fragmentQueryParam = new FragmentQueryParam();
 			fragmentQueryParam.setCurrentPage(1);
@@ -85,7 +85,7 @@ public class FragmentMgrController extends BaseMgrController {
 		return new JsonResult(true, templateService.queryFragment(fragmentQueryParam));
 	}
 
-	@RequestMapping(value = "create", method = RequestMethod.POST)
+	@PostMapping("create")
 	@ResponseBody
 	public JsonResult create(@RequestBody @Validated final Fragment fragment) throws LogicException {
 		if (fragment.isGlobal()) {
@@ -95,14 +95,14 @@ public class FragmentMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("fragment.user.create.success", "创建成功"));
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST)
+	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		templateService.deleteFragment(id);
 		return new JsonResult(true, new Message("fragment.user.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@RequestBody @Validated final Fragment fragment) throws LogicException {
 		if (fragment.isGlobal()) {
@@ -112,7 +112,7 @@ public class FragmentMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("fragment.user.update.success", "更新成功"));
 	}
 
-	@RequestMapping(value = "get/{id}")
+	@GetMapping("get/{id}")
 	@ResponseBody
 	public JsonResult get(@PathVariable("id") Integer id) throws LogicException {
 		return templateService.queryFragment(id).map(fragment -> new JsonResult(true, fragment))

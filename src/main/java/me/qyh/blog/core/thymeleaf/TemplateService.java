@@ -206,11 +206,11 @@ public interface TemplateService {
 	public interface PathTemplateService {
 
 		/**
-		 * 查询物理文件模板
+		 * 查询物理文件模版
 		 * 
 		 * @param pattern
 		 *            查询表达式(正则)，如果为空或者为null则查询全局
-		 * @return
+		 * @return 只读的模版集合
 		 */
 		List<PathTemplate> queryPathTemplates(String pattern);
 

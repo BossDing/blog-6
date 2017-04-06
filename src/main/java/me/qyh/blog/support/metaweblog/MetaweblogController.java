@@ -32,8 +32,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.config.Limit;
@@ -84,7 +84,7 @@ public class MetaweblogController extends BaseController implements Initializing
 	 * @throws FaultException
 	 *             处理失败
 	 */
-	@RequestMapping(value = "metaweblog", method = RequestMethod.POST, produces = "application/xml;charset=utf8")
+	@PostMapping(value = "metaweblog", produces = "application/xml;charset=utf8")
 	@ResponseBody
 	public synchronized String handle(HttpServletRequest request) throws FaultException {
 		long now = System.currentTimeMillis();

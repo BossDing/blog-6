@@ -20,10 +20,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -48,27 +49,27 @@ public class CommentMgrController extends BaseMgrController {
 		binder.setValidator(commentConfigValidator);
 	}
 
-	@RequestMapping(value = "delete", method = RequestMethod.POST, params = { "id" })
+	@PostMapping(value = "delete", params = { "id" })
 	@ResponseBody
 	public JsonResult remove(@RequestParam("id") Integer id) throws LogicException {
 		commentService.deleteComment(id);
 		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "check", method = RequestMethod.POST)
+	@PostMapping("check")
 	@ResponseBody
 	public JsonResult check(@RequestParam("id") Integer id) throws LogicException {
 		commentService.checkComment(id);
 		return new JsonResult(true, new Message("comment.check.success", "审核成功"));
 	}
 
-	@RequestMapping(value = "updateConfig", method = RequestMethod.GET)
+	@GetMapping("updateConfig")
 	public String update(ModelMap model) {
 		model.addAttribute("config", commentService.getCommentConfig());
 		return "mgr/config/commentConfig";
 	}
 
-	@RequestMapping(value = "updateConfig", method = RequestMethod.POST)
+	@PostMapping("updateConfig")
 	@ResponseBody
 	public JsonResult update(@RequestBody @Validated CommentConfig commentConfig) {
 		commentService.updateCommentConfig(commentConfig);

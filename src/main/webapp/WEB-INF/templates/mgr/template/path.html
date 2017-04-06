@@ -77,6 +77,7 @@
 		</div>
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript">
+	var needReload=false;
 		$(document).ready(function(){
 			$("#reload-icon").click(function(){
 				reload($(this).parent().prev().val());
@@ -84,6 +85,11 @@
 			$("#search-icon").click(function(){
 				var query = $(this).parent().prev().prev().val();
 				window.location.href = basePath+'/mgr/template/path/index?pattern='+query;
+			});
+			$("#reloadModal").on('hidden.bs.modal', function () {
+				if(needReload){
+					window.location.reload();
+				}
 			})
 		});
 		var flag = true;
@@ -98,6 +104,7 @@
 						if(records.length == 0){
 							bootbox.alert("没有需要载入的文件");
 						} else {
+							needReload = true;
 							var html = '';
 							html += '<div class="table-reponsive">';
 							html += '<table class="table">';

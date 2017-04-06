@@ -26,20 +26,21 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
@@ -78,7 +79,7 @@ public class ArticleMgrController extends BaseMgrController {
 		binder.setValidator(articleQueryParamValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(@Validated ArticleQueryParam articleQueryParam, BindingResult br, Model model) {
 		if (br.hasErrors()) {
 			articleQueryParam = new ArticleQueryParam();
@@ -92,28 +93,28 @@ public class ArticleMgrController extends BaseMgrController {
 		return "mgr/article/index";
 	}
 
-	@RequestMapping("logicDelete")
+	@PostMapping("logicDelete")
 	@ResponseBody
 	public JsonResult logicDelete(@RequestParam("id") Integer id) throws LogicException {
 		articleService.logicDeleteArticle(id);
 		return new JsonResult(true, new Message("article.logicDelete.success", "放入回收站成功"));
 	}
 
-	@RequestMapping("recover")
+	@PostMapping("recover")
 	@ResponseBody
 	public JsonResult recover(@RequestParam("id") Integer id) throws LogicException {
 		articleService.recoverArticle(id);
 		return new JsonResult(true, new Message("article.recover.success", "恢复成功"));
 	}
 
-	@RequestMapping("delete")
+	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		articleService.deleteArticle(id);
 		return new JsonResult(true, new Message("article.delete.success", "删除成功"));
 	}
 
-	@RequestMapping(value = "write", method = RequestMethod.GET)
+	@GetMapping("write")
 	public String write(@RequestParam(value = "editor", required = false, defaultValue = "MD") Editor editor,
 			RedirectAttributes ra, Model model) {
 		SpaceQueryParam param = new SpaceQueryParam();
@@ -129,25 +130,25 @@ public class ArticleMgrController extends BaseMgrController {
 		return "mgr/article/write/editor";
 	}
 
-	@RequestMapping(value = "write/preview", method = RequestMethod.GET)
+	@GetMapping("write/preview")
 	public String preview() {
 		return "mgr/article/write/preview";
 	}
 
-	@RequestMapping(value = "write", method = RequestMethod.POST)
+	@PostMapping("write")
 	@ResponseBody
 	public JsonResult write(@RequestBody @Validated Article article) throws LogicException {
 		return new JsonResult(true, articleService.writeArticle(article));
 	}
 
-	@RequestMapping(value = "pub", method = RequestMethod.POST)
+	@PostMapping("pub")
 	@ResponseBody
 	public JsonResult pub(@RequestParam("id") Integer id) throws LogicException {
 		articleService.publishDraft(id);
 		return new JsonResult(true, "article.pub.success");
 	}
 
-	@RequestMapping(value = "update/{id}", method = RequestMethod.GET)
+	@GetMapping("update/{id}")
 	public String update(@PathVariable("id") Integer id, RedirectAttributes ra, Model model) {
 		Article article;
 		try {
@@ -162,7 +163,7 @@ public class ArticleMgrController extends BaseMgrController {
 		return "mgr/article/write/editor";
 	}
 
-	@RequestMapping(value = "write/preview", method = RequestMethod.POST)
+	@PostMapping("write/preview")
 	@ResponseBody
 	public JsonResult preview(@RequestBody @Validated Article article, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {

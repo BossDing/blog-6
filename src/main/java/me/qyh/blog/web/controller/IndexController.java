@@ -23,9 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -48,7 +47,7 @@ public class IndexController {
 	@Autowired
 	private TemplateService templateService;
 
-	@RequestMapping(value = { "data/{tagName}", "space/{alias}/data/{tagName}" }, method = RequestMethod.GET)
+	@GetMapping({ "data/{tagName}", "space/{alias}/data/{tagName}" })
 	@ResponseBody
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
@@ -58,10 +57,11 @@ public class IndexController {
 			attMap.put(it.getKey(), it.getValue());
 		}
 		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
-		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind)).orElse(new JsonResult(false));
+		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind))
+				.orElse(new JsonResult(false));
 	}
 
-	@RequestMapping(value = { "fragment/{fragment}", "space/{alias}/fragment/{fragment}" }, method = RequestMethod.GET)
+	@GetMapping({ "fragment/{fragment}", "space/{alias}/fragment/{fragment}" })
 	@ResponseBody
 	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,

@@ -18,8 +18,8 @@ package me.qyh.blog.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -37,7 +37,7 @@ public class PathTemplateMgrController extends BaseMgrController {
 	@Autowired
 	private UrlHelper urlHelper;
 
-	@RequestMapping(value = "index", method = RequestMethod.GET)
+	@GetMapping("index")
 	public String index(ModelMap model, @RequestParam(value = "pattern", required = false) String pattern) {
 		try {
 			model.addAttribute("templates", templateService.getPathTemplateService().queryPathTemplates(pattern));
@@ -47,13 +47,13 @@ public class PathTemplateMgrController extends BaseMgrController {
 		return "mgr/template/path";
 	}
 
-	@RequestMapping(value = "reload", method = RequestMethod.GET)
+	@GetMapping("reload")
 	@ResponseBody
 	public JsonResult reload(@RequestParam("path") String path) throws LogicException {
 		return new JsonResult(true, templateService.getPathTemplateService().loadPathTemplateFile(path));
 	}
 
-	@RequestMapping(value = "preview", method = RequestMethod.GET)
+	@GetMapping("preview")
 	public String preview(@RequestParam("path") String path, ModelMap model) throws LogicException {
 		// 设置空间
 		PathTemplate preview = templateService.getPathTemplateService().registerPreview(path);

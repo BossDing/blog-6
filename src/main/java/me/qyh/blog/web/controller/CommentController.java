@@ -23,11 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -58,14 +58,13 @@ public class CommentController extends BaseController {
 		binder.setValidator(commentValidator);
 	}
 
-	@RequestMapping(value = "comment/config", method = RequestMethod.GET)
+	@GetMapping("comment/config")
 	@ResponseBody
 	public JsonResult getConfig() {
 		return new JsonResult(true, commentService.getCommentConfig());
 	}
 
-	@RequestMapping(value = { "space/{alias}/{type}/{id}/addComment",
-			"{type}/{id}/addComment" }, method = RequestMethod.POST)
+	@PostMapping({ "space/{alias}/{type}/{id}/addComment", "{type}/{id}/addComment" })
 	@ResponseBody
 	public JsonResult addComment(@RequestParam(value = "validateCode", required = false) String validateCode,
 			@RequestBody @Validated Comment comment, @PathVariable("type") String type,
@@ -81,8 +80,8 @@ public class CommentController extends BaseController {
 		return new JsonResult(true, commentService.insertComment(comment));
 	}
 
-	@RequestMapping(value = { "space/{alias}/{type}/{id}/comment/{commentId}/conversations",
-			"{type}/{id}/comment/{commentId}/conversations" }, method = RequestMethod.GET)
+	@GetMapping({ "space/{alias}/{type}/{id}/comment/{commentId}/conversations",
+			"{type}/{id}/comment/{commentId}/conversations" })
 	@ResponseBody
 	public JsonResult queryConversations(@PathVariable("type") String type, @PathVariable("id") Integer moduleId,
 			@PathVariable("commentId") Integer commentId) throws LogicException {
@@ -90,7 +89,7 @@ public class CommentController extends BaseController {
 				commentService.queryConversations(new CommentModule(getModuleType(type), moduleId), commentId));
 	}
 
-	@RequestMapping(value = "comment/link/{type}/{id}", method = RequestMethod.GET)
+	@GetMapping("comment/link/{type}/{id}")
 	public String redic(@PathVariable("type") String type, @PathVariable("id") Integer moduleId) throws LogicException {
 		return "redirect:"
 				+ commentService.getLink(new CommentModule(getModuleType(type), moduleId)).orElse(urlHelper.getUrl());

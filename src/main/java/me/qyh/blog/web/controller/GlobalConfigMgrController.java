@@ -20,10 +20,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -47,13 +48,13 @@ public class GlobalConfigMgrController extends BaseMgrController {
 		binder.setValidator(globalConfigValidator);
 	}
 
-	@RequestMapping("index")
+	@GetMapping("index")
 	public String index(Model model) {
 		model.addAttribute("config", configService.getGlobalConfig());
 		return "mgr/config/global";
 	}
 
-	@RequestMapping(value = "update", method = RequestMethod.POST)
+	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@Validated @RequestBody GlobalConfig globalConfig) throws LogicException {
 		configService.updateGlobalConfig(globalConfig);
