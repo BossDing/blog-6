@@ -1477,8 +1477,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 *            路径
 		 * @return 如果注册了一个新的RequestMappingInfo用于预览，那么返回这个mapping。否则返回null
 		 */
-		public void registerPreviewMapping(String templateName, String path) throws LogicException {
-			path = FileUtils.cleanPath(path);
+		public void registerPreviewMapping(String templateName, String previewPath) throws LogicException {
+			String path = FileUtils.cleanPath(previewPath);
 			// 判断是否是系统保留路径
 			if (isKeyPath(path)) {
 				throw new LogicException("requestMapping.preview.keyPath", "路径" + path + "是系统保留路径，无法被预览");
@@ -1548,8 +1548,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 * @throws LogicException
 		 *             路径已经存在并且无法清除
 		 */
-		public void registerTemplateMapping(String templateName, String path) throws LogicException {
-			path = FileUtils.cleanPath(path);
+		public void registerTemplateMapping(String templateName, String templatePath) throws LogicException {
+			String path = FileUtils.cleanPath(templatePath);
 			// 判断是否是系统保留路径
 			if (isKeyPath(path)) {
 				throw new LogicException("requestMapping.register.keyPath", "路径" + path + "是系统保留路径，无法被注册");
@@ -1579,8 +1579,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 * @param path
 		 *            模板访问路径
 		 */
-		public void unregisterTemplateMapping(String path) {
-			path = FileUtils.cleanPath(path);
+		public void unregisterTemplateMapping(String templatePath) {
+			String path = FileUtils.cleanPath(templatePath);
 			if (isKeyPath(path)) {
 				return;
 			}
@@ -1602,8 +1602,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 * @param path
 		 *            模板访问路径
 		 */
-		public void forceRegisterTemplateMapping(String templateName, String path) {
-			path = FileUtils.cleanPath(path);
+		public void forceRegisterTemplateMapping(String templateName, String templatePath) {
+			String path = FileUtils.cleanPath(templatePath);
 			if (isKeyPath(path)) {
 				return;
 			}

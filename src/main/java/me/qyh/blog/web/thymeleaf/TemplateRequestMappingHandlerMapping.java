@@ -30,7 +30,6 @@ import java.util.concurrent.locks.StampedLock;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -303,8 +302,6 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 		public MappingRegistration(RequestMappingInfo mapping, HandlerMethod handlerMethod, List<String> directUrls,
 				String mappingName) {
-			Assert.notNull(mapping);
-			Assert.notNull(handlerMethod);
 			this.mapping = mapping;
 			this.handlerMethod = handlerMethod;
 			this.directUrls = (directUrls != null ? directUrls : Collections.<String>emptyList());

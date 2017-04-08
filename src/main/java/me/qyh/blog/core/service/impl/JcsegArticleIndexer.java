@@ -17,7 +17,7 @@ package me.qyh.blog.core.service.impl;
 
 import java.io.IOException;
 
-import org.lionsoul.jcseg.analyzer.v5x.JcsegAnalyzer5X;
+import org.lionsoul.jcseg.analyzer.JcsegAnalyzer;
 import org.lionsoul.jcseg.tokenizer.core.ADictionary;
 import org.lionsoul.jcseg.tokenizer.core.ILexicon;
 import org.lionsoul.jcseg.tokenizer.core.IWord;
@@ -46,7 +46,7 @@ public class JcsegArticleIndexer extends ArticleIndexer {
 
 	@Override
 	public void doRemoveTags(String... tags) {
-		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
+		ADictionary dict = ((_Analyzer) analyzer).getDict();
 		for (String tag : tags) {
 			dict.remove(ILexicon.CJK_WORD, tag);
 		}
@@ -54,13 +54,13 @@ public class JcsegArticleIndexer extends ArticleIndexer {
 
 	@Override
 	public void doAddTags(String... tags) {
-		ADictionary dict = ((JcsegAnalyzer5X) analyzer).getDict();
+		ADictionary dict = ((_Analyzer) analyzer).getDict();
 		for (String tag : tags) {
 			dict.add(ILexicon.CJK_WORD, tag, IWord.T_CJK_WORD);
 		}
 	}
 
-	private static final class _Analyzer extends JcsegAnalyzer5X {
+	private static final class _Analyzer extends JcsegAnalyzer {
 
 		public _Analyzer(JcsegMode mode) {
 			super(mode.mode);
