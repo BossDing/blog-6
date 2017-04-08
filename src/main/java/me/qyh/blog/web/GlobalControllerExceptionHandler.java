@@ -332,9 +332,9 @@ public class GlobalControllerExceptionHandler {
 			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
 		}
 		if (Environment.hasSpace()) {
-			return "redirect:/" + Environment.getSpaceAlias() + "/error";
+			return "redirect:" + urlHelper.getUrl() + "/space/" + Environment.getSpaceAlias() + "/error";
 		} else {
-			return "redirect:/error";
+			return "redirect:" + urlHelper.getUrl() + "/error";
 		}
 	}
 
