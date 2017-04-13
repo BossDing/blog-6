@@ -20,6 +20,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -43,8 +43,8 @@ import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.form.CommentValidator;
 
-@Controller
-public class CommentController extends BaseController {
+@Controller("commentController")
+public class CommentController extends AttemptLoggerController {
 
 	@Autowired
 	private CommentService commentService;
@@ -52,6 +52,15 @@ public class CommentController extends BaseController {
 	private CommentValidator commentValidator;
 	@Autowired
 	private UrlHelper urlHelper;
+
+	@Value("${comment.attempt.count:5}")
+	private int attemptCount;
+
+	@Value("${comment.attempt.maxCount:100}")
+	private int maxAttemptCount;
+
+	@Value("${comment.attempt.sleepSec:60}")
+	private int sleepSec;
 
 	@InitBinder(value = "comment")
 	protected void initCommentBinder(WebDataBinder binder) {
@@ -66,17 +75,16 @@ public class CommentController extends BaseController {
 
 	@PostMapping({ "space/{alias}/{type}/{id}/addComment", "{type}/{id}/addComment" })
 	@ResponseBody
-	public JsonResult addComment(@RequestParam(value = "validateCode", required = false) String validateCode,
-			@RequestBody @Validated Comment comment, @PathVariable("type") String type,
+	public JsonResult addComment(@RequestBody @Validated Comment comment, @PathVariable("type") String type,
 			@PathVariable("id") Integer moduleId, HttpServletRequest req) throws LogicException {
-		if (!Environment.isLogin()) {
+		if (!Environment.isLogin() && log(Environment.getIP())) {
 			HttpSession session = req.getSession(false);
-			if (!Webs.matchValidateCode(validateCode, session)) {
+			if (!Webs.matchValidateCode(req.getParameter("validateCode"), session)) {
 				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 			}
 		}
 		comment.setCommentModule(new CommentModule(getModuleType(type), moduleId));
-		comment.setIp(Webs.getIp(req));
+		comment.setIp(Environment.getIP());
 		return new JsonResult(true, commentService.insertComment(comment));
 	}
 
@@ -95,11 +103,23 @@ public class CommentController extends BaseController {
 				+ commentService.getLink(new CommentModule(getModuleType(type), moduleId)).orElse(urlHelper.getUrl());
 	}
 
+	@GetMapping("needCommentCaptcha")
+	public boolean needCaptcha() {
+		return reach(Environment.getIP());
+	}
+
 	private ModuleType getModuleType(String type) {
 		try {
 			return ModuleType.valueOf(type.toUpperCase());
 		} catch (Exception e) {
 			throw new TypeMismatchException(type, ModuleType.class);
 		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		setAttemptLogger(new AttemptLogger(attemptCount, maxAttemptCount));
+		setSleepSec(sleepSec);
+		super.afterPropertiesSet();
 	}
 }

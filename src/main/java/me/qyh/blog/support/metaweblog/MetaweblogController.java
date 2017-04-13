@@ -38,9 +38,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.config.Limit;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.support.metaweblog.RequestXmlParser.MethodCaller;
 import me.qyh.blog.support.metaweblog.RequestXmlParser.ParseException;
-import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.BaseController;
 
 /**
@@ -88,7 +88,7 @@ public class MetaweblogController extends BaseController implements Initializing
 	@ResponseBody
 	public synchronized String handle(HttpServletRequest request) throws FaultException {
 		long now = System.currentTimeMillis();
-		String ip = Webs.getIp(request);
+		String ip = Environment.getIP();
 		invalidIpCheck(ip, now);
 		MethodCaller mc = parseFromRequest(request);
 		try {

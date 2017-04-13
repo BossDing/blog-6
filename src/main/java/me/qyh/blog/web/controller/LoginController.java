@@ -20,13 +20,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
@@ -36,6 +37,7 @@ import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.BCrypts;
+import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.RememberMe;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.form.LoginBean;
@@ -43,8 +45,8 @@ import me.qyh.blog.web.controller.form.LoginBeanValidator;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 
-@Controller
-public class LoginController extends BaseController {
+@Controller("loginController")
+public class LoginController extends AttemptLoggerController {
 
 	@Autowired
 	private RememberMe rememberMe;
@@ -53,21 +55,45 @@ public class LoginController extends BaseController {
 	@Autowired
 	private LoginBeanValidator loginBeanValidator;
 
+	// 是否支持改变sessionid,需要运行容器支持servlet3.1+
+	private static boolean SUPPORT_CHANGE_SESSION_ID;
+
+	static {
+		try {
+			HttpServletRequest.class.getMethod("changeSessionId");
+			SUPPORT_CHANGE_SESSION_ID = true;
+		} catch (Exception e) {
+			SUPPORT_CHANGE_SESSION_ID = false;
+		}
+	}
+
+	@Value("${login.attempt.count:5}")
+	private int attemptCount;
+
+	@Value("${login.attempt.maxCount:100}")
+	private int maxAttemptCount;
+
+	@Value("${login.attempt.sleepSec:1800}")
+	private int sleepSec;
+
 	@InitBinder(value = "loginBean")
 	protected void initBinder(WebDataBinder binder) {
 		binder.setValidator(loginBeanValidator);
 	}
 
-	@PostMapping(value = "login", headers = "x-requested-with=XMLHttpRequest")
+	@PostMapping(value = "login")
 	@ResponseBody
-	public JsonResult login(@RequestParam("validateCode") String validateCode,
-			@RequestBody @Validated LoginBean loginBean, HttpServletRequest request, HttpServletResponse response) {
+	public JsonResult login(@RequestBody @Validated LoginBean loginBean, HttpServletRequest request,
+			HttpServletResponse response) {
 		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session)) {
+		String ip = Environment.getIP();
+		if (log(ip) && !Webs.matchValidateCode(request.getParameter("validateCode"), session)) {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 		}
 		try {
-			login(loginBean, request, response);
+			doLogin(loginBean, request, response);
+
+			remove(ip);
 
 			String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 			if (lastAuthencationFailUrl != null) {
@@ -80,7 +106,13 @@ public class LoginController extends BaseController {
 		}
 	}
 
-	private void login(LoginBean loginBean, HttpServletRequest request, HttpServletResponse response)
+	@GetMapping("needLoginCaptcha")
+	@ResponseBody
+	public boolean needLoginCaptcha() {
+		return reach(Environment.getIP());
+	}
+
+	private void doLogin(LoginBean loginBean, HttpServletRequest request, HttpServletResponse response)
 			throws LogicException {
 		User user = UserConfig.get();
 		if (user.getName().equals(loginBean.getUsername())) {
@@ -91,7 +123,9 @@ public class LoginController extends BaseController {
 				}
 
 				request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
-
+				if (SUPPORT_CHANGE_SESSION_ID) {
+					request.changeSessionId();
+				}
 				changeCsrf(request, response);
 				return;
 			}
@@ -108,6 +142,13 @@ public class LoginController extends BaseController {
 			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
 			this.csrfTokenRepository.saveToken(newToken, request, response);
 		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		setAttemptLogger(new AttemptLogger(attemptCount, maxAttemptCount));
+		setSleepSec(sleepSec);
+		super.afterPropertiesSet();
 	}
 
 }

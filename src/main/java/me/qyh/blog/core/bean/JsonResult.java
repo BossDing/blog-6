@@ -30,6 +30,8 @@ public class JsonResult {
 
 	private Message message;
 
+	private String code;
+
 	/**
 	 * @param success
 	 *            是否成功
@@ -51,6 +53,7 @@ public class JsonResult {
 	public JsonResult(boolean success, Message message) {
 		this.success = success;
 		this.message = message;
+		this.code = message.getCodes()[0];
 	}
 
 	/**
@@ -84,6 +87,11 @@ public class JsonResult {
 
 	public void setMessage(Message message) {
 		this.message = message;
+		this.code = message.getCodes()[0];
+	}
+
+	public String getCode() {
+		return code;
 	}
 
 	@Override

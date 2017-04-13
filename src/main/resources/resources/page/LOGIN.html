@@ -38,7 +38,7 @@
 							name="rememberMe" value="true" />记住我
 						</label>
 					</div>
-					<div class="form-group">
+					<div class="form-group" style="display:none" id="captchaContainer">
 						<label for="captcha">验证码 </label>
 						<div style="margin-bottom: 10px">
 							<img src="/captcha" class="img-responsive" id="validateImg" />
@@ -57,6 +57,13 @@
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript">
      $(document).ready(function(){
+    	 $.get(rootPath+'/needLoginCaptcha',{},function(flag){
+    		 if(flag){
+    			 $("#captchaContainer").show();
+    		 }else{
+     			 $("#captchaContainer").hide();
+     		 }
+    	 })
         $("#login-btn").click(function(){
         var username = $("#username").val();
           var password = $("#password").val();
@@ -79,7 +86,14 @@
                 	window.location.href = rootPath;
                 }
               } else {
-                bootbox.alert(data.message);
+            	  $.get(rootPath+'/needLoginCaptcha',{},function(flag){
+             		 if(flag){
+             			 $("#captchaContainer").show();
+             		 }else{
+             			 $("#captchaContainer").hide();
+             		 }
+             		bootbox.alert(data.message);
+             	 })
               }
             },
             complete : function() {
