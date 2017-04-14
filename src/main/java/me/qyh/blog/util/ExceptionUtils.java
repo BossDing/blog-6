@@ -43,7 +43,7 @@ public final class ExceptionUtils {
 	}
 
 	/**
-	 * 从集合中取出指定的异常
+	 * 从集合中取出指定的异常(包括子异常)
 	 * 
 	 * @param throwable
 	 *            异常
@@ -66,6 +66,6 @@ public final class ExceptionUtils {
 	}
 
 	private static boolean matchType(Throwable th, Class<?>... types) {
-		return th != null && Arrays.stream(types).anyMatch(th.getClass()::equals);
+		return th != null && Arrays.stream(types).anyMatch(type -> type.isAssignableFrom(th.getClass()));
 	}
 }

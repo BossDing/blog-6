@@ -331,6 +331,8 @@ public class GlobalControllerExceptionHandler {
 		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
 		}
+		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) != null来判断
+		// 因为如果空间是私人的，这里会造成循坏重定向
 		if (Environment.hasSpace()) {
 			return "redirect:" + urlHelper.getUrl() + "/space/" + Environment.getSpaceAlias() + "/error";
 		} else {

@@ -37,7 +37,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.SpaceNotFoundException;
@@ -67,8 +66,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AppInterceptor.class);
 
-	@Autowired
-	private UrlHelper urlHelper;
 	@Autowired
 	private RememberMe rememberMe;
 	@Autowired
@@ -122,16 +119,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 				csrfCheck(request, response);
 
-			} catch (AuthencationException e) {
-				// 防止死循环
-				if (spaceAlias != null && !Environment.hasSpace()) {
-					removeContext();
-					response.setStatus(403);
-					response.sendRedirect(urlHelper.getUrl() + "/login");
-					return false;
-				}
-				throw e;
-			} catch (SpaceNotFoundException | LockException | CsrfException e) {
+			} catch (AuthencationException | SpaceNotFoundException | LockException | CsrfException e) {
 				removeContext();
 				throw e;
 			} catch (Throwable e) {
