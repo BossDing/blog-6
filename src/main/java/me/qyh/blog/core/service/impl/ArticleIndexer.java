@@ -646,14 +646,12 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 重建索引
 	 * 
-	 * @param space
-	 *            空间 ，如果为null，则重建所有发布的文章
 	 */
-	public synchronized void rebuildIndex(Space space) {
+	public synchronized void rebuildIndex() {
 		executor.submit(() -> {
 			long start = System.currentTimeMillis();
 			List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				return articleDao.selectPublished(space);
+				return articleDao.selectPublished(null);
 			});
 			gen = writer.deleteAll();
 			for (Article article : articles) {
@@ -671,7 +669,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 */
 	@EventListener
 	public void handleArticleIndexRebuildEvent(ArticleIndexRebuildEvent event) {
-		rebuildIndex(event.getSpace());
+		rebuildIndex();
 	}
 
 	protected abstract void doRemoveTags(String... tags);

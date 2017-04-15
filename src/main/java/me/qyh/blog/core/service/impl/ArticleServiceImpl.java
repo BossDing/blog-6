@@ -554,7 +554,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (rebuildIndex) {
-			this.articleIndexer.rebuildIndex(null);
+			this.articleIndexer.rebuildIndex();
 		}
 
 		if (hitsStrategy == null) {

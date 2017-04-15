@@ -102,8 +102,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 		spaceDao.update(space);
 		spaceCache.init();
-		Transactions
-				.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(space, this)));
+		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}
 
 	@Override
