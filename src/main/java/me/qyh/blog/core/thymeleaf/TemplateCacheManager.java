@@ -183,25 +183,30 @@ public class TemplateCacheManager extends AbstractCacheManager implements Initia
 
 		@Override
 		public void onApplicationEvent(TemplateEvitEvent event) {
-			String[] templateNames = event.getTemplateNames();
-			final Set<TemplateCacheKey> keysToBeRemoved = new HashSet<>(4 * templateNames.length);
-			final Set<TemplateCacheKey> templateCacheKeys = templateCache.keySet();
-			for (String templateName : templateNames) {
-				for (final TemplateCacheKey templateCacheKey : templateCacheKeys) {
-					final String ownerTemplate = templateCacheKey.getOwnerTemplate();
-					if (ownerTemplate != null) {
-						if (ownerTemplate.equals(templateName)) {
-							keysToBeRemoved.add(templateCacheKey);
-						}
-					} else {
-						if (templateCacheKey.getTemplate().equals(templateName)) {
-							keysToBeRemoved.add(templateCacheKey);
+			if (event.clear()) {
+				templateCache.clear();
+				expressionCache.clear();
+			} else {
+				String[] templateNames = event.getTemplateNames();
+				final Set<TemplateCacheKey> keysToBeRemoved = new HashSet<>(4 * templateNames.length);
+				final Set<TemplateCacheKey> templateCacheKeys = templateCache.keySet();
+				for (String templateName : templateNames) {
+					for (final TemplateCacheKey templateCacheKey : templateCacheKeys) {
+						final String ownerTemplate = templateCacheKey.getOwnerTemplate();
+						if (ownerTemplate != null) {
+							if (ownerTemplate.equals(templateName)) {
+								keysToBeRemoved.add(templateCacheKey);
+							}
+						} else {
+							if (templateCacheKey.getTemplate().equals(templateName)) {
+								keysToBeRemoved.add(templateCacheKey);
+							}
 						}
 					}
 				}
-			}
-			for (final TemplateCacheKey keyToBeRemoved : keysToBeRemoved) {
-				templateCache.clearKey(keyToBeRemoved);
+				for (final TemplateCacheKey keyToBeRemoved : keysToBeRemoved) {
+					templateCache.clearKey(keyToBeRemoved);
+				}
 			}
 		}
 	}

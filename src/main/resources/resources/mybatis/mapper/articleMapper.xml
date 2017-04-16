@@ -534,6 +534,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY RAND()
 		LIMIT 0,1
 	</select>
+	
+	<select id="selectCountBySpace" resultType="int">
+		SELECT COUNT(id) FROM blog_article WHERE space_id = #{id}
+	</select>
+	
+	<update id="moveSpace">
+		UPDATE blog_article SET space_id = #{newSpace.id} WHERE space_id = #{oldSpace.id}
+	</update>
 
 	<sql id="articleDetailSql">
 		SELECT

@@ -46,9 +46,11 @@
 										<td th:text="${space.isPrivate ? '是' : '否'}"></td>
 										<td th:data-lockId="${space.lockId}"
 											th:text="${space.lockId != null ? '是' : '否'}"></td>
-										<td><a href="###" data-toggle="modal"
+										<td><a href="###" data-toggle="modal" style="margin-right:20px"
 											data-target="#editSpaceModal" th:data-id="${space.id}"><span
-												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
+												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+											<a href="###" th:data-id="${space.id}" data-action="delete"><span class="glyphicon glyphicon-remove"
+												aria-hidden="true"></span></a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -70,7 +72,7 @@
 					<h4 class="modal-title" id="spaceModalLabel">新的空间</h4>
 				</div>
 				<div class="modal-body">
-					<div class="alert alert-warning">空间一旦创建成功，无法被删除，同时别名将无法被更改，请慎重</div>
+					<div class="alert alert-warning">空间一旦创建成功，别名将无法被更改，请慎重</div>
 					<div class="tip"></div>
 					<form>
 						<div class="form-group">

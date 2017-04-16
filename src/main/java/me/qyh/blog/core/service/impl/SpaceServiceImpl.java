@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.evt.LockDeleteEvent;
+import me.qyh.blog.core.evt.SpaceDeleteEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.message.Message;
@@ -80,10 +82,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void updateSpace(Space space) throws LogicException {
-		Space db = spaceDao.selectById(space.getId());
-		if (db == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
+		Space db = spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
 		Space nameDb = spaceDao.selectByName(space.getName());
 		if (nameDb != null && !nameDb.equals(db)) {
 			throw new LogicException(
@@ -101,6 +100,25 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		}
 
 		spaceDao.update(space);
+		spaceCache.init();
+		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+	}
+
+	@Override
+	@Sync
+	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
+			@CacheEvict(value = "articleFilesCache", allEntries = true) })
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class, isolation = Isolation.SERIALIZABLE)
+	public void deleteSpace(Integer id) throws LogicException {
+		Space space = spaceCache.getSpace(id).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
+		if (space.getIsDefault()) {
+			throw new LogicException("space.default.canNotDelete", "默认空间不能被删除");
+		}
+		// 推送空间删除事件，通知文章等删除
+		this.applicationEventPublisher.publishEvent(new SpaceDeleteEvent(this, space));
+
+		spaceDao.deleteById(id);
+
 		spaceCache.init();
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}

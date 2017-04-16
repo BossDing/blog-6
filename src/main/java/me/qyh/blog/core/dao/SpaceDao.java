@@ -99,4 +99,11 @@ public interface SpaceDao {
 	 */
 	void deleteLock(String lockId);
 
+	/**
+	 * 删除空间
+	 * 
+	 * @param id
+	 */
+	void deleteById(Integer id);
+
 }

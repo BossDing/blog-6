@@ -278,4 +278,20 @@ public interface ArticleDao {
 	Article selectRandom(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,
 			@Param("queryLock") boolean queryLock);
 
+	/**
+	 * 查询某个空间下<b>所有文章</b>的数量
+	 * 
+	 * @param space
+	 * @return
+	 */
+	int selectCountBySpace(Space space);
+
+	/**
+	 * 将某个空间下的文章移到另一个空间下
+	 * 
+	 * @param old
+	 * @param newSpace
+	 */
+	void moveSpace(@Param("oldSpace") Space oldSpace, @Param("newSpace") Space newSpace);
+
 }

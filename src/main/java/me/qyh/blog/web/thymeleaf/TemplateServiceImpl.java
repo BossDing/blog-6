@@ -51,10 +51,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -83,6 +86,7 @@ import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.evt.EventType;
 import me.qyh.blog.core.evt.PageEvent;
+import me.qyh.blog.core.evt.SpaceDeleteEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
@@ -137,6 +141,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+
+	@Autowired
+	private ApplicationContext applicationContext;
+
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	private List<DataTagProcessor<?>> processors = new ArrayList<>();
@@ -609,7 +617,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				pathTemplateService.loadPathTemplateFile("");
 			}
 		}
-
 	}
 
 	/**
@@ -619,7 +626,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 */
 	@EventListener
 	public void handleTemplateEvitEvent(TemplateEvitEvent evt) {
-		previewService.remove(evt.getTemplateNames());
+		if (evt.clear()) {
+			previewService.clearPreview();
+		} else {
+			previewService.remove(evt.getTemplateNames());
+		}
 	}
 
 	@Override
@@ -747,6 +758,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				return Template.isPreviewTemplate(templateName);
 			}
 		});
+
+		// add space delete event listener
+		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext.getParent();
+		appContext.addApplicationListener(new SpaceDeleteEventListener());
 	}
 
 	/**
@@ -776,7 +791,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
 				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
 
-		long stamp = templateMappingRegister.lockWrite();
+		long stamp = templateMappingRegister.tryLockWrite();
 		try {
 			for (Map.Entry<String, SystemTemplate> it : defaultTemplates.entrySet()) {
 				this.templateMappingRegister.registerTemplateMapping(it.getValue().getTemplateName(), it.getKey());
@@ -787,9 +802,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private void evitPageCache(String... templateNames) {
-		Transactions.afterCommit(() -> {
-			this.applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateNames));
-		});
+		if (templateNames != null && templateNames.length > 0) {
+			Transactions.afterCommit(() -> {
+				this.applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateNames));
+			});
+		}
 	}
 
 	private void evitPageCache(Page... pages) {
@@ -998,7 +1015,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			// 锁住Outer class，为了保证queryTemplate的时候没有其他写线程修改数据
 			synchronized (TemplateServiceImpl.this) {
 				// 获取RequestMapping的锁
-				long stamp = templateMappingRegister.lockWrite();
+				long stamp = templateMappingRegister.tryLockWrite();
 				try {
 					// 定位需要载入的目录
 					Path loadPath = pathTemplateRoot.resolve(FileUtils.cleanPath(path));
@@ -1234,7 +1251,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		public void registerPreview(String path, Template template) throws LogicException {
 			lock.writeLock().lock();
 			try {
-				long stamp = templateMappingRegister.lockWrite();
+				long stamp = templateMappingRegister.tryLockWrite();
 				try {
 					String cleanPath = FileUtils.cleanPath(path);
 					templateMappingRegister.registerPreviewMapping(template.getTemplateName(), cleanPath);
@@ -1252,7 +1269,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			lock.writeLock().lock();
 			try {
 				previewMap.clear();
-				long stamp = templateMappingRegister.lockWrite();
+				long stamp = templateMappingRegister.tryLockWrite();
 				try {
 					templateMappingRegister.unregisterPreviewMappings();
 				} finally {
@@ -1347,9 +1364,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 						return false;
 					});
 				} finally {
-					if (stamp != 0) {
-						templateMappingRegister.unlockWrite(stamp);
-					}
+					templateMappingRegister.unlockWrite(stamp);
 				}
 			} finally {
 				lock.writeLock().unlock();
@@ -1442,15 +1457,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		/**
-		 * 获取写锁
-		 * 
-		 * @return
-		 */
-		public long lockWrite() {
-			return mappingRegistry.getLock().writeLock();
-		}
-
-		/**
 		 * 尝试写锁
 		 * 
 		 * @return 如果返回0，锁失败
@@ -1465,7 +1471,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 * @param stamp
 		 */
 		public void unlockWrite(long stamp) {
-			this.mappingRegistry.getLock().unlockWrite(stamp);
+			if (stamp != 0) {
+				this.mappingRegistry.getLock().unlockWrite(stamp);
+			}
 		}
 
 		/**
@@ -1696,7 +1704,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				throw new SystemException(this.getClass().getName() + " 必须处于一个事务中");
 			}
 			// 锁住RequestMapping
-			this.stamp = templateMappingRegister.lockWrite();
+			this.stamp = templateMappingRegister.tryLockWrite();
 
 			Transactions.afterCompletion(i -> {
 				try {
@@ -1732,6 +1740,32 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 		}
+	}
+
+	private final class SpaceDeleteEventListener implements ApplicationListener<SpaceDeleteEvent> {
+
+		@Override
+		public void onApplicationEvent(SpaceDeleteEvent event) {
+			// 删除所有的fragments
+			fragmentDao.deleteBySpace(event.getSpace());
+			// 事务结束之后清空所有页面缓存
+			Transactions.afterCommit(() -> {
+				applicationEventPublisher.publishEvent(new TemplateEvitEvent(this));
+			});
+			// 查询所有的页面
+			List<Page> pages = pageDao.selectBySpace(event.getSpace());
+			if (!pages.isEmpty()) {
+				PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
+				for (Page page : pages) {
+					pageDao.deleteById(page.getId());
+					// 解除mapping注册
+					helper.unregisterPage(page);
+					// 发送事件
+					applicationEventPublisher.publishEvent(new PageEvent(this, EventType.DELETE, page));
+				}
+			}
+		}
+
 	}
 
 	/**

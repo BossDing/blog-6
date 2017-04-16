@@ -44,26 +44,29 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.bean.ArticleDateFile;
 import me.qyh.blog.core.bean.ArticleDateFiles;
+import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.bean.ArticleNav;
 import me.qyh.blog.core.bean.ArticleSpaceFile;
 import me.qyh.blog.core.bean.TagCount;
-import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.ArticleTag;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.evt.ArticleEvent;
 import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.evt.EventType;
 import me.qyh.blog.core.evt.LockDeleteEvent;
+import me.qyh.blog.core.evt.SpaceDeleteEvent;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.lock.LockManager;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.Environment;
@@ -549,6 +552,26 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@EventListener
 	public void handleLockDeleteEvent(LockDeleteEvent event) {
 		articleDao.deleteLock(event.getLockId());
+	}
+
+	@EventListener
+	public void handleSpaceDeleteEvent(SpaceDeleteEvent event) {
+		Space deleted = event.getSpace();
+		// 查询该空间下是否存在文章
+		int count = articleDao.selectCountBySpace(deleted);
+		if (count > 0) {
+			// 空间下存在文章
+			// 移动到默认空间
+			Space defaultSpace = spaceDao.selectDefault();
+			// 默认空间不存在，无法删除空间
+			if (defaultSpace == null) {
+				throw new RuntimeLogicException(new Message("space.delete.hasArticles", "空间下存在文章，删除失败"));
+			}
+
+			articleDao.moveSpace(deleted, defaultSpace);
+			// 清空文章缓存
+			Transactions.afterCommit(articleCache::clear);
+		}
 	}
 
 	@Override

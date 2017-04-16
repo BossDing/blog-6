@@ -77,6 +77,13 @@ public class SpaceMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("space.update.success", "更新成功"));
 	}
 
+	@PostMapping("delete/{id}")
+	@ResponseBody
+	public JsonResult delete(@PathVariable("id") Integer id) throws LogicException {
+		spaceService.deleteSpace(id);
+		return new JsonResult(true, new Message("space.delete.success", "删除成功"));
+	}
+
 	@GetMapping("get/{id}")
 	@ResponseBody
 	public JsonResult get(@PathVariable("id") Integer id) {

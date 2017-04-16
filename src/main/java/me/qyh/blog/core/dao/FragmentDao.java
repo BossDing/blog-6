@@ -100,4 +100,11 @@ public interface FragmentDao {
 	 * @return 如果不存在，返回null
 	 */
 	Fragment selectGlobalByName(String name);
+
+	/**
+	 * 根据空间删除fragment
+	 * 
+	 * @param space
+	 */
+	void deleteBySpace(Space space);
 }

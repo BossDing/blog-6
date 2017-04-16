@@ -122,4 +122,8 @@ public class ArticleCache {
 		idCache.invalidate(id);
 	}
 
+	public void clear() {
+		idCache.invalidateAll();
+	}
+
 }

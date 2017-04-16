@@ -77,6 +77,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		UPDATE blog_space SET  space_lock = NULL WHERE space_lock = #{lockId}
 	</update>
 	
+	<delete id="deleteById">
+		DELETE FROM blog_space WHERE id = #{id}
+	</delete>
+	
 	<sql id="spaceDetailSql">
 		SELECT
 			bs.id AS space_id,

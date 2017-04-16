@@ -77,4 +77,14 @@ public interface SpaceService {
 	 */
 	Optional<Space> getSpace(String spaceAlias);
 
+	/**
+	 * <b>完全的</b>删除一个空间
+	 * 
+	 * @param id
+	 *            空间ID
+	 * @throws LogicException
+	 *             删除失败
+	 */
+	void deleteSpace(Integer id) throws LogicException;
+
 }

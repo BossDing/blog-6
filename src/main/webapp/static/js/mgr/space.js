@@ -105,4 +105,41 @@ $(document).ready(function() {
 		});
 	});
 	
+	
+	$("[data-action='delete']").click(function(){
+		var me = $(this);
+		var html = "是否删除这个空间？您需要注意以下几点：";
+		html += '<div>';
+		html += '<ul>';
+		html += '<li>默认空间无法被删除</li>';
+		html += '<li>空间下所有的文章将会转移到默认空间下，如果没有设置默认空间将会删除失败</li>';
+		html += '<li><b>同时会删除该空间下所有的模板片断、页面以及页面的评论</b></li>';
+		html += '<li><b>该操作无法被恢复</b></li>';
+		html += '</ul>';
+		html += '</div>';
+		bootbox.confirm(html, function(result){ 
+			if(result){
+				var id = me.attr("data-id");
+				$.ajax({
+					type : "post",
+					url : basePath+"/mgr/space/delete/"+id,
+					data : {},
+					dataType : "json",
+					contentType : 'application/json',
+					success : function(data){
+						if(data.success){
+							bootbox.alert("删除成功");
+							setTimeout(function(){
+								window.location.reload();
+							},500);
+						} else {
+							bootbox.alert(data.message);
+						}
+					},
+					complete:function(){
+					}
+				});
+			}
+		});
+	});
 });

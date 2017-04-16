@@ -171,4 +171,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_name = #{name}
 			AND is_global = TRUE
 	</select>
+	
+	<delete id="deleteBySpace">
+		DELETE FROM blog_fragment_user WHERE  space_id = #{id}
+	</delete>
 </mapper>

@@ -44,4 +44,8 @@ public class TemplateEvitEvent extends ApplicationEvent {
 		return templateNames;
 	}
 
+	public boolean clear() {
+		return templateNames == null || templateNames.length == 0;
+	}
+
 }
