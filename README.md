@@ -3,6 +3,8 @@
 
 一个重型博客
 
+当前版本:5.5.1.RELEASE
+
 ## demo: https://www.qyh.me
 
 
