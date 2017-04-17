@@ -17,6 +17,7 @@ package me.qyh.blog.core.thymeleaf.dialect;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -32,7 +33,6 @@ import org.thymeleaf.standard.expression.StandardExpressions;
 import org.thymeleaf.standard.processor.StandardDefaultAttributesTagProcessor;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.EscapedAttributeUtils;
-import org.unbescape.html.HtmlEscape;
 
 /**
  * 用来处理动态属性
@@ -137,13 +137,8 @@ abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor
 				return;
 			}
 
-			/*
-			 * Compute the new attribute value
-			 */
-			boolean escapeHtml = !newAttributeName.endsWith("utext");
-			final String newAttributeValue = expressionResult == null ? null
-					: escapeHtml ? HtmlEscape.escapeHtml4Xml(expressionResult.toString()) : expressionResult.toString();
-
+			final String newAttributeValue = Objects.toString(expressionResult,null);
+			
 			/*
 			 * Set the new value, removing the attribute completely if the
 			 * expression evaluated to null

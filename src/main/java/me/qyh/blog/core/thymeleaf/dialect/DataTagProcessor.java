@@ -97,7 +97,6 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
 		Map<String, String> attMap = processAttribute(context, tag);
-
 		String name = attMap.get(NAME_ATTR);
 		if (Validators.isEmptyOrNull(name, true)) {
 			return null;
