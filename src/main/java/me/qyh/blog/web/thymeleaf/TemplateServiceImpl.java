@@ -58,12 +58,13 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.core.Ordered;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
@@ -791,7 +792,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
 				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
 
-		long stamp = templateMappingRegister.tryLockWrite();
+		long stamp = templateMappingRegister.lockWrite();
 		try {
 			for (Map.Entry<String, SystemTemplate> it : defaultTemplates.entrySet()) {
 				this.templateMappingRegister.registerTemplateMapping(it.getValue().getTemplateName(), it.getKey());
@@ -1015,7 +1016,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			// 锁住Outer class，为了保证queryTemplate的时候没有其他写线程修改数据
 			synchronized (TemplateServiceImpl.this) {
 				// 获取RequestMapping的锁
-				long stamp = templateMappingRegister.tryLockWrite();
+				long stamp = templateMappingRegister.lockWrite();
 				try {
 					// 定位需要载入的目录
 					Path loadPath = pathTemplateRoot.resolve(FileUtils.cleanPath(path));
@@ -1251,7 +1252,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		public void registerPreview(String path, Template template) throws LogicException {
 			lock.writeLock().lock();
 			try {
-				long stamp = templateMappingRegister.tryLockWrite();
+				long stamp = templateMappingRegister.lockWrite();
 				try {
 					String cleanPath = FileUtils.cleanPath(path);
 					templateMappingRegister.registerPreviewMapping(template.getTemplateName(), cleanPath);
@@ -1269,7 +1270,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			lock.writeLock().lock();
 			try {
 				previewMap.clear();
-				long stamp = templateMappingRegister.tryLockWrite();
+				long stamp = templateMappingRegister.lockWrite();
 				try {
 					templateMappingRegister.unregisterPreviewMappings();
 				} finally {
@@ -1459,10 +1460,19 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		/**
 		 * 尝试写锁
 		 * 
-		 * @return 如果返回0，锁失败
+		 * @return 0如果加锁失败
 		 */
 		public long tryLockWrite() {
 			return mappingRegistry.getLock().tryWriteLock();
+		}
+
+		/**
+		 * 写锁
+		 * 
+		 * @return stamp
+		 */
+		public long lockWrite() {
+			return mappingRegistry.getLock().writeLock();
 		}
 
 		/**
@@ -1704,17 +1714,31 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				throw new SystemException(this.getClass().getName() + " 必须处于一个事务中");
 			}
 			// 锁住RequestMapping
-			this.stamp = templateMappingRegister.tryLockWrite();
+			this.stamp = templateMappingRegister.lockWrite();
 
-			Transactions.afterCompletion(i -> {
-				try {
-					if (i == TransactionSynchronization.STATUS_ROLLED_BACK) {
-						rollback();
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+
+				@Override
+				public void afterCompletion(int status) {
+					try {
+						if (status == STATUS_ROLLED_BACK) {
+							rollback();
+						}
+					} finally {
+						templateMappingRegister.unlockWrite(stamp);
 					}
-				} finally {
-					templateMappingRegister.unlockWrite(stamp);
 				}
+
+				/**
+				 * 这里必须最高的优先级，第一时间解锁
+				 */
+				@Override
+				public int getOrder() {
+					return Ordered.HIGHEST_PRECEDENCE;
+				}
+
 			});
+
 		}
 
 		void registerPage(Page page) throws LogicException {
