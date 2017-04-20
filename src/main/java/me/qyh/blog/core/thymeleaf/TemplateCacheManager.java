@@ -91,8 +91,6 @@ public class TemplateCacheManager extends AbstractCacheManager implements Initia
 					templateService.compareTemplate(templateName, template, flag -> {
 						if (flag) {
 							cache.put(key, value);
-							// 删除文本，不再需要在内存中一直保持
-							template.clearTemplate();
 						}
 					});
 				});

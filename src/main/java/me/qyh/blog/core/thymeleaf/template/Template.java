@@ -109,9 +109,4 @@ public interface Template extends Serializable {
 	 * @return
 	 */
 	boolean equalsTo(Template other);
-
-	/**
-	 * 清除模板内容
-	 */
-	void clearTemplate();
 }

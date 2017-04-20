@@ -112,7 +112,6 @@ import me.qyh.blog.core.thymeleaf.template.Template;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.StringUtils;
-import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.TemplateView;
 import me.qyh.blog.web.Webs;
@@ -155,7 +154,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private static final Logger LOGGER = LoggerFactory.getLogger(TemplateServiceImpl.class);
 
 	/**
-	 * 系统默认片段
+	 * 系统默认模板片段
 	 */
 	private List<Fragment> fragments = new ArrayList<>();
 
@@ -654,25 +653,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			enablePathTemplate = true;
 		}
 
-		// 插入FragmentFactoryBean配置的全局fragment
-		executeInTransaction(() -> {
-			Timestamp now = Timestamp.valueOf(Times.now());
-			for (Fragment _fragment : fragments) {
-				Fragment fragment = fragmentDao.selectGlobalByName(_fragment.getName());
-				if (fragment == null) {
-					fragment = new Fragment();
-					fragment.setCallable(_fragment.isCallable());
-					fragment.setCreateDate(now);
-					fragment.setDescription("");
-					fragment.setGlobal(true);
-					fragment.setName(_fragment.getName());
-					fragment.setSpace(null);
-					fragment.setTpl(_fragment.getTpl());
-					fragmentDao.insert(fragment);
-				}
-			}
-		});
-
 		// System Template Processor
 		this.templateProcessors.add(new TemplateProcessor() {
 
@@ -850,6 +830,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		Fragment fragment = fragmentDao.selectBySpaceAndName(space, name);
 		if (fragment == null) { // 查找全局
 			fragment = fragmentDao.selectGlobalByName(name);
+		}
+
+		if (fragment == null) {
+			// 查找内置模板片段
+			// 为了防止默认模板片段被修改，这里首先进行clone
+			fragment = fragments.stream().filter(fb -> fb.getName().equals(name)).findAny().map(Fragment::new)
+					.orElse(null);
 		}
 		return Optional.ofNullable(fragment);
 	}
@@ -1861,11 +1848,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return path;
 		}
 
-		@Override
-		public void clearTemplate() {
-			this.template = null;
-		}
-
 		public static boolean isSystemTemplate(String templateName) {
 			return templateName != null && templateName.startsWith(SYSTEM_PREFIX);
 		}
@@ -1883,6 +1865,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		this.processors = processors;
 	}
 
+	/**
+	 * 设置系统内置的fragment
+	 * <p>
+	 * <b>无论是否设置space，这些fragment都是全局的</b>
+	 * </p>
+	 * 
+	 * @param fragments
+	 */
 	public void setFragments(List<Fragment> fragments) {
 		this.fragments = fragments;
 	}

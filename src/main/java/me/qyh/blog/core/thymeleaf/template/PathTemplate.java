@@ -129,11 +129,6 @@ public class PathTemplate implements Template {
 		return false;
 	}
 
-	@Override
-	public void clearTemplate() {
-		this.template = null;
-	}
-
 	public static boolean isPathTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(PATH_PREFIX);
 	}

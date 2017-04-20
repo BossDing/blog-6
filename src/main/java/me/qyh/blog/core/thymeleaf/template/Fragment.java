@@ -15,12 +15,17 @@
  */
 package me.qyh.blog.core.thymeleaf.template;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Objects;
+
+import org.springframework.core.io.Resource;
 
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.thymeleaf.data.DataTagProcessor;
+import me.qyh.blog.util.Resources;
+import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -70,6 +75,17 @@ public class Fragment extends BaseEntity implements Template {
 	public Fragment(String name) {
 		super();
 		this.name = name;
+	}
+
+	public Fragment(String name, Resource resource, boolean callable) throws IOException {
+		this.name = name;
+		this.tpl = Resources.readResourceToString(resource);
+		this.callable = callable;
+		this.createDate = Timestamp.valueOf(Times.now());
+	}
+
+	public Fragment(String name, Resource resource) throws IOException {
+		this(name, resource, false);
 	}
 
 	public Fragment(Fragment fragment) {
@@ -212,11 +228,6 @@ public class Fragment extends BaseEntity implements Template {
 
 	public void setGlobal(boolean global) {
 		this.global = global;
-	}
-
-	@Override
-	public void clearTemplate() {
-		this.tpl = null;
 	}
 
 	public static boolean isFragmentTemplate(String templateName) {

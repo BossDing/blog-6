@@ -105,59 +105,99 @@
 			</list>
 		</property>
 		<property name="fragments">
-			<bean class="me.qyh.blog.core.thymeleaf.template.FragmentsFactoryBean">
-				<property name="tplMap">
-					<map>
-						<entry key="文章详情" value="classpath:resources/fragment/article.html" />
-						<entry key="文章列表" value="classpath:resources/fragment/articles.html" />
-						<entry key="文章空间归档"
-							value="classpath:resources/fragment/articleSpaceFiles.html" />
-						<entry key="文章日期归档"
-							value="classpath:resources/fragment/articleDateFiles.html" />
-						<entry key="上一篇下一篇" value="classpath:resources/fragment/articleNav.html" />
-						<entry key="标签集" value="classpath:resources/fragment/articleTags.html" />
-						<entry key="顶部导航" value="classpath:resources/fragment/nav.html" />
-						<entry key="底部" value="classpath:resources/fragment/foot.html" />
-						<entry key="相似文章"
-							value="classpath:resources/fragment/similarArticles.html" />
-						<entry key="文章统计"
-							value="classpath:resources/fragment/articleStatistics.html" />
-						<entry key="评论统计"
-							value="classpath:resources/fragment/commentStatistics.html" />
-						<entry key="标签统计" value="classpath:resources/fragment/tagStatistics.html" />
-						<entry key="最近被访问文章"
-							value="classpath:resources/fragment/recentlyViewdArticles.html" />
-						<entry key="qa" value="classpath:resources/fragment/lock_qa.html" />
-						<entry key="password" value="classpath:resources/fragment/lock_password.html" />
-					</map>
-				</property>
-				<property name="fragments">
-					<list>
-						<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
-							<property name="name" value="评论" />
-							<property name="tpl">
-								<bean class="me.qyh.blog.core.thymeleaf.ResourceString">
-									<constructor-arg index="0"
-										value="classpath:resources/fragment/comments.html" />
-								</bean>
-							</property>
-							<property name="callable" value="true" />
-						</bean>
-						<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
-							<property name="name" value="评论挂件" />
-							<property name="tpl">
-								<bean class="me.qyh.blog.core.thymeleaf.ResourceString">
-									<constructor-arg index="0"
-										value="classpath:resources/fragment/commentWidget.html" />
-								</bean>
-							</property>
-							<property name="callable" value="true" />
-						</bean>
-					</list>
-				</property>
-			</bean>
+			<list>
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="文章详情"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/article.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="文章列表"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articles.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="文章空间归档"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleSpaceFiles.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="文章日期归档"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleDateFiles.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="上一篇下一篇"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleNav.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="标签集"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleTags.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="顶部导航"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/nav.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="底部"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/foot.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="相似文章"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/similarArticles.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="文章统计"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleStatistics.html"  type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="评论统计"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/commentStatistics.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="标签统计"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/tagStatistics.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="最近被访问文章"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/recentlyViewdArticles.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="qa"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/lock_qa.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="password"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/lock_password.html" type="org.springframework.core.io.Resource"/>
+				</bean>
+				
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="评论"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/comments.html"/>
+					<constructor-arg index="2" value="true" />
+				</bean>
+				
+				
+				<bean class="me.qyh.blog.core.thymeleaf.template.Fragment">
+					<constructor-arg index="0" value="评论挂件"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/commentWidget.html"/>
+					<constructor-arg index="2" value="true" />
+				</bean>
+			</list>
 		</property>
-		<property name="pathTemplateRoot" value="f:/tt/test" />
+		<!-- <property name="pathTemplateRoot" value="f:/tt/test" /> -->
 	</bean>
 	<bean class="me.qyh.blog.core.thymeleaf.TemplateExposeHelper">
 		<property name="pros">

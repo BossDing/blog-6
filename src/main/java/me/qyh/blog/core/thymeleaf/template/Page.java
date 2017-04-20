@@ -181,12 +181,9 @@ public class Page extends BaseEntity implements Template {
 
 	@Override
 	public String toString() {
-		return "Page [space=" + space + ", alias=" + alias + "]";
-	}
-
-	@Override
-	public void clearTemplate() {
-		this.tpl = null;
+		return "Page [space=" + space + ", tpl=" + tpl + ", name=" + name + ", description=" + description
+				+ ", createDate=" + createDate + ", alias=" + alias + ", allowComment=" + allowComment
+				+ ", templateName=" + templateName + "]";
 	}
 
 	/**
