@@ -3,7 +3,7 @@
 
 一个重型博客
 
-当前版本:5.5.1.RELEASE
+当前版本:5.5.2.RELEASE
 
 特性：
 
@@ -33,3 +33,6 @@
 
 
 ## detail: https://www.qyh.me/project/blog
+
+
+## changelog https://www.qyh.me/changelog
