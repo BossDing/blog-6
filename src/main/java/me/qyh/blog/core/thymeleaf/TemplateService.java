@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import me.qyh.blog.core.bean.ExportPage;
 import me.qyh.blog.core.bean.ImportRecord;
+import me.qyh.blog.core.bean.PathTemplateBean;
 import me.qyh.blog.core.bean.PathTemplateLoadRecord;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.FragmentQueryParam;
@@ -189,13 +190,6 @@ public interface TemplateService {
 	 */
 	PathTemplateService getPathTemplateService() throws LogicException;
 
-	/**
-	 * 获取预览模板服务
-	 * 
-	 * @return 预览模板服务，不会为null
-	 * 
-	 */
-	PreviewService getPreviewService();
 
 	/**
 	 * 物理文件模板服务
@@ -230,57 +224,53 @@ public interface TemplateService {
 		Optional<PathTemplate> getPathTemplate(String templateName);
 
 		/**
-		 * 注册一个预览页面
+		 * 保存|更新 一个物理文件模板
+		 * 
+		 * @param templateBean
+		 * @throws LogicException
+		 */
+		void build(PathTemplateBean templateBean) throws LogicException;
+
+		/**
+		 * 删除一个物理文件模板
 		 * 
 		 * @param path
+		 *            模板路径
+		 * @throws LogicException
+		 *             删除失败|模板不存在
+		 */
+		void deletePathTemplate(String path) throws LogicException;
+
+		/**
+		 * 预览一个页面
+		 * 
+		 * @param bean
 		 * @return 预览preview
 		 * @throws LogicException
-		 *             预览页面不存在，或者页面不能被预览
 		 */
-		PathTemplate registerPreview(String path) throws LogicException;
+		PathTemplate registerPreview(PathTemplateBean bean) throws LogicException;
 	}
 
 	/**
-	 * 模板预览服务
+	 * 注册一个预览页面
 	 * <p>
-	 * <b>页面只能在用户登录的情况下才能被预览</b>
+	 * 如果路径对应的mapping不存在，那么将会注册一个preview mapping
+	 * </p>
+	 * <p>
+	 * 如果路径已经存在，那么访问path即可预览该页面
 	 * </p>
 	 * 
-	 * @author mhlx
-	 *
+	 * @param path
+	 *            模板映射路径
+	 * @param template
+	 *            用来预览的模板
+	 * @throws LogicException
+	 *             注册失败
 	 */
-	public interface PreviewService {
-		/**
-		 * 注册一个预览页面
-		 * <p>
-		 * 如果路径对应的mapping不存在，那么将会注册一个preview mapping
-		 * </p>
-		 * <p>
-		 * 如果路径已经存在，那么访问path即可预览该页面
-		 * </p>
-		 * 
-		 * @param path
-		 *            模板映射路径
-		 * @param template
-		 *            用来预览的模板
-		 * @throws LogicException
-		 *             注册失败
-		 */
-		void registerPreview(String path, Template template) throws LogicException;
+	void registerPreview(String path, Template template) throws LogicException;
 
-		/**
-		 * 清空预览页面，删除mapping
-		 */
-		void clearPreview();
-
-		/**
-		 * 根据模板名查询模板
-		 * 
-		 * @param templateName
-		 *            模板名
-		 * @return
-		 */
-		Optional<Template> getTemplate(String templateName);
-	}
-
+	/**
+	 * 清空预览页面，删除mapping
+	 */
+	void clearPreview();
 }

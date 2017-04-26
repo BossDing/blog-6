@@ -75,4 +75,10 @@ public class Message implements MessageSourceResolvable, Serializable {
 	public Object[] getArguments() {
 		return arguments;
 	}
+
+	@Override
+	public String toString() {
+		return "Message [code=" + code + ", arguments=" + Arrays.toString(arguments) + ", defaultMessage="
+				+ defaultMessage + "]";
+	}
 }

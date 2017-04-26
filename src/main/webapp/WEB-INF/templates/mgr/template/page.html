@@ -35,7 +35,7 @@
 								<table class="table">
 									<thead>
 										<tr>
-											<th>页面ID</th>
+											<th>ID</th>
 											<th>页面名</th>
 											<th>路径</th>
 											<th>空间</th>
@@ -45,7 +45,7 @@
 									</thead>
 									<tbody>
 										<tr th:each="page : ${result.datas}">
-											<td th:text="${page.id}"></td>
+										<td th:text="${page.id}"></td>
 											<td><a href="###" th:title="${page.name}"
 												data-toggle="tooltip"
 												th:text="${#strings.length(page.name) > 10  ? #strings.substring(page.name,0,10)+'...' : page.name}"></a></td>

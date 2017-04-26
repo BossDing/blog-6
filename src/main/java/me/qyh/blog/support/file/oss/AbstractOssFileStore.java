@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +30,8 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.file.CommonFile;
 import me.qyh.blog.core.file.FileStore;
 import me.qyh.blog.core.file.ImageHelper;
-import me.qyh.blog.core.file.Resize;
-import me.qyh.blog.core.file.ThumbnailUrl;
 import me.qyh.blog.core.file.ImageHelper.ImageInfo;
+import me.qyh.blog.core.file.Resize;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.web.Webs;
@@ -54,9 +51,9 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractOssFileStore.class);
 
-	private Resize smallResize;
-	private Resize middleResize;
-	private Resize largeResize;
+	protected Resize smallResize;
+	protected Resize middleResize;
+	protected Resize largeResize;
 
 	private boolean readOnly;
 
@@ -236,21 +233,6 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 
 	protected final boolean isSystemAllowedImage(String key) {
 		return ImageHelper.isSystemAllowedImage(FileUtils.getFileExtension(key));
-	}
-
-	@Override
-	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
-		if (isSystemAllowedImage(key)) {
-			String small = buildThumbnailUrl(key, smallResize);
-			Objects.requireNonNull(small);
-			String middle = buildThumbnailUrl(key, middleResize);
-			Objects.requireNonNull(middle);
-			String large = buildThumbnailUrl(key, largeResize);
-			Objects.requireNonNull(large);
-
-			return Optional.of(new ThumbnailUrl(small, middle, large));
-		}
-		return Optional.empty();
 	}
 
 	public void setBackupAbsPath(String backupAbsPath) {

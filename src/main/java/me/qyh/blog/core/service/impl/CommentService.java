@@ -41,7 +41,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.util.HtmlUtils;
 
 import me.qyh.blog.core.bean.CommentPageResult;
 import me.qyh.blog.core.config.CommentConfig;
@@ -50,17 +49,17 @@ import me.qyh.blog.core.config.Limit;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.dao.CommentDao;
-import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.dao.CommentDao.ModuleCommentCount;
+import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Comment;
+import me.qyh.blog.core.entity.Comment.CommentStatus;
 import me.qyh.blog.core.entity.CommentMode;
 import me.qyh.blog.core.entity.CommentModule;
+import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
-import me.qyh.blog.core.entity.Comment.CommentStatus;
-import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.evt.ArticleEvent;
 import me.qyh.blog.core.evt.EventType;
 import me.qyh.blog.core.evt.PageEvent;
@@ -75,8 +74,6 @@ import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
-import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.form.CommentValidator;
 
 public class CommentService implements InitializingBean, CommentServer {
 
@@ -120,7 +117,6 @@ public class CommentService implements InitializingBean, CommentServer {
 	 * 同时为了走索引，只能限制它为255个字符，由于id为数字的原因，实际上一般情况下很难达到255的长度(即便id很大)，所以这里完全够用
 	 */
 	private static final int PATH_MAX_LENGTH = 255;
-	private static final int MAX_COMMENT_LENGTH = CommentValidator.MAX_COMMENT_LENGTH;
 
 	/**
 	 * 评论配置文件位置
@@ -247,7 +243,6 @@ public class CommentService implements InitializingBean, CommentServer {
 			}
 		}
 
-		setContent(comment, config);
 		commentChecker.checkComment(comment, config);
 
 		String parentPath = "/";
@@ -296,15 +291,16 @@ public class CommentService implements InitializingBean, CommentServer {
 
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
-		comment.setEditor(config.getEditor());
 
 		boolean check = config.getCheck() && !Environment.isLogin();
 		comment.setStatus(check ? CommentStatus.CHECK : CommentStatus.NORMAL);
-
+		// 获取当前设置的编辑器
+		comment.setEditor(config.getEditor());
 		comment.setParent(parent);
-		completeComment(comment);
 
 		commentDao.insert(comment);
+
+		completeComment(comment);
 
 		if (commentEmailNotifySupport != null) {
 			Transactions.afterCommit(() -> commentEmailNotifySupport.handle(comment));
@@ -444,6 +440,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		if (!comment.getCommentModule().equals(module)) {
 			return Collections.emptyList();
 		}
+		completeComment(comment);
 		if (comment.getParents().isEmpty()) {
 			return Arrays.asList(comment);
 		}
@@ -453,7 +450,6 @@ public class CommentService implements InitializingBean, CommentServer {
 			completeComment(p);
 			comments.add(p);
 		}
-		completeComment(comment);
 		comments.add(comment);
 		return comments;
 	}
@@ -591,31 +587,6 @@ public class CommentService implements InitializingBean, CommentServer {
 		}
 	}
 
-	private void setContent(Comment comment, CommentConfig commentConfig) throws LogicException {
-		String content = comment.getContent();
-		if (Editor.HTML.equals(comment.getEditor())) {
-			content = htmlClean.clean(content);
-		} else {
-			content = HtmlUtils.htmlEscape(content, Constants.CHARSET.name());
-
-			String parsed = htmlClean.clean(markdown2Html.toHtml(content));
-			validContentLength(parsed);
-		}
-		validContentLength(content);
-		comment.setContent(content);
-	}
-
-	private void validContentLength(String content) throws LogicException {
-		if (Validators.isEmptyOrNull(content, true)) {
-			throw new LogicException("comment.content.blank", "评论内容不能为空");
-		}
-		// 再次检查content的长度
-		if (content.length() > MAX_COMMENT_LENGTH) {
-			throw new LogicException("comment.content.toolong", "评论的内容不能超过" + MAX_COMMENT_LENGTH + "个字符",
-					MAX_COMMENT_LENGTH);
-		}
-	}
-
 	private List<Comment> buildTree(List<Comment> comments) {
 		CollectFilteredFilter filter = new CollectFilteredFilter(null);
 		List<Comment> roots = new ArrayList<>();
@@ -643,10 +614,11 @@ public class CommentService implements InitializingBean, CommentServer {
 	}
 
 	private void completeComment(Comment comment) {
+		String content = comment.getContent();
 		if (comment.getEditor().equals(Editor.MD)) {
-			String html = markdown2Html.toHtml(comment.getContent());
-			comment.setContent(htmlClean.clean(html));
+			content = markdown2Html.toHtml(comment.getContent());
 		}
+		comment.setContent(htmlClean.clean(content));
 		comment.setUrl(getCommentLink(comment));
 		Comment p = comment.getParent();
 		if (p != null) {

@@ -23,6 +23,17 @@ $(document).ready(function(){
 			clearTip();
 			$(this).find("form")[0].reset();
 		})
+		
+		var queryType = $("#pageFormType").val();
+		if(queryType != undefined){
+			$("#query-type").val(queryType);
+		}
+		
+		var querySubDir = $("#pageFormSubDir").val();
+		if(querySubDir != undefined){
+			$("#query-sub").prop('checked',querySubDir);
+		}
+		
 		$('[data-toggle="tooltip"]').tooltip();
 		$('#fileupload').fileupload({
 			dataType : 'json',
@@ -173,6 +184,23 @@ $(document).ready(function(){
 			default : 
 				break;
 			}
+		});
+		
+		$("#query").click(function(){
+			var form = "";
+			$("#query-form").remove();
+			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/file/index" method="get">';
+			var name = $.trim($("#query-name").val());
+			if(name != ''){
+				form += '<input type="hidden" name="name" value="'+name+'"/>';
+			}
+			if($("#query-sub").is(":checked")){
+				form += '<input type="hidden" name="querySubDir" value="true"/>';
+			}
+			form += '<input type="hidden" name="type" value="'+$("#query-type").val()+'"/>';
+			form += '</form>';
+			$("body").append(form);
+			$("#query-form").submit();
 		});
 		
 		$("#createFolder").click(function(){

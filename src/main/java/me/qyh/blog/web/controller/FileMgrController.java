@@ -87,8 +87,6 @@ public class FileMgrController extends BaseMgrController {
 			blogFileQueryParam = new BlogFileQueryParam();
 			blogFileQueryParam.setCurrentPage(1);
 		}
-		blogFileQueryParam.setQuerySubDir(false);
-		blogFileQueryParam.setExtensions(new HashSet<>());
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
 			model.addAttribute("stores", fileService.allStorableStores());

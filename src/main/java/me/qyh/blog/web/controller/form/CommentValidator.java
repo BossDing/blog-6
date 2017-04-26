@@ -27,7 +27,7 @@ import me.qyh.blog.util.Validators;
 @Component
 public class CommentValidator implements Validator {
 
-	public static final int MAX_COMMENT_LENGTH = 500;
+	private static final int MAX_COMMENT_LENGTH = 500;
 	private static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_WEBSITE_LENGTH = 50;
 

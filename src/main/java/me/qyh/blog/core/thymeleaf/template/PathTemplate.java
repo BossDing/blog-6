@@ -34,14 +34,16 @@ public class PathTemplate implements Template {
 	private final Path associate;
 	private final boolean registrable;
 	private final String relativePath;
+	private final boolean pub;
 	private String template;
 	private String templateName;
 
-	public PathTemplate(Path associate, boolean registrable, String relativePath) {
+	public PathTemplate(Path associate, boolean registrable, String relativePath, boolean pub) {
 		super();
 		this.associate = associate;
 		this.relativePath = relativePath;
 		this.registrable = registrable;
+		this.pub = pub;
 	}
 
 	public PathTemplate(PathTemplate clone) {
@@ -49,6 +51,7 @@ public class PathTemplate implements Template {
 		this.associate = clone.associate;
 		this.registrable = clone.registrable;
 		this.relativePath = clone.relativePath;
+		this.pub = clone.pub;
 	}
 
 	public Path getAssociate() {
@@ -79,21 +82,25 @@ public class PathTemplate implements Template {
 	@Override
 	public String getTemplateName() {
 		if (templateName == null) {
-			String path;
-			String spaceAlias = null;
-			if (relativePath.indexOf('/') == -1) {
-				path = relativePath;
-			} else {
-				if (UrlUtils.match("space/*/**", relativePath)) {
-					spaceAlias = relativePath.split("/")[1];
-					path = relativePath.substring(spaceAlias.length() + 6);
-				} else {
-					path = relativePath;
-				}
-			}
-			templateName = getTemplateName(path, spaceAlias);
+			templateName = getTemplateName(relativePath);
 		}
 		return templateName;
+	}
+
+	public static String getTemplateName(String relativePath) {
+		String path;
+		String spaceAlias = null;
+		if (relativePath.indexOf('/') == -1) {
+			path = relativePath;
+		} else {
+			if (UrlUtils.match("space/*/**", relativePath)) {
+				spaceAlias = relativePath.split("/")[1];
+				path = relativePath.substring(spaceAlias.length() + 6);
+			} else {
+				path = relativePath;
+			}
+		}
+		return getTemplateName(path, spaceAlias);
 	}
 
 	public static String getTemplateName(String path, String spaceAlias) {
@@ -116,6 +123,10 @@ public class PathTemplate implements Template {
 
 	public String getRelativePath() {
 		return relativePath;
+	}
+
+	public boolean isPub() {
+		return pub;
 	}
 
 	@Override

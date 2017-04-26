@@ -15,6 +15,9 @@
  */
 package me.qyh.blog.core.security.input;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * 标签属性
  * 
@@ -25,6 +28,30 @@ public class Attribute {
 	private String name;
 	private String protocols;
 	private String enforce;
+
+	public Attribute() {
+		super();
+	}
+
+	public Attribute(String name) {
+		super();
+		this.name = name;
+	}
+
+	public Attribute(String name, String... protocols) {
+		super();
+		this.name = name;
+		if (protocols != null && protocols.length > 0) {
+			this.protocols = Arrays.stream(protocols).collect(Collectors.joining(","));
+		}
+	}
+
+	public Attribute(String name, String protocols, String enforce) {
+		super();
+		this.name = name;
+		this.protocols = protocols;
+		this.enforce = enforce;
+	}
 
 	public String getName() {
 		return name;

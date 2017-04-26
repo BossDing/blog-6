@@ -70,6 +70,7 @@ import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
 import me.qyh.blog.core.thymeleaf.template.Template;
 import me.qyh.blog.support.metaweblog.FaultException;
 import me.qyh.blog.support.metaweblog.RequestXmlParser;
+import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.controller.BaseController;
 import me.qyh.blog.web.security.CsrfException;
@@ -89,6 +90,19 @@ public class GlobalControllerExceptionHandler {
 	private UrlHelper urlHelper;
 	@Autowired
 	private Messages messages;
+
+	/**
+	 * tomcat client abort exception <br>
+	 * 绝大部分不用记录这个异常，所以额外判断一下
+	 */
+	private static Class<?> clientAbortExceptionClass;
+
+	static {
+		try {
+			clientAbortExceptionClass = Class.forName("org.apache.catalina.connector.ClientAbortException");
+		} catch (ClassNotFoundException e) {
+		}
+	}
 
 	private static final Message ERROR_403 = new Message("error.403", "权限不足");
 	private static final Message ERROR_400 = new Message("error.400", "请求异常");
@@ -310,7 +324,10 @@ public class GlobalControllerExceptionHandler {
 
 	@ExceptionHandler(value = Exception.class)
 	public String defaultHandler(HttpServletRequest request, HttpServletResponse resp, Exception e) throws IOException {
-		LOGGER.error(e.getMessage(), e);
+		if (clientAbortExceptionClass == null
+				|| !ExceptionUtils.getFromChain(e, clientAbortExceptionClass).isPresent()) {
+			LOGGER.error(e.getMessage(), e);
+		}
 		if (resp.isCommitted()) {
 			return null;
 		}
@@ -331,7 +348,8 @@ public class GlobalControllerExceptionHandler {
 		if (error != null) {
 			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
 		}
-		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) != null来判断
+		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=
+		// null来判断
 		// 因为如果空间是私人的，这里会造成循坏重定向
 		if (Environment.hasSpace()) {
 			return "redirect:" + urlHelper.getUrl() + "/space/" + Environment.getSpaceAlias() + "/error";

@@ -39,7 +39,7 @@ public class TemplateSessionListener implements HttpSessionListener, Application
 		HttpSession old = se.getSession();
 		if (old != null && old.getAttribute(Constants.USER_SESSION_KEY) != null) {
 			// 清除预览模板
-			templateService.getPreviewService().clearPreview();
+			templateService.clearPreview();
 		}
 
 	}

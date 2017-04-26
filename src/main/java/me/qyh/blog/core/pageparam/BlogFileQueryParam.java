@@ -38,6 +38,7 @@ public class BlogFileQueryParam extends PageQueryParam {
 	private boolean querySubDir;
 	private BlogFile parentFile;
 	private Set<String> extensions = new HashSet<>();
+	private String name;
 
 	public Integer getParent() {
 		return parent;
@@ -77,6 +78,14 @@ public class BlogFileQueryParam extends PageQueryParam {
 
 	public void setExtensions(Set<String> extensions) {
 		this.extensions = extensions;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

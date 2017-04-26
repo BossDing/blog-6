@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.core.thymeleaf.template;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -75,9 +74,8 @@ public interface Template extends Serializable {
 	 * 获取模板内容
 	 * 
 	 * @return
-	 * @throws IOException
 	 */
-	String getTemplate() throws IOException;
+	String getTemplate();
 
 	/**
 	 * 获取模板名称

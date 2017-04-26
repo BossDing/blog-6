@@ -113,10 +113,5 @@
 		<task:scheduled ref="commentController" method="clearAttemptLogger"
 			fixed-delay="60000" />
 			
-			
-					
-		<!-- 每天8点 更新 Bing图片 -->
-		<task:scheduled ref="bingBackgroundImageDataTagProcessor" method="refresh"
-			cron="0 0 8 * * ?" />	
 	</task:scheduled-tasks>
 </beans>

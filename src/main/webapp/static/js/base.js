@@ -169,3 +169,31 @@ dateFormat.i18n = {
 Date.prototype.format = function (mask, utc) {
 	return dateFormat(this, mask, utc);
 };
+
+var supportLocalStorage;
+try{
+	localStorage.setItem("1","1");
+	localStorage.removeItem("1");
+	supportLocalStorage=true;
+}catch (e) {
+	supportLocalStorage = false;
+}
+
+function storeInLocal(key,value){
+	if(supportLocalStorage){
+		localStorage.setItem(key,value);
+	}
+}
+
+function getFromLocal(key){
+	if(supportLocalStorage){
+		return localStorage.getItem(key);
+	}
+	return null;
+}
+
+function removeLocal(key){
+	if(supportLocalStorage){
+		localStorage.removeItem(key);
+	}
+}

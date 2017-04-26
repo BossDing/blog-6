@@ -61,9 +61,6 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 
 	private ArticleQueryParam parseParam(Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
-		param.setSpace(getCurrentSpace());
-		param.setStatus(ArticleStatus.PUBLISHED);
-		param.setCurrentPage(1);
 
 		String beginStr = attributes.get("begin");
 		String endStr = attributes.get("end");
@@ -108,6 +105,10 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			}
 		}
 
+		if (param.getCurrentPage() < 1) {
+			param.setCurrentPage(1);
+		}
+
 		String pageSizeStr = attributes.get(Constants.PAGE_SIZE);
 		if (pageSizeStr != null) {
 			try {
@@ -138,11 +139,10 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 			if (queryPrivateStr != null) {
 				param.setQueryPrivate(Boolean.parseBoolean(queryPrivateStr));
 			}
-
 		}
 
-		param.setStatus(ArticleStatus.PUBLISHED);
 		param.setSpace(getCurrentSpace());
+		param.setStatus(ArticleStatus.PUBLISHED);
 
 		ArticleQueryParamValidator.validate(param);
 		return param;

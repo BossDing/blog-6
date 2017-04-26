@@ -106,9 +106,9 @@ public class LoginController extends AttemptLoggerController {
 		}
 	}
 
-	@GetMapping("needLoginCaptcha")
+	@GetMapping("login/needCaptcha")
 	@ResponseBody
-	public boolean needLoginCaptcha() {
+	public boolean needCaptcha() {
 		return reach(Environment.getIP());
 	}
 

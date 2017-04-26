@@ -130,7 +130,7 @@ public class TemplateMgrController extends BaseMgrController {
 	@PostMapping("clearPreview")
 	@ResponseBody
 	public JsonResult clearPreview() {
-		templateService.getPreviewService().clearPreview();
+		templateService.clearPreview();
 		return new JsonResult(true, new Message("clearPreview.success", "清除预览页面成功"));
 	}
 

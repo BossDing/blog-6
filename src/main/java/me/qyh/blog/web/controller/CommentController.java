@@ -103,9 +103,10 @@ public class CommentController extends AttemptLoggerController {
 				+ commentService.getLink(new CommentModule(getModuleType(type), moduleId)).orElse(urlHelper.getUrl());
 	}
 
-	@GetMapping("needCommentCaptcha")
+	@GetMapping("comment/needCaptcha")
+	@ResponseBody
 	public boolean needCaptcha() {
-		return reach(Environment.getIP());
+		return !Environment.isLogin() && reach(Environment.getIP());
 	}
 
 	private ModuleType getModuleType(String type) {

@@ -134,6 +134,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 					file_parent = #{parentFile.id}
 				</otherwise>
 			</choose>
+			<if test="name != null and name != ''">
+				AND file_path LIKE CONCAT('%', #{name},'%')
+			</if>
 			<if test="type != null">
 				AND file_type = #{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler}
 			</if>
@@ -176,6 +179,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 					file_parent = #{parentFile.id}
 				</otherwise>
 			</choose>
+			<if test="name != null and name != ''">
+				AND file_path LIKE CONCAT('%', #{name},'%')
+			</if>
 			<if test="type != null">
 				AND file_type = #{type,javaType=BlogFileType,typeHandler=EnumOrdinalTypeHandler}
 			</if>

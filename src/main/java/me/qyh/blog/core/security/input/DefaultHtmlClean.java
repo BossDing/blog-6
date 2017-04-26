@@ -50,7 +50,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	 */
 	private Resource whitelistJsonResource;
 	private AllowTags tags;
-	private boolean nofollow = true;// 是否在超链接上机上nofollow属性
+	private boolean nofollow = true;// 是否在超链接上加上nofollow属性
 
 	private static final String NOFOLLOW_ATTR = "external nofollow";
 
@@ -84,11 +84,9 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 		if (tags == null) {
 			tags = new AllowTags();
 			tags.addSimpleTags(new String[] { "b", "code", "em", "del", "small", "strong" });
-			Tag a = new Tag();
-			a.setName("a");
-			Attribute href = new Attribute();
-			href.setName("href");
-			a.addAttribute(href);
+			Tag a = new Tag("a").
+			// 这里protocols必须要标明，否则会有xss
+					addAttributes(new Attribute("href", "ftp", "http", "https", "mailto"), new Attribute("rel"));
 			tags.addTag(a);
 		}
 	}
@@ -126,4 +124,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 		this.whitelistJsonResource = whitelistJsonResource;
 	}
 
+	public void setNofollow(boolean nofollow) {
+		this.nofollow = nofollow;
+	}
 }

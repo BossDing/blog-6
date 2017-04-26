@@ -34,9 +34,9 @@ import com.qiniu.storage.model.FileListing;
 import com.qiniu.util.Auth;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.file.ImageHelper.ImageInfo;
 import me.qyh.blog.core.file.Resize;
 import me.qyh.blog.core.file.ThumbnailUrl;
-import me.qyh.blog.core.file.ImageHelper.ImageInfo;
 import me.qyh.blog.core.service.FileService;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Jsons.ExpressionExecutor;
@@ -140,20 +140,50 @@ public class QiniuFileStore extends AbstractOssFileStore {
 
 	@Override
 	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
-		Optional<ThumbnailUrl> optionalUrl = super.getThumbnailUrl(key);
-		if (optionalUrl.isPresent()) {
-			ThumbnailUrl thumbnailUrl = optionalUrl.get();
-			if (secret) {
-				return Optional.of(new ThumbnailUrl(auth.privateDownloadUrl(thumbnailUrl.getSmall()),
-						auth.privateDownloadUrl(thumbnailUrl.getMiddle()),
-						auth.privateDownloadUrl(thumbnailUrl.getLarge())));
-			} else if (sourceProtected) {
+
+		if (isSystemAllowedImage(key)) {
+			if (sourceProtected) {
 				// 只能采用样式访问
 				String url = urlPrefix + key + styleSplitChar + style;
-				return Optional.of(new ThumbnailUrl(url, url, url));
+				return Optional.of(new QiniuThumbnailUrl(url, url, url, key));
+			} else {
+				String small = buildThumbnailUrl(key, smallResize);
+				String middle = buildThumbnailUrl(key, middleResize);
+				String large = buildThumbnailUrl(key, largeResize);
+				if (secret) {
+					return Optional.of(new QiniuThumbnailUrl(auth.privateDownloadUrl(small),
+							auth.privateDownloadUrl(middle), auth.privateDownloadUrl(large), key));
+				} else {
+					return Optional.of(new QiniuThumbnailUrl(small, middle, large, key));
+				}
 			}
 		}
-		return optionalUrl;
+		return Optional.empty();
+	}
+
+	private final class QiniuThumbnailUrl extends ThumbnailUrl {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private final String key;
+
+		private QiniuThumbnailUrl(String small, String middle, String large, String key) {
+			super(small, middle, large);
+			this.key = key;
+		}
+
+		@Override
+		public String getThumbUrl(int width, int height, boolean keepRatio) {
+			return buildThumbnailUrl(key, new Resize(width, height, keepRatio));
+		}
+
+		@Override
+		public String getThumbUrl(int size) {
+			return buildThumbnailUrl(key, new Resize(size));
+		}
+
 	}
 
 	@Override

@@ -99,16 +99,21 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException {
-		return upload(configService.getMetaweblogConfig(), file);
+		return upload(configService.getMetaweblogConfig(), file).get(0);
 	}
 
-	private UploadedFile upload(UploadConfig config, MultipartFile file) throws LogicException {
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
+	public List<UploadedFile> upload(UploadConfig config, MultipartFile... files) throws LogicException {
+		if (files == null || files.length == 0) {
+			throw new SystemException("请至少上传一个文件");
+		}
 		BlogFile parent = createFolder(config.getPath());
 		BlogFileUpload bfu = new BlogFileUpload();
-		bfu.setFiles(Arrays.asList(file));
+		bfu.setFiles(Arrays.asList(files));
 		bfu.setParent(parent.getId());
 		bfu.setStore(config.getStore());
-		return upload(bfu).get(0);
+		return upload(bfu);
 	}
 
 	@Override
@@ -549,6 +554,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			}
 		}
 		blogFileDao.deleteUnassociateCommonFile();
+		
 	}
 
 	private boolean overMaxModifyTime(Path path) {

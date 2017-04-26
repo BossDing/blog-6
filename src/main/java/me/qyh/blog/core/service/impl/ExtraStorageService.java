@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import me.qyh.blog.core.bean.ExtraData;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.util.SerializationUtils;
 
@@ -56,11 +58,10 @@ public class ExtraStorageService implements InitializingBean {
 	/**
 	 * 存储键值对数据
 	 * 
-	 * @param k
-	 * @param v
+	 * @param extraData
 	 */
-	public void store(String k, String v) {
-		dataMap.put(k, v);
+	public void store(ExtraData extraData) {
+		dataMap.put(extraData.getKey(), extraData.getValue());
 	}
 
 	/**
@@ -80,6 +81,22 @@ public class ExtraStorageService implements InitializingBean {
 	 */
 	public void remove(String k) {
 		dataMap.remove(k);
+	}
+
+	/**
+	 * 清空数据
+	 */
+	public void clear() {
+		dataMap.clear();
+	}
+
+	/**
+	 * 获取所有的key
+	 * 
+	 * @return
+	 */
+	public Set<String> keys() {
+		return dataMap.keySet();
 	}
 
 	@EventListener

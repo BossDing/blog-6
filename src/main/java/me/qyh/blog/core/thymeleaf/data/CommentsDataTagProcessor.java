@@ -76,6 +76,15 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 			param.setCurrentPage(0);
 		}
 
+		String pageSizeStr = attributes.get(Constants.PAGE_SIZE);
+		if (pageSizeStr != null) {
+			try {
+				param.setPageSize(Integer.parseInt(pageSizeStr));
+			} catch (Exception e) {
+				LOGGER.debug("当前分页数量:" + pageSizeStr + "无法被转化:" + e.getMessage(), e);
+			}
+		}
+
 		return commentService.queryComment(param);
 	}
 

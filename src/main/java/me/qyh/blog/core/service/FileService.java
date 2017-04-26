@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.bean.BlogFilePageResult;
 import me.qyh.blog.core.bean.UploadedFile;
+import me.qyh.blog.core.config.UploadConfig;
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.file.FileStore;
@@ -153,5 +154,15 @@ public interface FileService {
 	 * 清理文件
 	 */
 	void clear();
+
+	/**
+	 * 上传文件
+	 * 
+	 * @param config
+	 * @param file
+	 * @return
+	 * @throws LogicException
+	 */
+	List<UploadedFile> upload(UploadConfig config, MultipartFile ... files) throws LogicException;
 
 }

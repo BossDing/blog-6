@@ -52,14 +52,13 @@ public class Tag {
 		this.attributes = attributes;
 	}
 
-	/**
-	 * 添加属性
-	 * 
-	 * @param att
-	 *            属性
-	 */
-	public void addAttribute(Attribute att) {
-		this.attributes.add(att);
+	public Tag addAttributes(Attribute... attributes) {
+		if (attributes != null && attributes.length > 0) {
+			for (Attribute att : attributes) {
+				this.attributes.add(att);
+			}
+		}
+		return this;
 	}
 
 }

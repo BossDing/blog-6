@@ -283,8 +283,34 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 
 	@Override
 	public Optional<ThumbnailUrl> getThumbnailUrl(String key) {
-		return Optional.of(new ThumbnailUrl(buildResizePath(smallResize, key), buildResizePath(middleResize, key),
-				buildResizePath(largeResize, key)));
+		return Optional.of(new ImageResourceThumbnailUrl(buildResizePath(smallResize, key),
+				buildResizePath(middleResize, key), buildResizePath(largeResize, key), key));
+	}
+
+	// 不能匿名内部类，否则gson无法write
+	private final class ImageResourceThumbnailUrl extends ThumbnailUrl {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private final String key;
+
+		private ImageResourceThumbnailUrl(String small, String middle, String large, String key) {
+			super(small, middle, large);
+			this.key = key;
+		}
+
+		@Override
+		public String getThumbUrl(int width, int height, boolean keepRatio) {
+			return buildResizePath(new Resize(width, height, keepRatio), key);
+		}
+
+		@Override
+		public String getThumbUrl(int size) {
+			return buildResizePath(new Resize(size), key);
+		}
+
 	}
 
 	private String buildResizePath(Resize resize, String key) {

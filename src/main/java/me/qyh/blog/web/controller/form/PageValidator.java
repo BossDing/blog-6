@@ -40,7 +40,7 @@ public class PageValidator implements Validator {
 	/**
 	 * 最长深度 String.split("/").length
 	 */
-	public static final int MAX_ALIAS_DEPTH = 6;
+	public static final int MAX_ALIAS_DEPTH = 10;
 
 	private static final String NO_REGISTRABLE_ALIAS_PATTERN = "^[A-Za-z0-9_-]+$";
 

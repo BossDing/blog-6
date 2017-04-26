@@ -24,6 +24,8 @@ import me.qyh.blog.core.pageparam.BlogFileQueryParam;
 @Component
 public class BlogFileQueryParamValidator implements Validator {
 
+	private static final int MAX_NAME_LENGTH = 20;
+
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return BlogFileQueryParam.class.isAssignableFrom(clazz);
@@ -34,6 +36,10 @@ public class BlogFileQueryParamValidator implements Validator {
 		BlogFileQueryParam param = (BlogFileQueryParam) target;
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
+		}
+		String name = param.getName();
+		if (name != null && name.length() > MAX_NAME_LENGTH) {
+			param.setName(name.substring(0, MAX_NAME_LENGTH));
 		}
 	}
 

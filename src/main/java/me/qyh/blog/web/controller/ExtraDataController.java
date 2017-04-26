@@ -17,20 +17,33 @@ package me.qyh.blog.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.bean.ExtraData;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.service.impl.ExtraStorageService;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.controller.form.ExtraDataValidator;
 
 @Controller
 @RequestMapping("mgr/extra")
 public class ExtraDataController extends BaseMgrController {
+
+	@Autowired
+	private ExtraDataValidator extraDataValidator;
+
+	@InitBinder(value = "extraData")
+	protected void initBinder(WebDataBinder binder) {
+		binder.setValidator(extraDataValidator);
+	}
+
 	@Autowired
 	private ExtraStorageService extraStorageService;
 
@@ -42,36 +55,28 @@ public class ExtraDataController extends BaseMgrController {
 
 	@PostMapping("put")
 	@ResponseBody
-	public JsonResult put(@RequestBody ExtraDataValue value) {
-		if (Validators.isEmptyOrNull(value.key, true)) {
-			return new JsonResult(false);
-		}
-		if (Validators.isEmptyOrNull(value.value, true)) {
-			return new JsonResult(false);
-		}
-		extraStorageService.store(value.key, value.value);
+	public JsonResult put(@RequestBody @Validated ExtraData extraData) {
+		extraStorageService.store(extraData);
 		return new JsonResult(true);
 	}
 
-	@PostMapping("remove/{key}")
+	@GetMapping("clear")
+	@ResponseBody
+	public JsonResult clear() {
+		extraStorageService.clear();
+		return new JsonResult(true);
+	}
+
+	@GetMapping("keys")
+	@ResponseBody
+	public JsonResult keys() {
+		return new JsonResult(true, extraStorageService.keys());
+	}
+
+	@GetMapping("remove/{key}")
 	@ResponseBody
 	public JsonResult remove(@PathVariable("key") String key) {
 		extraStorageService.remove(key);
 		return new JsonResult(true);
 	}
-
-	public final class ExtraDataValue {
-		private String key;
-		private String value;
-
-		public void setKey(String key) {
-			this.key = key;
-		}
-
-		public void setValue(String value) {
-			this.value = value;
-		}
-
-	}
-
 }

@@ -130,15 +130,43 @@ public class AliyunFileStore extends AbstractOssFileStore {
 		if (isSystemAllowedImage(key)) {
 			if (secret) {
 				String url = privateUrl(key);
-				return Optional.of(new ThumbnailUrl(url, url, url));
+				return Optional.of(new AliyunThumbnailUrl(url, url, url, key));
 			} else if (sourceProtected) {
 				String url = sourceProtectedUrl(key);
-				return Optional.of(new ThumbnailUrl(url, url, url));
+				return Optional.of(new AliyunThumbnailUrl(url, url, url, key));
 			} else {
-				return super.getThumbnailUrl(key);
+				String small = buildThumbnailUrl(key, smallResize);
+				String middle = buildThumbnailUrl(key, middleResize);
+				String large = buildThumbnailUrl(key, largeResize);
+				return Optional.of(new AliyunThumbnailUrl(small, middle, large, key));
 			}
 		}
 		return Optional.empty();
+	}
+
+	private final class AliyunThumbnailUrl extends ThumbnailUrl {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private final String key;
+
+		private AliyunThumbnailUrl(String small, String middle, String large, String key) {
+			super(small, middle, large);
+			this.key = key;
+		}
+
+		@Override
+		public String getThumbUrl(int width, int height, boolean keepRatio) {
+			return buildThumbnailUrl(key, new Resize(width, height, keepRatio));
+		}
+
+		@Override
+		public String getThumbUrl(int size) {
+			return buildThumbnailUrl(key, new Resize(size));
+		}
+
 	}
 
 	@Override

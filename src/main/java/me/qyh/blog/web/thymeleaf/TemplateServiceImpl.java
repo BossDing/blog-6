@@ -15,11 +15,13 @@
  */
 package me.qyh.blog.web.thymeleaf;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -80,6 +82,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import me.qyh.blog.core.bean.ExportPage;
 import me.qyh.blog.core.bean.ImportRecord;
+import me.qyh.blog.core.bean.PathTemplateBean;
 import me.qyh.blog.core.bean.PathTemplateLoadRecord;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.dao.FragmentDao;
@@ -161,7 +164,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	// PathTemplate
 	private Path pathTemplateRoot;
 	private boolean enablePathTemplate;
-	private PathTemplateService pathTemplateService;
+	private PathTemplateServiceImpl pathTemplateService;
 
 	// TEMPLATE REGISTER
 	@Autowired
@@ -172,12 +175,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private Map<String, SystemTemplate> defaultTemplates;
 
 	private final List<TemplateProcessor> templateProcessors = new ArrayList<>();
-	private PreviewServiceImpl previewService;
+	private PreviewManager previewManager;
 
 	/**
-	 * 模板自增长id
+	 * 模板自增长id，用于模板路径冲突时确定模板优先级
 	 */
-	private final AtomicInteger templateIncrementId = new AtomicInteger(0);
+	private final AtomicInteger templateIdGenerator = new AtomicInteger(0);
 
 	@Override
 	public synchronized void insertFragment(Fragment fragment) throws LogicException {
@@ -532,14 +535,19 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 						records.add(new ImportRecord(true, new Message("import.fragment.nochange",
 								"模板片段" + fragmentName + "内容没有发生变化，无需更新", fragmentName)));
 					} else {
-						// 如果用户存在同名的fragment，但是是global的，则插入space级别的
-						if (currentFragment.isGlobal()) {
+						// 如果是内置模板片段，插入新模板片段
+						if (!currentFragment.hasId()) {
 							insertFragmentWhenImport(fragment, records);
 						} else {
-							currentFragment.setTpl(fragment.getTpl());
-							fragmentDao.update(currentFragment);
-							records.add(new ImportRecord(true, new Message("import.update.fragment.success",
-									"模板片段" + fragmentName + "更新成功", fragmentName)));
+							// 如果是global的，则插入space级别的
+							if (currentFragment.isGlobal()) {
+								insertFragmentWhenImport(fragment, records);
+							} else {
+								currentFragment.setTpl(fragment.getTpl());
+								fragmentDao.update(currentFragment);
+								records.add(new ImportRecord(true, new Message("import.update.fragment.success",
+										"模板片段" + fragmentName + "更新成功", fragmentName)));
+							}
 						}
 						fragmentEvitKeySet.add(fragmentName);
 					}
@@ -557,6 +565,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} finally {
 			platformTransactionManager.commit(ts);
 		}
+	}
+
+	@Override
+	public void registerPreview(String path, Template template) throws LogicException {
+		previewManager.registerPreview(path, template);
+	}
+
+	@Override
+	public void clearPreview() {
+		previewManager.clearPreview();
 	}
 
 	/**
@@ -584,11 +602,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			throw new LogicException("pathTemplate.service.disable", "物理文件模板服务不可用");
 		}
 		return pathTemplateService;
-	}
-
-	@Override
-	public PreviewService getPreviewService() {
-		return previewService;
 	}
 
 	/**
@@ -627,9 +640,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@EventListener
 	public void handleTemplateEvitEvent(TemplateEvitEvent evt) {
 		if (evt.clear()) {
-			previewService.clearPreview();
+			previewManager.clearPreview();
 		} else {
-			previewService.remove(evt.getTemplateNames());
+			previewManager.remove(evt.getTemplateNames());
 		}
 	}
 
@@ -725,13 +738,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		// 预览文件模板服务
-		this.previewService = new PreviewServiceImpl();
+		this.previewManager = new PreviewManager();
 
 		this.templateProcessors.add(new TemplateProcessor() {
 
 			@Override
 			public Template getTemplate(String templateName) {
-				return previewService.getTemplate(templateName).orElse(null);
+				return previewManager.getTemplate(templateName).orElse(null);
 			}
 
 			@Override
@@ -900,57 +913,43 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		private static final String PREVIEW_SUFFIX = ".preview.html";
 
 		private final Map<String, PathTemplate> pathTemplates = new ConcurrentHashMap<>();
-		private final Map<String, PathTemplate> publicFragments = new ConcurrentHashMap<>();
 
 		@Override
-		public List<PathTemplate> queryPathTemplates(String pattern) {
-			if (Validators.isEmptyOrNull(pattern, true)) {
-				List<PathTemplate> templates = new ArrayList<>(pathTemplates.values());
-				templates.addAll(publicFragments.values());
-				return Collections.unmodifiableList(templates);
-			}
-
-			PatternFilter filter = new PatternFilter(pattern);
+		public List<PathTemplate> queryPathTemplates(String str) {
+			Predicate<PathTemplate> filter = Validators.isEmptyOrNull(str, true) ? (pathTemplate) -> true
+					: new ContainsFilter(str);
 			List<PathTemplate> templates = new ArrayList<>(
 					pathTemplates.values().parallelStream().filter(filter).collect(Collectors.toList()));
-			templates.addAll(publicFragments.values().parallelStream().filter(filter).collect(Collectors.toList()));
+
 			return Collections.unmodifiableList(templates);
 		}
 
 		@Override
-		public PathTemplate registerPreview(String path) throws LogicException {
-			String cleanPath = FileUtils.cleanPath(path);
-			Path lookupPath = pathTemplateRoot.resolve(cleanPath);
-			if (!Files.exists(lookupPath)) {
-				throw new LogicException("pathTemplate.preview.sourceNotExists", "文件不存在");
-			}
-			if (!FileUtils.isSub(lookupPath, pathTemplateRoot)) {
-				throw new LogicException("pathTemplate.preview.notInRoot", "文件不在模板主目录中");
-			}
-			if (!Files.isRegularFile(lookupPath)) {
-				throw new LogicException("pathTemplate.preview.notFile", "文件夹不能被预览");
-			}
-			String relativePath = getPathTemplatePath(lookupPath);
-			PathTemplate template = pathTemplates.get(relativePath);
-			if (template == null) {
-				throw new LogicException("pathTemplate.preview.notAssociate", "文件没有被注册");
-			}
-			if (!template.isRegistrable()) {
-				throw new LogicException("pathTemplate.preview.notRegistrable", "模板片段不能被预览");
-			}
+		public PathTemplate registerPreview(PathTemplateBean bean) throws LogicException {
+			String cleanPath = FileUtils.cleanPath(bean.getPath());
 			// 查找preview
-			Path previewPath = pathTemplateRoot.resolve(relativePath + PREVIEW_SUFFIX);
-			if (!Files.exists(previewPath)) {
-				throw new LogicException("pathTemplate.preview.previewNotExists", "预览文件不存在");
+			Path previewPath = pathTemplateRoot.resolve(cleanPath + PREVIEW_SUFFIX);
+			if (Files.exists(previewPath)) {
+				if (!FileUtils.isSub(previewPath, pathTemplateRoot)) {
+					throw new LogicException("pathTemplate.preview.notInRoot", "文件不在模板主目录中");
+				}
+				if (!Files.isRegularFile(previewPath)) {
+					throw new LogicException("pathTemplate.preview.notFile", "文件夹不能被预览");
+				}
 			}
-			if (!Files.isRegularFile(previewPath)) {
-				throw new LogicException("pathTemplate.preview.previewNotFile", "预览文件不是一个文件");
+			FileUtils.forceMkdir(previewPath.getParent());
+			try {
+				synchronized (this) {
+					Files.copy(new ByteArrayInputStream(bean.getTpl().getBytes(Constants.CHARSET)), previewPath,
+							StandardCopyOption.REPLACE_EXISTING);
+				}
+			} catch (IOException e) {
+				LOGGER.debug(e.getMessage(), e);
+				throw new LogicException("pathTemplate.preview.ioError", "写入预览文件异常");
 			}
-			if (!Files.isReadable(previewPath)) {
-				throw new LogicException("pathTemplate.preview.previewNotReadable", "预览文件不可读");
-			}
-			PathTemplate preview = new PathTemplate(previewPath, true, relativePath);
-			previewService.registerPreview(relativePath, preview);
+
+			PathTemplate preview = new PathTemplate(previewPath, true, cleanPath, false);
+			previewManager.registerPreview(cleanPath, preview);
 			return preview;
 		}
 
@@ -988,14 +987,76 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			} else {
 				template = pathTemplates.get("space/" + spaceAlias + (path.isEmpty() ? "" : "/" + path));
 			}
-			// 从全局fragment中寻找
 			if (template == null) {
-				template = publicFragments.get(path);
+				// 再次寻找 public pub
+				template = pathTemplates.get(path);
+				// 如果存在，不是public，认为没有找到
+				if (template != null && !template.isPub()) {
+					template = null;
+				}
 			}
 			if (template != null) {
 				template = new PathTemplate(template);
 			}
 			return Optional.ofNullable(template);
+		}
+
+		@Override
+		public void build(PathTemplateBean templateBean) throws LogicException {
+			// 根据相对路径查找文件
+			String resolvePath = FileUtils
+					.cleanPath(templateBean.getPath() + (templateBean.isPub() ? PUBLIC_FRAGMENT_TEMPLATE_SUFFIX
+							: templateBean.isRegistrable() ? PATH_TEMPLATE_REG_SUFFIX : PATH_TEMPLATE_SUFFIX));
+
+			Path path = pathTemplateRoot.resolve(resolvePath);
+
+			if (!FileUtils.isSub(path, pathTemplateRoot)) {
+				throw new LogicException("pathTemplate.build.notInRoot", "文件不在模板主目录中");
+			}
+
+			boolean exists = Files.exists(path);// 判断原路径是否已经存在，如果不存在并且保存失败，删除path
+			FileUtils.forceMkdir(path.getParent());
+			try {
+				synchronized (this) {
+					Files.copy(new ByteArrayInputStream(templateBean.getTpl().getBytes(Constants.CHARSET)), path,
+							StandardCopyOption.REPLACE_EXISTING);
+				}
+			} catch (IOException e) {
+				if (!exists) {
+					FileUtils.deleteQuietly(path);
+				}
+				LOGGER.debug(e.getMessage(), e);
+				throw new LogicException("pathTemplate.write.ioError", "写入文件异常");
+			}
+
+			long stamp = templateMappingRegister.lockWrite();
+			try {
+				PathTemplateLoadRecord record = loadPathTemplateFile(path);
+				if (!record.isSuccess()) {
+					if (!exists) {
+						FileUtils.deleteQuietly(path);
+					}
+					throw new LogicException(record.getMessage());
+				}
+			} finally {
+				templateMappingRegister.unlockWrite(stamp);
+			}
+		}
+
+		@Override
+		public void deletePathTemplate(String path) throws LogicException {
+			PathTemplate template = this.pathTemplates.get(FileUtils.cleanPath(path));
+			if (template != null) {
+				Path associate = template.getAssociate();
+				if (FileUtils.deleteQuietly(associate)) {
+					Path parent = associate.getParent();
+					this.loadPathTemplateFile(pathTemplateRoot.relativize(parent).toString());
+				} else {
+					throw new LogicException("pathTemplate.delete.fail", "删除文件失败");
+				}
+			} else {
+				throw new LogicException("pathTemplate.delete.path.notExists", "路径不存在");
+			}
 		}
 
 		@Override
@@ -1037,19 +1098,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 								pathTemplates.remove(relativePath);
 								applicationEventPublisher
 										.publishEvent(new TemplateEvitEvent(this, pathTemplate.getTemplateName()));
-								LOGGER.debug("文件" + associate + "不存在，删除");
-								records.add(new PathTemplateLoadRecord(relativePath, true,
-										new Message("pathTemplate.load.removeSuccess", "删除成功")));
-							}
-						}
-						// 从公共fragment中删除
-						for (PathTemplate publicFragment : publicFragments.values()) {
-							Path associate = publicFragment.getAssociate();
-							if (FileUtils.isSub(associate, loadPath) && !Files.exists(associate)) {
-								String relativePath = getPathTemplatePath(associate);
-								publicFragments.remove(relativePath);
-								applicationEventPublisher
-										.publishEvent(new TemplateEvitEvent(this, publicFragment.getTemplateName()));
 								LOGGER.debug("文件" + associate + "不存在，删除");
 								records.add(new PathTemplateLoadRecord(relativePath, true,
 										new Message("pathTemplate.load.removeSuccess", "删除成功")));
@@ -1101,18 +1149,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					// /dir/a.reg.html
 					// /dir/a.html
 					LOGGER.debug("文件:" + file + "已经存在");
-					return new PathTemplateLoadRecord(relativePath, true,
-							new Message("pathTemplate.load.exists", "文件已经存在"));
+					return new PathTemplateLoadRecord(relativePath, false,
+							new Message("pathTemplate.load.exists", "已经存在文件对应该路径"));
 				}
-			}
-
-			// 公共fragments中已经存在，此时不可能指向不同的文件，刷新缓存
-			if (publicFragments.containsKey(relativePath)) {
-				String templateName = publicFragments.get(relativePath).getTemplateName();
-				applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateName));
-				LOGGER.debug("文件" + file + "载入成功");
-				return new PathTemplateLoadRecord(relativePath, true,
-						new Message("pathTemplate.load.loadSuccess", "载入成功"));
 			}
 
 			if (!Files.exists(file)) {
@@ -1136,7 +1175,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 							new Message(first.getCode(), first.getDefaultMessage(), first.getArguments()));
 				}
 
-				PathTemplate pathTemplate = new PathTemplate(file, true, relativePath);
+				PathTemplate pathTemplate = new PathTemplate(file, true, relativePath, false);
 				String templateName = pathTemplate.getTemplateName();
 				try {
 					templateMappingRegister.registerTemplateMapping(templateName, relativePath);
@@ -1169,16 +1208,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					return new PathTemplateLoadRecord(relativePath, false,
 							new Message("pathTemplate.load.fragment.invalidName", "无效的名称:" + name, name));
 				}
-				PathTemplate pathTemplate = new PathTemplate(file, false, relativePath);
+				PathTemplate pathTemplate = new PathTemplate(file, false, relativePath, isPublic);
 
 				String templateName = pathTemplate.getTemplateName();
 				applicationEventPublisher.publishEvent(new TemplateEvitEvent(this, templateName));
 
-				if (isPublic) {
-					publicFragments.put(relativePath, pathTemplate);
-				} else {
-					pathTemplates.put(relativePath, pathTemplate);
-				}
+				pathTemplates.put(relativePath, pathTemplate);
 			}
 			LOGGER.debug("文件" + file + "载入成功");
 			return new PathTemplateLoadRecord(relativePath, true, new Message("pathTemplate.load.loadSuccess", "载入成功"));
@@ -1214,28 +1249,34 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return FileUtils.cleanPath(relativizePath);
 		}
 
-		private final class PatternFilter implements Predicate<PathTemplate> {
+		/**
+		 * 删除预览文件
+		 */
+		private void deleteAllPreview() {
+			FileUtils.deleteQuietly(pathTemplateRoot, this::isPreview);
+		}
 
-			private final String pattern;
+		private final class ContainsFilter implements Predicate<PathTemplate> {
 
-			public PatternFilter(String pattern) {
+			private final String str;
+
+			public ContainsFilter(String str) {
 				super();
-				this.pattern = pattern;
+				this.str = str;
 			}
 
 			@Override
 			public boolean test(PathTemplate t) {
-				return t.getRelativePath().matches(pattern);
+				return t.getRelativePath().contains(str);
 			}
 		}
 	}
 
-	private final class PreviewServiceImpl implements PreviewService {
+	private final class PreviewManager {
 
 		private Map<String, Template> previewMap = new HashMap<>();
 		private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-		@Override
 		public void registerPreview(String path, Template template) throws LogicException {
 			lock.writeLock().lock();
 			try {
@@ -1252,11 +1293,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 
-		@Override
 		public void clearPreview() {
 			lock.writeLock().lock();
 			try {
 				previewMap.clear();
+				if (pathTemplateService != null) {
+					pathTemplateService.deleteAllPreview();
+				}
 				long stamp = templateMappingRegister.lockWrite();
 				try {
 					templateMappingRegister.unregisterPreviewMappings();
@@ -1268,7 +1311,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 
-		@Override
 		public Optional<Template> getTemplate(String templateName) {
 			if (!Template.isPreviewTemplate(templateName)) {
 				return Optional.empty();
@@ -1656,7 +1698,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			this.templateView = new TemplateView(templateName);
 			this.templateName = templateName;
 			this.path = path;
-			this.id = templateIncrementId.incrementAndGet();
+			this.id = templateIdGenerator.incrementAndGet();
 		}
 
 		public TemplateView handleRequest(HttpServletRequest request) {
@@ -1665,7 +1707,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				String path = FileUtils
 						.cleanPath(request.getRequestURI().substring(request.getContextPath().length() + 1));
 				String previewTemplateName = Template.TEMPLATE_PREVIEW_PREFIX + path;
-				Optional<String> bestTemplateName = previewService.getBestMatchTemplateName(this.path,
+				Optional<String> bestTemplateName = previewManager.getBestMatchTemplateName(this.path,
 						previewTemplateName);
 				if (bestTemplateName.isPresent()) {
 					return new TemplateView(bestTemplateName.get());
@@ -1813,7 +1855,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		@Override
-		public String getTemplate() throws IOException {
+		public String getTemplate() {
 			return template;
 		}
 
@@ -1874,7 +1916,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 * @param fragments
 	 */
 	public void setFragments(List<Fragment> fragments) {
-		this.fragments = fragments;
+		for (Fragment fragment : fragments) {
+			// 清除ID，用来判断是否是内置模板片段
+			fragment.setId(null);
+			this.fragments.add(fragment);
+		}
 	}
 
 	public void setPathTemplateRoot(String pathTemplateRoot) {

@@ -41,6 +41,8 @@ public class FileUtils {
 	 */
 	private static final Path TEMP_DIR = HOME_DIR.resolve("blog_temp");
 
+	private static final Predicate<Path> TRUE = (path) -> true;
+
 	static {
 		forceMkdir(TEMP_DIR);
 	}
@@ -120,6 +122,20 @@ public class FileUtils {
 	 * @return
 	 */
 	public static boolean deleteQuietly(Path path) {
+		return deleteQuietly(path, TRUE);
+	}
+
+	/**
+	 * 删除文件|文件夹
+	 * 
+	 * @param path
+	 *            路径
+	 * @param filter
+	 *            过滤条件
+	 * @return
+	 */
+	public static boolean deleteQuietly(Path path, final Predicate<Path> filter) {
+		Objects.requireNonNull(filter);
 		if (path == null || !Files.exists(path)) {
 			return true;
 		}
@@ -127,13 +143,17 @@ public class FileUtils {
 			Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Files.delete(file);
+					if (filter.test(file)) {
+						Files.delete(file);
+					}
 					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					Files.delete(dir);
+					if (filter.test(dir)) {
+						Files.delete(dir);
+					}
 					return FileVisitResult.CONTINUE;
 				}
 			});
@@ -171,6 +191,9 @@ public class FileUtils {
 	 * @param parentFile
 	 */
 	public static void forceMkdir(Path path) {
+		if (path == null) {
+			return;
+		}
 		synchronized (FileUtils.class) {
 			if (!Files.exists(path)) {
 				try {

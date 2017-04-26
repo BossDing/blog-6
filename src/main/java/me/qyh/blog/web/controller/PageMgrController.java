@@ -119,7 +119,7 @@ public class PageMgrController extends BaseMgrController {
 		}
 		page.setSpace(space);
 
-		templateService.getPreviewService().registerPreview(page.getTemplatePath(), page);
+		templateService.registerPreview(page.getTemplatePath(), page);
 		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page)));
 	}
 

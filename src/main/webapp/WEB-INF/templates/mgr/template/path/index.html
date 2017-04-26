@@ -14,6 +14,11 @@
 		<div class="container-fluid" th:if="${error == null}">
 			<div class="row" style="margin-bottom: 10px">
 				<div class="col-md-8 col-md-offset-2">
+					<a class="btn btn-default" th:href="${urls.url+'/mgr/template/path/build'}">新增</a>
+				</div>
+			</div>
+			<div class="row" style="margin-bottom: 10px">
+				<div class="col-md-8 col-md-offset-2">
 					<div class="input-group">
 					  <input type="text" class="form-control" placeholder="相对路径" aria-describedby="basic-addon2">
 					  <span class="input-group-addon">
@@ -42,15 +47,21 @@
 								<tr th:each="template : ${templates}">
 									<td>
 										<span th:if="${template.registrable}" th:text="${template.relativePath}+'.reg.html'"></span>
-										<span th:unless="${template.registrable}" th:text="${template.relativePath}+'.html'"></span>
+										<span th:if="${!template.pub && !template.registrable}" th:text="${template.relativePath}+'.html'"></span>
+										<span th:if="${template.pub}" th:text="${template.relativePath}+'.pub.html'"></span>
 									</td>
 									<td
 										th:text="${template.relativePath == '' ? '/' : template.relativePath}"></td>
 									<td>
+										
 										<a
-										th:href="${urls.url+'/mgr/template/path/preview?path='+template.relativePath+'.reg.html'}"
-										target="_blank" style="margin-right: 20px"
-										th:if="${template.registrable}">预览</a></td>
+										th:href="${urls.url+'/mgr/template/path/build?path='+template.relativePath}"
+										style="margin-right: 20px"
+										>编辑</a>
+										
+										<a
+										href="###" style="margin-right: 20px" th:data-path="${template.relativePath}" data-action="delete">删除</a>
+										</td>
 								</tr>
 							</tbody>
 						</table>
@@ -84,12 +95,16 @@
 			});
 			$("#search-icon").click(function(){
 				var query = $(this).parent().prev().prev().val();
-				window.location.href = basePath+'/mgr/template/path/index?pattern='+query;
+				window.location.href = basePath+'/mgr/template/path/index?str='+query;
 			});
 			$("#reloadModal").on('hidden.bs.modal', function () {
 				if(needReload){
 					window.location.reload();
 				}
+			})
+			$("a[data-action='delete']").click(function(){
+				var path = $(this).attr("data-path");
+				deleteTemplate(path);
 			})
 		});
 		var flag = true;
@@ -139,6 +154,19 @@
 				});
 			}
 		}
+		
+		function deleteTemplate(path) {
+			$.post(basePath+'/mgr/template/path/delete',{"path":path},function(data){
+				if(data.success){
+					bootbox.alert("删除成功");
+					setTimeout(function(){
+						window.location.reload();
+					}, 500);
+				}else{
+					bootbox.alert(data.message);
+				}
+			});
+		}	
 	</script>
 </body>
 </html>

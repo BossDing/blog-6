@@ -1,3 +1,4 @@
+var localStorageSupport;
 function preview() {
 		var page = {"tpl":editor.getValue()};
 		page.tpls = fragments;
@@ -48,6 +49,7 @@ function preview() {
 			}
 		});
 	}
+	 var saveFlag = false;
 	function save() {
 		var page = {"target":$("#target").val(),"tpl":editor.getValue()};
 		page.tpls = fragments;
@@ -65,6 +67,7 @@ function preview() {
 		page.name=$("#name").val();
 		page.description=$("#description").val();
 		page.allowComment = $("#allowComment").prop("checked");
+		saveFlag = true;
 		$.ajax({
 			type : "post",
 			url : basePath + '/mgr/template/page/build',
@@ -73,15 +76,64 @@ function preview() {
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
+					$.ajax({
+						type : "get",
+						url : basePath + '/mgr/extra/remove/'+key,
+						data : {},
+						dataType : "json",
+						contentType : 'application/json',
+						success : function(data){
+							
+						}
+					});
 					bootbox.alert(data.message);
 					setTimeout(function(){
 						window.location.href = basePath + '/mgr/template/page/index';
 					}, 500);
 				} else {
 					showError(data);
+					saveFlag = false;
 				}
 			},
 			complete:function(){
+			
 			}
 		});
 	}
+	var key="page_";
+	$(document).ready(function(){
+		var id = $("#pageId").val();
+		if(id != null && $.trim(id) != ''){
+			//update
+			key=key+id;
+		}
+		$.ajax({
+			type : "get",
+			url : basePath + '/mgr/extra/get/'+key,
+			data : {},
+			dataType : "json",
+			contentType : 'application/json',
+			success : function(data){
+				if (data.success) {
+					editor.setValue(data.data);
+				}
+			}
+		});
+		 setInterval(function(){
+			 if(!saveFlag){
+				 var tpl = $.trim(editor.getValue());
+				 if(tpl != ''){
+					 $.ajax({
+							type : "post",
+							url : basePath + '/mgr/extra/put',
+							data : JSON.stringify({"key":key,"value":tpl}),
+							dataType : "json",
+							contentType : 'application/json',
+							success : function(data){
+								
+							}
+						});
+				 }
+			 }
+		 }, 5000);
+	});

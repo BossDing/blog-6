@@ -4,13 +4,6 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
 		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
-	<bean id="bingBackgroundImageDataTagProcessor"
-		class="me.qyh.blog.support.thymeleaf.data.BingBackgroundImageDataTagProcessor">
-		<constructor-arg index="0" value="Bing" />
-		<constructor-arg index="1" value="bingImage" />
-		<constructor-arg index="2" value="https://cn.bing.com" />
-	</bean>
-
 	<bean class="me.qyh.blog.web.thymeleaf.TemplateServiceImpl">
 		<property name="processors">
 			<list>
@@ -101,7 +94,6 @@
 					<constructor-arg index="1" value="randomArticle" />
 				</bean>
 
-				<ref bean="bingBackgroundImageDataTagProcessor"/>
 			</list>
 		</property>
 		<property name="fragments">

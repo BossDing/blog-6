@@ -18,16 +18,24 @@ package me.qyh.blog.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.bean.PathTemplateBean;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.thymeleaf.TemplateService;
+import me.qyh.blog.core.thymeleaf.TemplateService.PathTemplateService;
 import me.qyh.blog.core.thymeleaf.template.PathTemplate;
+import me.qyh.blog.web.controller.form.PathTemplateBeanValidator;
 
 @Controller
 @RequestMapping("mgr/template/path")
@@ -36,15 +44,22 @@ public class PathTemplateMgrController extends BaseMgrController {
 	private TemplateService templateService;
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private PathTemplateBeanValidator pathTemplateBeanValidator;
+
+	@InitBinder(value = "pathTemplateBean")
+	protected void initBinder(WebDataBinder binder) {
+		binder.setValidator(pathTemplateBeanValidator);
+	}
 
 	@GetMapping("index")
-	public String index(ModelMap model, @RequestParam(value = "pattern", required = false) String pattern) {
+	public String index(ModelMap model, @RequestParam(value = "str", required = false) String str) {
 		try {
-			model.addAttribute("templates", templateService.getPathTemplateService().queryPathTemplates(pattern));
+			model.addAttribute("templates", templateService.getPathTemplateService().queryPathTemplates(str));
 		} catch (LogicException e) {
 			model.addAttribute(ERROR, e.getLogicMessage());
 		}
-		return "mgr/template/path";
+		return "mgr/template/path/index";
 	}
 
 	@GetMapping("reload")
@@ -53,15 +68,39 @@ public class PathTemplateMgrController extends BaseMgrController {
 		return new JsonResult(true, templateService.getPathTemplateService().loadPathTemplateFile(path));
 	}
 
-	@GetMapping("preview")
-	public String preview(@RequestParam("path") String path, ModelMap model) throws LogicException {
+	@GetMapping("build")
+	public String build(@RequestParam(value = "path", required = false) String path, ModelMap model)
+			throws LogicException {
+		PathTemplateService pathTemplateService = templateService.getPathTemplateService();
+		PathTemplateBean tpl = path == null ? new PathTemplateBean()
+				: pathTemplateService.getPathTemplate(PathTemplate.getTemplateName(path)).map(PathTemplateBean::new)
+						.orElse(new PathTemplateBean());
+
+		model.addAttribute("pathTemplate", tpl);
+		return "mgr/template/path/build";
+	}
+
+	@PostMapping("build")
+	@ResponseBody
+	public JsonResult build(@RequestBody @Validated PathTemplateBean pathTemplateBean) throws LogicException {
+		PathTemplateService pathTemplateService = templateService.getPathTemplateService();
+		pathTemplateService.build(pathTemplateBean);
+		return new JsonResult(true);
+	}
+
+	@PostMapping("delete")
+	@ResponseBody
+	public JsonResult delete(@RequestParam(value = "path") String path) throws LogicException {
+		PathTemplateService pathTemplateService = templateService.getPathTemplateService();
+		pathTemplateService.deletePathTemplate(path);
+		return new JsonResult(true);
+	}
+
+	@PostMapping("preview")
+	@ResponseBody
+	public JsonResult preview(@RequestBody @Validated PathTemplateBean pathTemplateBean) throws LogicException {
 		// 设置空间
-		PathTemplate preview = templateService.getPathTemplateService().registerPreview(path);
-		PreviewUrl url = new PreviewUrl(urlHelper.getUrl() + "/" + preview.getRelativePath());
-		if (!url.isHasPathVariable()) {
-			return "redirect:" + url.getUrl();
-		}
-		model.put("url", url.getUrl());
-		return "mgr/template/preview";
+		PathTemplate preview = templateService.getPathTemplateService().registerPreview(pathTemplateBean);
+		return new JsonResult(true, new PreviewUrl(urlHelper.getUrl() + "/" + preview.getRelativePath()));
 	}
 }

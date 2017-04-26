@@ -23,7 +23,7 @@ import java.io.Serializable;
  * @author Administrator
  *
  */
-public class ThumbnailUrl implements Serializable {
+public abstract class ThumbnailUrl implements Serializable {
 
 	/**
 	 * 
@@ -59,5 +59,16 @@ public class ThumbnailUrl implements Serializable {
 	public String getLarge() {
 		return large;
 	}
+
+	/**
+	 * 获取缩放链接
+	 * @param width
+	 * @param height
+	 * @param keepRatio
+	 * @return
+	 */
+	public abstract String getThumbUrl(int width, int height, boolean keepRatio);
+
+	public abstract String getThumbUrl(int size);
 
 }
