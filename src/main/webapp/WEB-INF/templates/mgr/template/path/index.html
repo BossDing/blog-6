@@ -156,14 +156,18 @@
 		}
 		
 		function deleteTemplate(path) {
-			$.post(basePath+'/mgr/template/path/delete',{"path":path},function(data){
-				if(data.success){
-					bootbox.alert("删除成功");
-					setTimeout(function(){
-						window.location.reload();
-					}, 500);
-				}else{
-					bootbox.alert(data.message);
+			bootbox.confirm("确定要删除这个模板吗？这将无法被恢复！！！",function(result){
+				if(result){
+					$.post(basePath+'/mgr/template/path/delete',{"path":path},function(data){
+						if(data.success){
+							bootbox.alert("删除成功");
+							setTimeout(function(){
+								window.location.reload();
+							}, 500);
+						}else{
+							bootbox.alert(data.message);
+						}
+					});
 				}
 			});
 		}	
