@@ -95,12 +95,6 @@
 		<property name="delta" value="0" />
 	</bean>
 
-	<!-- metaweblog -->
-	<!-- <bean id="metaweblogController" class="me.qyh.blog.support.metaweblog.MetaweblogController" 
-		/> <task:scheduled-tasks scheduler="taskScheduler"> <task:scheduled ref="metaweblogController" 
-		method="clearInvalidIp" fixed-rate="5000"/> <task:scheduled ref="metaweblogController" 
-		method="clearFail" fixed-rate="100000"/> </task:scheduled-tasks> -->
-
 	<!-- sitemap 服务 -->
 	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
 	

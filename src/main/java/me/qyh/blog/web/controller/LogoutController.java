@@ -27,14 +27,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.security.RememberMe;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 
 @Controller
 public class LogoutController extends BaseController {
-
-	@Autowired
-	private RememberMe rememberMe;
 	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
 
@@ -56,7 +52,6 @@ public class LogoutController extends BaseController {
 		if (session != null) {
 			session.invalidate();
 			Environment.setUser(null);
-			rememberMe.remove(request, response);
 		}
 		csrfTokenRepository.saveToken(null, request, response);
 	}

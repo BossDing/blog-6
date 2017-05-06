@@ -29,8 +29,6 @@ import org.springframework.stereotype.Service;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.GlobalConfig;
-import me.qyh.blog.core.config.UploadConfig;
-import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.util.FileUtils;
@@ -44,9 +42,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
-
-	private static final String METAWEBLOG_UPLOAD_PATH = "metaweblog.upload.path";
-	private static final String METAWEBLOG_UPLOAD_STORE = "metaweblog.upload.store";
 
 	private Properties config = new Properties();
 
@@ -81,33 +76,6 @@ public class ConfigServiceImpl implements ConfigService, InitializingBean {
 		config.setProperty(PAGE_SIZE_USERPAGE, Integer.toString(globalConfig.getPagePageSize()));
 		store();
 		return globalConfig;
-	}
-
-	@Override
-	@Cacheable(key = "'mateweblogUploadConfig'", value = "configCache", unless = "#result == null")
-	public UploadConfig getMetaweblogConfig() {
-		UploadConfig uploadConfig = new UploadConfig();
-		String path = config.getProperty(METAWEBLOG_UPLOAD_PATH);
-		if (path == null) {
-			uploadConfig.setPath("");
-		} else {
-			uploadConfig.setPath(path);
-		}
-		uploadConfig.setStore(getInt(METAWEBLOG_UPLOAD_STORE, null));
-		return uploadConfig;
-	}
-
-	@Override
-	@CachePut(key = "'mateweblogUploadConfig'", value = "configCache")
-	public UploadConfig updateMetaweblogConfig(UploadConfig uploadConfig) throws LogicException {
-		if (uploadConfig.getPath() != null) {
-			config.setProperty(METAWEBLOG_UPLOAD_PATH, uploadConfig.getPath());
-		}
-		if (uploadConfig.getStore() != null) {
-			config.setProperty(METAWEBLOG_UPLOAD_STORE, uploadConfig.getStore().toString());
-		}
-		store();
-		return uploadConfig;
 	}
 
 	private Integer getInt(String key, Integer defaultValue) {

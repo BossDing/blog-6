@@ -16,7 +16,6 @@
 package me.qyh.blog.web;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
 
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
@@ -61,15 +59,12 @@ import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockException;
 import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.thymeleaf.TemplateNotFoundException;
 import me.qyh.blog.core.thymeleaf.TplRenderException;
 import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
 import me.qyh.blog.core.thymeleaf.template.Template;
-import me.qyh.blog.support.metaweblog.FaultException;
-import me.qyh.blog.support.metaweblog.RequestXmlParser;
 import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.controller.BaseController;
@@ -88,8 +83,6 @@ public class GlobalControllerExceptionHandler {
 
 	@Autowired
 	private UrlHelper urlHelper;
-	@Autowired
-	private Messages messages;
 
 	/**
 	 * tomcat client abort exception <br>
@@ -139,18 +132,6 @@ public class GlobalControllerExceptionHandler {
 			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
 			return "redirect:" + urlHelper.getUrl() + "/error/ui";
 		}
-	}
-
-	@ExceptionHandler(FaultException.class)
-	public String handleFaultException(HttpServletRequest request, HttpServletResponse resp, FaultException ex)
-			throws IOException {
-		resp.setContentType(MediaType.APPLICATION_XML_VALUE);
-		byte[] bits = RequestXmlParser.createFailXml(ex.getCode(), messages.getMessage(ex.getDesc())).getBytes();
-		resp.setContentLength(bits.length);
-		OutputStream os = resp.getOutputStream();
-		os.write(bits);
-		resp.flushBuffer();
-		return null;
 	}
 
 	@ExceptionHandler(CsrfException.class)

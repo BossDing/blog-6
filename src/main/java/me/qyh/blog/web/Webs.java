@@ -97,11 +97,6 @@ public class Webs {
 		return false;
 	}
 
-	public static boolean apisRequest(HttpServletRequest request) {
-		String path = request.getRequestURI();
-		return UrlUtils.match("/apis/**", path);
-	}
-
 	/**
 	 * 从请求中获取IP地址
 	 * 

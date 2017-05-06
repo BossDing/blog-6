@@ -19,16 +19,15 @@ import java.util.List;
 import java.util.Optional;
 
 import me.qyh.blog.core.bean.ArticleDateFiles;
+import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.bean.ArticleNav;
 import me.qyh.blog.core.bean.ArticleSpaceFile;
 import me.qyh.blog.core.bean.TagCount;
-import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.support.metaweblog.MetaweblogArticle;
 
 /**
  * 文章服务
@@ -177,16 +176,6 @@ public interface ArticleService {
 	 * @return 标签集
 	 */
 	List<TagCount> queryTags() throws LogicException;
-
-	/**
-	 * 更新metaweblog文章
-	 * 
-	 * @param article
-	 *            metaweblog 撰写的文章
-	 * @return 保存后的文章
-	 * @throws LogicException
-	 */
-	Article writeArticle(MetaweblogArticle article) throws LogicException;
 
 	/**
 	 * 查询最近的文章

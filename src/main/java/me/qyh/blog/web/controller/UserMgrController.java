@@ -19,6 +19,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,11 +32,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.security.BCrypts;
+import me.qyh.blog.core.security.GoogleAuthenticator;
+import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.web.controller.form.UserValidator;
 
 @Controller
@@ -44,6 +45,10 @@ public class UserMgrController extends BaseMgrController {
 
 	@Autowired
 	private UserValidator userValidator;
+	@Autowired
+	private UserService userService;
+	@Autowired(required = false)
+	private GoogleAuthenticator ga;
 
 	@InitBinder(value = "user")
 	protected void initBinder(WebDataBinder binder) {
@@ -51,18 +56,34 @@ public class UserMgrController extends BaseMgrController {
 	}
 
 	@GetMapping("index")
-	public String index() {
+	public String index(Model model) {
+		model.addAttribute("otpRequired", ga != null);
 		return "mgr/user/index";
 	}
 
 	@PostMapping("update")
 	@ResponseBody
-	public JsonResult update(@RequestParam(value = "oldPassword", defaultValue = "") String oldPassword,
-			@Validated @RequestBody User user, HttpSession session) throws LogicException {
-		if (!BCrypts.matches(oldPassword, UserConfig.get().getPassword())) {
-			return new JsonResult(false, new Message("user.update.authFail", "密码验证失败"));
+	public JsonResult update(@RequestParam(value = "oldPassword") String oldPassword,
+			@RequestParam(value = "code", required = false) String codeStr, @Validated @RequestBody User user,
+			HttpSession session) throws LogicException {
+		if (ga != null) {
+			boolean verifyFail = false;
+			if (codeStr == null || codeStr.length() != 6) {
+				verifyFail = true;
+			} else {
+				int code;
+				try {
+					code = Integer.parseInt(codeStr);
+					verifyFail = !ga.checkCode(code);
+				} catch (NumberFormatException e) {
+					verifyFail = true;
+				}
+			}
+			if (verifyFail) {
+				return new JsonResult(false, new Message("otp.verifyFail", "动态口令校验失败"));
+			}
 		}
-		UserConfig.update(user);
+		userService.update(user, oldPassword);
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		return new JsonResult(true, new Message("user.update.success", "更新成功"));
 	}

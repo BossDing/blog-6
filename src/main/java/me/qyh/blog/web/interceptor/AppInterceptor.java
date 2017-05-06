@@ -48,7 +48,6 @@ import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.security.RememberMe;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.thymeleaf.TemplateExposeHelper;
 import me.qyh.blog.support.file.local.RequestMatcher;
@@ -66,8 +65,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AppInterceptor.class);
 
-	@Autowired
-	private RememberMe rememberMe;
 	@Autowired
 	private TemplateExposeHelper uiExposeHelper;
 	@Autowired
@@ -90,9 +87,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				User user = null;
 				if (session != null) {
 					user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
-				}
-				if (user == null) {
-					user = autoLogin(request, response).orElse(null);
 				}
 
 				Environment.setUser(user);
@@ -138,23 +132,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
 					.ifPresent(ann -> Environment.doAuthencation());
 		}
-	}
-
-	/**
-	 * 通过cookie自动登录
-	 * 
-	 * @param request
-	 * @param response
-	 * @return
-	 */
-	private Optional<User> autoLogin(HttpServletRequest request, HttpServletResponse response) {
-		// auto login
-		Optional<User> optionalUser = rememberMe.login(request, response);
-		if (optionalUser.isPresent()) {
-			LOGGER.debug("用户没有登录，自动登录成功");
-			request.getSession().setAttribute(Constants.USER_SESSION_KEY, optionalUser.get());
-		}
-		return optionalUser;
 	}
 
 	/**
@@ -220,10 +197,6 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		request.setAttribute(csrfToken.getParameterName(), csrfToken);
 		if ("get".equalsIgnoreCase(request.getMethod())) {
 			// GET请求不能检查，否则死循环
-			return;
-		}
-		// metaweblog等放行
-		if (Webs.apisRequest(request)) {
 			return;
 		}
 		if (!requireCsrfProtectionMatcher.match(request)) {

@@ -28,17 +28,22 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
+import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.security.BCrypts;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.security.RememberMe;
+import me.qyh.blog.core.security.GoogleAuthenticator;
+import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.controller.form.LoginBean;
 import me.qyh.blog.web.controller.form.LoginBeanValidator;
@@ -49,11 +54,25 @@ import me.qyh.blog.web.security.CsrfTokenRepository;
 public class LoginController extends AttemptLoggerController {
 
 	@Autowired
-	private RememberMe rememberMe;
-	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
 	@Autowired
 	private LoginBeanValidator loginBeanValidator;
+	@Autowired
+	private UserService userService;
+
+	@Autowired(required = false)
+	private GoogleAuthenticator ga;
+
+	@Autowired
+	private RequestMappingHandlerMapping mapping;
+
+	/**
+	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
+	 */
+	private static final String GA_SESSION_KEY = "ga_user";
+
+	private final Message otpVerifyFail = new Message("otp.verifyFail", "动态口令校验失败");
+	private final Message pwdVerifyRequire = new Message("pwd.verifyRequire", "请先通过密码验证");
 
 	// 是否支持改变sessionid,需要运行容器支持servlet3.1+
 	private static boolean SUPPORT_CHANGE_SESSION_ID;
@@ -84,26 +103,19 @@ public class LoginController extends AttemptLoggerController {
 	@PostMapping(value = "login")
 	@ResponseBody
 	public JsonResult login(@RequestBody @Validated LoginBean loginBean, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws LogicException {
 		HttpSession session = request.getSession(false);
 		String ip = Environment.getIP();
 		if (log(ip) && !Webs.matchValidateCode(request.getParameter("validateCode"), session)) {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 		}
-		try {
-			doLogin(loginBean, request, response);
-
-			remove(ip);
-
-			String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-			if (lastAuthencationFailUrl != null) {
-				session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-			}
-			return new JsonResult(true, lastAuthencationFailUrl);
-		} catch (LogicException e) {
-			rememberMe.remove(request, response);
-			return new JsonResult(false, new Message("user.loginFail", "登录失败"));
+		User user = userService.login(loginBean);
+		if (ga != null) {
+			request.getSession().setAttribute(GA_SESSION_KEY, user);
+			return new JsonResult(false, new Message("otp.required", "请输入动态口令"));
 		}
+		String lastAuthencationFailUrl = successLogin(user, request, response);
+		return new JsonResult(true, lastAuthencationFailUrl);
 	}
 
 	@GetMapping("login/needCaptcha")
@@ -112,25 +124,56 @@ public class LoginController extends AttemptLoggerController {
 		return reach(Environment.getIP());
 	}
 
-	private void doLogin(LoginBean loginBean, HttpServletRequest request, HttpServletResponse response)
-			throws LogicException {
-		User user = UserConfig.get();
-		if (user.getName().equals(loginBean.getUsername())) {
-			String encrptPwd = user.getPassword();
-			if (BCrypts.matches(loginBean.getPassword(), encrptPwd)) {
-				if (loginBean.isRememberMe()) {
-					rememberMe.save(user, request, response);
-				}
-
-				request.getSession().setAttribute(Constants.USER_SESSION_KEY, user);
-				if (SUPPORT_CHANGE_SESSION_ID) {
-					request.changeSessionId();
-				}
-				changeCsrf(request, response);
-				return;
-			}
+	@ResponseBody
+	public JsonResult otpVerify(@RequestParam("code") String codeStr, HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			return new JsonResult(false, pwdVerifyRequire);
 		}
-		throw new LogicException("user.loginFail", "登录失败");
+		// 没有通过用户名密码认证，无需校验
+		User user = (User) session.getAttribute(GA_SESSION_KEY);
+		if (user == null) {
+			return new JsonResult(false, pwdVerifyRequire);
+		}
+
+		String ip = Environment.getIP();
+		if (log(ip) && !Webs.matchValidateCode(request.getParameter("validateCode"), session)) {
+			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		}
+
+		int code;
+		try {
+			code = Integer.parseInt(codeStr);
+		} catch (NumberFormatException e) {
+			return new JsonResult(false, otpVerifyFail);
+		}
+		if (!ga.checkCode(code)) {
+			return new JsonResult(false, otpVerifyFail);
+		}
+		session.removeAttribute(GA_SESSION_KEY);
+		String lastAuthencationFailUrl = successLogin(user, request, response);
+		return new JsonResult(true, lastAuthencationFailUrl);
+	}
+
+	private String successLogin(User user, HttpServletRequest request, HttpServletResponse response) {
+		HttpSession session = request.getSession();
+		session.setAttribute(Constants.USER_SESSION_KEY, user);
+		changeSessionId(request);
+		changeCsrf(request, response);
+
+		remove(Environment.getIP());
+		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+		if (lastAuthencationFailUrl != null) {
+			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
+		}
+		return lastAuthencationFailUrl;
+	}
+
+	private void changeSessionId(HttpServletRequest request) {
+		if (SUPPORT_CHANGE_SESSION_ID) {
+			request.changeSessionId();
+		}
 	}
 
 	private void changeCsrf(HttpServletRequest request, HttpServletResponse response) {
@@ -149,6 +192,14 @@ public class LoginController extends AttemptLoggerController {
 		setAttemptLogger(new AttemptLogger(attemptCount, maxAttemptCount));
 		setSleepSec(sleepSec);
 		super.afterPropertiesSet();
+
+		if (ga != null) {
+			mapping.registerMapping(
+					new RequestMappingInfo(new PatternsRequestCondition("login/otpVerify"),
+							new RequestMethodsRequestCondition(RequestMethod.POST), null, null, null, null, null),
+					"loginController", LoginController.class.getMethod("otpVerify", String.class,
+							HttpServletRequest.class, HttpServletResponse.class));
+		}
 	}
 
 }

@@ -73,7 +73,6 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.support.metaweblog.MetaweblogArticle;
 import me.qyh.blog.util.Times;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
@@ -152,34 +151,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void hit(Integer id) {
 		articleHitManager.hit(id);
-	}
-
-	@Override
-	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
-	@Sync
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article writeArticle(MetaweblogArticle mba) throws LogicException {
-		Space space = mba.getSpace() == null ? spaceDao.selectDefault() : spaceDao.selectByName(mba.getSpace());
-		if (space == null) {
-			throw new LogicException("space.notExists", "空间不存在");
-		}
-		Article article;
-		if (mba.hasId()) {
-			Article articleDb = articleDao.selectById(mba.getId());
-			if (articleDb != null) {
-				article = new Article(articleDb);
-				mba.mergeArticle(article);
-			} else {
-				article = mba.toArticle();
-				article.setId(mba.getId());
-			}
-		} else {
-			article = mba.toArticle();
-		}
-		article.setSpace(space);
-		return writeArticle(article);
 	}
 
 	@Override

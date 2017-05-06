@@ -101,17 +101,6 @@ public interface FileService {
 	void delete(Integer id) throws LogicException;
 
 	/**
-	 * 保存metaweblog api 上传的文件
-	 * 
-	 * @param file
-	 *            待保存的文件
-	 * @return 上传完成后的信息
-	 * @throws LogicException
-	 *             保存过程中发生逻辑异常
-	 */
-	UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException;
-
-	/**
 	 * 查询<b>文件</b>
 	 * <p>
 	 * 用于DataTag

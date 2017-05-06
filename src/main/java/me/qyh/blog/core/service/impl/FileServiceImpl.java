@@ -47,8 +47,8 @@ import me.qyh.blog.core.dao.BlogFileDao;
 import me.qyh.blog.core.dao.CommonFileDao;
 import me.qyh.blog.core.dao.FileDeleteDao;
 import me.qyh.blog.core.entity.BlogFile;
-import me.qyh.blog.core.entity.FileDelete;
 import me.qyh.blog.core.entity.BlogFile.BlogFileType;
+import me.qyh.blog.core.entity.FileDelete;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.file.CommonFile;
@@ -94,13 +94,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
 
 	private static final long MAX_MODIFY_TIME = 30 * 60 * 1000;
-
-	@Override
-	@Sync
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public UploadedFile uploadMetaweblogFile(MultipartFile file) throws LogicException {
-		return upload(configService.getMetaweblogConfig(), file).get(0);
-	}
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -554,7 +547,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			}
 		}
 		blogFileDao.deleteUnassociateCommonFile();
-		
+
 	}
 
 	private boolean overMaxModifyTime(Path path) {

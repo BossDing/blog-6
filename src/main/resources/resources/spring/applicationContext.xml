@@ -135,6 +135,11 @@
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
 
+	<!-- Google Auth -->
+	<bean class="me.qyh.blog.core.security.GoogleAuthenticator">
+		<constructor-arg value="qz23 fugf krvd krh6 cors 4lpq jw3y ilxy"/>
+	</bean>
+	
 	<bean id="htmlClean" class="me.qyh.blog.core.security.input.DefaultHtmlClean" />
 	<bean id="simpleCommentChecker" class="me.qyh.blog.core.service.impl.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
@@ -159,8 +164,7 @@
 		<property name="mailSubject" value="您有新的评论" />
 	</bean>
 	<bean class="me.qyh.blog.core.service.impl.CommentService"/>
-
-
+	
 	<!-- 定时任务 -->
 	<task:scheduled-tasks scheduler="taskScheduler">
 
@@ -194,7 +198,7 @@
 			fixed-rate="1800000" />
 	</task:scheduled-tasks>
 
-
+	
 
 	<!-- 博客ping服务 -->
 	<bean id="pingManager" class="me.qyh.blog.support.ping.SimplePingManager">
@@ -209,9 +213,5 @@
 
 	<!-- sitemap 服务 -->
 	<bean id="xmlSiteMap" class="me.qyh.blog.support.sitemap.XmlSiteMap" />
-
-
-	<!-- metaweblog服务 -->
-	<!-- <bean class="me.qyh.blog.support.metaweblog.MetaweblogHandler" /> -->
 
 </beans>      
