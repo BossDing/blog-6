@@ -27,8 +27,6 @@
 
 * sitemap
 
-* 支持metaweblog api
-
 ## demo: https://www.qyh.me
 
 
