@@ -29,8 +29,8 @@
 
 ## demo: https://www.qyh.me
 
-
 ## detail: https://www.qyh.me/project/blog
 
+## changelog: https://www.qyh.me/changelog
 
-## changelog https://www.qyh.me/changelog
+## doc: https://www.qyh.me/doc/blog
