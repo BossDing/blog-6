@@ -88,13 +88,6 @@
 
 	<bean class="me.qyh.blog.core.thymeleaf.TemplateRender" />
 
-
-	<!-- captcha -->
-	<bean class="me.qyh.blog.core.security.CaptchaController">
-		<property name="num" value="4" />
-		<property name="delta" value="0" />
-	</bean>
-
 	<!-- sitemap 服务 -->
 	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
 	

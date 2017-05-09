@@ -47,6 +47,7 @@ import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.controller.form.ArticleQueryParamValidator;
 import me.qyh.blog.web.controller.form.ArticleValidator;
 
@@ -138,6 +139,9 @@ public class ArticleMgrController extends BaseMgrController {
 	@PostMapping("write")
 	@ResponseBody
 	public JsonResult write(@RequestBody @Validated Article article) throws LogicException {
+		if (Validators.isEmptyOrNull(article.getFeatureImage(), true)) {
+			article.setFeatureImage(null);
+		}
 		return new JsonResult(true, articleService.writeArticle(article));
 	}
 

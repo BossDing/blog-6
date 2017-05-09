@@ -48,6 +48,7 @@ import me.qyh.blog.core.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.RequestMatcher;
 import me.qyh.blog.web.SimpleUrlMappingRegisterEvent;
 import me.qyh.blog.web.Webs;
 

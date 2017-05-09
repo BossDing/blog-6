@@ -6,8 +6,24 @@ import me.qyh.blog.web.controller.form.LoginBean;
 
 public interface UserService {
 
+	/**
+	 * 登录
+	 * 
+	 * @param loginBean
+	 * @return
+	 * @throws LogicException
+	 */
 	User login(LoginBean loginBean) throws LogicException;
 
+	/**
+	 * 更新用户
+	 * 
+	 * @param user
+	 *            当前用户
+	 * @param password
+	 *            密码
+	 * @throws LogicException
+	 */
 	void update(User user, String password) throws LogicException;
 
 }

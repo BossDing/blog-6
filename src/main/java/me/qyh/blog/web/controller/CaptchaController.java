@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.security;
+package me.qyh.blog.web.controller;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +41,10 @@ import me.qyh.blog.core.exception.SystemException;
 public class CaptchaController implements InitializingBean {
 
 	private static final Random random = new Random(System.nanoTime());
+	
+	@Value("${captcha.num:4}")
 	private int num;
+	@Value("${captcha.delta:0}")
 	private int delta;
 
 	private Cage cage;
@@ -69,13 +73,4 @@ public class CaptchaController implements InitializingBean {
 			cage = new GCage();
 		}
 	}
-
-	public void setNum(int num) {
-		this.num = num;
-	}
-
-	public void setDelta(int delta) {
-		this.delta = delta;
-	}
-
 }

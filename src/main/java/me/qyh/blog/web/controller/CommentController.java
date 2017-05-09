@@ -38,6 +38,7 @@ import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.web.Webs;

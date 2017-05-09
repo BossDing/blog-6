@@ -21,6 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="from" column="art_from" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="editor" column="editor" typeHandler="EnumOrdinalTypeHandler" />
 		<result property="alias" column="art_alias" />
+		<result property="featureImage" column="feature_image" />
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_alias" property="alias" />
@@ -57,10 +58,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
 		keyColumn="id">
 		INSERT INTO
-		blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,allowComment)
+		blog_article(content,pubDate,title,isPrivate,summary,art_level,art_lock,art_status,art_from,editor,space_id,art_alias,allowComment,feature_image)
 		VALUES(#{content},#{pubDate},#{title},#{isPrivate},#{summary},#{level},#{lockId},
 		#{status,javaType=ArticleStatus,typeHandler=EnumOrdinalTypeHandler},#{from,javaType=ArticleFrom,typeHandler=EnumOrdinalTypeHandler},
-		#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{allowComment})
+		#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler},#{space.id},#{alias},#{allowComment},#{featureImage})
 	</insert>
 
 	<update id="update">
@@ -99,6 +100,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="lastModifyDate != null">
 				lastModifyDate = #{lastModifyDate},
 			</if>
+			feature_image = #{featureImage},
 			art_alias = #{alias}
 		</set>
 		WHERE id = #{id}
@@ -123,7 +125,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		COUNT(art.id)
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
@@ -171,6 +174,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.space_id,
 		art.art_lock,
 		art.art_alias,
+		art.feature_image,
 		sp.space_alias,
 		space_lock,
 		sp.is_private AS space_is_private,
@@ -180,9 +184,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		blog_article art
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON
+		LEFT OUTER JOIN
+		blog_article_tag bat ON
 		bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
+		LEFT OUTER JOIN blog_tag
+		bt ON bat.tag_id =
 		bt.id
 		<where>
 			<if test="space != null">
@@ -255,6 +261,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.space_id,
 		art.art_lock,
 		art.art_alias,
+		art.feature_image,
 		sp.space_alias,
 		space_lock,
 		sp.space_name,
@@ -262,11 +269,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT OUTER JOIN
+		blog_space sp
 		ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON
+		LEFT OUTER JOIN blog_article_tag
+		bat ON
 		bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id
+		=
 		bt.id
 		WHERE art.id IN
 		<foreach collection="collection" item="id" open="(" close=")"
@@ -346,14 +356,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		UPDATE blog_article SET hits = hits + #{hits} WHERE
 		id = #{id}
 	</update>
-	
+
 	<update id="updateHits">
 		UPDATE blog_article SET hits = #{hits} WHERE
-		id = #{id}
+		id =
+		#{id}
 	</update>
-	
+
 	<select id="selectHits" resultType="int">
-		SELECT hits FROM blog_article WHERE id = #{id}
+		SELECT hits FROM blog_article
+		WHERE id = #{id}
 	</select>
 
 	<select id="selectAll" resultMap="ArticleDetail">
@@ -366,15 +378,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.id AS art_id,
 		art.art_alias,
 		art.title,
+		art.feature_image,
 		art.space_id,
 		sp.space_alias,
 		sp.space_name
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT OUTER JOIN
+		blog_space sp
 		ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.pubDate  <![CDATA[ < ]]>
+		AND
+		art.pubDate  <![CDATA[ < ]]>
 		#{article.pubDate}
 		<choose>
 			<when test="article.space != null">
@@ -399,14 +414,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.art_alias,
 		art.title,
 		art.space_id,
+		art.feature_image,
 		sp.space_alias,
 		sp.space_name
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT OUTER JOIN
+		blog_space sp
 		ON art.space_id = sp.id
 		WHERE art.art_status = 0
-		AND art.pubDate >
+		AND
+		art.pubDate >
 		#{article.pubDate}
 		<choose>
 			<when test="article.space != null">
@@ -424,11 +442,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY art.pubDate ASC,art.id ASC
 		LIMIT 0,1
 	</select>
-	
+
 	<select id="selectSimpleByIds" resultMap="ArticleDetail">
 		SELECT
 		art.id AS art_id,
 		art.title,
+		art.feature_image,
 		art.pubDate,
 		art.space_id,
 		art.art_alias,
@@ -436,7 +455,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		sp.space_name
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT
+		OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art.id IN
 		<foreach collection="list" item="id" open="(" close=")"
@@ -446,13 +466,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
 		COALESCE(SUM(hits),0) AS totalHits,
-		COUNT(art.id) AS totalArticles,
+		COUNT(art.id) AS
+		totalArticles,
 		MAX(lastModifyDate) AS lastModifyDate,
-		MAX(pubDate) AS lastPubDate
+		MAX(pubDate) AS
+		lastPubDate
 		FROM
 		blog_article art
 		LEFT OUTER JOIN blog_space sp
-		ON art.space_id = sp.id
+		ON
+		art.space_id = sp.id
 		WHERE art.art_status = 0
 		<if test="space != null">
 			AND art.space_id = #{space.id}
@@ -462,39 +485,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND sp.is_private = false
 		</if>
 	</select>
-	
+
 	<select id="selectAllStatistics" resultMap="ArticleStatisticsDetail">
 		SELECT
 		COALESCE(SUM(hits),0) AS totalHits,
-		COUNT(art.id) AS totalArticles,
+		COUNT(art.id) AS
+		totalArticles,
 		MAX(lastModifyDate) AS lastModifyDate,
-		MAX(pubDate) AS lastPubDate
+		MAX(pubDate) AS
+		lastPubDate
 		FROM
 		blog_article art
 		LEFT OUTER JOIN blog_space sp
-		ON art.space_id = sp.id
+		ON
+		art.space_id = sp.id
 		<where>
 			<if test="space != null">
 				art.space_id = #{space.id}
 			</if>
 		</where>
-	</select>
-
-	<select id="selectRecentArticles" resultMap="ArticleDetail">
-		SELECT
-		art.id AS art_id,
-		art.pubDate,
-		art.title,
-		sp.space_alias,
-		sp.space_name,
-		art.art_alias
-		FROM
-		blog_article art
-		LEFT OUTER JOIN blog_space sp
-		ON art.space_id = sp.id
-		WHERE art.art_status != 3<!-- DELETED -->
-		ORDER BY art.id DESC <!-- 这里不按照时间排序，因为这样草稿将会最后显示 -->
-		LIMIT 0,#{limit}
 	</select>
 
 	<update id="deleteLock">
@@ -505,22 +514,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectMinimumScheduleDate" resultType="java.sql.Timestamp">
 		SELECT MIN(pubDate) FROM blog_article WHERE art_status = 1<!-- SCHEDULED -->
 	</select>
-	
+
 	<select id="selectIdByAlias" resultType="java.lang.Integer">
-		SELECT id FROM blog_article WHERE art_alias = #{alias}
+		SELECT id FROM
+		blog_article WHERE art_alias = #{alias}
 	</select>
-	
+
 	<select id="selectRandom" resultMap="ArticleDetail">
 		SELECT
 		art.id AS art_id,
 		art.art_alias,
 		art.title,
 		art.space_id,
+		art.feature_image,
 		sp.space_alias,
 		sp.space_name
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT OUTER JOIN
+		blog_space sp
 		ON art.space_id = sp.id
 		WHERE art.art_status = 0 <!-- PUBLISHED -->
 		<if test="!queryPrivate">
@@ -534,13 +546,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY RAND()
 		LIMIT 0,1
 	</select>
-	
+
 	<select id="selectCountBySpace" resultType="int">
-		SELECT COUNT(id) FROM blog_article WHERE space_id = #{id}
+		SELECT COUNT(id) FROM
+		blog_article WHERE space_id = #{id}
 	</select>
-	
+
 	<update id="moveSpace">
-		UPDATE blog_article SET space_id = #{newSpace.id} WHERE space_id = #{oldSpace.id}
+		UPDATE blog_article SET space_id = #{newSpace.id}
+		WHERE space_id = #{oldSpace.id}
 	</update>
 
 	<sql id="articleDetailSql">
@@ -561,6 +575,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.art_lock,
 		art.art_alias,
 		art.allowComment,
+		art.feature_image,
 		sp.space_alias,
 		sp.space_name,
 		space_lock,
@@ -568,11 +583,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP_CONCAT(bt.tag_name) AS tags
 		FROM
 		blog_article art
-		LEFT OUTER JOIN blog_space sp
+		LEFT OUTER JOIN
+		blog_space sp
 		ON art.space_id = sp.id
-		LEFT OUTER JOIN blog_article_tag bat ON
+		LEFT OUTER JOIN blog_article_tag
+		bat ON
 		bat.article_id = art.id
-		LEFT OUTER JOIN blog_tag bt ON bat.tag_id =
-		bt.id
+		LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id
 	</sql>
 </mapper>

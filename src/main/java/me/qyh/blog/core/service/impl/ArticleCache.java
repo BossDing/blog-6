@@ -103,15 +103,12 @@ public class ArticleCache {
 
 	/**
 	 * 更新文章点击数
-	 * <p>
-	 * 如果文章不存在于缓存，则会将文章载入缓存中后设置点击数
-	 * </p>
 	 * 
 	 * @param hitsMap
 	 */
 	public synchronized void updateHits(Map<Integer, Integer> hitsMap) {
 		for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
-			Article article = idCache.get(it.getKey());
+			Article article = idCache.getIfPresent(it.getKey());
 			if (article != null) {
 				article.setHits(it.getValue());
 			}

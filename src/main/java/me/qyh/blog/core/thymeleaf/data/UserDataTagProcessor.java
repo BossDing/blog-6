@@ -15,11 +15,16 @@
  */
 package me.qyh.blog.core.thymeleaf.data;
 
-import me.qyh.blog.core.config.UserConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.service.UserQueryService;
 
 public class UserDataTagProcessor extends DataTagProcessor<User> {
+
+	@Autowired
+	private UserQueryService userQueryService;
 
 	public UserDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -31,7 +36,7 @@ public class UserDataTagProcessor extends DataTagProcessor<User> {
 	}
 
 	private User getUser() {
-		User user = new User(UserConfig.get());
+		User user = new User(userQueryService.getUser());
 		user.setPassword(null);
 		return user;
 	}

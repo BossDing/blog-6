@@ -23,11 +23,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.util.Validators;
 
 public class SimpleCommentChecker implements CommentChecker {
@@ -37,6 +37,8 @@ public class SimpleCommentChecker implements CommentChecker {
 
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private UserQueryService userQueryService;
 
 	@Override
 	public void checkComment(Comment comment, CommentConfig config) throws LogicException {
@@ -51,7 +53,7 @@ public class SimpleCommentChecker implements CommentChecker {
 		String email = comment.getEmail();
 		String name = comment.getNickname();
 		String website = comment.getWebsite();
-		User user = UserConfig.get();
+		User user = userQueryService.getUser();
 		String emailOrAdmin = user.getEmail();
 		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email)) {
 			throw new LogicException("comment.email.invalid", "邮件不被允许");

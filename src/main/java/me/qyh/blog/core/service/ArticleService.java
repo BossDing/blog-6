@@ -178,15 +178,6 @@ public interface ArticleService {
 	List<TagCount> queryTags() throws LogicException;
 
 	/**
-	 * 查询最近的文章
-	 * 
-	 * @param limit
-	 *            最大返回数目限制
-	 * @return 最近的文章
-	 */
-	List<Article> queryRecentArticles(Integer limit);
-
-	/**
 	 * 查询类似文章
 	 * 
 	 * @param idOrAlias

@@ -76,16 +76,7 @@ function preview() {
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					$.ajax({
-						type : "get",
-						url : basePath + '/mgr/extra/remove/'+key,
-						data : {},
-						dataType : "json",
-						contentType : 'application/json',
-						success : function(data){
-							
-						}
-					});
+					removeLocal(key);
 					bootbox.alert(data.message);
 					setTimeout(function(){
 						window.location.href = basePath + '/mgr/template/page/index';
@@ -107,32 +98,15 @@ function preview() {
 			//update
 			key=key+id;
 		}
-		$.ajax({
-			type : "get",
-			url : basePath + '/mgr/extra/get/'+key,
-			data : {},
-			dataType : "json",
-			contentType : 'application/json',
-			success : function(data){
-				if (data.success) {
-					editor.setValue(data.data);
-				}
-			}
-		});
+		var stored = getFromLocal(key);
+		if(stored != null){
+			editor.setValue(stored);
+		}
 		 setInterval(function(){
 			 if(!saveFlag){
 				 var tpl = $.trim(editor.getValue());
 				 if(tpl != ''){
-					 $.ajax({
-							type : "post",
-							url : basePath + '/mgr/extra/put',
-							data : JSON.stringify({"key":key,"value":tpl}),
-							dataType : "json",
-							contentType : 'application/json',
-							success : function(data){
-								
-							}
-						});
+					 storeInLocal(key,tpl);
 				 }
 			 }
 		 }, 5000);

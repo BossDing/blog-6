@@ -40,7 +40,7 @@ public class TemplateDialect extends AbstractProcessorDialect {
 		return new HashSet<>(Arrays.asList(new DataTagProcessor(dialectPrefix, applicationContext),
 				new FragmentTagProcessor(dialectPrefix), new PathTagProcessor(dialectPrefix),
 				new LockTagProcessor(dialectPrefix, applicationContext),
-				new RedirectProcessor(dialectPrefix, applicationContext)));
+				new RedirectTagProcessor(dialectPrefix, applicationContext), new PrivateTagProcessor(dialectPrefix)));
 	}
 
 }

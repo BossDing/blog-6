@@ -8,6 +8,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.web.controller.LoginController;
 
 /**
  * 谷歌OTP认证器
@@ -16,7 +17,7 @@ import me.qyh.blog.core.exception.SystemException;
  * </p>
  * 
  * @author Administrator
- *
+ * @see LoginController
  */
 public class GoogleAuthenticator {
 
@@ -53,8 +54,14 @@ public class GoogleAuthenticator {
 	 *            验证码
 	 * @return true 校验通过
 	 */
-	public boolean checkCode(long code) {
-		if (String.valueOf(code).length() != 6) {
+	public boolean checkCode(String codeStr) {
+		if (codeStr == null || codeStr.length() != 6) {
+			return false;
+		}
+		int code;
+		try {
+			code = Integer.parseInt(codeStr);
+		} catch (NumberFormatException e) {
 			return false;
 		}
 		long timestamp = System.currentTimeMillis();
@@ -68,7 +75,9 @@ public class GoogleAuthenticator {
 					return false;
 				}
 				synchronized (this) {
-					lasttimeslot = slot;
+					if (lasttimeslot < slot) {
+						lasttimeslot = slot;
+					}
 				}
 				return true;
 			}
@@ -137,4 +146,5 @@ public class GoogleAuthenticator {
 	private long getTimeWindowFromTime(long time) {
 		return time / MILL;
 	}
+
 }

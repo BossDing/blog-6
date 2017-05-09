@@ -39,12 +39,19 @@ import me.qyh.blog.util.Validators;
 @Component
 public class ArticleValidator implements Validator {
 
-	public static final int MAX_SUMMARY_LENGTH = 500;
-	public static final int MAX_TITLE_LENGTH = 200;
+	private static final int MAX_SUMMARY_LENGTH = 500;
+	private static final int MAX_TITLE_LENGTH = 200;
 	private static final int MAX_ALIAS_LENGTH = 200;
-	public static final int MAX_CONTENT_LENGTH = 200000;
-	public static final int MAX_TAG_SIZE = 10;
+	private static final int MAX_CONTENT_LENGTH = 200000;
+	private static final int MAX_TAG_SIZE = 10;
 	private static final int[] LEVEL_RANGE = new int[] { 0, 100 };
+
+	/**
+	 * 特征图像最大长度
+	 * 
+	 * @since 5.5.3
+	 */
+	private static final int MAX_FEATURE_IMAGE_SIZE = 255;
 
 	@Autowired
 	private TagValidator tagValidator;
@@ -187,6 +194,13 @@ public class ArticleValidator implements Validator {
 				}
 				article.setAlias(alias);
 			}
+		}
+
+		String featureImage = article.getFeatureImage();
+		if (!Validators.isEmptyOrNull(featureImage, true) && featureImage.length() > MAX_FEATURE_IMAGE_SIZE) {
+			errors.reject("article.featureImage.toolong", new Object[] { MAX_FEATURE_IMAGE_SIZE },
+					"文章特征图像不能超过" + MAX_FEATURE_IMAGE_SIZE + "个字符");
+			return;
 		}
 	}
 }

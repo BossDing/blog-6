@@ -31,7 +31,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UserConfig;
+import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.SerializationUtils;
 import me.qyh.blog.util.Validators;
@@ -46,6 +46,8 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 
 	@Autowired
 	private JavaMailSender javaMailSender;
+	@Autowired
+	private UserQueryService userQueryService;
 
 	private ConcurrentLinkedQueue<MessageBean> queue = new ConcurrentLinkedQueue<>();
 
@@ -99,7 +101,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	private void sendMail(final MessageBean mb) {
 		String email = mb.to;
 		if (Validators.isEmptyOrNull(email, true)) {
-			email = UserConfig.get().getEmail();
+			email = userQueryService.getUser().getEmail();
 		}
 		if (Validators.isEmptyOrNull(email, true)) {
 			LOGGER.error("接受人邮箱为空，无法发送邮件");
@@ -108,7 +110,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 		javaMailSender.send((mimeMessage) -> {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
 			helper.setText(mb.text, mb.html);
-			helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? UserConfig.get().getEmail() : mb.to);
+			helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? userQueryService.getUser().getEmail() : mb.to);
 			helper.setSubject(mb.subject);
 			mimeMessage.setFrom();
 		});

@@ -41,6 +41,7 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.service.UserService;
@@ -142,13 +143,7 @@ public class LoginController extends AttemptLoggerController {
 			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
 		}
 
-		int code;
-		try {
-			code = Integer.parseInt(codeStr);
-		} catch (NumberFormatException e) {
-			return new JsonResult(false, otpVerifyFail);
-		}
-		if (!ga.checkCode(code)) {
+		if (!ga.checkCode(codeStr)) {
 			return new JsonResult(false, otpVerifyFail);
 		}
 		session.removeAttribute(GA_SESSION_KEY);

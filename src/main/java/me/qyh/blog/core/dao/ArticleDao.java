@@ -233,15 +233,6 @@ public interface ArticleDao {
 	Article selectByAlias(String alias);
 
 	/**
-	 * 查询最近的文章
-	 * 
-	 * @param limit
-	 *            最大返回条数
-	 * @return 最近的文章集合
-	 */
-	List<Article> selectRecentArticles(int limit);
-
-	/**
 	 * 删除锁
 	 * 
 	 * @param lockId

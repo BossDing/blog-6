@@ -66,22 +66,8 @@ public class UserMgrController extends BaseMgrController {
 	public JsonResult update(@RequestParam(value = "oldPassword") String oldPassword,
 			@RequestParam(value = "code", required = false) String codeStr, @Validated @RequestBody User user,
 			HttpSession session) throws LogicException {
-		if (ga != null) {
-			boolean verifyFail = false;
-			if (codeStr == null || codeStr.length() != 6) {
-				verifyFail = true;
-			} else {
-				int code;
-				try {
-					code = Integer.parseInt(codeStr);
-					verifyFail = !ga.checkCode(code);
-				} catch (NumberFormatException e) {
-					verifyFail = true;
-				}
-			}
-			if (verifyFail) {
-				return new JsonResult(false, new Message("otp.verifyFail", "动态口令校验失败"));
-			}
+		if (ga != null && !ga.checkCode(codeStr)) {
+			return new JsonResult(false, new Message("otp.verifyFail", "动态口令校验失败"));
 		}
 		userService.update(user, oldPassword);
 		session.setAttribute(Constants.USER_SESSION_KEY, user);

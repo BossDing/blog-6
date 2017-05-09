@@ -48,7 +48,7 @@ import me.qyh.blog.web.GlobalControllerExceptionHandler;
  *      javax.servlet.http.HttpServletResponse)
  * @see RedirectException
  */
-public class RedirectProcessor extends DefaultAttributesTagProcessor {
+public class RedirectTagProcessor extends DefaultAttributesTagProcessor {
 
 	private static final String TAG_NAME = "redirect";
 	private static final int PRECEDENCE = 1000;
@@ -62,7 +62,7 @@ public class RedirectProcessor extends DefaultAttributesTagProcessor {
 
 	private final UrlHelper urlHelper;
 
-	public RedirectProcessor(String dialectPrefix, ApplicationContext applicationContext) {
+	public RedirectTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
 												// for matching
 				TAG_NAME, // Tag name: match specifically this tag

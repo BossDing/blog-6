@@ -32,7 +32,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 /**
- * 用来将markdown文本转化为html文本 {@link https://github.com/atlassian/commonmark-java}
+ * 用来将markdown文本转化为html文本 <br>
+ * {@link https://github.com/atlassian/commonmark-java}
  * 
  * @author Administrator
  *

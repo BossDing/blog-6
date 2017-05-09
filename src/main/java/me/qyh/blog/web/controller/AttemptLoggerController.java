@@ -4,7 +4,8 @@ import java.util.function.Predicate;
 
 import org.springframework.beans.factory.InitializingBean;
 
-import me.qyh.blog.web.controller.AttemptLogger.AttemptInfo;
+import me.qyh.blog.core.security.AttemptLogger;
+import me.qyh.blog.core.security.AttemptLogger.AttemptInfo;
 
 class AttemptLoggerController extends BaseController implements InitializingBean {
 

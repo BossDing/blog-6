@@ -1,4 +1,4 @@
-package me.qyh.blog.web.controller;
+package me.qyh.blog.core.security;
 
 import java.util.Map;
 import java.util.Objects;
@@ -8,6 +8,26 @@ import java.util.function.Predicate;
 
 import me.qyh.blog.core.exception.SystemException;
 
+/**
+ * 用来判断是否需要输入验证码
+ * <p>
+ * 当某个ip尝试此时达到attemptCount的情况下，如果该ip继续尝试，则需要输入验证码<br>
+ * 当尝试总数达到maxAttemptCount的情况下，如果有任何ip继续尝试，则需要输入验证码<br>
+ * </p>
+ * 基本用法:
+ * <pre>
+ * AttemptLogger logger = new AttemptLogger(10,100);
+ * if(logger.log(ip)){
+ *   //判断验证码是否正确
+ * }
+ * 
+ * reach(ip) 
+ * //判断某个ip是否需要输入验证码
+ * </pre>
+ * 
+ * @author Administrator
+ *
+ */
 public class AttemptLogger {
 
 	private final int attemptCount;

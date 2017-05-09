@@ -296,6 +296,7 @@
 		article.isPrivate = $("#private").prop("checked");
 		article.allowComment = $("#allowComment").prop("checked");
 		article.tags = tags;
+		article.featureImage = $("#featureImage").val();
 		article.summary = $("#summary").val();
 		article.space = {"id":$("#space").val()};
 		article.editor = editor_mode;

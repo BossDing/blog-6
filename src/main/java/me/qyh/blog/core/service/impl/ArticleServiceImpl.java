@@ -471,12 +471,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<Article> queryRecentArticles(Integer limit) {
-		return articleDao.selectRecentArticles(limit);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
 		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 

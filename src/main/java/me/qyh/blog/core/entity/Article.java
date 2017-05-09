@@ -58,6 +58,15 @@ public class Article extends BaseLockResource {
 	private Boolean allowComment;
 
 	/**
+	 * <p>
+	 * 文章特征图像
+	 * </p>
+	 * 
+	 * @since 5.5.3
+	 */
+	private String featureImage;
+
+	/**
 	 * 文章来源
 	 * 
 	 * @author Administrator
@@ -155,6 +164,7 @@ public class Article extends BaseLockResource {
 		this.title = source.title;
 		this.id = source.id;
 		this.allowComment = source.allowComment;
+		this.featureImage = source.featureImage;
 		source.getLockIds().ifPresent(lockIds -> setLockId(lockIds[0]));
 	}
 
@@ -339,6 +349,14 @@ public class Article extends BaseLockResource {
 
 	public void setAllowComment(Boolean allowComment) {
 		this.allowComment = allowComment;
+	}
+
+	public String getFeatureImage() {
+		return featureImage;
+	}
+
+	public void setFeatureImage(String featureImage) {
+		this.featureImage = featureImage;
 	}
 
 	@Override

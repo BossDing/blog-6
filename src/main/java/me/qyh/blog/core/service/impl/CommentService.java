@@ -47,7 +47,6 @@ import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.Limit;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.config.UserConfig;
 import me.qyh.blog.core.dao.CommentDao;
 import me.qyh.blog.core.dao.CommentDao.ModuleCommentCount;
 import me.qyh.blog.core.dao.PageDao;
@@ -71,6 +70,7 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.input.HtmlClean;
 import me.qyh.blog.core.security.input.Markdown2Html;
 import me.qyh.blog.core.service.CommentServer;
+import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
@@ -95,6 +95,8 @@ public class CommentService implements InitializingBean, CommentServer {
 	private Markdown2Html markdown2Html;
 	@Autowired(required = false)
 	private CommentEmailNotifySupport commentEmailNotifySupport;
+	@Autowired
+	private UserQueryService userQueryService;
 
 	/**
 	 * 评论配置项
@@ -631,7 +633,7 @@ public class CommentService implements InitializingBean, CommentServer {
 		if (comment.getAdmin() == null || !comment.getAdmin()) {
 			return;
 		}
-		User user = UserConfig.get();
+		User user = userQueryService.getUser();
 		comment.setNickname(user.getName());
 		String email = user.getEmail();
 		comment.setEmail(email);
