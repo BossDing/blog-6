@@ -22,13 +22,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.service.StatisticsService;
 
 @Controller
-public class StatisticsController extends BaseMgrController {
+public class StatisticsController {
 
 	@Autowired
 	private StatisticsService statisticsService;
@@ -43,7 +44,7 @@ public class StatisticsController extends BaseMgrController {
 			model.addAttribute("statistics", statisticsService.queryStatisticsDetail(spaceId));
 			return "mgr/statistics/index";
 		} catch (LogicException e) {
-			ra.addFlashAttribute(ERROR, e.getLogicMessage());
+			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
 			return "redirect:/mgr/statistics";
 		}
 	}

@@ -29,6 +29,8 @@ import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
+import me.qyh.blog.core.exception.SystemException;
+
 /**
  * java8 date utils for thymeleaf
  * 
@@ -136,7 +138,11 @@ public class Times {
 	public static String format(Temporal temporal, String pattern) {
 		Objects.requireNonNull(temporal);
 		Objects.requireNonNull(pattern);
-		return DATE_TIME_FORMATTER_CACHE.get(pattern).format(temporal);
+		DateTimeFormatter dtf = DATE_TIME_FORMATTER_CACHE.get(pattern);
+		if (dtf == null) {
+			throw new SystemException("无法获取" + pattern + "对应的DateTimeFormatter");
+		}
+		return dtf.format(temporal);
 	}
 
 	/**

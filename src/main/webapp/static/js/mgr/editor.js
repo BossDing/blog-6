@@ -95,7 +95,12 @@
 			var me = $(this);
 			var article = getArticle();
 			me.prop("disabled",true);
-			var url = basePath+"/mgr/article/write";
+			var url = "";
+			if(article.id && article.id != null){
+				url = basePath+"/mgr/article/update";
+			}else{
+				url = basePath+"/mgr/article/write";
+			}
 			$.ajax({
 				type : "post",
 				url : url,
@@ -210,8 +215,12 @@
 		if(article.content == ''){
 			return ;
 		}
-		
-		var url = basePath+"/mgr/article/write";
+		var url = "";
+		if(article.id && article.id != null){
+			url = basePath+"/mgr/article/update";
+		}else{
+			url = basePath+"/mgr/article/write";
+		}
 		publishing = true;
 		$.ajax({
 			type : "post",

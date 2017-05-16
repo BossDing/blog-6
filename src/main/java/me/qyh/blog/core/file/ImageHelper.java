@@ -73,8 +73,7 @@ public abstract class ImageHelper {
 	 */
 	public final ImageInfo read(Path file) throws IOException {
 		formatCheck(FileUtils.getFileExtension(file));
-		ImageInfo ii = doRead(file);
-		return ii;
+		return doRead(file);
 
 	}
 

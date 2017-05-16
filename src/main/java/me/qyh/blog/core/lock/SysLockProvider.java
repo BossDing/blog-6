@@ -97,11 +97,12 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 *            待新增的系统锁
 	 */
 	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
-	public void addLock(SysLock lock) {
+	public SysLock addLock(SysLock lock) {
 		lock.setId(StringUtils.uuid());
 		lock.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		encryptPasswordLock(lock);
 		sysLockDao.insert(lock);
+		return lock;
 	}
 
 	/**
@@ -114,7 +115,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 */
 	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#lock.id")
-	public void updateLock(SysLock lock) throws LogicException {
+	public SysLock updateLock(SysLock lock) throws LogicException {
 		SysLock db = sysLockDao.selectById(lock.getId());
 		if (db == null) {
 			throw new LogicException("lock.notexists", "锁不存在，可能已经被删除");
@@ -124,6 +125,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 		}
 		encryptPasswordLock(lock);
 		sysLockDao.update(lock);
+		return lock;
 	}
 
 	/**

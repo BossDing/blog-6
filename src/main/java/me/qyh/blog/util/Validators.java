@@ -94,10 +94,7 @@ public final class Validators {
 		if (a == b) {
 			return true;
 		}
-		if (a.getClass() != b.getClass()) {
-			return false;
-		}
-		return true;
+		return a.getClass() == b.getClass();
 	}
 
 	/**

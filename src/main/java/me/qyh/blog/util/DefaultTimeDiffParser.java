@@ -24,7 +24,7 @@ import me.qyh.blog.core.message.Message;
 
 public class DefaultTimeDiffParser extends TimeDiffParser {
 
-	private final ChronoUnit[] units = { ChronoUnit.YEARS, ChronoUnit.MONTHS, ChronoUnit.DAYS, ChronoUnit.HOURS,
+	private static final ChronoUnit[] UNITS = { ChronoUnit.YEARS, ChronoUnit.MONTHS, ChronoUnit.DAYS, ChronoUnit.HOURS,
 			ChronoUnit.MINUTES, ChronoUnit.SECONDS };
 
 	@Override
@@ -34,7 +34,7 @@ public class DefaultTimeDiffParser extends TimeDiffParser {
 		if (begin.isEqual(end)) {
 			return new Message("diff.now", "刚刚");
 		}
-		for (ChronoUnit unit : units) {
+		for (ChronoUnit unit : UNITS) {
 			long diff = unit.between(begin, end);
 			if (diff != 0) {
 				return toMessage(unit, diff);

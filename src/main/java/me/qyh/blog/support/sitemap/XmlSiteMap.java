@@ -166,7 +166,7 @@ public class XmlSiteMap implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 
 		if (configure == null) {
-			configure = (o) -> {
+			configure = o -> {
 				if (o instanceof Article) {
 					return new SiteMapConfig(Changefreq.MONTHLY, 0.8F);
 				}

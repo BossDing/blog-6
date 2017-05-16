@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.controller.form;
 
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -25,6 +27,7 @@ import me.qyh.blog.core.pageparam.BlogFileQueryParam;
 public class BlogFileQueryParamValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_EXTENSION_LENGTH = 5;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -41,6 +44,8 @@ public class BlogFileQueryParamValidator implements Validator {
 		if (name != null && name.length() > MAX_NAME_LENGTH) {
 			param.setName(name.substring(0, MAX_NAME_LENGTH));
 		}
+		// 最多只允许 5 个后缀
+		param.setExtensions(param.getExtensions().stream().limit(MAX_EXTENSION_LENGTH).collect(Collectors.toSet()));
 	}
 
 }

@@ -41,16 +41,7 @@ public class ArticleQueryParamValidator implements Validator {
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		validate((ArticleQueryParam) target);
-	}
-
-	/**
-	 * 校验查询参数
-	 * 
-	 * @param param
-	 *            查询参数
-	 */
-	public static void validate(ArticleQueryParam param) {
+		ArticleQueryParam param = (ArticleQueryParam) target;
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}

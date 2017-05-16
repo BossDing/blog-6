@@ -30,7 +30,7 @@ public class SimpleUrlMappingRegisterEvent extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 	private final String path;
-	private final Object handler;
+	private transient final Object handler;
 
 	public SimpleUrlMappingRegisterEvent(Object source, String path, Object handler) {
 		super(source);

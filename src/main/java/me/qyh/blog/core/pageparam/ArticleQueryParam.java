@@ -19,9 +19,9 @@ import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Article.ArticleFrom;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.util.Validators;
 
 /**
@@ -178,4 +178,12 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.highlight = highlight;
 	}
 
+	@Override
+	public String toString() {
+		return "ArticleQueryParam [space=" + space + ", begin=" + begin + ", end=" + end + ", query=" + query
+				+ ", status=" + status + ", from=" + from + ", ignoreLevel=" + ignoreLevel + ", queryPrivate="
+				+ queryPrivate + ", tag=" + tag + ", queryLock=" + queryLock + ", sort=" + sort + ", highlight="
+				+ highlight + "]";
+	}
+	
 }

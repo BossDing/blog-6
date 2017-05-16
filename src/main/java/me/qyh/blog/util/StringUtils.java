@@ -103,12 +103,12 @@ public final class StringUtils {
 	 *            returns null
 	 * @param close
 	 *            the String identifying the end of the substring, empty returns
-	 *            null
-	 * @return a String Array of substrings, or {@code null} if no match
+	 *            empty array
+	 * @return a String Array of substrings, or {@code new String[0]} if no match
 	 */
 	public static String[] substringsBetween(final String str, final String open, final String close) {
 		if (str == null || Validators.isEmptyOrNull(open, true) || Validators.isEmptyOrNull(close, true)) {
-			return null;
+			return EMPTY_ARRAY;
 		}
 		final int strLen = str.length();
 		if (strLen == 0) {
@@ -116,7 +116,7 @@ public final class StringUtils {
 		}
 		final int closeLen = close.length();
 		final int openLen = open.length();
-		final List<String> list = new ArrayList<String>();
+		final List<String> list = new ArrayList<>();
 		int pos = 0;
 		while (pos < strLen - closeLen) {
 			int start = str.indexOf(open, pos);
@@ -132,7 +132,7 @@ public final class StringUtils {
 			pos = end + closeLen;
 		}
 		if (list.isEmpty()) {
-			return null;
+			return EMPTY_ARRAY;
 		}
 		return list.toArray(new String[list.size()]);
 	}

@@ -1,6 +1,6 @@
 package me.qyh.blog.core.bean;
 
-import me.qyh.blog.core.thymeleaf.template.PathTemplate;
+import me.qyh.blog.web.thymeleaf.template.PathTemplate;
 
 public class PathTemplateBean {
 	private String tpl;

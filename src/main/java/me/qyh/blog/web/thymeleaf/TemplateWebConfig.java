@@ -27,8 +27,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.lock.LockArgumentResolver;
-import me.qyh.blog.core.thymeleaf.TemplateRender;
-import me.qyh.blog.core.thymeleaf.TemplateReturnValueHandler;
 import me.qyh.blog.util.Jsons;
 
 /**

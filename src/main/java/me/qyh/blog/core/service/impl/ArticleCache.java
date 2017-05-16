@@ -55,7 +55,7 @@ public class ArticleCache {
 
 					@Override
 					public Article load(Integer key) throws Exception {
-						return Transactions.executeInReadOnlyTransaction(platformTransactionManager, (status) -> {
+						return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 							Article article = articleDao.selectById(key);
 							if (article != null && article.isPublished()) {
 								return article;

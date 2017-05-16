@@ -307,7 +307,7 @@ public class Article extends BaseLockResource {
 	}
 
 	public String getTagStr() {
-		return tags.stream().map(tag -> tag.getName()).collect(Collectors.joining(","));
+		return tags.stream().map(Tag::getName).collect(Collectors.joining(","));
 	}
 
 	@Override

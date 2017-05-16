@@ -35,7 +35,10 @@ public class AppSimpleUrlHandlerMapping extends SimpleUrlHandlerMapping implemen
 
 		@Override
 		public void onApplicationEvent(SimpleUrlMappingRegisterEvent event) {
-			registerHandler(event.getPath(), event.getHandler());
+			Object handler = event.getHandler();
+			if (handler != null) {
+				registerHandler(event.getPath(), handler);
+			}
 		}
 
 	}

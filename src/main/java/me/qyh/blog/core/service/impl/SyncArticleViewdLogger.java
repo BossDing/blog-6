@@ -16,7 +16,6 @@
 package me.qyh.blog.core.service.impl;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -165,14 +164,14 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (Files.exists(sdfile)) {
+		if (FileUtils.exists(sdfile)) {
 			try {
 				this.articles.putAll(SerializationUtils.deserialize(sdfile));
 			} catch (Exception e) {
 				LOGGER.warn("反序列化文件" + sdfile + "失败：" + e.getMessage(), e);
 			} finally {
 				if (!FileUtils.deleteQuietly(sdfile)) {
-					LOGGER.warn("删除文件" + sdfile + "失败");
+					LOGGER.warn("删除文件{}失败",sdfile);
 				}
 			}
 		}

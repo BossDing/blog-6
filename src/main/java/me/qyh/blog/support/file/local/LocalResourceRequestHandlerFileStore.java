@@ -16,7 +16,6 @@
 package me.qyh.blog.support.file.local;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -63,7 +62,7 @@ import me.qyh.blog.web.Webs;
 class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		implements FileStore, ApplicationEventPublisherAware, ApplicationListener<ContextRefreshedEvent> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
+	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
 	protected int id;
 	private String name;
@@ -101,7 +100,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	@Override
 	public CommonFile store(String key, MultipartFile mf) throws LogicException {
 		Path dest = FileUtils.sub(absFolder, key);
-		if (Files.exists(dest) && !FileUtils.deleteQuietly(dest)) {
+		if (FileUtils.exists(dest) && !FileUtils.deleteQuietly(dest)) {
 			String absPath = dest.toAbsolutePath().toString();
 			throw new LogicException("file.store.exists", "文件" + absPath + "已经存在", absPath);
 		}
@@ -132,7 +131,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	@Override
 	public boolean delete(String key) {
 		Path p = FileUtils.sub(absFolder, key);
-		if (Files.exists(p)) {
+		if (FileUtils.exists(p)) {
 			return FileUtils.deleteQuietly(p);
 		}
 		return true;
@@ -182,7 +181,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 				FileUtils.copy(optionalOld.get(), FileUtils.sub(absFolder, path));
 				return true;
 			} catch (IOException e) {
-				LOGGER.error("拷贝文件失败:" + e.getMessage(), e);
+				LOG.error("拷贝文件失败:" + e.getMessage(), e);
 				return false;
 			}
 		}
@@ -197,7 +196,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 				FileUtils.move(optionalOld.get(), FileUtils.sub(absFolder, path));
 				return true;
 			} catch (IOException e) {
-				LOGGER.error("移动文件失败:" + e.getMessage(), e);
+				LOG.error("移动文件失败:" + e.getMessage(), e);
 				return false;
 			}
 		}
@@ -206,7 +205,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 
 	protected Optional<Path> getFile(String oldPath) {
 		Path p = FileUtils.sub(absFolder, oldPath);
-		if (Files.exists(p) && Files.isRegularFile(p)) {
+		if (FileUtils.exists(p) && FileUtils.isRegularFile(p)) {
 			return Optional.of(p);
 		}
 		return Optional.empty();
@@ -257,7 +256,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	}
 
 	protected void moreAfterPropertiesSet() {
-
+		// 用于重写
 	}
 
 	public void setId(int id) {

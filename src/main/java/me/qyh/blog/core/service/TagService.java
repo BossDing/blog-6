@@ -44,10 +44,11 @@ public interface TagService {
 	 *            待更新的标签
 	 * @param merge
 	 *            是否合并已经存在的标签
+	 * @return 
 	 * @throws LogicException
 	 *             更新过程中发生逻辑异常
 	 */
-	void updateTag(Tag tag, boolean merge) throws LogicException;
+	Tag updateTag(Tag tag, boolean merge) throws LogicException;
 
 	/**
 	 * 删除标签

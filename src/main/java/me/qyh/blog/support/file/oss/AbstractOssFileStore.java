@@ -176,7 +176,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 	private void deleteBackup(String key) {
 		if (backupDir != null) {
 			Path backup = FileUtils.sub(backupDir, key);
-			if (Files.exists(backup)) {
+			if (FileUtils.exists(backup)) {
 				FileUtils.deleteQuietly(backup);
 			}
 		}
@@ -202,7 +202,7 @@ public abstract class AbstractOssFileStore implements FileStore, InitializingBea
 		String vp = FileUtils.cleanPath(path);
 		if (backupDir != null) {
 			Path backup = FileUtils.sub(backupDir, vo);
-			if (Files.exists(backup)) {
+			if (FileUtils.exists(backup)) {
 				try {
 					FileUtils.copy(backup, FileUtils.sub(backupDir, vp));
 				} catch (IOException e) {

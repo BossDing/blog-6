@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.bean.JsonResult;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
@@ -37,7 +38,7 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.web.Webs;
 
 @Controller
-public class LockController extends BaseController {
+public class LockController {
 
 	@Autowired
 	private UrlHelper urlHelper;
@@ -52,14 +53,14 @@ public class LockController extends BaseController {
 		Lock lock = lockBean.getLock();
 		HttpSession session = request.getSession(false);
 		if (!Webs.matchValidateCode(validateCode, session)) {
-			ra.addFlashAttribute(ERROR, new Message("validateCode.error", "验证码错误"));
+			ra.addFlashAttribute(Constants.ERROR, new Message("validateCode.error", "验证码错误"));
 			return buildLockUrl(lockBean.getSpaceAlias());
 		}
 		LockKey key = null;
 		try {
 			key = lock.getKeyFromRequest(request);
 		} catch (LogicException e) {
-			ra.addFlashAttribute(ERROR, e.getLogicMessage());
+			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
 			return buildLockUrl(lockBean.getSpaceAlias());
 		}
 		LockHelper.addKey(request, key, lockBean.getLockResource());

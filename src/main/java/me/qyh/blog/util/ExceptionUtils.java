@@ -34,10 +34,11 @@ public final class ExceptionUtils {
 	 * @return
 	 */
 	public static List<Throwable> getThrowableList(Throwable throwable) {
-		final List<Throwable> list = new ArrayList<Throwable>();
-		while (throwable != null && list.contains(throwable) == false) {
-			list.add(throwable);
-			throwable = throwable.getCause();
+		List<Throwable> list = new ArrayList<>();
+		Throwable e = throwable;
+		while (e != null && !list.contains(e)) {
+			list.add(e);
+			e = e.getCause();
 		}
 		return list;
 	}

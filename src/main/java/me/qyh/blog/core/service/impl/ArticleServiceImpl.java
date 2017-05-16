@@ -27,8 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -73,11 +71,9 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.util.Times;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleServiceImpl.class);
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
@@ -140,17 +136,96 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	public Article getArticleForEdit(Integer id) throws LogicException {
+	public Optional<Article> getArticleForEdit(Integer id) {
 		Article article = articleDao.selectById(id);
-		if (article == null || article.isDeleted()) {
-			throw new LogicException("article.notExists", "文章不存在");
-		}
-		return article;
+		return Optional.ofNullable(article);
 	}
 
 	@Override
 	public void hit(Integer id) {
 		articleHitManager.hit(id);
+	}
+
+	@Override
+	@ArticleIndexRebuild
+	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Sync
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
+	public Article updateArticle(Article article) throws LogicException {
+		Space space = spaceCache.checkSpace(article.getSpace().getId());
+		article.setSpace(space);
+		// 如果文章是私有的，无法设置锁
+		if (article.isPrivate()) {
+			article.setLockId(null);
+		} else {
+			lockManager.ensureLockvailable(article.getLockId());
+		}
+		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+		Article articleDb = articleDao.selectById(article.getId());
+		if (articleDb == null) {
+			throw new LogicException("article.notExists", "文章不存在");
+		}
+		if (articleDb.isDeleted()) {
+			throw new LogicException("article.deleted", "文章已经被删除");
+		}
+		if (article.getAlias() != null) {
+			Article aliasDb = articleDao.selectByAlias(article.getAlias());
+			if (aliasDb != null && !aliasDb.equals(article)) {
+				throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
+						article.getAlias());
+			}
+		}
+
+		if (nochange(article, articleDb)) {
+			return articleDb;
+		}
+
+		Timestamp pubDate = null;
+		switch (article.getStatus()) {
+		case DRAFT:
+			pubDate = articleDb.isSchedule() ? null : articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
+			break;
+		case PUBLISHED:
+			pubDate = articleDb.isSchedule() ? now : articleDb.getPubDate() != null ? articleDb.getPubDate() : now;
+			break;
+		case SCHEDULED:
+			pubDate = article.getPubDate();
+			break;
+		default:
+			break;
+		}
+
+		article.setPubDate(pubDate);
+
+		if (articleDb.getPubDate() != null && article.isPublished()) {
+			article.setLastModifyDate(now);
+		}
+
+		articleTagDao.deleteByArticle(articleDb);
+
+		articleDao.update(article);
+
+		boolean rebuildIndexWhenTagChange = insertTags(article);
+		if (article.isSchedule()) {
+			scheduleManager.update();
+		}
+
+		Transactions.afterCommit(() -> {
+			articleCache.evit(article.getId());
+			if (rebuildIndexWhenTagChange) {
+				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+			} else {
+				articleIndexer.deleteDocument(article.getId());
+				if (article.isPublished()) {
+					articleIndexer.addOrUpdateDocument(article.getId());
+				}
+			}
+		});
+		applicationEventPublisher
+				.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()), EventType.UPDATE));
+		return article;
+
 	}
 
 	@Override
@@ -168,82 +243,33 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		} else {
 			lockManager.ensureLockvailable(article.getLockId());
 		}
-		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-		boolean update = article.hasId();
-		if (update) {
-			Article articleDb = articleDao.selectById(article.getId());
-			if (articleDb == null) {
-				throw new LogicException("article.notExists", "文章不存在");
+		if (article.getAlias() != null) {
+			Article aliasDb = articleDao.selectByAlias(article.getAlias());
+			if (aliasDb != null) {
+				throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
+						article.getAlias());
 			}
-			if (articleDb.isDeleted()) {
-				throw new LogicException("article.deleted", "文章已经被删除");
-			}
-			if (article.getAlias() != null) {
-				Article aliasDb = articleDao.selectByAlias(article.getAlias());
-				if (aliasDb != null && !aliasDb.equals(article)) {
-					throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
-							article.getAlias());
-				}
-			}
-
-			if (nochange(article, articleDb)) {
-				return articleDb;
-			}
-
-			Timestamp pubDate = null;
-			switch (article.getStatus()) {
-			case DRAFT:
-				pubDate = articleDb.isSchedule() ? null
-						: articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
-				break;
-			case PUBLISHED:
-				pubDate = articleDb.isSchedule() ? now : articleDb.getPubDate() != null ? articleDb.getPubDate() : now;
-				break;
-			case SCHEDULED:
-				pubDate = article.getPubDate();
-				break;
-			default:
-				break;
-			}
-
-			article.setPubDate(pubDate);
-
-			if (articleDb.getPubDate() != null && article.isPublished()) {
-				article.setLastModifyDate(now);
-			}
-
-			articleTagDao.deleteByArticle(articleDb);
-
-			articleDao.update(article);
-			Transactions.afterCommit(() -> articleCache.evit(article.getId()));
-		} else {
-			if (article.getAlias() != null) {
-				Article aliasDb = articleDao.selectByAlias(article.getAlias());
-				if (aliasDb != null) {
-					throw new LogicException("article.alias.exists", "别名" + article.getAlias() + "已经存在",
-							article.getAlias());
-				}
-			}
-
-			Timestamp pubDate = null;
-			switch (article.getStatus()) {
-			case DRAFT:
-				// 如果是草稿
-				pubDate = null;
-				break;
-			case PUBLISHED:
-				pubDate = now;
-				break;
-			case SCHEDULED:
-				pubDate = article.getPubDate();
-				break;
-			default:
-				break;
-			}
-			article.setPubDate(pubDate);
-
-			articleDao.insert(article);
 		}
+
+		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+		Timestamp pubDate = null;
+		switch (article.getStatus()) {
+		case DRAFT:
+			// 如果是草稿
+			pubDate = null;
+			break;
+		case PUBLISHED:
+			pubDate = now;
+			break;
+		case SCHEDULED:
+			pubDate = article.getPubDate();
+			break;
+		default:
+			break;
+		}
+		article.setPubDate(pubDate);
+
+		articleDao.insert(article);
 
 		boolean rebuildIndexWhenTagChange = insertTags(article);
 		if (article.isSchedule()) {
@@ -254,16 +280,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			if (rebuildIndexWhenTagChange) {
 				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 			} else {
-				if (update) {
-					articleIndexer.deleteDocument(article.getId());
-				}
 				if (article.isPublished()) {
 					articleIndexer.addOrUpdateDocument(article.getId());
 				}
 			}
 		});
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()),
-				update ? EventType.UPDATE : EventType.INSERT));
+		applicationEventPublisher
+				.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()), EventType.INSERT));
 		return article;
 	}
 
@@ -272,7 +295,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void publishDraft(Integer id) throws LogicException {
+	public Article publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -286,6 +309,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		articleDao.update(article);
 		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+		return article;
 	}
 
 	private boolean insertTags(Article article) {
@@ -370,7 +394,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void logicDeleteArticle(Integer id) throws LogicException {
+	public Article logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -387,6 +411,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		});
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+
+		return article;
 	}
 
 	@Override
@@ -394,7 +420,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void recoverArticle(Integer id) throws LogicException {
+	public Article recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -412,6 +438,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 
 		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+		return article;
 	}
 
 	@Override
@@ -593,15 +620,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		public int publish() {
 			if (start == null) {
-				LOGGER.debug("没有待发布的文章");
 				return 0;
 			}
 			long now = System.currentTimeMillis();
 			if (now < start.getTime()) {
-				LOGGER.debug("没有到发布日期：" + Times.format(start.toLocalDateTime(), "yyyy-MM-dd HH:mm:ss"));
 				return 0;
 			} else {
-				LOGGER.debug("开始查询发布文章");
 				Timestamp startCopy = new Timestamp(start.getTime());
 				List<Article> articles = Transactions.executeInTransaction(transactionManager, status -> {
 					Transactions.afterRollback(() -> start = startCopy);
@@ -611,7 +635,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							article.setStatus(ArticleStatus.PUBLISHED);
 							articleDao.update(article);
 						}
-						LOGGER.debug("发布了" + schedules.size() + "篇文章");
 						applicationEventPublisher.publishEvent(new ArticleEvent(this, schedules, EventType.UPDATE));
 					}
 					start = articleDao.selectMinimumScheduleDate();
@@ -624,8 +647,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		public void update() {
 			start = articleDao.selectMinimumScheduleDate();
-			LOGGER.debug(start == null ? "没有发现待发布文章"
-					: "发现待发布文章最小日期:" + Times.format(start.toLocalDateTime(), "yyyy-MM-dd HH:mm:ss"));
 		}
 	}
 

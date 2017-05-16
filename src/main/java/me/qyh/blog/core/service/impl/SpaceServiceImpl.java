@@ -57,7 +57,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void addSpace(Space space) throws LogicException {
+	public Space addSpace(Space space) throws LogicException {
 		lockManager.ensureLockvailable(space.getLockId());
 
 		if (spaceDao.selectByAlias(space.getAlias()) != null) {
@@ -74,6 +74,8 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		}
 		spaceDao.insert(space);
 		spaceCache.init();
+
+		return space;
 	}
 
 	@Override
@@ -81,7 +83,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void updateSpace(Space space) throws LogicException {
+	public Space updateSpace(Space space) throws LogicException {
 		Space db = spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
 		Space nameDb = spaceDao.selectByName(space.getName());
 		if (nameDb != null && !nameDb.equals(db)) {
@@ -102,6 +104,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		spaceDao.update(space);
 		spaceCache.init();
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+		return space;
 	}
 
 	@Override

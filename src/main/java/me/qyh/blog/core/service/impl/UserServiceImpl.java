@@ -73,9 +73,10 @@ public class UserServiceImpl implements UserService, UserQueryService, Initializ
 	}
 
 	@Override
-	public void update(User user, String password) throws LogicException {
+	public User update(User user, String password) throws LogicException {
 		verifyPassword(password);
 		update(user);
+		return getUser();
 	}
 
 	public void update(User user) throws LogicException {

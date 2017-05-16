@@ -7,7 +7,7 @@ import org.springframework.beans.factory.InitializingBean;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.AttemptLogger.AttemptInfo;
 
-class AttemptLoggerController extends BaseController implements InitializingBean {
+class AttemptLoggerController implements InitializingBean {
 
 	// 当ip达到最多尝试次数后，如果一段时间(s)内没有被再次尝试，则通过定时任务删除这个记录，此时仅仅代表着该ip记录可以被删除，不代表着该ip再次尝试无需验证码
 	private int sleepSec;

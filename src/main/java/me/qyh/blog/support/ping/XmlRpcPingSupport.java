@@ -43,8 +43,8 @@ public abstract class XmlRpcPingSupport extends PingService {
 	@Override
 	public void ping(Article article, String blogName) throws Exception {
 		String xml = articleToXml(article, blogName);
-		LOGGER.debug("文章报文内容为:" + xml);
-		LOGGER.debug("开始向" + pingUrl + "发送报文");
+		LOGGER.debug("文章报文内容为:{}", xml);
+		LOGGER.debug("开始向{}发送报文", pingUrl);
 		String type = "text/html";
 		String result = null;
 		try {

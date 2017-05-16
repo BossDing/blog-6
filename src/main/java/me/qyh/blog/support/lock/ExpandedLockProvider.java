@@ -82,16 +82,6 @@ public class ExpandedLockProvider implements InitializingBean {
 		}
 	}
 
-	private boolean valid(String str) {
-		char[] chars = str.toCharArray();
-		for (char ch : chars) {
-			if (!isAllowLetter(ch)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private void validLock(Lock lock) {
 		if (Validators.isEmptyOrNull(lock.getId(), true)) {
 			throw new SystemException("锁ID不能为空");
@@ -100,7 +90,7 @@ public class ExpandedLockProvider implements InitializingBean {
 		if (id.length() > MAX_ID_LENGTH) {
 			throw new SystemException("ID" + lock.getId() + "不能超过" + MAX_ID_LENGTH + "个字符");
 		}
-		if (!valid(id)) {
+		if (!Validators.isLetterOrNum(id)) {
 			throw new SystemException("ID只能包含英文字母和数字");
 		}
 		lock.setId(id);
@@ -111,7 +101,7 @@ public class ExpandedLockProvider implements InitializingBean {
 		if (type.length() > MAX_TYPE_LENGTH) {
 			throw new SystemException("锁类型" + lock.getLockType() + "不能超过" + MAX_TYPE_LENGTH + "个字符");
 		}
-		if (!valid(type)) {
+		if (!Validators.isLetterOrNum(type)) {
 			throw new SystemException("锁类型只能包含英文字母和数字");
 		}
 		if (Validators.isEmptyOrNull(lock.getName(), true)) {
@@ -122,10 +112,6 @@ public class ExpandedLockProvider implements InitializingBean {
 			throw new SystemException("锁名称" + lock.getName() + "不能超过" + MAX_NAME_LENGTH + "个字符");
 		}
 		lock.setName(name);
-	}
-
-	private boolean isAllowLetter(char ch) {
-		return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9');
 	}
 
 	/**

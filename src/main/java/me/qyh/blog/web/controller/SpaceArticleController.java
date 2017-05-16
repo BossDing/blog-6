@@ -32,7 +32,7 @@ import me.qyh.blog.util.UrlUtils;
 
 @Controller
 @RequestMapping("space/{alias}/article")
-public class SpaceArticleController extends BaseController {
+public class SpaceArticleController {
 
 	@Autowired
 	private ArticleService articleService;

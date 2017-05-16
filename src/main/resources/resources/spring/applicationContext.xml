@@ -136,9 +136,11 @@
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<!-- Google Auth -->
+	<!-- 
 	<bean class="me.qyh.blog.core.security.GoogleAuthenticator">
 		<constructor-arg value="qz23 fugf krvd krh6 cors 4lpq jw3y ilxy"/>
 	</bean>
+	 -->
 	
 	<bean id="htmlClean" class="me.qyh.blog.core.security.input.DefaultHtmlClean" />
 	<bean id="simpleCommentChecker" class="me.qyh.blog.core.service.impl.SimpleCommentChecker">

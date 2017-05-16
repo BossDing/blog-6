@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import me.qyh.blog.core.thymeleaf.TemplateExposeHelper;
+import me.qyh.blog.web.thymeleaf.TemplateExposeHelper;
 
 /**
  * 被标记为这个annotation的类将会被UIExposeHelper所用

@@ -32,8 +32,8 @@
 
 		<typeAlias type="me.qyh.blog.core.bean.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.core.thymeleaf.template.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.core.thymeleaf.template.Fragment"
+		<typeAlias type="me.qyh.blog.web.thymeleaf.template.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.web.thymeleaf.template.Fragment"
 			alias="Fragment" />
 
 		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile"
@@ -50,8 +50,6 @@
 			alias="CommentStatus" />
 		<typeAlias type="me.qyh.blog.core.entity.CommentModule"
 			alias="CommentModule" />
-		<typeAlias type="me.qyh.blog.core.entity.CommentModule$ModuleType"
-			alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />

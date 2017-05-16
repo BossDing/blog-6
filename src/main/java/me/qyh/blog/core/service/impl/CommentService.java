@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
@@ -60,6 +62,7 @@ import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.evt.ArticleEvent;
+import me.qyh.blog.core.evt.CommentEvent;
 import me.qyh.blog.core.evt.EventType;
 import me.qyh.blog.core.evt.PageEvent;
 import me.qyh.blog.core.exception.LogicException;
@@ -71,11 +74,11 @@ import me.qyh.blog.core.security.input.HtmlClean;
 import me.qyh.blog.core.security.input.Markdown2Html;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.UserQueryService;
-import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
+import me.qyh.blog.web.thymeleaf.template.Page;
 
-public class CommentService implements InitializingBean, CommentServer {
+public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware {
 
 	@Autowired(required = false)
 	private CommentChecker commentChecker;
@@ -93,10 +96,10 @@ public class CommentService implements InitializingBean, CommentServer {
 	private PageDao pageDao;
 	@Autowired
 	private Markdown2Html markdown2Html;
-	@Autowired(required = false)
-	private CommentEmailNotifySupport commentEmailNotifySupport;
 	@Autowired
 	private UserQueryService userQueryService;
+
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	/**
 	 * 评论配置项
@@ -151,11 +154,12 @@ public class CommentService implements InitializingBean, CommentServer {
 	 * 
 	 * @param id
 	 *            评论id
+	 * @return
 	 * @throws LogicException
 	 */
 
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void checkComment(Integer id) throws LogicException {
+	public Comment checkComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");
@@ -164,6 +168,8 @@ public class CommentService implements InitializingBean, CommentServer {
 			throw new LogicException("comment.checked", "评论审核过了");
 		}
 		commentDao.updateStatusToNormal(comment);
+
+		return comment;
 	}
 
 	/**
@@ -189,7 +195,7 @@ public class CommentService implements InitializingBean, CommentServer {
 	 * @param config
 	 *            配置
 	 */
-	public synchronized void updateCommentConfig(CommentConfig config) {
+	public synchronized CommentConfig updateCommentConfig(CommentConfig config) {
 		pros.setProperty(COMMENT_EDITOR, config.getEditor().name());
 		pros.setProperty(COMMENT_CHECK, config.getCheck().toString());
 		pros.setProperty(COMMENT_LIMIT_COUNT, config.getLimitCount().toString());
@@ -201,6 +207,7 @@ public class CommentService implements InitializingBean, CommentServer {
 			throw new SystemException(e.getMessage(), e);
 		}
 		loadConfig();
+		return config;
 	}
 
 	/**
@@ -304,9 +311,8 @@ public class CommentService implements InitializingBean, CommentServer {
 
 		completeComment(comment);
 
-		if (commentEmailNotifySupport != null) {
-			Transactions.afterCommit(() -> commentEmailNotifySupport.handle(comment));
-		}
+		applicationEventPublisher.publishEvent(new CommentEvent(this, comment));
+
 		return comment;
 	}
 
@@ -557,10 +563,7 @@ public class CommentService implements InitializingBean, CommentServer {
 
 	private boolean doValidaBeforeQueryPageComment(Integer moduleId) {
 		Page page = pageDao.selectById(moduleId);
-		if (page == null || !Environment.match(page.getSpace())) {
-			return false;
-		}
-		return true;
+		return page != null && Environment.match(page.getSpace());
 	}
 
 	private void doArticleCommentValid(Integer moduleId) throws LogicException {
@@ -666,6 +669,11 @@ public class CommentService implements InitializingBean, CommentServer {
 			rests.add(t);
 			return false;
 		}
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
 }

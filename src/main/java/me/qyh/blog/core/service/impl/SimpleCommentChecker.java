@@ -84,7 +84,7 @@ public class SimpleCommentChecker implements CommentChecker {
 	}
 
 	protected void checkCommentContent(Comment comment, CommentConfig config) throws LogicException {
-
+		//
 	}
 
 	public void setDisallowUsernamePatterns(String[] disallowUsernamePatterns) {

@@ -118,25 +118,23 @@ public class SpaceCache implements InitializingBean {
 	 */
 	public synchronized void init() {
 
-		Transactions.afterCommit(() -> {
-			Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				long stamp = lock.writeLock();
-				try {
-					List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
-					cache.clear();
-					cache.addAll(spaces);
-				} finally {
-					lock.unlockWrite(stamp);
-				}
-			});
-		});
+		Transactions.afterCommit(() -> Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+			long stamp = lock.writeLock();
+			try {
+				List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
+				cache.clear();
+				cache.addAll(spaces);
+			} finally {
+				lock.unlockWrite(stamp);
+			}
+		}));
 
 	}
 
 	private List<Space> doQuery(boolean queryPrivate) {
 		Stream<Space> stream = cache.stream();
 		if (!queryPrivate) {
-			stream.filter(space -> !space.getIsPrivate());
+			stream = stream.filter(space -> !space.getIsPrivate());
 		}
 		return stream.map(Space::new).collect(Collectors.toList());
 	}

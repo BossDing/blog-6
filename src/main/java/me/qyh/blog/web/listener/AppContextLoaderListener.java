@@ -40,7 +40,7 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
 		super.contextInitialized(event);
-		WebApplicationContext ctx = super.getCurrentWebApplicationContext();
+		WebApplicationContext ctx = getCurrentWebApplicationContext();
 		UrlConfig helper = ctx.getBean(UrlConfig.class);
 		ServletContext sc = event.getServletContext();
 		EnumSet<SessionTrackingMode> modes = EnumSet.of(SessionTrackingMode.COOKIE);

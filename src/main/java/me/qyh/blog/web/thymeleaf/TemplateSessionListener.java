@@ -13,7 +13,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.thymeleaf.TemplateService;
 
 @Component
 public class TemplateSessionListener implements HttpSessionListener, ApplicationContextAware {
@@ -32,6 +31,7 @@ public class TemplateSessionListener implements HttpSessionListener, Application
 
 	@Override
 	public void sessionCreated(HttpSessionEvent se) {
+		//
 	}
 
 	@Override

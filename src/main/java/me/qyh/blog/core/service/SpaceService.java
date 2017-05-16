@@ -34,10 +34,11 @@ public interface SpaceService {
 	 * 
 	 * @param space
 	 *            待添加的空间
+	 * @return
 	 * @throws LogicException
 	 *             添加过程中发生逻辑异常
 	 */
-	void addSpace(Space space) throws LogicException;
+	Space addSpace(Space space) throws LogicException;
 
 	/**
 	 * 更新空间
@@ -47,7 +48,7 @@ public interface SpaceService {
 	 * @throws LogicException
 	 *             更新过程中发生逻辑异常
 	 */
-	void updateSpace(Space space) throws LogicException;
+	Space updateSpace(Space space) throws LogicException;
 
 	/**
 	 * 查询空间

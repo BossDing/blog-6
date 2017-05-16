@@ -30,7 +30,7 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 
 @Controller
-public class LogoutController extends BaseController {
+public class LogoutController {
 	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
 

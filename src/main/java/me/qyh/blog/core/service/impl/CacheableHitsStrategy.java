@@ -16,19 +16,24 @@
 package me.qyh.blog.core.service.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
@@ -50,17 +55,13 @@ import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
 public final class CacheableHitsStrategy implements HitsStrategy {
 
 	@Autowired
-	private ArticleDao articleDao;
-	@Autowired
 	private ArticleCache articleCache;
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	@Autowired
-	@Qualifier("taskExecutor")
-	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
+	private SqlSessionFactory sqlSessionFactory;
 	/**
 	 * 存储所有文章的点击数
 	 */
@@ -80,97 +81,84 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	private boolean validIp = true;
 
 	/**
-	 * 最多保存的文章数，如果达到或超过该数目，将会立即更新
+	 * 最多保存的ip数，如果达到或超过该数目，将会立即更新
 	 */
-	private int maxIps = 100;
+	private int maxIps = 10;
 
 	/**
-	 * 做多保存文章数，如果达到或超过该数目，将会立即刷新
-	 * <p>
-	 * <b>因为没有批量更新的功能，所以这个值应该设置的较小</b>
-	 * </p>
+	 * 最多保存文章数，如果达到或超过该数目，将会立即刷新
 	 */
-	private int maxArticles = 20;
+	private int maxArticles = 50;
 
-	private final Object lock = new Object();
+	private AtomicInteger flushCounter = new AtomicInteger();
 
 	@Override
 	public void hit(Article article) {
 		// increase
-		hitsMap.computeIfAbsent(article.getId(), k -> {
-			return (validIp && maxArticles > 1) ? new IPBasedHitsHandler(article.getHits(), maxIps)
-					: new DefaultHitsHandler(article.getHits());
-		}).hit(article);
+		hitsMap.computeIfAbsent(article.getId(), k -> (validIp && maxArticles > 1)
+				? new IPBasedHitsHandler(article.getHits(), maxIps) : new DefaultHitsHandler(article.getHits()))
+				.hit(article);
 
-		flushMap.putIfAbsent(article.getId(), Boolean.TRUE);
-
-		/**
-		 * 并不会在flushMap.size()刚刚超过maxArticles的执行，也有可能会在flushMap.size()远远大于maxArticles的时候执行
-		 * 
-		 * 1.8 ConcurrentHashMap的size方法性能跟HashMap差不多
-		 * https://stackoverflow.com/questions/10754675/concurrent-hashmap-size-method-complexity/22996395#22996395
-		 */
-		if (flushMap.size() >= maxArticles) {
-			threadPoolTaskExecutor.submit(() -> {
-				synchronized (lock) {
-					if (flushMap.size() >= maxArticles) {
-						flush();
-					}
-				}
-			});
+		if (flushMap.putIfAbsent(article.getId(), Boolean.TRUE) == null
+				&& flushCounter.incrementAndGet() >= maxArticles) {
+			flush();
 		}
 	}
 
-	private synchronized void flush(Integer id) {
-		List<HitsWrapper> wrappers = new ArrayList<>();
-		flushMap.compute(id, (ck, cv) -> {
-			if (cv != null) {
-				wrappers.add(new HitsWrapper(id, hitsMap.get(id).getHits()));
-			}
-			return null;
-		});
-		doFlush(wrappers);
+	public void flush() {
+		flush(false);
 	}
 
-	public synchronized void flush() {
+	public void flush(boolean contextClose) {
 		if (!flushMap.isEmpty()) {
 			List<HitsWrapper> wrappers = new ArrayList<>();
 			for (Iterator<Entry<Integer, Boolean>> iter = flushMap.entrySet().iterator(); iter.hasNext();) {
 				Entry<Integer, Boolean> entry = iter.next();
 				Integer key = entry.getKey();
-				flushMap.compute(key, (ck, cv) -> {
-					if (cv != null) {
-						wrappers.add(new HitsWrapper(key, hitsMap.get(key).getHits()));
-					}
-					return null;
-				});
+
+				if (flushMap.remove(key) != null) {
+					flushCounter.decrementAndGet();
+					wrappers.add(new HitsWrapper(key, hitsMap.get(key)));
+				}
 			}
-			doFlush(wrappers);
+			doFlush(wrappers, contextClose);
 		}
 	}
 
-	private void doFlush(List<HitsWrapper> wrappers) {
-		if (!wrappers.isEmpty()) {
+	private synchronized void doFlush(List<HitsWrapper> wrappers, boolean contextClose) {
+		// 得到当前的实时点击数
+		Map<Integer, Integer> hitsMap = wrappers.stream().filter(wrapper -> wrapper.hitsHandler != null)
+				.collect(Collectors.toMap(wrapper -> wrapper.id, wrapper -> wrapper.hitsHandler.getHits()));
+		if (!hitsMap.isEmpty()) {
+
 			Transactions.executeInTransaction(transactionManager, status -> {
-				for (HitsWrapper wrapper : wrappers) {
-					articleDao.updateHits(wrapper.id, wrapper.hits);
+				if (!contextClose) {
+					Transactions.afterCommit(() -> {
+						articleCache.updateHits(hitsMap);
+						articleIndexer.addOrUpdateDocument(hitsMap.keySet().stream().toArray(i -> new Integer[i]));
+					});
 				}
+
+				try (SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH)) {
+					ArticleDao articleDao = sqlSession.getMapper(ArticleDao.class);
+					for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
+						articleDao.updateHits(it.getKey(), it.getValue());
+					}
+					sqlSession.commit();
+				}
+
 			});
-			articleCache.updateHits(
-					wrappers.stream().collect(Collectors.toMap(wrapper -> wrapper.id, wrapper -> wrapper.hits)));
-			articleIndexer
-					.addOrUpdateDocument(wrappers.stream().map(wrapper -> wrapper.id).toArray(i -> new Integer[i]));
 		}
 	}
 
 	private final class HitsWrapper {
 		private final Integer id;
-		private final Integer hits;
+		private final HitsHandler hitsHandler;
 
-		public HitsWrapper(Integer id, Integer hits) {
+		public HitsWrapper(Integer id, HitsHandler hitsHandler) {
 			super();
 			this.id = id;
-			this.hits = hits;
+			this.hitsHandler = hitsHandler;
 		}
 	}
 
@@ -201,9 +189,10 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	}
 
 	private final class IPBasedHitsHandler implements HitsHandler {
-		private final Map<String, Boolean> ips = new ConcurrentHashMap<String, Boolean>();
+		private final Map<String, Boolean> ips = new ConcurrentHashMap<>();
 		private final LongAdder adder;
 		private final int maxIps;
+		private final AtomicInteger counter = new AtomicInteger(0);
 
 		private IPBasedHitsHandler(int init, int maxIps) {
 			adder = new LongAdder();
@@ -216,17 +205,13 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 			String ip = Environment.getIP();
 			if (ip != null && ips.putIfAbsent(ip, Boolean.TRUE) == null) {
 				adder.increment();
-			}
-
-			if (ips.size() >= maxIps) {
-				threadPoolTaskExecutor.submit(() -> {
-					synchronized (lock) {
-						if (ips.size() >= maxIps) {
-							flush(article.getId());
-						}
+				if (counter.incrementAndGet() >= maxIps) {
+					Integer id = article.getId();
+					if (flushMap.remove(id) != null) {
+						flushCounter.decrementAndGet();
+						doFlush(Arrays.asList(new HitsWrapper(id, hitsMap.get(id))), false);
 					}
-				});
-
+				}
 			}
 		}
 
@@ -236,14 +221,18 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		}
 	}
 
+	@EventListener
 	public void handleContextEvent(ContextClosedEvent event) {
-		flush();
+		flush(true);
 	}
 
+	@TransactionalEventListener
 	public void handleArticleEvent(ArticleEvent evt) {
 		if (EventType.DELETE.equals(evt.getEventType())) {
 			evt.getArticles().stream().map(Article::getId).forEach(id -> {
-				flushMap.remove(id);
+				if (flushMap.remove(id) != null) {
+					flushCounter.decrementAndGet();
+				}
 				hitsMap.remove(id);
 			});
 		}

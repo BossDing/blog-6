@@ -240,7 +240,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 			Thread.currentThread().interrupt();
 		}
 		try {
-			searcherManager.maybeRefreshBlocking();
 			reopenThread.close();
 			oriWriter.close();
 			dir.close();
@@ -550,6 +549,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			case LASTMODIFYDATE:
 				fields.add(new SortField(LASTMODIFYDATE, SortField.Type.STRING, true));
 				fields.add(new SortField(PUB_DATE, SortField.Type.STRING, true));
+				break;
 			default:
 				break;
 			}
@@ -693,7 +693,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
 		// 新增标签
-		addTags(tagDao.selectAll().stream().map(tag -> tag.getName()).toArray(i -> new String[i]));
+		addTags(tagDao.selectAll().stream().map(Tag::getName).toArray(i -> new String[i]));
 	}
 
 	/**

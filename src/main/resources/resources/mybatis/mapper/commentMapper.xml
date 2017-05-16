@@ -31,7 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="editor" column="p_comment_editor" typeHandler="EnumOrdinalTypeHandler" />
 			<association property="commentModule" javaType="CommentModule">
 				<result column="p_module_id" property="id"/>
-				<result column="p_module_type" property="type" typeHandler="EnumOrdinalTypeHandler"/>
+				<result column="p_module_type" property="type"/>
 			</association>
 		</association>
 	</resultMap>
@@ -47,12 +47,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 		INSERT INTO blog_comment(parent_id,parent_path,content,module_type,module_id,comment_date,comment_status,comment_nickname,comment_email,comment_ip,comment_admin,comment_gravatar,comment_website,comment_editor)
-		VALUES(#{parent.id},#{parentPath},#{content},#{commentModule.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler},#{commentModule.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler},#{nickname},#{email},#{ip},#{admin},#{gravatar},#{website},#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler})
+		VALUES(#{parent.id},#{parentPath},#{content},#{commentModule.type},#{commentModule.id},#{commentDate},#{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler},#{nickname},#{email},#{ip},#{admin},#{gravatar},#{website},#{editor,javaType=Editor,typeHandler=EnumOrdinalTypeHandler})
 	</insert>
 	
 	<select id="selectCountByIpAndDatePeriod" resultType="int">
 		SELECT COUNT(id) FROM blog_comment 
-		WHERE module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		WHERE module_type = #{module.type}
 		AND module_id = #{module.id}
 		AND comment_ip = #{ip} 
 		AND comment_date BETWEEN #{begin} AND #{end} 
@@ -60,7 +60,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectCountWithTree" resultType="int">
 		SELECT COUNT(id) FROM blog_comment 
-		WHERE module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		WHERE module_type = #{module.type}
 		AND module_id = #{module.id} 
 		AND parent_path = '/'
 		<if test="status != null">
@@ -70,7 +70,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectCountWithList" resultType="int">
 		SELECT COUNT(id) FROM blog_comment 
-		WHERE module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		WHERE module_type = #{module.type}
 		AND module_id = #{module.id} 
 		<if test="status != null">
 		   AND comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
@@ -84,7 +84,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		  blog_comment a JOIN 
 		  (SELECT id, parent_path 
 		    FROM blog_comment 
-		    WHERE module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		    WHERE module_type = #{module.type}
 			AND module_id = #{module.id} 
 			AND parent_path = '/'
 		    <if test="status != null">
@@ -113,7 +113,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		FROM 
 		  blog_comment a 
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
-		WHERE a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		WHERE a.module_type = #{module.type}
 		AND a.module_id = #{module.id} 
 		<if test="status != null">
 		  	AND a.comment_status = #{status,javaType=CommentStatus,typeHandler=EnumOrdinalTypeHandler}
@@ -148,7 +148,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		 SELECT 
 		  a.id,a.parent_id,a.parent_path,a.content
 		 FROM blog_comment a 
-		 WHERE a.module_type = #{commentModule.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		 WHERE a.module_type = #{commentModule.type}
 		 AND a.module_id = #{commentModule.id} 
 		 AND a.comment_ip = #{ip}
 		 <choose>
@@ -169,7 +169,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<delete id="deleteByModule">
 		DELETE FROM blog_comment 
-		WHERE module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		WHERE module_type = #{type}
 		AND module_id = #{id} 
 	</delete>
 	
@@ -187,7 +187,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				LEFT OUTER JOIN blog_article ba ON a.module_id = ba.id
 				LEFT OUTER JOIN blog_space bs ON ba.space_id  = bs.id
 				WHERE ba.art_status = 0<!-- PUBLISHED -->
-				AND a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+				AND a.module_type = #{module.type}
 				<if test="module.id != null">
 					AND a.module_id = #{module.id}
 				</if>
@@ -207,7 +207,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				LEFT OUTER JOIN blog_page_user bpu ON a.module_id = bpu.id
 				LEFT OUTER JOIN blog_space bs ON bpu.space_id  = bs.id
 				WHERE a.comment_status = 0
-				AND a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+				AND a.module_type = #{module.type}
 				<if test="module.id != null">
 					AND a.module_id = #{module.id}
 				</if>
@@ -237,7 +237,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		SELECT a.module_id,a.module_type,CONCAT(a.module_type,'_',a.module_id) AS module_sign,COUNT(*) AS comments FROM blog_comment a
 		WHERE a.comment_status = 0<!-- NORMAL -->
 		AND ( <foreach collection="list" item="module" open="" close="" separator="OR">
-			(a.module_type = #{module.type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+			(a.module_type = #{module.type}
 		 	AND a.module_id = #{module.id} )
 		</foreach> )
 		GROUP BY a.module_type,a.module_id
@@ -246,7 +246,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectCommentCount" resultMap="ModuleCommentCountDetail" >
 		SELECT a.module_id,a.module_type,CONCAT(a.module_type,'_',a.module_id) AS module_sign,COUNT(*) AS comments FROM blog_comment a
 		WHERE a.comment_status = 0<!-- NORMAL -->
-		AND a.module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+		AND a.module_type = #{type}
 		 AND a.module_id = #{id} 
 		GROUP BY a.module_type,a.module_id
 	</select>
@@ -263,7 +263,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				WHERE 
 					a.comment_status = 0<!-- NORMAL -->
 					AND art.art_status = 0<!-- published -->
-					AND a.module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+					AND a.module_type = #{type}
 				<if test="space != null">
 					AND art.space_id = #{space.id}
 				</if>
@@ -281,7 +281,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				LEFT OUTER JOIN blog_space sp ON bpu.space_id = sp.id
 				WHERE 
 					a.comment_status = 0<!-- NORMAL -->
-					AND a.module_type = #{type,javaType=ModuleType,typeHandler=EnumOrdinalTypeHandler}
+					AND a.module_type = #{type}
 				<if test="space != null">
 					AND bpu.space_id = #{space.id}
 				</if>

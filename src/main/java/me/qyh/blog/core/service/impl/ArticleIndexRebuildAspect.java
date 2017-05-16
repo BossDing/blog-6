@@ -79,12 +79,7 @@ public class ArticleIndexRebuildAspect extends TransactionSynchronizationAdapter
 
 	private boolean needRebuild() {
 		Throwable ex = throwableLocal.get();
-		if (ex != null) {
-			if (ExceptionUtils.getFromChain(ex, NO_NEED_REBUILD_EXCEPTIONS).isPresent()) {
-				return false;
-			}
-		}
-		return true;
+		return ex == null || !ExceptionUtils.getFromChain(ex, NO_NEED_REBUILD_EXCEPTIONS).isPresent();
 	}
 
 	@Override

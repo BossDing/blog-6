@@ -65,6 +65,16 @@ public class Constants {
 	 */
 	public static final Path DAT_DIR = FileUtils.HOME_DIR.resolve("blog/dat");
 
+	/**
+	 * 成功
+	 */
+	public static final String ERROR = "error";
+
+	/**
+	 * 失败
+	 */
+	public static final String SUCCESS = "success";
+
 	static {
 		FileUtils.forceMkdir(CONFIG_DIR);
 		FileUtils.forceMkdir(DAT_DIR);

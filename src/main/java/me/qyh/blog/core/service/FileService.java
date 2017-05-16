@@ -58,7 +58,7 @@ public interface FileService {
 	 * @throws LogicException
 	 *             创建逻辑异常
 	 */
-	void createFolder(BlogFile toCreate) throws LogicException;
+	BlogFile createFolder(BlogFile toCreate) throws LogicException;
 
 	/**
 	 * 分页查询文件

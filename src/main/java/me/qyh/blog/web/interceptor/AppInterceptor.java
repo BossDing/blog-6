@@ -49,7 +49,6 @@ import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.core.thymeleaf.TemplateExposeHelper;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
@@ -60,6 +59,7 @@ import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 import me.qyh.blog.web.security.InvalidCsrfTokenException;
 import me.qyh.blog.web.security.MissingCsrfTokenException;
+import me.qyh.blog.web.thymeleaf.TemplateExposeHelper;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 
@@ -90,7 +90,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				}
 
 				Environment.setUser(user);
-				enableLogin(handler, user);
+				enableLogin(handler);
 
 				setLockKeys(request);
 
@@ -126,7 +126,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
-	private void enableLogin(Object methodHandler, User user) {
+	private void enableLogin(Object methodHandler) {
 		// auth check
 		if (methodHandler instanceof HandlerMethod) {
 			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
@@ -142,7 +142,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void setLockKeys(HttpServletRequest request) {
 		Map<String, List<LockKey>> keysMap = LockHelper.getKeysMap(request);
 		if (!CollectionUtils.isEmpty(keysMap)) {
-			LOGGER.debug("将LockKey放入LockKeyContext中:" + keysMap);
+			LOGGER.debug("将LockKey放入LockKeyContext中:{}", keysMap);
 			LockKeyContext.set(keysMap);
 		}
 	}
@@ -199,6 +199,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			// GET请求不能检查，否则死循环
 			return;
 		}
+
 		if (!requireCsrfProtectionMatcher.match(request)) {
 			return;
 		}
@@ -207,17 +208,13 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			actualToken = request.getParameter(csrfToken.getParameterName());
 		}
 		if (!csrfToken.getToken().equals(actualToken)) {
-			LOGGER.debug("Invalid CSRF token found for " + UrlUtils.buildFullRequestUrl(request));
+			LOGGER.debug("Invalid CSRF token found for {}", UrlUtils.buildFullRequestUrl(request));
 			if (missingToken) {
 				throw new MissingCsrfTokenException(actualToken);
 			} else {
 				throw new InvalidCsrfTokenException(csrfToken, actualToken);
 			}
 		}
-	}
-
-	public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
-		this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
 	}
 
 	@SuppressWarnings("serial")
@@ -306,5 +303,9 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private boolean executeHandler(Object handler) {
 		return handler instanceof HandlerMethod;
+	}
+
+	public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
+		this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
 	}
 }

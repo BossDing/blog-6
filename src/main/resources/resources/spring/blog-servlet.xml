@@ -42,7 +42,7 @@
 			<bean class="me.qyh.blog.core.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.core.thymeleaf.TemplateReturnHandler"></bean>
+			<bean class="me.qyh.blog.web.thymeleaf.TemplateReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 	 -->
@@ -60,7 +60,7 @@
 	</mvc:interceptors>
 
 
-	<bean id="templateEngine" class="me.qyh.blog.core.thymeleaf.TemplateEngine">
+	<bean id="templateEngine" class="me.qyh.blog.web.thymeleaf.TemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -70,12 +70,12 @@
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.core.thymeleaf.TemplateResolver" />
+				<bean class="me.qyh.blog.web.thymeleaf.TemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
 		<property name="cacheManager">
-			<bean class="me.qyh.blog.core.thymeleaf.TemplateCacheManager" />
+			<bean class="me.qyh.blog.web.thymeleaf.TemplateCacheManager" />
 		</property>
 	</bean>
 
@@ -86,12 +86,12 @@
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
 
-	<bean class="me.qyh.blog.core.thymeleaf.TemplateRender" />
+	<bean class="me.qyh.blog.web.thymeleaf.TemplateRender" />
 
 	<!-- sitemap 服务 -->
+	<!-- 
 	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
-	
-	
+	 -->
 	
 	<task:scheduled-tasks scheduler="taskScheduler">
 

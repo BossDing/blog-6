@@ -22,8 +22,16 @@ public interface UserService {
 	 *            当前用户
 	 * @param password
 	 *            密码
+	 * @return
 	 * @throws LogicException
 	 */
-	void update(User user, String password) throws LogicException;
+	User update(User user, String password) throws LogicException;
+
+	/**
+	 * 获取当前用户
+	 * 
+	 * @return
+	 */
+	User getUser();
 
 }

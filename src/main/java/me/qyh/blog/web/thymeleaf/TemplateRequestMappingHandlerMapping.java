@@ -67,6 +67,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	/**
 	 * Return a (read-only) map with all mappings and HandlerMethod's.
 	 */
+	@Override
 	public Map<RequestMappingInfo, HandlerMethod> getHandlerMethods() {
 		StampedLock lock = mappingRegistry.getLock();
 		long stamp = lock.tryOptimisticRead();
@@ -95,6 +96,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 * @param method
 	 *            the method
 	 */
+	@Override
 	public void registerMapping(RequestMappingInfo mapping, Object handler, Method method) {
 		StampedLock lock = mappingRegistry.getLock();
 		long stamp = lock.writeLock();
@@ -115,6 +117,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 * @param mapping
 	 *            the mapping to unregister
 	 */
+	@Override
 	public void unregisterMapping(RequestMappingInfo mapping) {
 		StampedLock lock = mappingRegistry.getLock();
 		long stamp = lock.writeLock();
@@ -139,6 +142,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 *             if another method was already registered under the same
 	 *             mapping
 	 */
+	@Override
 	protected void registerHandlerMethod(Object handler, Method method, RequestMappingInfo mapping) {
 		StampedLock lock = mappingRegistry.getLock();
 		long stamp = lock.writeLock();
@@ -167,6 +171,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 *         list will never be modified and is safe to iterate.
 	 * @see #setHandlerMethodMappingNamingStrategy
 	 */
+	@Override
 	public List<HandlerMethod> getHandlerMethodsForMappingName(String mappingName) {
 		return this.mappingRegistry.getHandlerMethodsByMappingName(mappingName);
 	}
@@ -230,6 +235,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 * @see #handleMatch(Object, String, HttpServletRequest)
 	 * @see #handleNoMatch(Set, String, HttpServletRequest)
 	 */
+	@Override
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
 		List<Match> matches = new ArrayList<>();
 		List<RequestMappingInfo> directPathMatches = this.mappingRegistry.getMappingsByUrl(lookupPath);
@@ -327,16 +333,12 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 	public class MappingRegistry {
 
-		private final Map<RequestMappingInfo, MappingRegistration> registry = new HashMap<RequestMappingInfo, MappingRegistration>();
-
-		private final Map<RequestMappingInfo, HandlerMethod> mappingLookup = new LinkedHashMap<RequestMappingInfo, HandlerMethod>();
-
-		private final MultiValueMap<String, RequestMappingInfo> urlLookup = new LinkedMultiValueMap<String, RequestMappingInfo>();
-
-		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<String, List<HandlerMethod>>();
-
-		private final Map<HandlerMethod, CorsConfiguration> corsLookup = new ConcurrentHashMap<HandlerMethod, CorsConfiguration>();
-
+		private final Map<RequestMappingInfo, MappingRegistration> registry = new HashMap<>();
+		private final Map<RequestMappingInfo, HandlerMethod> mappingLookup = new LinkedHashMap<>();
+		private final MultiValueMap<String, RequestMappingInfo> urlLookup = new LinkedMultiValueMap<>();
+		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();
+		private final Map<HandlerMethod, CorsConfiguration> corsLookup = new ConcurrentHashMap<>();
+		
 		private final StampedLock sl = new StampedLock();
 
 		private MappingRegistry() {

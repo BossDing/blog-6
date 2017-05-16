@@ -53,11 +53,9 @@ public interface ArticleService {
 	 * 
 	 * @param id
 	 *            文章id
-	 * @throws LogicException
-	 *             如果文章不存在
 	 * @return 文章
 	 */
-	Article getArticleForEdit(Integer id) throws LogicException;
+	Optional<Article> getArticleForEdit(Integer id);
 
 	/**
 	 * 查询<b>当前空间</b>文章日期归档
@@ -118,7 +116,7 @@ public interface ArticleService {
 	 *            文章id
 	 * @throws LogicException
 	 */
-	void logicDeleteArticle(Integer id) throws LogicException;
+	Article logicDeleteArticle(Integer id) throws LogicException;
 
 	/**
 	 * 从回收站中恢复
@@ -127,7 +125,7 @@ public interface ArticleService {
 	 *            文章id
 	 * @throws LogicException
 	 */
-	void recoverArticle(Integer id) throws LogicException;
+	Article recoverArticle(Integer id) throws LogicException;
 
 	/**
 	 * 删除博客
@@ -154,7 +152,7 @@ public interface ArticleService {
 	 *            草稿id
 	 * @throws LogicException
 	 */
-	void publishDraft(Integer id) throws LogicException;
+	Article publishDraft(Integer id) throws LogicException;
 
 	/**
 	 * 上一篇，下一篇文章
@@ -220,5 +218,14 @@ public interface ArticleService {
 	 * @return 随机文章
 	 */
 	Optional<Article> selectRandom(boolean queryLock);
+
+	/**
+	 * 更新文章
+	 * 
+	 * @param article
+	 * @return
+	 * @throws LogicException
+	 */
+	Article updateArticle(Article article) throws LogicException;
 
 }

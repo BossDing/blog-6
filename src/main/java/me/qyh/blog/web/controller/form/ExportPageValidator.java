@@ -23,9 +23,9 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.core.bean.ExportPage;
-import me.qyh.blog.core.thymeleaf.template.Fragment;
-import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.thymeleaf.template.Fragment;
+import me.qyh.blog.web.thymeleaf.template.Page;
 
 @Component
 public class ExportPageValidator implements Validator {

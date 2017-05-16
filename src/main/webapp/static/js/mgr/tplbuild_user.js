@@ -57,9 +57,11 @@ function preview() {
 		if(space != ''){
 			page.space = {"id":space}
 		}
+		var url = basePath + '/mgr/template/page/create';
 		var id = $("#pageId").val();
 		if(id != null && $.trim(id) != ''){
 			page.id = id;
+			url = basePath + '/mgr/template/page/update';
 		}
 		if($.trim($("#alias").val()) != ''){
 			page.alias = $.trim($("#alias").val());
@@ -70,8 +72,8 @@ function preview() {
 		saveFlag = true;
 		$.ajax({
 			type : "post",
-			url : basePath + '/mgr/template/page/build',
 			data : JSON.stringify(page),
+			url:url,
 			dataType : "json",
 			contentType : 'application/json',
 			success : function(data){

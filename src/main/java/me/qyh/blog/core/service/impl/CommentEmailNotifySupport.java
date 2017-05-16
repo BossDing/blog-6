@@ -16,7 +16,6 @@
 package me.qyh.blog.core.service.impl;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +33,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
@@ -41,6 +41,7 @@ import org.thymeleaf.templateresolver.StringTemplateResolver;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Comment;
+import me.qyh.blog.core.evt.CommentEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.support.mail.MailSender;
@@ -120,26 +121,26 @@ public class CommentEmailNotifySupport implements InitializingBean {
 			messageTipCount = MESSAGE_TIP_COUNT;
 		}
 
-		if (Files.exists(toSendSdfile)) {
+		if (FileUtils.exists(toSendSdfile)) {
 			try {
 				this.toSend = SerializationUtils.deserialize(toSendSdfile);
 			} catch (Exception e) {
 				LOGGER.warn("载入文件：" + toSendSdfile + "失败:" + e.getMessage(), e);
 			} finally {
 				if (!FileUtils.deleteQuietly(toSendSdfile)) {
-					LOGGER.warn("删除文件:" + toSendSdfile + "失败，这会导致邮件重复发送");
+					LOGGER.warn("删除文件:{}失败，这会导致邮件重复发送", toSendSdfile);
 				}
 			}
 		}
 
-		if (Files.exists(toProcessesSdfile)) {
+		if (FileUtils.exists(toProcessesSdfile)) {
 			try {
 				this.toProcesses = SerializationUtils.deserialize(toProcessesSdfile);
 			} catch (Exception e) {
 				LOGGER.warn("载入文件：" + toProcessesSdfile + "失败:" + e.getMessage(), e);
 			} finally {
 				if (!FileUtils.deleteQuietly(toProcessesSdfile)) {
-					LOGGER.warn("删除文件:" + toProcessesSdfile + "失败，这会导致邮件重复发送");
+					LOGGER.warn("删除文件:{}失败，这会导致邮件重复发送", toProcessesSdfile);
 				}
 			}
 		}
@@ -148,7 +149,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	public void forceSend() {
 		synchronized (toSend) {
 			if (!toSend.isEmpty()) {
-				LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到" + messageTipCount);
+				LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到{}", messageTipCount);
 				sendMail(toSend, null);
 				toSend.clear();
 			}
@@ -164,7 +165,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 				size++;
 				iterator.remove();
 				if (size >= messageTipCount) {
-					LOGGER.debug("发送列表尺寸达到" + messageTipCount + "立即发送邮件通知");
+					LOGGER.debug("发送列表尺寸达到{}立即发送邮件通知", messageTipCount);
 					sendMail(toSend, null);
 					toSend.clear();
 					break;
@@ -186,7 +187,9 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	}
 
 	@Async
-	public void handle(Comment comment) {
+	@TransactionalEventListener
+	public void handleCommentEvent(CommentEvent evt) {
+		Comment comment = evt.getComment();
 		Comment parent = comment.getParent();
 		// 如果在用户登录的情况下评论，一律不发送邮件
 		// 如果回复了管理员

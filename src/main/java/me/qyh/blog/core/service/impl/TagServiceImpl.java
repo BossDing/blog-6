@@ -61,34 +61,30 @@ public class TagServiceImpl implements TagService, ApplicationEventPublisherAwar
 	@CacheEvict(value = "hotTags", allEntries = true)
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void updateTag(Tag tag, boolean merge) throws LogicException {
+	public Tag updateTag(Tag tag, boolean merge) throws LogicException {
 		Tag db = tagDao.selectById(tag.getId());
 		if (db == null) {
 			throw new LogicException("tag.notExists", "标签不存在");
 		}
 		if (db.getName().equals(tag.getName())) {
-			return;
+			return tag;
 		}
 		Tag newTag = tagDao.selectByName(tag.getName());
-		boolean removeTag = false;
 		if (newTag != null) {
 			if (!merge) {
 				throw new LogicException("tag.exists", "标签已经存在");
-			} else {
-				articleTagDao.merge(db, newTag);
-				tagDao.deleteById(db.getId());
-				removeTag = true;
 			}
+			articleTagDao.merge(db, newTag);
+			tagDao.deleteById(db.getId());
 		} else {
 			tagDao.update(tag);
-			removeTag = true;
 		}
-		if (removeTag) {
-			articleIndexer.removeTags(db.getName());
-		}
+		articleIndexer.removeTags(db.getName());
 		articleIndexer.addTags(tag.getName());
 
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+
+		return tag;
 	}
 
 	@Override

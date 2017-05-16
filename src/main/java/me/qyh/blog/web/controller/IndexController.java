@@ -31,13 +31,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.thymeleaf.DataTag;
-import me.qyh.blog.core.thymeleaf.ParseConfig;
-import me.qyh.blog.core.thymeleaf.TemplateRender;
-import me.qyh.blog.core.thymeleaf.TemplateService;
-import me.qyh.blog.core.thymeleaf.TplRenderException;
-import me.qyh.blog.core.thymeleaf.template.Fragment;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.thymeleaf.DataTag;
+import me.qyh.blog.web.thymeleaf.ParseConfig;
+import me.qyh.blog.web.thymeleaf.TemplateRender;
+import me.qyh.blog.web.thymeleaf.TemplateService;
+import me.qyh.blog.web.thymeleaf.TplRenderException;
+import me.qyh.blog.web.thymeleaf.template.Fragment;
 
 @Controller
 public class IndexController {

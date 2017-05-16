@@ -146,6 +146,9 @@ public class Webs {
 		if (UrlUtils.match("space/*/**", path)) {
 			return path.split("/")[1];
 		}
+		if (UrlUtils.match("apis/space/*/**", path)) {
+			return path.split("/")[2];
+		}
 		return null;
 	}
 }

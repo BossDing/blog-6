@@ -93,7 +93,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
 
-	private static final long MAX_MODIFY_TIME = 30 * 60 * 1000;
+	private static final long MAX_MODIFY_TIME = 1800000;
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -250,7 +250,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public void createFolder(BlogFile toCreate) throws LogicException {
+	public BlogFile createFolder(BlogFile toCreate) throws LogicException {
 		BlogFile parent = toCreate.getParent();
 		if (parent != null) {
 			parent = blogFileDao.selectById(parent.getId());
@@ -277,6 +277,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 		blogFileDao.updateWhenAddChild(parent);
 		blogFileDao.insert(toCreate);
+		return toCreate;
 	}
 
 	private BlogFile createFolder(String path) throws LogicException {

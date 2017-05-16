@@ -17,17 +17,18 @@ package me.qyh.blog.core.service.impl;
 
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.RuntimeLogicException;
 
 /**
  * 用来在新事务中执行一些操作或者处理一些事务<b>事务提交</b>之后的事情
@@ -66,7 +67,7 @@ public final class Transactions {
 	 */
 	public static void afterCommit(Callback callback) {
 		Objects.requireNonNull(callback);
-		afterCompletion((status) -> {
+		afterCompletion(status -> {
 			if (status == TransactionSynchronization.STATUS_COMMITTED) {
 				callback.callback();
 			}
@@ -80,7 +81,7 @@ public final class Transactions {
 	 */
 	public static void afterRollback(Callback callback) {
 		Objects.requireNonNull(callback);
-		afterCompletion((status) -> {
+		afterCompletion(status -> {
 			if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
 				callback.callback();
 			}
@@ -116,7 +117,7 @@ public final class Transactions {
 	 * @return
 	 */
 	public static <T> T executeInReadOnlyTransaction(PlatformTransactionManager platformTransactionManager,
-			Function<TransactionStatus, T> function) {
+			LogicFunction<T> function) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		dtd.setReadOnly(true);
@@ -144,12 +145,11 @@ public final class Transactions {
 	 * 在 <b><i>新的</i></b> 默认事务中执行操作，并且返回一个结果
 	 * 
 	 * @param platformTransactionManager
-	 * @param callback
 	 * @see DefaultTransactionDefinition
 	 * @return
 	 */
 	public static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			Function<TransactionStatus, T> function) {
+			LogicFunction<T> function) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		return executeInTransaction(platformTransactionManager, dtd, function);
@@ -164,7 +164,7 @@ public final class Transactions {
 	 * @return
 	 */
 	public static void executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			Consumer<TransactionStatus> consumer) {
+			LogicConsumer consumer) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		executeInTransaction(platformTransactionManager, dtd, status -> {
@@ -174,13 +174,13 @@ public final class Transactions {
 	}
 
 	private static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			TransactionDefinition definition, Function<TransactionStatus, T> function) {
+			TransactionDefinition definition, LogicFunction<T> function) {
 		TransactionTemplate template = new TransactionTemplate(platformTransactionManager, definition);
-		return template.execute(new TransactionCallback<T>() {
-
-			@Override
-			public T doInTransaction(TransactionStatus status) {
+		return template.execute(status -> {
+			try {
 				return function.apply(status);
+			} catch (LogicException e) {
+				throw new RuntimeLogicException(e);
 			}
 		});
 	}
@@ -190,4 +190,13 @@ public final class Transactions {
 		void callback();
 	}
 
+	@FunctionalInterface
+	public interface LogicFunction<T> {
+		T apply(TransactionStatus t) throws LogicException;
+	}
+
+	@FunctionalInterface
+	public interface LogicConsumer {
+		void accept(TransactionStatus t) throws LogicException;
+	}
 }

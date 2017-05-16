@@ -23,10 +23,10 @@ import org.springframework.validation.Validator;
 import org.springframework.web.servlet.view.AbstractTemplateView;
 import org.thymeleaf.spring4.naming.SpringContextVariableNames;
 
-import me.qyh.blog.core.thymeleaf.template.Page;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.thymeleaf.template.Page;
 
 @Component
 public class PageValidator implements Validator {
@@ -118,7 +118,7 @@ public class PageValidator implements Validator {
 			return "";
 		}
 
-		if (cleanedAlias.equals("/")) {
+		if ("/".equals(cleanedAlias)) {
 			return "";
 		}
 

@@ -28,7 +28,7 @@ public class GoogleBlogPingService extends XmlRpcPingSupport {
 	@Override
 	protected boolean isSuccess(String result) {
 		String[] flags = StringUtils.substringsBetween(result, "<boolean>", "</boolean>");
-		if (flags == null || flags.length == 0) {
+		if (flags.length == 0) {
 			// not a xml response
 			return false;
 		}

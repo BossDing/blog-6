@@ -61,14 +61,13 @@ import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.thymeleaf.TemplateNotFoundException;
-import me.qyh.blog.core.thymeleaf.TplRenderException;
-import me.qyh.blog.core.thymeleaf.dialect.RedirectException;
-import me.qyh.blog.core.thymeleaf.template.Template;
 import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.web.controller.BaseController;
 import me.qyh.blog.web.security.CsrfException;
+import me.qyh.blog.web.thymeleaf.TemplateNotFoundException;
+import me.qyh.blog.web.thymeleaf.TplRenderException;
+import me.qyh.blog.web.thymeleaf.dialect.RedirectException;
+import me.qyh.blog.web.thymeleaf.template.Template;
 
 /**
  * 无法处理页面渲染时的异常。
@@ -108,14 +107,13 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_403));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.FORBIDDEN.value());
-			// 将链接放入
-			if ("get".equalsIgnoreCase(request.getMethod())) {
-				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
-			}
-			return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 		}
+		resp.setStatus(HttpStatus.FORBIDDEN.value());
+		// 将链接放入
+		if ("get".equalsIgnoreCase(request.getMethod())) {
+			request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
+		}
+		return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 	}
 
 	@ExceptionHandler(TplRenderException.class)
@@ -127,11 +125,10 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, e.getRenderErrorDescription()));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-			RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
-			return "redirect:" + urlHelper.getUrl() + "/error/ui";
 		}
+		resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		RequestContextUtils.getOutputFlashMap(request).put("description", e.getRenderErrorDescription());
+		return "redirect:" + urlHelper.getUrl() + "/error/ui";
 	}
 
 	@ExceptionHandler(CsrfException.class)
@@ -139,10 +136,9 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_403));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.FORBIDDEN.value());
-			return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 		}
+		resp.setStatus(HttpStatus.FORBIDDEN.value());
+		return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 	}
 
 	@ExceptionHandler(RedirectException.class)
@@ -151,19 +147,18 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new RedirectJsonResult(ex.getUrl(), ex.isPermanently()));
 			return null;
+		}
+		if (ex.isPermanently()) {
+			// 301
+			resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+			resp.setHeader("Location", ex.getUrl());
+			return null;
 		} else {
-			if (ex.isPermanently()) {
-				// 301
-				resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-				resp.setHeader("Location", ex.getUrl());
-				return null;
-			} else {
-				Message redirectMsg = ex.getRedirectMsg();
-				if (redirectMsg != null) {
-					RequestContextUtils.getOutputFlashMap(request).put("redirect_page_msg", redirectMsg);
-				}
-				return "redirect:" + ex.getUrl();
+			Message redirectMsg = ex.getRedirectMsg();
+			if (redirectMsg != null) {
+				RequestContextUtils.getOutputFlashMap(request).put("redirect_page_msg", redirectMsg);
 			}
+			return "redirect:" + ex.getUrl();
 		}
 	}
 
@@ -194,9 +189,8 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ex.getLogicMessage()));
 			return null;
-		} else {
-			return getErrorRedirect(request, new ErrorInfo(ex.getLogicMessage(), 200));
 		}
+		return getErrorRedirect(request, new ErrorInfo(ex.getLogicMessage(), 200));
 	}
 
 	@ExceptionHandler(RuntimeLogicException.class)
@@ -226,10 +220,9 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_400));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.BAD_REQUEST.value());
-			return getErrorRedirect(request, new ErrorInfo(ERROR_400, 400));
 		}
+		resp.setStatus(HttpStatus.BAD_REQUEST.value());
+		return getErrorRedirect(request, new ErrorInfo(ERROR_400, 400));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -250,10 +243,9 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_405));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.METHOD_NOT_ALLOWED.value());
-			return getErrorRedirect(request, new ErrorInfo(ERROR_405, 405));
 		}
+		resp.setStatus(HttpStatus.METHOD_NOT_ALLOWED.value());
+		return getErrorRedirect(request, new ErrorInfo(ERROR_405, 405));
 	}
 
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
@@ -263,15 +255,14 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, new Message("upload.overlimitsize",
 					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize())));
 			return null;
-		} else {
-			return getErrorRedirect(req, new ErrorInfo(new Message("upload.overlimitsize",
-					"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize()), 200));
 		}
+		return getErrorRedirect(req, new ErrorInfo(new Message("upload.overlimitsize",
+				"超过允许的最大上传文件大小：" + e.getMaxUploadSize() + "字节", e.getMaxUploadSize()), 200));
 	}
 
 	@ExceptionHandler(MultipartException.class)
 	public void handleMultipartException(MultipartException ex, HttpServletRequest req, HttpServletResponse resp) {
-
+		//
 	}
 
 	@ExceptionHandler(value = { NoHandlerFoundException.class, TemplateNotFoundException.class })
@@ -298,7 +289,7 @@ public class GlobalControllerExceptionHandler {
 			Webs.writeInfo(resp, new JsonResult(false, ERROR_NO_ERROR_MAPPING));
 			return null;
 		} else {
-			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, new ErrorInfo(ERROR_404, 404));
+			RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, new ErrorInfo(ERROR_404, 404));
 			return "redirect:" + urls.getCurrentUrl() + "/error";
 		}
 	}
@@ -315,10 +306,9 @@ public class GlobalControllerExceptionHandler {
 		if (Webs.isAjaxRequest(request)) {
 			Webs.writeInfo(resp, new JsonResult(false, Constants.SYSTEM_ERROR));
 			return null;
-		} else {
-			resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-			return getErrorRedirect(request, new ErrorInfo(Constants.SYSTEM_ERROR, 500));
 		}
+		resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		return getErrorRedirect(request, new ErrorInfo(Constants.SYSTEM_ERROR, 500));
 	}
 
 	private String getFullUrl(HttpServletRequest request) {
@@ -327,7 +317,7 @@ public class GlobalControllerExceptionHandler {
 
 	private String getErrorRedirect(HttpServletRequest request, ErrorInfo error) {
 		if (error != null) {
-			RequestContextUtils.getOutputFlashMap(request).put(BaseController.ERROR, error);
+			RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, error);
 		}
 		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=
 		// null来判断
@@ -382,4 +372,5 @@ public class GlobalControllerExceptionHandler {
 			return url;
 		}
 	}
+
 }

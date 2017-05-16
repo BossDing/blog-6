@@ -41,7 +41,7 @@ public class FileUtils {
 	 */
 	private static final Path TEMP_DIR = HOME_DIR.resolve("blog_temp");
 
-	private static final Predicate<Path> TRUE = (path) -> true;
+	private static final Predicate<Path> TRUE = path -> true;
 
 	static {
 		forceMkdir(TEMP_DIR);
@@ -136,7 +136,7 @@ public class FileUtils {
 	 */
 	public static boolean deleteQuietly(Path path, final Predicate<Path> filter) {
 		Objects.requireNonNull(filter);
-		if (path == null || !Files.exists(path)) {
+		if (path == null || !FileUtils.exists(path)) {
 			return true;
 		}
 		try {
@@ -169,8 +169,9 @@ public class FileUtils {
 	 * @param path
 	 */
 	public static void createFile(Path path) {
+		Objects.requireNonNull(path);
 		synchronized (FileUtils.class) {
-			if (!Files.exists(path)) {
+			if (!exists(path)) {
 				try {
 					Files.createDirectories(path.getParent());
 					Files.createFile(path);
@@ -178,11 +179,21 @@ public class FileUtils {
 					throw new SystemException("创建文件夹：" + path + "失败:" + e.getMessage(), e);
 				}
 			} else {
-				if (!Files.isRegularFile(path)) {
+				if (!isRegularFile(path)) {
 					throw new SystemException("目标位置" + path + "已经存在文件，但不是文件");
 				}
 			}
 		}
+	}
+
+	/**
+	 * 判读路径是否指向一个文件
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static boolean isRegularFile(Path path) {
+		return path != null && path.toFile().isFile();
 	}
 
 	/**
@@ -195,18 +206,28 @@ public class FileUtils {
 			return;
 		}
 		synchronized (FileUtils.class) {
-			if (!Files.exists(path)) {
+			if (!exists(path)) {
 				try {
 					Files.createDirectories(path);
 				} catch (IOException e) {
 					throw new SystemException("创建文件夹：" + path + "失败:" + e.getMessage(), e);
 				}
 			} else {
-				if (!Files.isDirectory(path)) {
+				if (!isDirectory(path)) {
 					throw new SystemException("目标位置" + path + "已经存在文件，但不是文件夹");
 				}
 			}
 		}
+	}
+
+	/**
+	 * 判断路径是否指向一个文件夹
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static boolean isDirectory(Path path) {
+		return path != null && path.toFile().isDirectory();
 	}
 
 	/**
@@ -282,30 +303,9 @@ public class FileUtils {
 	 * @param predicate
 	 */
 	public static void clearAppTemp(Predicate<Path> predicate) {
-		Objects.requireNonNull(predicate);
-		try {
-			Files.walkFileTree(TEMP_DIR, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-
-					if (predicate.test(file)) {
-						try {
-							Files.delete(file);
-						} catch (Exception e) {
-						}
-					}
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					return FileVisitResult.CONTINUE;
-				}
-			});
-		} catch (IOException e) {
-			// ignore
-		}
+		deleteQuietly(TEMP_DIR, predicate);
 	}
+
 
 	/**
 	 * 删除连续的 '/'，开头和结尾的'/'
@@ -357,5 +357,20 @@ public class FileUtils {
 	 */
 	public static String toString(Path path) throws IOException {
 		return new String(Files.readAllBytes(path), Constants.CHARSET);
+	}
+
+	/**
+	 * 判断文件是否存在
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static boolean exists(Path path) {
+		/**
+		 * FROM SONAR LINT Java 8's "Files.exists" should not be used
+		 * (squid:S3725) https://bugs.openjdk.java.net/browse/JDK-8153414
+		 * https://bugs.openjdk.java.net/browse/JDK-8154077
+		 */
+		return path != null && path.toFile().exists();
 	}
 }

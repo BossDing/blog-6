@@ -21,7 +21,6 @@ import static me.qyh.blog.core.file.ImageHelper.WEBP;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,10 +46,10 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.file.CommonFile;
 import me.qyh.blog.core.file.ImageHelper;
+import me.qyh.blog.core.file.ImageHelper.ImageInfo;
 import me.qyh.blog.core.file.Resize;
 import me.qyh.blog.core.file.ResizeValidator;
 import me.qyh.blog.core.file.ThumbnailUrl;
-import me.qyh.blog.core.file.ImageHelper.ImageInfo;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.Webs;
@@ -159,7 +158,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	}
 
 	private void checkFileStoreable(Path dest) throws LogicException {
-		if (Files.exists(dest) && !FileUtils.deleteQuietly(dest)) {
+		if (FileUtils.exists(dest) && !FileUtils.deleteQuietly(dest)) {
 			String absPath = dest.toAbsolutePath().toString();
 			throw new LogicException("file.store.exists", "文件" + absPath + "已经存在", absPath);
 		}
@@ -212,7 +211,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 		// 缩略图是否已经存在
 		Path file = findThumbByPath(thumbPath);
 		// 缩略图不存在，寻找原图
-		if (!Files.exists(file)) {
+		if (!FileUtils.exists(file)) {
 
 			Optional<Path> optionalFile = super.getFile(sourcePath);
 			// 源文件也不存在
@@ -226,7 +225,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 			if (ImageHelper.isSystemAllowedImage(ext)) {
 				try {
 					doResize(local, resize, file);
-					return Files.exists(file) ? Optional.of(new PathResource(file)) : Optional.empty();
+					return FileUtils.exists(file) ? Optional.of(new PathResource(file)) : Optional.empty();
 				} catch (Exception e) {
 					IMG_RESOURCE_LOGGER.error(e.getMessage(), e);
 					// 缩放失败
@@ -250,7 +249,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 		boolean flag = super.delete(key);
 		if (flag) {
 			Path thumbDir = FileUtils.sub(thumbAbsFolder, key);
-			if (Files.exists(thumbDir)) {
+			if (FileUtils.exists(thumbDir)) {
 				flag = FileUtils.deleteQuietly(thumbDir);
 			}
 		}
@@ -385,7 +384,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 				try {
 					executeResize(local, thumb, resize);
 				} catch (IOException e) {
-					if (Files.exists(local)) {
+					if (FileUtils.exists(local)) {
 						throw new SystemException(e.getMessage(), e);
 					}
 				}
@@ -402,7 +401,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 
 		if (fileMap.putIfAbsent(thumbCanonicalPath, new CountDownLatch(1)) == null) {
 			try {
-				if (!Files.exists(thumb)) {
+				if (!FileUtils.exists(thumb)) {
 					FileUtils.forceMkdir(thumb.getParent());
 					imageHelper.resize(resize, local, thumb);
 				}
@@ -434,10 +433,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 			return false;
 		}
 		String accept = request.getHeader("Accept");
-		if (accept != null && accept.indexOf(WEBP_ACCEPT) != -1) {
-			return true;
-		}
-		return false;
+		return accept != null && accept.indexOf(WEBP_ACCEPT) != -1;
 	}
 
 	protected String generateResizePathFromPath(Resize resize, String path) {

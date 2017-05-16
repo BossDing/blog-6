@@ -30,17 +30,17 @@ public abstract class TimeDiffParser {
 	public abstract Message parseDiff(LocalDateTime begin, LocalDateTime end);
 
 	public final Message parseDiff(LocalDateTime begin) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
+		Objects.requireNonNull(begin);
 		return parseDiff(begin, LocalDateTime.now());
 	}
 
 	public final Message parseDiff(Timestamp begin) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
+		Objects.requireNonNull(begin);
 		return parseDiff(begin.toLocalDateTime());
 	}
 
 	public final Message parseDiff(Date begin) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
+		Objects.requireNonNull(begin);
 		return parseDiff(LocalDateTime.ofInstant(begin.toInstant(), ZoneId.systemDefault()));
 	}
 
@@ -49,7 +49,7 @@ public abstract class TimeDiffParser {
 	}
 
 	public final Message parseDiff(String begin, String end) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
+		Objects.requireNonNull(begin);
 		Optional<LocalDateTime> optionalBeginTime = Times.parse(begin);
 		if (!optionalBeginTime.isPresent()) {
 			return new Message("datetime.parse.fail", "日期" + begin + "解析失败", begin);
@@ -65,14 +65,14 @@ public abstract class TimeDiffParser {
 	}
 
 	public final Message parseDiff(Timestamp begin, Timestamp end) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
-		Objects.requireNonNull(end, "结束日期不能为空");
+		Objects.requireNonNull(begin);
+		Objects.requireNonNull(end);
 		return parseDiff(begin.toLocalDateTime(), end.toLocalDateTime());
 	}
 
 	public final Message parseDiff(Date begin, Date end) {
-		Objects.requireNonNull(begin, "开始日期不能为空");
-		Objects.requireNonNull(end, "结束日期不能为空");
+		Objects.requireNonNull(begin);
+		Objects.requireNonNull(end);
 		LocalDateTime beginTime = LocalDateTime.ofInstant(begin.toInstant(), ZoneId.systemDefault());
 		LocalDateTime endTime = LocalDateTime.ofInstant(end.toInstant(), ZoneId.systemDefault());
 		return parseDiff(beginTime, endTime);

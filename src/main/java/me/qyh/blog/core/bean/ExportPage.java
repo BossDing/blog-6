@@ -18,8 +18,8 @@ package me.qyh.blog.core.bean;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.qyh.blog.core.thymeleaf.template.Fragment;
-import me.qyh.blog.core.thymeleaf.template.Page;
+import me.qyh.blog.web.thymeleaf.template.Fragment;
+import me.qyh.blog.web.thymeleaf.template.Page;
 
 /**
  * 用于文件导入

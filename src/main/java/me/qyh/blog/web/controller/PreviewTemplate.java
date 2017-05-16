@@ -3,7 +3,7 @@ package me.qyh.blog.web.controller;
 import java.io.Serializable;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.thymeleaf.template.Template;
+import me.qyh.blog.web.thymeleaf.template.Template;
 
 /**
  * 用来预览的模板bean

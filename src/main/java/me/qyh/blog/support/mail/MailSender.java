@@ -17,7 +17,6 @@ package me.qyh.blog.support.mail;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -70,7 +69,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (Files.exists(sdfile)) {
+		if (FileUtils.exists(sdfile)) {
 			LOGGER.debug("发现序列化文件，执行反序列化操作");
 
 			try {
@@ -99,21 +98,22 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	}
 
 	private void sendMail(final MessageBean mb) {
-		String email = mb.to;
-		if (Validators.isEmptyOrNull(email, true)) {
-			email = userQueryService.getUser().getEmail();
-		}
+		final String email = Validators.isEmptyOrNull(mb.to, true) ? userQueryService.getUser().getEmail() : mb.to;
 		if (Validators.isEmptyOrNull(email, true)) {
 			LOGGER.error("接受人邮箱为空，无法发送邮件");
 			return;
 		}
-		javaMailSender.send((mimeMessage) -> {
-			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
-			helper.setText(mb.text, mb.html);
-			helper.setTo(Validators.isEmptyOrNull(mb.to, true) ? userQueryService.getUser().getEmail() : mb.to);
-			helper.setSubject(mb.subject);
-			mimeMessage.setFrom();
-		});
+		try {
+			javaMailSender.send(mimeMessage -> {
+				MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, mb.html, Constants.CHARSET.name());
+				helper.setText(mb.text, mb.html);
+				helper.setTo(email);
+				helper.setSubject(mb.subject);
+				mimeMessage.setFrom();
+			});
+		} catch (RuntimeException e) {
+			LOGGER.error(e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -162,7 +162,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
 		if (!queue.isEmpty()) {
-			LOGGER.debug("队列中存在未发送邮件，序列化到本地:" + sdfile);
+			LOGGER.debug("队列中存在未发送邮件，序列化到本地:{}" , sdfile);
 			try {
 				SerializationUtils.serialize(queue, sdfile);
 			} catch (IOException e) {
