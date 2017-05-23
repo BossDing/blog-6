@@ -13,37 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web;
+package me.qyh.blog.web.thymeleaf;
 
-import org.springframework.context.ApplicationEvent;
+import java.io.Serializable;
+
+import me.qyh.blog.core.message.Message;
 
 /**
+ * 导入纪录
  * 
- * @see AppSimpleUrlHandlerMapping
  * @author Administrator
  *
  */
-public class SimpleUrlMappingRegisterEvent extends ApplicationEvent {
-
+public class ImportRecord implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private final String path;
-	private transient final Object handler;
+	private final boolean success;
+	private final Message message;
 
-	public SimpleUrlMappingRegisterEvent(Object source, String path, Object handler) {
-		super(source);
-		this.path = path;
-		this.handler = handler;
+	public ImportRecord(boolean success, Message message) {
+		super();
+		this.success = success;
+		this.message = message;
 	}
 
-	public String getPath() {
-		return path;
+	public boolean isSuccess() {
+		return success;
 	}
 
-	public Object getHandler() {
-		return handler;
+	public Message getMessage() {
+		return message;
 	}
 
 }

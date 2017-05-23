@@ -32,6 +32,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.AbstractTemplateView;
@@ -73,13 +74,13 @@ public final class TemplateRender {
 	@Autowired
 	private TemplateEngine viewTemplateEngine;
 
+	private boolean exposeEvaluationContext = false;
+
 	public String render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws TplRenderException {
 		try {
 			return doRender(templateName, model == null ? new HashMap<>() : model, request, response, config);
-		} catch (TplRenderException e) {
-			throw e;
-		} catch (RuntimeException e) {
+		} catch (TplRenderException | RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new SystemException(e.getMessage(), e);
@@ -101,7 +102,7 @@ public final class TemplateRender {
 			ParseContext.remove();
 
 			long renderMills = System.currentTimeMillis() - start;
-			TIME_LOGGER.debug("处理页面" + templateName + "耗费了" + renderMills + "ms");
+			TIME_LOGGER.debug("处理页面{0}耗费了{1}ms", templateName, renderMills);
 		}
 	}
 
@@ -149,21 +150,14 @@ public final class TemplateRender {
 		addRequestContextAsVariable(mergedModel, AbstractTemplateView.SPRING_MACRO_REQUEST_CONTEXT_ATTRIBUTE,
 				requestContext);
 
-		// Expose Thymeleaf's own evaluation context as a model variable
-		//
-		// Note Spring's EvaluationContexts are NOT THREAD-SAFE (in exchange for
-		// SpelExpressions being thread-safe).
-		// That's why we need to create a new EvaluationContext for each request
-		// / template execution, even if it is
-		// quite expensive to create because of requiring the initialization of
-		// several ConcurrentHashMaps.
-		final ConversionService conversionService = (ConversionService) request
-				.getAttribute(ConversionService.class.getName()); // might be
-																	// null!
-		final ThymeleafEvaluationContext evaluationContext = new ThymeleafEvaluationContext(applicationContext,
-				conversionService);
-		mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
-				evaluationContext);
+		if (exposeEvaluationContext) {
+			final ConversionService conversionService = (ConversionService) request
+					.getAttribute(ConversionService.class.getName());// 可能为null
+			final ThymeleafEvaluationContext evaluationContext = new ThymeleafEvaluationContext(applicationContext,
+					conversionService);
+			mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
+					evaluationContext);
+		}
 
 		final IEngineConfiguration configuration = viewTemplateEngine.getConfiguration();
 		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
@@ -190,7 +184,8 @@ public final class TemplateRender {
 				fragmentExpression = (FragmentExpression) parser.parseExpression(context,
 						"~{" + viewTemplateName + "}");
 			} catch (final TemplateProcessingException e) {
-				throw new IllegalArgumentException("Invalid template name specification: '" + viewTemplateName + "'");
+				throw new IllegalArgumentException("Invalid template name specification: '" + viewTemplateName + "'",
+						e);
 			}
 
 			final FragmentExpression.ExecutedFragmentExpression fragment = FragmentExpression
@@ -219,7 +214,7 @@ public final class TemplateRender {
 		}
 
 		final Set<String> processMarkupSelectors;
-		if (markupSelectors != null && markupSelectors.size() > 0) {
+		if (!CollectionUtils.isEmpty(markupSelectors)) {
 			processMarkupSelectors = markupSelectors;
 		} else {
 			processMarkupSelectors = null;
@@ -235,5 +230,9 @@ public final class TemplateRender {
 			throw new TemplateProcessingException("属性" + variableName + "已经存在与request中");
 		}
 		model.put(variableName, requestContext);
+	}
+
+	public void setExposeEvaluationContext(boolean exposeEvaluationContext) {
+		this.exposeEvaluationContext = exposeEvaluationContext;
 	}
 }

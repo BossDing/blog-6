@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.bean.ExportPage;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.thymeleaf.ExportPage;
 import me.qyh.blog.web.thymeleaf.template.Fragment;
 import me.qyh.blog.web.thymeleaf.template.Page;
 

@@ -205,6 +205,9 @@ public class FileUtils {
 		if (path == null) {
 			return;
 		}
+		if (exists(path) && isDirectory(path)) {
+			return;
+		}
 		synchronized (FileUtils.class) {
 			if (!exists(path)) {
 				try {
@@ -303,9 +306,10 @@ public class FileUtils {
 	 * @param predicate
 	 */
 	public static void clearAppTemp(Predicate<Path> predicate) {
-		deleteQuietly(TEMP_DIR, predicate);
+		deleteQuietly(TEMP_DIR, path ->
+		// 不删除文件夹
+		!isDirectory(path) && predicate.test(path));
 	}
-
 
 	/**
 	 * 删除连续的 '/'，开头和结尾的'/'

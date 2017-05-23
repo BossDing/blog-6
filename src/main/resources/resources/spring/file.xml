@@ -7,75 +7,10 @@
 		   					 http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 	<!-- 图片处理 -->
-	<bean class="me.qyh.blog.core.file.GraphicsMagickImageHelper">
-		<property name="magickPath" value="C:/Program Files/GraphicsMagick-1.3.23-Q8" />
-	</bean>
+	<bean class="me.qyh.blog.core.file.JavaImageHelper"/>
 	<!-- 纯java的图片处理，会占用较大的内存和cpu！！ -->
 	<!-- 文件服务 -->
-	<bean class="me.qyh.blog.core.file.DefaultFileManager">
-		<property name="stores">
-			<list>
-				<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
-					<property name="absPath" value="/web/file/blog_image/" />
-					<property name="id" value="1" />
-					<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />
-					<property name="cacheSeconds" value="31556926" />
-					<property name="supportWebp" value="true" />
-					<property name="name" value="图片存储" />
-					<property name="smallResize">
-						<bean class="me.qyh.blog.core.file.Resize">
-							<constructor-arg value="200" />
-						</bean>
-					</property>
-					<property name="middleResize">
-						<bean class="me.qyh.blog.core.file.Resize">
-							<constructor-arg value="600" />
-						</bean>
-					</property>
-					<property name="largeResize">
-						<bean class="me.qyh.blog.core.file.Resize">
-							<constructor-arg value="900" />
-						</bean>
-					</property>
-					<property name="resizeValidator">
-						<bean class="me.qyh.blog.core.file.DefaultResizeValidator">
-							<property name="allowSizes">
-								<array>
-									<value>64</value>
-									<value>100</value>
-									<value>160</value>
-									<value>200</value>
-									<value>400</value>
-									<value>600</value>
-									<value>900</value>
-									<value>1300</value>
-									<value>1920</value>
-								</array>
-							</property>
-						</bean>
-					</property>
-					<property name="executor">
-						<bean
-							class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
-							destroy-method="destroy">
-							<property name="corePoolSize" value="5" />
-							<property name="maxPoolSize" value="5" />
-							<property name="queueCapacity" value="50" />
-							<property name="rejectedExecutionHandler">
-								<bean class="java.util.concurrent.ThreadPoolExecutor$DiscardPolicy" />
-							</property>
-						</bean>
-					</property>
-				</bean>
-				<bean class="me.qyh.blog.support.file.local.CommonResourceStore">
-					<property name="absPath" value="/web/file/blog_file" />
-					<property name="id" value="2" />
-					<property name="name" value="文件存储" />
-					<property name="cacheSeconds" value="31556926" />
-				</bean>
-			</list>
-		</property>
-	</bean>
+	<bean class="me.qyh.blog.core.file.DefaultFileManager"/>
 
 	<task:scheduled-tasks scheduler="taskScheduler">
 		<task:scheduled ref="fileService" method="clear" cron="0 0 3 * * ?" />

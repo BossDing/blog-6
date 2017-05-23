@@ -50,6 +50,8 @@
 			alias="CommentStatus" />
 		<typeAlias type="me.qyh.blog.core.entity.CommentModule"
 			alias="CommentModule" />
+		<typeAlias type="me.qyh.blog.core.entity.CommentModule$ModuleType"
+			alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />

@@ -58,12 +58,12 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 		if (levelStr != null) {
 			try {
 				isolationLevel = Integer.parseInt(levelStr);
-			} catch (Exception e) {
+			} catch (NumberFormatException e) {
 			}
 		}
 		try {
 			if (ParseContext.getTransactionStatus() == null) {
-				ParseContext.setTransactionStatus(getTransactionStatus(context, isolationLevel));
+				ParseContext.setTransactionStatus(getTransactionStatus(isolationLevel));
 			} else {
 				throw new TemplateProcessingException("在开启一个事务前，应该先结束已经存在的事务");
 			}

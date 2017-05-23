@@ -1,4 +1,4 @@
-package me.qyh.blog.core.bean;
+package me.qyh.blog.web.thymeleaf;
 
 import me.qyh.blog.web.thymeleaf.template.PathTemplate;
 

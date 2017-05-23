@@ -15,13 +15,16 @@
  */
 package me.qyh.blog.core.file;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.event.EventListener;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.exception.SystemException;
@@ -34,8 +37,8 @@ import me.qyh.blog.core.exception.SystemException;
  */
 public class DefaultFileManager implements FileManager, InitializingBean {
 
-	private List<FileStore> stores;
-	private Map<Integer, FileStore> storeMap;
+	private List<FileStore> stores = new ArrayList<>();
+	private Map<Integer, FileStore> storeMap = new HashMap<>();
 
 	@Override
 	public Optional<FileStore> getFileStore(int id) {
@@ -44,10 +47,9 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (CollectionUtils.isEmpty(stores)) {
-			throw new SystemException("文件存储器不能为空");
+		if (!CollectionUtils.isEmpty(stores)) {
+			storeMap = stores.stream().collect(Collectors.toMap(FileStore::id, store -> store));
 		}
-		storeMap = stores.stream().collect(Collectors.toMap(FileStore::id, store -> store));
 	}
 
 	@Override
@@ -57,5 +59,16 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 
 	public void setStores(List<FileStore> stores) {
 		this.stores = stores;
+	}
+
+	@EventListener
+	public void handleFileServiceRegister(FileStoreRegisterEvent evt) {
+		FileStore fs = evt.getFileStore();
+		int id = fs.id();
+		if (storeMap.containsKey(id)) {
+			throw new SystemException("已经存在id为" + id + "的存储器了");
+		}
+		stores.add(fs);
+		storeMap.put(id, fs);
 	}
 }

@@ -16,26 +16,33 @@
 package me.qyh.blog.support.file.local;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.util.StringUtils;
+import org.springframework.web.HttpRequestHandler;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
+import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import me.qyh.blog.core.config.UrlHelper;
@@ -43,12 +50,12 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.file.CommonFile;
 import me.qyh.blog.core.file.FileStore;
+import me.qyh.blog.core.file.FileStoreRegisterEvent;
 import me.qyh.blog.core.file.ThumbnailUrl;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.RequestMatcher;
-import me.qyh.blog.web.SimpleUrlMappingRegisterEvent;
 import me.qyh.blog.web.Webs;
 
 /**
@@ -60,7 +67,7 @@ import me.qyh.blog.web.Webs;
  *
  */
 class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
-		implements FileStore, ApplicationEventPublisherAware, ApplicationListener<ContextRefreshedEvent> {
+		implements FileStore, ApplicationEventPublisherAware {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
@@ -76,10 +83,21 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	@Autowired
 	protected UrlHelper urlHelper;
 
-	@Autowired(required = false)
-	@Qualifier("downloadExecutor")
-	private ThreadPoolTaskExecutor downloadExecutor;
 	private ApplicationEventPublisher applicationEventPublisher;
+
+	@Autowired
+	private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+	private static Method method;
+
+	static {
+		try {
+			method = HttpRequestHandler.class.getMethod("handleRequest", HttpServletRequest.class,
+					HttpServletResponse.class);
+		} catch (Exception e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
 
 	public LocalResourceRequestHandlerFileStore(String urlPatternPrefix) {
 		super();
@@ -121,14 +139,6 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	}
 
 	@Override
-	public void onApplicationEvent(ContextRefreshedEvent evt) {
-		if (evt.getApplicationContext().getParent() != null) {
-			this.applicationEventPublisher
-					.publishEvent(new SimpleUrlMappingRegisterEvent(this, urlPatternPrefix + "/**", this));
-		}
-	}
-
-	@Override
 	public boolean delete(String key) {
 		Path p = FileUtils.sub(absFolder, key);
 		if (FileUtils.exists(p)) {
@@ -164,8 +174,39 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		return this.findResource(request);
 	}
 
+	protected final String getPath(HttpServletRequest request) {
+		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+		if (path == null) {
+			throw new IllegalStateException("Required request attribute '"
+					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
+		}
+		path = processPath(path);
+		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
+			return null;
+		}
+		if (path.contains("%")) {
+			try {
+				if (isInvalidPath(URLDecoder.decode(path, "UTF-8"))) {
+					return null;
+				}
+			} catch (IllegalArgumentException ex) {
+				// ignore
+			} catch (UnsupportedEncodingException e) {
+				throw new SystemException(e.getMessage(), e);
+			}
+		}
+		if (path.startsWith(urlPatternPrefix)) {
+			path = path.substring(urlPatternPrefix.length());
+		}
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		return path;
+	}
+
 	protected Resource findResource(HttpServletRequest request) throws IOException {
-		return super.getResource(request);
+		Path file = absFolder.resolve(getPath(request));
+		return FileUtils.exists(file) ? new PathResource(file) : null;
 	}
 
 	@Override
@@ -221,8 +262,6 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		absFolder = Paths.get(absPath);
 		FileUtils.forceMkdir(absFolder);
 
-		setLocations(Arrays.asList(new PathResource(absFolder)));
-
 		// 忽略location的警告
 		moreAfterPropertiesSet();
 
@@ -234,6 +273,13 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		 * spring 4.3 fix
 		 */
 		super.afterPropertiesSet();
+		
+		this.applicationEventPublisher.publishEvent(new FileStoreRegisterEvent(this, this));
+		String pattern = urlPatternPrefix + "/**";
+		requestMappingHandlerMapping.registerMapping(
+				new RequestMappingInfo(new PatternsRequestCondition(pattern),
+						new RequestMethodsRequestCondition(RequestMethod.GET), null, null, null, null, null),
+				this, method);
 	}
 
 	@Override

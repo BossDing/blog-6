@@ -4,8 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.bean.PathTemplateBean;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.thymeleaf.PathTemplateBean;
 
 @Component
 public class PathTemplateBeanValidator implements Validator {

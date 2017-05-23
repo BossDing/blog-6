@@ -233,7 +233,7 @@ public class QiniuFileStore extends AbstractOssFileStore {
 			Integer height = Integer.parseInt(executor.execute("height"));
 			return new ImageInfo(width, height, format);
 		} catch (Exception e) {
-			throw new IOException("获取图片信息失败:" + json);
+			throw new IOException("获取图片信息失败:" + json,e);
 		}
 	}
 

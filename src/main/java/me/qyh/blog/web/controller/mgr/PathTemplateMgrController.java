@@ -29,11 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.bean.JsonResult;
-import me.qyh.blog.core.bean.PathTemplateBean;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.web.controller.form.PathTemplateBeanValidator;
+import me.qyh.blog.web.thymeleaf.PathTemplateBean;
 import me.qyh.blog.web.thymeleaf.TemplateService;
 import me.qyh.blog.web.thymeleaf.TemplateService.PathTemplateService;
 import me.qyh.blog.web.thymeleaf.template.PathTemplate;

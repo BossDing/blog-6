@@ -262,10 +262,8 @@ public class AliyunFileStore extends AbstractOssFileStore {
 			sourceProtected = false;
 		}
 
-		if (sourceProtected) {
-			if (style == null) {
-				throw new SystemException("开启原图保护之后必须提供样式");
-			}
+		if (sourceProtected && style == null) {
+			throw new SystemException("开启原图保护之后必须提供样式");
 		}
 	}
 
@@ -302,7 +300,7 @@ public class AliyunFileStore extends AbstractOssFileStore {
 			Objects.requireNonNull(format);
 			return new ImageInfo(width, height, format);
 		} catch (Exception e) {
-			throw new IOException("获取图片信息失败:" + result);
+			throw new IOException("获取图片信息失败:" + result,e);
 		}
 	}
 

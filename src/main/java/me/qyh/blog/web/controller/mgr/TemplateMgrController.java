@@ -36,8 +36,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.thymeleaf.TemplateEngine;
 
-import me.qyh.blog.core.bean.ExportPage;
-import me.qyh.blog.core.bean.ImportRecord;
 import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Space;
@@ -49,6 +47,8 @@ import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.ExportPageValidator;
+import me.qyh.blog.web.thymeleaf.ExportPage;
+import me.qyh.blog.web.thymeleaf.ImportRecord;
 import me.qyh.blog.web.thymeleaf.TemplateService;
 import me.qyh.blog.web.thymeleaf.template.Page;
 

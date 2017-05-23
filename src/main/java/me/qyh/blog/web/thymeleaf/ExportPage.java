@@ -13,38 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.bean;
+package me.qyh.blog.web.thymeleaf;
 
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-import me.qyh.blog.core.message.Message;
+import me.qyh.blog.web.thymeleaf.template.Fragment;
+import me.qyh.blog.web.thymeleaf.template.Page;
 
 /**
- * 导入纪录
+ * 用于文件导入
  * 
  * @author Administrator
  *
  */
-public class ImportRecord implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private final boolean success;
-	private final Message message;
+public class ExportPage {
+	private Page page;
+	private List<Fragment> fragments = new ArrayList<>();
 
-	public ImportRecord(boolean success, Message message) {
+	public ExportPage() {
 		super();
-		this.success = success;
-		this.message = message;
 	}
 
-	public boolean isSuccess() {
-		return success;
+	public Page getPage() {
+		return page;
 	}
 
-	public Message getMessage() {
-		return message;
+	public List<Fragment> getFragments() {
+		return fragments;
 	}
 
+	public void add(Fragment fragment) {
+		this.fragments.add(fragment);
+	}
+
+	public void setPage(Page page) {
+		this.page = page;
+	}
+
+	public void setFragments(List<Fragment> fragments) {
+		this.fragments = fragments;
+	}
 }

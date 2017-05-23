@@ -26,9 +26,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -37,10 +35,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.HandlerMapping;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
@@ -87,21 +83,15 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	private Resize middleResize;
 	private Resize largeResize;
 
-	/**
-	 * 最多允许缩放线程数
-	 * <p>
-	 * 默认为5
-	 * </p>
-	 */
-	private ThreadPoolTaskExecutor executor;
+	private final Semaphore semaphore;
 
-	/**
-	 * 防止同时生成相同的缩略图和压缩图
-	 */
-	private final ConcurrentHashMap<String, CountDownLatch> fileMap = new ConcurrentHashMap<>();
+	public ImageResourceStore(String urlPatternPrefix, int semaphoreNum) {
+		super(urlPatternPrefix);
+		this.semaphore = new Semaphore(semaphoreNum);
+	}
 
 	public ImageResourceStore(String urlPatternPrefix) {
-		super(urlPatternPrefix);
+		this(urlPatternPrefix, 5);
 	}
 
 	public ImageResourceStore() {
@@ -145,16 +135,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 
 	@Override
 	protected Resource findResource(HttpServletRequest request) throws IOException {
-		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-		if (path == null) {
-			throw new SystemException("Required request attribute '"
-					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
-		}
-		path = processPath(path);
-		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
-			return null;
-		}
-		return findResource(path, request).orElse(null);
+		return findResource(getPath(request), request).orElse(null);
 	}
 
 	private void checkFileStoreable(Path dest) throws LogicException {
@@ -178,7 +159,6 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	}
 
 	private Optional<Resource> findResource(String path, HttpServletRequest request) {
-
 		// 判断是否是原图
 		Optional<Path> optionaLocalFile = super.getFile(path);
 		String extension = FileUtils.getFileExtension(path);
@@ -331,9 +311,6 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 		validateResize(middleResize);
 		validateResize(largeResize);
 
-		if (executor == null) {
-			throw new SystemException("请提供图片缩放线程池");
-		}
 		if (thumbAbsPath == null) {
 			throw new SystemException("缩略图存储路径不能为null");
 		}
@@ -376,51 +353,18 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	}
 
 	protected void doResize(Path local, Resize resize, Path thumb) throws IOException {
-		CountDownLatch cdl = fileMap.get(thumb.normalize().toString());
-		if (cdl != null) {
-			wait(cdl);
-		} else {
-			CompletableFuture.runAsync(() -> {
-				try {
-					executeResize(local, thumb, resize);
-				} catch (IOException e) {
-					if (FileUtils.exists(local)) {
-						throw new SystemException(e.getMessage(), e);
-					}
-				}
-			}, executor).join();
-		}
-	}
-
-	/*
-	 * https://www.qyh.me/space/java/article/graphicsmagick-error-137
-	 * 在这种情境下比computIfAbsent(k,Function,null)快
-	 */
-	private void executeResize(Path local, Path thumb, Resize resize) throws IOException {
-		String thumbCanonicalPath = thumb.normalize().toString();
-
-		if (fileMap.putIfAbsent(thumbCanonicalPath, new CountDownLatch(1)) == null) {
+		if (!FileUtils.exists(thumb)) {
 			try {
-				if (!FileUtils.exists(thumb)) {
-					FileUtils.forceMkdir(thumb.getParent());
-					imageHelper.resize(resize, local, thumb);
-				}
-			} finally {
-				fileMap.get(thumbCanonicalPath).countDown();
-				fileMap.remove(thumbCanonicalPath);
-			}
-		} else {
-			wait(fileMap.get(thumbCanonicalPath));
-		}
-	}
-
-	private void wait(CountDownLatch cdl) {
-		if (cdl != null) {
-			try {
-				cdl.await();
+				semaphore.acquire();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw new SystemException(e.getMessage(), e);
+			}
+			try {
+				FileUtils.forceMkdir(thumb.getParent());
+				imageHelper.resize(resize, local, thumb);
+			} finally {
+				semaphore.release();
 			}
 		}
 	}
@@ -564,9 +508,5 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 
 	public void setLargeResize(Resize largeResize) {
 		this.largeResize = largeResize;
-	}
-
-	public void setExecutor(ThreadPoolTaskExecutor executor) {
-		this.executor = executor;
 	}
 }

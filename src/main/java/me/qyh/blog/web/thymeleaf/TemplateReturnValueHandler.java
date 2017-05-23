@@ -68,14 +68,14 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest, nativeResponse,
 					new ParseConfig());
 
+		} catch (RedirectException e) {
+			throw e;
 		} catch (Exception e) {
 
-			if (!(e instanceof RedirectException)) {
-				// 解锁页面不能出现异常，不再跳转(防止死循环)
-				if (Webs.unlockRequest(nativeRequest) && nativeRequest.getMethod().equalsIgnoreCase("get")) {
-					LOGGER.error("在解锁页面发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:" + e.getMessage(), e);
-					return;
-				}
+			// 解锁页面不能出现异常，不再跳转(防止死循环)
+			if (Webs.unlockRequest(nativeRequest) && "get".equalsIgnoreCase(nativeRequest.getMethod())) {
+				LOGGER.error("在解锁页面发生了一个异常，为了防止死循环，这个页面发生异常将会无法跳转，异常栈信息:" + e.getMessage(), e);
+				return;
 			}
 
 			throw e;
