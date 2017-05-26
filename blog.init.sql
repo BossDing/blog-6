@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `blog_article` (
   `art_lock` varchar(40)  DEFAULT NULL,
   `art_alias` varchar(200)  DEFAULT NULL,
   `allowComment` tinyint(1) NOT NULL DEFAULT '1',
+  `feature_image` varchar(500)  DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
