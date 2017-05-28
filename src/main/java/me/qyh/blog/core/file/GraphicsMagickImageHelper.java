@@ -93,7 +93,11 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		Path temp = FileUtils.appTemp(ext);
 		try {
 			run(op, src.toAbsolutePath().toString(), temp.toAbsolutePath().toString());
-			FileUtils.move(temp, dest);
+			// windows下，如果多个线程move到同一文件
+			// 会出现 java.nio.file.AccessDeniedException异常
+			synchronized (this) {
+				FileUtils.move(temp, dest);
+			}
 		} catch (IOException e) {
 			// 如果原图是gif图像
 			if (isGIF(FileUtils.getFileExtension(src))) {
@@ -232,5 +236,4 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			return tmp;
 		}
 	}
-
 }

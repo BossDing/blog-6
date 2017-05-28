@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -34,14 +35,23 @@ import com.github.cage.Cage;
 import com.github.cage.GCage;
 import com.github.cage.token.RandomTokenGenerator;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.web.CaptchaValidator;
 
 @Controller
-public class CaptchaController implements InitializingBean {
+public class CaptchaController implements InitializingBean, CaptchaValidator {
 
 	private static final Random random = new Random(System.nanoTime());
-	
+
+	/**
+	 * session储存验证码的key
+	 */
+	private static final String VALIDATE_CODE_SESSION_KEY = "captchaInSession";
+
+	private static final Message INVALID_CAPTCHA_MESSAGE = new Message("validateCode.error", "验证码错误");
+
 	@Value("${captcha.num:4}")
 	private int num;
 	@Value("${captcha.delta:0}")
@@ -53,7 +63,7 @@ public class CaptchaController implements InitializingBean {
 	@GetMapping(value = "captcha", produces = MediaType.IMAGE_JPEG_VALUE)
 	public byte[] draw(HttpSession session) {
 		String capText = cage.getTokenGenerator().next();
-		session.setAttribute(Constants.VALIDATE_CODE_SESSION_KEY, capText);
+		session.setAttribute(VALIDATE_CODE_SESSION_KEY, capText);
 		BufferedImage bi = cage.drawImage(capText);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
@@ -71,6 +81,27 @@ public class CaptchaController implements InitializingBean {
 					new RandomTokenGenerator(random, num, delta), random);
 		} else {
 			cage = new GCage();
+		}
+	}
+
+	@Override
+	public void doValidate(HttpServletRequest request) throws LogicException {
+		String captcha = request.getParameter("validateCode");
+		if (captcha == null) {
+			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
+		}
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
+		}
+		String sessionCaptcha = (String) session.getAttribute(VALIDATE_CODE_SESSION_KEY);
+		if (sessionCaptcha == null) {
+			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
+		}
+		// remove
+		session.removeAttribute(VALIDATE_CODE_SESSION_KEY);
+		if (!sessionCaptcha.equals(captcha)) {
+			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
 		}
 	}
 }

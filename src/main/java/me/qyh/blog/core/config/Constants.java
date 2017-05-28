@@ -35,10 +35,6 @@ public class Constants {
 	 */
 	public static final String USER_SESSION_KEY = "user";
 	/**
-	 * session储存验证码的key
-	 */
-	public static final String VALIDATE_CODE_SESSION_KEY = "captchaInSession";
-	/**
 	 * 默认编码
 	 */
 	public static final Charset CHARSET = StandardCharsets.UTF_8;

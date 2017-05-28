@@ -16,6 +16,8 @@
 package me.qyh.blog.core.pageparam;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -52,6 +54,14 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean queryLock = true;
 	private Sort sort;
 	private boolean highlight = true;// 查询是否高亮显示
+
+	/**
+	 * 根据<b>别名</b>，只查询某些空间
+	 * 
+	 * @since 5.5.4
+	 */
+	private Set<String> spaces = new HashSet<>();
+	private Set<Integer> spaceIds = new HashSet<>();
 
 	public enum Sort {
 		HITS, PUBDATE, LASTMODIFYDATE
@@ -178,6 +188,22 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.highlight = highlight;
 	}
 
+	public Set<String> getSpaces() {
+		return spaces;
+	}
+
+	public void setSpaces(Set<String> spaces) {
+		this.spaces = spaces;
+	}
+
+	public Set<Integer> getSpaceIds() {
+		return spaceIds;
+	}
+
+	public void setSpaceIds(Set<Integer> spaceIds) {
+		this.spaceIds = spaceIds;
+	}
+
 	@Override
 	public String toString() {
 		return "ArticleQueryParam [space=" + space + ", begin=" + begin + ", end=" + end + ", query=" + query
@@ -185,5 +211,5 @@ public class ArticleQueryParam extends PageQueryParam {
 				+ queryPrivate + ", tag=" + tag + ", queryLock=" + queryLock + ", sort=" + sort + ", highlight="
 				+ highlight + "]";
 	}
-	
+
 }

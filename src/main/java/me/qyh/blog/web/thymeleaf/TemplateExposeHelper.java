@@ -66,6 +66,7 @@ public class TemplateExposeHelper implements InitializingBean {
 		request.setAttribute("user", Environment.getUser());
 		request.setAttribute("messages", messages);
 		request.setAttribute("space", Environment.getSpace());
+		request.setAttribute("ip", Environment.getIP());
 		request.setAttribute("timeDiffParser", timeDiffParser);
 		LockBean lockBean = LockHelper.getLockBean(request);
 		if (lockBean != null) {

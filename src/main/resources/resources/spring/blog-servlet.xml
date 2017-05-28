@@ -50,7 +50,11 @@
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
 
-	<bean id="appInterceptor" class="me.qyh.blog.web.interceptor.AppInterceptor" />
+	<bean id="appInterceptor" class="me.qyh.blog.web.interceptor.AppInterceptor">
+		<property name="ipGetter">
+			<bean class="me.qyh.blog.web.ProxyIPGetter"/>
+		</property>
+	</bean>
 
 	<mvc:interceptors>
 		<mvc:interceptor>
@@ -89,9 +93,7 @@
 	<bean class="me.qyh.blog.web.thymeleaf.TemplateRender" />
 
 	<!-- sitemap 服务 -->
-	<!-- 
 	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
-	 -->
 	
 	<task:scheduled-tasks scheduler="taskScheduler">
 

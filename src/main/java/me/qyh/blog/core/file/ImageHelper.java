@@ -23,9 +23,6 @@ import me.qyh.blog.util.FileUtils;
 
 /**
  * 图片辅助类，用来处理图片格式的转化，缩放以及图片的读取
- * <p>
- * <b>当多个线程resize生成同一文件时，需要做并发控制</b>
- * </p>
  * 
  * @author Administrator
  *

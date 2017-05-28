@@ -16,6 +16,7 @@
 package me.qyh.blog.web.controller.form;
 
 import java.util.Date;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -33,6 +34,8 @@ public class ArticleQueryParamValidator implements Validator {
 
 	private static final int MAX_QUERY_LENGTH = 40;
 	private static final int MAX_TAG_LENGTH = 20;
+
+	private static final int MAX_SPACES_ALIAS_SIZE = 10;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -59,6 +62,7 @@ public class ArticleQueryParamValidator implements Validator {
 			param.setBegin(null);
 			param.setEnd(null);
 		}
+		param.setSpaces(param.getSpaces().stream().limit(MAX_SPACES_ALIAS_SIZE).collect(Collectors.toSet()));
 	}
 
 }

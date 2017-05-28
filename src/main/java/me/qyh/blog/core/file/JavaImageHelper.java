@@ -130,7 +130,7 @@ public class JavaImageHelper extends ImageHelper {
 		}
 	}
 
-	private void writeImg(BufferedImage bi, String ext, File dest) throws IOException {
+	private synchronized void writeImg(BufferedImage bi, String ext, File dest) throws IOException {
 		FileUtils.deleteQuietly(dest.toPath());
 		ImageIO.write(bi, ext, dest);
 		bi.flush();

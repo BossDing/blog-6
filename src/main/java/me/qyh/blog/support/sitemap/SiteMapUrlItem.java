@@ -18,11 +18,13 @@ package me.qyh.blog.support.sitemap;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.springframework.web.util.HtmlUtils;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.util.Times;
+import me.qyh.blog.util.Validators;
 
 public class SiteMapUrlItem {
 
@@ -33,7 +35,7 @@ public class SiteMapUrlItem {
 
 	public SiteMapUrlItem(String loc, Timestamp lastmod, Changefreq changefreq, String priority) {
 		super();
-		this.loc = loc;
+		this.loc = cleanUrl(loc);
 		this.lastmod = lastmod;
 		this.changefreq = changefreq;
 		this.priority = priority;
@@ -42,7 +44,7 @@ public class SiteMapUrlItem {
 	public StringBuilder toBuilder() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<url>");
-		sb.append("<loc>").append(cleanUrl(loc)).append("</loc>");
+		sb.append("<loc>").append(loc).append("</loc>");
 		if (lastmod != null) {
 			sb.append("<lastmod>")
 					.append(Times.format(ZonedDateTime.of(lastmod.toLocalDateTime(), ZoneId.systemDefault()),
@@ -65,5 +67,19 @@ public class SiteMapUrlItem {
 
 	public Timestamp getLastmod() {
 		return lastmod;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.loc);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (Validators.baseEquals(this, obj)) {
+			SiteMapUrlItem rhs = (SiteMapUrlItem) obj;
+			return Objects.equals(this.loc, rhs.loc);
+		}
+		return false;
 	}
 }

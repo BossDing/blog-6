@@ -52,6 +52,7 @@ import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.GlobalControllerExceptionHandler;
+import me.qyh.blog.web.IPGetter;
 import me.qyh.blog.web.RequestMatcher;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.security.CsrfException;
@@ -76,6 +77,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private CsrfTokenRepository tokenRepository;
 
 	private RequestMatcher requireCsrfProtectionMatcher = new DefaultRequiresCsrfMatcher();
+
+	private IPGetter ipGetter = new IPGetter();
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -109,7 +112,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 					Environment.setSpace(space);
 				}
 
-				Environment.setIP(Webs.getIp(request));
+				Environment.setIP(ipGetter.getIp(request));
 
 				csrfCheck(request, response);
 
@@ -307,5 +310,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
 		this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
+	}
+
+	public void setIpGetter(IPGetter ipGetter) {
+		Objects.requireNonNull(ipGetter);
+		this.ipGetter = ipGetter;
 	}
 }

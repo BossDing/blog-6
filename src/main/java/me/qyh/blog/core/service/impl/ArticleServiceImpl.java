@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -357,14 +358,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return articleDao.selectSpaceFiles(Environment.isLogin());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * <b>当允许查询includeSpaces的时候，为了提高效率，首先会通过{@code SpaceCache}查询是否存在这个别名的空间，
+	 * 如果存在，则将空间id放入{@code ArticleQueryParam#getIncludeSpaceIds()}中，
+	 * 所以，当查询不存在的alias时，依旧能够查询到数据[includeSpaces中不存在的alias不会起作用]</b>
+	 * </p>
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
-		GlobalConfig globalConfig = configService.getGlobalConfig();
-		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getArticlePageSize()));
-		if (param.isQueryPrivate() && !Environment.isLogin()) {
-			param.setQueryPrivate(false);
-		}
+		checkParam(param);
 		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param);
@@ -387,6 +392,33 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 		}
 		return page;
+	}
+
+	private void checkParam(ArticleQueryParam param) {
+		GlobalConfig globalConfig = configService.getGlobalConfig();
+		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getArticlePageSize()));
+		// 如果查询私有文章，但是用户没有登录
+		if (param.isQueryPrivate() && !Environment.isLogin()) {
+			param.setQueryPrivate(false);
+		}
+		// 如果在空间下查询，不能查询多个空间
+		if (param.getSpace() != null) {
+			param.setSpaceIds(new HashSet<>());
+		}
+		// 如果查询多个空间
+		if (!param.getSpaces().isEmpty()) {
+			// 如果空间别名与alias一致，查询这个空间
+			Set<Integer> includeSpaceIds = new HashSet<>();
+			out: for (Space space : spaceCache.getSpaces(param.isQueryPrivate())) {
+				for (String alias : param.getSpaces()) {
+					if (alias.equals(space.getAlias())) {
+						includeSpaceIds.add(space.getId());
+						continue out;
+					}
+				}
+			}
+			param.setSpaceIds(includeSpaceIds);
+		}
 	}
 
 	@Override

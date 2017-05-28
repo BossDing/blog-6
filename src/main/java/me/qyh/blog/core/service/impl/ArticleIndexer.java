@@ -461,12 +461,18 @@ public abstract class ArticleIndexer implements InitializingBean {
 			if (param.getTag() != null) {
 				builder.add(new TermQuery(new Term(TAG, param.getTag())), Occur.MUST);
 			}
+
+			if (!CollectionUtils.isEmpty(param.getSpaceIds())) {
+				for (Integer id : param.getSpaceIds()) {
+					builder.add(new TermQuery(new Term(SPACE_ID, String.valueOf(id))), Occur.SHOULD);
+				}
+			}
+
 			Optional<Query> optionalMultiFieldQuery = param.hasQuery() ? buildMultiFieldQuery(param.getQuery())
 					: Optional.empty();
 			optionalMultiFieldQuery.ifPresent(query -> builder.add(query, Occur.MUST));
 			Query query = builder.build();
-			LOGGER.debug(query.toString());
-
+			
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();

@@ -15,8 +15,12 @@
  */
 package me.qyh.blog.web.thymeleaf.data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,6 +176,57 @@ public abstract class DataTagProcessor<T> {
 			try {
 				return Integer.parseInt(attV);
 			} catch (NumberFormatException e) {
+			}
+			return null;
+		}
+
+		/**
+		 * 将某个属性转化为Set
+		 * 
+		 * @param name
+		 *            属性名
+		 * @param split
+		 *            分割字符
+		 * @return 如果属性不存在，返回空Set，不返回null
+		 */
+		protected Set<String> getSet(String name, String split) {
+			return new HashSet<>(getList(name, split));
+		}
+
+		/**
+		 * 将某个属性转化为List
+		 * 
+		 * @param name
+		 *            属性名
+		 * @param split
+		 *            分割字符
+		 * @return 如果属性不存在，返回空Set，不返回null
+		 */
+		protected List<String> getList(String name, String split) {
+			String[] array = getArray(name, split);
+			if (array == null) {
+				return new ArrayList<>();
+			}
+			List<String> list = new ArrayList<>(array.length);
+			for (String str : array) {
+				list.add(str);
+			}
+			return list;
+		}
+
+		/**
+		 * 将某个属性转化为Array
+		 * 
+		 * @param name
+		 *            属性名
+		 * @param split
+		 *            分割字符
+		 * @return 如果属性不存在，返回null
+		 */
+		protected String[] getArray(String name, String split) {
+			String attV = attMap.get(name);
+			if (attV != null) {
+				return attV.split(split);
 			}
 			return null;
 		}

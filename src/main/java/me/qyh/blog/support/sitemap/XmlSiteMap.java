@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
@@ -54,8 +53,6 @@ public class XmlSiteMap implements InitializingBean {
 			return 0;
 		}
 	};
-
-	private List<SiteMapUrlItem> extras = new ArrayList<>();
 
 	private SiteMapConfigure configure;
 
@@ -112,9 +109,6 @@ public class XmlSiteMap implements InitializingBean {
 
 	private String buildSiteMapXml() {
 		List<SiteMapUrlItem> items = querySiteMapItems();
-		if (!CollectionUtils.isEmpty(extras)) {
-			items.addAll(extras);
-		}
 		StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
@@ -125,7 +119,7 @@ public class XmlSiteMap implements InitializingBean {
 		return sb.toString();
 	}
 
-	private List<SiteMapUrlItem> querySiteMapItems() {
+	protected List<SiteMapUrlItem> querySiteMapItems() {
 
 		List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 			return articleDao.selectPublished(null);
@@ -177,10 +171,6 @@ public class XmlSiteMap implements InitializingBean {
 			};
 		}
 
-	}
-
-	public void setExtras(List<SiteMapUrlItem> extras) {
-		this.extras = extras;
 	}
 
 	public void setConfigure(SiteMapConfigure configure) {

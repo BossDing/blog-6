@@ -22,11 +22,9 @@ import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,29 +35,10 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.util.Validators;
 
 public class Webs {
 
-	private static String[] HEADERS_TO_TRY = { "REMOTE_ADDR", "X-Forwarded-For", "X-Real-IP" };
-
 	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
-
-	public static boolean matchValidateCode(String code, HttpSession session) {
-		if (code == null) {
-			return false;
-		}
-		if (session == null) {
-			return false;
-		}
-		String sessionValidateCode = (String) session.getAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
-		if (sessionValidateCode == null) {
-			return false;
-		}
-		// remove
-		session.removeAttribute(Constants.VALIDATE_CODE_SESSION_KEY);
-		return sessionValidateCode.equals(code);
-	}
 
 	private Webs() {
 
@@ -95,18 +74,6 @@ public class Webs {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * 从请求中获取IP地址
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public static String getIp(HttpServletRequest request) {
-		return Arrays.stream(HEADERS_TO_TRY).map(request::getHeader)
-				.filter(ip -> (!Validators.isEmptyOrNull(ip, true) && !"unknown".equalsIgnoreCase(ip))).findFirst()
-				.orElse(request.getRemoteAddr());
 	}
 
 	/**

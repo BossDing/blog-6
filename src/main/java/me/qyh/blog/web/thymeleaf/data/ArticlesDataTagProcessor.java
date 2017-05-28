@@ -87,6 +87,7 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		param.setHighlight(attributes.getBoolean("highlight", true));
 		param.setIgnoreLevel(attributes.getBoolean("ignoreLevel", false));
 		param.setQueryLock(attributes.getBoolean("queryLock", true));
+		param.setSpaces(attributes.getSet("spaces", ","));
 
 		if (Environment.isLogin()) {
 			param.setQueryPrivate(attributes.getBoolean("queryPrivate", true));

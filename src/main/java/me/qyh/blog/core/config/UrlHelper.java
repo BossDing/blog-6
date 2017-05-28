@@ -17,6 +17,7 @@ package me.qyh.blog.core.config;
 
 import java.util.Date;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import me.qyh.blog.core.entity.Article;
@@ -313,6 +315,9 @@ public class UrlHelper implements InitializingBean {
 			}
 			if (param.hasQuery()) {
 				sb.append("&highlight=").append(param.isHighlight() ? "true" : "false");
+			}
+			if (!CollectionUtils.isEmpty(param.getSpaces())) {
+				sb.append("&spaces=").append(param.getSpaces().stream().collect(Collectors.joining(",")));
 			}
 			return sb.toString();
 		}

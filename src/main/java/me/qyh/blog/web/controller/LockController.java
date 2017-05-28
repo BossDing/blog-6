@@ -16,12 +16,10 @@
 package me.qyh.blog.web.controller;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -35,29 +33,26 @@ import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.lock.LockKey;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.CaptchaValidator;
 
 @Controller
 public class LockController {
 
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private CaptchaValidator captchaValidator;
 
 	@PostMapping({ "space/{alias}/unlock", "/unlock" })
-	public String unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request,
-			RedirectAttributes ra) {
+	public String unlock(HttpServletRequest request, RedirectAttributes ra) {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		if (lockBean == null) {
 			return "redirect:" + urlHelper.getUrl();
 		}
 		Lock lock = lockBean.getLock();
-		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session)) {
-			ra.addFlashAttribute(Constants.ERROR, new Message("validateCode.error", "验证码错误"));
-			return buildLockUrl(lockBean.getSpaceAlias());
-		}
 		LockKey key = null;
 		try {
+			captchaValidator.doValidate(request);
 			key = lock.getKeyFromRequest(request);
 		} catch (LogicException e) {
 			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
@@ -78,17 +73,13 @@ public class LockController {
 
 	@PostMapping(value = { "space/{alias}/unlock", "/unlock" }, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
-	public JsonResult unlock(@RequestParam("validateCode") String validateCode, HttpServletRequest request)
-			throws LogicException {
+	public JsonResult unlock(HttpServletRequest request) throws LogicException {
 		LockBean lockBean = LockHelper.getLockBean(request);
 		if (lockBean == null) {
 			return new JsonResult(false, new Message("lock.miss", "锁缺失"));
 		}
+		captchaValidator.doValidate(request);
 		Lock lock = lockBean.getLock();
-		HttpSession session = request.getSession(false);
-		if (!Webs.matchValidateCode(validateCode, session)) {
-			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
-		}
 		LockKey key = lock.getKeyFromRequest(request);
 		LockHelper.addKey(request, key, lockBean.getLockResource());
 		lock.tryOpen(key);

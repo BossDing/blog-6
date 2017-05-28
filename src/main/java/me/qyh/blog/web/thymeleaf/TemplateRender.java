@@ -15,14 +15,20 @@
  */
 package me.qyh.blog.web.thymeleaf;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +133,7 @@ public final class TemplateRender {
 
 		Locale locale = LocaleContextHolder.getLocale();
 
-		final Map<String, Object> mergedModel = new HashMap<String, Object>(30);
+		final Map<String, Object> mergedModel = new HashMap<>(30);
 		@SuppressWarnings("unchecked")
 
 		// View.PATH_VARIABLES 只能获取被PathVariable annotation属性标记的属性
@@ -160,8 +166,8 @@ public final class TemplateRender {
 		}
 
 		final IEngineConfiguration configuration = viewTemplateEngine.getConfiguration();
-		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
-				locale, mergedModel);
+		final WebExpressionContext context = new WebExpressionContext(configuration, request,
+				new ReadOnlyResponse(response), servletContext, locale, mergedModel);
 
 		final String templateName;
 		final Set<String> markupSelectors;
@@ -234,5 +240,139 @@ public final class TemplateRender {
 
 	public void setExposeEvaluationContext(boolean exposeEvaluationContext) {
 		this.exposeEvaluationContext = exposeEvaluationContext;
+	}
+
+	private final class ReadOnlyResponse extends HttpServletResponseWrapper {
+
+		public ReadOnlyResponse(HttpServletResponse response) {
+			super(response);
+		}
+
+		@Override
+		public void setResponse(ServletResponse response) {
+			unsupport();
+		}
+
+		@Override
+		public void setCharacterEncoding(String charset) {
+			unsupport();
+		}
+
+		@Override
+		public ServletOutputStream getOutputStream() throws IOException {
+			unsupport();
+			return null;
+		}
+
+		@Override
+		public PrintWriter getWriter() throws IOException {
+			unsupport();
+			return null;
+		}
+
+		@Override
+		public void setContentLength(int len) {
+			unsupport();
+		}
+
+		@Override
+		public void setContentLengthLong(long len) {
+			unsupport();
+		}
+
+		@Override
+		public void setContentType(String type) {
+			unsupport();
+		}
+
+		@Override
+		public void setBufferSize(int size) {
+			unsupport();
+		}
+
+		@Override
+		public void flushBuffer() throws IOException {
+			unsupport();
+		}
+
+		@Override
+		public void reset() {
+			unsupport();
+		}
+
+		@Override
+		public void resetBuffer() {
+			unsupport();
+		}
+
+		@Override
+		public void setLocale(Locale loc) {
+			unsupport();
+		}
+
+		@Override
+		public void addCookie(Cookie cookie) {
+			unsupport();
+		}
+
+		@Override
+		public void sendError(int sc, String msg) throws IOException {
+			unsupport();
+		}
+
+		@Override
+		public void sendError(int sc) throws IOException {
+			unsupport();
+		}
+
+		@Override
+		public void sendRedirect(String location) throws IOException {
+			unsupport();
+		}
+
+		@Override
+		public void setDateHeader(String name, long date) {
+			unsupport();
+		}
+
+		@Override
+		public void addDateHeader(String name, long date) {
+			unsupport();
+		}
+
+		@Override
+		public void setHeader(String name, String value) {
+			unsupport();
+		}
+
+		@Override
+		public void addHeader(String name, String value) {
+			unsupport();
+		}
+
+		@Override
+		public void setIntHeader(String name, int value) {
+			unsupport();
+		}
+
+		@Override
+		public void addIntHeader(String name, int value) {
+			unsupport();
+		}
+
+		@Override
+		public void setStatus(int sc) {
+			unsupport();
+		}
+
+		@Override
+		public void setStatus(int sc, String sm) {
+			unsupport();
+		}
+
+		private void unsupport() {
+			throw new TemplateProcessingException("不支持这个方法");
+		}
+
 	}
 }

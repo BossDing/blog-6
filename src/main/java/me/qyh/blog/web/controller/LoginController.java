@@ -45,7 +45,7 @@ import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.service.UserService;
-import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.CaptchaValidator;
 import me.qyh.blog.web.controller.form.LoginBean;
 import me.qyh.blog.web.controller.form.LoginBeanValidator;
 import me.qyh.blog.web.security.CsrfToken;
@@ -63,6 +63,9 @@ public class LoginController extends AttemptLoggerController {
 
 	@Autowired(required = false)
 	private GoogleAuthenticator ga;
+
+	@Autowired
+	private CaptchaValidator captchaValidator;
 
 	@Autowired
 	private RequestMappingHandlerMapping mapping;
@@ -105,10 +108,9 @@ public class LoginController extends AttemptLoggerController {
 	@ResponseBody
 	public JsonResult login(@RequestBody @Validated LoginBean loginBean, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		HttpSession session = request.getSession(false);
 		String ip = Environment.getIP();
-		if (log(ip) && !Webs.matchValidateCode(request.getParameter("validateCode"), session)) {
-			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		if (log(ip)) {
+			captchaValidator.doValidate(request);
 		}
 		User user = userService.login(loginBean);
 		if (ga != null) {
@@ -127,7 +129,7 @@ public class LoginController extends AttemptLoggerController {
 
 	@ResponseBody
 	public JsonResult otpVerify(@RequestParam("code") String codeStr, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws LogicException {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			return new JsonResult(false, pwdVerifyRequire);
@@ -139,8 +141,8 @@ public class LoginController extends AttemptLoggerController {
 		}
 
 		String ip = Environment.getIP();
-		if (log(ip) && !Webs.matchValidateCode(request.getParameter("validateCode"), session)) {
-			return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
+		if (log(ip)) {
+			captchaValidator.doValidate(request);
 		}
 
 		if (!ga.checkCode(codeStr)) {

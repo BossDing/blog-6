@@ -135,6 +135,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.isPrivate = false
 				AND sp.is_private = false
 			</if>
+			<if test="spaceIds != null and !spaceIds.isEmpty()">
+				AND art.space_id IN 
+				<foreach collection="spaceIds" item="id" open="(" close=")" separator=",">
+					#{id}
+				</foreach>
+			</if>
 			<if test="begin != null and end != null">
 				AND art.pubDate BETWEEN #{begin} AND #{end}
 			</if>
@@ -197,6 +203,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="!queryPrivate">
 				AND art.isPrivate = false
 				AND sp.is_private = false
+			</if>
+			<if test="spaceIds != null and !spaceIds.isEmpty()">
+				AND art.space_id IN 
+				<foreach collection="spaceIds" item="id" open="(" close=")" separator=",">
+					#{id}
+				</foreach>
 			</if>
 			<if test="begin != null and end != null">
 				AND art.pubDate BETWEEN #{begin} AND #{end}

@@ -16,7 +16,6 @@
 package me.qyh.blog.web.controller;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +36,10 @@ import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.impl.CommentService;
-import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.CaptchaValidator;
 import me.qyh.blog.web.controller.form.CommentValidator;
 
 @Controller("commentController")
@@ -53,6 +51,8 @@ public class CommentController extends AttemptLoggerController {
 	private CommentValidator commentValidator;
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private CaptchaValidator captchaValidator;
 
 	@Value("${comment.attempt.count:5}")
 	private int attemptCount;
@@ -79,10 +79,7 @@ public class CommentController extends AttemptLoggerController {
 	public JsonResult addComment(@RequestBody @Validated Comment comment, @PathVariable("type") String type,
 			@PathVariable("id") Integer moduleId, HttpServletRequest req) throws LogicException {
 		if (!Environment.isLogin() && log(Environment.getIP())) {
-			HttpSession session = req.getSession(false);
-			if (!Webs.matchValidateCode(req.getParameter("validateCode"), session)) {
-				return new JsonResult(false, new Message("validateCode.error", "验证码错误"));
-			}
+			captchaValidator.doValidate(req);
 		}
 		comment.setCommentModule(new CommentModule(getModuleType(type), moduleId));
 		comment.setIp(Environment.getIP());
