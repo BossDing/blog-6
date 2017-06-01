@@ -19,8 +19,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -52,7 +55,7 @@ import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 
 @Controller("loginController")
-public class LoginController extends AttemptLoggerController {
+public class LoginController implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 
 	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
@@ -96,8 +99,10 @@ public class LoginController extends AttemptLoggerController {
 	@Value("${login.attempt.maxCount:100}")
 	private int maxAttemptCount;
 
-	@Value("${login.attempt.sleepSec:1800}")
+	@Value("${login.attempt.sleepSec:300}")
 	private int sleepSec;
+
+	private AttemptLogger attemptLogger;
 
 	@InitBinder(value = "loginBean")
 	protected void initBinder(WebDataBinder binder) {
@@ -109,7 +114,7 @@ public class LoginController extends AttemptLoggerController {
 	public JsonResult login(@RequestBody @Validated LoginBean loginBean, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
 		String ip = Environment.getIP();
-		if (log(ip)) {
+		if (attemptLogger.log(ip)) {
 			captchaValidator.doValidate(request);
 		}
 		User user = userService.login(loginBean);
@@ -124,7 +129,7 @@ public class LoginController extends AttemptLoggerController {
 	@GetMapping("login/needCaptcha")
 	@ResponseBody
 	public boolean needCaptcha() {
-		return reach(Environment.getIP());
+		return attemptLogger.reach(Environment.getIP());
 	}
 
 	@ResponseBody
@@ -141,7 +146,7 @@ public class LoginController extends AttemptLoggerController {
 		}
 
 		String ip = Environment.getIP();
-		if (log(ip)) {
+		if (attemptLogger.log(ip)) {
 			captchaValidator.doValidate(request);
 		}
 
@@ -159,7 +164,8 @@ public class LoginController extends AttemptLoggerController {
 		changeSessionId(request);
 		changeCsrf(request, response);
 
-		remove(Environment.getIP());
+		attemptLogger.remove(Environment.getIP());
+
 		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 		if (lastAuthencationFailUrl != null) {
 			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
@@ -186,9 +192,7 @@ public class LoginController extends AttemptLoggerController {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		setAttemptLogger(new AttemptLogger(attemptCount, maxAttemptCount));
-		setSleepSec(sleepSec);
-		super.afterPropertiesSet();
+		this.attemptLogger = new AttemptLogger(attemptCount, maxAttemptCount, sleepSec);
 
 		if (ga != null) {
 			mapping.registerMapping(
@@ -197,6 +201,11 @@ public class LoginController extends AttemptLoggerController {
 					"loginController", LoginController.class.getMethod("otpVerify", String.class,
 							HttpServletRequest.class, HttpServletResponse.class));
 		}
+	}
+
+	@Override
+	public void onApplicationEvent(ContextClosedEvent event) {
+		attemptLogger.close();
 	}
 
 }

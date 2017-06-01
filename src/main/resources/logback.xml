@@ -45,16 +45,17 @@
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
 
 
+	<!-- 
 	<appender name="fileAppender" class="ch.qos.logback.core.FileAppender">
 		<file>c:/logs/rendertime.log</file>
-		<encoder><!-- 必须指定，否则不会往文件输出内容 -->
+		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{5} - %msg%n
 			</pattern>
 		</encoder>
 		<append>true</append>
 		<prudent>false</prudent>
 	</appender>
-
+	 -->
 
 	<logger name="me.qyh.blog.core.thymeleaf.TemplateRender" level="DEBUG" additivity="false">
 		<appender-ref ref="fileAppender" />

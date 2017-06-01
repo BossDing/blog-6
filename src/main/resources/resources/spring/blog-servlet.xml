@@ -93,18 +93,10 @@
 	<bean class="me.qyh.blog.web.thymeleaf.TemplateRender" />
 
 	<!-- sitemap 服务 -->
+	<!-- 
 	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
-	
-	<task:scheduled-tasks scheduler="taskScheduler">
-
-		<task:scheduled ref="loginController" method="clearAttemptLogger"
-			fixed-delay="600000" />
-		<task:scheduled ref="commentController" method="clearAttemptLogger"
-			fixed-delay="60000" />
-			
-	</task:scheduled-tasks>
-	
-	
+	 -->
+	 
 	<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
 		<property name="absPath" value="/web/file/blog_image/" />
 		<property name="id" value="1" />

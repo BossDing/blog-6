@@ -3,8 +3,10 @@ package me.qyh.blog.core.security;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 
 import me.qyh.blog.core.exception.SystemException;
 
@@ -15,6 +17,7 @@ import me.qyh.blog.core.exception.SystemException;
  * 当尝试总数达到maxAttemptCount的情况下，如果有任何ip继续尝试，则需要输入验证码<br>
  * </p>
  * 基本用法:
+ * 
  * <pre>
  * AttemptLogger logger = new AttemptLogger(10,100);
  * if(logger.log(ip)){
@@ -32,20 +35,22 @@ public class AttemptLogger {
 
 	private final int attemptCount;
 	private final int maxAttemptCount;
-	private final Map<String, AttemptInfo> map = new ConcurrentHashMap<>();
+	private final Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
 	private final AtomicInteger maxAttemptCounter;
 
-	public AttemptLogger(int attemptCount, int maxAttemptCount) {
+	private final ScheduledExecutorService ses;
+
+	public AttemptLogger(int attemptCount, int maxAttemptCount, int sec) {
 		super();
 		if (attemptCount < 1) {
 			throw new SystemException("尝试次数不能小于1");
 		}
-		if (maxAttemptCount < attemptCount) {
-			throw new SystemException("总尝试次数不能小于attemptCount");
-		}
 		this.attemptCount = attemptCount;
 		this.maxAttemptCount = maxAttemptCount;
 		this.maxAttemptCounter = new AtomicInteger(0);
+		ses = Executors.newSingleThreadScheduledExecutor();
+
+		ses.scheduleWithFixedDelay(this::clear, 0, sec, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -58,9 +63,8 @@ public class AttemptLogger {
 		Objects.requireNonNull(t);
 		BooleanHolder holder = new BooleanHolder(true);
 		map.compute(t, (k, v) -> {
-			// 尽可能减少创建对象
 			if (v == null && maxAttemptCounter.get() < maxAttemptCount) {
-				v = new AttemptInfo();
+				v = new AtomicInteger();
 			}
 			if (v != null) {
 				holder.value = add(v);
@@ -80,25 +84,22 @@ public class AttemptLogger {
 		if (maxAttemptCounter.get() == maxAttemptCount) {
 			return true;
 		}
-		AttemptInfo info = map.get(t);
-		return info != null && info.reach();
+		AtomicInteger counter = map.get(t);
+		return counter != null && counter.get() == attemptCount;
 	}
 
-	private boolean add(AttemptInfo v) {
-		// blocking...
-		v.lastAttemptTime = System.currentTimeMillis();
-		int count = v.getCount();
+	private boolean add(AtomicInteger v) {
+		int count = v.get();
 		if (count == attemptCount) {
 			return true;
 		}
-		// non blocking...
 		for (;;) {
 			int maxCount = maxAttemptCounter.get();
 			if (maxCount == maxAttemptCount) {
 				return true;
 			}
 			if (maxAttemptCounter.compareAndSet(maxCount, maxCount + 1)) {
-				v.increment();
+				v.incrementAndGet();
 				return false;
 			}
 		}
@@ -111,69 +112,17 @@ public class AttemptLogger {
 	 */
 	public void remove(String t) {
 		map.computeIfPresent(t, (k, v) -> {
-			maxAttemptCounter.addAndGet(-v.getCount());
+			maxAttemptCounter.addAndGet(-v.get());
 			return null;
 		});
 	}
 
-	/**
-	 * 按条件删除记录
-	 * 
-	 * @param predicate
-	 *            <b>应该简短</b>
-	 */
-	public void remove(Predicate<AttemptInfo> predicate) {
-		map.keySet().forEach(t -> {
-			map.computeIfPresent(t, (k, v) -> {
-				if (predicate.test(v)) {
-					maxAttemptCounter.addAndGet(-v.getCount());
-					return null;
-				}
-				return v;
-			});
-		});
+	public void close() {
+		this.ses.shutdownNow();
 	}
 
-	public final class AttemptInfo {
-		private long lastAttemptTime;
-		private AtomicInteger count;
-
-		public AttemptInfo() {
-			super();
-			this.count = new AtomicInteger(0);
-			this.lastAttemptTime = System.currentTimeMillis();
-		}
-
-		/**
-		 * 获取最后一次尝试的时间
-		 * 
-		 * @return
-		 */
-		public long getLastAttemptTime() {
-			return lastAttemptTime;
-		}
-
-		/**
-		 * 是否达到阈值
-		 * 
-		 * @return
-		 */
-		public boolean reach() {
-			return count.get() == attemptCount;
-		}
-
-		private void increment() {
-			count.incrementAndGet();
-		}
-
-		private int getCount() {
-			return count.get();
-		}
-
-		@Override
-		public String toString() {
-			return "AttemptInfo [count=" + count + "]";
-		}
+	private void clear() {
+		map.keySet().forEach(this::remove);
 	}
 
 	private final class BooleanHolder {

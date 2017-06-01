@@ -83,46 +83,14 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	/**
 	 * 最多保存的ip数，如果达到或超过该数目，将会立即更新
 	 */
-	private int maxIps = 10;
-
-	/**
-	 * 最多保存文章数，如果达到或超过该数目，将会立即刷新
-	 */
-	private int maxArticles = 50;
-
-	private AtomicInteger flushCounter = new AtomicInteger();
+	private int maxIps = 100;
 
 	@Override
 	public void hit(Article article) {
 		// increase
-		hitsMap.computeIfAbsent(article.getId(), k -> (validIp && maxArticles > 1)
-				? new IPBasedHitsHandler(article.getHits(), maxIps) : new DefaultHitsHandler(article.getHits()))
-				.hit(article);
-
-		if (flushMap.putIfAbsent(article.getId(), Boolean.TRUE) == null
-				&& flushCounter.incrementAndGet() >= maxArticles) {
-			flush();
-		}
-	}
-
-	public void flush() {
-		flush(false);
-	}
-
-	public void flush(boolean contextClose) {
-		if (!flushMap.isEmpty()) {
-			List<HitsWrapper> wrappers = new ArrayList<>();
-			for (Iterator<Entry<Integer, Boolean>> iter = flushMap.entrySet().iterator(); iter.hasNext();) {
-				Entry<Integer, Boolean> entry = iter.next();
-				Integer key = entry.getKey();
-
-				if (flushMap.remove(key) != null) {
-					flushCounter.decrementAndGet();
-					wrappers.add(new HitsWrapper(key, hitsMap.get(key)));
-				}
-			}
-			doFlush(wrappers, contextClose);
-		}
+		hitsMap.computeIfAbsent(article.getId(), k -> validIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
+				: new DefaultHitsHandler(article.getHits())).hit(article);
+		flushMap.putIfAbsent(article.getId(), Boolean.TRUE);
 	}
 
 	private synchronized void doFlush(List<HitsWrapper> wrappers, boolean contextClose) {
@@ -208,7 +176,6 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 				if (counter.incrementAndGet() >= maxIps) {
 					Integer id = article.getId();
 					if (flushMap.remove(id) != null) {
-						flushCounter.decrementAndGet();
 						doFlush(Arrays.asList(new HitsWrapper(id, hitsMap.get(id))), false);
 					}
 				}
@@ -218,6 +185,25 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		@Override
 		public int getHits() {
 			return adder.intValue();
+		}
+	}
+	
+	public void flush() {
+		flush(false);
+	}
+
+	private void flush(boolean contextClose) {
+		if (!flushMap.isEmpty()) {
+			List<HitsWrapper> wrappers = new ArrayList<>();
+			for (Iterator<Entry<Integer, Boolean>> iter = flushMap.entrySet().iterator(); iter.hasNext();) {
+				Entry<Integer, Boolean> entry = iter.next();
+				Integer key = entry.getKey();
+
+				if (flushMap.remove(key) != null) {
+					wrappers.add(new HitsWrapper(key, hitsMap.get(key)));
+				}
+			}
+			doFlush(wrappers, contextClose);
 		}
 	}
 
@@ -230,9 +216,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	public void handleArticleEvent(ArticleEvent evt) {
 		if (EventType.DELETE.equals(evt.getEventType())) {
 			evt.getArticles().stream().map(Article::getId).forEach(id -> {
-				if (flushMap.remove(id) != null) {
-					flushCounter.decrementAndGet();
-				}
+				flushMap.remove(id);
 				hitsMap.remove(id);
 			});
 		}
@@ -247,9 +231,5 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 			throw new SystemException("每篇文章允许最多允许保存的ip数应该大于0");
 		}
 		this.maxIps = maxIps;
-	}
-
-	public void setMaxArticles(int maxArticles) {
-		this.maxArticles = maxArticles;
 	}
 }

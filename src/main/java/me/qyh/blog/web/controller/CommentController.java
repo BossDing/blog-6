@@ -18,8 +18,11 @@ package me.qyh.blog.web.controller;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -43,7 +46,7 @@ import me.qyh.blog.web.CaptchaValidator;
 import me.qyh.blog.web.controller.form.CommentValidator;
 
 @Controller("commentController")
-public class CommentController extends AttemptLoggerController {
+public class CommentController implements InitializingBean, ApplicationListener<ContextClosedEvent> {
 
 	@Autowired
 	private CommentService commentService;
@@ -63,6 +66,8 @@ public class CommentController extends AttemptLoggerController {
 	@Value("${comment.attempt.sleepSec:60}")
 	private int sleepSec;
 
+	private AttemptLogger attemptLogger;
+
 	@InitBinder(value = "comment")
 	protected void initCommentBinder(WebDataBinder binder) {
 		binder.setValidator(commentValidator);
@@ -78,7 +83,7 @@ public class CommentController extends AttemptLoggerController {
 	@ResponseBody
 	public JsonResult addComment(@RequestBody @Validated Comment comment, @PathVariable("type") String type,
 			@PathVariable("id") Integer moduleId, HttpServletRequest req) throws LogicException {
-		if (!Environment.isLogin() && log(Environment.getIP())) {
+		if (!Environment.isLogin() && attemptLogger.log(Environment.getIP())) {
 			captchaValidator.doValidate(req);
 		}
 		comment.setCommentModule(new CommentModule(getModuleType(type), moduleId));
@@ -104,7 +109,7 @@ public class CommentController extends AttemptLoggerController {
 	@GetMapping("comment/needCaptcha")
 	@ResponseBody
 	public boolean needCaptcha() {
-		return !Environment.isLogin() && reach(Environment.getIP());
+		return !Environment.isLogin() && attemptLogger.reach(Environment.getIP());
 	}
 
 	private ModuleType getModuleType(String type) {
@@ -117,8 +122,11 @@ public class CommentController extends AttemptLoggerController {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		setAttemptLogger(new AttemptLogger(attemptCount, maxAttemptCount));
-		setSleepSec(sleepSec);
-		super.afterPropertiesSet();
+		this.attemptLogger = new AttemptLogger(attemptCount, maxAttemptCount, sleepSec);
+	}
+
+	@Override
+	public void onApplicationEvent(ContextClosedEvent event) {
+		this.attemptLogger.close();
 	}
 }
