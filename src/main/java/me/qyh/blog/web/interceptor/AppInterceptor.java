@@ -60,7 +60,7 @@ import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 import me.qyh.blog.web.security.InvalidCsrfTokenException;
 import me.qyh.blog.web.security.MissingCsrfTokenException;
-import me.qyh.blog.web.thymeleaf.TemplateExposeHelper;
+import me.qyh.blog.web.template.TemplateExposeHelper;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 

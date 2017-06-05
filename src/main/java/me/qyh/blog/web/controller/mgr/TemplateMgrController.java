@@ -47,10 +47,10 @@ import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.web.controller.form.ExportPageValidator;
-import me.qyh.blog.web.thymeleaf.ExportPage;
-import me.qyh.blog.web.thymeleaf.ImportRecord;
-import me.qyh.blog.web.thymeleaf.TemplateService;
-import me.qyh.blog.web.thymeleaf.template.Page;
+import me.qyh.blog.web.template.ExportPage;
+import me.qyh.blog.web.template.ImportRecord;
+import me.qyh.blog.web.template.Page;
+import me.qyh.blog.web.template.TemplateService;
 
 @Controller
 @RequestMapping("mgr/template")

@@ -37,8 +37,8 @@ import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.web.controller.form.FragmentQueryParamValidator;
 import me.qyh.blog.web.controller.form.FragmentValidator;
-import me.qyh.blog.web.thymeleaf.TemplateService;
-import me.qyh.blog.web.thymeleaf.template.Fragment;
+import me.qyh.blog.web.template.Fragment;
+import me.qyh.blog.web.template.TemplateService;
 
 @Controller
 @RequestMapping("mgr/template/fragment")

@@ -26,7 +26,7 @@ import org.thymeleaf.spring4.naming.SpringContextVariableNames;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.thymeleaf.template.Page;
+import me.qyh.blog.web.template.Page;
 
 @Component
 public class PageValidator implements Validator {

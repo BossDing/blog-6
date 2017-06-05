@@ -35,7 +35,7 @@ import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.ArticleQueryParam.Sort;
 import me.qyh.blog.util.Times;
-import me.qyh.blog.web.thymeleaf.template.Page;
+import me.qyh.blog.web.template.Page;
 
 /**
  * 链接辅助类，用来获取一些对象的访问链接

@@ -19,9 +19,14 @@
 	<import resource="ui.xml" />
 
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
-
+	
+	<!-- 
+	SERVLET 3.1
 	<bean id="multipartResolver"
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+	 -->
+
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
 
 	<mvc:resources location="/static/" mapping="/static/**"
 		cache-period="31556926" />
@@ -42,7 +47,7 @@
 			<bean class="me.qyh.blog.core.lock.LockArgumentResolver" />
 		</mvc:argument-resolvers>
 		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.web.thymeleaf.TemplateReturnHandler"></bean>
+			<bean class="me.qyh.blog.web.templateReturnHandler"></bean>
 		</mvc:return-value-handlers>
 	</mvc:annotation-driven>
 	 -->
@@ -64,7 +69,7 @@
 	</mvc:interceptors>
 
 
-	<bean id="templateEngine" class="me.qyh.blog.web.thymeleaf.TemplateEngine">
+	<bean id="templateEngine" class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -74,12 +79,12 @@
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.web.thymeleaf.TemplateResolver" />
+				<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
 		<property name="cacheManager">
-			<bean class="me.qyh.blog.web.thymeleaf.TemplateCacheManager" />
+			<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafCacheManager" />
 		</property>
 	</bean>
 
@@ -90,7 +95,8 @@
 		<property name="templateEngine" ref="templateEngine" />
 	</bean>
 
-	<bean class="me.qyh.blog.web.thymeleaf.TemplateRender" />
+	<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafRenderExecutor" />
+	<bean class="me.qyh.blog.web.template.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
 	<!-- sitemap 服务 -->
 	<!-- 

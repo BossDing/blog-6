@@ -64,10 +64,10 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.security.CsrfException;
-import me.qyh.blog.web.thymeleaf.TemplateNotFoundException;
-import me.qyh.blog.web.thymeleaf.TplRenderException;
-import me.qyh.blog.web.thymeleaf.dialect.RedirectException;
-import me.qyh.blog.web.thymeleaf.template.Template;
+import me.qyh.blog.web.template.RedirectException;
+import me.qyh.blog.web.template.Template;
+import me.qyh.blog.web.template.TemplateNotFoundException;
+import me.qyh.blog.web.template.TemplateRenderException;
 
 /**
  * 无法处理页面渲染时的异常。
@@ -116,8 +116,8 @@ public class GlobalControllerExceptionHandler {
 		return getErrorRedirect(request, new ErrorInfo(ERROR_403, 403));
 	}
 
-	@ExceptionHandler(TplRenderException.class)
-	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TplRenderException e)
+	@ExceptionHandler(TemplateRenderException.class)
+	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TemplateRenderException e)
 			throws IOException {
 		if (!Template.isPreviewTemplate(e.getTemplateName())) {
 			LOGGER.error(e.getMessage(), e);

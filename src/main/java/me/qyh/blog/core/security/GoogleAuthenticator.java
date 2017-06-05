@@ -24,7 +24,7 @@ public class GoogleAuthenticator {
 	private static final String HMAC_HASH_FUNCTION = "HmacSHA1";
 	private static final long MILL = TimeUnit.SECONDS.toMillis(30);
 
-	private transient long lasttimeslot;
+	private long lasttimeslot;
 
 	private final String secret;
 	private final int window;// 认证窗口

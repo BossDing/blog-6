@@ -32,8 +32,8 @@
 
 		<typeAlias type="me.qyh.blog.core.bean.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.web.thymeleaf.template.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.web.thymeleaf.template.Fragment"
+		<typeAlias type="me.qyh.blog.web.template.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.web.template.Fragment"
 			alias="Fragment" />
 
 		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile"

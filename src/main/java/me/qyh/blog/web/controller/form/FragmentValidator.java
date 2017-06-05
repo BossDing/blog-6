@@ -20,7 +20,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.thymeleaf.template.Fragment;
+import me.qyh.blog.web.template.Fragment;
 
 @Component
 public class FragmentValidator implements Validator {

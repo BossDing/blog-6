@@ -33,10 +33,10 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.web.controller.form.PathTemplateBeanValidator;
-import me.qyh.blog.web.thymeleaf.PathTemplateBean;
-import me.qyh.blog.web.thymeleaf.TemplateService;
-import me.qyh.blog.web.thymeleaf.TemplateService.PathTemplateService;
-import me.qyh.blog.web.thymeleaf.template.PathTemplate;
+import me.qyh.blog.web.template.PathTemplate;
+import me.qyh.blog.web.template.PathTemplateBean;
+import me.qyh.blog.web.template.TemplateService;
+import me.qyh.blog.web.template.TemplateService.PathTemplateService;
 
 @Controller
 @RequestMapping("mgr/template/path")

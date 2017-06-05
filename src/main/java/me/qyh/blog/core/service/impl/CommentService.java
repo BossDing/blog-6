@@ -76,7 +76,7 @@ import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
-import me.qyh.blog.web.thymeleaf.template.Page;
+import me.qyh.blog.web.template.Page;
 
 public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware {
 

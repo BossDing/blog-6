@@ -5,7 +5,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.thymeleaf.PathTemplateBean;
+import me.qyh.blog.web.template.PathTemplateBean;
 
 @Component
 public class PathTemplateBeanValidator implements Validator {

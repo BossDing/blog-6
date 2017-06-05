@@ -45,11 +45,6 @@
         <servlet-class>
         	org.springframework.web.servlet.DispatcherServlet
         </servlet-class>
-        <multipart-config>
-        	<file-size-threshold>0</file-size-threshold>
-        	<max-file-size>-1</max-file-size>
-        	<max-request-size>-1</max-request-size>
-        </multipart-config>
         <init-param>
             <param-name>contextConfigLocation</param-name>
       		<param-value>classpath:resources/spring/blog-servlet.xml</param-value>
