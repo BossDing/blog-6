@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.listener;
 
+import java.lang.reflect.Method;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -77,6 +78,18 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 			}
 		}
 
+		shutdownMysqlIfAvailable();
+	}
+
+	private void shutdownMysqlIfAvailable() {
+		try {
+			Class<?> clazz = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+			// 5.1.41
+			Method method = clazz.getMethod("checkedShutdown");
+			method.invoke(null);
+		} catch (Exception e) {
+			// ignore
+		}
 	}
 
 }

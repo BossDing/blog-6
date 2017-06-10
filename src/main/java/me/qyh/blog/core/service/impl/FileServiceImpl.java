@@ -38,9 +38,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.bean.BlogFilePageResult;
-import me.qyh.blog.core.bean.ExpandedCommonFile;
-import me.qyh.blog.core.bean.UploadedFile;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UploadConfig;
 import me.qyh.blog.core.dao.BlogFileDao;
@@ -60,11 +57,14 @@ import me.qyh.blog.core.pageparam.BlogFileQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.FileService;
+import me.qyh.blog.core.vo.BlogFilePageResult;
+import me.qyh.blog.core.vo.BlogFileUpload;
+import me.qyh.blog.core.vo.ExpandedCommonFile;
+import me.qyh.blog.core.vo.UploadedFile;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Times;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.form.BlogFileUpload;
-import me.qyh.blog.web.controller.form.BlogFileValidator;
+import me.qyh.blog.web.validator.BlogFileValidator;
 
 /**
  * {@link http://mikehillyer.com/articles/managing-hierarchical-data-in-mysql}

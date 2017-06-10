@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -41,18 +43,30 @@ public final class SerializationUtils {
 	 *            流，不会关闭！！！
 	 */
 	public static void serialize(Object obj, OutputStream os) throws IOException {
-		if (obj instanceof Serializable) {
-			ObjectOutputStream out = new ObjectOutputStream(os);
+		enableSerializable(obj);
+		ObjectOutputStream out = new ObjectOutputStream(os);
+		out.writeObject(obj);
+	}
+
+	/**
+	 * 序列化一个对象
+	 * 
+	 * @param obj
+	 *            本身或者其实现类必须实现<code>java.io.Serializable</code>接口
+	 * @return 字节
+	 */
+	public static byte[] serialize(Object obj) throws IOException {
+		enableSerializable(obj);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ObjectOutputStream out = new ObjectOutputStream(baos)) {
 			out.writeObject(obj);
-		} else {
-			throw new SystemException(obj + "没有实现Serializable接口");
+			return baos.toByteArray();
 		}
 	}
 
 	/**
 	 * 反序列化
 	 * 
-	 * @param obj
 	 * @param is
 	 *            流，不会关闭！！！
 	 * @throws IOException
@@ -64,6 +78,22 @@ public final class SerializationUtils {
 			return (T) in.readObject();
 		} catch (ClassNotFoundException e) {
 			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * 反序列化
+	 * 
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T deserialize(byte[] bits) throws IOException {
+		try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bits))) {
+			try {
+				return (T) in.readObject();
+			} catch (ClassNotFoundException e) {
+				throw new SystemException(e.getMessage(), e);
+			}
 		}
 	}
 
@@ -93,6 +123,12 @@ public final class SerializationUtils {
 	public static <T> T deserialize(Path path) throws IOException {
 		try (InputStream is = Files.newInputStream(path)) {
 			return deserialize(is);
+		}
+	}
+
+	private static void enableSerializable(Object obj) {
+		if (!(obj instanceof Serializable)) {
+			throw new SystemException(obj + "没有实现Serializable接口");
 		}
 	}
 }

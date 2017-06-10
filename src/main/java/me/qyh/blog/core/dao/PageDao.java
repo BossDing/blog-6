@@ -19,9 +19,9 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.PageQueryParam;
-import me.qyh.blog.web.template.Page;
 
 /**
  * 

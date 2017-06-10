@@ -41,12 +41,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.core.bean.ArticleDateFile;
-import me.qyh.blog.core.bean.ArticleDateFiles;
-import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.core.bean.ArticleNav;
-import me.qyh.blog.core.bean.ArticleSpaceFile;
-import me.qyh.blog.core.bean.TagCount;
 import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
@@ -72,6 +66,12 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
+import me.qyh.blog.core.vo.ArticleDateFile;
+import me.qyh.blog.core.vo.ArticleDateFiles;
+import me.qyh.blog.core.vo.ArticleNav;
+import me.qyh.blog.core.vo.ArticleSpaceFile;
+import me.qyh.blog.core.vo.TagCount;
+import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 

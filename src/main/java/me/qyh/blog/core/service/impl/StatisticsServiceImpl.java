@@ -23,8 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.core.bean.BlogFileCount;
-import me.qyh.blog.core.bean.FileStoreBean;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.BlogFileDao;
@@ -44,6 +42,8 @@ import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.StatisticsService;
+import me.qyh.blog.core.vo.BlogFileCount;
+import me.qyh.blog.core.vo.FileStoreBean;
 
 @Service
 @Transactional(readOnly = true)

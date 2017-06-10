@@ -17,7 +17,7 @@ package me.qyh.blog.core.evt;
 
 import org.springframework.context.ApplicationEvent;
 
-import me.qyh.blog.web.template.Page;
+import me.qyh.blog.core.entity.Page;
 
 /**
  * 页面操作事件

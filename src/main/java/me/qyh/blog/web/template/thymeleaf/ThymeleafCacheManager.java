@@ -39,9 +39,9 @@ import org.thymeleaf.templateresource.ITemplateResource;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import me.qyh.blog.web.template.Template;
-import me.qyh.blog.web.template.TemplateEvitEvent;
-import me.qyh.blog.web.template.TemplateService;
+import me.qyh.blog.core.entity.Template;
+import me.qyh.blog.core.evt.TemplateEvitEvent;
+import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver.TemplateResource;
 
 public class ThymeleafCacheManager extends AbstractCacheManager implements InitializingBean {

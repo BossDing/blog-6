@@ -27,7 +27,7 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.web.template.PathTemplate;
+import me.qyh.blog.core.vo.PathTemplate;
 import me.qyh.blog.web.template.thymeleaf.UIStackoverflowError;
 
 public class PathTagProcessor extends DefaultAttributesTagProcessor {

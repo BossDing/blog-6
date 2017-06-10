@@ -83,10 +83,14 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.dao.FragmentDao;
 import me.qyh.blog.core.dao.PageDao;
+import me.qyh.blog.core.entity.Fragment;
+import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.evt.EventType;
 import me.qyh.blog.core.evt.PageEvent;
 import me.qyh.blog.core.evt.SpaceDeleteEvent;
+import me.qyh.blog.core.evt.TemplateEvitEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
@@ -96,25 +100,34 @@ import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.FileService;
+import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
+import me.qyh.blog.core.vo.DataBind;
+import me.qyh.blog.core.vo.DataTag;
+import me.qyh.blog.core.vo.DataTagProcessor;
+import me.qyh.blog.core.vo.ExportPage;
+import me.qyh.blog.core.vo.ImportRecord;
+import me.qyh.blog.core.vo.PathTemplate;
+import me.qyh.blog.core.vo.PathTemplateBean;
+import me.qyh.blog.core.vo.PathTemplateLoadRecord;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.TemplateView;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.controller.form.FragmentValidator;
-import me.qyh.blog.web.controller.form.PageValidator;
 import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping.MappingRegistry;
-import me.qyh.blog.web.template.data.DataBind;
-import me.qyh.blog.web.template.data.DataTag;
-import me.qyh.blog.web.template.data.DataTagProcessor;
+import me.qyh.blog.web.validator.FragmentValidator;
+import me.qyh.blog.web.validator.PageValidator;
 
 /**
  * 模板服务类
  * <p>
  * 这个类所有对模板写操作的方法都是加锁的，因此在首次加载模板的时候效率很低
+ * </p>
+ * <p>
+ * <b>这个类必须在Web环境中注册</b>
  * </p>
  * 
  * @author mhlx
@@ -371,7 +384,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public Optional<DataBind<?>> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException {
+	public Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException {
 		Optional<DataTagProcessor<?>> processor = processors.stream()
 				.filter(pro -> pro.getName().equals(dataTag.getName())).findAny();
 		if (onlyCallable) {

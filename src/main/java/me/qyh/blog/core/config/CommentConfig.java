@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.annotations.Expose;
 
 import me.qyh.blog.core.entity.Editor;
+import me.qyh.blog.core.vo.Limit;
 
 /**
  * 评论配置

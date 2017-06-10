@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.util.FileUtils;

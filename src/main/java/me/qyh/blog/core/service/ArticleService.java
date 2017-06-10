@@ -18,16 +18,16 @@ package me.qyh.blog.core.service;
 import java.util.List;
 import java.util.Optional;
 
-import me.qyh.blog.core.bean.ArticleDateFiles;
-import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
-import me.qyh.blog.core.bean.ArticleNav;
-import me.qyh.blog.core.bean.ArticleSpaceFile;
-import me.qyh.blog.core.bean.TagCount;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.vo.ArticleDateFiles;
+import me.qyh.blog.core.vo.ArticleNav;
+import me.qyh.blog.core.vo.ArticleSpaceFile;
+import me.qyh.blog.core.vo.TagCount;
+import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
 
 /**
  * 文章服务

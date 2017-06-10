@@ -19,10 +19,10 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.core.bean.BlogFileCount;
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.pageparam.BlogFileQueryParam;
 import me.qyh.blog.core.service.StatisticsService.FileCount;
+import me.qyh.blog.core.vo.BlogFileCount;
 
 /**
  * 

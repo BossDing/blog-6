@@ -19,11 +19,11 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.core.bean.TagCount;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.ArticleTag;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
+import me.qyh.blog.core.vo.TagCount;
 
 /**
  * 

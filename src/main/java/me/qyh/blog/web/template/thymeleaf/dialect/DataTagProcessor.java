@@ -30,11 +30,11 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
+import me.qyh.blog.core.service.TemplateService;
+import me.qyh.blog.core.vo.DataBind;
+import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.template.ParseContext;
-import me.qyh.blog.web.template.TemplateService;
-import me.qyh.blog.web.template.data.DataBind;
-import me.qyh.blog.web.template.data.DataTag;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -73,9 +73,9 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			}
 
 			IWebContext webContext = (IWebContext) context;
-			Optional<DataBind<?>> optional = queryDataBind(dataTag);
+			Optional<DataBind> optional = queryDataBind(dataTag);
 			if (optional.isPresent()) {
-				DataBind<?> bind = optional.get();
+				DataBind bind = optional.get();
 				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
@@ -87,7 +87,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 		}
 	}
 
-	private Optional<DataBind<?>> queryDataBind(DataTag dataTag) {
+	private Optional<DataBind> queryDataBind(DataTag dataTag) {
 		try {
 			return templateService.queryData(dataTag,
 					ParseContext.onlyCallable() && !ParseContext.getRoot().isCallable());

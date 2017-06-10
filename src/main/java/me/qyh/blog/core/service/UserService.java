@@ -2,7 +2,7 @@ package me.qyh.blog.core.service;
 
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.web.controller.form.LoginBean;
+import me.qyh.blog.web.validator.LoginBean;
 
 public interface UserService {
 

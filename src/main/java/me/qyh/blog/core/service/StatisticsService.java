@@ -20,10 +20,10 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.qyh.blog.core.bean.FileStoreBean;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.BlogFile.BlogFileType;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.vo.FileStoreBean;
 
 public interface StatisticsService {
 

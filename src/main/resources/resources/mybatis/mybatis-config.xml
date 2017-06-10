@@ -30,15 +30,15 @@
 		<typeAlias type="me.qyh.blog.core.lock.PasswordLock" alias="PasswordLock" />
 		<typeAlias type="me.qyh.blog.core.lock.QALock" alias="QALock" />
 
-		<typeAlias type="me.qyh.blog.core.bean.BlogFileCount" alias="BlogFileCount" />
+		<typeAlias type="me.qyh.blog.core.vo.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.web.template.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.web.template.Fragment"
+		<typeAlias type="me.qyh.blog.core.entity.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.core.entity.Fragment"
 			alias="Fragment" />
 
-		<typeAlias type="me.qyh.blog.core.bean.ArticleDateFile"
+		<typeAlias type="me.qyh.blog.core.vo.ArticleDateFile"
 			alias="ArticleDateFile" />
-		<typeAlias type="me.qyh.blog.core.bean.ArticleSpaceFile"
+		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceFile"
 			alias="ArticleSpaceFile" />
 
 		<typeAlias

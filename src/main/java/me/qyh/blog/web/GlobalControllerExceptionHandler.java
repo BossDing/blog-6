@@ -45,11 +45,11 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
-import me.qyh.blog.core.bean.JsonResult;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SpaceNotFoundException;
@@ -65,7 +65,6 @@ import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.web.security.CsrfException;
 import me.qyh.blog.web.template.RedirectException;
-import me.qyh.blog.web.template.Template;
 import me.qyh.blog.web.template.TemplateNotFoundException;
 import me.qyh.blog.web.template.TemplateRenderException;
 

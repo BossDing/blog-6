@@ -7,89 +7,89 @@
 	<bean class="me.qyh.blog.web.template.TemplateServiceImpl">
 		<property name="processors">
 			<list>
-				<bean class="me.qyh.blog.web.template.data.ArticleDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.ArticleDataTagProcessor">
 					<constructor-arg index="0" value="文章详情" />
 					<constructor-arg index="1" value="article" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.data.ArticlesDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.ArticlesDataTagProcessor">
 					<constructor-arg index="0" value="文章列表" />
 					<constructor-arg index="1" value="articlePage" />
 				</bean>
 				<bean
-					class="me.qyh.blog.web.template.data.ArticleSpaceFilesDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleSpaceFilesDataTagProcessor">
 					<constructor-arg index="0" value="文章空间归档" />
 					<constructor-arg index="1" value="articleSpaceFiles" />
 				</bean>
 				<bean
-					class="me.qyh.blog.web.template.data.ArticleDateFilesDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleDateFilesDataTagProcessor">
 					<constructor-arg index="0" value="文章日期归档" />
 					<constructor-arg index="1" value="articleDateFiles" />
 					<property name="callable" value="true" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.data.ArticleNavDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.ArticleNavDataTagProcessor">
 					<constructor-arg index="0" value="上一篇下一篇" />
 					<constructor-arg index="1" value="articleNav" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.data.ArticleTagDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.ArticleTagDataTagProcessor">
 					<constructor-arg index="0" value="标签集" />
 					<constructor-arg index="1" value="articleTags" />
 				</bean>
 				<bean
-					class="me.qyh.blog.web.template.data.ArticleSimilarDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleSimilarDataTagProcessor">
 					<constructor-arg index="0" value="相似文章" />
 					<constructor-arg index="1" value="similarArticles" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.data.SpacesDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.SpacesDataTagProcessor">
 					<constructor-arg index="0" value="所有空间" />
 					<constructor-arg index="1" value="spaces" />
 				</bean>
 
-				<bean class="me.qyh.blog.web.template.data.CommentsDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
 					<property name="callable" value="true" />
 				</bean>
 
-				<bean class="me.qyh.blog.web.template.data.LastCommentsDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.LastCommentsDataTagProcessor">
 					<constructor-arg index="0" value="最近评论" />
 					<constructor-arg index="1" value="comments" />
 				</bean>
 
 				<bean
-					class="me.qyh.blog.web.template.data.ArticleStatisticsDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleStatisticsDataTagProcessor">
 					<constructor-arg index="0" value="文章统计" />
 					<constructor-arg index="1" value="articleStatistics" />
 				</bean>
 				<bean
-					class="me.qyh.blog.web.template.data.CommentStatisticsDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.CommentStatisticsDataTagProcessor">
 					<constructor-arg index="0" value="评论统计" />
 					<constructor-arg index="1" value="commentStatistics" />
 				</bean>
 				<bean
-					class="me.qyh.blog.web.template.data.TagStatisticsDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.TagStatisticsDataTagProcessor">
 					<constructor-arg index="0" value="标签统计" />
 					<constructor-arg index="1" value="tagStatistics" />
 				</bean>
 
-				<bean class="me.qyh.blog.web.template.data.FilesDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.FilesDataTagProcessor">
 					<constructor-arg index="0" value="文件查询" />
 					<constructor-arg index="1" value="filePage" />
 				</bean>
 
-				<bean class="me.qyh.blog.web.template.data.UserDataTagProcessor">
+				<bean class="me.qyh.blog.core.templatedata.UserDataTagProcessor">
 					<constructor-arg index="0" value="用户信息" />
 					<constructor-arg index="1" value="myInfo" />
 				</bean>
 
 
 				<bean
-					class="me.qyh.blog.web.template.data.RecentlyViewdArticlesDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.RecentlyViewdArticlesDataTagProcessor">
 					<constructor-arg index="0" value="最近被访问文章" />
 					<constructor-arg index="1" value="recentlyViewdArticles" />
 				</bean>
 
 				<bean
-					class="me.qyh.blog.web.template.data.RandomArticleDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.RandomArticleDataTagProcessor">
 					<constructor-arg index="0" value="随机文章" />
 					<constructor-arg index="1" value="randomArticle" />
 				</bean>
@@ -98,91 +98,91 @@
 		</property>
 		<property name="fragments">
 			<list>
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章详情"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/article.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章列表"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章空间归档"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleSpaceFiles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章日期归档"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleDateFiles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="上一篇下一篇"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleNav.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="标签集"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleTags.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="顶部导航"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/nav.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="底部"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/foot.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="相似文章"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/similarArticles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleStatistics.html"  type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="评论统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/commentStatistics.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="标签统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/tagStatistics.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="最近被访问文章"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/recentlyViewdArticles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="qa"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/lock_qa.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="password"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/lock_password.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="评论"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/comments.html"/>
 					<constructor-arg index="2" value="true" />
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.web.template.Fragment">
+				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="评论挂件"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/commentWidget.html"/>
 					<constructor-arg index="2" value="true" />

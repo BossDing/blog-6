@@ -21,13 +21,13 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.core.bean.ArticleDateFile;
-import me.qyh.blog.core.bean.ArticleSpaceFile;
-import me.qyh.blog.core.bean.ArticleDateFiles.ArticleDateFileMode;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.service.StatisticsService.ArticleStatistics;
+import me.qyh.blog.core.vo.ArticleDateFile;
+import me.qyh.blog.core.vo.ArticleSpaceFile;
+import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
 
 /**
  * 

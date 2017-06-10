@@ -20,15 +20,15 @@ import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.bean.BlogFilePageResult;
-import me.qyh.blog.core.bean.UploadedFile;
 import me.qyh.blog.core.config.UploadConfig;
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.file.FileStore;
 import me.qyh.blog.core.pageparam.BlogFileQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
-import me.qyh.blog.web.controller.form.BlogFileUpload;
+import me.qyh.blog.core.vo.BlogFilePageResult;
+import me.qyh.blog.core.vo.BlogFileUpload;
+import me.qyh.blog.core.vo.UploadedFile;
 
 /**
  * 

@@ -5,7 +5,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="me.qyh.blog.core.dao.ArticleTagDao">
 
 	
-	<resultMap type="me.qyh.blog.core.bean.TagCount" id="TagCountDetail">
+	<resultMap type="me.qyh.blog.core.vo.TagCount" id="TagCountDetail">
 		<id column="tag_id"/>
 		<result property="count" column="counts"/>
 		<association property="tag" javaType="Tag">

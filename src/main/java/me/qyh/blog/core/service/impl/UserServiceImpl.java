@@ -22,7 +22,7 @@ import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.controller.form.LoginBean;
+import me.qyh.blog.web.validator.LoginBean;
 
 @Service
 public class UserServiceImpl implements UserService, UserQueryService, InitializingBean {
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService, UserQueryService, Initializ
 
 	private void verifyPassword(String password) throws LogicException {
 		if (!BCrypts.matches(password, user.getPassword())) {
-			throw new LogicException("user.password.verifyFail", "密码校验失败");
+			throw new LogicException("user.loginFail", "登录失败");
 		}
 	}
 

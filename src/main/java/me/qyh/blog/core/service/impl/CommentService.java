@@ -44,10 +44,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
-import me.qyh.blog.core.bean.CommentPageResult;
 import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.Limit;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.dao.CommentDao;
 import me.qyh.blog.core.dao.CommentDao.ModuleCommentCount;
@@ -59,6 +57,7 @@ import me.qyh.blog.core.entity.CommentMode;
 import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.entity.Editor;
+import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.evt.ArticleEvent;
@@ -74,9 +73,10 @@ import me.qyh.blog.core.security.input.HtmlClean;
 import me.qyh.blog.core.security.input.Markdown2Html;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.UserQueryService;
+import me.qyh.blog.core.vo.CommentPageResult;
+import me.qyh.blog.core.vo.Limit;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
-import me.qyh.blog.web.template.Page;
 
 public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware {
 
