@@ -24,6 +24,17 @@ public final class ReadOnlyResponse extends HttpServletResponseWrapper {
 		super(response);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * 返回<b>ReadOnlyResponse</b>
+	 * </p>
+	 */
+	@Override
+	public ServletResponse getResponse() {
+		return this;
+	}
+
 	@Override
 	public void setResponse(ServletResponse response) {
 		unsupport();

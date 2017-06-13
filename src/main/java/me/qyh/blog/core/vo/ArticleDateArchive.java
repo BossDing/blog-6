@@ -15,25 +15,34 @@
  */
 package me.qyh.blog.core.vo;
 
-import me.qyh.blog.core.entity.Space;
+import java.util.Date;
 
 /**
- * 文章按照空间归档
+ * 文档日期归档
  * 
  * @author Administrator
  *
  */
-public class ArticleSpaceFile {
+public class ArticleDateArchive {
 
-	private Space space;
+	private Date begin;
+	private Date end;
 	private int count;
 
-	public Space getSpace() {
-		return space;
+	public Date getBegin() {
+		return begin;
 	}
 
-	public void setSpace(Space space) {
-		this.space = space;
+	public void setBegin(Date begin) {
+		this.begin = begin;
+	}
+
+	public Date getEnd() {
+		return end;
+	}
+
+	public void setEnd(Date end) {
+		this.end = end;
 	}
 
 	public int getCount() {

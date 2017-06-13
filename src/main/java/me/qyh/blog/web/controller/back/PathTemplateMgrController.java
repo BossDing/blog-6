@@ -75,7 +75,7 @@ public class PathTemplateMgrController extends BaseMgrController {
 		PathTemplateService pathTemplateService = templateService.getPathTemplateService();
 		PathTemplateBean tpl = path == null ? new PathTemplateBean()
 				: pathTemplateService.getPathTemplate(PathTemplate.getTemplateName(path)).map(PathTemplateBean::new)
-						.orElse(new PathTemplateBean());
+						.orElse(new PathTemplateBean(path));
 
 		model.addAttribute("pathTemplate", tpl);
 		return "mgr/template/path/build";
@@ -91,7 +91,8 @@ public class PathTemplateMgrController extends BaseMgrController {
 
 	@PostMapping("delete")
 	@ResponseBody
-	public JsonResult delete(@RequestParam(value = "path") String path) throws LogicException {
+	public JsonResult delete(@RequestParam(value = "path", required = false, defaultValue = "") String path)
+			throws LogicException {
 		PathTemplateService pathTemplateService = templateService.getPathTemplateService();
 		pathTemplateService.deletePathTemplate(path);
 		return new JsonResult(true);

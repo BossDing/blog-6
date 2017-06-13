@@ -10,6 +10,11 @@ public class PathTemplateBean {
 		super();
 	}
 
+	public PathTemplateBean(String path) {
+		super();
+		this.path = path;
+	}
+
 	public PathTemplateBean(PathTemplate template) {
 		this.tpl = template.getTemplate();
 		this.path = template.getRelativePath();

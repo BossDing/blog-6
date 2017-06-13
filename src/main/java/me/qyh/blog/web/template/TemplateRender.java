@@ -22,8 +22,6 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -43,8 +41,6 @@ import me.qyh.blog.util.ExceptionUtils;
  */
 @Component
 public final class TemplateRender {
-
-	private static final Logger TIME_LOGGER = LoggerFactory.getLogger(TemplateRender.class);
 
 	@Autowired
 	private TemplateExposeHelper uiExposeHelper;
@@ -69,7 +65,6 @@ public final class TemplateRender {
 	public String doRender(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws Exception {
 		uiExposeHelper.addVariables(request);
-		long start = System.currentTimeMillis();
 		ParseContext.setConfig(config);
 		try {
 			return doRender(templateName, model, request, response);
@@ -94,9 +89,6 @@ public final class TemplateRender {
 		} finally {
 			commit();
 			ParseContext.remove();
-
-			long renderMills = System.currentTimeMillis() - start;
-			TIME_LOGGER.debug("处理页面{0}耗费了{1}ms", templateName, renderMills);
 		}
 	}
 

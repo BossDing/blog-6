@@ -930,12 +930,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		private final Map<String, PathTemplate> pathTemplates = new ConcurrentHashMap<>();
 
+		private final Comparator<PathTemplate> comparator = new PathTemplateComparator();
+
 		@Override
 		public List<PathTemplate> queryPathTemplates(String str) {
 			Predicate<PathTemplate> filter = Validators.isEmptyOrNull(str, true) ? pathTemplate -> true
 					: new ContainsFilter(str);
-			List<PathTemplate> templates = new ArrayList<>(
-					pathTemplates.values().parallelStream().filter(filter).collect(Collectors.toList()));
+			List<PathTemplate> templates = new ArrayList<>(pathTemplates.values().parallelStream().filter(filter)
+					.sorted(comparator).collect(Collectors.toList()));
 
 			return Collections.unmodifiableList(templates);
 		}
@@ -1287,6 +1289,32 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			@Override
 			public boolean test(PathTemplate t) {
 				return t.getRelativePath().contains(str);
+			}
+		}
+
+		private final class PathTemplateComparator implements Comparator<PathTemplate> {
+
+			@Override
+			public int compare(PathTemplate o1, PathTemplate o2) {
+				Integer order1 = getOrder(o1.getAssociate());
+				Integer order2 = getOrder(o2.getAssociate());
+				if (order1.equals(order2)) {
+					return o1.getRelativePath().compareTo(o2.getRelativePath());
+				}
+				return order1.compareTo(order2);
+			}
+
+			private Integer getOrder(Path path) {
+				if (isRegPathTemplate(path)) {
+					return 1;
+				}
+				if (isPublicFragment(path)) {
+					return 3;
+				}
+				if (isPathTemplate(path)) {
+					return 2;
+				}
+				throw new SystemException("仅支持.reg.html,.html,.pub.html的排序");
 			}
 		}
 	}

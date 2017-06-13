@@ -1,0 +1,28 @@
+<div th:unless="${#lists.isEmpty(articleSpaceArchives)}" class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">文章空间归档</h3>
+	</div>
+	<div th:if="${#lists.isEmpty(articleSpaceArchives)}" th:remove="tag">
+		<div class="panel-body">
+			<div class="alert alert-info">没有任何文章空间归档</div>
+		</div>
+	</div>
+	<div th:unless="${#lists.isEmpty(articleSpaceArchives)}" th:remove="tag">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>空间</th>
+					<th>文章数</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="articleSpaceArchive : ${articleSpaceArchives}">
+					<td><a
+						th:href="${urls.getUrl(articleSpaceArchive.space)}"
+						th:text="${articleSpaceArchive.space.name}"></a></td>
+					<td th:text="${articleSpaceArchive.count}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>

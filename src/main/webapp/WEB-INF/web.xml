@@ -21,7 +21,7 @@
 	</context-param>
 	<listener>
 	    <listener-class>
-	       me.qyh.blog.web.listener.MysqlCloseableContextLoaderListener
+	       me.qyh.blog.web.listener.AppContextLoaderListener
 	    </listener-class>
 	</listener>
 	

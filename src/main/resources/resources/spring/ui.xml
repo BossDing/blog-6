@@ -16,14 +16,14 @@
 					<constructor-arg index="1" value="articlePage" />
 				</bean>
 				<bean
-					class="me.qyh.blog.core.templatedata.ArticleSpaceFilesDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleSpaceArchivesDataTagProcessor">
 					<constructor-arg index="0" value="文章空间归档" />
-					<constructor-arg index="1" value="articleSpaceFiles" />
+					<constructor-arg index="1" value="articleSpaceArchives" />
 				</bean>
 				<bean
-					class="me.qyh.blog.core.templatedata.ArticleDateFilesDataTagProcessor">
+					class="me.qyh.blog.core.templatedata.ArticleDateArchivesDataTagProcessor">
 					<constructor-arg index="0" value="文章日期归档" />
-					<constructor-arg index="1" value="articleDateFiles" />
+					<constructor-arg index="1" value="articleDateArchives" />
 					<property name="callable" value="true" />
 				</bean>
 				<bean class="me.qyh.blog.core.templatedata.ArticleNavDataTagProcessor">
@@ -33,11 +33,6 @@
 				<bean class="me.qyh.blog.core.templatedata.ArticleTagDataTagProcessor">
 					<constructor-arg index="0" value="标签集" />
 					<constructor-arg index="1" value="articleTags" />
-				</bean>
-				<bean
-					class="me.qyh.blog.core.templatedata.ArticleSimilarDataTagProcessor">
-					<constructor-arg index="0" value="相似文章" />
-					<constructor-arg index="1" value="similarArticles" />
 				</bean>
 				<bean class="me.qyh.blog.core.templatedata.SpacesDataTagProcessor">
 					<constructor-arg index="0" value="所有空间" />
@@ -110,12 +105,12 @@
 				
 				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章空间归档"/>
-					<constructor-arg index="1" value="classpath:resources/fragment/articleSpaceFiles.html" type="org.springframework.core.io.Resource"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleSpaceArchives.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="文章日期归档"/>
-					<constructor-arg index="1" value="classpath:resources/fragment/articleDateFiles.html" type="org.springframework.core.io.Resource"/>
+					<constructor-arg index="1" value="classpath:resources/fragment/articleDateArchives.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				<bean class="me.qyh.blog.core.entity.Fragment">
@@ -136,11 +131,6 @@
 				<bean class="me.qyh.blog.core.entity.Fragment">
 					<constructor-arg index="0" value="底部"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/foot.html" type="org.springframework.core.io.Resource"/>
-				</bean>
-				
-				<bean class="me.qyh.blog.core.entity.Fragment">
-					<constructor-arg index="0" value="相似文章"/>
-					<constructor-arg index="1" value="classpath:resources/fragment/similarArticles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				<bean class="me.qyh.blog.core.entity.Fragment">
@@ -189,7 +179,7 @@
 				</bean>
 			</list>
 		</property>
-		<!-- <property name="pathTemplateRoot" value="f:/tt/test" /> -->
+		<property name="pathTemplateRoot" value="/web/template" />
 	</bean>
 	<bean class="me.qyh.blog.web.template.TemplateExposeHelper">
 		<property name="pros">

@@ -232,7 +232,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			}
 			Path tmp = FileUtils.appTemp(PNG);
 			BufferedImage bi = gd.getFrame(0);
-			ImageIO.write(bi, GIF, tmp.toFile());
+			synchronized (this) {
+				ImageIO.write(bi, GIF, tmp.toFile());
+			}
 			return tmp;
 		}
 	}

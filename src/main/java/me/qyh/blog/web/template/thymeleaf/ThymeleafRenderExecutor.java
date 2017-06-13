@@ -37,7 +37,6 @@ import org.thymeleaf.context.WebExpressionContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring4.expression.ThymeleafEvaluationContext;
 import org.thymeleaf.spring4.naming.SpringContextVariableNames;
-import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 import org.thymeleaf.standard.expression.FragmentExpression;
 import org.thymeleaf.standard.expression.IStandardExpressionParser;
 import org.thymeleaf.standard.expression.StandardExpressionExecutionContext;
@@ -53,9 +52,6 @@ import me.qyh.blog.web.template.TemplateRenderExecutor;
  *
  */
 public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
-
-	@Autowired
-	protected ThymeleafViewResolver thymeleafViewResolver;
 
 	@Autowired
 	private ServletContext servletContext;
@@ -106,8 +102,8 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		}
 
 		final IEngineConfiguration configuration = viewTemplateEngine.getConfiguration();
-		final WebExpressionContext context = new WebExpressionContext(configuration, request,
-				new ReadOnlyResponse(response), servletContext, locale, mergedModel);
+		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
+				locale, mergedModel);
 
 		final String templateName;
 		final Set<String> markupSelectors;
@@ -156,7 +152,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 				context.setVariables(nameFragmentParameters);
 
 			}
-
+			
 		}
 
 		final Set<String> processMarkupSelectors;

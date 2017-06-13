@@ -27,7 +27,7 @@ import me.qyh.blog.core.exception.SystemException;
  * @author Administrator
  *
  */
-public class ArticleDateFiles {
+public class ArticleDateArchives {
 	/**
 	 * 文章日期归档模式
 	 * 
@@ -38,7 +38,7 @@ public class ArticleDateFiles {
 		Y, YM, YMD
 	}
 
-	private List<ArticleDateFile> files = new ArrayList<>();
+	private List<ArticleDateArchive> archives = new ArrayList<>();
 	private ArticleDateFileMode mode;
 
 	/**
@@ -49,15 +49,15 @@ public class ArticleDateFiles {
 	 * @param mode
 	 *            归档模式
 	 */
-	public ArticleDateFiles(List<ArticleDateFile> files, ArticleDateFileMode mode) {
-		this.files = files;
+	public ArticleDateArchives(List<ArticleDateArchive> archives, ArticleDateFileMode mode) {
+		this.archives = archives;
 		this.mode = mode;
 	}
 
 	/**
 	 * default
 	 */
-	public ArticleDateFiles() {
+	public ArticleDateArchives() {
 		super();
 	}
 
@@ -69,21 +69,21 @@ public class ArticleDateFiles {
 		this.mode = mode;
 	}
 
-	public List<ArticleDateFile> getFiles() {
-		return files;
+	public List<ArticleDateArchive> getArchives() {
+		return archives;
 	}
 
-	public void setFiles(List<ArticleDateFile> files) {
-		this.files = files;
+	public void setArchives(List<ArticleDateArchive> archives) {
+		this.archives = archives;
 	}
 
 	/**
 	 * 根据模式计算归档的开始和结束日期
 	 */
 	public void calDate() {
-		for (ArticleDateFile file : files) {
+		for (ArticleDateArchive archive : archives) {
 			Calendar cal = Calendar.getInstance();
-			cal.setTime(file.getBegin());
+			cal.setTime(archive.getBegin());
 			int year = cal.get(Calendar.YEAR);
 			int month = cal.get(Calendar.MONTH);
 			int day = cal.get(Calendar.DAY_OF_MONTH);
@@ -91,37 +91,26 @@ public class ArticleDateFiles {
 			cal.set(Calendar.YEAR, year);
 			switch (mode) {
 			case Y:
-				file.setBegin(cal.getTime());
+				archive.setBegin(cal.getTime());
 				cal.add(Calendar.YEAR, 1);
-				file.setEnd(cal.getTime());
+				archive.setEnd(cal.getTime());
 				break;
 			case YM:
 				cal.set(Calendar.MONTH, month);
-				file.setBegin(cal.getTime());
+				archive.setBegin(cal.getTime());
 				cal.add(Calendar.MONTH, 1);
-				file.setEnd(cal.getTime());
+				archive.setEnd(cal.getTime());
 				break;
 			case YMD:
 				cal.set(Calendar.MONTH, month);
 				cal.set(Calendar.DAY_OF_MONTH, day);
-				file.setBegin(cal.getTime());
+				archive.setBegin(cal.getTime());
 				cal.add(Calendar.DAY_OF_MONTH, 1);
-				file.setEnd(cal.getTime());
+				archive.setEnd(cal.getTime());
 				break;
 			default:
 				throw new SystemException("无法识别的归档模式：" + mode);
 			}
 		}
 	}
-
-	/**
-	 * 增加归档记录
-	 * 
-	 * @param file
-	 *            归档记录
-	 */
-	public void addArticleDateFile(ArticleDateFile file) {
-		files.add(file);
-	}
-
 }

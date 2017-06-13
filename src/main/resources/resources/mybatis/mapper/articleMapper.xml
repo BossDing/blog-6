@@ -31,14 +31,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 
-	<resultMap type="ArticleDateFile" id="ArticleDateFileDetail">
+	<resultMap type="ArticleDateArchive" id="ArticleDateArchiveDetail">
 		<id column="art_id" />
 		<result column="pubDate" property="begin" />
 		<result column="pubDate" property="end" />
 		<result column="art_count" property="count" />
 	</resultMap>
 
-	<resultMap type="ArticleSpaceFile" id="ArticleSpaceFileDetail">
+	<resultMap type="ArticleSpaceArchive" id="ArticleSpaceArchiveDetail">
 		<id column="space_id" />
 		<result column="art_count" property="count" />
 		<association property="space" javaType="Space">
@@ -296,7 +296,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP BY art.id
 	</select>
 
-	<select id="selectDateFiles" resultMap="ArticleDateFileDetail">
+	<select id="selectDateArchives" resultMap="ArticleDateArchiveDetail">
 		SELECT MIN(pubDate) AS pubDate,COUNT(*) AS art_count,MIN(art.id) AS
 		art_id
 		FROM blog_article art
@@ -326,7 +326,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		ORDER BY pubDate DESC
 	</select>
 
-	<select id="selectSpaceFiles" resultMap="ArticleSpaceFileDetail">
+	<select id="selectSpaceArchives" resultMap="ArticleSpaceArchiveDetail">
 		SELECT space_id,space_alias,space_name,COUNT(*) AS art_count
 		FROM
 		blog_article art

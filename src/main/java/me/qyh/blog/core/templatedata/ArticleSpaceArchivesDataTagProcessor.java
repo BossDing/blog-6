@@ -15,27 +15,27 @@
  */
 package me.qyh.blog.core.templatedata;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.ArticleDateFiles;
-import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.core.vo.ArticleSpaceArchive;
 import me.qyh.blog.core.vo.DataTagProcessor;
 
-public class ArticleDateFilesDataTagProcessor extends DataTagProcessor<ArticleDateFiles> {
+public class ArticleSpaceArchivesDataTagProcessor extends DataTagProcessor<List<ArticleSpaceArchive>> {
 
 	@Autowired
 	private ArticleService articleService;
 
-	public ArticleDateFilesDataTagProcessor(String name, String dataName) {
+	public ArticleSpaceArchivesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected ArticleDateFiles query(Attributes attributes) throws LogicException {
-		return articleService
-				.queryArticleDateFiles(attributes.getEnum("mode", ArticleDateFileMode.class, ArticleDateFileMode.YM));
+	protected List<ArticleSpaceArchive> query(Attributes attributes) throws LogicException {
+		return articleService.queryArticleSpaceArchives();
 	}
 
 }

@@ -15,38 +15,27 @@
  */
 package me.qyh.blog.core.templatedata;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
-import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.vo.ArticleDateArchives;
+import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
 import me.qyh.blog.core.vo.DataTagProcessor;
 
-public class ArticleSimilarDataTagProcessor extends DataTagProcessor<List<Article>> {
+public class ArticleDateArchivesDataTagProcessor extends DataTagProcessor<ArticleDateArchives> {
 
 	@Autowired
 	private ArticleService articleService;
 
-	private int limit = 5;
-
-	public ArticleSimilarDataTagProcessor(String name, String dataName) {
+	public ArticleDateArchivesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected List<Article> query(Attributes attributes) throws LogicException {
-		String idOrAlias = attributes.get("idOrAlias");
-		if (idOrAlias != null) {
-			return articleService.findSimilar(idOrAlias, limit);
-		}
-		return new ArrayList<>();
-	}
-
-	public void setLimit(int limit) {
-		this.limit = limit;
+	protected ArticleDateArchives query(Attributes attributes) throws LogicException {
+		return articleService.queryArticleDateArchives(
+				attributes.getEnum("mode", ArticleDateFileMode.class, ArticleDateFileMode.YM));
 	}
 
 }

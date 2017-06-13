@@ -36,10 +36,10 @@
 		<typeAlias type="me.qyh.blog.core.entity.Fragment"
 			alias="Fragment" />
 
-		<typeAlias type="me.qyh.blog.core.vo.ArticleDateFile"
-			alias="ArticleDateFile" />
-		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceFile"
-			alias="ArticleSpaceFile" />
+		<typeAlias type="me.qyh.blog.core.vo.ArticleDateArchive"
+			alias="ArticleDateArchive" />
+		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceArchive"
+			alias="ArticleSpaceArchive" />
 
 		<typeAlias
 			type="me.qyh.blog.core.service.StatisticsService$ArticleStatistics"

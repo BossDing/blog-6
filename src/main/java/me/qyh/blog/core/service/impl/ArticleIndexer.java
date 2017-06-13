@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,13 +47,11 @@ import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.queries.mlt.MoreLikeThis;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -115,9 +112,6 @@ import me.qyh.blog.util.FileUtils;
 public abstract class ArticleIndexer implements InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleIndexer.class);
-
-	private static final Comparator<Article> COMPARATOR = Comparator.comparing(Article::getPubDate).reversed()
-			.thenComparing(Comparator.comparing(Article::getId).reversed());
 
 	private static final String ID = "id";
 	private static final String TITLE = "title";
@@ -333,85 +327,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 		gen = writer.deleteDocuments(term);
 	}
 
-	/**
-	 * 查询相似文章
-	 * 
-	 * @param article
-	 *            源文章
-	 * @param dquery
-	 *            文章详情查询接口
-	 * @param limit
-	 *            文章数
-	 * @return
-	 */
-	public List<Article> querySimilar(Article article, boolean queryPrivate, int limit) {
-		IndexSearcher searcher = null;
-		try {
-			waitForGen();
-			searcher = searcherManager.acquire();
-
-			Query likeQuery = buildLikeQuery(article, searcher);
-			if (likeQuery == null) {
-				return Collections.emptyList();
-			}
-			Builder builder = new Builder();
-			builder.add(likeQuery, Occur.MUST);
-			builder.add(new TermQuery(new Term(SPACE_ID, article.getSpace().getId().toString())), Occur.MUST);
-			if (!queryPrivate) {
-				builder.add(new TermQuery(new Term(PRIVATE, "false")), Occur.MUST);
-				builder.add(new TermQuery(new Term(LOCKED, "false")), Occur.MUST);
-			}
-			TopDocs likeDocs = searcher.search(builder.build(), limit + 1);
-			List<Integer> datas = new ArrayList<>();
-			for (ScoreDoc scoreDoc : likeDocs.scoreDocs) {
-				Document aSimilar = searcher.doc(scoreDoc.doc);
-				datas.add(Integer.parseInt(aSimilar.get(ID)));
-			}
-			if (datas.isEmpty()) {
-				return new ArrayList<>();
-			}
-			List<Article> articles = selectByIds(datas);
-			if (!articles.isEmpty()) {
-				articles.sort(COMPARATOR);
-			}
-			List<Article> results = articles.stream().filter(art -> !art.equals(article)).collect(Collectors.toList());
-			int size = results.size();
-			int max = Math.min(limit, size);
-			return size > max ? results.subList(0, max) : results;
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		} finally {
-			try {
-				if (searcher != null) {
-					searcherManager.release(searcher);
-					searcher = null;
-				}
-			} catch (Exception e) {
-				LOGGER.error(e.getMessage(), e);
-			}
-		}
-	}
-
-	protected Query buildLikeQuery(Article article, IndexSearcher searcher) throws IOException {
-
-		TermQuery tq = new TermQuery(new Term(ID, article.getId().toString()));
-		TopDocs topDocs = searcher.search(tq, 1);
-		int total = topDocs.totalHits;
-		if (total > 0) {
-
-			int docId = topDocs.scoreDocs[0].doc;
-			IndexReader reader = searcher.getIndexReader();
-			MoreLikeThis mlt = new MoreLikeThis(reader);
-			mlt.setMinTermFreq(1);
-			mlt.setMinDocFreq(1);
-			mlt.setMinWordLen(2);
-			mlt.setFieldNames(new String[] { TITLE, TAG, ALIAS }); // fields
-			mlt.setAnalyzer(analyzer);
-			return mlt.like(docId);
-		}
-		return null;
-	}
-
 	private void waitForGen() {
 		try {
 			reopenThread.waitForGeneration(gen);
@@ -472,7 +387,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 					: Optional.empty();
 			optionalMultiFieldQuery.ifPresent(query -> builder.add(query, Occur.MUST));
 			Query query = builder.build();
-			
+
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
 			int total = tds.totalHits;
 			int offset = param.getOffset();

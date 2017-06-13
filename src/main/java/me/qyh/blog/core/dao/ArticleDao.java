@@ -25,9 +25,9 @@ import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.service.StatisticsService.ArticleStatistics;
-import me.qyh.blog.core.vo.ArticleDateFile;
-import me.qyh.blog.core.vo.ArticleSpaceFile;
-import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.core.vo.ArticleDateArchive;
+import me.qyh.blog.core.vo.ArticleSpaceArchive;
+import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
 
 /**
  * 
@@ -55,7 +55,7 @@ public interface ArticleDao {
 	 *            是否查询私人文章
 	 * @return 文章日期归档集合
 	 */
-	List<ArticleDateFile> selectDateFiles(@Param("space") Space space, @Param("mode") ArticleDateFileMode mode,
+	List<ArticleDateArchive> selectDateArchives(@Param("space") Space space, @Param("mode") ArticleDateFileMode mode,
 			@Param("queryPrivate") boolean queryPrivate);
 
 	/**
@@ -65,7 +65,7 @@ public interface ArticleDao {
 	 *            是否查询私有文章
 	 * @return 文章空间归档集合
 	 */
-	List<ArticleSpaceFile> selectSpaceFiles(@Param("queryPrivate") boolean queryPrivate);
+	List<ArticleSpaceArchive> selectSpaceArchives(@Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 查询截至日期前的待发布文章

@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,12 +65,12 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.core.vo.ArticleDateFile;
-import me.qyh.blog.core.vo.ArticleDateFiles;
+import me.qyh.blog.core.vo.ArticleDateArchive;
+import me.qyh.blog.core.vo.ArticleDateArchives;
+import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.ArticleSpaceFile;
+import me.qyh.blog.core.vo.ArticleSpaceArchive;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -340,22 +339,23 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
-	public ArticleDateFiles queryArticleDateFiles(ArticleDateFileMode mode) throws LogicException {
-		List<ArticleDateFile> files = articleDao.selectDateFiles(Environment.getSpace(), mode, Environment.isLogin());
-		ArticleDateFiles _files = new ArticleDateFiles(files, mode);
-		_files.calDate();
-		return _files;
+	@Cacheable(value = "articleArchivesCache", key = "'dateArchives-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
+	public ArticleDateArchives queryArticleDateArchives(ArticleDateFileMode mode) throws LogicException {
+		List<ArticleDateArchive> archives = articleDao.selectDateArchives(Environment.getSpace(), mode,
+				Environment.isLogin());
+		ArticleDateArchives _archives = new ArticleDateArchives(archives, mode);
+		_archives.calDate();
+		return _archives;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "articleFilesCache", key = "'dateFiles-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
-	public List<ArticleSpaceFile> queryArticleSpaceFiles() {
+	@Cacheable(value = "articleArchivesCache", key = "'dateArchives-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
+	public List<ArticleSpaceArchive> queryArticleSpaceArchives() {
 		if (Environment.hasSpace()) {
 			return Collections.emptyList();
 		}
-		return articleDao.selectSpaceFiles(Environment.isLogin());
+		return articleDao.selectSpaceArchives(Environment.isLogin());
 	}
 
 	/**
@@ -526,23 +526,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
 	public List<TagCount> queryTags() throws LogicException {
 		return new ArrayList<>(articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin()));
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<Article> findSimilar(String idOrAlias, int limit) throws LogicException {
-		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
-
-		if (optionalArticle.isPresent()) {
-			Article article = optionalArticle.get();
-			if (!Environment.match(article.getSpace())) {
-				return Collections.emptyList();
-			}
-			return articleIndexer.querySimilar(article, Environment.isLogin(), limit).stream()
-					.collect(Collectors.toList());
-		}
-
-		return Collections.emptyList();
 	}
 
 	/**

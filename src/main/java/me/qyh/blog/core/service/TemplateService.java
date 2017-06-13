@@ -207,11 +207,11 @@ public interface TemplateService {
 		/**
 		 * 查询物理文件模版
 		 * 
-		 * @param pattern
-		 *            查询表达式(正则)，如果为空或者为null则查询全局
+		 * @param str
+		 *            {@code String#contains(CharSequence)}
 		 * @return 只读的模版集合
 		 */
-		List<PathTemplate> queryPathTemplates(String pattern);
+		List<PathTemplate> queryPathTemplates(String str);
 
 		/**
 		 * 刷新路径

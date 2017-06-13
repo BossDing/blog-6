@@ -85,6 +85,11 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	 */
 	private int maxIps = 100;
 
+	/**
+	 * 每50条写入数据库
+	 */
+	private int flushNum = 50;
+
 	@Override
 	public void hit(Article article) {
 		// increase
@@ -107,10 +112,15 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 					});
 				}
 
-				try (SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH)) {
+				try (SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
 					ArticleDao articleDao = sqlSession.getMapper(ArticleDao.class);
+					int num = 0;
 					for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
 						articleDao.updateHits(it.getKey(), it.getValue());
+						num++;
+						if (num % flushNum == 0) {
+							sqlSession.commit();
+						}
 					}
 					sqlSession.commit();
 				}
@@ -187,7 +197,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 			return adder.intValue();
 		}
 	}
-	
+
 	public void flush() {
 		flush(false);
 	}
@@ -232,4 +242,12 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		}
 		this.maxIps = maxIps;
 	}
+
+	public void setFlushNum(int flushNum) {
+		if (flushNum < 1) {
+			throw new SystemException("flushNum不能小于1");
+		}
+		this.flushNum = flushNum;
+	}
+
 }

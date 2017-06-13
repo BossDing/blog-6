@@ -17,7 +17,6 @@ package me.qyh.blog.core.lock;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -145,7 +144,14 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 * @return 存在：true，不存在：false
 	 */
 	public boolean checkLockTypeExists(String lockType) {
-		return lockType != null && Arrays.stream(LOCK_TYPES).anyMatch(lockType::equals);
+		if (lockType != null) {
+			for (String _lockType : LOCK_TYPES) {
+				if (lockType.equals(_lockType)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

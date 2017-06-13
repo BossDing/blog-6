@@ -23,11 +23,11 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.core.vo.ArticleDateFiles;
+import me.qyh.blog.core.vo.ArticleDateArchives;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.ArticleSpaceFile;
+import me.qyh.blog.core.vo.ArticleSpaceArchive;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.core.vo.ArticleDateFiles.ArticleDateFileMode;
+import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
 
 /**
  * 文章服务
@@ -71,14 +71,14 @@ public interface ArticleService {
 	 * @throws LogicException
 	 *             空间不存在
 	 */
-	ArticleDateFiles queryArticleDateFiles(ArticleDateFileMode mode) throws LogicException;
+	ArticleDateArchives queryArticleDateArchives(ArticleDateFileMode mode) throws LogicException;
 
 	/**
 	 * 查询文章空间归档
 	 * 
 	 * @return 文章空间归档集合
 	 */
-	List<ArticleSpaceFile> queryArticleSpaceFiles();
+	List<ArticleSpaceArchive> queryArticleSpaceArchives();
 
 	/**
 	 * 分页查询文章
@@ -174,18 +174,6 @@ public interface ArticleService {
 	 * @return 标签集
 	 */
 	List<TagCount> queryTags() throws LogicException;
-
-	/**
-	 * 查询类似文章
-	 * 
-	 * @param idOrAlias
-	 *            文章id或者别名
-	 * @param limit
-	 *            最大数目
-	 * @return 类似文章集合
-	 * @throws LogicException
-	 */
-	List<Article> findSimilar(String idOrAlias, int limit) throws LogicException;
 
 	/**
 	 * 用来处理预览文章，比如将markdown转化为html
