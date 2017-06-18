@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.file;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -115,15 +116,26 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		localIMOperation.format("%w\n%h\n%m\n");
 		localIMOperation.addImage();
 		ArrayListOutputConsumer localArrayListOutputConsumer = new ArrayListOutputConsumer();
-		run(() -> {
-			IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
-			localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
-			return localIdentifyCmd;
-		}, localIMOperation, file.toAbsolutePath().toString());
+		try {
+			run(() -> {
+				IdentifyCmd localIdentifyCmd = new IdentifyCmd(true);
+				localIdentifyCmd.setOutputConsumer(localArrayListOutputConsumer);
+				return localIdentifyCmd;
+			}, localIMOperation, file.toAbsolutePath().toString());
 
-		List<String> atts = localArrayListOutputConsumer.getOutput();
-		Iterator<String> it = atts.iterator();
-		return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
+			List<String> atts = localArrayListOutputConsumer.getOutput();
+			Iterator<String> it = atts.iterator();
+			return new ImageInfo(Integer.parseInt(it.next()), Integer.parseInt(it.next()), it.next());
+
+		} catch (IOException e) {
+			// 如果是GIF，尝试采用java读取
+			// 如果原图是gif图像
+			if (isGIF(FileUtils.getFileExtension(file))) {
+				return readGif(file);
+			} else {
+				throw e;
+			}
+		}
 	}
 
 	private void addCompressOp(IMOperation op, String ext) {
@@ -238,4 +250,24 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			return tmp;
 		}
 	}
+
+	/**
+	 * 有些gif图片GM无法处理，此时尝试用java读取gif信息
+	 * 
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
+	private ImageInfo readGif(Path file) throws IOException {
+		try (InputStream is = Files.newInputStream(file)) {
+			GifDecoder gd = new GifDecoder();
+			int flag = gd.read(is);
+			if (flag != GifDecoder.STATUS_OK) {
+				throw new IOException(file + "文件无法读取");
+			}
+			Dimension dim = gd.getFrameSize();
+			return new ImageInfo(dim.width, dim.height, GIF);
+		}
+	}
+
 }

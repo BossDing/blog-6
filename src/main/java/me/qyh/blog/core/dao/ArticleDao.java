@@ -24,10 +24,8 @@ import org.apache.ibatis.annotations.Param;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
-import me.qyh.blog.core.service.StatisticsService.ArticleStatistics;
-import me.qyh.blog.core.vo.ArticleDateArchive;
-import me.qyh.blog.core.vo.ArticleSpaceArchive;
-import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
+import me.qyh.blog.core.vo.ArticleSpaceStatistics;
+import me.qyh.blog.core.vo.ArticleStatistics;
 
 /**
  * 
@@ -45,27 +43,11 @@ public interface ArticleDao {
 	Article selectById(int id);
 
 	/**
-	 * 查询文章日期归档
+	 * 查询所有的文章
 	 * 
-	 * @param space
-	 *            空间
-	 * @param mode
-	 *            日期归档模式
-	 * @param queryPrivate
-	 *            是否查询私人文章
-	 * @return 文章日期归档集合
+	 * @return 文章<b>只保留了用于构造访问连接的基本信息，并且没有进行任何排序</b>
 	 */
-	List<ArticleDateArchive> selectDateArchives(@Param("space") Space space, @Param("mode") ArticleDateFileMode mode,
-			@Param("queryPrivate") boolean queryPrivate);
-
-	/**
-	 * 查询文章空间归档
-	 * 
-	 * @param queryPrivate
-	 *            是否查询私有文章
-	 * @return 文章空间归档集合
-	 */
-	List<ArticleSpaceArchive> selectSpaceArchives(@Param("queryPrivate") boolean queryPrivate);
+	List<Article> selectSimplePublished(@Param("space") Space space,@Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 查询截至日期前的待发布文章
@@ -284,5 +266,13 @@ public interface ArticleDao {
 	 * @param newSpace
 	 */
 	void moveSpace(@Param("oldSpace") Space oldSpace, @Param("newSpace") Space newSpace);
+
+	/**
+	 * 查询每个空间下文章数目
+	 * 
+	 * @param queryPrivate
+	 * @return
+	 */
+	List<ArticleSpaceStatistics> selectArticleSpaceStatistics(@Param("queryPrivate") boolean queryPrivate);
 
 }

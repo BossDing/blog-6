@@ -801,6 +801,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		// 各个空间文章详情页面
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
 				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
+		//文章归档页面
+		defaultTemplates.put("archives", new SystemTemplate("archives","resources/page/PAGE_ARCHIVES.html"));
+		defaultTemplates.put("space/{alias}/archives", new SystemTemplate("space/{alias}/archives","resources/page/PAGE_ARCHIVES.html"));
 
 		long stamp = templateMappingRegister.lockWrite();
 		try {

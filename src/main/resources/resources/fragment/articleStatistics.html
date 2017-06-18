@@ -1,4 +1,5 @@
-<div class="panel panel-default" th:if="${articleStatistics != null}">
+<div  th:if="${articleStatistics != null}" th:remove="tag">
+<div class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">文章统计</h3>
 	</div>
@@ -14,4 +15,28 @@
 			th:if="${articleStatistics.lastModifyDate != null}"><strong>最后修改日期：</strong><span
 			th:text="${messages.getMessage(timeDiffParser.parseDiff(articleStatistics.lastModifyDate))}"></span></li>
 	</ul>
+</div>
+<div th:unless="${#lists.isEmpty(articleStatistics.spaceStatisticsList)}" class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">空间文章统计</h3>
+	</div>
+	<div class="table-responsive">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>空间</th>
+					<th>文章数</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="spaceStatistics : ${articleStatistics.spaceStatisticsList}">
+					<td><a
+						th:href="${urls.getUrl(spaceStatistics.space)}"
+						th:text="${spaceStatistics.space.name}"></a></td>
+					<td th:text="${spaceStatistics.count}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
 </div>

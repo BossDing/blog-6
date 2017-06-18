@@ -21,8 +21,8 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.BlogFile;
 import me.qyh.blog.core.pageparam.BlogFileQueryParam;
-import me.qyh.blog.core.service.StatisticsService.FileCount;
 import me.qyh.blog.core.vo.BlogFileCount;
+import me.qyh.blog.core.vo.FileCountBean;
 
 /**
  * 
@@ -159,7 +159,6 @@ public interface BlogFileDao {
 	 * @return
 	 */
 	List<FileCountBean> selectFileCount();
-	
 
 	/**
 	 * 添加节点后批量更新父节点左右值
@@ -226,26 +225,4 @@ public interface BlogFileDao {
 	 *            待删除的节点
 	 */
 	void updateRgtWhenDelete(BlogFile toDelete);
-
-	public class FileCountBean {
-		private int fileStore;
-		private FileCount fileCount;
-
-		public int getFileStore() {
-			return fileStore;
-		}
-
-		public void setFileStore(int fileStore) {
-			this.fileStore = fileStore;
-		}
-
-		public FileCount getFileCount() {
-			return fileCount;
-		}
-
-		public void setFileCount(FileCount fileCount) {
-			this.fileCount = fileCount;
-		}
-
-	}
 }

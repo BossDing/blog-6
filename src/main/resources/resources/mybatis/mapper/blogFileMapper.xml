@@ -22,9 +22,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="file_count" property="count"/>
 	</resultMap>
 	
-	<resultMap type="me.qyh.blog.core.dao.BlogFileDao$FileCountBean" id="FileCountBeanDetail">
+	<resultMap type="me.qyh.blog.core.vo.FileCountBean" id="FileCountBeanDetail">
 		<id column="file_store" property="fileStore"/>
-		<association property="fileCount" javaType="me.qyh.blog.core.service.StatisticsService$FileCount">
+		<association property="fileCount" javaType="me.qyh.blog.core.vo.FileCount">
 			<result column="fileCount" property="fileCount"/>
 			<result column="totalSize" property="totalSize"/>
 		</association>

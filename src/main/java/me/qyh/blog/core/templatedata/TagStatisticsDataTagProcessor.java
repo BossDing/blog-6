@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.StatisticsService;
-import me.qyh.blog.core.service.StatisticsService.TagStatistics;
 import me.qyh.blog.core.vo.DataTagProcessor;
+import me.qyh.blog.core.vo.TagStatistics;
 
 public class TagStatisticsDataTagProcessor extends DataTagProcessor<TagStatistics> {
 

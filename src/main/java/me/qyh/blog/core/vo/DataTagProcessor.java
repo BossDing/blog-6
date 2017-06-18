@@ -137,7 +137,7 @@ public abstract class DataTagProcessor<T> {
 				return Enum.valueOf(e, attV);
 			} catch (IllegalArgumentException ex) {
 			}
-			return null;
+			return defaultValue;
 		}
 
 		/**
@@ -177,7 +177,7 @@ public abstract class DataTagProcessor<T> {
 				return Integer.parseInt(attV);
 			} catch (NumberFormatException e) {
 			}
-			return null;
+			return defaultValue;
 		}
 
 		/**

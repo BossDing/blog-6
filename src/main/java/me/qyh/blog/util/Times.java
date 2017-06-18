@@ -15,11 +15,14 @@
  */
 package me.qyh.blog.util;
 
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.Objects;
@@ -29,37 +32,31 @@ import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
-import me.qyh.blog.core.exception.SystemException;
-
 /**
  * java8 date utils for thymeleaf
- * 
- * @author Administrator
  *
  */
 @UIUtils
 public class Times {
 
-	private static final DateTimeFormatter[] DATE_TIME_PARSERS;
-	private static final DateTimeFormatter[] DATE_FORMATTERS;
+	private static final String[] PATTERNS = { "yyyyMMdd", "yyyy-MM-dd", "yyyy/MM/dd", "yyyy-MM-dd HH:mm:ss",
+			"yyyy-MM-dd HH:mm", "yyyy-MM-dd HH", "yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd HH:mm" };
+	private static final DateTimeFormatterWrapper[] DATE_FORMATTERS = new DateTimeFormatterWrapper[PATTERNS.length];
 
-	private static final LoadingCache<String, DateTimeFormatter> DATE_TIME_FORMATTER_CACHE = Caffeine.newBuilder()
-			.build(new CacheLoader<String, DateTimeFormatter>() {
+	private static final LoadingCache<String, DateTimeFormatterWrapper> DATE_TIME_FORMATTER_CACHE = Caffeine
+			.newBuilder().build(new CacheLoader<String, DateTimeFormatterWrapper>() {
 
 				@Override
-				public DateTimeFormatter load(String key) throws Exception {
-					return DateTimeFormatter.ofPattern(key);
+				public DateTimeFormatterWrapper load(String key) throws Exception {
+					return new DateTimeFormatterWrapper(key);
 				}
 
 			});
 
 	static {
-		DATE_FORMATTERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd"),
-				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd") };
-		DATE_TIME_PARSERS = new DateTimeFormatter[] { DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH:mm:ss"),
-				DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH:mm"), DATE_TIME_FORMATTER_CACHE.get("yyyy-MM-dd HH"),
-				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH:mm:ss"), DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH:mm"),
-				DATE_TIME_FORMATTER_CACHE.get("yyyy/MM/dd HH") };
+		for (int i = 0; i < PATTERNS.length; i++) {
+			DATE_FORMATTERS[i] = DATE_TIME_FORMATTER_CACHE.get(PATTERNS[i]);
+		}
 	}
 
 	private Times() {
@@ -93,11 +90,7 @@ public class Times {
 	 * @return
 	 */
 	public static Optional<LocalDateTime> parse(String text, String pattern) {
-		try {
-			return Optional.of(LocalDateTime.parse(text, DATE_TIME_FORMATTER_CACHE.get(pattern)));
-		} catch (DateTimeParseException e) {
-			return Optional.empty();
-		}
+		return DATE_TIME_FORMATTER_CACHE.get(pattern).parse(text);
 	}
 
 	/**
@@ -107,25 +100,21 @@ public class Times {
 	 * @return
 	 */
 	public static Optional<LocalDateTime> parse(String text) {
-		if (text.indexOf(' ') == -1) {
-			// may be date
-			for (DateTimeFormatter formatter : DATE_FORMATTERS) {
-				try {
-					return Optional.of(LocalDateTime.from(LocalDate.parse(text, formatter).atStartOfDay()));
-				} catch (DateTimeParseException e) {
-					continue;
-				}
+		Objects.requireNonNull(text);
+		String trim = text.trim();
+		int len = trim.length();
+		for (DateTimeFormatterWrapper wrapper : DATE_FORMATTERS) {
+			if (wrapper.length == len) {
+				return wrapper.parse(text);
 			}
+		}
+		// 时间戳
+		try {
+			Long stamp = Long.parseLong(trim);
+			return Optional.of(LocalDateTime.ofInstant(Instant.ofEpochMilli(stamp), ZoneId.systemDefault()));
+		} catch (DateTimeException | NumberFormatException e) {
 			return Optional.empty();
 		}
-		for (DateTimeFormatter formatter : DATE_TIME_PARSERS) {
-			try {
-				return Optional.of(LocalDateTime.parse(text, formatter));
-			} catch (DateTimeParseException e) {
-				continue;
-			}
-		}
-		return Optional.empty();
 	}
 
 	/**
@@ -138,11 +127,7 @@ public class Times {
 	public static String format(Temporal temporal, String pattern) {
 		Objects.requireNonNull(temporal);
 		Objects.requireNonNull(pattern);
-		DateTimeFormatter dtf = DATE_TIME_FORMATTER_CACHE.get(pattern);
-		if (dtf == null) {
-			throw new SystemException("无法获取" + pattern + "对应的DateTimeFormatter");
-		}
-		return dtf.format(temporal);
+		return DATE_TIME_FORMATTER_CACHE.get(pattern).format(temporal);
 	}
 
 	/**
@@ -188,5 +173,111 @@ public class Times {
 	public static Date toDate(LocalDateTime time) {
 		Objects.requireNonNull(time);
 		return Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
+	}
+
+	/**
+	 * 从日期中获取年份
+	 * 
+	 * @param temporal
+	 * @return
+	 * @see Temporal#get(ChronoField.YEAR)
+	 */
+	public static int getYear(Temporal temporal) {
+		Objects.requireNonNull(temporal);
+		return temporal.get(ChronoField.YEAR);
+	}
+
+	/**
+	 * 从日期中获取月份
+	 * 
+	 * @param temporal
+	 * @return
+	 * @see Temporal#get(ChronoField.MONTH_OF_YEAR)
+	 */
+	public static int getMonthOfYear(Temporal temporal) {
+		Objects.requireNonNull(temporal);
+		return temporal.get(ChronoField.MONTH_OF_YEAR);
+	}
+
+	/**
+	 * 从日期中获取是某個月的第幾天
+	 * 
+	 * @param temporal
+	 * @return
+	 * @see Temporal#get(ChronoField.MONTH_OF_YEAR)
+	 */
+	public static int getDayOfMonth(Temporal temporal) {
+		Objects.requireNonNull(temporal);
+		return temporal.get(ChronoField.DAY_OF_MONTH);
+	}
+
+	/**
+	 * 从日期中获取年份
+	 * 
+	 * @param date
+	 * @return
+	 * @see #getYear(Temporal)
+	 */
+	public static int getYear(Date date) {
+		Objects.requireNonNull(date);
+		return getYear(toLocalDateTime(date));
+	}
+
+	/**
+	 * 从日期中获取月份
+	 * 
+	 * @param date
+	 * @return
+	 * @see #getMonthOfYear(Temporal)
+	 */
+	public static int getMonthOfYear(Date date) {
+		Objects.requireNonNull(date);
+		return getMonthOfYear(toLocalDateTime(date));
+	}
+
+	/**
+	 * 从日期中获取是某個月的第幾天
+	 * 
+	 * @param date
+	 * @return
+	 * @see #getDayOfMonth(Temporal)
+	 */
+	public static int getDayOfMonth(Date date) {
+		Objects.requireNonNull(date);
+		return getDayOfMonth(toLocalDateTime(date));
+	}
+
+	private static final class DateTimeFormatterWrapper {
+		private final String pattern;
+		private final int length;
+		private final DateTimeFormatter formatter;
+		private final boolean isDate;
+
+		public DateTimeFormatterWrapper(String pattern) {
+			super();
+			Objects.requireNonNull(pattern);
+			this.pattern = pattern.trim();
+			this.length = this.pattern.length();
+			this.formatter = DateTimeFormatter.ofPattern(this.pattern);
+			this.isDate = this.pattern.indexOf(' ') == -1;
+		}
+
+		String format(Temporal temporal) {
+			return formatter.format(temporal);
+		}
+
+		Optional<LocalDateTime> parse(String text) {
+			try {
+				LocalDateTime time;
+				if (isDate) {
+					time = LocalDateTime.from(LocalDate.parse(text, formatter).atStartOfDay());
+				} else {
+					time = LocalDateTime.parse(text, formatter);
+				}
+				return Optional.of(time);
+			} catch (DateTimeParseException e) {
+				return Optional.empty();
+			}
+		}
 	}
 }

@@ -36,14 +36,12 @@
 		<typeAlias type="me.qyh.blog.core.entity.Fragment"
 			alias="Fragment" />
 
-		<typeAlias type="me.qyh.blog.core.vo.ArticleDateArchive"
-			alias="ArticleDateArchive" />
-		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceArchive"
-			alias="ArticleSpaceArchive" />
-
 		<typeAlias
-			type="me.qyh.blog.core.service.StatisticsService$ArticleStatistics"
+			type="me.qyh.blog.core.vo.ArticleStatistics"
 			alias="ArticleStatistics" />
+		<typeAlias
+			type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
+			alias="ArticleSpaceStatistics" />
 
 		<typeAlias type="me.qyh.blog.core.entity.Comment" alias="Comment" />
 		<typeAlias type="me.qyh.blog.core.entity.Comment$CommentStatus"

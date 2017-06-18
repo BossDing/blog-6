@@ -59,28 +59,20 @@ public class UserServiceImpl implements UserService, UserQueryService, Initializ
 
 	@Override
 	public User login(LoginBean loginBean) throws LogicException {
-		if (user.getName().equals(loginBean.getUsername())) {
-			verifyPassword(loginBean.getPassword());
+		if (user.getName().equals(loginBean.getUsername())
+				&& BCrypts.matches(loginBean.getPassword(), user.getPassword())) {
 			return user;
 		}
 		throw new LogicException("user.loginFail", "登录失败");
 	}
 
-	private void verifyPassword(String password) throws LogicException {
-		if (!BCrypts.matches(password, user.getPassword())) {
-			throw new LogicException("user.loginFail", "登录失败");
-		}
-	}
-
 	@Override
 	public User update(User user, String password) throws LogicException {
-		verifyPassword(password);
-		update(user);
-		return getUser();
-	}
-
-	public void update(User user) throws LogicException {
+		if (!BCrypts.matches(password, this.user.getPassword())) {
+			throw new LogicException("user.update.errorPwd", "密码错误");
+		}
 		save(user);
+		return getUser();
 	}
 
 	private synchronized void save(User user) {

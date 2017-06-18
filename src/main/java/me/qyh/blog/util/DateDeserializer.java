@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.entity;
+package me.qyh.blog.util;
 
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
@@ -23,8 +23,6 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-
-import me.qyh.blog.util.Times;
 
 /**
  * JsonFormat annotation可以解决同样的问题，但只能局限一种格式？

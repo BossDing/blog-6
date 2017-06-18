@@ -23,11 +23,9 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.core.vo.ArticleDateArchives;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.ArticleSpaceArchive;
+import me.qyh.blog.core.vo.ArticleArchiveNode;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
 
 /**
  * 文章服务
@@ -56,29 +54,6 @@ public interface ArticleService {
 	 * @return 文章
 	 */
 	Optional<Article> getArticleForEdit(Integer id);
-
-	/**
-	 * 查询<b>当前空间</b>文章日期归档
-	 * <p>
-	 * <b>用于DataTag</b>
-	 * </p>
-	 * 
-	 * @param space
-	 *            空间
-	 * @param mode
-	 *            归档方式
-	 * @return 文章归档
-	 * @throws LogicException
-	 *             空间不存在
-	 */
-	ArticleDateArchives queryArticleDateArchives(ArticleDateFileMode mode) throws LogicException;
-
-	/**
-	 * 查询文章空间归档
-	 * 
-	 * @return 文章空间归档集合
-	 */
-	List<ArticleSpaceArchive> queryArticleSpaceArchives();
 
 	/**
 	 * 分页查询文章
@@ -215,5 +190,12 @@ public interface ArticleService {
 	 * @throws LogicException
 	 */
 	Article updateArticle(Article article) throws LogicException;
+
+	/**
+	 * 查询文章归档
+	 * 
+	 * @return 年月日归档
+	 */
+	List<ArticleArchiveNode> selectArticleArchives();
 
 }

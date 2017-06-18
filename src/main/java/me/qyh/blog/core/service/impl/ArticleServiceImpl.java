@@ -16,9 +16,11 @@
 package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,18 +62,17 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.core.vo.ArticleDateArchive;
-import me.qyh.blog.core.vo.ArticleDateArchives;
-import me.qyh.blog.core.vo.ArticleDateArchives.ArticleDateFileMode;
+import me.qyh.blog.core.vo.ArticleArchiveNode;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.ArticleSpaceArchive;
 import me.qyh.blog.core.vo.TagCount;
+import me.qyh.blog.util.Times;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -96,6 +98,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private ArticleIndexer articleIndexer;
+	@Autowired
+	private Messages messages;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -115,6 +119,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Autowired(required = false)
 	private ArticleViewedLogger articleViewedLogger;
+
+	private final Comparator<ArticleArchiveNode> archiveNodeComparator = Comparator
+			.comparing(ArticleArchiveNode::getOrder).reversed();
+	/**
+	 * 文章排序，按照发布时间倒叙排，如果发布时间相同，按照ID倒序排.
+	 */
+	private final Comparator<Article> articleComparator = Comparator.comparing(Article::getPubDate).reversed()
+			.thenComparing(Comparator.comparing(Article::getId).reversed());
 
 	@Override
 	@Transactional(readOnly = true)
@@ -148,7 +160,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -230,7 +242,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -292,7 +304,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article publishDraft(Integer id) throws LogicException {
@@ -335,27 +347,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 		}
 		return rebuildIndexWhenTagChange;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	@Cacheable(value = "articleArchivesCache", key = "'dateArchives-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-mode-'+#mode.name()+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
-	public ArticleDateArchives queryArticleDateArchives(ArticleDateFileMode mode) throws LogicException {
-		List<ArticleDateArchive> archives = articleDao.selectDateArchives(Environment.getSpace(), mode,
-				Environment.isLogin());
-		ArticleDateArchives _archives = new ArticleDateArchives(archives, mode);
-		_archives.calDate();
-		return _archives;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	@Cacheable(value = "articleArchivesCache", key = "'dateArchives-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
-	public List<ArticleSpaceArchive> queryArticleSpaceArchives() {
-		if (Environment.hasSpace()) {
-			return Collections.emptyList();
-		}
-		return articleDao.selectSpaceArchives(Environment.isLogin());
 	}
 
 	/**
@@ -423,7 +414,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article logicDeleteArticle(Integer id) throws LogicException {
@@ -449,7 +440,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "articleFilesCache", allEntries = true),
+	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
 			@CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article recoverArticle(Integer id) throws LogicException {
@@ -492,7 +483,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
-			@CacheEvict(value = "articleFilesCache", allEntries = true, condition = "#result > 0") })
+			@CacheEvict(value = "archiveCache", allEntries = true, condition = "#result > 0") })
 	public int publishScheduled() {
 		return scheduleManager.publish();
 	}
@@ -547,6 +538,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public Optional<Article> selectRandom(boolean queryLock) {
 		return Optional.ofNullable(articleDao.selectRandom(Environment.getSpace(), Environment.isLogin(), queryLock));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * <b>数据量较小时候适用</b>
+	 * </p>
+	 */
+	@Override
+	public List<ArticleArchiveNode> selectArticleArchives() {
+		List<Article> articles = articleDao.selectSimplePublished(Environment.getSpace(), Environment.isLogin());
+		return buildArticleArchiveNodes(articles);
 	}
 
 	@Override
@@ -804,4 +807,64 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
+
+	private List<ArticleArchiveNode> buildArticleArchiveNodes(List<Article> articles) {
+		if (CollectionUtils.isEmpty(articles)) {
+			return Collections.emptyList();
+		}
+
+		// group by localDate
+		Map<LocalDate, List<Article>> map = articles.stream()
+				.collect(Collectors.groupingBy(art -> Times.toLocalDateTime(art.getPubDate()).toLocalDate()));
+
+		Set<LocalDate> dateSet = map.keySet();
+		// 年份节点
+		Map<Integer, List<LocalDate>> yearMap = dateSet.stream().collect(Collectors.groupingBy(Times::getYear));
+		List<ArticleArchiveNode> nodes = new ArrayList<>(yearMap.size());
+		for (Map.Entry<Integer, List<LocalDate>> it : yearMap.entrySet()) {
+			ArticleArchiveNode node = new ArticleArchiveNode();
+			node.setText(messages.getMessage(new Message("archive.year", it.getKey() + "年", it.getKey())));
+			node.setOrder(it.getKey());
+			// 月份节点
+			Map<Integer, List<LocalDate>> monthMap = it.getValue().stream()
+					.collect(Collectors.groupingBy(Times::getMonthOfYear));
+			for (Map.Entry<Integer, List<LocalDate>> monthIt : monthMap.entrySet()) {
+				ArticleArchiveNode monthNode = new ArticleArchiveNode();
+				monthNode.setOrder(monthIt.getKey());
+				monthNode.setText(
+						messages.getMessage(new Message("archive.month", monthIt.getKey() + "月", monthIt.getKey())));
+
+				// 天节点
+				Map<Integer, List<LocalDate>> dayMap = monthIt.getValue().stream()
+						.collect(Collectors.groupingBy(Times::getDayOfMonth));
+				for (Map.Entry<Integer, List<LocalDate>> dayIt : dayMap.entrySet()) {
+					ArticleArchiveNode dayNode = new ArticleArchiveNode();
+					dayNode.setOrder(dayIt.getKey());
+					dayNode.setText(
+							messages.getMessage(new Message("archive.day", dayIt.getKey() + "日", dayIt.getKey())));
+					List<Article> dayArticles = map.get(dayIt.getValue().get(0));
+					dayArticles.sort(articleComparator);
+					if (!CollectionUtils.isEmpty(dayArticles)) {
+						// 文章节点
+						List<ArticleArchiveNode> articleNodes = new ArrayList<>(dayArticles.size());
+						for (Article dayArticle : dayArticles) {
+							ArticleArchiveNode articleNode = new ArticleArchiveNode();
+							articleNode.setText(dayArticle.getTitle());
+							articleNode.setArticle(dayArticle);
+							articleNodes.add(articleNode);
+						}
+						dayNode.setNodes(articleNodes);
+					}
+					monthNode.add(dayNode);
+				}
+				monthNode.getNodes().sort(archiveNodeComparator);
+				node.add(monthNode);
+			}
+			node.getNodes().sort(archiveNodeComparator);
+			nodes.add(node);
+		}
+		nodes.sort(archiveNodeComparator);
+		return nodes;
+	}
+
 }

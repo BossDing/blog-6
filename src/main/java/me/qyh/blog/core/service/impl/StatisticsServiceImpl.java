@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.BlogFileDao;
-import me.qyh.blog.core.dao.BlogFileDao.FileCountBean;
 import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
@@ -42,8 +41,17 @@ import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.StatisticsService;
+import me.qyh.blog.core.vo.ArticleDetailStatistics;
+import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.BlogFileCount;
+import me.qyh.blog.core.vo.CommentStatistics;
+import me.qyh.blog.core.vo.FileCountBean;
+import me.qyh.blog.core.vo.FileStatistics;
 import me.qyh.blog.core.vo.FileStoreBean;
+import me.qyh.blog.core.vo.PageStatistics;
+import me.qyh.blog.core.vo.StatisticsDetail;
+import me.qyh.blog.core.vo.TagDetailStatistics;
+import me.qyh.blog.core.vo.TagStatistics;
 
 @Service
 @Transactional(readOnly = true)
@@ -68,7 +76,11 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 	@Override
 	public ArticleStatistics queryArticleStatistics() {
-		return articleDao.selectStatistics(Environment.getSpace(), Environment.isLogin());
+		ArticleStatistics articleStatistics =  articleDao.selectStatistics(Environment.getSpace(), Environment.isLogin());
+		if(!Environment.hasSpace()){
+			articleStatistics.setSpaceStatisticsList(articleDao.selectArticleSpaceStatistics(Environment.isLogin()));
+		}
+		return articleStatistics;
 	}
 
 	@Override

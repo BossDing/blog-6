@@ -17,10 +17,12 @@ package me.qyh.blog.util;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -36,9 +38,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.core.entity.DateDeserializer;
 import me.qyh.blog.core.lock.LockArgumentResolver.SysLockDeserializer;
 import me.qyh.blog.core.lock.SysLock;
 import me.qyh.blog.core.message.Message;
@@ -87,11 +91,12 @@ public class Jsons {
 		}
 	};
 
-	private static final Gson gson = new GsonBuilder().setPrettyPrinting()
+	private static final Gson gson = new GsonBuilder()
 			.addSerializationExclusionStrategy(SERIALIZATION_EXCLUSION_STRATEGY)
 			.addDeserializationExclusionStrategy(DESERIALIZATION_EXCLUSION_STRATEGY).enableComplexMapKeySerialization()
 			.registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
+			.registerTypeAdapter(Date.class, new DateSerializer())
 			.registerTypeAdapter(SysLock.class, new SysLockDeserializer()).create();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Jsons.class);
@@ -442,4 +447,14 @@ public class Jsons {
 		}
 	}
 
+	private static final class DateSerializer implements JsonSerializer<Date> {
+
+		@Override
+		public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+			if (src == null) {
+				return JsonNull.INSTANCE;
+			}
+			return new JsonPrimitive(src.getTime());
+		}
+	}
 }

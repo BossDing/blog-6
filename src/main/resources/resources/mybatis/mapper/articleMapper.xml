@@ -30,15 +30,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<result column="space_lock" property="lockId" />
 		</association>
 	</resultMap>
-
-	<resultMap type="ArticleDateArchive" id="ArticleDateArchiveDetail">
-		<id column="art_id" />
-		<result column="pubDate" property="begin" />
-		<result column="pubDate" property="end" />
-		<result column="art_count" property="count" />
+	
+	<resultMap type="ArticleStatistics" id="ArticleStatisticsDetail">
+		<id column="space_id" />
+		<result column="lastPubDate" property="lastPubDate" />
+		<result column="lastModifyDate" property="lastModifyDate" />
+		<result column="totalHits" property="totalHits" />
+		<result column="totalArticles" property="totalArticles" />
 	</resultMap>
-
-	<resultMap type="ArticleSpaceArchive" id="ArticleSpaceArchiveDetail">
+	
+	<resultMap type="ArticleSpaceStatistics" id="ArticleSpaceStatisticsDetail">
 		<id column="space_id" />
 		<result column="art_count" property="count" />
 		<association property="space" javaType="Space">
@@ -48,13 +49,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</association>
 	</resultMap>
 
-	<resultMap type="ArticleStatistics" id="ArticleStatisticsDetail">
-		<id column="space_id" />
-		<result column="lastPubDate" property="lastPubDate" />
-		<result column="lastModifyDate" property="lastModifyDate" />
-		<result column="totalHits" property="totalHits" />
-		<result column="totalArticles" property="totalArticles" />
-	</resultMap>
 	<insert id="insert" useGeneratedKeys="true" keyProperty="id"
 		keyColumn="id">
 		INSERT INTO
@@ -296,48 +290,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		GROUP BY art.id
 	</select>
 
-	<select id="selectDateArchives" resultMap="ArticleDateArchiveDetail">
-		SELECT MIN(pubDate) AS pubDate,COUNT(*) AS art_count,MIN(art.id) AS
-		art_id
+	<select id="selectSimplePublished" resultMap="ArticleDetail">
+		SELECT
+		art.id AS art_id,
+		art.art_alias,
+		art.title,
+		art.pubDate,
+		art.lastModifyDate,
+		sp.space_alias,
+		
+		art.isPrivate,
+		art.art_lock,
+		space_lock,
+		sp.is_private AS space_is_private
+		
 		FROM blog_article art
-		LEFT OUTER JOIN blog_space sp ON
-		art.space_id = sp.id
-		WHERE art_status = 0<!-- PUBLISHED -->
+		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
+		WHERE art.art_status = 0
+		<if test="space != null">
+			AND space_id = #{space.id}
+		</if>
 		<if test="!queryPrivate">
 			AND art.isPrivate = false
 			AND sp.is_private = false
 		</if>
-		<choose>
-			<when test="space != null">
-				AND space_id = #{space.id}
-			</when>
-		</choose>
-		<choose>
-			<when test='mode.name() == "Y"'>
-				GROUP BY YEAR(pubDate)
-			</when>
-			<when test='mode.name() == "YM"'>
-				GROUP BY YEAR(pubDate),MONTH(pubDate)
-			</when>
-			<otherwise>
-				GROUP BY YEAR(pubDate),MONTH(pubDate),DAY(pubDate)
-			</otherwise>
-		</choose>
-		ORDER BY pubDate DESC
-	</select>
-
-	<select id="selectSpaceArchives" resultMap="ArticleSpaceArchiveDetail">
-		SELECT space_id,space_alias,space_name,COUNT(*) AS art_count
-		FROM
-		blog_article art
-		LEFT OUTER JOIN blog_space sp
-		ON art.space_id = sp.id
-		WHERE art_status = 0<!-- PUBLISHED -->
-		<if test="!queryPrivate">
-			AND art.isPrivate = false
-			AND sp.is_private = false
-		</if>
-		GROUP BY space_id
 	</select>
 
 	<select id="selectScheduled" resultMap="ArticleDetail">
@@ -568,6 +544,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		UPDATE blog_article SET space_id = #{newSpace.id}
 		WHERE space_id = #{oldSpace.id}
 	</update>
+	
+	<select id="selectArticleSpaceStatistics" resultMap="ArticleSpaceStatisticsDetail">
+		SELECT space_id,space_alias,space_name,COUNT(*) AS art_count
+		FROM
+		blog_article art
+		LEFT OUTER JOIN blog_space sp
+		ON art.space_id = sp.id
+		WHERE art_status = 0<!-- PUBLISHED -->
+		<if test="!queryPrivate">
+			AND art.isPrivate = false
+			AND sp.is_private = false
+		</if>
+		GROUP BY space_id
+	</select>
 
 	<sql id="articleDetailSql">
 		SELECT

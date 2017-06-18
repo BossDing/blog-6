@@ -21,21 +21,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.ArticleSpaceArchive;
+import me.qyh.blog.core.vo.ArticleArchiveNode;
 import me.qyh.blog.core.vo.DataTagProcessor;
 
-public class ArticleSpaceArchivesDataTagProcessor extends DataTagProcessor<List<ArticleSpaceArchive>> {
+/**
+ * 文章归档
+ * 
+ * @author Administrator
+ *
+ */
+public class ArticleArchivesDataTagProcessor extends DataTagProcessor<List<ArticleArchiveNode>> {
 
 	@Autowired
 	private ArticleService articleService;
 
-	public ArticleSpaceArchivesDataTagProcessor(String name, String dataName) {
+	public ArticleArchivesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
 	}
 
 	@Override
-	protected List<ArticleSpaceArchive> query(Attributes attributes) throws LogicException {
-		return articleService.queryArticleSpaceArchives();
+	protected List<ArticleArchiveNode> query(Attributes attributes) throws LogicException {
+		return articleService.selectArticleArchives();
 	}
 
 }

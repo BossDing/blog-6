@@ -15,16 +15,21 @@
  */
 package me.qyh.blog.core.vo;
 
+import java.io.Serializable;
+
 import me.qyh.blog.core.entity.Space;
 
 /**
- * 文章按照空间归档
  * 
  * @author Administrator
  *
  */
-public class ArticleSpaceArchive {
+public class ArticleSpaceStatistics implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Space space;
 	private int count;
 
