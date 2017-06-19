@@ -160,8 +160,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article updateArticle(Article article) throws LogicException {
@@ -242,8 +241,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article writeArticle(Article article) throws LogicException {
@@ -304,8 +302,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article publishDraft(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -414,8 +411,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article logicDeleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -440,8 +436,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@ArticleIndexRebuild
-	@Caching(evict = { @CacheEvict(value = "archiveCache", allEntries = true),
-			@CacheEvict(value = "hotTags", allEntries = true) })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article recoverArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
@@ -482,8 +477,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
-	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0"),
-			@CacheEvict(value = "archiveCache", allEntries = true, condition = "#result > 0") })
+	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true, condition = "#result > 0") })
 	public int publishScheduled() {
 		return scheduleManager.publish();
 	}

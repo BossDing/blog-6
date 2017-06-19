@@ -36,7 +36,7 @@
           addHref(data[i]);
       	}
   		$(function(){
-  			$('#tree').treeview({data: data,enableLinks:true,showBorder:false});
+  			$('#tree').treeview({data: data,enableLinks:true,showBorder:false,selectable:false});
   		});
   		function addHref(data){
   			var art = data.article;
