@@ -444,7 +444,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return new ArrayList<>();
 		}
 		// 如果导入的空间不存在，直接返回
-		Space space = null;
+		Space space;
 		try {
 			space = spaceCache.checkSpace(spaceId);
 		} catch (LogicException e) {
@@ -591,7 +591,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public void clearPreview() {
-		previewManager.clearPreview();
+		previewManager.clearPreview(true);
 	}
 
 	/**
@@ -657,7 +657,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@EventListener
 	public void handleTemplateEvitEvent(TemplateEvitEvent evt) {
 		if (evt.clear()) {
-			previewManager.clearPreview();
+			previewManager.clearPreview(false);
 		} else {
 			previewManager.remove(evt.getTemplateNames());
 		}
@@ -801,9 +801,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		// 各个空间文章详情页面
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
 				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
-		//文章归档页面
-		defaultTemplates.put("archives", new SystemTemplate("archives","resources/page/PAGE_ARCHIVES.html"));
-		defaultTemplates.put("space/{alias}/archives", new SystemTemplate("space/{alias}/archives","resources/page/PAGE_ARCHIVES.html"));
+		// 文章归档页面
+		defaultTemplates.put("archives", new SystemTemplate("archives", "resources/page/PAGE_ARCHIVES.html"));
+		defaultTemplates.put("space/{alias}/archives",
+				new SystemTemplate("space/{alias}/archives", "resources/page/PAGE_ARCHIVES.html"));
 
 		long stamp = templateMappingRegister.lockWrite();
 		try {
@@ -837,9 +838,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			List<Space> spaces = spaceCache.getSpaces(true);
 			Set<String> templateNames = new HashSet<>();
 			for (String name : names) {
-				templateNames.add(new Fragment(name).getTemplateName());
+				templateNames.add(Fragment.getTemplateName(name, null));
 				for (Space space : spaces) {
-					templateNames.add(new Fragment(name, space).getTemplateName());
+					templateNames.add(Fragment.getTemplateName(name, space));
 				}
 			}
 			this.applicationEventPublisher
@@ -911,7 +912,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (fragmentMap.containsKey(name)) {
 				continue;
 			}
-			Optional<Fragment> optional = queryFragmentWithTemplateName(new Fragment(name, space).getTemplateName());
+			Optional<Fragment> optional = queryFragmentWithTemplateName(Fragment.getTemplateName(name, space));
 			fragmentMap.put(name, optional.orElse(null));
 			if (optional.isPresent()) {
 				fragmentMap2.put(name, optional.get());
@@ -1343,18 +1344,30 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 
-		public void clearPreview() {
+		/**
+		 * 清空预览页面
+		 * 
+		 * @param unmapping
+		 *            是否解除RequestMapping
+		 *            <p>
+		 *            因为在{@code TemplateEvitEvent}的事件处理中同样会调用这个方法，此时unmapping可能导致死锁，因为{@code StampedLock}是不可重入的
+		 *            </p>
+		 * 
+		 */
+		public void clearPreview(boolean unmapping) {
 			lock.writeLock().lock();
 			try {
 				previewMap.clear();
 				if (pathTemplateService != null) {
 					pathTemplateService.deleteAllPreview();
 				}
-				long stamp = templateMappingRegister.lockWrite();
-				try {
-					templateMappingRegister.unregisterPreviewMappings();
-				} finally {
-					templateMappingRegister.unlockWrite(stamp);
+				if (unmapping) {
+					long stamp = templateMappingRegister.lockWrite();
+					try {
+						templateMappingRegister.unregisterPreviewMappings();
+					} finally {
+						templateMappingRegister.unlockWrite(stamp);
+					}
 				}
 			} finally {
 				lock.writeLock().unlock();
@@ -1432,20 +1445,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			lock.writeLock().lock();
 			try {
-				long stamp = templateMappingRegister.tryLockWrite();
-				try {
-					previewMap.entrySet().removeIf(it -> {
-						String previewTemplateName = it.getValue().getTemplateName();
-						for (String templateName : templateNames) {
-							if (previewTemplateName.equals(templateName)) {
-								return true;
-							}
+				previewMap.entrySet().removeIf(it -> {
+					String previewTemplateName = it.getValue().getTemplateName();
+					for (String templateName : templateNames) {
+						if (previewTemplateName.equals(templateName)) {
+							return true;
 						}
-						return false;
-					});
-				} finally {
-					templateMappingRegister.unlockWrite(stamp);
-				}
+					}
+					return false;
+				});
 			} finally {
 				lock.writeLock().unlock();
 			}
@@ -1516,15 +1524,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		/**
-		 * 尝试写锁
-		 * 
-		 * @return 0如果加锁失败
-		 */
-		public long tryLockWrite() {
-			return mappingRegistry.getLock().tryWriteLock();
-		}
-
-		/**
 		 * 写锁
 		 * 
 		 * @return stamp
@@ -1539,9 +1538,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		 * @param stamp
 		 */
 		public void unlockWrite(long stamp) {
-			if (stamp != 0) {
-				this.mappingRegistry.getLock().unlockWrite(stamp);
-			}
+			this.mappingRegistry.getLock().unlockWrite(stamp);
 		}
 
 		/**

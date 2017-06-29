@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.web;
 
 import javax.servlet.http.HttpServletRequest;
@@ -7,9 +22,6 @@ import me.qyh.blog.util.Validators;
 /**
  * 
  * 在代理环境下用来获取IP地址
- * <p>
- * 如果采用了nginx来做代理，那么
- * </p>
  * <p>
  * <b>因为X-Forwarded-For可以被伪造，所以在没有代理的情况下不能用于直接获取IP地址</b>
  * </p>

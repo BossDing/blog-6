@@ -68,8 +68,8 @@ public class OtherController {
 			HttpServletResponse response) {
 		try {
 			return new JsonResult(true,
-					templateRender.render(new Fragment(Webs.decode(fragment), Environment.getSpace()).getTemplateName(),
-							null, request, response, new ParseConfig(true)));
+					templateRender.render(Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null,
+							request, response, new ParseConfig(true)));
 		} catch (TemplateRenderException e) {
 			return new JsonResult(false, e.getRenderErrorDescription());
 		}

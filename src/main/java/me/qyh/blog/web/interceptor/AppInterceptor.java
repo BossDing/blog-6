@@ -51,7 +51,6 @@ import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.GlobalControllerExceptionHandler;
 import me.qyh.blog.web.IPGetter;
 import me.qyh.blog.web.RequestMatcher;
 import me.qyh.blog.web.Webs;
@@ -83,7 +82,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		if (executeHandler(handler)) {
+		if (isHandlerMethod(handler)) {
 			String spaceAlias = Webs.getSpaceFromRequest(request);
 			try {
 				HttpSession session = request.getSession(false);
@@ -93,7 +92,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				}
 
 				Environment.setUser(user);
-				enableLogin(handler);
+				enableLogin((HandlerMethod) handler);
 
 				setLockKeys(request);
 
@@ -129,12 +128,9 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
-	private void enableLogin(Object methodHandler) {
+	private void enableLogin(HandlerMethod methodHandler) {
 		// auth check
-		if (methodHandler instanceof HandlerMethod) {
-			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
-					.ifPresent(ann -> Environment.doAuthencation());
-		}
+		getAnnotation(methodHandler.getMethod(), EnsureLogin.class).ifPresent(ann -> Environment.doAuthencation());
 	}
 
 	/**
@@ -161,27 +157,16 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
 			ModelAndView modelAndView) throws Exception {
-		// ajax request
-		// static res request
-		// then mv is null
 		if (modelAndView != null) {
 			LOGGER.debug("将用户和路径处理器放入model中");
 			uiExposeHelper.addVariables(request);
 		}
 	}
 
-	/**
-	 * 如果抛出异常，首先会被GlobalControllerExceptionHandler所捕获处理<br/>
-	 * 但GlobalControllerExceptionHandler无法处理页面渲染时发生的异常
-	 * 
-	 * @see GlobalControllerExceptionHandler
-	 */
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		if (executeHandler(handler)) {
-			removeContext();
-		}
+		removeContext();
 	}
 
 	private void removeContext() {
@@ -304,7 +289,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		}
 	}
 
-	private boolean executeHandler(Object handler) {
+	private boolean isHandlerMethod(Object handler) {
 		return handler instanceof HandlerMethod;
 	}
 

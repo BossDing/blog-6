@@ -31,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Jsons;
 import me.qyh.blog.util.UrlUtils;
 
@@ -43,20 +42,36 @@ public class Webs {
 
 	}
 
+	/**
+	 * 判断是否是ajax请求
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public static boolean isAjaxRequest(HttpServletRequest request) {
 		return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
 	}
 
+	/**
+	 * 向响应中写入json信息
+	 * 
+	 * @param response
+	 * @param result
+	 * @throws IOException
+	 */
 	public static void writeInfo(HttpServletResponse response, JsonResult result) throws IOException {
 		response.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding(Constants.CHARSET.name());
 		Jsons.write(result, response.getWriter());
 	}
 
-	public static boolean isAction(HttpServletRequest request) {
-		return FileUtils.getFileExtension(request.getRequestURI()).trim().isEmpty();
-	}
-
+	/**
+	 * 解码
+	 * 
+	 * @see URLDecoder#decode(String)
+	 * @param toDecode
+	 * @return
+	 */
 	public static String decode(String toDecode) {
 		try {
 			return URLDecoder.decode(toDecode, Constants.CHARSET.name());
@@ -65,6 +80,12 @@ public class Webs {
 		}
 	}
 
+	/**
+	 * 判断是否是解锁请求
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public static boolean unlockRequest(HttpServletRequest request) {
 		String path = request.getRequestURI();
 		for (String unlockPattern : UNLOCK_PATTERNS) {
@@ -111,9 +132,6 @@ public class Webs {
 	public static String getSpaceFromPath(String path) {
 		if (UrlUtils.match("space/*/**", path)) {
 			return path.split("/")[1];
-		}
-		if (UrlUtils.match("apis/space/*/**", path)) {
-			return path.split("/")[2];
 		}
 		return null;
 	}
