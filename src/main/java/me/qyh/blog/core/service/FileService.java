@@ -37,8 +37,6 @@ import me.qyh.blog.core.vo.UploadedFile;
  */
 public interface FileService {
 
-	public static final String SPLIT_CHAR = "/";
-
 	/**
 	 * 上传文件
 	 * 

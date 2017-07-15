@@ -10,10 +10,10 @@
 			th:text="${articleStatistics.totalHits}"></span></li>
 		<li class="list-group-item"
 			th:if="${articleStatistics.lastPubDate != null}"><strong>最后发布日期：</strong><span
-			th:text="${messages.getMessage(timeDiffParser.parseDiff(articleStatistics.lastPubDate))}"></span></li>
+			th:text="${times.format(articleStatistics.lastPubDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastPubDate)}"></span></li>
 		<li class="list-group-item"
 			th:if="${articleStatistics.lastModifyDate != null}"><strong>最后修改日期：</strong><span
-			th:text="${messages.getMessage(timeDiffParser.parseDiff(articleStatistics.lastModifyDate))}"></span></li>
+			th:text="${times.format(articleStatistics.lastModifyDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastModifyDate)}"></span></li>
 	</ul>
 </div>
 <div th:unless="${#lists.isEmpty(articleStatistics.spaceStatisticsList)}" class="panel panel-default">

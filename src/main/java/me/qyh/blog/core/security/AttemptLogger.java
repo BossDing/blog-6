@@ -18,9 +18,6 @@ package me.qyh.blog.core.security;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.qyh.blog.core.exception.SystemException;
@@ -34,7 +31,7 @@ import me.qyh.blog.core.exception.SystemException;
  * 基本用法:
  * 
  * <pre>
- * AttemptLogger logger = new AttemptLogger(10,100);
+ * AttemptLogger logger = attemptLoggerManager.createAttemptLogger();
  * if(logger.log(ip)){
  *   //判断验证码是否正确
  * }
@@ -44,7 +41,7 @@ import me.qyh.blog.core.exception.SystemException;
  * </pre>
  * 
  * @author Administrator
- *
+ * @see AttemptLoggerManager
  */
 public class AttemptLogger {
 
@@ -53,9 +50,7 @@ public class AttemptLogger {
 	private final Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
 	private final AtomicInteger maxAttemptCounter;
 
-	private final ScheduledExecutorService ses;
-
-	public AttemptLogger(int attemptCount, int maxAttemptCount, int sec) {
+	AttemptLogger(int attemptCount, int maxAttemptCount) {
 		super();
 		if (attemptCount < 1) {
 			throw new SystemException("尝试次数不能小于1");
@@ -63,9 +58,6 @@ public class AttemptLogger {
 		this.attemptCount = attemptCount;
 		this.maxAttemptCount = maxAttemptCount;
 		this.maxAttemptCounter = new AtomicInteger(0);
-		ses = Executors.newSingleThreadScheduledExecutor();
-
-		ses.scheduleWithFixedDelay(this::clear, 0, sec, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -132,11 +124,7 @@ public class AttemptLogger {
 		});
 	}
 
-	public void close() {
-		this.ses.shutdownNow();
-	}
-
-	private void clear() {
+	void clear() {
 		map.keySet().forEach(this::remove);
 	}
 

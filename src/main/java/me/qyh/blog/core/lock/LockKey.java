@@ -37,6 +37,6 @@ public interface LockKey extends Serializable {
 	 * 
 	 * @return 钥匙
 	 */
-	Object getKey();
+	Serializable getKey();
 
 }

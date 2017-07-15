@@ -67,6 +67,11 @@ public class ArticleQueryParam extends PageQueryParam {
 		HITS, PUBDATE, LASTMODIFYDATE
 	}
 
+	/**
+	 * @since 5.5.5
+	 */
+	private Integer tagId;
+
 	public ArticleQueryParam() {
 		super();
 	}
@@ -202,6 +207,14 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setSpaceIds(Set<Integer> spaceIds) {
 		this.spaceIds = spaceIds;
+	}
+
+	public Integer getTagId() {
+		return tagId;
+	}
+
+	public void setTagId(Integer tagId) {
+		this.tagId = tagId;
 	}
 
 	@Override

@@ -42,6 +42,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.dao.ArticleDao;
@@ -358,6 +359,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		checkParam(param);
+		
+		//5.5.5
+		if(StringUtils.isEmpty(param.getTag())){
+			param.setTagId(null);
+		} else {
+			Tag tag = tagDao.selectByName(param.getTag());
+			if(tag == null){
+				return new PageResult<>(param, 0, Collections.emptyList());
+			}
+			param.setTagId(tag.getId());
+		}
+		
 		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param);

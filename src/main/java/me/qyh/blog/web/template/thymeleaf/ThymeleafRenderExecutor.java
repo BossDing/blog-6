@@ -70,10 +70,10 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		Locale locale = LocaleContextHolder.getLocale();
 
 		final Map<String, Object> mergedModel = new HashMap<>(30);
-		@SuppressWarnings("unchecked")
 
 		// View.PATH_VARIABLES 只能获取被PathVariable annotation属性标记的属性
 		// 这里需要获取optional PathVariable
+		@SuppressWarnings("unchecked")
 		final Map<String, Object> pathVars = (Map<String, Object>) request
 				.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
@@ -152,7 +152,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 				context.setVariables(nameFragmentParameters);
 
 			}
-			
+
 		}
 
 		final Set<String> processMarkupSelectors;

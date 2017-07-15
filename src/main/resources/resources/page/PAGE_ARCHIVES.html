@@ -42,9 +42,9 @@
   			var art = data.article;
            if(art){
              if(art.alias && art.alias != null){
-             	data.href = actPath+'/space/'+art.space.alias+'/article/'+art.alias
+             	data.href = actPath+'/article/'+art.alias
              }else{
-             	data.href = actPath+'/space/'+art.space.alias+'/article/'+art.id
+             	data.href = actPath+'/article/'+art.id
              }
            }
           data.state = {

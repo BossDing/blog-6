@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.lock;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -67,7 +68,7 @@ public class QALock extends SysLock {
 			}
 
 			@Override
-			public Object getKey() {
+			public Serializable getKey() {
 				return answer;
 			}
 		};

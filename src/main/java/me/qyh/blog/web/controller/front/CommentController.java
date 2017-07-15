@@ -21,8 +21,6 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -39,6 +37,7 @@ import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.AttemptLogger;
+import me.qyh.blog.core.security.AttemptLoggerManager;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.web.CaptchaValidator;
@@ -46,7 +45,7 @@ import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.validator.CommentValidator;
 
 @Controller("commentController")
-public class CommentController implements InitializingBean, ApplicationListener<ContextClosedEvent> {
+public class CommentController implements InitializingBean {
 
 	@Autowired
 	private CommentService commentService;
@@ -56,11 +55,13 @@ public class CommentController implements InitializingBean, ApplicationListener<
 	private UrlHelper urlHelper;
 	@Autowired
 	private CaptchaValidator captchaValidator;
+	@Autowired
+	private AttemptLoggerManager attemptLoggerManager;
 
 	@Value("${comment.attempt.count:5}")
 	private int attemptCount;
 
-	@Value("${comment.attempt.maxCount:100}")
+	@Value("${comment.attempt.maxCount:50}")
 	private int maxAttemptCount;
 
 	@Value("${comment.attempt.sleepSec:60}")
@@ -122,11 +123,6 @@ public class CommentController implements InitializingBean, ApplicationListener<
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.attemptLogger = new AttemptLogger(attemptCount, maxAttemptCount, sleepSec);
-	}
-
-	@Override
-	public void onApplicationEvent(ContextClosedEvent event) {
-		this.attemptLogger.close();
+		this.attemptLogger = attemptLoggerManager.createAttemptLogger(attemptCount, maxAttemptCount, sleepSec);
 	}
 }

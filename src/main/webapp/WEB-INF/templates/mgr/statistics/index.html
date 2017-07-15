@@ -29,12 +29,12 @@
 									<tr th:if="${articleStatistics.lastPubDate != null}">
 										<th>最后发布日期</th>
 										<td
-											th:text="${messages.getMessage(timeDiffParser.parseDiff(articleStatistics.lastPubDate))}"></td>
+											th:text="${times.format(articleStatistics.lastPubDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastPubDate)}"></td>
 									</tr>
 									<tr th:if="${articleStatistics.lastModifyDate != null}">
 										<th>最后修改日期</th>
 										<td
-											th:text="${messages.getMessage(timeDiffParser.parseDiff(articleStatistics.lastModifyDate))}"></td>
+											th:text="${times.format(articleStatistics.lastModifyDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastModifyDate)}"></td>
 									</tr>
 									<tr>
 										<th>文章总数</th>

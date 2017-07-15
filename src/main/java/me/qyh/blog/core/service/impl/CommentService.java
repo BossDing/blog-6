@@ -558,6 +558,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 			return false;
 		}
 		lockManager.openLock(article);
+		lockManager.openLock(article.getSpace());
 		return true;
 	}
 

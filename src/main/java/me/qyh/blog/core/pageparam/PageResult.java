@@ -37,12 +37,6 @@ public class PageResult<T> {
 
 	}
 
-	public void decrease(int count) {
-		this.totalRow -= count;
-		this.totalPage = totalRow % pageSize == 0 ? totalRow / pageSize : totalRow / pageSize + 1;
-		countListbeginAndListend();
-	}
-
 	public PageResult(PageQueryParam param, int totalRow, List<T> datas) {
 		this.pageSize = param.getPageSize();
 		this.offset = param.getOffset();

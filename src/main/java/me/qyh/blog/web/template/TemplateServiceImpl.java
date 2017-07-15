@@ -99,7 +99,6 @@ import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.core.service.FileService;
 import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
@@ -1008,7 +1007,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			} else {
 				template = pathTemplates
-						.get("space/" + spaceAlias + (path.isEmpty() ? "" : FileService.SPLIT_CHAR + path));
+						.get("space/" + spaceAlias + (path.isEmpty() ? "" : "/" + path));
 			}
 			if (template == null) {
 				// 再次寻找 public pub
@@ -1422,7 +1421,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					}
 					PatternsRequestCondition condition = new PatternsRequestCondition(
 							pathSet.toArray(new String[pathSet.size()]));
-					List<String> matches = condition.getMatchingPatterns(FileService.SPLIT_CHAR + path);
+					List<String> matches = condition.getMatchingPatterns("/" + path);
 					if (!matches.isEmpty()) {
 						String bestMatch = matches.get(0).substring(1);
 						template = previewMap.get(bestMatch);
@@ -1560,7 +1559,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			// 此时应该遍历查找
 			// 因为space/{alias}和space/test是两个不同的RequestMapping
 			// 但是space/{alias}可以映射到space/test
-			String lookupPath = FileService.SPLIT_CHAR + path;
+			String lookupPath = "/" + path;
 			boolean hasPathVariable = StringUtils.substringBetween(path, "{", "}") != null;
 
 			for (Map.Entry<RequestMappingInfo, HandlerMethod> it : mappingRegistry.getMappings().entrySet()) {
@@ -1692,7 +1691,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		private boolean isKeyPath(String path) {
-			String lookupPath = FileService.SPLIT_CHAR + path;
+			String lookupPath = "/" + path;
 			return !condition.getMatchingPatterns(lookupPath).isEmpty();
 		}
 

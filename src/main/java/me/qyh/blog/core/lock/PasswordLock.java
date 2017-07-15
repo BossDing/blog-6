@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.lock;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
@@ -70,7 +71,7 @@ public class PasswordLock extends SysLock {
 			}
 
 			@Override
-			public Object getKey() {
+			public Serializable getKey() {
 				return requestPassword;
 			}
 		};

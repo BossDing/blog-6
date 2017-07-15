@@ -198,6 +198,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				<if test="!queryPrivate">
 					AND ba.isPrivate = FALSE 
 					AND bs.is_private = FALSE
+					AND ba.art_lock IS NULL
+					AND bs.space_lock IS NULL
 				</if>
 				<if test="!queryAdmin">
 					AND a.comment_admin = FALSE

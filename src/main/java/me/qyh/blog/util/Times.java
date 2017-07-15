@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
@@ -245,6 +246,28 @@ public class Times {
 	public static int getDayOfMonth(Date date) {
 		Objects.requireNonNull(date);
 		return getDayOfMonth(toLocalDateTime(date));
+	}
+
+	/**
+	 * 获取时间戳
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static long getTime(Date date) {
+		Objects.requireNonNull(date);
+		return date.getTime();
+	}
+
+	/**
+	 * 获取时间戳
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static long getTime(LocalDateTime date) {
+		Objects.requireNonNull(date);
+		return date.atZone(ZoneOffset.systemDefault()).toInstant().toEpochMilli();
 	}
 
 	private static final class DateTimeFormatterWrapper {

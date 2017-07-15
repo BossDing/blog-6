@@ -22,8 +22,6 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -44,6 +42,7 @@ import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.AttemptLogger;
+import me.qyh.blog.core.security.AttemptLoggerManager;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.service.UserService;
@@ -55,7 +54,7 @@ import me.qyh.blog.web.validator.LoginBean;
 import me.qyh.blog.web.validator.LoginBeanValidator;
 
 @Controller("loginController")
-public class LoginController implements InitializingBean, ApplicationListener<ContextClosedEvent> {
+public class LoginController implements InitializingBean {
 
 	@Autowired
 	private CsrfTokenRepository csrfTokenRepository;
@@ -102,6 +101,8 @@ public class LoginController implements InitializingBean, ApplicationListener<Co
 	@Value("${login.attempt.sleepSec:300}")
 	private int sleepSec;
 
+	@Autowired
+	private AttemptLoggerManager attemptLoggerManager;
 	private AttemptLogger attemptLogger;
 
 	@InitBinder(value = "loginBean")
@@ -192,7 +193,7 @@ public class LoginController implements InitializingBean, ApplicationListener<Co
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.attemptLogger = new AttemptLogger(attemptCount, maxAttemptCount, sleepSec);
+		this.attemptLogger = attemptLoggerManager.createAttemptLogger(attemptCount, maxAttemptCount, sleepSec);
 
 		if (ga != null) {
 			mapping.registerMapping(
@@ -202,10 +203,4 @@ public class LoginController implements InitializingBean, ApplicationListener<Co
 							HttpServletRequest.class, HttpServletResponse.class));
 		}
 	}
-
-	@Override
-	public void onApplicationEvent(ContextClosedEvent event) {
-		attemptLogger.close();
-	}
-
 }

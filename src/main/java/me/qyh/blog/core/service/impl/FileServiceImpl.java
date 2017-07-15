@@ -167,7 +167,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throw new LogicException("file.path.exists", "文件已经存在");
 		}
 
-		String key = folderKey.isEmpty() ? fullname : (folderKey + SPLIT_CHAR + fullname);
+		String key = folderKey.isEmpty() ? fullname : (folderKey + "/" + fullname);
 		deleteImmediatelyIfNeed(key);
 		CommonFile cf = store.store(key, file);
 
@@ -203,7 +203,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (clean.isEmpty()) {
 			return;
 		}
-		String rootKey = clean.split(SPLIT_CHAR)[0];
+		String rootKey = clean.split("/")[0];
 		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
 		if (children.isEmpty()) {
 			return;
@@ -285,11 +285,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (cleanedPath.isEmpty()) {
 			return blogFileDao.selectRoot();
 		} else {
-			if (cleanedPath.indexOf(FileService.SPLIT_CHAR) == -1) {
+			if (cleanedPath.indexOf('/') == -1) {
 				return createFolder(blogFileDao.selectRoot(), cleanedPath);
 			} else {
 				BlogFile parent = blogFileDao.selectRoot();
-				for (String _path : cleanedPath.split(SPLIT_CHAR)) {
+				for (String _path : cleanedPath.split("/")) {
 					parent = createFolder(parent, _path);
 				}
 				return parent;
@@ -426,7 +426,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		blogFileDao.insert(copyBf);
 
 		FileStore fs = getFileStore(source.getCf());
-		String destPath = folderPath + FileService.SPLIT_CHAR + source.getPath();
+		String destPath = folderPath + "/" + source.getPath();
 		if (!fs.copy(oldPath, destPath)) {
 			throw new LogicException("file.copy.fail", "文件拷贝失败");
 		}
@@ -453,7 +453,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (!Validators.isEmptyOrNull(ext, true)) {
 			path = path + "." + ext;
 		}
-		int index = path.lastIndexOf(FileService.SPLIT_CHAR);
+		int index = path.lastIndexOf('/');
 		String folderPath = index == -1 ? "" : path.substring(0, index);
 		String fileName = index == -1 ? path : path.substring(index + 1, path.length());
 
@@ -574,10 +574,10 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		if (cleanedPath.isEmpty()) {
 			param.setParentFile(parent);
 		} else {
-			if (cleanedPath.indexOf(FileService.SPLIT_CHAR) == -1) {
+			if (cleanedPath.indexOf('/') == -1) {
 				parent = blogFileDao.selectByParentAndPath(parent, cleanedPath);
 			} else {
-				for (String _path : cleanedPath.split(SPLIT_CHAR)) {
+				for (String _path : cleanedPath.split("/")) {
 					parent = blogFileDao.selectByParentAndPath(parent, _path);
 					if (parent == null) {
 						break;
@@ -624,7 +624,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private String getFilePath(BlogFile bf) {
 		List<BlogFile> files = blogFileDao.selectPath(bf);
 		return files.stream().map(BlogFile::getPath).filter(path -> !path.isEmpty())
-				.collect(Collectors.joining(SPLIT_CHAR));
+				.collect(Collectors.joining("/"));
 	}
 
 	@Override

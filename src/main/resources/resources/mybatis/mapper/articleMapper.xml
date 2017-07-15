@@ -150,10 +150,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.art_lock IS NULL
 				AND sp.space_lock IS NULL
 			</if>
-			<if test="tag != null">
+			<if test="tagId != null">
 				AND art.id IN (SELECT article_id FROM blog_article_tag
-				bat LEFT OUTER JOIN blog_tag bt ON bat.tag_id = bt.id WHERE
-				bt.tag_name = #{tag})
+				bat  WHERE bat.tag_id = #{tagId})
 			</if>
 		</where>
 	</select>
@@ -219,8 +218,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND art.art_lock IS NULL
 				AND sp.space_lock IS NULL
 			</if>
-			<if test="tag != null">
-				AND bt.tag_name = #{tag}
+			<if test="tagId != null">
+				AND art.id IN (SELECT article_id FROM blog_article_tag bat WHERE bat.tag_id = #{tagId})
 			</if>
 		</where>
 		GROUP BY art.id

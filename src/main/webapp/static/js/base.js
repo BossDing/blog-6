@@ -197,3 +197,45 @@ function removeLocal(key){
 		localStorage.removeItem(key);
 	}
 }
+
+function renderTimeDiff(container){
+	container.find('[data-timestamp]').each(function(){
+		var ts = $(this).attr('data-timestamp');
+		$(this).html(getFriendlyTime(ts));
+	});
+}
+
+function getFriendlyTime(ts){
+	 var getWidthString = function(num){
+         return num < 10 ? ("0" + num) : num;
+     };
+	 var oldTime = new Date();
+	 oldTime.setTime(ts);
+	 var currentTime = new Date();
+     var delta = currentTime.getTime() - oldTime.getTime();
+     if(delta < 0){ 
+    	 return [getWidthString(oldTime.getFullYear()), getWidthString(oldTime.getMonth() + 1), getWidthString(oldTime.getDate())].join("-")+" "+getWidthString(oldTime.getHours())+":"+getWidthString(oldTime.getMinutes());
+     }
+     if(delta <= 6000){
+         return "1分钟内";
+     }
+     else if(delta < 60 * 60 * 1000){
+         return Math.floor(delta / (60 * 1000)) + "分钟前";
+     }
+     else if(delta < 24 * 60 * 60 * 1000){
+         return Math.floor(delta / (60 * 60 * 1000)) + "小时前";
+     }
+     else if(delta < 3 * 24 * 60 * 60 * 1000){
+         return Math.floor(delta / (24 * 60 * 60 * 1000)) + "天前";
+     }
+     else if(currentTime.getFullYear() != oldTime.getFullYear()){
+         return [getWidthString(oldTime.getFullYear()), getWidthString(oldTime.getMonth() + 1), getWidthString(oldTime.getDate())].join("-")+" "+getWidthString(oldTime.getHours())+":"+getWidthString(oldTime.getMinutes());
+     }
+     else{
+         return [getWidthString(oldTime.getMonth() + 1), getWidthString(oldTime.getDate())].join("-");
+     }
+}
+
+$(function(){
+	renderTimeDiff($("body"));
+});

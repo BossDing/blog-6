@@ -22,7 +22,6 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import me.qyh.blog.core.entity.BlogFile;
-import me.qyh.blog.core.service.FileService;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 
@@ -63,8 +62,8 @@ public class BlogFileValidator implements Validator {
 			return;
 		}
 		String clean = FileUtils.cleanPath(folderPath);
-		if (clean.indexOf(FileService.SPLIT_CHAR) != -1) {
-			validFolderPath(folderPath.split(FileService.SPLIT_CHAR), errors);
+		if (clean.indexOf('/') != -1) {
+			validFolderPath(folderPath.split("/"), errors);
 		}
 	}
 
@@ -79,10 +78,10 @@ public class BlogFileValidator implements Validator {
 		}
 		String path = FileUtils.cleanPath(filePath);
 		String fileName;
-		if (path.indexOf(FileService.SPLIT_CHAR) == -1) {
+		if (path.indexOf('/') == -1) {
 			fileName = path;
 		} else {
-			String[] toCopy = path.split(FileService.SPLIT_CHAR);
+			String[] toCopy = path.split("/");
 			String[] pathArray = new String[toCopy.length - 1];
 			System.arraycopy(toCopy, 0, pathArray, 0, toCopy.length - 1);
 

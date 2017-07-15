@@ -20,8 +20,9 @@
 			</span>
 		</div>
 		<div style="margin-top: 5px; margin-bottom: 10px">
+			<span class="glyphicon glyphicon-time" aria-hidden="true"></span>
 			 <span
-				th:text="'发布日期：'+${messages.getMessage(timeDiffParser.parseDiff(article.pubDate))}"></span>
+				th:text="${times.format(article.pubDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(article.pubDate)}"></span>
 		</div>
 
 		<div style="margin-top: 5px; margin-bottom: 10px">

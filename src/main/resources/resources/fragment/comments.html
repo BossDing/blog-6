@@ -28,7 +28,7 @@
 			<p style="word-break: break-all" th:utext="${comment.content}"></p>
 			<h5>
 				<span
-					th:text="${messages.getMessage(timeDiffParser.parseDiff(comment.commentDate))}"></span>&nbsp;&nbsp;&nbsp;
+					th:text="${times.format(comment.commentDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(comment.commentDate)}"></span>&nbsp;&nbsp;&nbsp;
 				<a href="###" th:if="${user != null}"
 					th:onclick="'removeComment(\''+${comment.id}+'\')'"
 					style="margin-right: 8px"><span

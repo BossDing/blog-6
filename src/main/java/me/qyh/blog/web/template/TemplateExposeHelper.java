@@ -35,8 +35,6 @@ import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockHelper;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.util.DefaultTimeDiffParser;
-import me.qyh.blog.util.TimeDiffParser;
 import me.qyh.blog.util.UIUtils;
 import me.qyh.blog.util.Validators;
 
@@ -46,8 +44,6 @@ public class TemplateExposeHelper implements InitializingBean {
 	private UrlHelper urlHelper;
 	@Autowired
 	private Messages messages;
-	@Autowired(required = false)
-	private TimeDiffParser timeDiffParser;
 
 	/**
 	 * 用于扫描 UIUtils
@@ -67,7 +63,6 @@ public class TemplateExposeHelper implements InitializingBean {
 		request.setAttribute("messages", messages);
 		request.setAttribute("space", Environment.getSpace());
 		request.setAttribute("ip", Environment.getIP());
-		request.setAttribute("timeDiffParser", timeDiffParser);
 		LockBean lockBean = LockHelper.getLockBean(request);
 		if (lockBean != null) {
 			request.setAttribute("lock", lockBean.getLock());
@@ -80,9 +75,6 @@ public class TemplateExposeHelper implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (timeDiffParser == null) {
-			timeDiffParser = new DefaultTimeDiffParser();
-		}
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 		scanner.addIncludeFilter(new AnnotationTypeFilter(UIUtils.class));
 		Set<BeanDefinition> definitions = new HashSet<>();
