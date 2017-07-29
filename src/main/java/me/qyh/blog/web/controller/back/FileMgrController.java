@@ -49,6 +49,7 @@ import me.qyh.blog.core.service.FileService;
 import me.qyh.blog.core.vo.BlogFileUpload;
 import me.qyh.blog.core.vo.FileStoreBean;
 import me.qyh.blog.core.vo.UploadedFile;
+import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.validator.BlogFileQueryParamValidator;
 import me.qyh.blog.web.validator.BlogFileUploadValidator;
@@ -148,14 +149,9 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult copy(@RequestParam("sourceId") Integer sourceId, @RequestParam("folderPath") String folderPath)
 			throws LogicException {
-		Errors bingdingResult = new MapBindingResult(new HashMap<>(), "folderPath");
-		BlogFileValidator.validFolderPath(folderPath, bingdingResult);
-		if (bingdingResult.hasErrors()) {
-			List<ObjectError> errors = bingdingResult.getAllErrors();
-			for (ObjectError error : errors) {
-				return new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
-			}
+		JsonResult validResult = validPath("folderPath", folderPath);
+		if (validResult != null) {
+			return validResult;
 		}
 		fileService.copy(sourceId, folderPath);
 		return new JsonResult(true, new Message("file.copy.success", "拷贝成功"));
@@ -165,8 +161,32 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult move(@RequestParam("sourceId") Integer sourceId, @RequestParam("destPath") String destPath)
 			throws LogicException {
-		Errors bingdingResult = new MapBindingResult(new HashMap<>(), "destPath");
-		BlogFileValidator.validFilePath(destPath, bingdingResult);
+		JsonResult validResult = validPath("destPath", destPath);
+		if (validResult != null) {
+			return validResult;
+		}
+		fileService.move(sourceId, destPath);
+		return new JsonResult(true, new Message("file.move.success", "移动成功"));
+	}
+
+	@PostMapping("rename")
+	@ResponseBody
+	public JsonResult rename(@RequestParam("sourceId") Integer sourceId, @RequestParam("newName") String newName)
+			throws LogicException {
+		if (Validators.isEmptyOrNull(newName, true)) {
+			return new JsonResult(false, new Message("file.name.blank", "文件名不能为空"));
+		}
+		if (!BlogFileValidator.checkPath(newName)) {
+			return new JsonResult(false,
+					new Message("file.fileName.valid", "文件名" + newName + "无效，文件名必须为字母数字或者汉字或者_和-", newName));
+		}
+		fileService.rename(sourceId, newName);
+		return new JsonResult(true, new Message("file.move.success", "移动成功"));
+	}
+
+	private JsonResult validPath(String objectName, String path) {
+		Errors bingdingResult = new MapBindingResult(new HashMap<>(), objectName);
+		BlogFileValidator.validFilePath(path, bingdingResult);
 		if (bingdingResult.hasErrors()) {
 			List<ObjectError> errors = bingdingResult.getAllErrors();
 			for (ObjectError error : errors) {
@@ -174,7 +194,6 @@ public class FileMgrController extends BaseMgrController {
 						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
 			}
 		}
-		fileService.move(sourceId, destPath);
-		return new JsonResult(true, new Message("file.move.success", "移动成功"));
+		return null;
 	}
 }

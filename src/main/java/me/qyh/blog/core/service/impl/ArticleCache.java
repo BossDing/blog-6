@@ -76,10 +76,10 @@ public class ArticleCache {
 	 * @param alias
 	 * @return
 	 */
-	public Article getArticle(String alias) {
+	public Article getArticle(String alias, boolean putInCache) {
 		Integer id = articleDao.selectIdByAlias(alias);
 		if (id != null) {
-			Article art = getArticle(id);
+			Article art = getArticle(id, putInCache);
 			if (art != null && Objects.equals(alias, art.getAlias())) {
 				return art;
 			}
@@ -93,12 +93,22 @@ public class ArticleCache {
 	 * @param id
 	 * @return
 	 */
-	public Article getArticle(Integer id) {
-		Article article = idCache.get(id);
-		if (article != null) {
-			return new Article(article);
+	public Article getArticle(Integer id, boolean putInCache) {
+		Article article;
+		if (putInCache) {
+			article = idCache.get(id);
+			if (article != null) {
+				article = new Article(article);
+			}
+		} else {
+			article = idCache.getIfPresent(id);
+			if (article != null) {
+				article = new Article(article);
+			} else {
+				article = articleDao.selectById(id);
+			}
 		}
-		return null;
+		return article;
 	}
 
 	/**

@@ -474,7 +474,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		String link = null;
 		switch (module.getType()) {
 		case ARTICLE:
-			Article article = articleCache.getArticle(module.getId());
+			Article article = articleCache.getArticle(module.getId(), false);
 			if (article != null) {
 				link = urlHelper.getUrls().getUrl(article);
 			}
@@ -547,7 +547,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	}
 
 	private boolean doValidaBeforeQueryArticleComment(Integer moduleId) {
-		Article article = articleCache.getArticle(moduleId);
+		Article article = articleCache.getArticle(moduleId, false);
 		if (article == null || !article.isPublished()) {
 			return false;
 		}
@@ -568,7 +568,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	}
 
 	private void doArticleCommentValid(Integer moduleId) throws LogicException {
-		Article article = articleCache.getArticle(moduleId);
+		Article article = articleCache.getArticle(moduleId, false);
 		// 博客不存在
 		if (article == null || !Environment.match(article.getSpace()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");

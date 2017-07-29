@@ -15,13 +15,12 @@
  */
 package me.qyh.blog.core.templatedata;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.ArticleArchiveNode;
+import me.qyh.blog.core.vo.ArticleArchiveTree;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.DataTagProcessor;
 
 /**
@@ -30,7 +29,7 @@ import me.qyh.blog.core.vo.DataTagProcessor;
  * @author Administrator
  *
  */
-public class ArticleArchivesDataTagProcessor extends DataTagProcessor<List<ArticleArchiveNode>> {
+public class ArticleArchivesDataTagProcessor extends DataTagProcessor<ArticleArchiveTree> {
 
 	@Autowired
 	private ArticleService articleService;
@@ -40,8 +39,9 @@ public class ArticleArchivesDataTagProcessor extends DataTagProcessor<List<Artic
 	}
 
 	@Override
-	protected List<ArticleArchiveNode> query(Attributes attributes) throws LogicException {
-		return articleService.selectArticleArchives();
+	protected ArticleArchiveTree query(Attributes attributes) throws LogicException {
+		ArticleArchiveMode mode = attributes.getEnum("mode", ArticleArchiveMode.class, ArticleArchiveMode.YMD);
+		return articleService.selectArticleArchives(mode);
 	}
 
 }

@@ -138,6 +138,17 @@ public interface FileService {
 	void move(Integer sourceId, String newPath) throws LogicException;
 
 	/**
+	 * 重命名文件
+	 * 
+	 * @param id
+	 *            文件ID
+	 * @param newName
+	 *            新文件名，不包括后缀
+	 * @throws LogicException
+	 */
+	void rename(Integer id, String newName) throws LogicException;
+
+	/**
 	 * 清理文件
 	 */
 	void clear();
@@ -150,6 +161,6 @@ public interface FileService {
 	 * @return
 	 * @throws LogicException
 	 */
-	List<UploadedFile> upload(UploadConfig config, MultipartFile ... files) throws LogicException;
+	List<UploadedFile> upload(UploadConfig config, MultipartFile... files) throws LogicException;
 
 }

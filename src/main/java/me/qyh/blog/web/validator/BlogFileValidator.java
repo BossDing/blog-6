@@ -135,7 +135,7 @@ public class BlogFileValidator implements Validator {
 		}
 	}
 
-	private static boolean checkPath(String path) {
+	public static boolean checkPath(String path) {
 		if (path.matches(PATH_PATTERN)) {
 			try {
 				new File(path).getCanonicalPath();

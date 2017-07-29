@@ -242,6 +242,15 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	}
 
 	@Override
+	public boolean move(String oldPath, String path) {
+		if (super.move(oldPath, path)) {
+			FileUtils.deleteQuietly(FileUtils.sub(thumbAbsFolder, oldPath));
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public final boolean canStore(MultipartFile multipartFile) {
 		String ext = FileUtils.getFileExtension(multipartFile.getOriginalFilename());
 		return ImageHelper.isSystemAllowedImage(ext);

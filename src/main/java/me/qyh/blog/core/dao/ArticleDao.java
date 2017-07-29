@@ -47,7 +47,7 @@ public interface ArticleDao {
 	 * 
 	 * @return 文章<b>只保留了用于构造访问连接的基本信息，并且没有进行任何排序</b>
 	 */
-	List<Article> selectSimplePublished(@Param("space") Space space,@Param("queryPrivate") boolean queryPrivate);
+	List<Article> selectSimplePublished(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 查询截至日期前的待发布文章
@@ -103,10 +103,22 @@ public interface ArticleDao {
 
 	/**
 	 * 根据指定id集合查询对应的文章
+	 * <p>
+	 * 文章只保留了一些用于分页展示的信息
+	 * </p>
 	 * 
 	 * @param ids
 	 *            文章id集合
 	 * @return id集合对应的文章集合
+	 * @see #selectByIds(Collection)
+	 */
+	List<Article> selectPageByIds(Collection<Integer> ids);
+
+	/**
+	 * 根据ID集合查询文章
+	 * 
+	 * @param ids
+	 * @return
 	 */
 	List<Article> selectByIds(Collection<Integer> ids);
 

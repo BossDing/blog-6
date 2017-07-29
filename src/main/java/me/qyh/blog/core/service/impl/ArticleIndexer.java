@@ -51,7 +51,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -76,6 +75,7 @@ import org.apache.lucene.search.highlight.TokenGroup;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -131,7 +131,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	protected Analyzer analyzer;
 	private final ControlledRealTimeReopenThread<IndexSearcher> reopenThread;
-	private final TrackingIndexWriter writer;
 	private final ReferenceManager<IndexSearcher> searcherManager;
 	private final Directory dir;
 	private final IndexWriter oriWriter;
@@ -154,21 +153,18 @@ public abstract class ArticleIndexer implements InitializingBean {
 	@Autowired
 	private ArticleDao articleDao;
 	@Autowired
-	private ArticleCache articleCache;
-	@Autowired
 	private TagDao tagDao;
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
 
 	private static final Path INDEX_DIR = FileUtils.HOME_DIR.resolve("blog/index");
 
+	private boolean useRAMDirectory = true;
+
 	static {
 		FileUtils.forceMkdir(INDEX_DIR);
 	}
 
-	/**
-	 * @see ControlledRealTimeReopenThread
-	 */
 	private long gen;
 
 	private ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MICROSECONDS,
@@ -205,7 +201,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * 
 	 */
 	public ArticleIndexer(Analyzer analyzer) throws IOException {
-		this.dir = FSDirectory.open(INDEX_DIR);
+		this.dir = useRAMDirectory ? new RAMDirectory() : FSDirectory.open(INDEX_DIR);
 		this.analyzer = analyzer;
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE_OR_APPEND);
@@ -215,13 +211,8 @@ public abstract class ArticleIndexer implements InitializingBean {
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-
-		writer = new TrackingIndexWriter(oriWriter);
 		searcherManager = new SearcherManager(oriWriter, new SearcherFactory());
-		reopenThread = new ControlledRealTimeReopenThread<>(writer, searcherManager, 0.5, 0.01);
-		reopenThread.setName("Article_Index_NRT");
-		reopenThread.setPriority(Math.min(Thread.currentThread().getPriority() + 2, Thread.MAX_PRIORITY));
-		reopenThread.setDaemon(true);
+		reopenThread = new ControlledRealTimeReopenThread<>(oriWriter, searcherManager, 0.5, 0.01);
 		reopenThread.start();
 	}
 
@@ -294,15 +285,14 @@ public abstract class ArticleIndexer implements InitializingBean {
 			if (ids == null || ids.length == 0) {
 				return null;
 			}
-			Arrays.stream(ids).map(articleCache::getArticle).filter(Objects::nonNull).filter(Article::isPublished)
-					.forEach(art -> {
-						try {
-							doDeleteDocument(art.getId());
-							gen = writer.addDocument(buildDocument(art));
-						} catch (IOException e) {
-							throw new SystemException(e.getMessage(), e);
-						}
-					});
+			articleDao.selectByIds(Arrays.asList(ids)).stream().filter(Article::isPublished).forEach(art->{
+				try {
+					doDeleteDocument(art.getId());
+					gen = oriWriter.addDocument(buildDocument(art));
+				} catch (IOException e) {
+					throw new SystemException(e.getMessage(), e);
+				}
+			});
 			return null;
 		});
 	}
@@ -324,10 +314,10 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private void doDeleteDocument(Integer id) throws IOException {
 		Term term = new Term(ID, id.toString());
-		gen = writer.deleteDocuments(term);
+		gen = oriWriter.deleteDocuments(term);
 	}
 
-	private void waitForGen() {
+	protected void waitForGen() {
 		try {
 			reopenThread.waitForGeneration(gen);
 		} catch (InterruptedException e) {
@@ -346,7 +336,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	public PageResult<Article> query(ArticleQueryParam param) {
 		IndexSearcher searcher = null;
 		try {
-			waitForGen();
+			// waitForGen();
 			searcher = searcherManager.acquire();
 			Sort sort = buildSort(param);
 
@@ -427,9 +417,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		if (CollectionUtils.isEmpty(ids)) {
 			return Collections.emptyList();
 		}
-		// mysql can use order by field
-		// but h2 can not
-		List<Article> articles = articleDao.selectByIds(ids);
+		List<Article> articles = articleDao.selectPageByIds(ids);
 		if (articles.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -574,9 +562,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 			List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 				return articleDao.selectPublished(null);
 			});
-			gen = writer.deleteAll();
+			gen = oriWriter.deleteAll();
 			for (Article article : articles) {
-				gen = writer.addDocument(buildDocument(article));
+				gen = oriWriter.addDocument(buildDocument(article));
 			}
 			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
 			return null;
@@ -658,5 +646,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	public void setSummaryFormatter(Formatter summaryFormatter) {
 		this.summaryFormatter = summaryFormatter;
+	}
+
+	public void setUseRAMDirectory(boolean useRAMDirectory) {
+		this.useRAMDirectory = useRAMDirectory;
 	}
 }

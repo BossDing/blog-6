@@ -23,8 +23,9 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.vo.ArticleArchiveTree;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.ArticleArchiveNode;
 import me.qyh.blog.core.vo.TagCount;
 
 /**
@@ -194,8 +195,9 @@ public interface ArticleService {
 	/**
 	 * 查询文章归档
 	 * 
+	 * @param
 	 * @return 年月日归档
 	 */
-	List<ArticleArchiveNode> selectArticleArchives();
+	ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode);
 
 }

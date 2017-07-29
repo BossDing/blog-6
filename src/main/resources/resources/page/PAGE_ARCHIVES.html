@@ -31,31 +31,35 @@
 	<div th:replace="base/foot_source">&nbsp;</div>
 	<script type="text/javascript" th:src="@{/static/bootstrap-tree/bootstrap-treeview.min.js}"></script>
 	<script th:inline="javascript">
-  		var data = $.parseJSON([[${jsons.write(archives)}]]);
-     	for(var i=0;i<data.length;i++){
-          addHref(data[i]);
-      	}
-  		$(function(){
-  			$('#tree').treeview({data: data,enableLinks:true,showBorder:false,selectable:false});
-  		});
-  		function addHref(data){
-  			var art = data.article;
-           if(art){
-             if(art.alias && art.alias != null){
-             	data.href = actPath+'/article/'+art.alias
-             }else{
-             	data.href = actPath+'/article/'+art.id
-             }
-           }
-          data.state = {
-            expanded: true
-          };
-           var nodes = data.nodes;
-          if(nodes){
-          	for(var i=0;i<nodes.length;i++){
-            	addHref(nodes[i])
-            }
-          }
+  		var data = $.parseJSON([[${jsons.write(archives)}]]).nodes;
+  		if(data.length == 0){
+  			$("#tree").html('<div class="alert alert-info">没有可供归档的文章</div>');
+  		}else{
+  			for(var i=0;i<data.length;i++){
+  	          addHref(data[i]);
+  	      	}
+  	  		$(function(){
+  	  			$('#tree').treeview({data: data,enableLinks:true,showBorder:false,selectable:false});
+  	  		});
+  	  		function addHref(data){
+  	           if(data.title){
+  	             if(data.alias && data.alias != null){
+  	             	data.href = rootPath+'/space/'+data.space.alias+'/article/'+data.alias
+  	             }else{
+  	             	data.href = rootPath+'/space/'+data.space.alias+'/article/'+data.id
+  	             }
+  	             data.text = data.title;
+  	           }
+  	          data.state = {
+  	            expanded: true
+  	          };
+  	           var nodes = data.nodes;
+  	          if(nodes){
+  	          	for(var i=0;i<nodes.length;i++){
+  	            	addHref(nodes[i])
+  	            }
+  	          }
+  	  		}
   		}
   	</script>
 </body>

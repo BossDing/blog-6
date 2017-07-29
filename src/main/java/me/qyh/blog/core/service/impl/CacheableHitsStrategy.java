@@ -108,7 +108,16 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 				if (!contextClose) {
 					Transactions.afterCommit(() -> {
 						articleCache.updateHits(hitsMap);
-						articleIndexer.addOrUpdateDocument(hitsMap.keySet().stream().toArray(i -> new Integer[i]));
+						int num = 0;
+						List<Integer> ids = new ArrayList<>();
+						for (Integer id : hitsMap.keySet()) {
+							ids.add(id);
+							if (++num % flushNum == 0) {
+								articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
+								ids.clear();
+							}
+						}
+						articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
 					});
 				}
 
@@ -249,5 +258,4 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		}
 		this.flushNum = flushNum;
 	}
-
 }

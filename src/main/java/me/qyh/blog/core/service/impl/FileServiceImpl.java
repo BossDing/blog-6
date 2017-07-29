@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -507,6 +508,70 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
+	public void rename(Integer id, String newName) throws LogicException {
+		BlogFile db = blogFileDao.selectById(id);
+		if (db == null) {
+			throw new LogicException(NOT_EXISTS);
+		}
+		if (!db.isFile()) {
+			throw new LogicException("file.rename.onlyFile", "只有文件才能被重命名");
+		}
+		String oldName = FileUtils.getNameWithoutExtension(db.getPath());
+		if (newName.equals(oldName)) {
+			return;
+		}
+		String ext = FileUtils.getFileExtension(db.getPath());
+		String name = newName;
+		if (!Validators.isEmptyOrNull(ext, true)) {
+			name = name + "." + ext;
+		}
+
+		if (name.length() > MAX_FILE_NAME_LENGTH) {
+			int extLength = ext.length() + 1;
+			if (extLength >= MAX_FILE_NAME_LENGTH) {
+				throw new LogicException("file.move.ext.toolong", "该文件后缀名过长，无法更新路径");
+			} else {
+				throw new LogicException("file.name.toolong", "文件名不能超过" + (MAX_FILE_NAME_LENGTH - extLength) + "个字符",
+						name, (MAX_FILE_NAME_LENGTH - extLength));
+			}
+		}
+
+		BlogFile parent;
+		if (db.getParent() == null) {
+			parent = blogFileDao.selectRoot();
+		} else {
+			parent = blogFileDao.selectById(db.getParent().getId());
+		}
+
+		BlogFile checked = blogFileDao.selectByParentAndPath(parent, name);
+		// 路径上存在文件
+		if (checked != null && !Objects.equals(db.getId(), checked.getId())) {
+			throw new LogicException("file.path.exists", "文件已经存在");
+		}
+
+		String oldPath = FileUtils.cleanPath(getFilePath(db));
+		String newPath;
+		if(oldPath.indexOf('/') == -1){
+			newPath = name;
+		}else{
+			newPath = oldPath.substring(0, oldPath.lastIndexOf('/'))+"/"+name;
+		}
+
+		db.setPath(name);
+		blogFileDao.update(db);
+		
+		// 移动实际文件
+		FileStore fs = getFileStore(db.getCf());
+		if (!fs.move(oldPath, newPath)) {
+			throw new LogicException("file.move.fail", "文件移动失败");
+		}
+		
+
+	}
+
+	@Override
+	@Sync
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void delete(Integer id) throws LogicException {
 		BlogFile db = blogFileDao.selectById(id);
 		if (db == null) {
@@ -623,8 +688,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private String getFilePath(BlogFile bf) {
 		List<BlogFile> files = blogFileDao.selectPath(bf);
-		return files.stream().map(BlogFile::getPath).filter(path -> !path.isEmpty())
-				.collect(Collectors.joining("/"));
+		return files.stream().map(BlogFile::getPath).filter(path -> !path.isEmpty()).collect(Collectors.joining("/"));
 	}
 
 	@Override

@@ -111,6 +111,7 @@ $(document).ready(function(){
 			var me = $(this);
 			var action = $(this).attr("data-action");
 			var id = $(this).attr("data-id");
+			var ext = me.attr('data-ext');
 			current = id;
 			switch(action){
 			case "property":
@@ -146,7 +147,6 @@ $(document).ready(function(){
 				});
 				break;
 			case "delete":
-				var me = $(this);
 				bootbox.confirm("确定要删除吗？",function(result){
 					if(result){
 						$.ajax({
@@ -177,9 +177,14 @@ $(document).ready(function(){
 			case "move":
 				$("#moveModal").modal("show");
 				$("#moveModal input[name='id']").val(id);
-				var ext = me.attr('data-ext')
 				$("#move-path-container").html('<span class="input-group-addon">路径</span><input type="text" value="" class="form-control" name="path"><span class="input-group-addon" >.'+ext+'</span>');
 				$("#moveModal input[name='path']").val('');
+				break;
+			case "rename":
+				$("#rename-path-container").html('<span class="input-group-addon">名称</span><input type="text" value="" class="form-control" name="newName"><span class="input-group-addon" >.'+ext+'</span>');
+				$("#renameModal").modal("show");
+				$("#renameModal input[name='id']").val(id);
+				$("#renameModal input[name='newName']").val('');
 				break;
 			default : 
 				break;
@@ -276,6 +281,29 @@ $(document).ready(function(){
 				},
 				complete:function(){
 					$("#move").prop("disabled",false);
+				}
+			});
+		});
+		
+		$("#rename").click(function(){
+			$("#rename").prop("disabled",true);
+			$.ajax({
+				type : "post",
+				url : basePath+"/mgr/file/rename?sourceId="+$("#renameModal input[name='id']").val()+"&newName="+$("#renameModal input[name='newName']").val(),
+				data : {},
+				contentType : 'application/json',
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500)
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+					$("#rename").prop("disabled",false);
 				}
 			});
 		});

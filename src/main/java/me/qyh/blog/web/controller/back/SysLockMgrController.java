@@ -18,7 +18,6 @@ package me.qyh.blog.web.controller.back;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,14 +47,14 @@ public class SysLockMgrController extends BaseMgrController {
 
 	@PostMapping("add")
 	@ResponseBody
-	public JsonResult addLock(@RequestLock SysLock lock, BindingResult br) throws LogicException {
+	public JsonResult addLock(@RequestLock SysLock lock) throws LogicException {
 		sysLockProvider.addLock(lock);
 		return new JsonResult(true, new Message("lock.add.success", "添加成功"));
 	}
 
 	@PostMapping("update")
 	@ResponseBody
-	public JsonResult updateLock(@RequestLock SysLock lock, BindingResult br) throws LogicException {
+	public JsonResult updateLock(@RequestLock SysLock lock) throws LogicException {
 		sysLockProvider.updateLock(lock);
 		return new JsonResult(true, new Message("lock.update.success", "更新成功"));
 	}

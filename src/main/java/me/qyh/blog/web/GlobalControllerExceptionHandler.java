@@ -116,8 +116,8 @@ public class GlobalControllerExceptionHandler {
 	}
 
 	@ExceptionHandler(TemplateRenderException.class)
-	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp, TemplateRenderException e)
-			throws IOException {
+	public String handleTplRenderException(HttpServletRequest request, HttpServletResponse resp,
+			TemplateRenderException e) throws IOException {
 		if (!Template.isPreviewTemplate(e.getTemplateName())) {
 			LOGGER.error(e.getMessage(), e);
 		}

@@ -106,6 +106,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.id = #{id}
 		GROUP BY art.id
 	</select>
+	
+	<select id="selectByIds" resultMap="ArticleDetail">
+		<include refid="articleDetailSql"></include>
+		WHERE art.id IN
+		<foreach collection="collection" item="id" open="(" close=")"
+			separator=",">#{id}</foreach>
+		GROUP BY art.id
+	</select>
 
 	<select id="selectByAlias" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
@@ -251,7 +259,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 	</select>
 
-	<select id="selectByIds" resultMap="ArticleDetail">
+	<select id="selectPageByIds" resultMap="ArticleDetail">
 		SELECT
 		art.id AS art_id,
 		art.pubDate,

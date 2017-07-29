@@ -16,11 +16,9 @@
 package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,17 +61,16 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.pageparam.ArticleQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.core.vo.ArticleArchiveNode;
+import me.qyh.blog.core.vo.ArticleArchiveTree;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.util.Times;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -99,8 +96,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private ArticleIndexer articleIndexer;
-	@Autowired
-	private Messages messages;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -121,18 +116,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired(required = false)
 	private ArticleViewedLogger articleViewedLogger;
 
-	private final Comparator<ArticleArchiveNode> archiveNodeComparator = Comparator
-			.comparing(ArticleArchiveNode::getOrder).reversed();
-	/**
-	 * 文章排序，按照发布时间倒叙排，如果发布时间相同，按照ID倒序排.
-	 */
-	private final Comparator<Article> articleComparator = Comparator.comparing(Article::getPubDate).reversed()
-			.thenComparing(Comparator.comparing(Article::getId).reversed());
-
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
-		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias, true);
 		if (optionalArticle.isPresent()) {
 
 			Article clone = new Article(optionalArticle.get());
@@ -359,18 +346,18 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
 		checkParam(param);
-		
-		//5.5.5
-		if(StringUtils.isEmpty(param.getTag())){
+
+		// 5.5.5
+		if (StringUtils.isEmpty(param.getTag())) {
 			param.setTagId(null);
 		} else {
 			Tag tag = tagDao.selectByName(param.getTag());
-			if(tag == null){
+			if (tag == null) {
 				return new PageResult<>(param, 0, Collections.emptyList());
 			}
 			param.setTagId(tag.getId());
 		}
-		
+
 		PageResult<Article> page;
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param);
@@ -382,10 +369,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		// query comments
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
-			List<Integer> ids = new ArrayList<>(datas.size());
-			for (Article article : datas) {
-				ids.add(article.getId());
-			}
+			List<Integer> ids = datas.stream().map(Article::getId).collect(Collectors.toList());
 			Map<Integer, Integer> countsMap = articleCommentStatisticsService.queryArticlesCommentCount(ids);
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
@@ -505,7 +489,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<ArticleNav> getArticleNav(String idOrAlias, boolean queryLock) {
-		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias, false);
 		if (optionalArticle.isPresent()) {
 			Article article = optionalArticle.get();
 			if (!Environment.match(article.getSpace())) {
@@ -538,7 +522,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	 */
 	@Override
 	public List<Article> getRecentlyViewdArticle(int num) {
-		return articleViewedLogger == null ? Collections.emptyList() : articleViewedLogger.getViewdArticles(num);
+		return articleViewedLogger == null ? Collections.emptyList()
+				: articleViewedLogger.getViewdArticles(Math.max(1, num));
 	}
 
 	@Override
@@ -547,16 +532,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return Optional.ofNullable(articleDao.selectRandom(Environment.getSpace(), Environment.isLogin(), queryLock));
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * <b>数据量较小时候适用</b>
-	 * </p>
-	 */
 	@Override
-	public List<ArticleArchiveNode> selectArticleArchives() {
+	public ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode) {
 		List<Article> articles = articleDao.selectSimplePublished(Environment.getSpace(), Environment.isLogin());
-		return buildArticleArchiveNodes(articles);
+		return new ArticleArchiveTree(articles, mode == null ? ArticleArchiveMode.YMD : mode);
 	}
 
 	@Override
@@ -606,13 +585,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		scheduleManager.update();
 	}
 
-	private Optional<Article> getCheckedArticle(String idOrAlias) {
+	private Optional<Article> getCheckedArticle(String idOrAlias, boolean putInCache) {
 		Article article = null;
 		try {
 			int id = Integer.parseInt(idOrAlias);
-			article = articleCache.getArticle(id);
+			article = articleCache.getArticle(id, putInCache);
 		} catch (NumberFormatException e) {
-			article = articleCache.getArticle(idOrAlias);
+			article = articleCache.getArticle(idOrAlias, putInCache);
 		}
 		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
 			if (article.isPrivate()) {
@@ -685,7 +664,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 
 		void hit(Integer id) {
-			Article article = articleCache.getArticle(id);
+			Article article = articleCache.getArticle(id, false);
 			if (article != null && validHit(article)) {
 				hitsStrategy.hit(article);
 
@@ -814,64 +793,4 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
-
-	private List<ArticleArchiveNode> buildArticleArchiveNodes(List<Article> articles) {
-		if (CollectionUtils.isEmpty(articles)) {
-			return Collections.emptyList();
-		}
-
-		// group by localDate
-		Map<LocalDate, List<Article>> map = articles.stream()
-				.collect(Collectors.groupingBy(art -> Times.toLocalDateTime(art.getPubDate()).toLocalDate()));
-
-		Set<LocalDate> dateSet = map.keySet();
-		// 年份节点
-		Map<Integer, List<LocalDate>> yearMap = dateSet.stream().collect(Collectors.groupingBy(Times::getYear));
-		List<ArticleArchiveNode> nodes = new ArrayList<>(yearMap.size());
-		for (Map.Entry<Integer, List<LocalDate>> it : yearMap.entrySet()) {
-			ArticleArchiveNode node = new ArticleArchiveNode();
-			node.setText(messages.getMessage(new Message("archive.year", it.getKey() + "年", it.getKey())));
-			node.setOrder(it.getKey());
-			// 月份节点
-			Map<Integer, List<LocalDate>> monthMap = it.getValue().stream()
-					.collect(Collectors.groupingBy(Times::getMonthOfYear));
-			for (Map.Entry<Integer, List<LocalDate>> monthIt : monthMap.entrySet()) {
-				ArticleArchiveNode monthNode = new ArticleArchiveNode();
-				monthNode.setOrder(monthIt.getKey());
-				monthNode.setText(
-						messages.getMessage(new Message("archive.month", monthIt.getKey() + "月", monthIt.getKey())));
-
-				// 天节点
-				Map<Integer, List<LocalDate>> dayMap = monthIt.getValue().stream()
-						.collect(Collectors.groupingBy(Times::getDayOfMonth));
-				for (Map.Entry<Integer, List<LocalDate>> dayIt : dayMap.entrySet()) {
-					ArticleArchiveNode dayNode = new ArticleArchiveNode();
-					dayNode.setOrder(dayIt.getKey());
-					dayNode.setText(
-							messages.getMessage(new Message("archive.day", dayIt.getKey() + "日", dayIt.getKey())));
-					List<Article> dayArticles = map.get(dayIt.getValue().get(0));
-					dayArticles.sort(articleComparator);
-					if (!CollectionUtils.isEmpty(dayArticles)) {
-						// 文章节点
-						List<ArticleArchiveNode> articleNodes = new ArrayList<>(dayArticles.size());
-						for (Article dayArticle : dayArticles) {
-							ArticleArchiveNode articleNode = new ArticleArchiveNode();
-							articleNode.setText(dayArticle.getTitle());
-							articleNode.setArticle(dayArticle);
-							articleNodes.add(articleNode);
-						}
-						dayNode.setNodes(articleNodes);
-					}
-					monthNode.add(dayNode);
-				}
-				monthNode.getNodes().sort(archiveNodeComparator);
-				node.add(monthNode);
-			}
-			node.getNodes().sort(archiveNodeComparator);
-			nodes.add(node);
-		}
-		nodes.sort(archiveNodeComparator);
-		return nodes;
-	}
-
 }
