@@ -19,7 +19,7 @@ import java.io.Serializable;
 
 import me.qyh.blog.core.config.Constants;
 
-public abstract class PageQueryParam implements Serializable {
+public class PageQueryParam implements Serializable {
 
 	/**
 	 * 

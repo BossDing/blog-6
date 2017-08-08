@@ -146,6 +146,10 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * 最大查询数量
 	 */
 	private static final int MAX_RESULTS = 1000;
+	/**
+	 * @since 5.5.5 当重建所有索引时，每次从数据库中抓取并且索引的数目
+	 */
+	private static final int DEFAULT_PAGE_SIZE = 100;
 
 	@Autowired(required = false)
 	private ArticleContentHandler articleContentHandler;
@@ -159,7 +163,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private static final Path INDEX_DIR = FileUtils.HOME_DIR.resolve("blog/index");
 
-	private boolean useRAMDirectory = true;
+	private boolean useRAMDirectory = false;
+
+	private int pageSize;
 
 	static {
 		FileUtils.forceMkdir(INDEX_DIR);
@@ -285,7 +291,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			if (ids == null || ids.length == 0) {
 				return null;
 			}
-			articleDao.selectByIds(Arrays.asList(ids)).stream().filter(Article::isPublished).forEach(art->{
+			articleDao.selectByIds(Arrays.asList(ids)).stream().filter(Article::isPublished).forEach(art -> {
 				try {
 					doDeleteDocument(art.getId());
 					gen = oriWriter.addDocument(buildDocument(art));
@@ -555,17 +561,38 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 重建索引
 	 * 
+	 * @throws IOException
+	 * 
 	 */
 	public synchronized void rebuildIndex() {
+		try {
+			gen = oriWriter.deleteAll();
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
 		executor.submit(() -> {
 			long start = System.currentTimeMillis();
-			List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				return articleDao.selectPublished(null);
+			Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+				// return articleDao.selectPublished(null);
+				int offset = 0;
+				int limit = getPageSize();
+				List<Article> articles;
+				List<Document> documents = new ArrayList<>();
+				while (!(articles = articleDao.selectPublishedPage(offset, limit)).isEmpty()) {
+					offset += limit;
+					for (Article article : articles) {
+						documents.add(buildDocument(article));
+					}
+					try {
+						gen = oriWriter.addDocuments(documents);
+					} catch (IOException e) {
+						throw new SystemException(e.getMessage(), e);
+					}
+					documents.clear();
+					articles = null;
+				}
+				return null;
 			});
-			gen = oriWriter.deleteAll();
-			for (Article article : articles) {
-				gen = oriWriter.addDocument(buildDocument(article));
-			}
 			LOGGER.debug("重建索引花费了：" + (System.currentTimeMillis() - start) + "ms");
 			return null;
 		});
@@ -650,5 +677,13 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	public void setUseRAMDirectory(boolean useRAMDirectory) {
 		this.useRAMDirectory = useRAMDirectory;
+	}
+	
+	private int getPageSize(){
+		return pageSize < 1 ? DEFAULT_PAGE_SIZE : pageSize;
+	}
+
+	public void setPageSize(int pageSize) {
+		this.pageSize = pageSize;
 	}
 }

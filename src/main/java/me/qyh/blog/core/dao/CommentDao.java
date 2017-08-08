@@ -22,9 +22,11 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.entity.CommentModule;
-import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.CommentQueryParam;
+import me.qyh.blog.core.pageparam.PageQueryParam;
+import me.qyh.blog.core.vo.ModuleCommentCount;
 
 /**
  * 
@@ -191,30 +193,18 @@ public interface CommentDao {
 			@Param("limit") int limit, @Param("queryPrivate") boolean queryPrivate,
 			@Param("queryAdmin") boolean queryAdmin);
 
-	public static final class ModuleCommentCount {
-		private CommentModule module;
-		private Integer comments;
+	/**
+	 * 查询没有被审核的评论数目
+	 * 
+	 * @return
+	 */
+	int queryUncheckCommentsCount();
 
-		public CommentModule getModule() {
-			return module;
-		}
-
-		public void setModule(CommentModule module) {
-			this.module = module;
-		}
-
-		public Integer getComments() {
-			return comments;
-		}
-
-		public void setComments(Integer comments) {
-			this.comments = comments;
-		}
-
-		public Integer getModuleId() {
-			return module.getId();
-		}
-
-	}
+	/**
+	 * 分页查询未审核的评论
+	 * @param param
+	 * @return
+	 */
+	List<Comment> queryUncheckComments(PageQueryParam param);
 
 }

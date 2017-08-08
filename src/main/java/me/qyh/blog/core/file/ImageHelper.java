@@ -55,7 +55,7 @@ public abstract class ImageHelper {
 	 */
 	public final void resize(Resize resize, Path src, Path dest) throws IOException {
 		formatCheck(FileUtils.getFileExtension(src));
-		formatCheck(FileUtils.getFileExtension(src));
+		formatCheck(FileUtils.getFileExtension(dest));
 		doResize(resize, src, dest);
 	}
 

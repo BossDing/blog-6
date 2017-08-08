@@ -79,10 +79,12 @@ public class TagServiceImpl implements TagService, ApplicationEventPublisherAwar
 		} else {
 			tagDao.update(tag);
 		}
-		articleIndexer.removeTags(db.getName());
-		articleIndexer.addTags(tag.getName());
 
-		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+		Transactions.afterCommit(() -> {
+			articleIndexer.removeTags(db.getName());
+			articleIndexer.addTags(tag.getName());
+			applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+		});
 
 		return tag;
 	}
@@ -97,9 +99,11 @@ public class TagServiceImpl implements TagService, ApplicationEventPublisherAwar
 		}
 		articleTagDao.deleteByTag(db);
 		tagDao.deleteById(id);
-		articleIndexer.removeTags(db.getName());
 
-		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
+		Transactions.afterCommit(() -> {
+			articleIndexer.removeTags(db.getName());
+			applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
+		});
 	}
 
 	@Override

@@ -25,8 +25,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -84,6 +88,7 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	private Resize largeResize;
 
 	private final Semaphore semaphore;
+	private final Map<String, Resizer> resizeMap = new ConcurrentHashMap<>();
 
 	public ImageResourceStore(String urlPatternPrefix, int semaphoreNum) {
 		super(urlPatternPrefix);
@@ -362,18 +367,20 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 	}
 
 	protected void doResize(Path local, Resize resize, Path thumb) throws IOException {
-		if (!FileUtils.exists(thumb)) {
+		if (FileUtils.exists(thumb)) {
+			return;
+		}
+		String resizeKey = local.toString() + '@' + resize.toString();
+		if (resizeMap.putIfAbsent(resizeKey, new Resizer(thumb, local, resize)) == null) {
 			try {
-				semaphore.acquire();
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				throw new SystemException(e.getMessage(), e);
-			}
-			try {
-				FileUtils.forceMkdir(thumb.getParent());
-				imageHelper.resize(resize, local, thumb);
+				resizeMap.get(resizeKey).resize();
 			} finally {
-				semaphore.release();
+				resizeMap.remove(resizeKey);
+			}
+		} else {
+			Resizer resizer = resizeMap.get(resizeKey);
+			if (resizer != null) {
+				resizer.resize();
 			}
 		}
 	}
@@ -485,6 +492,47 @@ public class ImageResourceStore extends LocalResourceRequestHandlerFileStore {
 			}
 		}
 		return Optional.empty();
+	}
+
+	private final class Resizer {
+
+		private AtomicBoolean resized = new AtomicBoolean(false);
+		private CountDownLatch latch = new CountDownLatch(1);
+		private Path thumb;
+		private Path local;
+		private Resize resize;
+
+		public Resizer(Path thumb, Path local, Resize resize) {
+			super();
+			this.thumb = thumb;
+			this.local = local;
+			this.resize = resize;
+		}
+
+		public void resize() throws IOException {
+			if (resized.compareAndSet(false, true)) {
+				try {
+					semaphore.acquire();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					throw new SystemException(e.getMessage(), e);
+				}
+				try {
+					FileUtils.forceMkdir(thumb.getParent());
+					imageHelper.resize(resize, local, thumb);
+				} finally {
+					semaphore.release();
+					latch.countDown();
+				}
+			} else {
+				try {
+					latch.await();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					throw new SystemException(e.getMessage(), e);
+				}
+			}
+		}
 	}
 
 	public void setThumbAbsPath(String thumbAbsPath) {

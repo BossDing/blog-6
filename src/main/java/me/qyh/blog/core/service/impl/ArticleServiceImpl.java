@@ -17,7 +17,6 @@ package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -206,11 +205,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		articleDao.update(article);
 
 		boolean rebuildIndexWhenTagChange = insertTags(article);
-		if (article.isSchedule()) {
-			scheduleManager.update();
-		}
 
 		Transactions.afterCommit(() -> {
+
+			if (article.isSchedule()) {
+				scheduleManager.update();
+			}
+
 			articleCache.evit(article.getId());
 			if (rebuildIndexWhenTagChange) {
 				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
@@ -507,7 +508,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Transactional(readOnly = true)
 	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
 	public List<TagCount> queryTags() throws LogicException {
-		return new ArrayList<>(articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin()));
+		return articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin());
 	}
 
 	/**
@@ -650,7 +651,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 
 		public void update() {
-			start = articleDao.selectMinimumScheduleDate();
+			Transactions.executeInReadOnlyTransaction(transactionManager, status -> {
+				start = articleDao.selectMinimumScheduleDate();
+			});
 		}
 	}
 

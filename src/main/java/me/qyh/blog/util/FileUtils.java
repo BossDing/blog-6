@@ -132,11 +132,11 @@ public class FileUtils {
 	 *            路径
 	 * @param filter
 	 *            过滤条件
-	 * @return
+	 * @return <b>完全删除:true</b>,删除失败或者部分删除:false
 	 */
 	public static boolean deleteQuietly(Path path, final Predicate<Path> filter) {
 		Objects.requireNonNull(filter);
-		if (path == null || !FileUtils.exists(path)) {
+		if (path == null || !exists(path)) {
 			return true;
 		}
 		try {
@@ -157,7 +157,7 @@ public class FileUtils {
 					return FileVisitResult.CONTINUE;
 				}
 			});
-			return true;
+			return !exists(path);
 		} catch (Exception e) {
 			return false;
 		}

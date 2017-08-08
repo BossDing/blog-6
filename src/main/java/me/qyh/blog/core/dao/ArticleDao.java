@@ -98,8 +98,10 @@ public interface ArticleDao {
 	 * @param space
 	 *            空间，如果为空，查询全部发布的文章
 	 * @return 文章集合
+	 * @see #selectPublishedPage(int, int)
+	 * @deprecated
 	 */
-	List<Article> selectPublished(@Param("space") Space space);
+	List<Article> selectPublished();
 
 	/**
 	 * 根据指定id集合查询对应的文章
@@ -129,7 +131,7 @@ public interface ArticleDao {
 	 *            文章id集合
 	 * @return id集合对应的文章集合
 	 */
-	List<Article> selectSimpleByIds(List<Integer> ids);
+	List<Article> selectSimpleByIds(Collection<Integer> ids);
 
 	/**
 	 * 根据文章id删除文章
@@ -286,5 +288,14 @@ public interface ArticleDao {
 	 * @return
 	 */
 	List<ArticleSpaceStatistics> selectArticleSpaceStatistics(@Param("queryPrivate") boolean queryPrivate);
+
+	/**
+	 * 分页查询已经发布的文章
+	 * 
+	 * @param offset
+	 * @param limit
+	 * @return
+	 */
+	List<Article> selectPublishedPage(@Param("offset") int offset, @Param("limit") int limit);
 
 }

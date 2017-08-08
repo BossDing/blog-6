@@ -132,4 +132,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id
 		ORDER BY page_create_date,bpu.id
 	</select>
+	
+	<select id="selectSimpleByIds" resultMap="PageDetail">
+		SELECT bpu.id,space_id,page_name,space_alias,page_alias FROM blog_page_user bpu LEFT OUTER JOIN blog_space bs ON bpu.space_id = bs.id 
+		WHERE bpu.id IN
+		<foreach collection="collection" item="id" open="(" close=")"
+			separator=",">#{id}</foreach>
+	</select>
 </mapper>

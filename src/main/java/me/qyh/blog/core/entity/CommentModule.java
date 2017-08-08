@@ -44,6 +44,11 @@ public class CommentModule implements Serializable {
 
 	private ModuleType type;// 评论类型
 	private Integer id;// 关联id
+	
+	/**
+	 * @since 5.5.5
+	 */
+	private Object object;//关联对象
 
 	public CommentModule(ModuleType type, Integer id) {
 		super();
@@ -69,6 +74,14 @@ public class CommentModule implements Serializable {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+
+	public Object getObject() {
+		return object;
+	}
+
+	public void setObject(Object object) {
+		this.object = object;
 	}
 
 	@Override

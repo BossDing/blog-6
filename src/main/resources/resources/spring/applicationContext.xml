@@ -19,7 +19,9 @@
 
 
 	<context:property-placeholder
-		location="classpath:resources/mybatis/db.properties,classpath:resources/app.properties,classpath:resources/mail.properties" />
+		location="classpath:resources/mybatis/db.properties,
+				  classpath:resources/app.properties,
+				  classpath:resources/mail.properties" />
 
 	<!-- mysql -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
@@ -40,30 +42,39 @@
 	</bean>
 
 	<!-- 配置SqlSessionFactory -->
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+	<bean id="sqlSessionFactory" 
+		class="org.mybatis.spring.SqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 
 	<bean id="txManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
 		p:dataSource-ref="dataSource" />
+		
 	<tx:annotation-driven transaction-manager="txManager" />
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
-			value="me.qyh.blog.core.dao,me.qyh.blog.core.lock" />
+			value="me.qyh.blog.core.dao,
+				   me.qyh.blog.core.lock" />
 	</bean>
 
 	<import resource="file.xml" />
+	
 	<context:component-scan
-		base-package="me.qyh.blog.core.service,me.qyh.blog.core.config,me.qyh.blog.core.security,me.qyh.blog.core.lock" />
+		base-package="me.qyh.blog.core.service,
+					  me.qyh.blog.core.config,
+					  me.qyh.blog.core.security,
+					  me.qyh.blog.core.lock" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
 	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager" class="org.springframework.cache.caffeine.CaffeineCacheManager">
-		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
+	<bean id="cacheManager" 
+		  class="org.springframework.cache.caffeine.CaffeineCacheManager">
+		<property name="cacheSpecification" 
+				  value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 
 	<bean id="messageSource"

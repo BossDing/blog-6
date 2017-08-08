@@ -454,7 +454,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		WHERE art.id IN
-		<foreach collection="list" item="id" open="(" close=")"
+		<foreach collection="collection" item="id" open="(" close=")"
 			separator=",">#{id}</foreach>
 	</select>
 
@@ -564,6 +564,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND sp.is_private = false
 		</if>
 		GROUP BY space_id
+	</select>
+	
+	<select id="selectPublishedPage" resultMap="ArticleDetail">
+		<include refid="articleDetailSql"></include>
+		GROUP BY art.id
+		ORDER BY art.id
+		LIMIT #{offset},#{limit}
 	</select>
 
 	<sql id="articleDetailSql">

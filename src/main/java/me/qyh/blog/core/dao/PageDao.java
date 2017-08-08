@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.core.dao;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -107,5 +108,15 @@ public interface PageDao {
 	 * @return
 	 */
 	List<Page> selectAll();
+	
+	
+	/**
+	 * 根据指定id集合查询对应的页面，只会查询一些构建访问链接等必要的信息
+	 * 
+	 * @param ids
+	 *            页面id集合
+	 * @return 页面集合
+	 */
+	List<Page> selectSimpleByIds(Collection<Integer> ids);
 
 }

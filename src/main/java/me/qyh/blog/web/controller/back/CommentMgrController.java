@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.pageparam.PageQueryParam;
 import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.validator.CommentConfigValidator;
@@ -66,7 +67,7 @@ public class CommentMgrController extends BaseMgrController {
 	@GetMapping("updateConfig")
 	public String update(ModelMap model) {
 		model.addAttribute("config", commentService.getCommentConfig());
-		return "mgr/config/commentConfig";
+		return "mgr/comment/config";
 	}
 
 	@PostMapping("updateConfig")
@@ -74,6 +75,15 @@ public class CommentMgrController extends BaseMgrController {
 	public JsonResult update(@RequestBody @Validated CommentConfig commentConfig) {
 		commentService.updateCommentConfig(commentConfig);
 		return new JsonResult(true, new Message("comment.config.update.success", "更新成功"));
+	}
+
+	@GetMapping("uncheck")
+	public String uncheck(PageQueryParam param, ModelMap model) {
+		if (param.getCurrentPage() < 1) {
+			param.setCurrentPage(1);
+		}
+		model.addAttribute("page", commentService.queryUncheckComments(param));
+		return "mgr/comment/uncheck";
 	}
 
 }

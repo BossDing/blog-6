@@ -97,12 +97,9 @@
 	<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafRenderExecutor" />
 	<bean class="me.qyh.blog.web.template.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
-	<!-- sitemap 服务 -->
-	<!-- 
-	<bean class="me.qyh.blog.support.sitemap.SiteMapController" />
-	 -->
-	 
 	<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
+		<constructor-arg value="image"  index="0"/>
+		<constructor-arg value="2" index="1" type="int"/>
 		<property name="absPath" value="/web/file/blog_image/" />
 		<property name="id" value="1" />
 		<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />

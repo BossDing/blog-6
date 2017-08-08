@@ -119,10 +119,11 @@ public class XmlSiteMap implements InitializingBean {
 		return sb.toString();
 	}
 
+	@SuppressWarnings("deprecation")
 	protected List<SiteMapUrlItem> querySiteMapItems() {
 
 		List<Article> articles = Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			return articleDao.selectPublished(null);
+			return articleDao.selectPublished();
 		});
 
 		SpaceUrls urls = urlHelper.getUrlsBySpace(null);

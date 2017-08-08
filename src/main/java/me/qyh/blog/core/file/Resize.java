@@ -101,4 +101,21 @@ public class Resize {
 	public void setSize(Integer size) {
 		this.size = size;
 	}
+
+	@Override
+	public String toString() {
+		if (size != null) {
+			return "size=" + size;
+		} else {
+			StringBuilder sb = new StringBuilder();
+			if (width > 0) {
+				sb.append("width=").append(width).append(",");
+			}
+			if (height > 0) {
+				sb.append("height=").append(height).append(",");
+			}
+			sb.append("keepRatio=").append(keepRatio);
+			return sb.toString();
+		}
+	}
 }

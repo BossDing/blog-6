@@ -116,7 +116,7 @@ public class SpaceCache implements InitializingBean {
 	/**
 	 * 重新查询所有空间并载入内存
 	 */
-	public synchronized void init() {
+	public void init() {
 
 		Transactions.afterCommit(() -> Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 			long stamp = lock.writeLock();

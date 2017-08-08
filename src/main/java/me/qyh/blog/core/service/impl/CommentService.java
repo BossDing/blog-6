@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,8 +48,8 @@ import org.springframework.util.DigestUtils;
 import me.qyh.blog.core.config.CommentConfig;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.CommentDao;
-import me.qyh.blog.core.dao.CommentDao.ModuleCommentCount;
 import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Comment;
@@ -68,6 +69,8 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.pageparam.CommentQueryParam;
+import me.qyh.blog.core.pageparam.PageQueryParam;
+import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.security.input.HtmlClean;
 import me.qyh.blog.core.security.input.Markdown2Html;
@@ -75,6 +78,7 @@ import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.core.vo.CommentPageResult;
 import me.qyh.blog.core.vo.Limit;
+import me.qyh.blog.core.vo.ModuleCommentCount;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
 
@@ -98,6 +102,8 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	private Markdown2Html markdown2Html;
 	@Autowired
 	private UserQueryService userQueryService;
+	@Autowired
+	private ArticleDao articleDao;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -517,6 +523,45 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	@Transactional(readOnly = true)
 	public int queryPagesTotalCommentCount(Space space, boolean queryPrivate) {
 		return commentDao.selectTotalCommentCount(ModuleType.USERPAGE, space, queryPrivate);
+	}
+
+	@Transactional(readOnly = true)
+	public PageResult<Comment> queryUncheckComments(PageQueryParam param) {
+		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
+		int count = commentDao.queryUncheckCommentsCount();
+		List<Comment> comments = commentDao.queryUncheckComments(param);
+		Map<ModuleType, List<CommentModule>> moduleMap = comments.stream().map(Comment::getCommentModule)
+				.collect(Collectors.groupingBy(CommentModule::getType));
+		Map<CommentModule, Object> referenceMap = new HashMap<>();
+		for (Map.Entry<ModuleType, List<CommentModule>> it : moduleMap.entrySet()) {
+			switch (it.getKey()) {
+			case ARTICLE:
+				List<Article> articles = it.getValue().isEmpty() ? Collections.emptyList()
+						: articleDao.selectSimpleByIds(
+								it.getValue().stream().map(CommentModule::getId).collect(Collectors.toSet()));
+				for (Article article : articles) {
+					referenceMap.put(new CommentModule(ModuleType.ARTICLE, article.getId()), article);
+				}
+				break;
+			case USERPAGE:
+				List<Page> pages = it.getValue().isEmpty() ? Collections.emptyList()
+						: pageDao.selectSimpleByIds(
+								it.getValue().stream().map(CommentModule::getId).collect(Collectors.toSet()));
+				for (Page page : pages) {
+					referenceMap.put(new CommentModule(ModuleType.USERPAGE, page.getId()), page);
+				}
+				break;
+			default:
+				throw new SystemException("无法处理的评论模块类型：" + it.getKey());
+			}
+		}
+		for (Comment comment : comments) {
+			CommentModule module = comment.getCommentModule();
+			module.setObject(referenceMap.get(module));
+			completeComment(comment);
+		}
+
+		return new PageResult<>(param, count, comments);
 	}
 
 	/**

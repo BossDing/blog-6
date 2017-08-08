@@ -17,7 +17,6 @@ package me.qyh.blog.support.ping;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,13 +69,15 @@ public class SimplePingManager implements InitializingBean {
 	}
 
 	private void ping(Article article) {
-		pingServices.stream().forEach(pingService -> CompletableFuture.runAsync(() -> {
-			try {
-				pingService.ping(article, blogName);
-			} catch (Exception e) {
-				LOGGER.error(e.getMessage(), e);
-			}
-		}, taskExecutor));
+		for (final PingService ps : pingServices) {
+			taskExecutor.execute(() -> {
+				try {
+					ps.ping(article, blogName);
+				} catch (Exception e) {
+					LOGGER.error(e.getMessage(), e);
+				}
+			});
+		}
 	}
 
 	public void setPingServices(List<PingService> pingServices) {
