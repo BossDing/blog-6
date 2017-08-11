@@ -47,6 +47,7 @@ import me.qyh.blog.core.lock.LockArgumentResolver.SysLockDeserializer;
 import me.qyh.blog.core.lock.SysLock;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.MessageSerializer;
+import me.qyh.blog.web.JsonResult;
 
 /**
  * json处理工具类
@@ -231,7 +232,27 @@ public class Jsons {
 
 		return new ExpressionExecutor(je);
 	}
+	
+	/**
+	 * 
+	 * @param success
+	 * @param data
+	 * @return
+	 */
+	public static String toJsonResult(boolean success,Object data){
+		return gson.toJson(new JsonResult(success, data));
+	}
 
+	/**
+	 * 
+	 * @param success
+	 * @param message
+	 * @return
+	 */
+	public static String toJsonResult(boolean success,Message message){
+		return gson.toJson(new JsonResult(success, message));
+	}
+	
 	/**
 	 * 
 	 * @author mhlx

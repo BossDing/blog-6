@@ -568,6 +568,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectPublishedPage" resultMap="ArticleDetail">
 		<include refid="articleDetailSql"></include>
+		WHERE art.art_status = 0
 		GROUP BY art.id
 		ORDER BY art.id
 		LIMIT #{offset},#{limit}

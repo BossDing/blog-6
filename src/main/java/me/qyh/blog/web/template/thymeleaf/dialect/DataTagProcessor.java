@@ -34,7 +34,7 @@ import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.template.ParseContext;
+import me.qyh.blog.web.template.ParseContextHolder;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -89,8 +89,8 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private Optional<DataBind> queryDataBind(DataTag dataTag) {
 		try {
-			return templateService.queryData(dataTag,
-					ParseContext.onlyCallable() && !ParseContext.getRoot().isCallable());
+			return templateService.queryData(dataTag, ParseContextHolder.getContext().onlyCallable()
+					&& !ParseContextHolder.getContext().getRoot().isCallable());
 		} catch (LogicException e) {
 			throw new RuntimeLogicException(e);
 		}

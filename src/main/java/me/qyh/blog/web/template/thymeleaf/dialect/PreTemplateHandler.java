@@ -25,7 +25,7 @@ import org.thymeleaf.templateresource.ITemplateResource;
 import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.web.template.ParseContext;
+import me.qyh.blog.web.template.ParseContextHolder;
 import me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver.TemplateResource;
 
 /**
@@ -35,7 +35,7 @@ import me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver.TemplateReso
  *
  */
 public final class PreTemplateHandler extends AbstractTemplateHandler {
-	
+
 	public PreTemplateHandler() {
 		super();
 	}
@@ -51,10 +51,10 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
 				Template template = ((TemplateResource) templateResource).getTemplate();
 
-				Template root = ParseContext.getRoot();
+				Template root = ParseContextHolder.getContext().getRoot();
 				// 如果主模板不存在，设置主模板
 				if (root == null) {
-					ParseContext.setRoot(template);
+					ParseContextHolder.getContext().setRoot(template);
 				} else {
 					// 如果已经存在主模板，那么查看当前待解析的模板是否是'主模板'
 					if (template.isRoot()) {
@@ -62,7 +62,8 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 					}
 				}
 
-				if (!ParseContext.getRoot().isCallable() && ParseContext.onlyCallable()) {
+				if (!ParseContextHolder.getContext().getRoot().isCallable()
+						&& ParseContextHolder.getContext().onlyCallable()) {
 					throw new RuntimeLogicException(new Message("template.notCallable", "模板无法被调用"));
 				}
 

@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.template;
 
+import org.springframework.http.MediaType;
 import org.springframework.transaction.TransactionStatus;
 
 import me.qyh.blog.core.entity.Template;
@@ -27,49 +28,48 @@ import me.qyh.blog.core.entity.Template;
  */
 public class ParseContext {
 
-	private static final ThreadLocal<TransactionStatus> TRANSACTION_LOCAL = new ThreadLocal<>();
-	private static final ThreadLocal<ParseConfig> CONFIG_LOCAL = ThreadLocal.withInitial(ParseConfig::new);
-	private static final ThreadLocal<Template> ROOT_LOCAL = new ThreadLocal<>();
+	private TransactionStatus transactionStatus;
+	private ParseConfig config;
+	private Template root;
+	private MediaType mediaType;
 
-	private ParseContext() {
+	ParseContext() {
 		super();
 	}
 
-	public static void setTransactionStatus(TransactionStatus status) {
-		TRANSACTION_LOCAL.set(status);
+	public TransactionStatus getTransactionStatus() {
+		return transactionStatus;
 	}
 
-	public static TransactionStatus getTransactionStatus() {
-		return TRANSACTION_LOCAL.get();
+	public void setTransactionStatus(TransactionStatus transactionStatus) {
+		this.transactionStatus = transactionStatus;
 	}
 
-	public static void remove() {
-		TRANSACTION_LOCAL.remove();
-		CONFIG_LOCAL.remove();
-		ROOT_LOCAL.remove();
+	public ParseConfig getConfig() {
+		return config;
 	}
 
-	public static void removeTransactionStatus() {
-		TRANSACTION_LOCAL.remove();
+	public void setConfig(ParseConfig config) {
+		this.config = config;
 	}
 
-	public static boolean onlyCallable() {
-		return getConfig().isOnlyCallable();
+	public Template getRoot() {
+		return root;
 	}
 
-	public static void setConfig(ParseConfig config) {
-		CONFIG_LOCAL.set(config);
+	public void setRoot(Template root) {
+		this.root = root;
 	}
 
-	private static ParseConfig getConfig() {
-		return CONFIG_LOCAL.get();
+	public MediaType getMediaType() {
+		return mediaType;
 	}
 
-	public static Template getRoot() {
-		return ROOT_LOCAL.get();
+	public void setMediaType(MediaType mediaType) {
+		this.mediaType = mediaType;
 	}
 
-	public static void setRoot(Template template) {
-		ROOT_LOCAL.set(template);
+	public boolean onlyCallable() {
+		return config.isOnlyCallable();
 	}
 }

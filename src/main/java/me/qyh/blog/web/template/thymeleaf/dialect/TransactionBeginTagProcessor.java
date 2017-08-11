@@ -23,7 +23,7 @@ import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.web.template.ParseContext;
+import me.qyh.blog.web.template.ParseContextHolder;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -62,8 +62,8 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 			}
 		}
 		try {
-			if (ParseContext.getTransactionStatus() == null) {
-				ParseContext.setTransactionStatus(getTransactionStatus(isolationLevel));
+			if (ParseContextHolder.getContext().getTransactionStatus() == null) {
+				ParseContextHolder.getContext().setTransactionStatus(getTransactionStatus(isolationLevel));
 			} else {
 				throw new TemplateProcessingException("在开启一个事务前，应该先结束已经存在的事务");
 			}

@@ -22,7 +22,7 @@ import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.web.template.ParseContext;
+import me.qyh.blog.web.template.ParseContextHolder;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -53,10 +53,10 @@ public class TransactionEndTagProcessor extends TransactionSupport {
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
 		try {
-			TransactionStatus status = ParseContext.getTransactionStatus();
+			TransactionStatus status = ParseContextHolder.getContext().getTransactionStatus();
 			if (status != null) {
 				getTransactionManager().commit(status);
-				ParseContext.removeTransactionStatus();
+				ParseContextHolder.getContext().setTransactionStatus(null);
 			}
 		} finally {
 			structureHandler.removeElement();

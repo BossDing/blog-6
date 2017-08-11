@@ -1,1 +1,0 @@
-alter table blog_article add column feature_image varchar(500) default null;

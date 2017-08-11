@@ -60,7 +60,7 @@ public class Webs {
 	 * @throws IOException
 	 */
 	public static void writeInfo(HttpServletResponse response, JsonResult result) throws IOException {
-		response.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding(Constants.CHARSET.name());
 		Jsons.write(result, response.getWriter());
 	}

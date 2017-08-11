@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IProcessableElementTag;
@@ -37,6 +39,8 @@ import me.qyh.blog.web.template.thymeleaf.UIStackoverflowError;
  *
  */
 public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
+
+	private static final Logger logger = LoggerFactory.getLogger(FragmentTagProcessor.class);
 
 	private static final String TAG_NAME = "fragment";
 	private static final int PRECEDENCE = 1000;
@@ -59,8 +63,8 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 		String name = attMap.get(NAME);
 		if (name != null) {
 			String templateName = Fragment.getTemplateName(name, Environment.getSpace());
-			Writer writer = new FastStringWriter(200);
-			try {
+			try (Writer writer = new FastStringWriter(200)) {
+
 				context.getConfiguration().getTemplateManager().parseAndProcess(
 						new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
 				structureHandler.replaceWith(writer.toString(), false);
@@ -71,11 +75,9 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 				} else {
 					throw new UIStackoverflowError(templateName, null, null, e);
 				}
-			} finally {
-				try {
-					writer.close();
-				} catch (IOException e) {
-				}
+			} catch (IOException e) {
+				// ??
+				logger.debug(e.getMessage(), e);
 			}
 		}
 		structureHandler.removeElement();

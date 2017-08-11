@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.controller.front;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +23,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Fragment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
@@ -36,6 +39,7 @@ import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.template.ParseConfig;
+import me.qyh.blog.web.template.RenderResult;
 import me.qyh.blog.web.template.TemplateRender;
 import me.qyh.blog.web.template.TemplateRenderException;
 
@@ -62,16 +66,36 @@ public class OtherController {
 	}
 
 	@GetMapping({ "fragment/{fragment}", "space/{alias}/fragment/{fragment}" })
-	@ResponseBody
-	public JsonResult queryFragment(@PathVariable("fragment") String fragment,
+	public void queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
-			HttpServletResponse response) {
+			HttpServletResponse response) throws IOException {
 		try {
-			return new JsonResult(true,
-					templateRender.render(Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null,
-							request, response, new ParseConfig(true)));
+
+			RenderResult result = templateRender.render(
+					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request, response,
+					new ParseConfig(true));
+
+			String content = result.getContent();
+			MediaType type = result.getType();
+			if (type == null) {
+				type = MediaType.TEXT_HTML;
+			}
+
+			write(content, type, response);
+
 		} catch (TemplateRenderException e) {
-			return new JsonResult(false, e.getRenderErrorDescription());
+			Webs.writeInfo(response, new JsonResult(true, e.getRenderErrorDescription()));
+		}
+	}
+
+	protected void write(String content, MediaType type, HttpServletResponse response) throws IOException {
+		if (MediaType.TEXT_HTML.equals(type)) {
+			Webs.writeInfo(response, new JsonResult(true, content));
+		} else {
+			response.setContentType(type.toString());
+			response.setCharacterEncoding(Constants.CHARSET.name());
+			response.getWriter().write(content);
+			response.getWriter().flush();
 		}
 	}
 }

@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.MediaType;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
@@ -61,7 +62,7 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 
 		String templateName = templateView.getTemplateName();
 
-		String rendered;
+		RenderResult rendered;
 
 		try {
 			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest, nativeResponse,
@@ -80,12 +81,19 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 			throw e;
 		}
 
-		nativeResponse.setContentLength(rendered.getBytes(Constants.CHARSET).length);
-		nativeResponse.setContentType("text/html");
+		String content = rendered.getContent();
+
+		MediaType type = rendered.getType();
+		if (type == null) {
+			type = MediaType.TEXT_HTML;
+		}
+
+		nativeResponse.setContentType(type.toString());
 		nativeResponse.setCharacterEncoding(Constants.CHARSET.name());
 
 		Writer writer = nativeResponse.getWriter();
-		writer.write(rendered);
+		writer.write(content);
 		writer.flush();
 	}
+
 }

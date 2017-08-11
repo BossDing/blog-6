@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -51,7 +52,7 @@ public final class TemplateRender {
 	@Autowired
 	private TemplateExceptionTranslater templateExceptionTranslater;
 
-	public String render(String templateName, Map<String, Object> model, HttpServletRequest request,
+	public RenderResult render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws TemplateRenderException {
 		try {
 			return doRender(templateName, model == null ? new HashMap<>() : model, request, response, config);
@@ -62,12 +63,14 @@ public final class TemplateRender {
 		}
 	}
 
-	public String doRender(String templateName, Map<String, Object> model, HttpServletRequest request,
+	public RenderResult doRender(String templateName, Map<String, Object> model, HttpServletRequest request,
 			HttpServletResponse response, ParseConfig config) throws Exception {
 		uiExposeHelper.addVariables(request);
-		ParseContext.setConfig(config);
+		ParseContextHolder.getContext().setConfig(config);
 		try {
-			return doRender(templateName, model, request, response);
+			String content = doRender(templateName, model, request, response);
+			MediaType type = ParseContextHolder.getContext().getMediaType();
+			return new RenderResult(type, content);
 		} catch (Throwable e) {
 			markRollBack();
 
@@ -88,19 +91,19 @@ public final class TemplateRender {
 
 		} finally {
 			commit();
-			ParseContext.remove();
+			ParseContextHolder.remove();
 		}
 	}
 
 	private void markRollBack() {
-		TransactionStatus status = ParseContext.getTransactionStatus();
+		TransactionStatus status = ParseContextHolder.getContext().getTransactionStatus();
 		if (status != null) {
 			status.setRollbackOnly();
 		}
 	}
 
 	private void commit() {
-		TransactionStatus status = ParseContext.getTransactionStatus();
+		TransactionStatus status = ParseContextHolder.getContext().getTransactionStatus();
 		if (status != null) {
 			transactionManager.commit(status);
 		}
