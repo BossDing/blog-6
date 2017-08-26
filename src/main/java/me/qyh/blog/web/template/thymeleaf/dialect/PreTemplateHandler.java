@@ -22,10 +22,10 @@ import org.thymeleaf.engine.TemplateData;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.templateresource.ITemplateResource;
 
-import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.web.template.ParseContextHolder;
+import me.qyh.blog.web.template.Template;
 import me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver.TemplateResource;
 
 /**

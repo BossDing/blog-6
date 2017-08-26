@@ -18,8 +18,6 @@ package me.qyh.blog.web.template;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.TransactionStatus;
 
-import me.qyh.blog.core.entity.Template;
-
 /**
  * 解析上下文
  * 

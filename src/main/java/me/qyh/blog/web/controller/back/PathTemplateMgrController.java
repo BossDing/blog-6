@@ -31,11 +31,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.service.TemplateService;
-import me.qyh.blog.core.service.TemplateService.PathTemplateService;
 import me.qyh.blog.core.vo.PathTemplate;
 import me.qyh.blog.core.vo.PathTemplateBean;
 import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.web.template.TemplateService;
+import me.qyh.blog.web.template.TemplateService.PathTemplateService;
 import me.qyh.blog.web.validator.PathTemplateBeanValidator;
 
 @Controller

@@ -22,10 +22,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.entity.Fragment;
-import me.qyh.blog.core.entity.Page;
-import me.qyh.blog.core.vo.ExportPage;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.template.ExportPage;
+import me.qyh.blog.web.template.Fragment;
+import me.qyh.blog.web.template.Page;
 
 @Component
 public class ExportPageValidator implements Validator {

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.entity;
+package me.qyh.blog.web.template;
 
 import java.sql.Timestamp;
 import java.util.Objects;
 
+import me.qyh.blog.core.entity.BaseEntity;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 

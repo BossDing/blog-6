@@ -42,7 +42,7 @@
 					<li><a th:href="@{/mgr/article/index}"
 						th:class="${tag == 'article'}? active:''"> 文章管理</a></li>
 					<li><a th:href="@{/mgr/comment/uncheck}"
-						th:class="${tag == 'uncheckComment'}? active:''"> 未审核评论</a></li>
+						th:class="${tag == 'uncheckComment'}? active:''"> 未审核评论 <span class="badge" id="uncheck-comment-count" style="display:none">0</span></a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
 						data-target="#tplMgr"> 模板管理</a>
 						<ul id="tplMgr" class="nav nav-second-level collapse in">

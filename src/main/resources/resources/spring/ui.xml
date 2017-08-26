@@ -88,76 +88,76 @@
 		</property>
 		<property name="fragments">
 			<list>
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="文章详情"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/article.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="文章列表"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="上一篇下一篇"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleNav.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="标签集"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleTags.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="顶部导航"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/nav.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="底部"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/foot.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="文章统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/articleStatistics.html"  type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="评论统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/commentStatistics.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="标签统计"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/tagStatistics.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="最近被访问文章"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/recentlyViewdArticles.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="qa"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/lock_qa.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="password"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/lock_password.html" type="org.springframework.core.io.Resource"/>
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="评论"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/comments.html"/>
 					<constructor-arg index="2" value="true" />
 				</bean>
 				
 				
-				<bean class="me.qyh.blog.core.entity.Fragment">
+				<bean class="me.qyh.blog.web.template.Fragment">
 					<constructor-arg index="0" value="评论挂件"/>
 					<constructor-arg index="1" value="classpath:resources/fragment/commentWidget.html"/>
 					<constructor-arg index="2" value="true" />

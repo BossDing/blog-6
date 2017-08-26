@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.DataTagProcessor;
 
 public class RandomArticleDataTagProcessor extends DataTagProcessor<Article> {
 

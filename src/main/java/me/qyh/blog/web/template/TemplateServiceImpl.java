@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,7 +60,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -78,17 +76,10 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
 import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.dao.FragmentDao;
-import me.qyh.blog.core.dao.PageDao;
-import me.qyh.blog.core.entity.Fragment;
-import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.evt.EventType;
-import me.qyh.blog.core.evt.PageEvent;
 import me.qyh.blog.core.evt.SpaceDeleteEvent;
 import me.qyh.blog.core.evt.TemplateEvitEvent;
 import me.qyh.blog.core.exception.LogicException;
@@ -99,24 +90,23 @@ import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
+import me.qyh.blog.core.templatedata.DataTagProcessor;
 import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.core.vo.DataTag;
-import me.qyh.blog.core.vo.DataTagProcessor;
-import me.qyh.blog.core.vo.ExportPage;
 import me.qyh.blog.core.vo.ImportRecord;
 import me.qyh.blog.core.vo.PathTemplate;
 import me.qyh.blog.core.vo.PathTemplateBean;
 import me.qyh.blog.core.vo.PathTemplateLoadRecord;
 import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.util.Resources;
 import me.qyh.blog.util.StringUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.TemplateView;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping.MappingRegistry;
+import me.qyh.blog.web.template.dao.FragmentDao;
+import me.qyh.blog.web.template.dao.PageDao;
 import me.qyh.blog.web.validator.FragmentValidator;
 import me.qyh.blog.web.validator.PageValidator;
 
@@ -169,7 +159,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	// TEMPLATE REGISTER
 	@Autowired
-	private RequestMappingHandlerMapping requestMapping;
+	private TemplateRequestMappingHandlerMapping requestMapping;
 
 	private TemplateMappingRegister templateMappingRegister;
 
@@ -1006,8 +996,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					template = pathTemplates.get(path);
 				}
 			} else {
-				template = pathTemplates
-						.get("space/" + spaceAlias + (path.isEmpty() ? "" : "/" + path));
+				template = pathTemplates.get("space/" + spaceAlias + (path.isEmpty() ? "" : "/" + path));
 			}
 			if (template == null) {
 				// 再次寻找 public pub
@@ -1603,7 +1592,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			HandlerMethod handlerMethod = mappingRegistry.getMappings().get(mapping);
 			if (handlerMethod != null) {
 				TemplateController templateController = (TemplateController) handlerMethod.getBean();
-				if (Template.isPreviewTemplate(templateController.templateName)) {
+				if (Template.isPreviewTemplate(templateController.getTemplateName())) {
 					// 此时可以解除
 					mappingRegistry.unregister(mapping);
 				}
@@ -1633,8 +1622,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				exists = true;
 				TemplateController templateController = (TemplateController) handlerMethod.getBean();
 				// 如果是系统模板或者预览模板，删除后注册
-				if (SystemTemplate.isSystemTemplate(templateController.templateName)
-						|| Template.isPreviewTemplate(templateController.templateName)) {
+				if (SystemTemplate.isSystemTemplate(templateController.getTemplateName())
+						|| Template.isPreviewTemplate(templateController.getTemplateName())) {
 					mappingRegistry.unregister(info);
 					exists = false;
 				}
@@ -1642,7 +1631,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (exists) {
 				throw new LogicException(new Message("requestMapping.register.exists", "路径:" + path + "已经存在", path));
 			}
-			mappingRegistry.register(info, new TemplateController(templateName, path), method);
+			mappingRegistry.register(info, new _TemplateController(templateName, path), method);
 		}
 
 		/**
@@ -1662,7 +1651,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (template != null) {
 				String templateName = template.getTemplateName();
 				mappingRegistry.register(getMethodMapping(template.getPath()),
-						new TemplateController(templateName, path), method);
+						new _TemplateController(templateName, path), method);
 			}
 		}
 
@@ -1681,13 +1670,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			RequestMappingInfo info = getMethodMapping(path);
 			mappingRegistry.unregister(info);
-			mappingRegistry.register(info, new TemplateController(templateName, path), method);
+			mappingRegistry.register(info, new _TemplateController(templateName, path), method);
 		}
 
 		private RequestMappingInfo getMethodMapping(String registPath) {
-			PatternsRequestCondition prc = new PatternsRequestCondition(registPath);
-			RequestMethodsRequestCondition rmrc = new RequestMethodsRequestCondition(RequestMethod.GET);
-			return new RequestMappingInfo(prc, rmrc, null, null, null, null, null);
+			return requestMapping.createRequestMappingInfoWithConfig(
+					RequestMappingInfo.paths(registPath).methods(RequestMethod.GET));
 		}
 
 		private boolean isKeyPath(String path) {
@@ -1695,7 +1683,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return !condition.getMatchingPatterns(lookupPath).isEmpty();
 		}
 
-		private class PreviewTemplateController extends TemplateController {
+		private class PreviewTemplateController extends _TemplateController {
 
 			public PreviewTemplateController(String path) {
 				super(Template.TEMPLATE_PREVIEW_PREFIX + path, path);
@@ -1704,51 +1692,34 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			@Override
 			public TemplateView handleRequest(HttpServletRequest request) {
 				if (Environment.isLogin()) {
-					return templateView;
+					return getTemplateView();
 				} else {
-					throw new TemplateNotFoundException(templateName);
+					throw new TemplateNotFoundException(getTemplateName());
 				}
 			}
 		}
 	}
 
-	public class TemplateController {
+	public class _TemplateController extends TemplateController {
 
-		protected final TemplateView templateView;
-		protected final String templateName;
-		protected final String path;
-		protected final Integer id;
-
-		private TemplateController(String templateName, String path) {
-			super();
-			this.templateView = new TemplateView(templateName);
-			this.templateName = templateName;
-			this.path = path;
-			this.id = templateIdGenerator.incrementAndGet();
+		private _TemplateController(String templateName, String path) {
+			super(templateIdGenerator.incrementAndGet(), templateName, path);
 		}
 
+		@Override
 		public TemplateView handleRequest(HttpServletRequest request) {
 			// 如果用户登录状态并且预览服务中存在这个模板，那么返回预览模板名
 			if (Environment.isLogin()) {
 				String path = FileUtils
 						.cleanPath(request.getRequestURI().substring(request.getContextPath().length() + 1));
 				String previewTemplateName = Template.TEMPLATE_PREVIEW_PREFIX + path;
-				Optional<String> bestTemplateName = previewManager.getBestMatchTemplateName(this.path,
+				Optional<String> bestTemplateName = previewManager.getBestMatchTemplateName(getPath(),
 						previewTemplateName);
 				if (bestTemplateName.isPresent()) {
 					return new TemplateView(bestTemplateName.get());
 				}
 			}
-			return templateView;
-		}
-
-		/**
-		 * 返回模板ID，id越大，优先级越高
-		 * 
-		 * @return
-		 */
-		public Integer getId() {
-			return id;
+			return getTemplateView();
 		}
 	}
 
@@ -1840,84 +1811,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 
-	}
-
-	/**
-	 * 系统内置模板
-	 * 
-	 * @author mhlx
-	 *
-	 */
-	private static final class SystemTemplate implements Template {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private static final String SYSTEM_PREFIX = TEMPLATE_PREFIX + "System" + SPLITER;
-		private final String path;
-		private String template;
-		private String templateName;
-
-		private SystemTemplate(SystemTemplate systemTemplate) {
-			this.path = systemTemplate.path;
-			this.template = systemTemplate.template;
-		}
-
-		public SystemTemplate(String path, String templateClassPath) {
-			super();
-			this.path = path;
-			try {
-				this.template = Resources.readResourceToString(new ClassPathResource(templateClassPath));
-			} catch (IOException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-		}
-
-		@Override
-		public boolean isRoot() {
-			return true;
-		}
-
-		@Override
-		public String getTemplate() {
-			return template;
-		}
-
-		@Override
-		public String getTemplateName() {
-			if (templateName == null) {
-				templateName = SYSTEM_PREFIX + FileUtils.cleanPath(path);
-			}
-			return templateName;
-		}
-
-		@Override
-		public Template cloneTemplate() {
-			return new SystemTemplate(this);
-		}
-
-		@Override
-		public boolean isCallable() {
-			return false;
-		}
-
-		@Override
-		public boolean equalsTo(Template other) {
-			if (Validators.baseEquals(this, other)) {
-				SystemTemplate rhs = (SystemTemplate) other;
-				return Objects.equals(this.path, rhs.path);
-			}
-			return false;
-		}
-
-		public String getPath() {
-			return path;
-		}
-
-		public static boolean isSystemTemplate(String templateName) {
-			return templateName != null && templateName.startsWith(SYSTEM_PREFIX);
-		}
 	}
 
 	public void setProcessors(List<DataTagProcessor<?>> processors) {

@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.DataTagProcessor;
 import me.qyh.blog.core.vo.TagCount;
 
 public class ArticleTagDataTagProcessor extends DataTagProcessor<List<TagCount>> {

@@ -56,7 +56,8 @@
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
 			value="me.qyh.blog.core.dao,
-				   me.qyh.blog.core.lock" />
+				   me.qyh.blog.core.lock,
+				   me.qyh.blog.web.template.dao" />
 	</bean>
 
 	<import resource="file.xml" />

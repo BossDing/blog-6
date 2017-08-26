@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.vo;
+package me.qyh.blog.core.templatedata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.util.Validators;
 
 public abstract class DataTagProcessor<T> {

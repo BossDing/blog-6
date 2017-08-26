@@ -86,4 +86,10 @@ public class CommentMgrController extends BaseMgrController {
 		return "mgr/comment/uncheck";
 	}
 
+	@GetMapping("uncheckCount")
+	@ResponseBody
+	public JsonResult uncheckCount() {
+		return new JsonResult(true, commentService.queryUncheckCommentCount());
+	}
+
 }

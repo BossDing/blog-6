@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.evt;
+package me.qyh.blog.web.template;
 
 import org.springframework.context.ApplicationEvent;
 
-import me.qyh.blog.core.entity.Page;
+import me.qyh.blog.core.evt.EventType;
 
 /**
  * 页面操作事件

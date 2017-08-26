@@ -25,7 +25,6 @@ import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.impl.CommentService;
-import me.qyh.blog.core.vo.DataTagProcessor;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 

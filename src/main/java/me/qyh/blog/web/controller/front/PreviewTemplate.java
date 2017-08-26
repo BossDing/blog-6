@@ -18,7 +18,7 @@ package me.qyh.blog.web.controller.front;
 import java.io.Serializable;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Template;
+import me.qyh.blog.web.template.Template;
 
 /**
  * 用来预览的模板bean

@@ -18,6 +18,7 @@ package me.qyh.blog.web.template;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
@@ -41,9 +42,17 @@ public class TemplateWebConfig extends WebMvcConfigurationSupport {
 	@Autowired
 	private TemplateRender templateRender;
 
+	@Bean
+	@Override
+	public TemplateRequestMappingHandlerMapping requestMappingHandlerMapping() {
+		return (TemplateRequestMappingHandlerMapping) super.requestMappingHandlerMapping();
+	}
+
 	@Override
 	protected RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
-		return new TemplateRequestMappingHandlerMapping();
+		TemplateRequestMappingHandlerMapping mapping = new TemplateRequestMappingHandlerMapping();
+		mapping.setUseSuffixPatternMatch(false);
+		return mapping;
 	}
 
 	@Override

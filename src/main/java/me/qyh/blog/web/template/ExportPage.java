@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.vo;
+package me.qyh.blog.web.template;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import me.qyh.blog.core.entity.Fragment;
-import me.qyh.blog.core.entity.Page;
 
 /**
  * 用于文件导入

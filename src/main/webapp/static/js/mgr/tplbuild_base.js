@@ -40,8 +40,8 @@ file_mode = "HTML";
 			      CodeMirror.commands["selectAll"](editor);
 			      autoFormatSelection()
 				break;
-			case 'lookup':
-				lookup();
+			case 'lookup-data':
+				lookupData();
 				break;
 			case 'lock':
 				showLock();
@@ -126,6 +126,10 @@ file_mode = "HTML";
 	
 	function lookup(){
 		$("#lookupModal").modal('show');
+	}
+	
+	function lookupData(){
+		$("#lookupDataModal").modal('show');
 	}
 	
 	function showDataTags(){

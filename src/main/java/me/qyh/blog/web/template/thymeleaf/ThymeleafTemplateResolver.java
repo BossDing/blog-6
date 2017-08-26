@@ -32,9 +32,9 @@ import org.thymeleaf.templateresolver.TemplateResolution;
 import org.thymeleaf.templateresource.ITemplateResource;
 import org.thymeleaf.templateresource.StringTemplateResource;
 
-import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.service.TemplateService;
+import me.qyh.blog.web.template.Template;
+import me.qyh.blog.web.template.TemplateService;
 
 public class ThymeleafTemplateResolver implements ITemplateResolver {
 

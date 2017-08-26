@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.vo.ArticleNav;
-import me.qyh.blog.core.vo.DataTagProcessor;
 
 public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 

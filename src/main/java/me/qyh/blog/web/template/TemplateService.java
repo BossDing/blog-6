@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.service;
+package me.qyh.blog.web.template;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import me.qyh.blog.core.entity.Fragment;
-import me.qyh.blog.core.entity.Page;
-import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.pageparam.FragmentQueryParam;
 import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.core.vo.DataTag;
-import me.qyh.blog.core.vo.ExportPage;
 import me.qyh.blog.core.vo.ImportRecord;
 import me.qyh.blog.core.vo.PathTemplate;
 import me.qyh.blog.core.vo.PathTemplateBean;

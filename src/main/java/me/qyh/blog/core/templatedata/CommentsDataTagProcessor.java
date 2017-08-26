@@ -26,7 +26,6 @@ import me.qyh.blog.core.pageparam.CommentQueryParam;
 import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.impl.CommentService;
 import me.qyh.blog.core.vo.CommentPageResult;
-import me.qyh.blog.core.vo.DataTagProcessor;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired

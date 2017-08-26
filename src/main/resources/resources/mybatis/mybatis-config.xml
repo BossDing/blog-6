@@ -32,8 +32,8 @@
 
 		<typeAlias type="me.qyh.blog.core.vo.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.core.entity.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.core.entity.Fragment"
+		<typeAlias type="me.qyh.blog.web.template.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.web.template.Fragment"
 			alias="Fragment" />
 
 		<typeAlias

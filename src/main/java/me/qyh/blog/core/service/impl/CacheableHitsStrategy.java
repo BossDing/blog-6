@@ -107,7 +107,6 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 			Transactions.executeInTransaction(transactionManager, status -> {
 				if (!contextClose) {
 					Transactions.afterCommit(() -> {
-						articleCache.updateHits(hitsMap);
 						int num = 0;
 						List<Integer> ids = new ArrayList<>();
 						for (Integer id : hitsMap.keySet()) {
@@ -118,6 +117,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 							}
 						}
 						articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
+						articleCache.updateHits(hitsMap);
 					});
 				}
 

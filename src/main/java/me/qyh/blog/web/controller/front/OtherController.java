@@ -31,17 +31,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.entity.Fragment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.template.Fragment;
 import me.qyh.blog.web.template.ParseConfig;
 import me.qyh.blog.web.template.RenderResult;
 import me.qyh.blog.web.template.TemplateRender;
 import me.qyh.blog.web.template.TemplateRenderException;
+import me.qyh.blog.web.template.TemplateService;
 
 @Controller
 public class OtherController {

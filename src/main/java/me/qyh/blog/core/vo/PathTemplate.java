@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import me.qyh.blog.core.entity.Template;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.template.Template;
 
 public class PathTemplate implements Template {
 

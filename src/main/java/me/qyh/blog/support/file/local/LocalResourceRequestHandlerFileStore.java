@@ -39,10 +39,7 @@ import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
-import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
-import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import me.qyh.blog.core.config.UrlHelper;
@@ -57,6 +54,7 @@ import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.RequestMatcher;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping;
 
 /**
  * 将资源存储和资源访问结合起来，<b>这个类必须在Web环境中注册</b>
@@ -86,7 +84,7 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Autowired
-	private RequestMappingHandlerMapping requestMappingHandlerMapping;
+	private TemplateRequestMappingHandlerMapping requestMappingHandlerMapping;
 
 	private static Method method;
 
@@ -273,13 +271,11 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		 * spring 4.3 fix
 		 */
 		super.afterPropertiesSet();
-		
+
 		this.applicationEventPublisher.publishEvent(new FileStoreRegisterEvent(this, this));
 		String pattern = urlPatternPrefix + "/**";
-		requestMappingHandlerMapping.registerMapping(
-				new RequestMappingInfo(new PatternsRequestCondition(pattern),
-						new RequestMethodsRequestCondition(RequestMethod.GET), null, null, null, null, null),
-				this, method);
+		requestMappingHandlerMapping.registerMapping(requestMappingHandlerMapping.createRequestMappingInfoWithConfig(
+				RequestMappingInfo.paths(pattern).methods(RequestMethod.GET)), 	this, method);
 	}
 
 	@Override

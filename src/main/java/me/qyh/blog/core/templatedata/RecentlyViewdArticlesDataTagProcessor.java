@@ -23,7 +23,6 @@ import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.DataTagProcessor;
 
 public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List<Article>> {
 

@@ -30,11 +30,11 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
-import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.template.ParseContextHolder;
+import me.qyh.blog.web.template.TemplateService;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}

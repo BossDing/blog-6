@@ -50,7 +50,6 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.CommentDao;
-import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Comment;
 import me.qyh.blog.core.entity.Comment.CommentStatus;
@@ -58,13 +57,11 @@ import me.qyh.blog.core.entity.CommentMode;
 import me.qyh.blog.core.entity.CommentModule;
 import me.qyh.blog.core.entity.CommentModule.ModuleType;
 import me.qyh.blog.core.entity.Editor;
-import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.evt.ArticleEvent;
 import me.qyh.blog.core.evt.CommentEvent;
 import me.qyh.blog.core.evt.EventType;
-import me.qyh.blog.core.evt.PageEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.lock.LockManager;
@@ -81,6 +78,9 @@ import me.qyh.blog.core.vo.Limit;
 import me.qyh.blog.core.vo.ModuleCommentCount;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Resources;
+import me.qyh.blog.web.template.Page;
+import me.qyh.blog.web.template.PageEvent;
+import me.qyh.blog.web.template.dao.PageDao;
 
 public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware {
 
@@ -525,6 +525,22 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		return commentDao.selectTotalCommentCount(ModuleType.USERPAGE, space, queryPrivate);
 	}
 
+	/**
+	 * 查询未审核评论的数目
+	 * @since 5.5.6
+	 * @return
+	 */
+	@Transactional
+	public int queryUncheckCommentCount(){
+		return commentDao.queryUncheckCommentsCount();
+	}
+
+	/**
+	 * 分页查询待审核评论
+	 * 
+	 * @param param
+	 * @return
+	 */
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryUncheckComments(PageQueryParam param) {
 		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));

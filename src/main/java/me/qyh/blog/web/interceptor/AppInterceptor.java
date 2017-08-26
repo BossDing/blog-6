@@ -168,6 +168,12 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			throws Exception {
 		removeContext();
 	}
+	
+	@Override
+	public void afterConcurrentHandlingStarted(HttpServletRequest request, HttpServletResponse response, Object handler)
+			throws Exception {
+		removeContext();
+	}
 
 	private void removeContext() {
 		Environment.remove();

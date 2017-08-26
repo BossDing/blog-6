@@ -33,15 +33,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.core.service.TemplateService;
 import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.web.template.Page;
+import me.qyh.blog.web.template.TemplateService;
 import me.qyh.blog.web.validator.PageValidator;
 import me.qyh.blog.web.validator.TemplatePageQueryParamValidator;
 

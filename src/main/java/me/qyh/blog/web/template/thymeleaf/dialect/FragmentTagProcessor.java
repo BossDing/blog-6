@@ -28,8 +28,8 @@ import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
-import me.qyh.blog.core.entity.Fragment;
 import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.web.template.Fragment;
 import me.qyh.blog.web.template.thymeleaf.UIStackoverflowError;
 
 /**

@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.BlogFileDao;
-import me.qyh.blog.core.dao.PageDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.BlogFile;
@@ -52,6 +51,7 @@ import me.qyh.blog.core.vo.PageStatistics;
 import me.qyh.blog.core.vo.StatisticsDetail;
 import me.qyh.blog.core.vo.TagDetailStatistics;
 import me.qyh.blog.core.vo.TagStatistics;
+import me.qyh.blog.web.template.dao.PageDao;
 
 @Service
 @Transactional(readOnly = true)

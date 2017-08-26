@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.entity.Fragment;
 import me.qyh.blog.util.Validators;
+import me.qyh.blog.web.template.Fragment;
 
 @Component
 public class FragmentValidator implements Validator {

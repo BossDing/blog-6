@@ -32,10 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
-import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.User;
@@ -50,6 +47,7 @@ import me.qyh.blog.web.CaptchaValidator;
 import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
+import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.validator.LoginBean;
 import me.qyh.blog.web.validator.LoginBeanValidator;
 
@@ -70,7 +68,7 @@ public class LoginController implements InitializingBean {
 	private CaptchaValidator captchaValidator;
 
 	@Autowired
-	private RequestMappingHandlerMapping mapping;
+	private TemplateRequestMappingHandlerMapping mapping;
 
 	/**
 	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
@@ -196,9 +194,10 @@ public class LoginController implements InitializingBean {
 		this.attemptLogger = attemptLoggerManager.createAttemptLogger(attemptCount, maxAttemptCount, sleepSec);
 
 		if (ga != null) {
+
 			mapping.registerMapping(
-					new RequestMappingInfo(new PatternsRequestCondition("login/otpVerify"),
-							new RequestMethodsRequestCondition(RequestMethod.POST), null, null, null, null, null),
+					mapping.createRequestMappingInfoWithConfig(
+							RequestMappingInfo.paths("login/otpVerify").methods(RequestMethod.POST)),
 					"loginController", LoginController.class.getMethod("otpVerify", String.class,
 							HttpServletRequest.class, HttpServletResponse.class));
 		}

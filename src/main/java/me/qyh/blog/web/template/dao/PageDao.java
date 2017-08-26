@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.dao;
+package me.qyh.blog.web.template.dao;
 
 import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import me.qyh.blog.core.entity.Page;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.pageparam.PageQueryParam;
+import me.qyh.blog.web.template.Page;
 
 /**
  * 

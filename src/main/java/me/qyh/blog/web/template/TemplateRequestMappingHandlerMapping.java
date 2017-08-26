@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.web.template;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,23 +25,28 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.StampedLock;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConfiguration;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import me.qyh.blog.web.template.TemplateServiceImpl.TemplateController;
+import me.qyh.blog.core.exception.SystemException;
 
 /**
  * 一个提供注册TemplateRequestMapping的类
@@ -62,7 +68,18 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 
 	private static final CorsConfiguration ALLOW_CORS_CONFIG = new CorsConfiguration();
 
+	/**
+	 * @since 5.6
+	 */
+	private RequestMappingInfo.BuilderConfiguration config;
+
+	TemplateRequestMappingHandlerMapping() {
+		super();
+	}
+
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
+
+	private List<TemplateInterceptor> templateInterceptors = new ArrayList<>();
 
 	/**
 	 * Return a (read-only) map with all mappings and HandlerMethod's.
@@ -296,6 +313,49 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 		}
 	}
 
+	/**
+	 * @since 5.6
+	 * @see RequestMappingInfo.Builder#options(BuilderConfiguration)
+	 * @param builder
+	 * @return
+	 */
+	public RequestMappingInfo createRequestMappingInfoWithConfig(RequestMappingInfo.Builder builder) {
+		return builder.options(config).build();
+	}
+
+	@Override
+	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+
+		templateInterceptors.addAll(BeanFactoryUtils
+				.beansOfTypeIncludingAncestors(getApplicationContext(), TemplateInterceptor.class, true, false)
+				.values());
+		try {
+			Field configField = this.getClass().getSuperclass().getDeclaredField("config");
+			configField.setAccessible(true);
+			this.config = (BuilderConfiguration) configField.get(this);
+		} catch (Exception e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	protected HandlerExecutionChain getHandlerExecutionChain(Object handler, HttpServletRequest request) {
+		HandlerExecutionChain chain = super.getHandlerExecutionChain(handler, request);
+		Optional<TemplateController> optional;
+		if (!CollectionUtils.isEmpty(templateInterceptors)
+				&& (optional = TemplateUtils.getTemplateController(handler)).isPresent()) {
+			String templateName = ((TemplateController) optional.get()).getTemplateName();
+			for (TemplateInterceptor interceptor : templateInterceptors) {
+				if (interceptor.match(templateName,request)) {
+					chain.addInterceptor(interceptor);
+				}
+			}
+		}
+
+		return chain;
+	}
+
 	private static class MappingRegistration {
 
 		private final RequestMappingInfo mapping;
@@ -338,7 +398,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 		private final MultiValueMap<String, RequestMappingInfo> urlLookup = new LinkedMultiValueMap<>();
 		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();
 		private final Map<HandlerMethod, CorsConfiguration> corsLookup = new ConcurrentHashMap<>();
-		
+
 		private final StampedLock sl = new StampedLock();
 
 		private MappingRegistry() {
