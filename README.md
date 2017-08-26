@@ -3,7 +3,7 @@
 
 一个重型博客
 
-当前版本: **maintenance**
+当前版本: 5.5
 
 特性：
 
@@ -33,4 +33,9 @@
 
 ## changelog: https://www.qyh.me/changelog
 
-## doc: https://www.qyh.me/doc/blog
+
+## version
+5.5.1 -> 5.1  
+...  
+5.5.5 -> 5.5
+
