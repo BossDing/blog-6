@@ -38,6 +38,7 @@ import me.qyh.blog.web.JsonResult;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.template.Fragment;
 import me.qyh.blog.web.template.ParseConfig;
+import me.qyh.blog.web.template.ReadOnlyResponse;
 import me.qyh.blog.web.template.RenderResult;
 import me.qyh.blog.web.template.TemplateRender;
 import me.qyh.blog.web.template.TemplateRenderException;
@@ -72,7 +73,7 @@ public class OtherController {
 		try {
 
 			RenderResult result = templateRender.render(
-					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request, response,
+					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request, new ReadOnlyResponse(response),
 					new ParseConfig(true));
 
 			String content = result.getContent();

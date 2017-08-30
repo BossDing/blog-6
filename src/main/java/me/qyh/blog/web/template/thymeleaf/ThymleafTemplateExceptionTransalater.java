@@ -16,6 +16,7 @@
 package me.qyh.blog.web.template.thymeleaf;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.support.ServletContextResource;
@@ -25,8 +26,8 @@ import me.qyh.blog.util.ExceptionUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.template.TemplateExceptionTranslater;
 import me.qyh.blog.web.template.TemplateRenderErrorDescription;
-import me.qyh.blog.web.template.TemplateRenderException;
 import me.qyh.blog.web.template.TemplateRenderErrorDescription.TemplateErrorInfo;
+import me.qyh.blog.web.template.TemplateRenderException;
 
 public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTranslater {
 
@@ -39,16 +40,16 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 	private static final String SERVLET_RESOURCE_PREFIX = "ServletContext resource ";
 
 	@Override
-	public TemplateRenderException translate(String templateName, Throwable e) {
+	public Optional<TemplateRenderException> translate(String templateName, Throwable e) {
 		if (e instanceof TemplateProcessingException) {
-			return new TemplateRenderException(templateName,
-					fromException((TemplateProcessingException) e, templateName), e);
+			Optional.of(new TemplateRenderException(templateName,
+					fromException((TemplateProcessingException) e, templateName), e));
 		}
 		if (e instanceof UIStackoverflowError) {
 			UIStackoverflowError error = (UIStackoverflowError) e;
-			return new TemplateRenderException(templateName, fromError(error), e);
+			Optional.of(new TemplateRenderException(templateName, fromError(error), e));
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private TemplateRenderErrorDescription fromError(UIStackoverflowError e) {

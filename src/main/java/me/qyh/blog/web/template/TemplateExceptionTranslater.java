@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.template;
 
+import java.util.Optional;
+
 /**
  * 用来将模板异常转化为可读的{@code TemplateRenderException}
  * 
@@ -28,8 +30,8 @@ public interface TemplateExceptionTranslater {
 	 *            模板名称
 	 * @param e
 	 *            异常
-	 * @return 模板渲染异常，如果无法转化为该异常，返回null
+	 * @return 模板渲染异常
 	 */
-	TemplateRenderException translate(String templateName, Throwable e);
+	Optional<TemplateRenderException> translate(String templateName, Throwable e);
 
 }

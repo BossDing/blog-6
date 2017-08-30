@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.core.vo;
 
+import me.qyh.blog.web.template.PathTemplate;
+
 public class PathTemplateBean {
 	private String tpl;
 	private String path;

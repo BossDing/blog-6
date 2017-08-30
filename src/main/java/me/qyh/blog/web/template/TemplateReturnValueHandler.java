@@ -65,7 +65,7 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 		RenderResult rendered;
 
 		try {
-			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest, nativeResponse,
+			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest, new ReadOnlyResponse(nativeResponse),
 					new ParseConfig());
 
 		} catch (RedirectException e) {

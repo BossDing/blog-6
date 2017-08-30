@@ -71,4 +71,9 @@ public class DataTag {
 		return attrs.containsKey(key);
 	}
 
+	@Override
+	public String toString() {
+		return "DataTag [name=" + name + ", attrs=" + attrs + "]";
+	}
+
 }

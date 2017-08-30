@@ -23,7 +23,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,6 +193,16 @@ public class Jsons {
 	}
 
 	/**
+	 * @see Jsons#read(String, String, UrlReader)
+	 * @param url
+	 * @param expression
+	 * @return
+	 */
+	public static ExpressionExecutors readForExecutors(String url) {
+		return readForExecutors(url, DEFAULT_READER);
+	}
+
+	/**
 	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
 	 * 
 	 * @param url
@@ -220,6 +232,25 @@ public class Jsons {
 	 *            表达式读取
 	 * @return
 	 */
+	public static ExpressionExecutors readForExecutors(String url, UrlReader reader) {
+		try {
+			return readJsonForExecutors(reader.read(url));
+		} catch (IOException e) {
+			return new ExpressionExecutors(toJsonArray(JsonNull.INSTANCE));
+		}
+	}
+
+	/**
+	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
+	 * 
+	 * @param url
+	 *            url
+	 * @param expression
+	 *            表达式
+	 * @param reader
+	 *            表达式读取
+	 * @return
+	 */
 	public static ExpressionExecutor readJson(String json) {
 		JsonElement je = null;
 		try {
@@ -232,27 +263,41 @@ public class Jsons {
 
 		return new ExpressionExecutor(je);
 	}
-	
+
+	/**
+	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
+	 * 
+	 * @param url
+	 *            url
+	 * @param expression
+	 *            表达式
+	 * @param reader
+	 *            表达式读取
+	 * @return
+	 */
+	public static ExpressionExecutors readJsonForExecutors(String json) {
+		JsonElement je = null;
+		try {
+			JsonParser jp = new JsonParser();
+			je = jp.parse(json);
+		} catch (Exception e) {
+			LOGGER.debug(e.getMessage(), e);
+			je = JsonNull.INSTANCE;
+		}
+
+		return new ExpressionExecutors(toJsonArray(je));
+	}
+
 	/**
 	 * 
 	 * @param success
 	 * @param data
 	 * @return
 	 */
-	public static String toJsonResult(boolean success,Object data){
+	public static String toJsonResult(boolean success, Object data) {
 		return gson.toJson(new JsonResult(success, data));
 	}
 
-	/**
-	 * 
-	 * @param success
-	 * @param message
-	 * @return
-	 */
-	public static String toJsonResult(boolean success,Message message){
-		return gson.toJson(new JsonResult(success, message));
-	}
-	
 	/**
 	 * 
 	 * @author mhlx
@@ -332,14 +377,90 @@ public class Jsons {
 			this.ele = ele;
 		}
 
+		/**
+		 * 执行一个表达式
+		 * 
+		 * <pre>
+		 * data:{
+		 * 	data:{
+		 * 		success:true
+		 * 	}
+		 * }
+		 * executeForExecutor(data).executeForExecutor(data).executeForExecutor(success).get() ==> 'true'
+		 * </pre>
+		 * 
+		 * @param expression
+		 * @return
+		 */
 		public ExpressionExecutor executeForExecutor(String expression) {
 			return new ExpressionExecutor(doExecute(expression));
 		}
 
-		public String execute(String expression) {
+		/**
+		 * 执行一个表达式
+		 * 
+		 * <pre>
+		 * data:{
+		 * 	data:{
+		 * 		success:true
+		 * 	}
+		 * }
+		 * executeForExecutors(data).getExpressionExecutor(0).executeForExecutor(data).executeForExecutor(success).get() ==> 'true'
+		 * 
+		 * 
+		 * data:{
+		 * 	datas:[
+		 * 	{
+		 * 		success:true
+		 * 	},{
+		 * 		success:false
+		 * 	}	
+		 * 	]
+		 * }
+		 * ExpressionExecutors executors = executeForExecutors(data-&gt;datas);
+		 * for(int i=0;i&lt;executors.size();i++){
+		 * 	ExpressionExecutor executor = executors.get(i);
+		 *  executor.execute(success) ==&gt; true,false
+		 * }
+		 * </pre>
+		 * 
+		 * @param expression
+		 * @return
+		 */
+		public ExpressionExecutors executeForExecutors(String expression) {
+			JsonElement ele = doExecute(expression);
+			return new ExpressionExecutors(toJsonArray(ele));
+		}
+
+		/**
+		 * 执行表达式，并返回结果
+		 * 
+		 * <pre>
+		 * data:{
+		 * 	data:{
+		 * 		success:true
+		 * 	}
+		 * }
+		 * execute(data) ==> data:{success:true}
+		 * execute(data-&gt;data-&gt;success) ==> 'true'
+		 * </pre>
+		 * 
+		 * @param expression
+		 * @return
+		 */
+		public Optional<String> execute(String expression) {
+			if (Validators.isEmptyOrNull(expression, true)) {
+				return isNull() ? Optional.empty()
+						: Optional.of(ele.isJsonPrimitive() ? ele.getAsString() : ele.toString());
+			}
 			JsonElement executed = doExecute(expression);
-			return executed == JsonNull.INSTANCE ? null
-					: executed.isJsonPrimitive() ? executed.getAsString() : executed.toString();
+			return executed == JsonNull.INSTANCE ? Optional.empty()
+					: executed.isJsonPrimitive() ? Optional.of(executed.getAsString())
+							: Optional.of(executed.toString());
+		}
+
+		public Optional<String> get() {
+			return execute(null);
 		}
 
 		private JsonElement doExecute(String expression) {
@@ -361,6 +482,11 @@ public class Jsons {
 			return executed;
 		}
 
+		/**
+		 * 结果是否为空
+		 * 
+		 * @return
+		 */
 		public boolean isNull() {
 			return ele == JsonNull.INSTANCE;
 		}
@@ -468,6 +594,40 @@ public class Jsons {
 		}
 	}
 
+	public static final class ExpressionExecutors implements Iterable<ExpressionExecutor> {
+		private final JsonArray array;
+
+		public ExpressionExecutors(JsonArray array) {
+			super();
+			this.array = array;
+		}
+
+		public int size() {
+			return array.size();
+		}
+
+		public ExpressionExecutor getExpressionExecutor(int index) {
+			return new ExpressionExecutor(array.get(index));
+		}
+
+		@Override
+		public Iterator<ExpressionExecutor> iterator() {
+			final Iterator<JsonElement> it = array.iterator();
+			return new Iterator<Jsons.ExpressionExecutor>() {
+
+				@Override
+				public ExpressionExecutor next() {
+					return new ExpressionExecutor(it.next());
+				}
+
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+			};
+		}
+	}
+
 	private static final class DateSerializer implements JsonSerializer<Date> {
 
 		@Override
@@ -477,5 +637,14 @@ public class Jsons {
 			}
 			return new JsonPrimitive(src.getTime());
 		}
+	}
+
+	private static JsonArray toJsonArray(JsonElement ele) {
+		if (ele.isJsonArray()) {
+			return ele.getAsJsonArray();
+		}
+		JsonArray array = new JsonArray(1);
+		array.add(ele);
+		return array;
 	}
 }

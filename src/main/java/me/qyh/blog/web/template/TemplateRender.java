@@ -16,23 +16,36 @@
 package me.qyh.blog.web.template;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.lock.LockBean;
 import me.qyh.blog.core.lock.LockException;
+import me.qyh.blog.core.lock.LockHelper;
+import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.util.ExceptionUtils;
+import me.qyh.blog.util.UIUtils;
+import me.qyh.blog.util.Validators;
 
 /**
  * 用来将模板解析成字符串
@@ -40,20 +53,23 @@ import me.qyh.blog.util.ExceptionUtils;
  * @author Administrator
  *
  */
-@Component
-public final class TemplateRender {
+public final class TemplateRender implements InitializingBean {
 
-	@Autowired
-	private TemplateExposeHelper uiExposeHelper;
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private TemplateRenderExecutor templateRenderer;
 	@Autowired
 	private TemplateExceptionTranslater templateExceptionTranslater;
+	@Autowired
+	private UrlHelper urlHelper;
+	@Autowired
+	private Messages messages;
+
+	private Map<String, Object> pros = new HashMap<>();
 
 	public RenderResult render(String templateName, Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response, ParseConfig config) throws TemplateRenderException {
+			ReadOnlyResponse response, ParseConfig config) throws TemplateRenderException {
 		try {
 			return doRender(templateName, model == null ? new HashMap<>() : model, request, response, config);
 		} catch (TemplateRenderException | RuntimeException e) {
@@ -63,9 +79,8 @@ public final class TemplateRender {
 		}
 	}
 
-	public RenderResult doRender(String templateName, Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response, ParseConfig config) throws Exception {
-		uiExposeHelper.addVariables(request);
+	public RenderResult doRender(String templateName, Map<String, ?> model, HttpServletRequest request,
+			ReadOnlyResponse response, ParseConfig config) throws Exception {
 		ParseContextHolder.getContext().setConfig(config);
 		try {
 			String content = doRender(templateName, model, request, response);
@@ -82,9 +97,9 @@ public final class TemplateRender {
 			}
 
 			// 如果没有逻辑异常，转化模板异常
-			TemplateRenderException templateRenderException = templateExceptionTranslater.translate(templateName, e);
-			if (templateRenderException != null) {
-				throw templateRenderException;
+			Optional<TemplateRenderException> optional = templateExceptionTranslater.translate(templateName, e);
+			if (optional.isPresent()) {
+				throw optional.get();
 			}
 
 			throw new SystemException(e.getMessage(), e);
@@ -109,9 +124,55 @@ public final class TemplateRender {
 		}
 	}
 
-	private String doRender(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
-			final HttpServletResponse response) throws Exception {
-		return templateRenderer.execute(viewTemplateName, model, request, new ReadOnlyResponse(response));
+	private String doRender(String viewTemplateName, final Map<String, ?> model, final HttpServletRequest request,
+			final ReadOnlyResponse response) throws Exception {
+		Map<String, Object> _model = new HashMap<>();
+		_model.putAll(getVariables(request));
+		if (model != null) {
+			_model.putAll(model);
+		}
+		return templateRenderer.execute(viewTemplateName, _model, request, response);
+	}
+
+	private Map<String, Object> getVariables(HttpServletRequest request) {
+		Map<String, Object> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(pros)) {
+			for (Map.Entry<String, Object> it : pros.entrySet()) {
+				map.put(it.getKey(), it.getValue());
+			}
+		}
+		map.put("urls", urlHelper.getUrlsBySpace(Environment.getSpaceAlias()));
+		map.put("user", Environment.getUser());
+		map.put("messages", messages);
+		map.put("space", Environment.getSpace());
+		map.put("ip", Environment.getIP());
+		LockBean lockBean = LockHelper.getLockBean(request);
+		if (lockBean != null) {
+			map.put("lock", lockBean.getLock());
+		}
+		return map;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+		scanner.addIncludeFilter(new AnnotationTypeFilter(UIUtils.class));
+		Set<BeanDefinition> definitions = new HashSet<>();
+		definitions.addAll(scanner.findCandidateComponents("me.qyh.blog"));
+		for (BeanDefinition definition : definitions) {
+			Class<?> clazz = Class.forName(definition.getBeanClassName());
+			UIUtils ann = AnnotationUtils.findAnnotation(clazz, UIUtils.class);
+			String name = ann.name();
+			if (Validators.isEmptyOrNull(name, true)) {
+				name = clazz.getSimpleName();
+				name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+			}
+			pros.put(name, clazz);
+		}
+	}
+
+	public void setPros(Map<String, Object> pros) {
+		this.pros = pros;
 	}
 
 }

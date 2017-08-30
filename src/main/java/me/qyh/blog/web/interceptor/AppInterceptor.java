@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import me.qyh.blog.core.config.Constants;
@@ -59,14 +58,11 @@ import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 import me.qyh.blog.web.security.InvalidCsrfTokenException;
 import me.qyh.blog.web.security.MissingCsrfTokenException;
-import me.qyh.blog.web.template.TemplateExposeHelper;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AppInterceptor.class);
 
-	@Autowired
-	private TemplateExposeHelper uiExposeHelper;
 	@Autowired
 	private SpaceService spaceService;
 	@Autowired
@@ -155,20 +151,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	@Override
-	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-			ModelAndView modelAndView) throws Exception {
-		if (modelAndView != null) {
-			LOGGER.debug("将用户和路径处理器放入model中");
-			uiExposeHelper.addVariables(request);
-		}
-	}
-
-	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
 		removeContext();
 	}
-	
+
 	@Override
 	public void afterConcurrentHandlingStarted(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {

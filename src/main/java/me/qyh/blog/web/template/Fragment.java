@@ -43,9 +43,6 @@ public class Fragment extends BaseEntity implements Template {
 
 	private static final String FRAGMENT_PREFIX = TEMPLATE_PREFIX + "Fragment" + SPLITER;
 
-	/**
-	 * 片段名，全局唯一
-	 */
 	private String name;
 	private String tpl;
 	private Space space;

@@ -166,11 +166,4 @@
 		</property>
 		<property name="pathTemplateRoot" value="/web/template" />
 	</bean>
-	<bean class="me.qyh.blog.web.template.TemplateExposeHelper">
-		<property name="pros">
-			<map>
-				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
-			</map>
-		</property>
-	</bean>
 </beans>      

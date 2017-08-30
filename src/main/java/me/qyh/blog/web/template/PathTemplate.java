@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.vo;
+package me.qyh.blog.web.template;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,7 +22,6 @@ import java.util.Objects;
 import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.template.Template;
 
 public class PathTemplate implements Template {
 

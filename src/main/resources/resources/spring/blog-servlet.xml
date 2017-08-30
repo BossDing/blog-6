@@ -19,44 +19,35 @@
 	<import resource="ui.xml" />
 
 	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
-	
+
 	<bean id="multipartResolver"
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 
-	<!-- 
-	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
-	 -->
+	<!-- <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/> -->
 
 	<mvc:resources location="/static/" mapping="/static/**"
+		cache-period="31556926" />
+
+	<mvc:resources location="/doc/" mapping="/doc/**"
 		cache-period="31556926" />
 
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web" />
 
-	<!-- 
-	USE TemplateWebConfig instead
-	<mvc:annotation-driven>
-		<mvc:message-converters>
-			<bean
-				class="org.springframework.http.converter.json.GsonHttpMessageConverter">
-				<property name="gson" value="#{T(me.qyh.blog.util.Jsons).getGson()}" />
-			</bean>
-		</mvc:message-converters>
-		<mvc:argument-resolvers>
-			<bean class="me.qyh.blog.core.lock.LockArgumentResolver" />
-		</mvc:argument-resolvers>
-		<mvc:return-value-handlers>
-			<bean class="me.qyh.blog.web.templateReturnHandler"></bean>
-		</mvc:return-value-handlers>
-	</mvc:annotation-driven>
-	 -->
-	 
+
+	<!-- USE TemplateWebConfig instead <mvc:annotation-driven> <mvc:message-converters> 
+		<bean class="org.springframework.http.converter.json.GsonHttpMessageConverter"> 
+		<property name="gson" value="#{T(me.qyh.blog.util.Jsons).getGson()}" /> </bean> 
+		</mvc:message-converters> <mvc:argument-resolvers> <bean class="me.qyh.blog.core.lock.LockArgumentResolver" 
+		/> </mvc:argument-resolvers> <mvc:return-value-handlers> <bean class="me.qyh.blog.web.templateReturnHandler"></bean> 
+		</mvc:return-value-handlers> </mvc:annotation-driven> -->
+
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
 
 	<bean id="appInterceptor" class="me.qyh.blog.web.interceptor.AppInterceptor">
 		<property name="ipGetter">
-			<bean class="me.qyh.blog.web.ProxyIPGetter"/>
+			<bean class="me.qyh.blog.web.ProxyIPGetter" />
 		</property>
 	</bean>
 
@@ -68,7 +59,8 @@
 	</mvc:interceptors>
 
 
-	<bean id="templateEngine" class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateEngine">
+	<bean id="templateEngine"
+		class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -87,19 +79,21 @@
 		</property>
 	</bean>
 
-
-	<bean class="org.thymeleaf.spring4.view.ThymeleafViewResolver">
-		<property name="contentType" value="text/html" />
-		<property name="characterEncoding" value="utf-8" />
-		<property name="templateEngine" ref="templateEngine" />
+	<bean class="me.qyh.blog.web.template.TemplateRender">
+		<property name="pros">
+			<map>
+				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
+			</map>
+		</property>
 	</bean>
 
 	<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafRenderExecutor" />
-	<bean class="me.qyh.blog.web.template.thymeleaf.ThymleafTemplateExceptionTransalater" />
+	<bean
+		class="me.qyh.blog.web.template.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
 	<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
-		<constructor-arg value="image"  index="0"/>
-		<constructor-arg value="2" index="1" type="int"/>
+		<constructor-arg value="image" index="0" />
+		<constructor-arg value="2" index="1" type="int" />
 		<property name="absPath" value="/web/file/blog_image/" />
 		<property name="id" value="1" />
 		<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />

@@ -4,7 +4,9 @@ import java.util.Optional;
 
 import org.springframework.web.method.HandlerMethod;
 
-class TemplateUtils {
+import me.qyh.blog.core.exception.SystemException;
+
+public class TemplateUtils {
 
 	private TemplateUtils() {
 		super();
@@ -18,6 +20,10 @@ class TemplateUtils {
 			}
 		}
 		return Optional.empty();
+	}
+	
+	public static TemplateController getRequiredTemplateController(Object handler){
+		return getTemplateController(handler).orElseThrow(()->new SystemException("无法转化为TemplateController"));
 	}
 
 }

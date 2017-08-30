@@ -302,6 +302,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		art.id AS art_id,
 		art.art_alias,
 		art.title,
+		art.hits,
 		art.pubDate,
 		art.lastModifyDate,
 		sp.space_alias,

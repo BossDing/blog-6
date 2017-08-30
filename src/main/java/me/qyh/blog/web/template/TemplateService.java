@@ -26,7 +26,6 @@ import me.qyh.blog.core.pageparam.TemplatePageQueryParam;
 import me.qyh.blog.core.vo.DataBind;
 import me.qyh.blog.core.vo.DataTag;
 import me.qyh.blog.core.vo.ImportRecord;
-import me.qyh.blog.core.vo.PathTemplate;
 import me.qyh.blog.core.vo.PathTemplateBean;
 import me.qyh.blog.core.vo.PathTemplateLoadRecord;
 
