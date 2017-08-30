@@ -29,7 +29,7 @@
 
 ## demo: https://www.qyh.me
 
-## detail: https://mhlx.github.io/mblog/
+## detail: https://www.qyh.me/project/blog
 
 ## changelog: https://www.qyh.me/changelog
 
