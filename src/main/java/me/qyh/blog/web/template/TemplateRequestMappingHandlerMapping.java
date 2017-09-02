@@ -73,7 +73,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	private RequestMappingInfo.BuilderConfiguration config;
 
-	TemplateRequestMappingHandlerMapping() {
+	public TemplateRequestMappingHandlerMapping() {
 		super();
 	}
 

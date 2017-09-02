@@ -79,33 +79,13 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		if (isHandlerMethod(handler)) {
-			String spaceAlias = Webs.getSpaceFromRequest(request);
+			HandlerMethod _handler = (HandlerMethod) handler;
+
 			try {
-				HttpSession session = request.getSession(false);
-				User user = null;
-				if (session != null) {
-					user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
-				}
 
-				Environment.setUser(user);
-				enableLogin((HandlerMethod) handler);
-
+				setUser(request, _handler);
 				setLockKeys(request);
-
-				if (spaceAlias != null) {
-					Space space = spaceService.getSpace(spaceAlias)
-							.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
-
-					if (space.getIsPrivate()) {
-						Environment.doAuthencation();
-					}
-
-					if (space.hasLock() && !Webs.unlockRequest(request)) {
-						lockManager.openLock(space);
-					}
-
-					Environment.setSpace(space);
-				}
+				setSpace(request);
 
 				Environment.setIP(ipGetter.getIp(request));
 
@@ -124,9 +104,37 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
+	private void setUser(HttpServletRequest request, HandlerMethod handler) {
+		HttpSession session = request.getSession(false);
+		User user = null;
+		if (session != null) {
+			user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
+		}
+
+		Environment.setUser(user);
+		enableLogin(handler);
+	}
+
 	private void enableLogin(HandlerMethod methodHandler) {
 		// auth check
 		getAnnotation(methodHandler.getMethod(), EnsureLogin.class).ifPresent(ann -> Environment.doAuthencation());
+	}
+
+	private void setSpace(HttpServletRequest request) throws SpaceNotFoundException {
+		String spaceAlias = Webs.getSpaceFromRequest(request);
+		if (spaceAlias != null) {
+			Space space = spaceService.getSpace(spaceAlias).orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
+
+			if (space.getIsPrivate()) {
+				Environment.doAuthencation();
+			}
+
+			if (space.hasLock() && !Webs.unlockRequest(request)) {
+				lockManager.openLock(space);
+			}
+
+			Environment.setSpace(space);
+		}
 	}
 
 	/**

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web.template;
+package me.qyh.blog.web;
 
 import java.util.List;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,11 +25,17 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.lock.LockArgumentResolver;
+import me.qyh.blog.support.file.local.LocalResourceRequestHandlerFileStore;
 import me.qyh.blog.util.Jsons;
+import me.qyh.blog.web.template.TemplateRender;
+import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping;
+import me.qyh.blog.web.template.TemplateReturnValueHandler;
 
 /**
  * 替代默认的RequestMappingHandlerMapping
@@ -37,10 +44,12 @@ import me.qyh.blog.util.Jsons;
  *
  */
 @Configuration
-public class TemplateWebConfig extends WebMvcConfigurationSupport {
+public class WebConfig extends WebMvcConfigurationSupport {
 
 	@Autowired
 	private TemplateRender templateRender;
+
+	private static final Integer cacheSec = 31556926;
 
 	@Bean
 	@Override
@@ -48,11 +57,29 @@ public class TemplateWebConfig extends WebMvcConfigurationSupport {
 		return (TemplateRequestMappingHandlerMapping) super.requestMappingHandlerMapping();
 	}
 
+	@Bean
+	@Override
+	public FileStoreUrlHandlerMapping resourceHandlerMapping() {
+		SimpleUrlHandlerMapping mapping = (SimpleUrlHandlerMapping) super.resourceHandlerMapping();
+		FileStoreUrlHandlerMapping fsMapping = new FileStoreUrlHandlerMapping();
+		fsMapping.setOrder(mapping.getOrder());
+		fsMapping.setUrlMap(mapping.getUrlMap());
+		return fsMapping;
+	}
+
 	@Override
 	protected RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
 		TemplateRequestMappingHandlerMapping mapping = new TemplateRequestMappingHandlerMapping();
 		mapping.setUseSuffixPatternMatch(false);
 		return mapping;
+	}
+
+	@Override
+	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("/favicon.ico").setCachePeriod(cacheSec)
+				.addResourceLocations("/static/img/favicon.ico");
+		registry.addResourceHandler("/static/**").setCachePeriod(cacheSec).addResourceLocations("/static/");
+		registry.addResourceHandler("/doc/**").setCachePeriod(cacheSec).addResourceLocations("/doc/");
 	}
 
 	@Override
@@ -83,6 +110,15 @@ public class TemplateWebConfig extends WebMvcConfigurationSupport {
 	@Override
 	protected void addReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
 		returnValueHandlers.add(new TemplateReturnValueHandler(templateRender));
+	}
+
+	public final class FileStoreUrlHandlerMapping extends SimpleUrlHandlerMapping {
+
+		public void registerFileStoreMapping(String urlPath, LocalResourceRequestHandlerFileStore fileStore)
+				throws BeansException, IllegalStateException {
+			super.registerHandler(urlPath, fileStore);
+		}
+
 	}
 
 }

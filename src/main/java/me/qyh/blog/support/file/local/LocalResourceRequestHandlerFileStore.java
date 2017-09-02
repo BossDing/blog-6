@@ -36,6 +36,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
+import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
@@ -53,6 +54,7 @@ import me.qyh.blog.util.FileUtils;
 import me.qyh.blog.util.UrlUtils;
 import me.qyh.blog.util.Validators;
 import me.qyh.blog.web.RequestMatcher;
+import me.qyh.blog.web.WebConfig.FileStoreUrlHandlerMapping;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping;
 
@@ -64,7 +66,7 @@ import me.qyh.blog.web.template.TemplateRequestMappingHandlerMapping;
  * @author mhlx
  *
  */
-class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
+public class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		implements FileStore, ApplicationEventPublisherAware {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
@@ -83,8 +85,18 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
+	/**
+	 * 是否注册为Controller
+	 */
+	private boolean registerMapping;
+
+	@Autowired
+	private ContentNegotiationManager contentNegotiationManager;
+
 	@Autowired
 	private TemplateRequestMappingHandlerMapping requestMappingHandlerMapping;
+	@Autowired
+	private FileStoreUrlHandlerMapping fileStoreUrlHandlerMapping;
 
 	private static Method method;
 
@@ -268,14 +280,27 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 		}
 
 		/**
+		 * ResourceHandlerRegistry#getHandlerMapping()
+		 */
+		this.setContentNegotiationManager(contentNegotiationManager);
+
+		/**
 		 * spring 4.3 fix
 		 */
 		super.afterPropertiesSet();
 
 		this.applicationEventPublisher.publishEvent(new FileStoreRegisterEvent(this, this));
+
 		String pattern = urlPatternPrefix + "/**";
-		requestMappingHandlerMapping.registerMapping(requestMappingHandlerMapping.createRequestMappingInfoWithConfig(
-				RequestMappingInfo.paths(pattern).methods(RequestMethod.GET)), 	this, method);
+		if (registerMapping) {
+			requestMappingHandlerMapping.registerMapping(requestMappingHandlerMapping
+					.createRequestMappingInfoWithConfig(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET)),
+					this, method);
+		} else {
+			// 注册为SimpleUrlMapping
+			fileStoreUrlHandlerMapping.registerFileStoreMapping(pattern, this);
+		}
+
 	}
 
 	@Override
@@ -323,6 +348,10 @@ class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
 
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
+	}
+
+	public void setRegisterMapping(boolean registerMapping) {
+		this.registerMapping = registerMapping;
 	}
 
 	@Override

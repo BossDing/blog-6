@@ -18,18 +18,9 @@
 
 	<import resource="ui.xml" />
 
-	<mvc:resources mapping="/favicon.ico" location="/static/img/favicon.ico" />
 
 	<bean id="multipartResolver"
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
-
-	<!-- <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/> -->
-
-	<mvc:resources location="/static/" mapping="/static/**"
-		cache-period="31556926" />
-
-	<mvc:resources location="/doc/" mapping="/doc/**"
-		cache-period="31556926" />
 
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web" />
