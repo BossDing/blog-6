@@ -18,7 +18,6 @@ package me.qyh.blog.web.template.thymeleaf;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.AbstractTemplateView;
@@ -37,11 +35,8 @@ import org.thymeleaf.context.WebExpressionContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring4.expression.ThymeleafEvaluationContext;
 import org.thymeleaf.spring4.naming.SpringContextVariableNames;
-import org.thymeleaf.standard.expression.FragmentExpression;
-import org.thymeleaf.standard.expression.IStandardExpressionParser;
-import org.thymeleaf.standard.expression.StandardExpressionExecutionContext;
-import org.thymeleaf.standard.expression.StandardExpressions;
 
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.web.template.ReadOnlyResponse;
 import me.qyh.blog.web.template.TemplateRenderExecutor;
 
@@ -64,8 +59,12 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 
 	// ### copied from ThymeleafView
 	@Override
-	public String execute(String viewTemplateName, final Map<String, ?> model, final HttpServletRequest request,
+	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) throws Exception {
+
+		if (viewTemplateName.contains("::")) {
+			throw new SystemException("模板命中不能包含::");
+		}
 
 		Locale locale = LocaleContextHolder.getLocale();
 
@@ -105,64 +104,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
 				locale, mergedModel);
 
-		final String templateName;
-		final Set<String> markupSelectors;
-		if (!viewTemplateName.contains("::")) {
-			// No fragment specified at the template name
-
-			templateName = viewTemplateName;
-			markupSelectors = null;
-
-		} else {
-			// Template name contains a fragment name, so we should parse it as
-			// such
-
-			final IStandardExpressionParser parser = StandardExpressions.getExpressionParser(configuration);
-
-			final FragmentExpression fragmentExpression;
-			try {
-				// By parsing it as a standard expression, we might profit from
-				// the expression cache
-				fragmentExpression = (FragmentExpression) parser.parseExpression(context,
-						"~{" + viewTemplateName + "}");
-			} catch (final TemplateProcessingException e) {
-				throw new IllegalArgumentException("Invalid template name specification: '" + viewTemplateName + "'",
-						e);
-			}
-
-			final FragmentExpression.ExecutedFragmentExpression fragment = FragmentExpression
-					.createExecutedFragmentExpression(context, fragmentExpression,
-							StandardExpressionExecutionContext.NORMAL);
-
-			templateName = FragmentExpression.resolveTemplateName(fragment);
-			markupSelectors = FragmentExpression.resolveFragments(fragment);
-			final Map<String, Object> nameFragmentParameters = fragment.getFragmentParameters();
-
-			if (nameFragmentParameters != null) {
-
-				if (fragment.hasSyntheticParameters()) {
-					// We cannot allow synthetic parameters because there is no
-					// way to specify them at the template
-					// engine execution!
-					throw new IllegalArgumentException(
-							"Parameters in a view specification must be named (non-synthetic): '" + viewTemplateName
-									+ "'");
-				}
-
-				context.setVariables(nameFragmentParameters);
-
-			}
-
-		}
-
-		final Set<String> processMarkupSelectors;
-		if (!CollectionUtils.isEmpty(markupSelectors)) {
-			processMarkupSelectors = markupSelectors;
-		} else {
-			processMarkupSelectors = null;
-		}
-
-		return viewTemplateEngine.process(templateName, processMarkupSelectors, context);
+		return viewTemplateEngine.process(viewTemplateName, null, context);
 	}
 
 	private void addRequestContextAsVariable(final Map<String, Object> model, final String variableName,

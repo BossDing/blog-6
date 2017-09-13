@@ -36,7 +36,7 @@ public interface TemplateRenderExecutor {
 	 * @return
 	 * @throws Exception
 	 */
-	String execute(String viewTemplateName, Map<String, ?> model, HttpServletRequest request,
+	String execute(String viewTemplateName, Map<String, Object> model, HttpServletRequest request,
 			ReadOnlyResponse readOnlyResponse) throws Exception;
 
 }

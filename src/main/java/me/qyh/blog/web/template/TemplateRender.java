@@ -15,9 +15,12 @@
  */
 package me.qyh.blog.web.template;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -68,6 +71,8 @@ public final class TemplateRender implements InitializingBean {
 
 	private Map<String, Object> pros = new HashMap<>();
 
+	private List<TemplateRenderHandler> renderHandlers = new ArrayList<>();
+
 	public RenderResult render(String templateName, Map<String, Object> model, HttpServletRequest request,
 			ReadOnlyResponse response, ParseConfig config) throws TemplateRenderException {
 		try {
@@ -85,7 +90,15 @@ public final class TemplateRender implements InitializingBean {
 		try {
 			String content = doRender(templateName, model, request, response);
 			MediaType type = ParseContextHolder.getContext().getMediaType();
-			return new RenderResult(type, content);
+			RenderResult result = new RenderResult(type, content);
+			if (!renderHandlers.isEmpty()) {
+				for (TemplateRenderHandler handler : renderHandlers) {
+					if (handler.match(templateName)) {
+						handler.afterRender(result,request);
+					}
+				}
+			}
+			return result;
 		} catch (Throwable e) {
 			markRollBack();
 
@@ -126,31 +139,21 @@ public final class TemplateRender implements InitializingBean {
 
 	private String doRender(String viewTemplateName, final Map<String, ?> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) throws Exception {
-		Map<String, Object> _model = new HashMap<>();
-		_model.putAll(getVariables(request));
-		if (model != null) {
-			_model.putAll(model);
-		}
-		return templateRenderer.execute(viewTemplateName, _model, request, response);
-	}
-
-	private Map<String, Object> getVariables(HttpServletRequest request) {
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> _model = model == null ? new HashMap<>() : new HashMap<>(model);
 		if (!CollectionUtils.isEmpty(pros)) {
-			for (Map.Entry<String, Object> it : pros.entrySet()) {
-				map.put(it.getKey(), it.getValue());
-			}
+			_model.putAll(pros);
 		}
-		map.put("urls", urlHelper.getUrlsBySpace(Environment.getSpaceAlias()));
-		map.put("user", Environment.getUser());
-		map.put("messages", messages);
-		map.put("space", Environment.getSpace());
-		map.put("ip", Environment.getIP());
+		_model.put("messages", messages);
+		_model.put("urls", urlHelper.getUrlsBySpace(Environment.getSpaceAlias()));
+		_model.put("user", Environment.getUser());
+		_model.put("space", Environment.getSpace());
+		_model.put("ip", Environment.getIP());
 		LockBean lockBean = LockHelper.getLockBean(request);
 		if (lockBean != null) {
-			map.put("lock", lockBean.getLock());
+			_model.put("lock", lockBean.getLock());
 		}
-		return map;
+
+		return templateRenderer.execute(viewTemplateName, _model, request, response);
 	}
 
 	@Override
@@ -173,6 +176,11 @@ public final class TemplateRender implements InitializingBean {
 
 	public void setPros(Map<String, Object> pros) {
 		this.pros = pros;
+	}
+
+	public void setRenderHandlers(List<TemplateRenderHandler> renderHandlers) {
+		Objects.requireNonNull(renderHandlers);
+		this.renderHandlers = renderHandlers;
 	}
 
 }
