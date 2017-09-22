@@ -43,6 +43,9 @@ file_mode = "HTML";
 			case 'lookup':
 				lookup();
 				break;
+			case 'template':
+				showTemplateModal();
+				break;
 			case 'lock':
 				showLock();
 				break;
@@ -117,6 +120,32 @@ file_mode = "HTML";
 				console.log(data.data);
 			}
 		});
+	}
+	
+	
+	function showTemplateModal(){
+		var templates = loadTemplates();
+		if(!templates || templates.length == 0){
+			bootbox.alert("沒有可供访问的地址");
+			return ;
+		}
+		var html = "<div class='table-responsive'>";
+		html += '<table class="table">';
+		html += '<tr><td>模板名称</td><td></td></tr>';
+		for(var i=0;i<templates.length;i++){
+			html += '<tr><td>'+templates[i].name+'</td><td><a href="javascript:void(0)" onclick="loadTemplate(\''+templates[i].path+'\')">加载</a></td></tr>';
+		}
+		html += '</table>';
+		html += '</div>';
+		$("#templateModalBody").html(html);
+		$("#templateModal").modal('show');
+	}
+	
+	function loadTemplate(path){
+		$.get(path,{},function(data){
+			editor.setValue(data);
+			$("#templateModal").modal('hide');
+		})
 	}
 	
 	function addLock(id){

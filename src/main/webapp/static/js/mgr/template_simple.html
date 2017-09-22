@@ -4,6 +4,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <link rel="stylesheet"
 	th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
@@ -13,30 +15,14 @@
 	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
 	  <script th:src="@{/static/js/respond.min.js}"></script>
 	<![endif]-->
-<title th:text="${space == null ? '主页' : space.name}"></title>
+<title text=""></title>
 </head>
 <body>
 	<fragment name="顶部导航" />
 	<div class="container">
 		<div class="row">
-			<transaction:begin />
-			<data name="文章列表" th:currentPage="${param.currentPage}"
-				queryPrivate="true" th:sort="${param.sort}"
-				th:query="${param.query}" th:tag="${param.tag}"
-				th:begin="${param.begin}" th:end="${param.end}"
-				th:from="${param.from}"/>
-			<data name="标签集" />
-			<data name="文章统计" />
-			<transaction:end />
-			<div class="col-lg-8 col-md-8  col-sm-8 text">
-				<div th:with="showSortLab=false">
-					<fragment name="文章列表" />
-				</div>
-			</div>
-
-			<div class="col-lg-4 col-md-4 col-sm-4 text hidden-xs">
-				<fragment name="标签集" />
-				<fragment name="文章统计" />
+			<div class="col-md-12">
+				
 			</div>
 		</div>
 	</div>
@@ -44,4 +30,3 @@
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
 </body>
-</html>

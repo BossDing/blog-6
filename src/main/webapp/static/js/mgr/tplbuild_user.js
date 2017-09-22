@@ -113,3 +113,7 @@ function preview() {
 			 }
 		 }, 5000);
 	});
+	
+	var loadTemplates = function(){
+		return [{name : '基本模板',path:rootPath+'/static/js/mgr/template_simple.html'},{name : '留言模板',path:rootPath+'/static/js/mgr/template_guestbook.html'}]
+	}
