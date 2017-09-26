@@ -6,6 +6,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import me.qyh.blog.core.exception.SystemException;
 
+
 public class TemplateUtils {
 
 	private TemplateUtils() {

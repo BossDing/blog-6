@@ -18,7 +18,7 @@ package me.qyh.blog.core.dao;
 import java.util.List;
 
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.pageparam.TagQueryParam;
+import me.qyh.blog.core.vo.TagQueryParam;
 
 /**
  * 

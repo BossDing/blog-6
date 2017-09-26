@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.pageparam.PageQueryParam;
-import me.qyh.blog.web.template.Page;
+import me.qyh.blog.core.vo.PageQueryParam;
+import me.qyh.blog.web.template.entity.Page;
 
 /**
  * 
@@ -108,8 +108,7 @@ public interface PageDao {
 	 * @return
 	 */
 	List<Page> selectAll();
-	
-	
+
 	/**
 	 * 根据指定id集合查询对应的页面，只会查询一些构建访问链接等必要的信息
 	 * 

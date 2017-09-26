@@ -17,7 +17,6 @@ package me.qyh.blog.web.controller.front;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,18 +30,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.entity.Comment;
-import me.qyh.blog.core.entity.CommentModule;
-import me.qyh.blog.core.entity.CommentModule.ModuleType;
+import me.qyh.blog.comment.entity.Comment;
+import me.qyh.blog.comment.entity.CommentModule;
+import me.qyh.blog.comment.service.CommentService;
+import me.qyh.blog.comment.validator.CommentValidator;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.AttemptLoggerManager;
-import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.service.impl.CommentService;
+import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.web.CaptchaValidator;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.CommentValidator;
+import me.qyh.blog.web.config.UrlHelper;
+import me.qyh.blog.web.template.service.TemplateService;
 
 @Controller("commentController")
 public class CommentController implements InitializingBean {
@@ -52,11 +52,15 @@ public class CommentController implements InitializingBean {
 	@Autowired
 	private CommentValidator commentValidator;
 	@Autowired
-	private UrlHelper urlHelper;
-	@Autowired
 	private CaptchaValidator captchaValidator;
 	@Autowired
 	private AttemptLoggerManager attemptLoggerManager;
+	@Autowired
+	private ArticleService articleService;
+	@Autowired
+	private TemplateService templateService;
+	@Autowired
+	private UrlHelper urlHelper;
 
 	@Value("${comment.attempt.count:5}")
 	private int attemptCount;
@@ -87,7 +91,7 @@ public class CommentController implements InitializingBean {
 		if (!Environment.isLogin() && attemptLogger.log(Environment.getIP())) {
 			captchaValidator.doValidate(req);
 		}
-		comment.setCommentModule(new CommentModule(getModuleType(type), moduleId));
+		comment.setCommentModule(new CommentModule(type, moduleId));
 		comment.setIp(Environment.getIP());
 		return new JsonResult(true, commentService.insertComment(comment));
 	}
@@ -98,27 +102,25 @@ public class CommentController implements InitializingBean {
 	public JsonResult queryConversations(@PathVariable("type") String type, @PathVariable("id") Integer moduleId,
 			@PathVariable("commentId") Integer commentId) throws LogicException {
 		return new JsonResult(true,
-				commentService.queryConversations(new CommentModule(getModuleType(type), moduleId), commentId));
+				commentService.queryConversations(new CommentModule(type, moduleId), commentId));
+	}
+	
+	@GetMapping("comment/link/article/{id}")
+	public String jumpToArticle(@PathVariable("id") Integer id) {
+		return "redirect:"+
+				articleService.getArticleForEdit(id).map(art->urlHelper.getUrls().getUrl(art)).orElse(urlHelper.getUrl());
+	}
+	
+	@GetMapping("comment/link/userpage/{id}")
+	public String jumpToPage(@PathVariable("id") Integer id) {
+		return "redirect:"+templateService.queryPage(id).map(page->urlHelper.getUrls().getUrl(page)).orElse(urlHelper.getUrl());
 	}
 
-	@GetMapping("comment/link/{type}/{id}")
-	public String redic(@PathVariable("type") String type, @PathVariable("id") Integer moduleId) throws LogicException {
-		return "redirect:"
-				+ commentService.getLink(new CommentModule(getModuleType(type), moduleId)).orElse(urlHelper.getUrl());
-	}
 
 	@GetMapping("comment/needCaptcha")
 	@ResponseBody
 	public boolean needCaptcha() {
 		return !Environment.isLogin() && attemptLogger.reach(Environment.getIP());
-	}
-
-	private ModuleType getModuleType(String type) {
-		try {
-			return ModuleType.valueOf(type.toUpperCase());
-		} catch (Exception e) {
-			throw new TypeMismatchException(type, ModuleType.class);
-		}
 	}
 
 	@Override

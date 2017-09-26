@@ -25,12 +25,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.entity.SysLock;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.lock.RequestLock;
-import me.qyh.blog.core.lock.SysLock;
-import me.qyh.blog.core.lock.SysLockProvider;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.service.SysLockProvider;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.web.lock.RequestLock;
+
 
 @Controller
 @RequestMapping("mgr/lock/sys")

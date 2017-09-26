@@ -31,11 +31,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.SpaceValidator;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.validator.SpaceValidator;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.core.vo.SpaceQueryParam;
+
 
 @Controller
 @RequestMapping("mgr/space")

@@ -38,22 +38,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.entity.BlogFile;
-import me.qyh.blog.core.entity.BlogFile.BlogFileType;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.file.FileStore;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.BlogFileQueryParam;
-import me.qyh.blog.core.service.FileService;
-import me.qyh.blog.core.vo.BlogFileUpload;
-import me.qyh.blog.core.vo.FileStoreBean;
-import me.qyh.blog.core.vo.UploadedFile;
-import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.BlogFileQueryParamValidator;
-import me.qyh.blog.web.validator.BlogFileUploadValidator;
-import me.qyh.blog.web.validator.BlogFileValidator;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.file.entity.BlogFile;
+import me.qyh.blog.file.entity.BlogFile.BlogFileType;
+import me.qyh.blog.file.service.FileService;
+import me.qyh.blog.file.store.FileStore;
+import me.qyh.blog.file.validator.BlogFileQueryParamValidator;
+import me.qyh.blog.file.validator.BlogFileUploadValidator;
+import me.qyh.blog.file.validator.BlogFileValidator;
+import me.qyh.blog.file.vo.BlogFileQueryParam;
+import me.qyh.blog.file.vo.BlogFileUpload;
+import me.qyh.blog.file.vo.FileStoreBean;
+import me.qyh.blog.file.vo.UploadedFile;
 
 @Controller
 @RequestMapping("mgr/file")

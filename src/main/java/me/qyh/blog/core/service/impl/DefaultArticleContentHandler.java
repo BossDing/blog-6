@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Editor;
-import me.qyh.blog.core.security.input.Markdown2Html;
+import me.qyh.blog.core.text.Markdown2Html;
 
 /**
  * 

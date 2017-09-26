@@ -35,13 +35,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.evt.ArticleEvent;
-import me.qyh.blog.core.evt.EventType;
+import me.qyh.blog.core.event.ArticleEvent;
+import me.qyh.blog.core.event.EventType;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
+
 
 /**
  * 将点击数缓存起来，每隔一定的时间刷入数据库

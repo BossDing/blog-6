@@ -18,22 +18,22 @@
 
 		<typeAlias type="me.qyh.blog.core.entity.Space" alias="Space" />
 
-		<typeAlias type="me.qyh.blog.core.entity.BlogFile" alias="BlogFile" />
-		<typeAlias type="me.qyh.blog.core.entity.BlogFile$BlogFileType"
+		<typeAlias type="me.qyh.blog.file.entity.BlogFile" alias="BlogFile" />
+		<typeAlias type="me.qyh.blog.file.entity.BlogFile$BlogFileType"
 			alias="BlogFileType" />
-		<typeAlias type="me.qyh.blog.core.file.CommonFile" alias="CommonFile" />
-		<typeAlias type="me.qyh.blog.core.entity.FileDelete" alias="FileDelete" />
+		<typeAlias type="me.qyh.blog.file.entity.CommonFile" alias="CommonFile" />
+		<typeAlias type="me.qyh.blog.file.entity.FileDelete" alias="FileDelete" />
 
-		<typeAlias type="me.qyh.blog.core.lock.SysLock" alias="SysLock" />
-		<typeAlias type="me.qyh.blog.core.lock.SysLock$SysLockType"
+		<typeAlias type="me.qyh.blog.core.entity.SysLock" alias="SysLock" />
+		<typeAlias type="me.qyh.blog.core.entity.SysLock$SysLockType"
 			alias="LockType" />
-		<typeAlias type="me.qyh.blog.core.lock.PasswordLock" alias="PasswordLock" />
-		<typeAlias type="me.qyh.blog.core.lock.QALock" alias="QALock" />
+		<typeAlias type="me.qyh.blog.core.entity.PasswordLock" alias="PasswordLock" />
+		<typeAlias type="me.qyh.blog.core.entity.QALock" alias="QALock" />
 
-		<typeAlias type="me.qyh.blog.core.vo.BlogFileCount" alias="BlogFileCount" />
+		<typeAlias type="me.qyh.blog.file.vo.BlogFileCount" alias="BlogFileCount" />
 
-		<typeAlias type="me.qyh.blog.web.template.Page" alias="Page" />
-		<typeAlias type="me.qyh.blog.web.template.Fragment"
+		<typeAlias type="me.qyh.blog.web.template.entity.Page" alias="Page" />
+		<typeAlias type="me.qyh.blog.web.template.entity.Fragment"
 			alias="Fragment" />
 
 		<typeAlias
@@ -43,13 +43,11 @@
 			type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
 			alias="ArticleSpaceStatistics" />
 
-		<typeAlias type="me.qyh.blog.core.entity.Comment" alias="Comment" />
-		<typeAlias type="me.qyh.blog.core.entity.Comment$CommentStatus"
+		<typeAlias type="me.qyh.blog.comment.entity.Comment" alias="Comment" />
+		<typeAlias type="me.qyh.blog.comment.entity.Comment$CommentStatus"
 			alias="CommentStatus" />
-		<typeAlias type="me.qyh.blog.core.entity.CommentModule"
+		<typeAlias type="me.qyh.blog.comment.entity.CommentModule"
 			alias="CommentModule" />
-		<typeAlias type="me.qyh.blog.core.entity.CommentModule$ModuleType"
-			alias="ModuleType" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />
@@ -72,5 +70,7 @@
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
 
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/articleCommentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/pageCommentMapper.xml" />
 	</mappers>
 </configuration>

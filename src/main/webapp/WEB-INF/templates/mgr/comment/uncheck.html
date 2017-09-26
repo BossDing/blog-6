@@ -21,12 +21,12 @@
 							th:if="${#lists.isEmpty(page.datas)}" style="margin-top: 10px">当前没有任何未审核评论</div>
 						<div th:unless="${#lists.isEmpty(page.datas)}">
 							<div th:each="comment : ${page.datas}">
-								<small th:switch="${comment.commentModule.type.name()}"
+								<small th:switch="${comment.commentModule.module}"
 									th:with="obj=${comment.commentModule.object}"> <span
-									th:case="'ARTICLE'" th:remove="tag">来自于文章[ <a
+									th:case="'article'" th:remove="tag">来自于文章[ <a
 										th:attr="href=${obj == null ? null : urls.getUrl(obj)}"
 										th:target="_blank" th:text="${obj == null ? '未知' :obj.title}"></a>]
-								</span> <span th:case="'USERPAGE'" th:remove="tag">来自于页面[ <a
+								</span> <span th:case="'userpage'" th:remove="tag">来自于页面[ <a
 										th:attr="href=${obj == null ? null : urls.getUrl(obj)}"
 										th:target="_blank" th:text="${obj == null ? '未知' :obj.name}"></a>]
 								</span> 的评论

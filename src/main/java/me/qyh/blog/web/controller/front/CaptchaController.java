@@ -40,6 +40,7 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.web.CaptchaValidator;
 
+
 @Controller
 public class CaptchaController implements InitializingBean, CaptchaValidator {
 

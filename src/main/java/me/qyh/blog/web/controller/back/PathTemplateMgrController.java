@@ -28,15 +28,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.vo.PathTemplateBean;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.web.config.UrlHelper;
 import me.qyh.blog.web.template.PathTemplate;
-import me.qyh.blog.web.template.TemplateService;
-import me.qyh.blog.web.template.TemplateService.PathTemplateService;
-import me.qyh.blog.web.validator.PathTemplateBeanValidator;
+import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.web.template.service.TemplateService.PathTemplateService;
+import me.qyh.blog.web.template.validator.PathTemplateBeanValidator;
+import me.qyh.blog.web.template.vo.PathTemplateBean;
 
 @Controller
 @RequestMapping("mgr/template/path")

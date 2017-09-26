@@ -28,19 +28,18 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.security.BCrypts;
-import me.qyh.blog.core.service.UserQueryService;
 import me.qyh.blog.core.service.UserService;
-import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.validator.LoginBean;
+import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.vo.LoginBean;
 
 @Service
-public class UserServiceImpl implements UserService, UserQueryService, InitializingBean {
+public class UserServiceImpl implements UserService, InitializingBean {
 
 	private static final Path USER_RES_PATH = Constants.CONFIG_DIR.resolve("user.properties");
 

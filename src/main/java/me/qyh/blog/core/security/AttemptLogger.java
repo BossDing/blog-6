@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.qyh.blog.core.exception.SystemException;
 
+
 /**
  * 用来判断是否需要输入验证码
  * <p>

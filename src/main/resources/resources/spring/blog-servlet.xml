@@ -15,23 +15,24 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
+	<context:property-placeholder
+		location="classpath:resources/app.properties" />
 
-	<import resource="ui.xml" />
+	<import resource="template.xml" />
 
 
 	<bean id="multipartResolver"
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 
 	<!-- 包扫描 -->
-	<context:component-scan base-package="me.qyh.blog.web" />
+	<context:component-scan base-package="me.qyh.blog.web.controller,
+			me.qyh.blog.web.template.render,
+			me.qyh.blog.web.security,
+		    me.qyh.blog.web.comment,
+			me.qyh.blog.web.template.service.impl,
+			me.qyh.blog.web.listener,
+			me.qyh.blog.web.view" />
 
-
-	<!-- USE TemplateWebConfig instead <mvc:annotation-driven> <mvc:message-converters> 
-		<bean class="org.springframework.http.converter.json.GsonHttpMessageConverter"> 
-		<property name="gson" value="#{T(me.qyh.blog.util.Jsons).getGson()}" /> </bean> 
-		</mvc:message-converters> <mvc:argument-resolvers> <bean class="me.qyh.blog.core.lock.LockArgumentResolver" 
-		/> </mvc:argument-resolvers> <mvc:return-value-handlers> <bean class="me.qyh.blog.web.templateReturnHandler"></bean> 
-		</mvc:return-value-handlers> </mvc:annotation-driven> -->
 
 	<!-- csrf token store stragey -->
 	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
@@ -51,7 +52,7 @@
 
 
 	<bean id="templateEngine"
-		class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateEngine">
+		class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafTemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -61,16 +62,16 @@
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafTemplateResolver" />
+				<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafTemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
 		<property name="cacheManager">
-			<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafCacheManager" />
+			<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafCacheManager" />
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.web.template.TemplateRender">
+	<bean class="me.qyh.blog.web.template.render.TemplateRender">
 		<property name="pros">
 			<map>
 				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
@@ -78,11 +79,11 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.web.template.thymeleaf.ThymeleafRenderExecutor" />
+	<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafRenderExecutor" />
 	<bean
-		class="me.qyh.blog.web.template.thymeleaf.ThymleafTemplateExceptionTransalater" />
+		class="me.qyh.blog.web.template.render.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
-	<bean class="me.qyh.blog.support.file.local.ImageResourceStore">
+	<bean class="me.qyh.blog.web.file.ImageResourceStore">
 		<constructor-arg value="image" index="0" />
 		<constructor-arg value="2" index="1" type="int" />
 		<property name="absPath" value="/web/file/blog_image/" />
@@ -90,24 +91,25 @@
 		<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />
 		<property name="cacheSeconds" value="31556926" />
 		<property name="supportWebp" value="true" />
+		<property name="sourceProtected" value="true" />
 		<property name="name" value="图片存储" />
 		<property name="smallResize">
-			<bean class="me.qyh.blog.core.file.Resize">
+			<bean class="me.qyh.blog.file.store.Resize">
 				<constructor-arg value="200" />
 			</bean>
 		</property>
 		<property name="middleResize">
-			<bean class="me.qyh.blog.core.file.Resize">
+			<bean class="me.qyh.blog.file.store.Resize">
 				<constructor-arg value="600" />
 			</bean>
 		</property>
 		<property name="largeResize">
-			<bean class="me.qyh.blog.core.file.Resize">
+			<bean class="me.qyh.blog.file.store.Resize">
 				<constructor-arg value="900" />
 			</bean>
 		</property>
 		<property name="resizeValidator">
-			<bean class="me.qyh.blog.core.file.DefaultResizeValidator">
+			<bean class="me.qyh.blog.file.store.DefaultResizeValidator">
 				<property name="allowSizes">
 					<array>
 						<value>64</value>
@@ -124,10 +126,16 @@
 			</bean>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.support.file.local.CommonResourceStore">
+	<bean class="me.qyh.blog.web.file.CommonResourceStore">
 		<property name="absPath" value="/web/file/blog_file" />
 		<property name="id" value="2" />
 		<property name="name" value="文件存储" />
 		<property name="cacheSeconds" value="31556926" />
 	</bean>
+	
+	<bean class="me.qyh.blog.web.WebConfiguration"/>
+	
+	
+	<bean class="me.qyh.blog.web.template.PageCommentModuleHandler"/>
+	
 </beans>

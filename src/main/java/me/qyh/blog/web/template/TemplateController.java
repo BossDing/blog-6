@@ -2,7 +2,7 @@ package me.qyh.blog.web.template;
 
 import javax.servlet.http.HttpServletRequest;
 
-import me.qyh.blog.web.TemplateView;
+import me.qyh.blog.web.view.TemplateView;
 
 /**
  * 将路径模板转化为一个Controller

@@ -17,8 +17,6 @@ package me.qyh.blog.core.entity;
 
 import java.util.Optional;
 
-import me.qyh.blog.core.lock.LockResource;
-
 /**
  * 
  * @author Administrator

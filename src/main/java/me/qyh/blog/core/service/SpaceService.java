@@ -20,7 +20,8 @@ import java.util.Optional;
 
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.vo.SpaceQueryParam;
+
 
 /**
  * 

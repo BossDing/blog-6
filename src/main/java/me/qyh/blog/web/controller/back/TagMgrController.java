@@ -31,11 +31,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.TagQueryParam;
 import me.qyh.blog.core.service.TagService;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.TagQueryParamValidator;
-import me.qyh.blog.web.validator.TagValidator;
+import me.qyh.blog.core.validator.TagQueryParamValidator;
+import me.qyh.blog.core.validator.TagValidator;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.core.vo.TagQueryParam;
+
 
 @RequestMapping("mgr/tag")
 @Controller

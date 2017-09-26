@@ -4,6 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
+import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
+
 /**
  * <p>
  * 模板拦截器，等效于HandlerInterceptor

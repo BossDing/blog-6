@@ -24,10 +24,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.web.security.CsrfTokenRepository;
+
 
 @Controller
 public class LogoutController {

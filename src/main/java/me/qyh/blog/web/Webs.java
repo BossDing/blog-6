@@ -29,10 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.util.Jsons;
-import me.qyh.blog.util.UrlUtils;
+import me.qyh.blog.core.util.Jsons;
+import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.vo.JsonResult;
 
 public class Webs {
 
@@ -87,7 +88,7 @@ public class Webs {
 	 * @return
 	 */
 	public static boolean unlockRequest(HttpServletRequest request) {
-		String path = request.getRequestURI();
+		String path = request.getRequestURI().substring(request.getContextPath().length());
 		for (String unlockPattern : UNLOCK_PATTERNS) {
 			if (UrlUtils.match(unlockPattern, path)) {
 				return true;

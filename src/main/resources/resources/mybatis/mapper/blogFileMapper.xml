@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="me.qyh.blog.core.dao.BlogFileDao">
+<mapper namespace="me.qyh.blog.file.dao.BlogFileDao">
 
 	<resultMap type="BlogFile" id="BlogFileDetail">
 		<id column="id" property="id"/>
@@ -14,7 +14,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<association property="parent" javaType="BlogFile">
 			<result column="file_parent" property="id"/>
 		</association>
-		<association property="cf" javaType="CommonFile" resultMap="me.qyh.blog.core.dao.CommonFileDao.CommonFileDetail"/>
+		<association property="cf" javaType="CommonFile" resultMap="me.qyh.blog.file.dao.CommonFileDao.CommonFileDetail"/>
 	</resultMap>
 	
 	<resultMap type="BlogFileCount" id="BlogFileCountDetail">
@@ -22,9 +22,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result column="file_count" property="count"/>
 	</resultMap>
 	
-	<resultMap type="me.qyh.blog.core.vo.FileCountBean" id="FileCountBeanDetail">
+	<resultMap type="me.qyh.blog.file.vo.FileCountBean" id="FileCountBeanDetail">
 		<id column="file_store" property="fileStore"/>
-		<association property="fileCount" javaType="me.qyh.blog.core.vo.FileCount">
+		<association property="fileCount" javaType="me.qyh.blog.file.vo.FileCount">
 			<result column="fileCount" property="fileCount"/>
 			<result column="totalSize" property="totalSize"/>
 		</association>

@@ -17,7 +17,7 @@ package me.qyh.blog.web;
 
 import javax.servlet.http.HttpServletRequest;
 
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 

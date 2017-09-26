@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import me.qyh.blog.util.StringUtils;
+import me.qyh.blog.core.util.StringUtils;
 
 public final class PreviewUrl {
 

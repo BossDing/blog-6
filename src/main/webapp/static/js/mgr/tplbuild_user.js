@@ -115,5 +115,8 @@ function preview() {
 	});
 	
 	var loadTemplates = function(){
-		return [{name : '基本模板',path:rootPath+'/static/js/mgr/template_simple.html'},{name : '留言模板',path:rootPath+'/static/js/mgr/template_guestbook.html'}]
+		return [{name : '基本模板',path:rootPath+'/static/js/mgr/template_simple.html'},{name : '留言模板',path:rootPath+'/static/js/mgr/template_guestbook.html'},
+			{name:'首页',path:rootPath+'/static/js/mgr/template_index.html'},{name:'登录页',path:rootPath+'/static/js/mgr/template_login.html'},
+			{name:'解锁页',path:rootPath+'/static/js/mgr/template_lock.html'},{name:'文章详情页',path:rootPath+'/static/js/mgr/template_article_detail.html'},
+			{name:'文章归档页',path:rootPath+'/static/js/mgr/template_archives.html'}]
 	}

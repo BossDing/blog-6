@@ -23,7 +23,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.web.controller.front.LoginController;
 
 /**
  * 谷歌OTP认证器

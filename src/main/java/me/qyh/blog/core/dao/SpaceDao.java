@@ -18,7 +18,7 @@ package me.qyh.blog.core.dao;
 import java.util.List;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
+import me.qyh.blog.core.vo.SpaceQueryParam;
 
 /**
  * 

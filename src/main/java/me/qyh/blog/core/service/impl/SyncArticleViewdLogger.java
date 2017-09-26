@@ -32,13 +32,13 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.evt.ArticleEvent;
+import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.ArticleViewedLogger;
-import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.util.SerializationUtils;
+import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.SerializationUtils;
 
 /**
  * 将最近访问的文章纪录在内存中

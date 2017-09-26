@@ -16,14 +16,13 @@
 						     http://www.springframework.org/schema/cache/spring-cache-4.0.xsd 
 						     http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
-
-
+		   					 
 	<context:property-placeholder
 		location="classpath:resources/mybatis/db.properties,
-				  classpath:resources/app.properties,
-				  classpath:resources/mail.properties" />
+			classpath:resources/mail.properties,
+			classpath:resources/app.properties" />
 
-	<!-- mysql -->
+	<!-- database -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
 		destroy-method="close">
 		<property name="jdbcUrl" value="${jdbc.jdbcUrl}" />
@@ -40,42 +39,46 @@
 			</props>
 		</property>
 	</bean>
-
-	<!-- 配置SqlSessionFactory -->
-	<bean id="sqlSessionFactory" 
-		class="org.mybatis.spring.SqlSessionFactoryBean"
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 
+	<!-- transaction -->
 	<bean id="txManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
 		p:dataSource-ref="dataSource" />
-		
 	<tx:annotation-driven transaction-manager="txManager" />
 
-	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+
+	<!-- mybatis -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" >
 		<property name="basePackage"
 			value="me.qyh.blog.core.dao,
-				   me.qyh.blog.core.lock,
+				   me.qyh.blog.comment.dao,
+			 	   me.qyh.blog.file.dao,
 				   me.qyh.blog.web.template.dao" />
 	</bean>
 
-	<import resource="file.xml" />
-	
+
 	<context:component-scan
 		base-package="me.qyh.blog.core.service,
-					  me.qyh.blog.core.config,
 					  me.qyh.blog.core.security,
-					  me.qyh.blog.core.lock" />
+					  me.qyh.blog.core.text,
+					  me.qyh.blog.core.validator,
+					  me.qyh.blog.file.service,
+					  me.qyh.blog.comment.service,
+					  me.qyh.blog.comment.module,
+					  me.qyh.blog.comment.validator,
+					  me.qyh.blog.file.validator,
+					  me.qyh.blog.web.template.validator,
+					  me.qyh.blog.web.config" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
-	<cache:annotation-driven />
 	<!-- 缓存配置 -->
-	<bean id="cacheManager" 
-		  class="org.springframework.cache.caffeine.CaffeineCacheManager">
-		<property name="cacheSpecification" 
-				  value="maximumSize=500,expireAfterAccess=20m" />
+	<cache:annotation-driven />
+	<bean id="cacheManager" class="org.springframework.cache.caffeine.CaffeineCacheManager">
+		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 
 	<bean id="messageSource"
@@ -84,28 +87,10 @@
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
-	<bean class="me.qyh.blog.core.message.Messages"/>
+	<bean class="me.qyh.blog.core.message.Messages" />
 
 	<bean id="articleIndexer" class="me.qyh.blog.core.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="SEARCH" />
-	</bean>
-
-	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="mailSender" class="me.qyh.blog.support.mail.MailSender" />
-
-	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
-		<property name="protocol" value="${mail.protocol}" />
-		<property name="host" value="${mail.host}" />
-		<property name="port" value="${mail.port}" />
-		<property name="username" value="${mail.username}" />
-		<property name="password" value="${mail.password}" />
-		<property name="javaMailProperties">
-			<props>
-				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
-				<prop key="mail.from">${mail.from}</prop>
-			</props>
-		</property>
 	</bean>
 
 	<!-- article content handler -->
@@ -119,13 +104,13 @@
 
 	<!-- 缓存点击策略 -->
 	<bean id="cacheableHitsStrategy" class="me.qyh.blog.core.service.impl.CacheableHitsStrategy" />
-	
+
 	<!-- 纪录最近被访问的文章 -->
-	<bean class="me.qyh.blog.core.service.impl.SyncArticleViewdLogger"/>
-	
+	<bean class="me.qyh.blog.core.service.impl.SyncArticleViewdLogger" />
+
 	<!-- 文章缓存 -->
-	<bean class="me.qyh.blog.core.service.impl.ArticleCache"/>
-	<bean id="articleService" class="me.qyh.blog.core.service.impl.ArticleServiceImpl"/>
+	<bean class="me.qyh.blog.core.service.impl.ArticleCache" />
+	<bean id="articleService" class="me.qyh.blog.core.service.impl.ArticleServiceImpl" />
 
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
@@ -146,15 +131,17 @@
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
 
-	<!-- Google Auth -->
-	<!-- 
-	<bean class="me.qyh.blog.core.security.GoogleAuthenticator">
-		<constructor-arg value="qz23 fugf krvd krh6 cors 4lpq jw3y ilxy"/>
+	<!-- HTML清理 -->
+	<bean id="htmlClean" class="me.qyh.blog.core.text.DefaultHtmlClean" >
+		<property name="followRootDomains">
+			<array>
+				<!-- 如果网址中包含下列域名，不会被加上ref nofollow  -->
+				<value>qyh.me</value>
+			</array>
+		</property>
 	</bean>
-	 -->
 	
-	<bean id="htmlClean" class="me.qyh.blog.core.security.input.DefaultHtmlClean" />
-	<bean id="simpleCommentChecker" class="me.qyh.blog.core.service.impl.SimpleCommentChecker">
+	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.service.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
 				<value>qyh</value>
@@ -171,19 +158,9 @@
 		</property>
 	</bean>
 
-	<!-- 默认评论服务 -->
-	<!-- 评论服务邮件提醒 -->
-	<bean id="commentEmailNotifySupport" class="me.qyh.blog.core.service.impl.CommentEmailNotifySupport">
-		<property name="mailSubject" value="您有新的评论" />
-	</bean>
-	<bean class="me.qyh.blog.core.service.impl.CommentService"/>
-	
+
 	<!-- 定时任务 -->
 	<task:scheduled-tasks scheduler="taskScheduler">
-
-		<!-- 凌晨一点更新sitemap -->
-		<task:scheduled ref="xmlSiteMap" method="updateSitemap"
-			cron="0 0 1 * * ?" />
 
 		<!-- 如果配置了缓存点击量策略，那么每隔600s更新文章点击量 -->
 		<task:scheduled ref="cacheableHitsStrategy" method="flush"
@@ -193,38 +170,63 @@
 		<task:scheduled ref="articleService" method="publishScheduled"
 			fixed-rate="5000" />
 
+		<!-- 每隔30min将索引写入物理文件 -->
+		<task:scheduled ref="articleIndexer" method="commit"
+			fixed-rate="1800000" />
+			
+		
+		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
+		<task:scheduled ref="mailSender" method="sendMailFromQueue"
+			fixed-delay="1000" />
+
+		<!-- 每天凌晨3点清空待刪除的文件 -->
+		<task:scheduled ref="fileService" method="clear" cron="0 0 3 * * ?" />
+
+
 		<!-- 如果配置了评论邮件通知服务 -->
 		<!-- 每隔5s中将队列中的评论取出来放到待发送列表中 -->
 		<task:scheduled ref="commentEmailNotifySupport" method="processToSend"
 			fixed-rate="5000" />
 		<!-- 每隔300s中发送待发送邮件 -->
 		<task:scheduled ref="commentEmailNotifySupport" method="forceSend"
-			fixed-rate="300000" />
+			fixed-rate="300000" />	
 
-
-		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
-		<task:scheduled ref="mailSender" method="sendMailFromQueue"
-			fixed-delay="1000" />
-
-		<!-- 每隔30min将索引写入物理文件 -->
-		<task:scheduled ref="articleIndexer" method="commit"
-			fixed-rate="1800000" />
 	</task:scheduled-tasks>
 
-	
 
-	<!-- 博客ping服务 -->
-	<bean id="pingManager" class="me.qyh.blog.support.ping.SimplePingManager">
-		<constructor-arg value="钱宇豪的个人博客" />
-		<property name="pingServices">
-			<list>
-				<bean class="me.qyh.blog.support.ping.GoogleBlogPingService" />
-				<bean class="me.qyh.blog.support.ping.BaiduBlogPingService" />
-			</list>
+	<!-- 文件管理 -->
+	<bean class="me.qyh.blog.file.store.JavaImageHelper" />
+	<bean class="me.qyh.blog.file.store.DefaultFileManager" />
+
+	<!-- 如果不需要邮件通知这个服务请不要设置 -->
+	<bean id="mailSender" class="me.qyh.blog.expanded.mail.MailSender" />
+
+	<!-- 如果不需要邮件通知这个服务请不要设置 -->
+	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="protocol" value="${mail.protocol}" />
+		<property name="host" value="${mail.host}" />
+		<property name="port" value="${mail.port}" />
+		<property name="username" value="${mail.username}" />
+		<property name="password" value="${mail.password}" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+				<prop key="mail.from">${mail.from}</prop>
+			</props>
 		</property>
 	</bean>
 
-	<!-- sitemap 服务 -->
-	<bean id="xmlSiteMap" class="me.qyh.blog.support.sitemap.XmlSiteMap" />
+	<!-- 评论服务邮件提醒 -->
+	<bean id="commentEmailNotifySupport" class="me.qyh.blog.web.comment.CommentEmailNotifySupport">
+		<property name="mailSubject" value="您有新的评论" />
+	</bean>
 
+	<!-- Google Auth -->
+	<!-- <bean class="me.qyh.blog.core.security.GoogleAuthenticator"> <constructor-arg 
+		value="qz23 fugf krvd krh6 cors 4lpq jw3y ilxy"/> </bean> -->
+	<!-- 
+	<bean class="me.qyh.blog.core.security.GoogleAuthenticator">
+		<constructor-arg value="a4jy r2wh puin 4q2k a4kq 2wfw 3im2 53ed"/>
+	</bean>
+	 -->
 </beans>      

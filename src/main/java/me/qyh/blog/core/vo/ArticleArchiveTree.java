@@ -29,7 +29,7 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.util.Times;
+import me.qyh.blog.core.util.Times;
 
 public class ArticleArchiveTree {
 

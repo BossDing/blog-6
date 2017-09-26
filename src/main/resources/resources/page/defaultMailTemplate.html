@@ -62,7 +62,7 @@
 	<div th:unless="${#lists.isEmpty(comments)}" th:remove="tag">
 		<div class="panel-body">
 			<div class="media" th:each="comment : ${comments}">
-				<a class="media-left" th:href="${comment.url}">
+				<a class="media-left" th:href="${urls.url}+'/mgr/comment/uncheck'">
 					<img th:src="${comment.gravatar == null ? urls.url+'/static/img/guest.png' : gravatarPrefix+comment.gravatar}"
 					style="width: 64px; height: 64px" alt="...">
 				</a>

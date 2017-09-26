@@ -17,7 +17,7 @@ package me.qyh.blog.core.service;
 
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.web.validator.LoginBean;
+import me.qyh.blog.core.vo.LoginBean;
 
 public interface UserService {
 
@@ -43,7 +43,7 @@ public interface UserService {
 	User update(User user, String password) throws LogicException;
 
 	/**
-	 * 获取当前用户
+	 * 获取管理員信息
 	 * 
 	 * @return
 	 */

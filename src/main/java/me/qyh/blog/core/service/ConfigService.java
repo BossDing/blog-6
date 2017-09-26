@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.core.service;
 
-import me.qyh.blog.core.config.GlobalConfig;
+import me.qyh.blog.core.entity.GlobalConfig;
 
 /**
  * 

@@ -26,7 +26,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 
 /**
  * 对对象的string类型属性进行标签转化

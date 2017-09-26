@@ -20,8 +20,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.pageparam.FragmentQueryParam;
-import me.qyh.blog.web.template.Fragment;
+import me.qyh.blog.web.template.entity.Fragment;
+import me.qyh.blog.web.template.vo.FragmentQueryParam;
 
 /**
  * 

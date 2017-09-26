@@ -27,12 +27,13 @@ import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.GlobalConfig;
+import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.entity.GlobalConfig;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.util.Resources;
+import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Resources;
+
 
 @Service
 public class ConfigServiceImpl implements ConfigService, InitializingBean {

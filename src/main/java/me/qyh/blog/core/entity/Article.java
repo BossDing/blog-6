@@ -26,7 +26,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 

@@ -19,14 +19,17 @@ import java.util.List;
 import java.util.Optional;
 
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.pageparam.ArticleQueryParam;
-import me.qyh.blog.core.pageparam.PageResult;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
+import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
+import me.qyh.blog.core.vo.ArticleQueryParam;
+import me.qyh.blog.core.vo.ArticleStatistics;
+import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.TagCount;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 
 /**
  * 文章服务
@@ -199,5 +202,20 @@ public interface ArticleService {
 	 * @return 年月日归档
 	 */
 	ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode);
+
+	/**
+	 * 统计某个空间下的文章
+	 * 
+	 * @param space
+	 * @return
+	 */
+	ArticleDetailStatistics queryArticleDetailStatistics(Space space);
+
+	/**
+	 * 统计所有的文章
+	 * 
+	 * @return
+	 */
+	ArticleStatistics queryArticleStatistics();
 
 }

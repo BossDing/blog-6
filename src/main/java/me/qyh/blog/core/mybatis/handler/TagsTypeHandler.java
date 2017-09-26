@@ -30,7 +30,7 @@ import org.apache.ibatis.type.JdbcType;
 
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 用来将mysql取出的tag 字符串转化为Set&lt;Tag&gt;

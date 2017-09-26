@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import me.qyh.blog.util.FileUtils;
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.web.Webs;
 
 public class PathTemplate implements Template {

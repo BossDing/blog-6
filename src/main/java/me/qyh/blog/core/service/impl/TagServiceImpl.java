@@ -25,15 +25,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.TagDao;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
+import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.pageparam.PageResult;
-import me.qyh.blog.core.pageparam.TagQueryParam;
 import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.TagService;
+import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.core.vo.TagDetailStatistics;
+import me.qyh.blog.core.vo.TagQueryParam;
+import me.qyh.blog.core.vo.TagStatistics;
 
 @Service
 public class TagServiceImpl implements TagService, ApplicationEventPublisherAware {
@@ -104,6 +108,27 @@ public class TagServiceImpl implements TagService, ApplicationEventPublisherAwar
 			articleIndexer.removeTags(db.getName());
 			applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 		});
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public TagDetailStatistics queryTagDetailStatistics(Space space) {
+		TagDetailStatistics tagDetailStatistics = new TagDetailStatistics();
+		tagDetailStatistics.setArticleTagCount(articleTagDao.selectAllTagsCount(space));
+		if (space == null) {
+			tagDetailStatistics.setTotal(tagDao.selectCount(new TagQueryParam()));
+		}
+		return tagDetailStatistics;
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public TagStatistics queryTagStatistics() {
+		TagStatistics tagStatistics = new TagStatistics();
+		boolean queryPrivate = Environment.isLogin();
+		tagStatistics
+				.setArticleTagCount(articleTagDao.selectTagsCount(Environment.getSpace(), queryPrivate));
+		return tagStatistics;
 	}
 
 	@Override

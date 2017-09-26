@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.lock.LockManager;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.service.LockManager;
+import me.qyh.blog.core.vo.JsonResult;
 
 @Controller
 @RequestMapping("mgr/lock")

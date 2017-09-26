@@ -18,7 +18,7 @@ package me.qyh.blog.core.entity;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-import me.qyh.blog.util.Validators;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 

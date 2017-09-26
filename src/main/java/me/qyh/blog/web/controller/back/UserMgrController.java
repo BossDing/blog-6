@@ -30,14 +30,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.service.UserService;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.UserValidator;
+import me.qyh.blog.core.validator.UserValidator;
+import me.qyh.blog.core.vo.JsonResult;
+
 
 @Controller
 @RequestMapping("mgr/user")

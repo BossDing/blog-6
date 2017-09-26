@@ -25,11 +25,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
+import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
+import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.lock.LockException;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.util.ExceptionUtils;
+import me.qyh.blog.core.util.ExceptionUtils;
 
 /**
  * 当回滚时用来重建构建文章索引，只有处于事务中时才会生效

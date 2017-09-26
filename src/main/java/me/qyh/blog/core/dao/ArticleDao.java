@@ -23,9 +23,10 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.pageparam.ArticleQueryParam;
+import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleSpaceStatistics;
 import me.qyh.blog.core.vo.ArticleStatistics;
+
 
 /**
  * 

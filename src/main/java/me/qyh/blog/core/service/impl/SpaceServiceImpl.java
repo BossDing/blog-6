@@ -31,17 +31,17 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
-import me.qyh.blog.core.evt.LockDeleteEvent;
-import me.qyh.blog.core.evt.SpaceDeleteEvent;
+import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
+import me.qyh.blog.core.event.LockDeleteEvent;
+import me.qyh.blog.core.event.SpaceDeleteEvent;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
-import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.vo.SpaceQueryParam;
 
 @Service
 public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisherAware {

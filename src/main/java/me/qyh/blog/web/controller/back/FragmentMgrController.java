@@ -31,14 +31,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.FragmentQueryParam;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.template.Fragment;
-import me.qyh.blog.web.template.TemplateService;
-import me.qyh.blog.web.validator.FragmentQueryParamValidator;
-import me.qyh.blog.web.validator.FragmentValidator;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.core.vo.SpaceQueryParam;
+import me.qyh.blog.web.template.entity.Fragment;
+import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.web.template.validator.FragmentQueryParamValidator;
+import me.qyh.blog.web.template.validator.FragmentValidator;
+import me.qyh.blog.web.template.vo.FragmentQueryParam;
 
 @Controller
 @RequestMapping("mgr/template/fragment")

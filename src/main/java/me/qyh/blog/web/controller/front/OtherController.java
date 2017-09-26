@@ -30,19 +30,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.security.Environment;
-import me.qyh.blog.core.vo.DataTag;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.template.Fragment;
-import me.qyh.blog.web.template.ParseConfig;
-import me.qyh.blog.web.template.ReadOnlyResponse;
-import me.qyh.blog.web.template.RenderResult;
-import me.qyh.blog.web.template.TemplateRender;
-import me.qyh.blog.web.template.TemplateRenderException;
-import me.qyh.blog.web.template.TemplateService;
+import me.qyh.blog.web.template.entity.Fragment;
+import me.qyh.blog.web.template.render.ParseConfig;
+import me.qyh.blog.web.template.render.ReadOnlyResponse;
+import me.qyh.blog.web.template.render.RenderResult;
+import me.qyh.blog.web.template.render.TemplateRender;
+import me.qyh.blog.web.template.render.TemplateRenderException;
+import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.web.template.vo.DataTag;
 
 @Controller
 public class OtherController {
@@ -73,8 +73,8 @@ public class OtherController {
 		try {
 
 			RenderResult result = templateRender.render(
-					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request, new ReadOnlyResponse(response),
-					new ParseConfig(true));
+					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request,
+					new ReadOnlyResponse(response), new ParseConfig(true));
 
 			String content = result.getContent();
 			MediaType type = result.getType();

@@ -17,13 +17,16 @@ package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,35 +44,37 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import me.qyh.blog.core.config.GlobalConfig;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.ArticleTag;
+import me.qyh.blog.core.entity.GlobalConfig;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.evt.ArticleEvent;
-import me.qyh.blog.core.evt.ArticleIndexRebuildEvent;
-import me.qyh.blog.core.evt.EventType;
-import me.qyh.blog.core.evt.LockDeleteEvent;
-import me.qyh.blog.core.evt.SpaceDeleteEvent;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.event.ArticleEvent;
+import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
+import me.qyh.blog.core.event.EventType;
+import me.qyh.blog.core.event.LockDeleteEvent;
+import me.qyh.blog.core.event.SpaceDeleteEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
-import me.qyh.blog.core.lock.LockManager;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.ArticleQueryParam;
-import me.qyh.blog.core.pageparam.PageResult;
-import me.qyh.blog.core.security.Environment;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.ConfigService;
+import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
+import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
+import me.qyh.blog.core.vo.ArticleQueryParam;
+import me.qyh.blog.core.vo.ArticleStatistics;
+import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.TagCount;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -89,8 +94,8 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private ArticleCache articleCache;
 	@Autowired
 	private ConfigService configService;
-	@Autowired
-	private CommentServer articleCommentStatisticsService;
+	@Autowired(required = false)
+	private CommentServer commentServer;
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
@@ -115,6 +120,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired(required = false)
 	private ArticleViewedLogger articleViewedLogger;
 
+	public static final String COMMENT_MODULE = "article";
+	// ArticleCommentModuleHandler.MODULE_NAME;
+
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
@@ -122,7 +130,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (optionalArticle.isPresent()) {
 
 			Article clone = new Article(optionalArticle.get());
-			clone.setComments(articleCommentStatisticsService.queryArticleCommentCount(clone.getId()).orElse(0));
+			clone.setComments(commentServer.queryCommentNum(COMMENT_MODULE, clone.getId()).orElse(0));
 
 			if (articleContentHandler != null) {
 				articleContentHandler.handle(clone);
@@ -371,7 +379,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
 			List<Integer> ids = datas.stream().map(Article::getId).collect(Collectors.toList());
-			Map<Integer, Integer> countsMap = articleCommentStatisticsService.queryArticlesCommentCount(ids);
+			Map<Integer, Integer> countsMap = commentServer.queryCommentNums(COMMENT_MODULE, ids);
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
 				article.setComments(comments == null ? 0 : comments);
@@ -506,7 +514,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	@Transactional(readOnly = true)
-	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.security.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.security.Environment).isLogin())")
+	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.context.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.context.Environment).isLogin())")
 	public List<TagCount> queryTags() throws LogicException {
 		return articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin());
 	}
@@ -534,9 +542,38 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode) {
 		List<Article> articles = articleDao.selectSimplePublished(Environment.getSpace(), Environment.isLogin());
 		return new ArticleArchiveTree(articles, mode == null ? ArticleArchiveMode.YMD : mode);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ArticleDetailStatistics queryArticleDetailStatistics(Space space) {
+		ArticleDetailStatistics articleDetailStatistics = new ArticleDetailStatistics(
+				articleDao.selectAllStatistics(space));
+		ArticleQueryParam param = new ArticleQueryParam();
+		param.setQueryPrivate(true);
+		param.setSpace(space);
+		Map<ArticleStatus, Integer> countMap = new EnumMap<>(ArticleStatus.class);
+		for (ArticleStatus status : ArticleStatus.values()) {
+			param.setStatus(status);
+			countMap.put(status, articleDao.selectCount(param));
+		}
+		articleDetailStatistics.setStatusCountMap(countMap);
+		return articleDetailStatistics;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ArticleStatistics queryArticleStatistics() {
+		ArticleStatistics articleStatistics = articleDao.selectStatistics(Environment.getSpace(),
+				Environment.isLogin());
+		if (!Environment.hasSpace()) {
+			articleStatistics.setSpaceStatisticsList(articleDao.selectArticleSpaceStatistics(Environment.isLogin()));
+		}
+		return articleStatistics;
 	}
 
 	@Override
@@ -584,6 +621,26 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		this.articleHitManager = new ArticleHitManager(hitsStrategy);
 
 		scheduleManager.update();
+		
+		if(commentServer == null){
+			commentServer = new CommentServer() {
+				
+				@Override
+				public Map<Integer, Integer> queryCommentNums(String module, Collection<Integer> moduleIds) {
+					return Collections.emptyMap();
+				}
+				
+				@Override
+				public OptionalInt queryCommentNum(String module, Space space, boolean queryPrivate) {
+					return OptionalInt.empty();
+				}
+				
+				@Override
+				public OptionalInt queryCommentNum(String module, Integer moduleId) {
+					return OptionalInt.empty();
+				}
+			};
+		}
 	}
 
 	private Optional<Article> getCheckedArticle(String idOrAlias, boolean putInCache) {

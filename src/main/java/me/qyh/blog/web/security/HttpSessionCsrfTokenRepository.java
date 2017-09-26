@@ -36,7 +36,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.util.Assert;
 
-import me.qyh.blog.util.StringUtils;
+import me.qyh.blog.core.util.StringUtils;
 
 /**
  * A {@link CsrfTokenRepository} that stores the {@link CsrfToken} in the

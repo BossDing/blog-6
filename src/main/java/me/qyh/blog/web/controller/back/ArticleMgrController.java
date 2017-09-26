@@ -33,21 +33,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.Constants;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.pageparam.ArticleQueryParam;
-import me.qyh.blog.core.pageparam.SpaceQueryParam;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.SpaceService;
-import me.qyh.blog.util.Validators;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.ArticleQueryParamValidator;
-import me.qyh.blog.web.validator.ArticleValidator;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.validator.ArticleQueryParamValidator;
+import me.qyh.blog.core.validator.ArticleValidator;
+import me.qyh.blog.core.vo.ArticleQueryParam;
+import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.core.vo.SpaceQueryParam;
+
 
 /**
  * 、 文章管理控制器

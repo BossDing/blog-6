@@ -27,12 +27,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.GlobalConfig;
+import me.qyh.blog.core.entity.GlobalConfig;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.ConfigService;
-import me.qyh.blog.web.JsonResult;
-import me.qyh.blog.web.validator.GlobalConfigValidator;
+import me.qyh.blog.core.validator.GlobalConfigValidator;
+import me.qyh.blog.core.vo.JsonResult;
 
 @RequestMapping("mgr/config/global")
 @Controller

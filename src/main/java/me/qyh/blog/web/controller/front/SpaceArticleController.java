@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import me.qyh.blog.core.security.Environment;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.util.UrlUtils;
-import me.qyh.blog.web.JsonResult;
+import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.vo.JsonResult;
 
 @Controller
 @RequestMapping("space/{alias}/article")
