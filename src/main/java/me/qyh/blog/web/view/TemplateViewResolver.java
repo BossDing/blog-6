@@ -13,11 +13,11 @@ import org.springframework.web.servlet.view.AbstractCachingViewResolver;
 import org.springframework.web.servlet.view.InternalResourceView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import me.qyh.blog.core.Constants;
-import me.qyh.blog.web.template.render.ParseConfig;
-import me.qyh.blog.web.template.render.ReadOnlyResponse;
-import me.qyh.blog.web.template.render.RenderResult;
-import me.qyh.blog.web.template.render.TemplateRender;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.template.render.ParseConfig;
+import me.qyh.blog.template.render.ReadOnlyResponse;
+import me.qyh.blog.template.render.RenderResult;
+import me.qyh.blog.template.render.TemplateRender;
 
 
 @Component

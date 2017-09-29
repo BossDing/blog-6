@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.context.LockKeyContext;
 import me.qyh.blog.core.entity.Lock;

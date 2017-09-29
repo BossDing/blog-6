@@ -26,9 +26,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.template.service.TemplateService;
 
 /**
  * session listener，用于监听管理员退出后清空预览页面缓存

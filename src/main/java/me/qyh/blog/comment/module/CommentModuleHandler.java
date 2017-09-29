@@ -3,6 +3,7 @@ package me.qyh.blog.comment.module;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import me.qyh.blog.comment.entity.Comment;
@@ -84,4 +85,12 @@ public abstract class CommentModuleHandler {
 	 * @return
 	 */
 	public abstract List<Comment> queryLastComments(Space space,int limit,boolean queryPrivate,boolean queryAdmin);
+	
+	
+	/**
+	 * 获取某个项目的访问地址
+	 * @param id
+	 * @return
+	 */
+	public abstract Optional<String> getUrl(Integer id);
 }

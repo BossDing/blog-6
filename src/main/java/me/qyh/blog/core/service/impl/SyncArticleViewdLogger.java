@@ -32,7 +32,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.exception.SystemException;

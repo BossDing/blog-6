@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
@@ -46,7 +46,7 @@ import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.validator.LoginBeanValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LoginBean;
-import me.qyh.blog.web.CaptchaValidator;
+import me.qyh.blog.web.security.CaptchaValidator;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
 import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;

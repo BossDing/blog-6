@@ -30,19 +30,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.template.entity.Fragment;
+import me.qyh.blog.template.render.ParseConfig;
+import me.qyh.blog.template.render.ReadOnlyResponse;
+import me.qyh.blog.template.render.RenderResult;
+import me.qyh.blog.template.render.TemplateRender;
+import me.qyh.blog.template.render.TemplateRenderException;
+import me.qyh.blog.template.service.TemplateService;
+import me.qyh.blog.template.vo.DataTag;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.template.entity.Fragment;
-import me.qyh.blog.web.template.render.ParseConfig;
-import me.qyh.blog.web.template.render.ReadOnlyResponse;
-import me.qyh.blog.web.template.render.RenderResult;
-import me.qyh.blog.web.template.render.TemplateRender;
-import me.qyh.blog.web.template.render.TemplateRenderException;
-import me.qyh.blog.web.template.service.TemplateService;
-import me.qyh.blog.web.template.vo.DataTag;
 
 @Controller
 public class OtherController {

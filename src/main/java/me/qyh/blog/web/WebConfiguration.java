@@ -30,9 +30,9 @@ import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.util.Jsons;
-import me.qyh.blog.web.file.FileStoreUrlHandlerMapping;
+import me.qyh.blog.file.store.local.FileStoreUrlHandlerMapping;
+import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.web.lock.LockArgumentResolver;
-import me.qyh.blog.web.template.render.TemplateRender;
 import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.view.TemplateReturnValueHandler;
 

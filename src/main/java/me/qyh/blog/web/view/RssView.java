@@ -30,12 +30,12 @@ import com.rometools.rome.feed.rss.Channel;
 import com.rometools.rome.feed.rss.Content;
 import com.rometools.rome.feed.rss.Item;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.web.config.UrlHelper;
 
 @Component
 public class RssView extends AbstractRssFeedView {

@@ -29,5 +29,24 @@ public class CommentStatistics {
 	public void setStMap(Map<String, Integer> stMap) {
 		this.stMap = stMap;
 	}
+	/**
+	 * 适配以前
+	 * @return
+	 */
+	public int getTotalArticleComments() {
+		return getComments("article");
+	}
+	/**
+	 * 适配以前
+	 * @return
+	 */
+	public int getTotalPageComments() {
+		return getComments("userpage");
+	}
+
+	public int getComments(String key) {
+		Integer count = stMap.get(key);
+		return count == null ? 0 : count;
+	}
 
 }

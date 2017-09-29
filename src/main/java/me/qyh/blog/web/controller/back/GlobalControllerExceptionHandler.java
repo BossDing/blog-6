@@ -45,7 +45,9 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.Space;
@@ -60,15 +62,13 @@ import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.template.Template;
+import me.qyh.blog.template.TemplateNotFoundException;
+import me.qyh.blog.template.render.RedirectException;
+import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.config.UrlHelper;
-import me.qyh.blog.web.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.web.lock.LockHelper;
 import me.qyh.blog.web.security.CsrfException;
-import me.qyh.blog.web.template.Template;
-import me.qyh.blog.web.template.TemplateNotFoundException;
-import me.qyh.blog.web.template.render.RedirectException;
-import me.qyh.blog.web.template.render.TemplateRenderException;
 
 /**
  * 无法处理页面渲染时的异常。

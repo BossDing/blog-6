@@ -26,10 +26,9 @@
 
 	<!-- 包扫描 -->
 	<context:component-scan base-package="me.qyh.blog.web.controller,
-			me.qyh.blog.web.template.render,
+			me.qyh.blog.template.render,
 			me.qyh.blog.web.security,
-		    me.qyh.blog.web.comment,
-			me.qyh.blog.web.template.service.impl,
+			me.qyh.blog.template.service.impl,
 			me.qyh.blog.web.listener,
 			me.qyh.blog.web.view" />
 
@@ -39,7 +38,7 @@
 
 	<bean id="appInterceptor" class="me.qyh.blog.web.interceptor.AppInterceptor">
 		<property name="ipGetter">
-			<bean class="me.qyh.blog.web.ProxyIPGetter" />
+			<bean class="me.qyh.blog.web.security.ProxyIPGetter" />
 		</property>
 	</bean>
 
@@ -52,7 +51,7 @@
 
 
 	<bean id="templateEngine"
-		class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafTemplateEngine">
+		class="me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateEngine">
 		<property name="templateResolvers">
 			<set>
 				<bean
@@ -62,16 +61,16 @@
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafTemplateResolver" />
+				<bean class="me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
 		<property name="cacheManager">
-			<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafCacheManager" />
+			<bean class="me.qyh.blog.template.render.thymeleaf.ThymeleafCacheManager" />
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.web.template.render.TemplateRender">
+	<bean class="me.qyh.blog.template.render.TemplateRender">
 		<property name="pros">
 			<map>
 				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
@@ -79,11 +78,11 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.web.template.render.thymeleaf.ThymeleafRenderExecutor" />
+	<bean class="me.qyh.blog.template.render.thymeleaf.ThymeleafRenderExecutor" />
 	<bean
-		class="me.qyh.blog.web.template.render.thymeleaf.ThymleafTemplateExceptionTransalater" />
+		class="me.qyh.blog.template.render.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
-	<bean class="me.qyh.blog.web.file.ImageResourceStore">
+	<bean class="me.qyh.blog.file.store.local.ImageResourceStore">
 		<constructor-arg value="image" index="0" />
 		<constructor-arg value="2" index="1" type="int" />
 		<property name="absPath" value="/web/file/blog_image/" />
@@ -126,7 +125,7 @@
 			</bean>
 		</property>
 	</bean>
-	<bean class="me.qyh.blog.web.file.CommonResourceStore">
+	<bean class="me.qyh.blog.file.store.local.CommonResourceStore">
 		<property name="absPath" value="/web/file/blog_file" />
 		<property name="id" value="2" />
 		<property name="name" value="文件存储" />
@@ -134,8 +133,5 @@
 	</bean>
 	
 	<bean class="me.qyh.blog.web.WebConfiguration"/>
-	
-	
-	<bean class="me.qyh.blog.web.template.PageCommentModuleHandler"/>
 	
 </beans>

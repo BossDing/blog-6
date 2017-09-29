@@ -44,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import me.qyh.blog.core.config.ConfigServer;
+import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
@@ -51,7 +53,6 @@ import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.ArticleTag;
-import me.qyh.blog.core.entity.GlobalConfig;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
@@ -65,7 +66,6 @@ import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
-import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
@@ -90,10 +90,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private TagDao tagDao;
 	@Autowired
 	private LockManager lockManager;
-	@Autowired
+	@Autowired	
 	private ArticleCache articleCache;
 	@Autowired
-	private ConfigService configService;
+	private ConfigServer configServer;
 	@Autowired(required = false)
 	private CommentServer commentServer;
 	@Autowired
@@ -389,7 +389,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	private void checkParam(ArticleQueryParam param) {
-		GlobalConfig globalConfig = configService.getGlobalConfig();
+		GlobalConfig globalConfig = configServer.getGlobalConfig();
 		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getArticlePageSize()));
 		// 如果查询私有文章，但是用户没有登录
 		if (param.isQueryPrivate() && !Environment.isLogin()) {

@@ -17,7 +17,7 @@ package me.qyh.blog.core.vo;
 
 import java.io.Serializable;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 
 public class PageQueryParam implements Serializable {
 

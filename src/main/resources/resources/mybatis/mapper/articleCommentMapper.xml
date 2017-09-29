@@ -4,12 +4,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="me.qyh.blog.comment.dao.ArticleCommentDao">
 
-	<select id="selectLastComments" resultMap="me.qyh.blog.comment.dao.CommentDao.CommentDetail">
+	<resultMap type="me.qyh.blog.comment.vo.LastArticleComment" id="LastArticleCommentDetail" extends="me.qyh.blog.comment.dao.CommentDao.CommentDetail">
+		<association property="article" javaType="Article">
+			<result column="art_lock" property="lockId" />
+			<association property="space" javaType="Space">
+				<result column="space_lock" property="lockId" />
+			</association>
+		</association>
+	</resultMap>
+
+	<select id="selectLastComments" resultMap="LastArticleCommentDetail">
 		SELECT 
 		a.id,a.parent_id,a.parent_path,a.content,a.module_id,a.module_type,a.comment_status,a.comment_editor,
 		a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,
 		 p.comment_editor AS p_comment_edtior,p.module_id AS p_module_id,p.module_type AS p_module_type,
-		p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar
+		p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar,
+		ba.art_lock,bs.space_lock
 		FROM blog_comment a
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
 		LEFT OUTER JOIN blog_article ba ON a.module_id = ba.id
@@ -23,8 +33,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="!queryPrivate">
 			AND ba.isPrivate = FALSE 
 			AND bs.is_private = FALSE
-			AND ba.art_lock IS NULL
-			AND bs.space_lock IS NULL
 		</if>
 		<if test="!queryAdmin">
 			AND a.comment_admin = FALSE
@@ -39,18 +47,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			COUNT(a.id)
 		FROM
 			blog_comment a
-		LEFT OUTER JOIN blog_article art ON a.module_id = art.id
-		LEFT OUTER JOIN blog_space sp ON art.space_id = sp.id
+		LEFT OUTER JOIN blog_article ba ON a.module_id = ba.id
+		LEFT OUTER JOIN blog_space bs ON ba.space_id = bs.id
 		WHERE 
 			a.comment_status = 0<!-- NORMAL -->
-			AND art.art_status = 0<!-- published -->
+			AND ba.art_status = 0<!-- published -->
 			AND a.module_type = 'article'
 		<if test="space != null">
-			AND art.space_id = #{space.id}
+			AND ba.space_id = #{space.id}
 		</if>
 		<if test="!queryPrivate">
-			AND art.isPrivate = false
-			AND sp.is_private = false
+			AND ba.isPrivate = false
+			AND bs.is_private = false
 		</if>
 	</select>
 </mapper>

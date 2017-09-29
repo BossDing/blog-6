@@ -57,7 +57,6 @@ public class Comment extends BaseEntity {
 	private Boolean admin;// 是否是管理员
 
 	private String gravatar;
-	@Deprecated
 	private String url;
 	private Editor editor;// 编辑器
 

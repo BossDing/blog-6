@@ -31,13 +31,13 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.template.render.ParseConfig;
+import me.qyh.blog.template.render.ReadOnlyResponse;
+import me.qyh.blog.template.render.RedirectException;
+import me.qyh.blog.template.render.RenderResult;
+import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.template.render.ParseConfig;
-import me.qyh.blog.web.template.render.ReadOnlyResponse;
-import me.qyh.blog.web.template.render.RedirectException;
-import me.qyh.blog.web.template.render.RenderResult;
-import me.qyh.blog.web.template.render.TemplateRender;
 
 public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandler {
 

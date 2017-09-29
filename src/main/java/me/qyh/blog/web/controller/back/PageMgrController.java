@@ -31,19 +31,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
-import me.qyh.blog.web.config.UrlHelper;
-import me.qyh.blog.web.template.entity.Page;
-import me.qyh.blog.web.template.service.TemplateService;
-import me.qyh.blog.web.template.validator.PageValidator;
-import me.qyh.blog.web.template.validator.TemplatePageQueryParamValidator;
-import me.qyh.blog.web.template.vo.TemplatePageQueryParam;
+import me.qyh.blog.template.entity.Page;
+import me.qyh.blog.template.service.TemplateService;
+import me.qyh.blog.template.validator.PageValidator;
+import me.qyh.blog.template.validator.TemplatePageQueryParamValidator;
+import me.qyh.blog.template.vo.TemplatePageQueryParam;
 
 @Controller
 @RequestMapping("mgr/template/page")

@@ -38,7 +38,7 @@ import com.github.cage.token.RandomTokenGenerator;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.web.CaptchaValidator;
+import me.qyh.blog.web.security.CaptchaValidator;
 
 
 @Controller

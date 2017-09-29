@@ -38,11 +38,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.ConfigServer;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.impl.Sync;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Times;
@@ -88,7 +88,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Autowired
 	private CommonFileDao commonFileDao;
 	@Autowired
-	private ConfigService configService;
+	private ConfigServer configServer;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
@@ -325,7 +325,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		} else {
 			param.setParentFile(blogFileDao.selectRoot());
 		}
-		param.setPageSize(configService.getGlobalConfig().getFilePageSize());
+		param.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		int count = blogFileDao.selectCount(param);
 		List<BlogFile> datas = blogFileDao.selectPage(param);
 		for (BlogFile file : datas) {
@@ -621,7 +621,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<BlogFile> queryFiles(String path, BlogFileQueryParam param) {
-		param.setPageSize(Math.min(configService.getGlobalConfig().getFilePageSize(), param.getPageSize()));
+		param.setPageSize(Math.min(configServer.getGlobalConfig().getFilePageSize(), param.getPageSize()));
 		BlogFile parent = blogFileDao.selectRoot();
 		String cleanedPath = FileUtils.cleanPath(path.trim());
 		if (cleanedPath.isEmpty()) {

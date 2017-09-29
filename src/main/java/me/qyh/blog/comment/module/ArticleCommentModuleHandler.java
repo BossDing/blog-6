@@ -3,6 +3,7 @@ package me.qyh.blog.comment.module;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
@@ -16,14 +17,20 @@ import me.qyh.blog.comment.dao.CommentDao;
 import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
 import me.qyh.blog.comment.service.CommentService;
+import me.qyh.blog.comment.vo.LastArticleComment;
 import me.qyh.blog.comment.vo.ModuleCommentCount;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.event.EventType;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.impl.ArticleCache;
 
@@ -44,7 +51,16 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 	@Autowired
 	private CommentService commentService;
 	
+	@Autowired
+	private UrlHelper urlHelper;
+	
+	@Autowired
+	private Messages messages;
+	
 	private static final String MODULE_NAME = "article";
+	
+	private static final Message PROTECTED_COMMENT_MD = new Message("comment.protected","\\*\\*\\*\\*\\*\\*");
+	private static final Message PROTECTED_COMMENT_HTML = new Message("comment.protected","******");
 
 	public ArticleCommentModuleHandler() {
 		super(MODULE_NAME);
@@ -128,7 +144,22 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 
 	@Override
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin) {
-		return articleCommentDao.selectLastComments(space, limit, queryPrivate, queryAdmin);
+		
+		User user = Environment.getUser();
+		List<Comment> comments = articleCommentDao.selectLastComments(space, limit, queryPrivate, queryAdmin);
+		for(Comment comment : comments){
+			LastArticleComment lac = (LastArticleComment)comment;
+			if(user == null && lac.getArticle() != null && lac.getArticle().hasLock()){
+				comment.setContent(messages.getMessage(Editor.MD.equals(comment.getEditor()) ? PROTECTED_COMMENT_MD : PROTECTED_COMMENT_HTML));
+			}
+		}
+		return comments;
+	}
+
+	@Override
+	public Optional<String> getUrl(Integer id) {
+		Article article = articleCache.getArticle(id, false);
+		return article == null ? Optional.empty() : Optional.of(urlHelper.getUrls().getUrl(article));
 	}
 
 }

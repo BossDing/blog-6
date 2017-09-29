@@ -27,10 +27,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.entity.GlobalConfig;
+import me.qyh.blog.core.config.ConfigServer;
+import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.validator.GlobalConfigValidator;
 import me.qyh.blog.core.vo.JsonResult;
 
@@ -39,7 +39,7 @@ import me.qyh.blog.core.vo.JsonResult;
 public class GlobalConfigMgrController extends BaseMgrController {
 
 	@Autowired
-	private ConfigService configService;
+	private ConfigServer configServer;
 	@Autowired
 	private GlobalConfigValidator globalConfigValidator;
 
@@ -50,14 +50,14 @@ public class GlobalConfigMgrController extends BaseMgrController {
 
 	@GetMapping("index")
 	public String index(Model model) {
-		model.addAttribute("config", configService.getGlobalConfig());
+		model.addAttribute("config", configServer.getGlobalConfig());
 		return "mgr/config/global";
 	}
 
 	@PostMapping("update")
 	@ResponseBody
 	public JsonResult update(@Validated @RequestBody GlobalConfig globalConfig) throws LogicException {
-		configService.updateGlobalConfig(globalConfig);
+		configServer.updateGlobalConfig(globalConfig);
 		return new JsonResult(true, new Message("global.update.success", "更新成功"));
 	}
 

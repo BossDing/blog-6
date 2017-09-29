@@ -15,16 +15,16 @@
  */
 package me.qyh.blog.web.controller.back;
 
+import me.qyh.blog.comment.vo.CommentStatistics;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.TagDetailStatistics;
 import me.qyh.blog.file.vo.FileStatistics;
-import me.qyh.blog.web.comment._CommentStatistics;
-import me.qyh.blog.web.template.vo.PageStatistics;
+import me.qyh.blog.template.vo.PageStatistics;
 
 public class StatisticsDetail {
 	private ArticleDetailStatistics articleStatistics;
 	private TagDetailStatistics tagStatistics;
-	private _CommentStatistics commentStatistics;
+	private CommentStatistics commentStatistics;
 	private PageStatistics pageStatistics;
 	private FileStatistics fileStatistics;
 
@@ -44,11 +44,11 @@ public class StatisticsDetail {
 		this.tagStatistics = tagStatistics;
 	}
 
-	public _CommentStatistics getCommentStatistics() {
+	public CommentStatistics getCommentStatistics() {
 		return commentStatistics;
 	}
 
-	public void setCommentStatistics(_CommentStatistics commentStatistics) {
+	public void setCommentStatistics(CommentStatistics commentStatistics) {
 		this.commentStatistics = commentStatistics;
 	}
 

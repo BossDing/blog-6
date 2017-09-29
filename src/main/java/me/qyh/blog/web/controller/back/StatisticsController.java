@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.comment.service.CommentService;
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
@@ -32,8 +32,7 @@ import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.service.TagService;
 import me.qyh.blog.core.vo.SpaceQueryParam;
 import me.qyh.blog.file.service.FileService;
-import me.qyh.blog.web.comment._CommentStatistics;
-import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.template.service.TemplateService;
 
 @Controller
 @RequestMapping("mgr/statistics")
@@ -61,7 +60,7 @@ public class StatisticsController extends BaseMgrController  {
 					.orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
 			StatisticsDetail detail = new StatisticsDetail();
 			detail.setArticleStatistics(articleService.queryArticleDetailStatistics(space));
-			detail.setCommentStatistics(new _CommentStatistics(commentService.queryCommentStatistics(space)));
+			detail.setCommentStatistics(commentService.queryCommentStatistics(space));
 			
 			if(space == null){
 				detail.setFileStatistics(fileService.queryFileStatistics());

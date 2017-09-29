@@ -23,7 +23,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.LockKey;
 import me.qyh.blog.core.entity.Space;
@@ -31,9 +32,8 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
-import me.qyh.blog.web.CaptchaValidator;
-import me.qyh.blog.web.config.UrlHelper;
 import me.qyh.blog.web.lock.LockHelper;
+import me.qyh.blog.web.security.CaptchaValidator;
 
 @Controller
 public class LockController {

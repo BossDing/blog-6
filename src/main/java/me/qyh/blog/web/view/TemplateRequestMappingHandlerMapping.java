@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -47,10 +47,9 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConf
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.web.template.TemplateController;
-import me.qyh.blog.web.template.TemplateInterceptor;
-import me.qyh.blog.web.template.TemplateUtils;
-
+import me.qyh.blog.template.TemplateController;
+import me.qyh.blog.template.TemplateInterceptor;
+import me.qyh.blog.template.TemplateUtils;
 
 /**
  * 一个提供注册TemplateRequestMapping的类
@@ -90,18 +89,12 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	public Map<RequestMappingInfo, HandlerMethod> getHandlerMethods() {
-		StampedLock lock = mappingRegistry.getLock();
-		long stamp = lock.tryOptimisticRead();
-		Map<RequestMappingInfo, HandlerMethod> map = this.mappingRegistry.getMappings();
-		if (!lock.validate(stamp)) {
-			stamp = lock.readLock();
-			try {
-				map = this.mappingRegistry.getMappings();
-			} finally {
-				lock.unlockRead(stamp);
-			}
+		this.mappingRegistry.acquireReadLock();
+		try {
+			return Collections.unmodifiableMap(this.mappingRegistry.getMappings());
+		} finally {
+			this.mappingRegistry.releaseReadLock();
 		}
-		return Collections.unmodifiableMap(map);
 	}
 
 	/**
@@ -119,12 +112,11 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	public void registerMapping(RequestMappingInfo mapping, Object handler, Method method) {
-		StampedLock lock = mappingRegistry.getLock();
-		long stamp = lock.writeLock();
+		this.mappingRegistry.acquireWriteLock();
 		try {
 			this.mappingRegistry.register(mapping, handler, method);
 		} finally {
-			lock.unlockWrite(stamp);
+			this.mappingRegistry.releaseWriteLock();
 		}
 	}
 
@@ -140,12 +132,11 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	public void unregisterMapping(RequestMappingInfo mapping) {
-		StampedLock lock = mappingRegistry.getLock();
-		long stamp = lock.writeLock();
+		this.mappingRegistry.acquireWriteLock();
 		try {
 			this.mappingRegistry.unregister(mapping);
 		} finally {
-			lock.unlockWrite(stamp);
+			this.mappingRegistry.releaseWriteLock();
 		}
 	}
 
@@ -165,12 +156,11 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	protected void registerHandlerMethod(Object handler, Method method, RequestMappingInfo mapping) {
-		StampedLock lock = mappingRegistry.getLock();
-		long stamp = lock.writeLock();
+		this.mappingRegistry.acquireWriteLock();
 		try {
 			this.mappingRegistry.register(mapping, handler, method);
 		} finally {
-			lock.unlockWrite(stamp);
+			this.mappingRegistry.releaseWriteLock();
 		}
 	}
 
@@ -204,19 +194,24 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	 */
 	@Override
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
-		StampedLock lock = mappingRegistry.getLock();
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
-		long stamp = lock.tryOptimisticRead();
-		HandlerMethod handlerMethod = lookupHandlerMethod(lookupPath, request);
-		if (!lock.validate(stamp)) {
-			stamp = lock.readLock();
-			try {
-				handlerMethod = lookupHandlerMethod(lookupPath, request);
-			} finally {
-				lock.unlockRead(stamp);
-			}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Looking up handler method for path " + lookupPath);
 		}
-		return (handlerMethod != null ? handlerMethod.createWithResolvedBean() : null);
+		this.mappingRegistry.acquireReadLock();
+		try {
+			HandlerMethod handlerMethod = lookupHandlerMethod(lookupPath, request);
+			if (logger.isDebugEnabled()) {
+				if (handlerMethod != null) {
+					logger.debug("Returning handler method [" + handlerMethod + "]");
+				} else {
+					logger.debug("Did not find handler method for [" + lookupPath + "]");
+				}
+			}
+			return (handlerMethod != null ? handlerMethod.createWithResolvedBean() : null);
+		} finally {
+			this.mappingRegistry.releaseReadLock();
+		}
 	}
 
 	private void _addMatchingMappings(Collection<RequestMappingInfo> mappings, List<Match> matches,
@@ -351,7 +346,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 				&& (optional = TemplateUtils.getTemplateController(handler)).isPresent()) {
 			String templateName = ((TemplateController) optional.get()).getTemplateName();
 			for (TemplateInterceptor interceptor : templateInterceptors) {
-				if (interceptor.match(templateName,request)) {
+				if (interceptor.match(templateName, request)) {
 					chain.addInterceptor(interceptor);
 				}
 			}
@@ -403,20 +398,32 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();
 		private final Map<HandlerMethod, CorsConfiguration> corsLookup = new ConcurrentHashMap<>();
 
-		private final StampedLock sl = new StampedLock();
+		private final ReentrantReadWriteLock sl = new ReentrantReadWriteLock();
 
 		private MappingRegistry() {
 			super();
 		}
 
 		/**
-		 * 获取锁
-		 * 
-		 * @see StampedLock
-		 * @return
+		 * Acquire the read lock when using getMappings and getMappingsByUrl.
 		 */
-		public StampedLock getLock() {
-			return sl;
+		public void acquireReadLock() {
+			this.sl.readLock().lock();
+		}
+
+		/**
+		 * Release the read lock after using getMappings and getMappingsByUrl.
+		 */
+		public void releaseReadLock() {
+			this.sl.readLock().unlock();
+		}
+
+		public void acquireWriteLock() {
+			this.sl.writeLock().lock();
+		}
+
+		public void releaseWriteLock() {
+			this.sl.writeLock().unlock();
 		}
 
 		/**

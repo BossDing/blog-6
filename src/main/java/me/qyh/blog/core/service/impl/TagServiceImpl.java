@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.TagDao;
@@ -32,7 +33,6 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.exception.LogicException;
-import me.qyh.blog.core.service.ConfigService;
 import me.qyh.blog.core.service.TagService;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.TagDetailStatistics;
@@ -47,7 +47,7 @@ public class TagServiceImpl implements TagService, ApplicationEventPublisherAwar
 	@Autowired
 	private ArticleTagDao articleTagDao;
 	@Autowired
-	private ConfigService configSerivce;
+	private ConfigServer configSerivce;
 	@Autowired
 	private ArticleIndexer articleIndexer;
 	private ApplicationEventPublisher applicationEventPublisher;

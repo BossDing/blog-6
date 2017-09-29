@@ -29,7 +29,7 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.SerializationUtils;

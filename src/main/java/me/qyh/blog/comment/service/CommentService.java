@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Predicate;
@@ -56,7 +57,7 @@ import me.qyh.blog.comment.module.CommentModuleHandler;
 import me.qyh.blog.comment.vo.CommentPageResult;
 import me.qyh.blog.comment.vo.CommentQueryParam;
 import me.qyh.blog.comment.vo.CommentStatistics;
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
@@ -147,7 +148,6 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	 * @return
 	 * @throws LogicException
 	 */
-
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Comment checkComment(Integer id) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
@@ -303,6 +303,12 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		return comment;
 	}
 
+	/**
+	 * 分页查询评论
+	 * 
+	 * @param param
+	 * @return
+	 */
 	@Transactional(readOnly = true)
 	public CommentPageResult queryComment(CommentQueryParam param) {
 		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
@@ -388,11 +394,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 			return Collections.emptyList();
 		}
 		CommentModuleHandler handler = handlerMap.get(module);
-		if(handler == null){
+		if (handler == null) {
 			return Collections.emptyList();
 		}
-		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit,
-				Environment.isLogin(), queryAdmin);
+		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit, Environment.isLogin(),
+				queryAdmin);
 		for (Comment comment : comments) {
 			completeComment(comment);
 		}
@@ -518,6 +524,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		return OptionalInt.empty();
 	}
 
+	/**
+	 * 查询评论统计情况
+	 * @param space 当前空间
+	 * @return
+	 */
 	@Transactional(readOnly = true)
 	public CommentStatistics queryCommentStatistics(Space space) {
 		CommentStatistics commentStatistics = new CommentStatistics();
@@ -528,6 +539,23 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		}
 		commentStatistics.setStMap(map);
 		return commentStatistics;
+	}
+
+	/**
+	 * 查询某个评论模块项目的地址
+	 * 
+	 * @param module
+	 * @return
+	 */
+	@Transactional(readOnly = true)
+	public Optional<String> queryCommentModuleUrl(CommentModule module) {
+		CommentModuleHandler handler = handlerMap.get(module.getModule());
+		
+		if(handler != null){
+			return handler.getUrl(module.getId());
+		}
+		
+		return Optional.empty();
 	}
 
 	private List<Comment> buildTree(List<Comment> comments) {
@@ -612,6 +640,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
 
+	/**
+	 * 添加一个评论模块处理器
+	 * 
+	 * @param handler
+	 */
 	public void addCommentModuleHandler(CommentModuleHandler handler) {
 		Objects.requireNonNull(handler);
 		handlerMap.remove(handler.getType());

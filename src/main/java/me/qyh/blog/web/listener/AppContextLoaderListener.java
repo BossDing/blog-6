@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.WebApplicationContext;
 
-import me.qyh.blog.web.config.UrlConfig;
+import me.qyh.blog.core.config.UrlConfig;
 
 
 public class AppContextLoaderListener extends ContextLoaderListener {

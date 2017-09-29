@@ -28,7 +28,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.Constants;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;

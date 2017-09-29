@@ -34,15 +34,13 @@ import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.validator.CommentValidator;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.AttemptLoggerManager;
-import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.web.CaptchaValidator;
-import me.qyh.blog.web.config.UrlHelper;
-import me.qyh.blog.web.template.service.TemplateService;
+import me.qyh.blog.web.security.CaptchaValidator;
 
 @Controller("commentController")
 public class CommentController implements InitializingBean {
@@ -55,10 +53,6 @@ public class CommentController implements InitializingBean {
 	private CaptchaValidator captchaValidator;
 	@Autowired
 	private AttemptLoggerManager attemptLoggerManager;
-	@Autowired
-	private ArticleService articleService;
-	@Autowired
-	private TemplateService templateService;
 	@Autowired
 	private UrlHelper urlHelper;
 
@@ -105,17 +99,13 @@ public class CommentController implements InitializingBean {
 				commentService.queryConversations(new CommentModule(type, moduleId), commentId));
 	}
 	
-	@GetMapping("comment/link/article/{id}")
-	public String jumpToArticle(@PathVariable("id") Integer id) {
-		return "redirect:"+
-				articleService.getArticleForEdit(id).map(art->urlHelper.getUrls().getUrl(art)).orElse(urlHelper.getUrl());
+	@GetMapping("comment/link/{module}/{id}")
+	public String jumpToArticle(@PathVariable("module") String module , @PathVariable("id") Integer id) {
+		
+		String url = commentService.queryCommentModuleUrl(new CommentModule(module, id)).orElse(urlHelper.getUrl());
+		return "redirect:"+ url;
 	}
 	
-	@GetMapping("comment/link/userpage/{id}")
-	public String jumpToPage(@PathVariable("id") Integer id) {
-		return "redirect:"+templateService.queryPage(id).map(page->urlHelper.getUrls().getUrl(page)).orElse(urlHelper.getUrl());
-	}
-
 
 	@GetMapping("comment/needCaptcha")
 	@ResponseBody
