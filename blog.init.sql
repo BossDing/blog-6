@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `blog_comment` (
   comment_website varchar(255),
   `COMMENT_GRAVATAR` varchar(255),
   `module_id` int(11) NOT NULL,
-  `module_type` int(11) NOT NULL,
+  `module_type` varchar(50) NOT NULL,
   `comment_editor` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ;

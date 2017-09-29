@@ -39,3 +39,15 @@
 ...  
 5.5.5 -> 5.5   
 ...
+
+## upgrade  
+5.6    
+1.
+``` sql
+alter table blog_comment modify(alter) column module_type varchar(50) not null;
+update blog_comment set module_type = 'article' where module_type = '0';
+update blog_comment set module_type = 'userpage' where module_type = '1';
+```
+2.包结构变更
+
+
