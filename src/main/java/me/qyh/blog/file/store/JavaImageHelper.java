@@ -90,17 +90,16 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	private ImageInfo readOtherImage(Path file) throws IOException {
-		try (InputStream is = Files.newInputStream(file)) {
-			try (ImageInputStream iis = ImageIO.createImageInputStream(is)) {
-				Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
-				while (imageReaders.hasNext()) {
-					ImageReader reader = imageReaders.next();
-					reader.setInput(iis);
-					int minIndex = reader.getMinIndex();
-					return new ImageInfo(reader.getWidth(minIndex), reader.getHeight(minIndex), reader.getFormatName());
-				}
-				throw new IOException("无法确定图片:" + file + "的具体类型");
+		try (InputStream is = Files.newInputStream(file);
+				ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+			Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
+			while (imageReaders.hasNext()) {
+				ImageReader reader = imageReaders.next();
+				reader.setInput(iis);
+				int minIndex = reader.getMinIndex();
+				return new ImageInfo(reader.getWidth(minIndex), reader.getHeight(minIndex), reader.getFormatName());
 			}
+			throw new IOException("无法确定图片:" + file + "的具体类型");
 		}
 	}
 

@@ -17,8 +17,8 @@ package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,10 +52,10 @@ import me.qyh.blog.core.dao.ArticleTagDao;
 import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.ArticleTag;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.event.EventType;
@@ -68,13 +68,13 @@ import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
 
@@ -90,7 +90,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private TagDao tagDao;
 	@Autowired
 	private LockManager lockManager;
-	@Autowired	
+	@Autowired
 	private ArticleCache articleCache;
 	@Autowired
 	private ConfigServer configServer;
@@ -362,7 +362,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		} else {
 			Tag tag = tagDao.selectByName(param.getTag());
 			if (tag == null) {
-				return new PageResult<>(param, 0, Collections.emptyList());
+				return new PageResult<>(param, 0, new ArrayList<>());
 			}
 			param.setTagId(tag.getId());
 		}
@@ -531,8 +531,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	 */
 	@Override
 	public List<Article> getRecentlyViewdArticle(int num) {
-		return articleViewedLogger == null ? Collections.emptyList()
-				: articleViewedLogger.getViewdArticles(Math.max(1, num));
+		return articleViewedLogger == null ? new ArrayList<>() : articleViewedLogger.getViewdArticles(Math.max(1, num));
 	}
 
 	@Override
@@ -621,20 +620,20 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		this.articleHitManager = new ArticleHitManager(hitsStrategy);
 
 		scheduleManager.update();
-		
-		if(commentServer == null){
+
+		if (commentServer == null) {
 			commentServer = new CommentServer() {
-				
+
 				@Override
 				public Map<Integer, Integer> queryCommentNums(String module, Collection<Integer> moduleIds) {
-					return Collections.emptyMap();
+					return new HashMap<>();
 				}
-				
+
 				@Override
 				public OptionalInt queryCommentNum(String module, Space space, boolean queryPrivate) {
 					return OptionalInt.empty();
 				}
-				
+
 				@Override
 				public OptionalInt queryCommentNum(String module, Integer moduleId) {
 					return OptionalInt.empty();

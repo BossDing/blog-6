@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -639,7 +638,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			}
 
 			if (parent == null || parent.isFile()) {
-				return new PageResult<>(param, 0, Collections.emptyList());
+				return new PageResult<>(param, 0, new ArrayList<>());
 			}
 
 			param.setParentFile(parent);

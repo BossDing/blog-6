@@ -448,7 +448,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		try {
 			space = spaceCache.checkSpace(spaceId);
 		} catch (LogicException e) {
-			return Arrays.asList(new ImportRecord(false, e.getLogicMessage()));
+			List<ImportRecord> list = new ArrayList<>();
+			list.add(new ImportRecord(false, e.getLogicMessage()));
+			return list;
 		}
 		// 开启一个新的串行化事务
 		DefaultTransactionDefinition td = new DefaultTransactionDefinition();
@@ -1102,20 +1104,21 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				// 获取RequestMapping的锁
 				templateMappingRegister.lockWrite();
 				try {
+					List<PathTemplateLoadRecord> records = new ArrayList<>();
 					// 定位需要载入的目录
 					Path loadPath = pathTemplateRoot.resolve(FileUtils.cleanPath(path));
 					if (!FileUtils.exists(loadPath)) {
 						LOGGER.debug("文件{}不存在", loadPath);
-						return Arrays.asList(new PathTemplateLoadRecord(null, false,
+						records.add(new PathTemplateLoadRecord(null, false,
 								new Message("pathTemplate.path.notExists", "路径不存在")));
+						return records;
 					}
 					if (!FileUtils.isSub(loadPath, pathTemplateRoot)) {
 						LOGGER.debug("文件{}不存在于模板主目录中", loadPath);
-						return Arrays.asList(new PathTemplateLoadRecord(null, false,
+						records.add(new PathTemplateLoadRecord(null, false,
 								new Message("pathTemplate.load.path.notInRoot", "文件不存在于模板主目录中")));
+						return records;
 					}
-
-					List<PathTemplateLoadRecord> records = new ArrayList<>();
 
 					if (FileUtils.isRegularFile(loadPath)) {
 						if (!isPreview(loadPath)) {

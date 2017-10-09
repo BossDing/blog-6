@@ -1,7 +1,7 @@
 package me.qyh.blog.comment.module;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +68,7 @@ public class PageCommentModuleHandler extends CommentModuleHandler implements In
 
 	@Override
 	public Map<Integer, Integer> queryCommentNums(Collection<Integer> ids) {
-		return Collections.emptyMap();
+		return new HashMap<>();
 	}
 
 	@Override
@@ -76,7 +76,6 @@ public class PageCommentModuleHandler extends CommentModuleHandler implements In
 		ModuleCommentCount count = commentDao.selectCommentCount(new CommentModule(MODULE_NAME, id));
 		return count == null ? OptionalInt.empty() : OptionalInt.of(count.getComments());
 	}
-
 
 	@Override
 	public Map<Integer, Object> getReferences(Collection<Integer> ids) {

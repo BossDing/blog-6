@@ -21,9 +21,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -313,12 +311,12 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	public CommentPageResult queryComment(CommentQueryParam param) {
 		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
 		if (!param.complete()) {
-			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
+			return new CommentPageResult(param, 0, new ArrayList<>(), new CommentConfig(config));
 		}
 		CommentModule module = param.getModule();
 		CommentModuleHandler handler = handlerMap.get(module.getModule());
 		if (handler == null || !handler.doValidateBeforeQuery(module.getId())) {
-			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
+			return new CommentPageResult(param, 0, new ArrayList<>(), new CommentConfig(config));
 		}
 
 		CommentMode mode = param.getMode();
@@ -333,7 +331,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		}
 		int pageSize = config.getPageSize();
 		if (count == 0) {
-			return new CommentPageResult(param, 0, Collections.emptyList(), new CommentConfig(config));
+			return new CommentPageResult(param, 0, new ArrayList<>(), new CommentConfig(config));
 		}
 		boolean asc = param.isAsc();
 		if (param.getCurrentPage() <= 0) {
@@ -391,11 +389,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(String module, int limit, boolean queryAdmin) {
 		if (StringUtils.isEmpty(module)) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		CommentModuleHandler handler = handlerMap.get(module);
 		if (handler == null) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit, Environment.isLogin(),
 				queryAdmin);
@@ -414,28 +412,27 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	@Transactional(readOnly = true)
 	public List<Comment> queryConversations(CommentModule module, Integer id) throws LogicException {
 		if (module.getModule() == null || module.getId() == null) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		CommentModuleHandler handler = handlerMap.get(module.getModule());
 		if (handler == null || !handler.doValidateBeforeQuery(module.getId())) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		Comment comment = commentDao.selectById(id);
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");
 		}
 		if (!comment.getCommentModule().equals(module)) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		completeComment(comment);
-		if (comment.getParents().isEmpty()) {
-			return Arrays.asList(comment);
-		}
 		List<Comment> comments = new ArrayList<>();
-		for (Integer pid : comment.getParents()) {
-			Comment p = commentDao.selectById(pid);
-			completeComment(p);
-			comments.add(p);
+		if (!comment.getParents().isEmpty()) {
+			for (Integer pid : comment.getParents()) {
+				Comment p = commentDao.selectById(pid);
+				completeComment(p);
+				comments.add(p);
+			}
 		}
 		comments.add(comment);
 		return comments;
@@ -473,16 +470,13 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 			if (handler == null) {
 				throw new SystemException("无法找到CommentModuleHandler：" + key);
 			}
-			Map<Integer, Object> references;
 			List<CommentModule> values = it.getValue();
-			if (values.isEmpty()) {
-				references = Collections.emptyMap();
-			} else {
-				references = handler
+			if (!values.isEmpty()) {
+				Map<Integer, Object> references = handler
 						.getReferences(values.stream().map(CommentModule::getId).collect(Collectors.toSet()));
-			}
-			for (Map.Entry<Integer, Object> refIt : references.entrySet()) {
-				referenceMap.put(new CommentModule(key, refIt.getKey()), refIt.getValue());
+				for (Map.Entry<Integer, Object> refIt : references.entrySet()) {
+					referenceMap.put(new CommentModule(key, refIt.getKey()), refIt.getValue());
+				}
 			}
 		}
 		for (Comment comment : comments) {
@@ -511,7 +505,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		if (handler != null) {
 			return handler.queryCommentNums(moduleIds);
 		}
-		return Collections.emptyMap();
+		return new HashMap<>();
 	}
 
 	@Override
@@ -526,7 +520,9 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 
 	/**
 	 * 查询评论统计情况
-	 * @param space 当前空间
+	 * 
+	 * @param space
+	 *            当前空间
 	 * @return
 	 */
 	@Transactional(readOnly = true)
@@ -550,11 +546,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	@Transactional(readOnly = true)
 	public Optional<String> queryCommentModuleUrl(CommentModule module) {
 		CommentModuleHandler handler = handlerMap.get(module.getModule());
-		
-		if(handler != null){
+
+		if (handler != null) {
 			return handler.getUrl(module.getId());
 		}
-		
+
 		return Optional.empty();
 	}
 

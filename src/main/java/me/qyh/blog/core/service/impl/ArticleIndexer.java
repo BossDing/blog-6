@@ -21,7 +21,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -91,9 +90,9 @@ import org.springframework.util.CollectionUtils;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleFrom;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.entity.Article.ArticleFrom;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
@@ -422,11 +421,11 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private List<Article> selectByIds(Collection<Integer> ids) {
 		if (CollectionUtils.isEmpty(ids)) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		List<Article> articles = articleDao.selectPageByIds(ids);
 		if (articles.isEmpty()) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		Map<Integer, Article> map = articles.stream().collect(Collectors.toMap(Article::getId, article -> article));
 		return ids.stream().map(map::get).filter(Objects::nonNull).collect(Collectors.toList());

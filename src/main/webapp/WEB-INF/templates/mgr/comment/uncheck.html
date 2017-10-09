@@ -42,9 +42,12 @@
 									<div class="media-body">
 										<h4 class="media-heading" th:text="${comment.nickname}"></h4>
 										<p th:text="${comment.content}"></p>
-										<p>
-											<a href="###" th:data-check-id="${comment.id}"><span
+										<p>	
+											<a href="###" th:data-remove-id="${comment.id}" style="margin-right:10px"><span
+												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
+											<a href="###" th:data-check-id="${comment.id}" ><span
 												class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>
+												
 										</p>
 									</div>
 								</div>
@@ -79,6 +82,33 @@
 						$.ajax({
 							type : "post",
 							url : rootPath + "/mgr/comment/check?id=" + id,
+							data : {
+								id : id
+							},
+							xhrFields : {
+								withCredentials : true
+							},
+							crossDomain : true,
+							success : function(data) {
+								if (data.success) {
+									window.location.reload();
+								} else {
+									bootbox.alert(data.msg);
+								}
+							},
+							complete : function() {
+							}
+						});
+					}
+				});
+			});
+			$("[data-remove-id]").click(function() {
+				var id = $(this).attr('data-remove-id');
+				bootbox.confirm("确定要删除吗？", function(result) {
+					if (result) {
+						$.ajax({
+							type : "post",
+							url : rootPath + "/mgr/comment/delete?id=" + id,
 							data : {
 								id : id
 							},

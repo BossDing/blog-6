@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.template.render.data;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +40,9 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 	protected List<Comment> query(Attributes attributes) throws LogicException {
 		String type = attributes.get("moduleType");
 		if (type == null) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
-		return commentService.queryLastComments(type,
-				getLimit(attributes), attributes.getBoolean("queryAdmin", false));
+		return commentService.queryLastComments(type, getLimit(attributes), attributes.getBoolean("queryAdmin", false));
 	}
 
 	private int getLimit(Attributes attributes) {

@@ -139,7 +139,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		}
 	}
 
-	private void addCompressOp(IMOperation op, String ext) {
+	protected void addCompressOp(IMOperation op, String ext) {
 		if (isJPEG(ext)) {
 			op.interlace("Plane");
 			op.quality(quality);

@@ -254,6 +254,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 	@Override
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
 		List<Match> matches = new ArrayList<>();
+		
 		List<RequestMappingInfo> directPathMatches = this.mappingRegistry.getMappingsByUrl(lookupPath);
 		if (directPathMatches != null) {
 			addMatchingMappings(directPathMatches, matches, request);
@@ -445,6 +446,7 @@ public final class TemplateRequestMappingHandlerMapping extends RequestMappingHa
 		 * @see #acquireReadLock()
 		 */
 		public List<RequestMappingInfo> getMappingsByUrl(String urlPath) {
+			
 			return this.urlLookup.get(urlPath);
 		}
 

@@ -21,10 +21,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.CollectionUtils;
 
@@ -46,10 +43,6 @@ public class SimplePingManager implements InitializingBean {
 	private List<PingService> pingServices = new ArrayList<>();
 	private final String blogName;
 
-	@Autowired
-	@Qualifier("taskExecutor")
-	private ThreadPoolTaskExecutor taskExecutor;
-
 	public SimplePingManager(String blogName) {
 		super();
 		this.blogName = blogName;
@@ -70,13 +63,11 @@ public class SimplePingManager implements InitializingBean {
 
 	private void ping(Article article) {
 		for (final PingService ps : pingServices) {
-			taskExecutor.execute(() -> {
-				try {
-					ps.ping(article, blogName);
-				} catch (Exception e) {
-					LOGGER.error(e.getMessage(), e);
-				}
-			});
+			try {
+				ps.ping(article, blogName);
+			} catch (Throwable e) {
+				LOGGER.error(e.getMessage(), e);
+			}
 		}
 	}
 

@@ -48,7 +48,6 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 			ITemplateResource templateResource = templateData.getTemplateResource();
 
 			if (templateResource instanceof TemplateResource) {
-				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
 				Template template = ((TemplateResource) templateResource).getTemplate();
 
 				Template root = ParseContextHolder.getContext().getRoot();
@@ -66,7 +65,7 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 						&& ParseContextHolder.getContext().onlyCallable()) {
 					throw new RuntimeLogicException(new Message("template.notCallable", "模板无法被调用"));
 				}
-
+				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
 				((IEngineContext) context).setVariable("this", template.cloneTemplate());
 			}
 		}

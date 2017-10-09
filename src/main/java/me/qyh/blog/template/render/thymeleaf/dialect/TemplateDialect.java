@@ -38,9 +38,11 @@ public class TemplateDialect extends AbstractProcessorDialect {
 	@Override
 	public Set<IProcessor> getProcessors(final String dialectPrefix) {
 		return new HashSet<>(Arrays.asList(new DataTagProcessor(dialectPrefix, applicationContext),
-				new FragmentTagProcessor(dialectPrefix), new PathTagProcessor(dialectPrefix),
+				new FragmentTagProcessor(dialectPrefix), 
+				new PathTagProcessor(dialectPrefix),
 				new LockTagProcessor(dialectPrefix, applicationContext),
-				new RedirectTagProcessor(dialectPrefix, applicationContext), new PrivateTagProcessor(dialectPrefix),
+				new RedirectTagProcessor(dialectPrefix, applicationContext), 
+				new PrivateTagProcessor(dialectPrefix),
 				new MediaTypeTagProcessor(dialectPrefix)));
 	}
 

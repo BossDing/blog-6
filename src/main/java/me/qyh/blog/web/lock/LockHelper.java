@@ -16,7 +16,6 @@
 package me.qyh.blog.web.lock;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,8 @@ public final class LockHelper {
 		}
 		List<LockKey> keys = keysMap.get(lockResource.getResourceId());
 		if (CollectionUtils.isEmpty(keys)) {
-			keys = new ArrayList<>(Arrays.asList(key));
+			keys = new ArrayList<>();
+			keys.add(key);
 			keysMap.put(lockResource.getResourceId(), keys);
 		} else {
 			keys.removeIf(_key -> _key.lockId().equals(key.lockId()));

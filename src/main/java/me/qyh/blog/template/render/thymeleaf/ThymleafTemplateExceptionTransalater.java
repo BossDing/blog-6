@@ -26,28 +26,27 @@ import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.render.TemplateExceptionTranslater;
 import me.qyh.blog.template.render.TemplateRenderErrorDescription;
-import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.template.render.TemplateRenderErrorDescription.TemplateErrorInfo;
+import me.qyh.blog.template.render.TemplateRenderException;
 
 public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTranslater {
 
 	private static final String SPEL_EXPRESSION_ERROR_PREFIX = "Exception evaluating SpringEL expression:";
+	private static final String STANDARD_EXPRESSION_ERROR_PREFIX = "Could not parse as expression:";
 	/**
 	 * @see ServletContextResource#getDescription()
 	 */
-	private static final String STANDARD_EXPRESSION_ERROR_PREFIX = "Could not parse as expression:";
-
 	private static final String SERVLET_RESOURCE_PREFIX = "ServletContext resource ";
 
 	@Override
 	public Optional<TemplateRenderException> translate(String templateName, Throwable e) {
 		if (e instanceof TemplateProcessingException) {
-			Optional.of(new TemplateRenderException(templateName,
+			return Optional.of(new TemplateRenderException(templateName,
 					fromException((TemplateProcessingException) e, templateName), e));
 		}
 		if (e instanceof UIStackoverflowError) {
 			UIStackoverflowError error = (UIStackoverflowError) e;
-			Optional.of(new TemplateRenderException(templateName, fromError(error), e));
+			return Optional.of(new TemplateRenderException(templateName, fromError(error), e));
 		}
 		return Optional.empty();
 	}
