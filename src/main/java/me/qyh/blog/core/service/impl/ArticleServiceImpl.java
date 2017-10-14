@@ -42,7 +42,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.GlobalConfig;
@@ -67,6 +66,7 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.LockManager;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
 import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
@@ -357,7 +357,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		checkParam(param);
 
 		// 5.5.5
-		if (StringUtils.isEmpty(param.getTag())) {
+		if (Validators.isEmptyOrNull(param.getTag(), true)) {
 			param.setTagId(null);
 		} else {
 			Tag tag = tagDao.selectByName(param.getTag());

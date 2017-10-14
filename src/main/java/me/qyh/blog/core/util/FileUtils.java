@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -34,6 +35,10 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 
 public class FileUtils {
+
+	private static final char[] ILLEGAL_CHARACTERS = { '/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>',
+			'|', '\"', ':' };
+
 	public static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
 
 	/**
@@ -192,7 +197,7 @@ public class FileUtils {
 	 * @return
 	 */
 	public static boolean isRegularFile(Path path) {
-		return path != null && path.toFile().isFile();
+		return path != null && Files.isRegularFile(path);
 	}
 
 	/**
@@ -229,7 +234,7 @@ public class FileUtils {
 	 * @return
 	 */
 	public static boolean isDirectory(Path path) {
-		return path != null && path.toFile().isDirectory();
+		return path != null && Files.isDirectory(path);
 	}
 
 	/**
@@ -335,21 +340,14 @@ public class FileUtils {
 	}
 
 	/**
-	 * 要创建的文件是否在缩略图文件夹中
+	 * 判断文件是否是某个文件的子文件
 	 * 
 	 * @param dest
 	 * @param parent
-	 * @return
+	 * @return 如果是子文件或者两者相同
 	 */
 	public static boolean isSub(Path dest, Path parent) {
-		try {
-			String canonicalP = parent.toFile().getCanonicalPath();
-			String canonicalC = dest.toFile().getCanonicalPath();
-			return canonicalP.equals(canonicalC)
-					|| canonicalC.regionMatches(false, 0, canonicalP, 0, canonicalP.length());
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
+		return dest.equals(parent) || dest.startsWith(parent.normalize());
 	}
 
 	/**
@@ -369,11 +367,88 @@ public class FileUtils {
 	 * @return
 	 */
 	public static boolean exists(Path path) {
-		/**
-		 * FROM SONAR LINT Java 8's "Files.exists" should not be used
-		 * (squid:S3725) https://bugs.openjdk.java.net/browse/JDK-8153414
-		 * https://bugs.openjdk.java.net/browse/JDK-8154077
-		 */
-		return path != null && path.toFile().exists();
+		return path != null && Files.exists(path);
+	}
+
+	/**
+	 * 获取文件大小
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static long getSize(Path path) {
+		Objects.requireNonNull(path);
+		try {
+			return Files.size(path);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * 提供一个简单的文件名校验，最終是否允许以能否成功创建文件为准
+	 * <p>
+	 * <b>不会对文件系统的保留文件名做校验，例如windows下的CON文件</b>
+	 * </p>
+	 * 
+	 * @param name
+	 *            包含后缀名的文件名
+	 * @return
+	 */
+	public static boolean maybeValidateFilename(String name) {
+		if (Validators.isEmptyOrNull(name, true)) {
+			return false;
+		}
+
+		try {
+			Paths.get(name);
+		} catch (InvalidPathException e) {
+			return false;
+		}
+
+		if (name.chars().anyMatch(FileUtils::isIllegalChar)) {
+			return false;
+		}
+
+		if (name.endsWith(".")) {
+			return false;
+		}
+
+		if (name.endsWith(" ")) {
+			return false;
+		}
+
+		// 一些文件系統的保留名称不做校验 例如windows下的CON
+		return true;
+	}
+
+	private static boolean isIllegalChar(int ch) {
+		for (char illegal : ILLEGAL_CHARACTERS) {
+			if (illegal == ch) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * <p>
+	 * 将字节转化为可读的文件大小
+	 * </p>
+	 * 
+	 * {@link https://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java}
+	 * 
+	 * @param bytes
+	 * @param si
+	 *            如果为true，那么以1000为一个单位，否则以1024为一个单位
+	 * @return
+	 */
+	public static String humanReadableByteCount(long bytes, boolean si) {
+		int unit = si ? 1000 : 1024;
+		if (bytes < unit)
+			return bytes + " B";
+		int exp = (int) (Math.log(bytes) / Math.log(unit));
+		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
+		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 }

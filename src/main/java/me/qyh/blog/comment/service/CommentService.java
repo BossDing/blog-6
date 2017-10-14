@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
-import org.springframework.util.StringUtils;
 
 import me.qyh.blog.comment.dao.CommentDao;
 import me.qyh.blog.comment.entity.Comment;
@@ -68,6 +67,7 @@ import me.qyh.blog.core.text.HtmlClean;
 import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Resources;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.Limit;
 import me.qyh.blog.core.vo.PageQueryParam;
 import me.qyh.blog.core.vo.PageResult;
@@ -388,7 +388,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	 */
 	@Transactional(readOnly = true)
 	public List<Comment> queryLastComments(String module, int limit, boolean queryAdmin) {
-		if (StringUtils.isEmpty(module)) {
+		if (Validators.isEmptyOrNull(module,true)) {
 			return new ArrayList<>();
 		}
 		CommentModuleHandler handler = handlerMap.get(module);

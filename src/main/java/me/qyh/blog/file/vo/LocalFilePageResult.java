@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.file.entity.BlogFile;
 
 /**
  * 分页查询结果
@@ -27,27 +26,38 @@ import me.qyh.blog.file.entity.BlogFile;
  * @author Administrator
  *
  */
-public class BlogFilePageResult {
+public class LocalFilePageResult {
 
 	/**
 	 * 文章路径，例如 a-&gt;b-&gt;c
 	 */
-	private List<BlogFile> paths = new ArrayList<>();
-	private PageResult<BlogFile> page;
+	private List<LocalFile> paths = new ArrayList<>();
+	private PageResult<LocalFile> page;
+	
 
-	public List<BlogFile> getPaths() {
+	public LocalFilePageResult() {
+		super();
+	}
+
+	public LocalFilePageResult(List<LocalFile> paths, PageResult<LocalFile> page) {
+		super();
+		this.paths = paths;
+		this.page = page;
+	}
+
+	public List<LocalFile> getPaths() {
 		return paths;
 	}
 
-	public void setPaths(List<BlogFile> paths) {
+	public void setPaths(List<LocalFile> paths) {
 		this.paths = paths;
 	}
 
-	public PageResult<BlogFile> getPage() {
+	public PageResult<LocalFile> getPage() {
 		return page;
 	}
 
-	public void setPage(PageResult<BlogFile> page) {
+	public void setPage(PageResult<LocalFile> page) {
 		this.page = page;
 	}
 

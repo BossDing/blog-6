@@ -127,18 +127,24 @@ public abstract class DataTagProcessor<T> {
 		 *            属性名
 		 * @param e
 		 *            如果转化失败或者属性不存在，返回null
+		 * @param upperCase 是否转化大写
 		 * @return
 		 */
-		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue) {
+		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue ,boolean upperCase) {
 			String attV = attMap.get(name);
 			if (attV == null) {
 				return defaultValue;
 			}
 			try {
-				return Enum.valueOf(e, attV);
+				return Enum.valueOf(e, upperCase ? attV.toUpperCase() : attV);
 			} catch (IllegalArgumentException ex) {
 			}
 			return defaultValue;
+		}
+
+		
+		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue) {
+			return getEnum(name, e, defaultValue,true);
 		}
 
 		/**

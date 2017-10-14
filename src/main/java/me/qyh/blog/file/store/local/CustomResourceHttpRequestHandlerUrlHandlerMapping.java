@@ -13,30 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.vo;
+package me.qyh.blog.file.store.local;
 
-import me.qyh.blog.comment.entity.Comment;
-import me.qyh.blog.core.entity.Article;
+import org.springframework.beans.BeansException;
+import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 /**
- * 最近的文章评论
- * <p>在查询最近的文章评论的时候，如果文章是受保护的，那么评论也应该是受保护的</p>
+ * UrlMapping，用來注册本地文件存储器
  */
-public class LastArticleComment extends Comment{
+public class CustomResourceHttpRequestHandlerUrlHandlerMapping extends SimpleUrlHandlerMapping {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	
-	private Article article;
-
-	public Article getArticle() {
-		return article;
+	public void registerResourceHttpRequestHandlerMapping(String urlPath, ResourceHttpRequestHandler handler)
+			throws BeansException, IllegalStateException {
+		super.registerHandler(urlPath, handler);
 	}
 
-	public void setArticle(Article article) {
-		this.article = article;
-	}
-	
 }

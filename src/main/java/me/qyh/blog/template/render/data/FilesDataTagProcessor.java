@@ -54,7 +54,11 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 		param.setPageSize(attributes.getInteger("pageSize", 0));
 		param.setCurrentPage(attributes.getInteger("currentPage", 0));
 		param.setType(attributes.getEnum("type", BlogFileType.class, null));
-		param.setName(attributes.get("name"));
+
+		/**
+		 * @since 5.7
+		 */
+		param.setName(attributes.get("fileName"));
 
 		validator.validate(param, new MapBindingResult(new HashMap<>(), "blogFileQueryParam"));
 

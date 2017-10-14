@@ -15,17 +15,15 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
-import org.springframework.validation.MapBindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -49,7 +46,6 @@ import me.qyh.blog.file.service.FileService;
 import me.qyh.blog.file.store.FileStore;
 import me.qyh.blog.file.validator.BlogFileQueryParamValidator;
 import me.qyh.blog.file.validator.BlogFileUploadValidator;
-import me.qyh.blog.file.validator.BlogFileValidator;
 import me.qyh.blog.file.vo.BlogFileQueryParam;
 import me.qyh.blog.file.vo.BlogFileUpload;
 import me.qyh.blog.file.vo.FileStoreBean;
@@ -65,8 +61,6 @@ public class FileMgrController extends BaseMgrController {
 	private BlogFileQueryParamValidator blogFileParamValidator;
 	@Autowired
 	private BlogFileUploadValidator blogFileUploadValidator;
-	@Autowired
-	private BlogFileValidator blogFileValidator;
 
 	@InitBinder(value = "blogFileQueryParam")
 	protected void initBlogFileQueryParamBinder(WebDataBinder binder) {
@@ -76,11 +70,6 @@ public class FileMgrController extends BaseMgrController {
 	@InitBinder(value = "blogFileUpload")
 	protected void initBlogUploadBinder(WebDataBinder binder) {
 		binder.setValidator(blogFileUploadValidator);
-	}
-
-	@InitBinder(value = "blogFile")
-	protected void initBlogFileBinder(WebDataBinder binder) {
-		binder.setValidator(blogFileValidator);
 	}
 
 	@GetMapping("index")
@@ -135,11 +124,21 @@ public class FileMgrController extends BaseMgrController {
 	public JsonResult pro(@PathVariable("id") int id) throws LogicException {
 		return new JsonResult(true, fileService.getBlogFileProperty(id));
 	}
-
-	@PostMapping("createFolder")
+	
+	@PostMapping({"{parent}/createFolder","createFolder"})
 	@ResponseBody
-	public JsonResult createFolder(@RequestBody @Validated BlogFile blogFile) throws LogicException {
-		blogFile.setCf(null);
+	public JsonResult createFolder(@PathVariable Optional<Integer> parent,
+			@RequestParam("path") String path) throws LogicException {
+		if(Validators.isEmptyOrNull(path, true)){
+			return new JsonResult(false, new Message("file.create.emptyPath", "文件夹地址不能为空"));
+		}
+		BlogFile blogFile = new BlogFile();
+		parent.ifPresent(_id->{
+			BlogFile _parent = new BlogFile();
+			_parent.setId(_id);
+			blogFile.setParent(_parent);
+		});
+		blogFile.setPath(path);
 		blogFile.setType(BlogFileType.DIRECTORY);
 		fileService.createFolder(blogFile);
 		return new JsonResult(true, new Message("file.create.success", "创建成功"));
@@ -149,9 +148,8 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult copy(@RequestParam("sourceId") Integer sourceId, @RequestParam("folderPath") String folderPath)
 			throws LogicException {
-		JsonResult validResult = validPath("folderPath", folderPath);
-		if (validResult != null) {
-			return validResult;
+		if(Validators.isEmptyOrNull(folderPath, true)){
+			return new JsonResult(false, new Message("file.copy.emptyFolderPath", "目标文件夹地址不能为空"));
 		}
 		fileService.copy(sourceId, folderPath);
 		return new JsonResult(true, new Message("file.copy.success", "拷贝成功"));
@@ -161,9 +159,8 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult move(@RequestParam("sourceId") Integer sourceId, @RequestParam("destPath") String destPath)
 			throws LogicException {
-		JsonResult validResult = validPath("destPath", destPath);
-		if (validResult != null) {
-			return validResult;
+		if(Validators.isEmptyOrNull(destPath, true)){
+			return new JsonResult(false, new Message("file.move.emptyDestPath", "目标地址不能为空"));
 		}
 		fileService.move(sourceId, destPath);
 		return new JsonResult(true, new Message("file.move.success", "移动成功"));
@@ -173,27 +170,10 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult rename(@RequestParam("sourceId") Integer sourceId, @RequestParam("newName") String newName)
 			throws LogicException {
-		if (Validators.isEmptyOrNull(newName, true)) {
-			return new JsonResult(false, new Message("file.name.blank", "文件名不能为空"));
-		}
-		if (!BlogFileValidator.checkPath(newName)) {
-			return new JsonResult(false,
-					new Message("file.fileName.valid", "文件名" + newName + "无效，文件名必须为字母数字或者汉字或者_和-", newName));
+		if(Validators.isEmptyOrNull(newName, true)){
+			return new JsonResult(false, new Message("file.rename.emptyNewName", "新文件名不能为空"));
 		}
 		fileService.rename(sourceId, newName);
-		return new JsonResult(true, new Message("file.move.success", "移动成功"));
-	}
-
-	private JsonResult validPath(String objectName, String path) {
-		Errors bingdingResult = new MapBindingResult(new HashMap<>(), objectName);
-		BlogFileValidator.validFilePath(path, bingdingResult);
-		if (bingdingResult.hasErrors()) {
-			List<ObjectError> errors = bingdingResult.getAllErrors();
-			for (ObjectError error : errors) {
-				return new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
-			}
-		}
-		return null;
+		return new JsonResult(true, new Message("file.rename.success", "重命名	成功"));
 	}
 }

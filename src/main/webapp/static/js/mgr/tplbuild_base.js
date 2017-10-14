@@ -36,6 +36,10 @@ file_mode = "HTML";
 				fileSelectPageQuery(1,'');
 	        	$("#fileSelectModal").modal("show");
 				break;
+			case 'localFile':
+				localFileSelectPageQuery(1,'');
+	        	$("#localFileSelectModal").modal("show");
+				break;
 			case 'format':
 			      CodeMirror.commands["selectAll"](editor);
 			      autoFormatSelection()

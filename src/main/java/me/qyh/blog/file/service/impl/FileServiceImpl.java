@@ -58,7 +58,6 @@ import me.qyh.blog.file.service.FileService;
 import me.qyh.blog.file.store.FileManager;
 import me.qyh.blog.file.store.FileStore;
 import me.qyh.blog.file.store.ImageHelper;
-import me.qyh.blog.file.validator.BlogFileValidator;
 import me.qyh.blog.file.vo.BlogFileCount;
 import me.qyh.blog.file.vo.BlogFilePageResult;
 import me.qyh.blog.file.vo.BlogFileQueryParam;
@@ -91,12 +90,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
-	private static final Message PARENT_NOT_EXISTS = new Message("file.parent.notexists", "父目录不存在");
-	private static final Message NOT_EXISTS = new Message("file.notexists", "文件不存在");
-
-	private static final int MAX_FILE_NAME_LENGTH = BlogFileValidator.MAX_FILE_NAME_LENGTH;
+	private static final Message PARENT_NOT_EXISTS = new Message("file.parent.notExists", "父目录不存在");
+	private static final Message NOT_EXISTS = new Message("file.notExists", "文件不存在");
 
 	private static final long MAX_MODIFY_TIME = 1800000;
+
+	private static final int MAX_PATH_LENGTH = 255;
 
 	@Override
 	@Sync
@@ -110,6 +109,13 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			}
 		} else {
 			parent = blogFileDao.selectRoot();
+		}
+
+		/**
+		 * 5.7
+		 */
+		if (!parent.isDir()) {
+			throw new LogicException("file.parent.mustDir", "父目录必须是一个文件夹");
 		}
 
 		String folderKey = getFilePath(parent);
@@ -147,9 +153,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throws LogicException {
 		BlogFile blogFile;
 		String originalFilename = file.getOriginalFilename();
+		
+		validateSlashPath(originalFilename);
+		
 		String ext = FileUtils.getFileExtension(originalFilename);
 		String name = FileUtils.getNameWithoutExtension(originalFilename);
-		String fullname = name + "." + ext.toLowerCase();
+		String fullname = ext.isEmpty() ? name :  name + "." + ext.toLowerCase();
 
 		BlogFile checked = blogFileDao.selectByParentAndPath(parent, fullname);
 		if (checked != null) {
@@ -189,16 +198,18 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private void deleteImmediatelyIfNeed(String path) throws LogicException {
 		String clean = FileUtils.cleanPath(path);
+		List<FileDelete> deletes;
 		if (clean.isEmpty()) {
+			deletes = fileDeleteDao.selectAll();
+		} else {
+			String rootKey = clean.split("/")[0];
+			deletes = fileDeleteDao.selectChildren(rootKey);
+		}
+		if (deletes.isEmpty()) {
 			return;
 		}
-		String rootKey = clean.split("/")[0];
-		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
-		if (children.isEmpty()) {
-			return;
-		}
-		for (FileDelete child : children) {
-			deleteFile(child);
+		for (FileDelete delete : deletes) {
+			deleteFile(delete);
 		}
 	}
 
@@ -240,6 +251,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public BlogFile createFolder(BlogFile toCreate) throws LogicException {
+
 		BlogFile parent = toCreate.getParent();
 		if (parent != null) {
 			parent = blogFileDao.selectById(parent.getId());
@@ -254,22 +266,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			parent = blogFileDao.selectRoot();
 		}
 
-		BlogFile checked = blogFileDao.selectByParentAndPath(parent, toCreate.getPath());
-		if (checked != null) {
-			throw new LogicException("file.path.exists", "文件已经存在");
-		}
-
-		toCreate.setLft(parent.getLft() + 1);
-		toCreate.setRgt(parent.getLft() + 2);
-		toCreate.setParent(parent);
-		toCreate.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
-
-		blogFileDao.updateWhenAddChild(parent);
-		blogFileDao.insert(toCreate);
-		return toCreate;
+		return createFolder(parent, toCreate.getPath());
 	}
 
 	private BlogFile createFolder(String path) throws LogicException {
+
 		String cleanedPath = FileUtils.cleanPath(path);
 		if (cleanedPath.isEmpty()) {
 			return blogFileDao.selectRoot();
@@ -287,6 +288,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	}
 
 	private BlogFile createFolder(BlogFile parent, String folder) throws LogicException {
+
+		validateSlashPath(folder);
+
 		BlogFile checked = blogFileDao.selectByParentAndPath(parent, folder);
 		if (checked != null) {
 			if (checked.isDir()) {
@@ -446,15 +450,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		String folderPath = index == -1 ? "" : path.substring(0, index);
 		String fileName = index == -1 ? path : path.substring(index + 1, path.length());
 
-		if (fileName.length() > MAX_FILE_NAME_LENGTH) {
-			int extLength = ext.length() + 1;
-			if (extLength >= MAX_FILE_NAME_LENGTH) {
-				throw new LogicException("file.move.ext.toolong", "该文件后缀名过长，无法更新路径");
-			} else {
-				throw new LogicException("file.name.toolong", "文件名不能超过" + (MAX_FILE_NAME_LENGTH - extLength) + "个字符",
-						fileName, (MAX_FILE_NAME_LENGTH - extLength));
-			}
-		}
+		validateSlashPath(fileName);
 
 		// 先删除节点
 		blogFileDao.delete(db);
@@ -514,15 +510,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			name = name + "." + ext;
 		}
 
-		if (name.length() > MAX_FILE_NAME_LENGTH) {
-			int extLength = ext.length() + 1;
-			if (extLength >= MAX_FILE_NAME_LENGTH) {
-				throw new LogicException("file.move.ext.toolong", "该文件后缀名过长，无法更新路径");
-			} else {
-				throw new LogicException("file.name.toolong", "文件名不能超过" + (MAX_FILE_NAME_LENGTH - extLength) + "个字符",
-						name, (MAX_FILE_NAME_LENGTH - extLength));
-			}
-		}
+		validateSlashPath(name);
 
 		BlogFile parent;
 		if (db.getParent() == null) {
@@ -622,7 +610,9 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	public PageResult<BlogFile> queryFiles(String path, BlogFileQueryParam param) {
 		param.setPageSize(Math.min(configServer.getGlobalConfig().getFilePageSize(), param.getPageSize()));
 		BlogFile parent = blogFileDao.selectRoot();
-		String cleanedPath = FileUtils.cleanPath(path.trim());
+		String cleanedPath =
+				// since 5.7
+				path == null ? "" : FileUtils.cleanPath(path.trim());
 		if (cleanedPath.isEmpty()) {
 			param.setParentFile(parent);
 		} else {
@@ -643,7 +633,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 			param.setParentFile(parent);
 		}
-		param.setType(BlogFileType.FILE);
+		// param.setType(BlogFileType.FILE);
 		param.setQuerySubDir(true);
 
 		int count = blogFileDao.selectCount(param);
@@ -710,4 +700,16 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			blogFileDao.insert(root);
 		}
 	}
+
+	private void validateSlashPath(String path) throws LogicException {
+		if (!FileUtils.maybeValidateFilename(path)) {
+			throw new LogicException("file.name.valid", "文件名" + path + "无效", path);
+		}
+
+		if (path.length() > MAX_PATH_LENGTH) {
+			throw new LogicException("file.name.toolong", "文件名:" + path + "不能超过" + MAX_PATH_LENGTH + "个字符", path,
+					MAX_PATH_LENGTH);
+		}
+	}
+
 }

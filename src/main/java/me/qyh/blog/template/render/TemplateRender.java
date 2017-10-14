@@ -39,6 +39,7 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.util.ExceptionUtils;
+import me.qyh.blog.core.util.Formats;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
@@ -158,6 +159,7 @@ public final class TemplateRender implements InitializingBean {
 		pros.put("jsons", Jsons.class);
 		pros.put("strings", StringUtils.class);
 		pros.put("times", Times.class);
+		pros.put("formats", Formats.class);
 	}
 
 	public void setPros(Map<String, Object> pros) {

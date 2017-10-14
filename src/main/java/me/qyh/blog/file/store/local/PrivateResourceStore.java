@@ -15,26 +15,38 @@
  */
 package me.qyh.blog.file.store.local;
 
-import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.core.io.Resource;
+
+import me.qyh.blog.core.context.Environment;
 
 /**
- * 非图片文件存储器
- * 
- * @author Administrator
- *
+ * 私人文件存储器
+ * <p><b>不应该被nginx等服务器代理！！！</b></p>
  */
-public class CommonResourceStore extends LocalResourceRequestHandlerFileStore {
+public class PrivateResourceStore extends CommonResourceStore{
 
-	public CommonResourceStore(String urlPatternPrefix) {
+	public PrivateResourceStore(String urlPatternPrefix) {
 		super(urlPatternPrefix);
 	}
-
-	public CommonResourceStore() {
-		super("file");
+	
+	public PrivateResourceStore() {
+		super("private");
 	}
 
 	@Override
-	public final boolean canStore(MultipartFile multipartFile) {
-		return true;
+	protected final Resource findResource(HttpServletRequest request) throws IOException {
+		Environment.doAuthencation();
+		return super.findResource(request);
 	}
+
+	@Override
+	protected final boolean getRegisterMapping() {
+		return true;
+	}	
+
+
 }

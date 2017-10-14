@@ -126,10 +126,22 @@
 		</property>
 	</bean>
 	<bean class="me.qyh.blog.file.store.local.CommonResourceStore">
-		<property name="absPath" value="/web/file/blog_file" />
+		<property name="absPath" value="f:/web/file/blog_file" />
 		<property name="id" value="2" />
 		<property name="name" value="文件存储" />
 		<property name="cacheSeconds" value="31556926" />
+	</bean>
+	
+	<bean class="me.qyh.blog.file.store.local.PrivateResourceStore">
+		<property name="absPath" value="/web/file/blog_private" />
+		<property name="id" value="3" />
+		<property name="name" value="私人文件存储" />
+		<property name="cacheSeconds" value="31556926" />
+	</bean>
+	
+	<bean class="me.qyh.blog.file.store.local.EditablePathResourceHttpRequestHandler">
+		<constructor-arg index="0" value="f:/test"/>
+		<constructor-arg index="1" value="lf"/>
 	</bean>
 	
 	<bean class="me.qyh.blog.web.WebConfiguration"/>

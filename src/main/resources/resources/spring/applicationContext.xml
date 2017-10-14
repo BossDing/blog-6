@@ -221,10 +221,4 @@
 		<property name="mailSubject" value="您有新的评论" />
 	</bean>
 
-	<!-- Google Auth -->
-	<!-- <bean class="me.qyh.blog.core.security.GoogleAuthenticator"> <constructor-arg 
-		value="qz23 fugf krvd krh6 cors 4lpq jw3y ilxy"/> </bean> -->
-	<bean class="me.qyh.blog.core.security.GoogleAuthenticator">
-		<constructor-arg value="a4jy r2wh puin 4q2k a4kq 2wfw 3im2 53ed"/>
-	</bean>
 </beans>      

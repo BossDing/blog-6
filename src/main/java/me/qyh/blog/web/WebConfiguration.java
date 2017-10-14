@@ -30,7 +30,7 @@ import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.util.Jsons;
-import me.qyh.blog.file.store.local.FileStoreUrlHandlerMapping;
+import me.qyh.blog.file.store.local.CustomResourceHttpRequestHandlerUrlHandlerMapping;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.web.lock.LockArgumentResolver;
 import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
@@ -58,9 +58,10 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 
 	@Bean
 	@Override
-	public FileStoreUrlHandlerMapping resourceHandlerMapping() {
+	public CustomResourceHttpRequestHandlerUrlHandlerMapping resourceHandlerMapping() {
 		SimpleUrlHandlerMapping mapping = (SimpleUrlHandlerMapping) super.resourceHandlerMapping();
-		FileStoreUrlHandlerMapping fsMapping = new FileStoreUrlHandlerMapping();
+		CustomResourceHttpRequestHandlerUrlHandlerMapping fsMapping = 
+				new CustomResourceHttpRequestHandlerUrlHandlerMapping();
 		fsMapping.setOrder(mapping.getOrder());
 		fsMapping.setUrlMap(mapping.getUrlMap());
 		return fsMapping;

@@ -65,8 +65,7 @@ import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
  * @author mhlx
  *
  */
-public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler
-		implements FileStore{
+public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler implements FileStore {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
@@ -95,7 +94,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 	@Autowired
 	private TemplateRequestMappingHandlerMapping requestMappingHandlerMapping;
 	@Autowired
-	private FileStoreUrlHandlerMapping fileStoreUrlHandlerMapping;
+	private CustomResourceHttpRequestHandlerUrlHandlerMapping customResourceHttpRequestHandlerUrlHandlerMapping;
 
 	private static Method method;
 
@@ -293,13 +292,13 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 		fileManager.addFileStore(this);
 
 		String pattern = urlPatternPrefix + "/**";
-		if (registerMapping) {
+		if (getRegisterMapping()) {
 			requestMappingHandlerMapping.registerMapping(requestMappingHandlerMapping
 					.createRequestMappingInfoWithConfig(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET)),
 					this, method);
 		} else {
 			// 注册为SimpleUrlMapping
-			fileStoreUrlHandlerMapping.registerFileStoreMapping(pattern, this);
+			customResourceHttpRequestHandlerUrlHandlerMapping.registerResourceHttpRequestHandlerMapping(pattern, this);
 		}
 
 	}
@@ -317,7 +316,6 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 	public String name() {
 		return name;
 	}
-
 
 	protected void moreAfterPropertiesSet() {
 		// 用于重写
@@ -345,6 +343,10 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 
 	public void setReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
+	}
+
+	protected boolean getRegisterMapping() {
+		return this.registerMapping;
 	}
 
 	public void setRegisterMapping(boolean registerMapping) {

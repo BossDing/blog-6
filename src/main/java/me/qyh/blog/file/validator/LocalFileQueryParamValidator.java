@@ -15,42 +15,37 @@
  */
 package me.qyh.blog.file.validator;
 
-import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.file.vo.BlogFileUpload;
+import me.qyh.blog.file.vo.LocalFileQueryParam;
 
 @Component
-public class BlogFileUploadValidator implements Validator {
+public class LocalFileQueryParamValidator implements Validator {
+
+	private static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_EXTENSION_LENGTH = 5;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return BlogFileUpload.class.isAssignableFrom(clazz);
+		return LocalFileQueryParam.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		BlogFileUpload upload = (BlogFileUpload) target;
-		List<MultipartFile> files = upload.getFiles();
-		if (CollectionUtils.isEmpty(files)) {
-			errors.reject("file.uploadfiles.blank", "需要上传文件为空");
-			return;
+		LocalFileQueryParam param = (LocalFileQueryParam) target;
+		if (param.getCurrentPage() < 1) {
+			param.setCurrentPage(1);
 		}
-		for (MultipartFile file : files) {
-			if (file.isEmpty()) {
-				errors.reject("file.content.blank", "文件内容不能为空");
-				return;
-			}
+		String name = param.getName();
+		if (name != null && name.length() > MAX_NAME_LENGTH) {
+			param.setName(name.substring(0, MAX_NAME_LENGTH));
 		}
-		if (upload.getStore() == null) {
-			errors.reject("file.uploadstore.blank", "文件存储器为空");
-			return;
-		}
+		// 最多只允许 5 个后缀
+		param.setExtensions(param.getExtensions().stream().limit(MAX_EXTENSION_LENGTH).collect(Collectors.toSet()));
 	}
 
 }

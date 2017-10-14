@@ -20,11 +20,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.UrlUtils;
@@ -37,6 +39,10 @@ import me.qyh.blog.core.util.Validators;
  *
  */
 public class DefaultHtmlClean implements HtmlClean, InitializingBean {
+	
+	@Autowired
+	private UrlHelper urlHelper;
+	
 
 	private String[] followRootDomains;
 
@@ -66,6 +72,9 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 				|| StringUtils.startsWithIgnoreCase(href, "https://"))) {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
 			String host = uc.getHost();
+			if(StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())){
+				return false;
+			}
 			for (String followRootDomain : followRootDomains) {
 				if (StringUtils.endsWithIgnoreCase(host, followRootDomain)) {
 					return false;

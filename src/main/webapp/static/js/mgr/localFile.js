@@ -22,12 +22,7 @@ $(document).ready(function(){
 		$("#copyModal").on("show.bs.modal",function(){
 			clearTip();
 			$(this).find("form")[0].reset();
-		})
-		
-		var queryType = $("#pageFormType").val();
-		if(queryType != undefined){
-			$("#query-type").val(queryType);
-		}
+		});
 		
 		var querySubDir = $("#pageFormSubDir").val();
 		if(querySubDir != undefined){
@@ -110,49 +105,16 @@ $(document).ready(function(){
 		$("[data-action]").click(function(){
 			var me = $(this);
 			var action = $(this).attr("data-action");
-			var id = $(this).attr("data-id");
-			var ext = me.attr('data-ext');
-			current = id;
+			var path = $(this).attr("data-path");
+			current = path;
 			switch(action){
-			case "property":
-				$.get(basePath + "/mgr/file/"+id+"/pro",{},function(data){
-					if(data.success){
-						data = data.data;
-						var html = '';
-						var typename = data.type == "DIRECTORY" ? '文件夹' : '文件'
-						html += '<p><strong>文件类型</strong>：'+typename+'</p>'
-						html += '<p><strong>文件大小</strong>：'+data.totalSize+'字节</p>';
-						if(data.type == "DIRECTORY"){
-							var counts = data.counts;
-							if(counts.length > 0){
-								for(var i=0;i<counts.length;i++){
-									var count = data.counts[i];
-									var _typename = count.type == "DIRECTORY" ? '子文件夹' : '子文件';
-									html += '<p><strong>'+_typename+'个数</strong>：'+count.count+'</p>';
-								}
-							} else {
-								html += '<p>没有任何子文件夹和子文件</p>';
-							}
-						} else {
-							if(data.width){
-								html += '<p><strong>宽</strong>：'+data.width+'</p>';
-								html += '<p><strong>高</strong>：'+data.height+'</p>';
-							}
-							html += '<p><strong>访问路径</strong>：<a href="'+data.url+'" target="blank">'+data.url+'</a></p>';
-						}
-						bootbox.alert(html);
-					}else{
-						bootbox.alert(data.message);
-					}
-				});
-				break;
 			case "delete":
 				bootbox.confirm("确定要删除吗？",function(result){
 					if(result){
 						$.ajax({
 							type : "post",
-							url : basePath+"/mgr/file/delete",
-							data : {"id":id},
+							url : basePath+"/mgr/localFile/delete",
+							data : {"path":path},
 							success : function(data){
 								if(data.success){
 									success(data.message);
@@ -169,22 +131,24 @@ $(document).ready(function(){
 					}
 				})
 				break;
-			case "copy":
-				$("#copyModal").modal("show");
-				$("#copyModal input[name='id']").val(id);
-				$("#copyModal input[name='path']").val('');
-				break;
 			case "move":
 				$("#moveModal").modal("show");
-				$("#moveModal input[name='id']").val(id);
-				$("#move-path-container").html('<span class="input-group-addon">路径</span><input type="text" value="" class="form-control" name="path"><span class="input-group-addon" >.'+ext+'</span>');
-				$("#moveModal input[name='path']").val('');
+				var currentPath = current;
+				if(me.attr("data-dir") == 'false'){
+					var index = currentPath.lastIndexOf('.');
+					if(index > -1){
+						currentPath = currentPath.substring(0,index);
+					}
+				}
+				$("#move-path-container").html('<span class="input-group-addon">路径</span><input type="text" value="'+currentPath+'" class="form-control" name="path">');
 				break;
-			case "rename":
-				$("#rename-path-container").html('<span class="input-group-addon">名称</span><input type="text" value="" class="form-control" name="newName"><span class="input-group-addon" >.'+ext+'</span>');
-				$("#renameModal").modal("show");
-				$("#renameModal input[name='id']").val(id);
-				$("#renameModal input[name='newName']").val('');
+			case "unzip":
+				$("#unzipModal input[name='path']").val('');
+				$("#unzipModal").modal("show");
+				break;
+			case "copy":
+				$("#copyModal").modal("show");
+				$("#copyModal input[name='path']").val(current)
 				break;
 			default : 
 				break;
@@ -194,15 +158,18 @@ $(document).ready(function(){
 		$("#query").click(function(){
 			var form = "";
 			$("#query-form").remove();
-			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/file/index" method="get">';
+			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/localFile/index" method="get">';
 			var name = $.trim($("#query-name").val());
 			if(name != ''){
 				form += '<input type="hidden" name="name" value="'+name+'"/>';
 			}
+			var path = $.trim($("#query-path").val());
+			if(path && path != ''){
+				form += '<input type="hidden" name="path" value="'+path+'"/>';
+			}
 			if($("#query-sub").is(":checked")){
 				form += '<input type="hidden" name="querySubDir" value="true"/>';
 			}
-			form += '<input type="hidden" name="type" value="'+$("#query-type").val()+'"/>';
 			form += '</form>';
 			$("body").append(form);
 			$("#query-form").submit();
@@ -213,15 +180,10 @@ $(document).ready(function(){
 			var data = $("#createFolderModal").find("form").serializeObject();
 			var parent = data.parent;
 			var url ;
-			if(parent){
-				url = basePath+"/mgr/file/"+parent+"/createFolder";
-			}else{
-				url = basePath+"/mgr/file/createFolder";
-			}
 			$.ajax({
 				type : "post",
-				url : url,
-				data : {path:data.path},
+				url : basePath+"/mgr/localFile/createFolder",
+				data : {path:$("#dir-path").val() + '/'+data.path},
 				success : function(data){
 					if(data.success){
 						success(data.message);
@@ -242,7 +204,7 @@ $(document).ready(function(){
 			$("#copy").prop("disabled",true);
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/file/copy?sourceId="+$("#copyModal input[name='id']").val()+"&folderPath="+$("#copyModal input[name='path']").val(),
+				url : basePath+"/mgr/localFile/copy?path="+current+"&destPath="+$("#copyModal input[name='path']").val(),
 				data : {},
 				contentType : 'application/json',
 				success : function(data){
@@ -265,7 +227,7 @@ $(document).ready(function(){
 			$("#move").prop("disabled",true);
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/file/move?sourceId="+$("#moveModal input[name='id']").val()+"&destPath="+$("#moveModal input[name='path']").val(),
+				url : basePath+"/mgr/localFile/move?path="+current+"&destPath="+$("#moveModal input[name='path']").val(),
 				data : {},
 				contentType : 'application/json',
 				success : function(data){
@@ -284,13 +246,13 @@ $(document).ready(function(){
 			});
 		});
 		
-		$("#rename").click(function(){
-			$("#rename").prop("disabled",true);
+		$("#unzip").click(function(){
+			$("#unzip").prop("disabled",true);
+			var data = $("#unzipModal").find("form").serializeObject();
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/file/rename?sourceId="+$("#renameModal input[name='id']").val()+"&newName="+$("#renameModal input[name='newName']").val(),
-				data : {},
-				contentType : 'application/json',
+				url : basePath+"/mgr/localFile/unzip",
+				data : {zipPath:current,path:data.path,deleteAfterSuccessUnzip:$("#deleteAfterSuccessUnzip").is(":checked"),encoding:data.encoding},
 				success : function(data){
 					if(data.success){
 						success(data.message);
@@ -302,7 +264,7 @@ $(document).ready(function(){
 					}
 				},
 				complete:function(){
-					$("#rename").prop("disabled",false);
+					$("#unzip").prop("disabled",false);
 				}
 			});
 		});
@@ -313,35 +275,14 @@ $(document).ready(function(){
 		});
 		
 	});
-
-	var param = {"type":"DIRECTORY"};
-	
-	function directorySelectQuery(){
-		param = {"type":"DIRECTORY"};
-		directorySelectPageQuery(1);
-	}
-	
-	function directorySelectPageQuery(page,parent){
-		param.currentPage = page;
-		if(parent)
-			param.parent = parent;
-		$.get(basePath+'/mgr/file/query',param,function(data){
-			if(data.success){
-				$("#directorySelectMain").html(getRenderHtml(data.data));
-				$('#directorySelectMain [data-toggle="tooltip"]').tooltip();
-			} else {
-				$("#directorySelectMain").html('<div class="row"><div class="col-md-12"><div class="alert alert-danger">'+data.message+'</div></div></div>');
-			}
-		})
-	}
 	var current;
 	var moving = false;
-	function move(id){
+	function move(path){
 		if(moving){
 			return ;
 		} else {
 			moving = true;
-			$.post(basePath+"/mgr/file/move",{"src":current,"parent":id},function callBack(data){
+			$.post(basePath+"/mgr/localFile/move",{"path":current,"destPath":path},function callBack(data){
 				moving = false;
 				if(data.success){
 					success(data.message);
@@ -354,64 +295,4 @@ $(document).ready(function(){
 				}
 			});
 		}
-	}
-	
-	function getRenderHtml(data){
-		var html = '';
-		var paths = data.paths;
-		if(paths.length > 0){
-			html += '<div class="row">';
-			html += '<div class="col-md-12">';
-			html += '<ol class="breadcrumb">';
-			html += '<li><a href="###" onclick="directorySelectQuery()">根目录</a></li>'	;
-			for(var i=0;i<paths.length;i++){
-				var path = paths[i];
-				html += '<li><a href="###" onclick="directorySelectPageQuery(\'1\',\''+path.id+'\')">'+path.name+'</a></li>';
-			}
-			html += '</ol>';
-			html += '</div>';
-			html += '</div>';
-		}
-		var page = data.page;
-		var datas = page.datas;
-		html += '<div class="row">';
-		html += '<div class="col-md-12"><div class="tip"></div>';
-		if(datas.length > 0){
-			html += '<div class="row">';
-			for(var i=0;i<datas.length;i++){
-				var data = datas[i];
-				html += '<div class="col-xs-6 col-md-4">';
-				html += '<div class="thumbnail text-center">';
-				html += '<a href="###" onclick="directorySelectPageQuery(\'1\',\''+data.id+'\')"><img src="'+basePath+'/static/fileicon/folder.png" class="img-responsive"/></a>';
-				html += '<div class="caption">';
-				var name = data.name
-				if(name.length > 5){
-					name = name.substring(0,5);
-				}
-				html += '<a title="'+data.name+'" data-toggle="tooltip">'+name+'</a>';
-				html += '</div>';
-				html += '<div class="caption">';
-				html += '<a href="###" onclick="move(\''+data.id+'\')"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
-				html += '</div>';
-				html += '</div>';
-				html += '</div>';
-			}
-			html += '</div>';
-		} else {
-			html += '<div class="alert alert-info">当前没有任何文件</div>'
-		}
-		if(page.totalPage > 1){
-			html += '<div>';
-			html += '<ul class="pagination">';
-			for(var i=page.listbegin;i<=page.listend-1;i++){
-				html += '<li>';
-				html += '<a href="###" onclick="directorySelectPageQuery(\''+i+'\')">'+i+'</a>';
-				html += '</li>';
-			}
-			html += '</ul>';
-			html += '</div>';
-		}
-		html += '</div>';
-		html += '</div>';
-		return html;
 	}
