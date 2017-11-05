@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.servlet.view.AbstractTemplateView;
-import org.thymeleaf.spring4.naming.SpringContextVariableNames;
+import org.thymeleaf.spring5.naming.SpringContextVariableNames;
 
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.StringUtils;
@@ -176,6 +176,7 @@ public class PageValidator implements Validator {
 				errors.reject("page.alias.pathVariable.onlyLetter", "{}中间的内容必须为英文字母");
 				return;
 			}
+			
 			// variable 不能为key word
 			for (String keyword : ALIAS_KEY_WORDS) {
 				if (variable.equals(keyword)) {

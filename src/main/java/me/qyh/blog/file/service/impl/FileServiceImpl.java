@@ -114,7 +114,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		/**
 		 * 5.7
 		 */
-		if (!parent.isDir()) {
+		if (!parent.isRoot() && !parent.isDir()) {
 			throw new LogicException("file.parent.mustDir", "父目录必须是一个文件夹");
 		}
 

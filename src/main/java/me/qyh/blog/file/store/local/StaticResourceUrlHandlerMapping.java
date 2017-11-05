@@ -20,9 +20,9 @@ import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 /**
- * UrlMapping，用來注册本地文件存储器
+ * UrlMapping，用來注册静态文件处理器
  */
-public class CustomResourceHttpRequestHandlerUrlHandlerMapping extends SimpleUrlHandlerMapping {
+public class StaticResourceUrlHandlerMapping extends SimpleUrlHandlerMapping {
 
 	public void registerResourceHttpRequestHandlerMapping(String urlPath, ResourceHttpRequestHandler handler)
 			throws BeansException, IllegalStateException {

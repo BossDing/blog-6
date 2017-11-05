@@ -24,16 +24,18 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.util.Jsons;
-import me.qyh.blog.file.store.local.CustomResourceHttpRequestHandlerUrlHandlerMapping;
+import me.qyh.blog.file.store.local.StaticResourceUrlHandlerMapping;
+import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.web.lock.LockArgumentResolver;
-import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.view.TemplateReturnValueHandler;
 
 /**
@@ -45,6 +47,8 @@ import me.qyh.blog.web.view.TemplateReturnValueHandler;
 @Configuration
 public class WebConfiguration extends WebMvcConfigurationSupport {
 
+	@Autowired
+	private WebExceptionResolver exceptionResolver;
 	@Autowired
 	private TemplateRender templateRender;
 
@@ -58,27 +62,32 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 
 	@Bean
 	@Override
-	public CustomResourceHttpRequestHandlerUrlHandlerMapping resourceHandlerMapping() {
+	public StaticResourceUrlHandlerMapping resourceHandlerMapping() {
 		SimpleUrlHandlerMapping mapping = (SimpleUrlHandlerMapping) super.resourceHandlerMapping();
-		CustomResourceHttpRequestHandlerUrlHandlerMapping fsMapping = 
-				new CustomResourceHttpRequestHandlerUrlHandlerMapping();
-		fsMapping.setOrder(mapping.getOrder());
+		StaticResourceUrlHandlerMapping fsMapping = new StaticResourceUrlHandlerMapping();
+		fsMapping.setOrder(-100);
 		fsMapping.setUrlMap(mapping.getUrlMap());
 		return fsMapping;
 	}
 
 	@Override
 	protected RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
-		TemplateRequestMappingHandlerMapping mapping = new TemplateRequestMappingHandlerMapping();
-		mapping.setUseSuffixPatternMatch(false);
-		return mapping;
+		return new TemplateRequestMappingHandlerMapping();
+	}
+
+	@Override
+	protected void configurePathMatch(PathMatchConfigurer configurer) {
+		configurer.setUseSuffixPatternMatch(false);
 	}
 
 	@Override
 	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
 		registry.addResourceHandler("/favicon.ico").setCachePeriod(cacheSec)
 				.addResourceLocations("/static/img/favicon.ico");
-		registry.addResourceHandler("/static/**").setCachePeriod(cacheSec).addResourceLocations("/static/");
+		/**
+		 * 5.7 me.qyh.blog.file.store.local.StaticResourceHttpRequestHandler
+		 */
+		// registry.addResourceHandler("/static/**").setCachePeriod(cacheSec).addResourceLocations("/static/");
 		registry.addResourceHandler("/doc/**").setCachePeriod(cacheSec).addResourceLocations("/doc/");
 	}
 
@@ -110,6 +119,11 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 	@Override
 	protected void addReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
 		returnValueHandlers.add(new TemplateReturnValueHandler(templateRender));
+	}
+
+	@Override
+	protected void configureHandlerExceptionResolvers(List<HandlerExceptionResolver> resolvers) {
+		resolvers.add(exceptionResolver);
 	}
 
 }

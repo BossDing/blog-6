@@ -15,8 +15,7 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
-	<context:property-placeholder
-		location="classpath:resources/app.properties" />
+	<context:property-placeholder location="classpath:resources/app.properties" />
 
 	<import resource="template.xml" />
 
@@ -25,7 +24,8 @@
 		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
 
 	<!-- 包扫描 -->
-	<context:component-scan base-package="me.qyh.blog.web.controller,
+	<context:component-scan
+		base-package="me.qyh.blog.web.controller,
 			me.qyh.blog.template.render,
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
@@ -55,13 +55,14 @@
 		<property name="templateResolvers">
 			<set>
 				<bean
-					class="org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver">
+					class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
 					<property name="prefix" value="/WEB-INF/templates/" />
 					<property name="suffix" value=".html" />
 					<property name="templateMode" value="HTML" />
 					<property name="characterEncoding" value="utf-8" />
 				</bean>
-				<bean class="me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateResolver" />
+				<bean
+					class="me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateResolver" />
 			</set>
 		</property>
 		<property name="enableSpringELCompiler" value="true" />
@@ -126,24 +127,24 @@
 		</property>
 	</bean>
 	<bean class="me.qyh.blog.file.store.local.CommonResourceStore">
-		<property name="absPath" value="f:/web/file/blog_file" />
+		<property name="absPath" value="/web/file/blog_file" />
 		<property name="id" value="2" />
 		<property name="name" value="文件存储" />
 		<property name="cacheSeconds" value="31556926" />
 	</bean>
-	
+
 	<bean class="me.qyh.blog.file.store.local.PrivateResourceStore">
 		<property name="absPath" value="/web/file/blog_private" />
 		<property name="id" value="3" />
 		<property name="name" value="私人文件存储" />
 		<property name="cacheSeconds" value="31556926" />
 	</bean>
-	
-	<bean class="me.qyh.blog.file.store.local.EditablePathResourceHttpRequestHandler">
-		<constructor-arg index="0" value="f:/test"/>
-		<constructor-arg index="1" value="lf"/>
-	</bean>
-	
-	<bean class="me.qyh.blog.web.WebConfiguration"/>
-	
+
+	<bean class="me.qyh.blog.file.store.local.StaticResourceHttpRequestHandler" />
+
+	<bean class="me.qyh.blog.web.WebConfiguration" />
+
+	<bean class="me.qyh.blog.template.TemplateMapping" />
+	<bean class="me.qyh.blog.web.WebExceptionResolver" />
+
 </beans>

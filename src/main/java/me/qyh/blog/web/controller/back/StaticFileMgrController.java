@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.web.controller.back;
 
 import java.util.HashSet;
@@ -22,40 +37,40 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.file.store.local.EditablePathResourceHttpRequestHandler;
-import me.qyh.blog.file.validator.LocalFileQueryParamValidator;
-import me.qyh.blog.file.validator.LocalFileUploadValidator;
-import me.qyh.blog.file.vo.LocalFileQueryParam;
-import me.qyh.blog.file.vo.LocalFileUpload;
+import me.qyh.blog.file.validator.StaticFileQueryParamValidator;
+import me.qyh.blog.file.validator.StaticFileUploadValidator;
+import me.qyh.blog.file.vo.StaticFileQueryParam;
+import me.qyh.blog.file.vo.StaticFileUpload;
 import me.qyh.blog.file.vo.UnzipConfig;
 import me.qyh.blog.file.vo.UploadedFile;
 
 @Controller
-@RequestMapping("mgr/localFile")
-public class LocalFileMgrController extends BaseMgrController {
+@RequestMapping("mgr/static")
+public class StaticFileMgrController extends BaseMgrController {
 
 	@Autowired(required = false)
 	private EditablePathResourceHttpRequestHandler handler;
 	
 	@Autowired
-	private LocalFileQueryParamValidator localFileParamValidator;
+	private StaticFileQueryParamValidator staticFileParamValidator;
 	@Autowired
-	private LocalFileUploadValidator localFileUploadValidator;
+	private StaticFileUploadValidator staticFileUploadValidator;
 
-	@InitBinder(value = "localFileQueryParam")
-	protected void initLocalFileQueryParamBinder(WebDataBinder binder) {
-		binder.setValidator(localFileParamValidator);
+	@InitBinder(value = "staticFileQueryParam")
+	protected void initStaticFileQueryParamBinder(WebDataBinder binder) {
+		binder.setValidator(staticFileParamValidator);
 	}
 
-	@InitBinder(value = "localFileUpload")
+	@InitBinder(value = "staticFileUpload")
 	protected void initLocalUploadBinder(WebDataBinder binder) {
-		binder.setValidator(localFileUploadValidator);
+		binder.setValidator(staticFileUploadValidator);
 	}
 
 	@GetMapping("index")
-	public String index(@Validated LocalFileQueryParam localFileQueryParam,Model model) {
+	public String index(@Validated StaticFileQueryParam staticFileQueryParam,Model model) {
 		try {
 			checkHandler();
-			model.addAttribute("result", handler.query(localFileQueryParam));
+			model.addAttribute("result", handler.query(staticFileQueryParam));
 		} catch (LogicException e) {
 			model.addAttribute(Constants.ERROR, e.getLogicMessage());
 		}
@@ -65,16 +80,16 @@ public class LocalFileMgrController extends BaseMgrController {
 
 	@GetMapping("query")
 	@ResponseBody
-	public JsonResult query(@Validated LocalFileQueryParam localFileQueryParam) throws LogicException {
+	public JsonResult query(@Validated StaticFileQueryParam staticFileQueryParam) throws LogicException {
 		checkHandler();
-		localFileQueryParam.setQuerySubDir(false);
-		localFileQueryParam.setExtensions(new HashSet<>());
-		return new JsonResult(true, handler.query(localFileQueryParam));
+		staticFileQueryParam.setQuerySubDir(false);
+		staticFileQueryParam.setExtensions(new HashSet<>());
+		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}
 	
 	@PostMapping("upload")
 	@ResponseBody
-	public JsonResult upload(@Validated LocalFileUpload localFileUpload, BindingResult result) throws LogicException {
+	public JsonResult upload(@Validated StaticFileUpload staticFileUpload, BindingResult result) throws LogicException {
 		checkHandler();
 		if (result.hasErrors()) {
 			List<ObjectError> errors = result.getAllErrors();
@@ -83,7 +98,7 @@ public class LocalFileMgrController extends BaseMgrController {
 						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
 			}
 		}
-		List<UploadedFile> uploadedFiles = handler.upload(localFileUpload);
+		List<UploadedFile> uploadedFiles = handler.upload(staticFileUpload);
 		return new JsonResult(true, uploadedFiles);
 	}
 	
@@ -93,7 +108,7 @@ public class LocalFileMgrController extends BaseMgrController {
 			throws LogicException {
 		checkHandler();
 		handler.copy(path, destPath);
-		return new JsonResult(true, new Message("file.copy.success", "拷贝成功"));
+		return new JsonResult(true, new Message("staticFile.copy.success", "拷贝成功"));
 	}
 
 	@PostMapping("move")
@@ -102,7 +117,7 @@ public class LocalFileMgrController extends BaseMgrController {
 			throws LogicException {
 		checkHandler();
 		handler.move(path, destPath);
-		return new JsonResult(true, new Message("file.move.success", "移动成功"));
+		return new JsonResult(true, new Message("staticFile.move.success", "移动成功"));
 	}
 	
 	@PostMapping("delete")
@@ -110,7 +125,7 @@ public class LocalFileMgrController extends BaseMgrController {
 	public JsonResult delete(@RequestParam("path") String path) throws LogicException {
 		checkHandler();
 		handler.delete(path);
-		return new JsonResult(true, new Message("file.delete.success", "删除成功"));
+		return new JsonResult(true, new Message("staticFile.delete.success", "删除成功"));
 	}
 
 	
@@ -119,7 +134,7 @@ public class LocalFileMgrController extends BaseMgrController {
 	public JsonResult createFolder(@RequestParam("path") String path) throws LogicException {
 		checkHandler();
 		handler.createDirectorys(path);
-		return new JsonResult(true, new Message("file.create.success", "创建成功"));
+		return new JsonResult(true, new Message("staticFile.create.success", "创建成功"));
 	}
 	
 	@PostMapping("unzip")
@@ -131,13 +146,21 @@ public class LocalFileMgrController extends BaseMgrController {
 			return new JsonResult(false, new Message("file.unzip.emptyPath", "zip文件路径不能为空"));
 		}
 		handler.unzip(zipPath,config);
-		return new JsonResult(true, new Message("file.unzip.success", "解压缩成功"));
+		return new JsonResult(true, new Message("staticFile.unzip.success", "解压缩成功"));
+	}
+	
+	@PostMapping("zip")
+	@ResponseBody
+	public JsonResult zip( 
+			@RequestParam("path") String path,@RequestParam("zipPath") String zipPath) throws LogicException{
+		checkHandler();
+		handler.packZip(path, zipPath);
+		return new JsonResult(true, new Message("staticFile.zip.success", "压缩成功"));
 	}
 	
 	private void checkHandler() throws LogicException {
 		if (handler == null) {
-			throw new LogicException("handler.notEnable", "本地文件服务没有启用");
+			throw new LogicException("staticFile.handler.notEnable", "本地文件服务没有启用");
 		}
 	}
-
 }

@@ -54,8 +54,8 @@ import me.qyh.blog.file.entity.CommonFile;
 import me.qyh.blog.file.store.FileManager;
 import me.qyh.blog.file.store.FileStore;
 import me.qyh.blog.file.store.ThumbnailUrl;
+import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.security.RequestMatcher;
-import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
 
 /**
  * 将资源存储和资源访问结合起来，<b>这个类必须在Web环境中注册</b>
@@ -92,9 +92,9 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 	private ContentNegotiationManager contentNegotiationManager;
 
 	@Autowired
-	private TemplateRequestMappingHandlerMapping requestMappingHandlerMapping;
+	private TemplateRequestMappingHandlerMapping mapping;
 	@Autowired
-	private CustomResourceHttpRequestHandlerUrlHandlerMapping customResourceHttpRequestHandlerUrlHandlerMapping;
+	private StaticResourceUrlHandlerMapping customResourceHttpRequestHandlerUrlHandlerMapping;
 
 	private static Method method;
 
@@ -293,9 +293,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 
 		String pattern = urlPatternPrefix + "/**";
 		if (getRegisterMapping()) {
-			requestMappingHandlerMapping.registerMapping(requestMappingHandlerMapping
-					.createRequestMappingInfoWithConfig(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET)),
-					this, method);
+			mapping.registerMapping(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET), this, method);
 		} else {
 			// 注册为SimpleUrlMapping
 			customResourceHttpRequestHandlerUrlHandlerMapping.registerResourceHttpRequestHandlerMapping(pattern, this);

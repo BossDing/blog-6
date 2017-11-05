@@ -18,9 +18,11 @@ package me.qyh.blog.template.render.thymeleaf;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -31,10 +33,12 @@ import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.AbstractTemplateView;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.IContext;
 import org.thymeleaf.context.WebExpressionContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
-import org.thymeleaf.spring4.expression.ThymeleafEvaluationContext;
-import org.thymeleaf.spring4.naming.SpringContextVariableNames;
+import org.thymeleaf.spring5.context.webmvc.SpringWebMvcThymeleafRequestContext;
+import org.thymeleaf.spring5.expression.ThymeleafEvaluationContext;
+import org.thymeleaf.spring5.naming.SpringContextVariableNames;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.template.render.ReadOnlyResponse;
@@ -57,11 +61,17 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 
 	private boolean exposeEvaluationContext = false;
 
-	// ### copied from ThymeleafView
+	// COPIED FROM ThymeleafView 3.0.8.RELEASE
 	@Override
 	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
-			final ReadOnlyResponse response) throws Exception {
+			final ReadOnlyResponse response) {
+		IContext context = buildIContext(viewTemplateName, model, request, response);
+		return viewTemplateEngine.process(viewTemplateName, null, context);
+	}
 
+	private IContext buildIContext(String viewTemplateName, final Map<String, Object> model,
+			final HttpServletRequest request, final HttpServletResponse response) {
+		Objects.requireNonNull(viewTemplateName);
 		if (viewTemplateName.contains("::")) {
 			throw new SystemException("模板命中不能包含::");
 		}
@@ -84,16 +94,24 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		}
 
 		final RequestContext requestContext = new RequestContext(request, response, servletContext, mergedModel);
+		final SpringWebMvcThymeleafRequestContext thymeleafRequestContext = new SpringWebMvcThymeleafRequestContext(
+				requestContext, request);
 
 		// For compatibility with ThymeleafView
 		addRequestContextAsVariable(mergedModel, SpringContextVariableNames.SPRING_REQUEST_CONTEXT, requestContext);
 		// For compatibility with AbstractTemplateView
 		addRequestContextAsVariable(mergedModel, AbstractTemplateView.SPRING_MACRO_REQUEST_CONTEXT_ATTRIBUTE,
 				requestContext);
+		// Add the Thymeleaf RequestContext wrapper that we will be using in
+		// this dialect (the bare RequestContext
+		// stays in the context to for compatibility with other dialects)
+		mergedModel.put(SpringContextVariableNames.THYMELEAF_REQUEST_CONTEXT, thymeleafRequestContext);
 
 		if (exposeEvaluationContext) {
 			final ConversionService conversionService = (ConversionService) request
-					.getAttribute(ConversionService.class.getName());// 可能为null
+					.getAttribute(ConversionService.class.getName()); // might
+																		// be
+																		// null!
 			final ThymeleafEvaluationContext evaluationContext = new ThymeleafEvaluationContext(applicationContext,
 					conversionService);
 			mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
@@ -104,7 +122,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
 				locale, mergedModel);
 
-		return viewTemplateEngine.process(viewTemplateName, null, context);
+		return context;
 	}
 
 	private void addRequestContextAsVariable(final Map<String, Object> model, final String variableName,

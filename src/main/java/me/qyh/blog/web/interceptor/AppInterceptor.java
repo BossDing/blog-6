@@ -78,12 +78,11 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		if (isHandlerMethod(handler)) {
-			HandlerMethod _handler = (HandlerMethod) handler;
+		if (isHandler(handler)) {
 
 			try {
 
-				setUser(request, _handler);
+				setUser(request, handler);
 				setLockKeys(request);
 				setSpace(request);
 
@@ -104,7 +103,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
-	private void setUser(HttpServletRequest request, HandlerMethod handler) {
+	private void setUser(HttpServletRequest request, Object handler) {
 		HttpSession session = request.getSession(false);
 		User user = null;
 		if (session != null) {
@@ -115,9 +114,12 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		enableLogin(handler);
 	}
 
-	private void enableLogin(HandlerMethod methodHandler) {
-		// auth check
-		getAnnotation(methodHandler.getMethod(), EnsureLogin.class).ifPresent(ann -> Environment.doAuthencation());
+	private void enableLogin(Object methodHandler) {
+		if (methodHandler instanceof HandlerMethod) {
+			// auth check
+			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
+					.ifPresent(ann -> Environment.doAuthencation());
+		}
 	}
 
 	private void setSpace(HttpServletRequest request) throws SpaceNotFoundException {
@@ -290,7 +292,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		}
 	}
 
-	private boolean isHandlerMethod(Object handler) {
+	private boolean isHandler(Object handler) {
 		return handler instanceof HandlerMethod;
 	}
 

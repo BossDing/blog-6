@@ -25,7 +25,7 @@ import org.springframework.context.ApplicationContext;
 import org.thymeleaf.dialect.IPreProcessorDialect;
 import org.thymeleaf.preprocessor.IPreProcessor;
 import org.thymeleaf.preprocessor.PreProcessor;
-import org.thymeleaf.spring4.SpringTemplateEngine;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.template.render.thymeleaf.dialect.PreTemplateHandler;

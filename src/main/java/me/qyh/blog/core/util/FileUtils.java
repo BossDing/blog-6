@@ -37,7 +37,7 @@ import me.qyh.blog.core.exception.SystemException;
 public class FileUtils {
 
 	private static final char[] ILLEGAL_CHARACTERS = { '/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>',
-			'|', '\"', ':' };
+			'|', '\"', ':', '\u0000' };
 
 	public static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
 
@@ -148,7 +148,7 @@ public class FileUtils {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					if (filter.test(file)) {
-						Files.delete(file);
+						deleteOneFileQuietly(file);
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -156,7 +156,7 @@ public class FileUtils {
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 					if (filter.test(dir)) {
-						Files.delete(dir);
+						deleteOneFileQuietly(dir);
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -164,6 +164,14 @@ public class FileUtils {
 			return true;
 		} catch (Exception e) {
 			return false;
+		}
+	}
+	
+	private static void deleteOneFileQuietly(Path file){
+		try{
+			Files.delete(file);
+		}catch (IOException e) {
+			
 		}
 	}
 

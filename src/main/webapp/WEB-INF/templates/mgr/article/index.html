@@ -112,10 +112,10 @@
 														style="margin-left: 10px" title="编辑"
 														th:if="${page.param.status.name() != 'DELETED'}"><span
 															class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-														<a style="margin-left: 10px" href="###" data-action="link"
+														<a style="margin-left: 10px" href="###" 
 														th:if="${page.param.status.name() == 'PUBLISHED'}"
-														th:data-link="${urls.getUrl(article)}" title="获取页面链接"><span
-															class="glyphicon glyphicon-link" aria-hidden="true"></span></a>
+														th:data-clipboard-text="${urls.getUrl(article)}" title="拷贝文章访问地址"><span
+															class="glyphicon glyphicon-share-alt" aria-hidden="true"></span></a>
 													</td>
 												</tr>
 											</tbody>
@@ -140,5 +140,18 @@
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript" th:src="@{/static/js/mgr/article.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
+		<script
+		th:src="@{/static/js/clipboard.min.js}"></script>
+	<script>
+	$(function(){
+		var clipboard=new Clipboard('[data-clipboard-text]');
+		clipboard.on('success',function(){
+			bootbox.alert("拷贝成功");
+		});
+		clipboard.on('error',function(){
+			bootbox.alert("拷贝失败");
+		});
+	});
+	</script>
 </body>
 </html>

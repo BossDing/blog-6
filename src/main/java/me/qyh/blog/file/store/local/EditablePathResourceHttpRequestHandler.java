@@ -1,15 +1,29 @@
+/*
+ * Copyright 2017 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.file.store.local;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -18,17 +32,17 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.zip.ZipError;
-
-import javax.servlet.ServletContext;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,22 +57,24 @@ import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.file.vo.LocalFile;
-import me.qyh.blog.file.vo.LocalFilePageResult;
-import me.qyh.blog.file.vo.LocalFileQueryParam;
-import me.qyh.blog.file.vo.LocalFileStatistics;
-import me.qyh.blog.file.vo.LocalFileUpload;
+import me.qyh.blog.file.vo.StaticFile;
+import me.qyh.blog.file.vo.StaticFilePageResult;
+import me.qyh.blog.file.vo.StaticFileQueryParam;
+import me.qyh.blog.file.vo.StaticFileStatistics;
+import me.qyh.blog.file.vo.StaticFileUpload;
 import me.qyh.blog.file.vo.UnzipConfig;
 import me.qyh.blog.file.vo.UploadedFile;
 
 /**
  * 一个可对文件进行管理的 ResourceHttpRequestHandler
  * 
+ * @since 5.7
  */
 public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestHandler {
 
@@ -67,11 +83,10 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	private final Logger logger = LoggerFactory.getLogger(EditablePathResourceHttpRequestHandler.class);
 
 	private static final String ZIP = "zip";
-	private static final String ENCRYPTED_ENTRY = "encrypted entry";
 	private static final String MALFORMED = "MALFORMED";
 
-	private final Path root;
-	private final String prefix;
+	private Path root;
+	private String prefix;
 
 	private static final int MAX_NAME_LENGTH = 255;
 
@@ -80,12 +95,9 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	@Autowired
 	private UrlHelper urlHelper;
 	@Autowired
-	private CustomResourceHttpRequestHandlerUrlHandlerMapping mapping;
+	private StaticResourceUrlHandlerMapping mapping;
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
-
-	@Autowired
-	private ServletContext servletContext;
 
 	/**
 	 * @param rootLocation
@@ -94,10 +106,27 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 *            访问链接前缀 见 &lt;mvc:resources/&gt;
 	 */
 	public EditablePathResourceHttpRequestHandler(String rootLocation, String prefix) {
+		this(Paths.get(rootLocation), prefix);
+	}
+
+	/**
+	 * 
+	 * @param root
+	 *            根目录
+	 * @param prefix
+	 *            访问前缀
+	 */
+	public EditablePathResourceHttpRequestHandler(Path root, String prefix) {
+		this.init(root, prefix);
+	}
+
+	protected EditablePathResourceHttpRequestHandler() {
 		super();
-		Objects.requireNonNull(rootLocation);
+	}
+
+	protected void init(Path root, String prefix) {
+		Objects.requireNonNull(root);
 		Objects.requireNonNull(prefix);
-		this.root = Paths.get(rootLocation);
 		if (root.getParent() == null) {
 			throw new SystemException("不能以根目录作为存储位置");
 		}
@@ -105,6 +134,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		if (FileUtils.isRegularFile(root)) {
 			throw new SystemException("根目录不能是文件");
 		}
+		this.root = root;
 		this.prefix = FileUtils.cleanPath(prefix);
 		if (this.prefix.isEmpty()) {
 			throw new SystemException("访问前缀不能为空");
@@ -118,21 +148,17 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * @return
 	 * @throws LogicException
 	 */
-	public List<UploadedFile> upload(LocalFileUpload upload) throws LogicException {
+	public List<UploadedFile> upload(StaticFileUpload upload) throws LogicException {
 		lock.writeLock().lock();
 		try {
 
 			Path p = this.root.resolve(validatePath(upload.getPath()));
 
 			if (!FileUtils.isSub(p, root)) {
-				throw new LogicException("localFile.upload.dir.notInRoot", "文件上传存储目录不在根目录内");
+				throw new LogicException("staticFile.upload.dir.notInRoot", "文件上传存储目录不在根目录内");
 			}
 
-			try {
-				createDirectories(p);
-			} catch (IOException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
+			createDirectories(p);
 
 			List<UploadedFile> results = new ArrayList<>();
 
@@ -148,16 +174,15 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 				Path dest = p.resolve(name);
 
-				try (InputStream in = file.getInputStream()) {
-					Files.copy(in, dest);
+				try (InputStream in = new BufferedInputStream(file.getInputStream())) {
 
+					Files.copy(in, dest);
 					results.add(new UploadedFile(name, file.getSize(), null, null));
 
 				} catch (FileAlreadyExistsException e) {
-
 					Path relative = this.root.relativize(dest);
 					results.add(new UploadedFile(name,
-							new Message("localFile.upload.file.exists", "位置:" + relative + "已经存在文件", relative)));
+							new Message("staticFile.upload.file.exists", "位置:" + relative + "已经存在文件", relative)));
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
 					results.add(new UploadedFile(name, Constants.SYSTEM_ERROR));
@@ -190,12 +215,12 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 			Path zip = byPath(validatePath(zipPath));
 			if (!FileUtils.isRegularFile(zip) || !ZIP.equalsIgnoreCase(FileUtils.getFileExtension(zip))) {
 				Path relative = this.root.relativize(zip);
-				throw new LogicException("localFile.unzip.notZipFile", "文件:" + relative + "不是zip文件", relative);
+				throw new LogicException("staticFile.unzip.notZipFile", "文件:" + relative + "不是zip文件", relative);
 			}
 
 			Path dest = root.resolve(validatePath(config.getPath()));
 			if (!FileUtils.isSub(dest, root)) {
-				throw new LogicException("localFile.unzip.dest.notInRoot", "解压缩位置不在根目录内");
+				throw new LogicException("staticFile.unzip.dest.notInRoot", "解压缩位置不在根目录内");
 			}
 
 			try {
@@ -203,18 +228,11 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 			} catch (IllegalArgumentException e) {
 				String msg = e.getMessage();
 				if (msg.indexOf(MALFORMED) > -1) {
-					throw new LogicException("localFile.unzip.path.unread", "zip文件中某个路径无法被读取，可能字符不符");
+					throw new LogicException("staticFile.unzip.path.unread", "zip文件中某个路径无法被读取，可能字符不符");
 				}
 				throw e;
 			} catch (LogicException ex) {
 				throw ex;
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
-			} catch (ZipError e) {
-				if (e.getMessage().indexOf(ENCRYPTED_ENTRY) > -1) {
-					throw new LogicException("localFile.unzip.encrypted", "zip文件受密码保护");
-				}
-				throw new LogicException("localFile.unzip.broken", "zip文件损坏或者不是正确的格式");
 			}
 
 			if (config.isDeleteAfterSuccessUnzip()) {
@@ -226,84 +244,66 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		}
 	}
 
-	protected void doUnzip(Path zip, Path dir, UnzipConfig config) throws Exception {
-		Map<String, String> env = new HashMap<>();
-		String encoding = config.getEncoding();
-		if (!Validators.isEmptyOrNull(encoding, true)) {
+	private final void doUnzip(Path zip, Path dir, UnzipConfig config) throws LogicException {
+
+		Charset charset = null;
+		if (!Validators.isEmptyOrNull(config.getEncoding(), true)) {
 			try {
-				Charset.forName(encoding.trim());
-				env.put("encoding", encoding);
+				charset = Charset.forName(config.getEncoding());
 			} catch (Exception e) {
+
 			}
 		}
 
-		URI uri;
-		try {
-			uri = new URI("jar", zip.toUri().toString(), null);
-		} catch (URISyntaxException e) {
-			throw new SystemException(e.getMessage(), e);
+		if (charset == null) {
+			charset = StandardCharsets.UTF_8;
 		}
 
-		try (FileSystem fs = FileSystems.newFileSystem(uri, env)) {
+		List<Path> rollbacks = new ArrayList<>();
+		try (ZipFile zipFile = new ZipFile(zip.toFile(), charset)) {
 
-			Path root = fs.getPath("/");
-			// 尝试读取所有的Path，可能因为字符原因某个Path读取失败
-			List<Path> all = Files.walk(root).filter(FileUtils::isRegularFile).peek(path -> path.toString())
-					.collect(Collectors.toList());
+			List<ZipEntry> entryList = new ArrayList<>();
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-			// 校验文件名称
-			Optional<Path> inValid = all.stream().filter(this::invalidatePath).findAny();
+			while (entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				if (!entry.isDirectory()) {
+					String name = entry.getName();
+					validatePath(name);
 
-			if (inValid.isPresent()) {
-				String name = Objects.toString(inValid.get().getFileName());
-				throw new LogicException("localFile.unzip.fileName.valid", "压缩包内文件名" + name + "无效", name);
-			}
+					Path dest = dir.resolve(name);
 
-			List<Path> rollBacks = Collections.synchronizedList(new ArrayList<>());
-
-			ExHolder holder = new ExHolder();
-
-			all.parallelStream().forEach(p -> {
-
-				if (!holder.hasEx()) {
-					Path dest = dir.resolve(FileUtils.cleanPath(p.toString()));
-
-					boolean exists = FileUtils.exists(dest);
-
-					try {
-
-						rollBacks.addAll(createDirectories(dest.getParent()));
-						Files.copy(p, dest);
-						rollBacks.add(dest);
-
-					} catch (Exception e) {
-
-						if (!exists) {
-							FileUtils.deleteQuietly(dest);
-						}
-
-						if (e instanceof LogicException) {
-							holder.setEx(e);
-						}
-
-						if (e instanceof FileAlreadyExistsException) {
-							Path relative = this.root.relativize(dest);
-							holder.setEx(new LogicException("localFile.unzip.file.exists", "位置:" + relative + "已经存在文件",
-									relative));
-						}
-
-						if (!holder.hasEx()) {
-							holder.setEx(new SystemException(e.getMessage(), e));
-						}
+					if (Files.exists(dest)) {
+						Path relative = this.root.relativize(dest);
+						throw new LogicException("staticFile.unzip.file.exists", "位置:" + relative + "已经存在文件", relative);
 					}
-				}
 
+					rollbacks.addAll(createDirectories(dest.getParent()));
+
+					entryList.add(entry);
+				}
+			}
+
+			entryList.parallelStream().forEach(entry -> {
+				Path dest = dir.resolve(entry.getName());
+				try (InputStream is = new BufferedInputStream(zipFile.getInputStream(entry))) {
+					Files.copy(is, dest);
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
 			});
 
-			if (holder.hasEx()) {
-				delete(rollBacks);
-				throw holder.getEx();
+		} catch (LogicException e) {
+			delete(rollbacks);
+			throw e;
+		} catch (Exception e) {
+			delete(rollbacks);
+
+			if (e instanceof ZipException) {
+				throw new LogicException("staticFile.unzip.broken", "zip文件损坏或者不是正确的格式");
 			}
+
+			throw new SystemException(e.getMessage(), e);
 		}
 	}
 
@@ -312,19 +312,17 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * 
 	 * @param path
 	 * @return 新建的文件夹，不包含本来已经存在的文件夹
-	 * @throws FileAlreadyExistsException
+	 * @throws LogicException
 	 *             如果文件已经存在但是不是一个文件夹
-	 * @throws IOException
-	 *             创建文件异常
 	 */
-	private List<Path> createDirectories(Path dir) throws LogicException, IOException {
+	private List<Path> createDirectories(Path dir) throws LogicException {
 		try {
 			List<Path> paths = new ArrayList<>();
 			if (createAndCheckIsDirectory(dir)) {
 				paths.add(dir);
 			}
 			return paths;
-		} catch (IOException x) {
+		} catch (SystemException x) {
 		}
 
 		SecurityException se = null;
@@ -339,12 +337,14 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 				parent.getFileSystem().provider().checkAccess(parent);
 				break;
 			} catch (NoSuchFileException x) {
+			} catch (IOException ex) {
+				throw new SystemException(ex.getMessage(), ex);
 			}
 			parent = parent.getParent();
 		}
 		if (parent == null) {
 			if (se == null) {
-				throw new FileSystemException(dir.toString(), null, "Unable to determine if root directory exists");
+				throw new SystemException("Unable to determine if root directory exists:" + dir.toString());
 			} else {
 				throw se;
 			}
@@ -354,14 +354,13 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		for (Path name : parent.relativize(dir)) {
 			child = child.resolve(name);
 			try {
+
 				if (createAndCheckIsDirectory(child)) {
 					paths.add(child);
 				}
 
 			} catch (Exception e) {
-				for (Path path : paths) {
-					FileUtils.deleteQuietly(path);
-				}
+				delete(paths);
 				throw e;
 			}
 		}
@@ -373,21 +372,21 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * 
 	 * @param dir
 	 * @return 是否创建了一个新的文件夹
-	 * @throws PathAlreadyExistsException
-	 *             文件已经存在但是不是一个文件夹
 	 * @throws IOException
 	 *             创建文件夹失败
 	 */
-	private synchronized boolean createAndCheckIsDirectory(Path dir) throws LogicException, IOException {
+	private synchronized boolean createAndCheckIsDirectory(Path dir) throws LogicException {
 		try {
 			Files.createDirectory(dir);
 			return true;
 		} catch (FileAlreadyExistsException x) {
 			if (!Files.isDirectory(dir)) {
 				Path relative = this.root.relativize(dir);
-				throw new LogicException("localFile.createDir.file.exists",
+				throw new LogicException("staticFile.createDir.file.exists",
 						"创建文件夹失败，位置:" + relative + "已经存在文件，但不是一个文件夹", relative);
 			}
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
 		}
 		return false;
 	}
@@ -395,11 +394,11 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	private Path byPath(String path) throws LogicException {
 		Path p = resolve(root, path);
 		if (!FileUtils.isSub(p, root)) {
-			throw new LogicException("localFile.notInRoot", "文件不在根目录内");
+			throw new LogicException("staticFile.notInRoot", "文件不在根目录内");
 		}
 		if (!FileUtils.exists(p)) {
 			Path relative = root.relativize(p);
-			throw new LogicException("localFile.notExists", "文件" + relative + "不存在", relative);
+			throw new LogicException("staticFile.notExists", "文件" + relative + "不存在", relative);
 		}
 		return p;
 	}
@@ -410,14 +409,14 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * @param param
 	 * @return
 	 */
-	public LocalFilePageResult query(LocalFileQueryParam param) {
+	public StaticFilePageResult query(StaticFileQueryParam param) {
 		lock.readLock().lock();
 		try {
 			param.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 			Path root = resolve(this.root, param.getPath());
 
 			if (!FileUtils.exists(root) || FileUtils.isRegularFile(root) || !FileUtils.isSub(root, this.root)) {
-				return new LocalFilePageResult(new ArrayList<>(), new PageResult<>(param, 0, new ArrayList<>()));
+				return new StaticFilePageResult(new ArrayList<>(), new PageResult<>(param, 0, new ArrayList<>()));
 			}
 
 			List<Path> way = betweenPaths(this.root, root);
@@ -425,16 +424,16 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 				way.add(root);
 			}
 
-			List<LocalFile> transferWay = way.stream().map(this::toLocalFile).collect(Collectors.toList());
+			List<StaticFile> transferWay = way.stream().map(this::toStaticFile).collect(Collectors.toList());
 
-			PageResult<LocalFile> page;
+			PageResult<StaticFile> page;
 			try {
 				page = param.isQuerySubDir() ? doWalkSearch(root, param) : doSubSearch(root, param);
 			} catch (IOException e) {
 				throw new SystemException(e.getMessage(), e);
 			}
 
-			return new LocalFilePageResult(transferWay, page);
+			return new StaticFilePageResult(transferWay, page);
 		} finally {
 			lock.readLock().unlock();
 		}
@@ -450,7 +449,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * @return
 	 * @throws IOException
 	 */
-	protected PageResult<LocalFile> doSubSearch(Path root, LocalFileQueryParam param) throws IOException {
+	protected PageResult<StaticFile> doSubSearch(Path root, StaticFileQueryParam param) throws IOException {
 		File rootFile = root.toFile();
 
 		Predicate<String> predicate = !param.needQuery() ? p -> true : p -> matchParam(param, p);
@@ -464,10 +463,10 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 		int to = Math.min(total, param.getOffset() + param.getPageSize());
 
-		List<LocalFile> files = new ArrayList<>();
+		List<StaticFile> files = new ArrayList<>();
 		for (int i = param.getOffset(); i < to; i++) {
 			String name = names.get(i);
-			files.add(toLocalFile(new File(rootFile, name).toPath()));
+			files.add(toStaticFile(new File(rootFile, name).toPath()));
 		}
 
 		return new PageResult<>(param, total, files);
@@ -483,7 +482,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * @return
 	 * @throws IOException
 	 */
-	protected PageResult<LocalFile> doWalkSearch(Path root, LocalFileQueryParam param) throws IOException {
+	protected PageResult<StaticFile> doWalkSearch(Path root, StaticFileQueryParam param) throws IOException {
 		Predicate<Path> predicate = !param.needQuery() ? p -> true
 				: p -> matchParam(param, Objects.toString(p.getFileName(), null));
 		Path[] paths = Files.walk(root).filter(predicate).toArray(i -> new Path[i]);
@@ -495,14 +494,14 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 		int to = Math.min(total, param.getOffset() + param.getPageSize());
 
-		List<LocalFile> files = new ArrayList<>();
+		List<StaticFile> files = new ArrayList<>();
 		for (int i = param.getOffset(); i < to; i++) {
-			files.add(toLocalFile(paths[i]));
+			files.add(toStaticFile(paths[i]));
 		}
 		return new PageResult<>(param, total, files);
 	}
 
-	private boolean matchParam(LocalFileQueryParam param, String name) {
+	private boolean matchParam(StaticFileQueryParam param, String name) {
 		String ext = FileUtils.getFileExtension(name);
 		if (!CollectionUtils.isEmpty(param.getExtensions())
 				&& !param.getExtensions().stream().anyMatch(ex -> ex.equalsIgnoreCase(ext))) {
@@ -515,8 +514,8 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		return true;
 	}
 
-	private LocalFile toLocalFile(Path path) {
-		LocalFile lf = new LocalFile();
+	private StaticFile toStaticFile(Path path) {
+		StaticFile lf = new StaticFile();
 		lf.setDir(Files.isDirectory(path));
 		lf.setName(Objects.toString(path.getFileName()));
 		if (FileUtils.isRegularFile(path)) {
@@ -558,7 +557,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		try {
 			Path p = byPath(validatePath(path));
 			if (p == this.root) {
-				throw new LogicException("localFile.move.root", "根目录无法被移动");
+				throw new LogicException("staticFile.move.root", "根目录无法被移动");
 			}
 
 			String _newPath = newPath;
@@ -573,7 +572,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 			Path dest = resolve(this.root, validatePath(_newPath));
 
 			if (!FileUtils.isSub(dest, this.root)) {
-				throw new LogicException("localFile.move.dest.notInRoot", "文件移动目标位置不在根目录内");
+				throw new LogicException("staticFile.move.dest.notInRoot", "文件移动目标位置不在根目录内");
 			}
 
 			if (p.equals(dest)) {
@@ -586,13 +585,13 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 			if (Files.exists(dest)) {
 				Path relative = this.root.relativize(dest);
-				throw new LogicException("localFile.move.dest.exists", "目标位置已经存在文件:" + relative, relative);
+				throw new LogicException("staticFile.move.dest.exists", "目标位置已经存在文件:" + relative, relative);
 			}
 
 			if (FileUtils.isSub(dest, p)) {
 				Path relativeDest = this.root.relativize(dest);
 				Path relativeP = this.root.relativize(p);
-				throw new LogicException("localFile.move.parentPath",
+				throw new LogicException("staticFile.move.parentPath",
 						"目标文件:" + relativeDest + "不能是原文件:" + relativeP + "的子文件", relativeDest, relativeP);
 			}
 
@@ -613,7 +612,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 				if (e instanceof FileAlreadyExistsException) {
 					Path relative = this.root.relativize(dest);
-					throw new LogicException("localFile.move.file.exists", "位置:" + relative + "已经存在文件", relative);
+					throw new LogicException("staticFile.move.file.exists", "位置:" + relative + "已经存在文件", relative);
 				}
 
 				throw new SystemException(e.getMessage(), e);
@@ -638,37 +637,33 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		try {
 			Path p = byPath(validatePath(path));
 			if (p == this.root) {
-				throw new LogicException("localFile.copy.notRoot", "根目录无法被拷贝");
+				throw new LogicException("staticFile.copy.notRoot", "根目录无法被拷贝");
 			}
 
+			Path dest = resolve(this.root, validatePath(destPath));
+			if (!FileUtils.isSub(dest, this.root)) {
+				throw new LogicException("staticFile.copy.notInRoot", "目标位置不在根目录内");
+			}
+
+			if (p.equals(dest)) {
+				throw new LogicException("staticFile.copy.samePath", "目标文件不能和原文件相同");
+			}
+
+			if (p.equals(dest.resolve(p.getFileName()))) {
+				Path relative = this.root.relativize(p);
+				throw new LogicException("staticFile.copy.file.exists", "文件" + relative + "已经存在", relative);
+			}
+
+			if (FileUtils.isSub(dest, p)) {
+				Path relativeDest = this.root.relativize(dest);
+				Path relativeP = this.root.relativize(p);
+				throw new LogicException("staticFile.copy.parentPath",
+						"目标文件:" + relativeDest + "不能是原文件:" + relativeP + "的子文件", relativeDest, relativeP);
+			}
 			try {
-				Path dest = resolve(this.root, validatePath(destPath));
-				if (!FileUtils.isSub(dest, this.root)) {
-					throw new LogicException("localFile.copy.notInRoot", "目标位置不在根目录内");
-				}
-
-				if (p.equals(dest)) {
-					throw new LogicException("localFile.copy.samePath", "目标文件不能和原文件相同");
-				}
-
-				if (p.equals(dest.resolve(p.getFileName()))) {
-					Path relative = this.root.relativize(p);
-					throw new LogicException("localFile.copy.file.exists", "文件" + relative + "已经存在", relative);
-				}
-
-				if (FileUtils.isSub(dest, p)) {
-					Path relativeDest = this.root.relativize(dest);
-					Path relativeP = this.root.relativize(p);
-					throw new LogicException("localFile.copy.parentPath",
-							"目标文件:" + relativeDest + "不能是原文件:" + relativeP + "的子文件", relativeDest, relativeP);
-				}
-
 				doCopy(p, dest);
-
-			} catch (LogicException e) {
-				throw e;
-			} catch (Exception e) {
-				throw new SystemException(e.getMessage(), e);
+			} catch (RuntimeLogicException e) {
+				throw e.getLogicException();
 			}
 
 		} finally {
@@ -676,7 +671,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		}
 	}
 
-	protected void doCopy(Path source, Path dest) throws Exception {
+	protected void doCopy(Path source, Path dest) throws LogicException {
 
 		List<Path> rollBacks = Collections.synchronizedList(createDirectories(dest));
 
@@ -695,10 +690,10 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 				if (e instanceof FileAlreadyExistsException) {
 					Path relative = this.root.relativize(copied);
-					throw new LogicException("localFile.copy.file.exists", "位置:" + relative + "已经存在文件", relative);
+					throw new LogicException("staticFile.copy.file.exists", "位置:" + relative + "已经存在文件", relative);
 				}
 
-				throw e;
+				throw new SystemException(e.getMessage(), e);
 			}
 		}
 
@@ -706,54 +701,43 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 
 			Path root = dest.resolve(source.getFileName());
 
-			ExHolder holder = new ExHolder();
+			walk(source).filter(FileUtils::isRegularFile).parallel().forEach(path -> {
 
-			Files.walk(source).filter(FileUtils::isRegularFile).parallel().forEach(path -> {
+				Path target = root.resolve(source.relativize(path));
 
-				if (!holder.hasEx()) {
-					Path target = root.resolve(source.relativize(path));
+				boolean exists = FileUtils.exists(target);
 
-					boolean exists = FileUtils.exists(target);
+				try {
+					rollBacks.addAll(createDirectories(target.getParent()));
+					Files.copy(path, target);
+					rollBacks.add(target);
 
-					try {
-						rollBacks.addAll(createDirectories(target.getParent()));
-						Files.copy(path, target);
-						rollBacks.add(target);
+				} catch (Exception e) {
 
-					} catch (Exception e) {
-
-						if (!exists) {
-							FileUtils.deleteQuietly(target);
-						}
-
-						if (e instanceof LogicException) {
-							holder.setEx(e);
-						}
-
-						if (e instanceof FileAlreadyExistsException) {
-							Path relative = this.root.relativize(dest);
-							holder.setEx(new LogicException("localFile.copy.file.exists", "位置:" + relative + "已经存在文件",
-									relative));
-						}
-
-						if (!holder.hasEx()) {
-							holder.setEx(new SystemException(e.getMessage(), e));
-						}
+					if (!exists) {
+						FileUtils.deleteQuietly(target);
 					}
+
+					delete(rollBacks);
+
+					if (e instanceof LogicException) {
+						throw new RuntimeLogicException((LogicException) e);
+					}
+
+					if (e instanceof FileAlreadyExistsException) {
+						Path relative = this.root.relativize(dest);
+						throw new RuntimeLogicException(
+								new Message("staticFile.copy.file.exists", "位置:" + relative + "已经存在文件", relative));
+					}
+
+					throw new SystemException(e.getMessage(), e);
 				}
 			});
-
-			if (holder.hasEx()) {
-				delete(rollBacks);
-				throw holder.getEx();
-			}
 		}
 	}
 
-	private void delete(List<Path> paths) {
-		for (Path path : paths) {
-			FileUtils.deleteQuietly(path);
-		}
+	protected void delete(List<Path> paths) {
+		paths.forEach(FileUtils::deleteQuietly);
 	}
 
 	protected final class ZipPathReadFailException extends RuntimeException {
@@ -773,7 +757,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	 * 
 	 * @return
 	 */
-	public LocalFileStatistics queryFileStatistics() {
+	public StaticFileStatistics queryFileStatistics() {
 		lock.readLock().lock();
 		try {
 			long total = Files.walk(root).filter(FileUtils::isRegularFile).parallel().mapToLong(FileUtils::getSize)
@@ -781,7 +765,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 			int dirCount = (int) Files.walk(root).filter(FileUtils::isDirectory).parallel().count();
 			int fileCount = (int) Files.walk(root).filter(FileUtils::isRegularFile).parallel().count();
 
-			return new LocalFileStatistics(dirCount, fileCount, total);
+			return new StaticFileStatistics(dirCount, fileCount, total);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		} finally {
@@ -804,7 +788,7 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		try {
 			Path toDelete = byPath(path);
 			if (toDelete == this.root) {
-				throw new LogicException("localFile.delete.root", "根目录无法删除");
+				throw new LogicException("staticFile.delete.root", "根目录无法删除");
 			}
 			FileUtils.deleteQuietly(toDelete);
 		} finally {
@@ -825,33 +809,12 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 			Path dir = root.resolve(validatePath(path));
 
 			if (!FileUtils.isSub(dir, root)) {
-				throw new LogicException("localFile.createDir.notInRoot", "文件不在根目录内");
+				throw new LogicException("staticFile.createDir.notInRoot", "文件不在根目录内");
 			}
-			try {
-				createDirectories(dir);
-			} catch (LogicException e) {
-				throw e;
-			} catch (IOException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
+
+			createDirectories(dir);
 		} finally {
 			lock.writeLock().unlock();
-		}
-	}
-
-	protected final class ExHolder {
-		private Exception ex;
-
-		public void setEx(Exception ex) {
-			this.ex = ex;
-		}
-
-		public boolean hasEx() {
-			return ex != null;
-		}
-
-		public Exception getEx() {
-			return ex;
 		}
 	}
 
@@ -889,15 +852,6 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		if (path.length() > MAX_NAME_LENGTH) {
 			throw new LogicException("file.name.toolong", "文件名:" + path + "不能超过" + MAX_NAME_LENGTH + "个字符", path,
 					MAX_NAME_LENGTH);
-		}
-	}
-
-	private boolean invalidatePath(Path path) {
-		try {
-			validatePath(path.toString());
-			return false;
-		} catch (LogicException e) {
-			return true;
 		}
 	}
 
@@ -943,16 +897,6 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
-		Path webRoot = Paths.get(servletContext.getRealPath("/"));
-		// 不能为webapp根目录的子目录
-		if (FileUtils.isSub(root, webRoot)) {
-			throw new SystemException("不能以web项目根目录下的文件作为存储根目录");
-		}
-
-		if (FileUtils.isSub(webRoot, root)) {
-			throw new SystemException("不能以web项目根目录的父目录作为存储根目录");
-		}
-
 		this.setContentNegotiationManager(contentNegotiationManager);
 
 		super.afterPropertiesSet();
@@ -960,15 +904,100 @@ public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestH
 		mapping.registerResourceHttpRequestHandlerMapping("/" + prefix + "/**", this);
 	}
 
-	@Override
-	protected boolean isInvalidPath(String path) {
-		boolean invalid = super.isInvalidPath(path);
-		if (invalid) {
-			// ALLOW
-			if (path.contains("WEB-INF") || path.contains("META-INF")) {
-				return false;
+	/**
+	 * 将文件|文件夹打包成ZIP文件
+	 * 
+	 * @param path
+	 * @param zipPath
+	 */
+	public void packZip(String path, String zipPath) throws LogicException {
+		lock.writeLock().lock();
+
+		try {
+			Path p = byPath(path);
+
+			if (p == this.root) {
+				throw new LogicException("staticFile.zip.root", "根目录不能打包成zip");
 			}
+
+			Path zip = resolve(this.root, validatePath(zipPath + "." + ZIP.toLowerCase()));
+
+			if (!FileUtils.isSub(zip, this.root)) {
+				throw new LogicException("staticFile.zip.notInRoot", "目标位置不在根目录内");
+			}
+
+			List<Path> rollBacks = createDirectories(zip.getParent());
+
+			try {
+				rollBacks.add(Files.createFile(zip));
+			} catch (Exception e) {
+
+				delete(rollBacks);
+
+				if (e instanceof FileAlreadyExistsException) {
+					Path relative = this.root.relativize(zip);
+					throw new LogicException("staticFile.zip.file.exists", "位置" + relative + "已经存在文件");
+				}
+
+				throw new SystemException(e.getMessage(), e);
+			}
+
+			try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(zip));
+					ZipOutputStream zs = new ZipOutputStream(bos)) {
+
+				if (FileUtils.isRegularFile(p)) {
+					ZipEntry zipEntry = new ZipEntry(p.getFileName().toString());
+					putInEntry(zs, zipEntry, p);
+				}
+
+				if (FileUtils.isDirectory(p)) {
+					Files.walk(p).filter(_p -> !FileUtils.isDirectory(_p)).forEach(_p -> {
+						ZipEntry zipEntry = new ZipEntry(p.relativize(_p).toString());
+						try {
+							putInEntry(zs, zipEntry, _p);
+						} catch (IOException e) {
+							throw new SystemException(e.getMessage(), e);
+						}
+					});
+				}
+			} catch (Exception e) {
+				delete(rollBacks);
+
+				if (e instanceof SystemException) {
+					throw (SystemException) e;
+				}
+
+				throw new SystemException(e.getMessage(), e);
+			}
+		} finally {
+			lock.writeLock().unlock();
 		}
-		return invalid;
+
 	}
+
+	private void putInEntry(ZipOutputStream zs, ZipEntry entry, Path _p) throws IOException {
+		zs.putNextEntry(entry);
+		Files.copy(_p, zs);
+		zs.closeEntry();
+	}
+
+	protected final Stream<Path> walk(Path path) {
+		try {
+			return Files.walk(path);
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+	}
+
+	// @Override
+	// protected boolean isInvalidPath(String path) {
+	// boolean invalid = super.isInvalidPath(path);
+	// if (invalid) {
+	// // ALLOW
+	// if (path.contains("WEB-INF") || path.contains("META-INF")) {
+	// return false;
+	// }
+	// }
+	// return invalid;
+	// }
 }

@@ -191,6 +191,5 @@
 				</bean>
 			</list>
 		</property>
-		<property name="pathTemplateRoot" value="/web/template" />
 	</bean>
 </beans>      

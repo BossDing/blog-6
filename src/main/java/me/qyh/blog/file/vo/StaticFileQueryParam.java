@@ -29,7 +29,7 @@ import me.qyh.blog.core.vo.PageQueryParam;
  * @author Administrator
  *
  */
-public class LocalFileQueryParam extends PageQueryParam {
+public class StaticFileQueryParam extends PageQueryParam {
 
 	/**
 	 * 

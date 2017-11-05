@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 qyh.me
+ * Copyright 2017 qyh.me
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.template;
+package me.qyh.blog.file.vo;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
-import org.springframework.web.servlet.AsyncHandlerInterceptor;
+import org.springframework.web.multipart.MultipartFile;
 
-/**
- * <p>
- * 模板拦截器，等效于HandlerInterceptor
- * </p>
- * <p>
- * <b>无法拦截Fragment、非注册PathTemplate，因为它本质上还是基于路径的拦截器</b>
- * </p>
- * 
- * @author mhlx
- * 
- * @since 5.6
- *
- */
-public interface TemplateInterceptor extends AsyncHandlerInterceptor {
-
-	boolean match(String templateName, HttpServletRequest request);
+public class StaticFileUpload {
+	
+	private String path;
+	private List<MultipartFile> files;
+	public String getPath() {
+		return path;
+	}
+	public void setPath(String path) {
+		this.path = path;
+	}
+	public List<MultipartFile> getFiles() {
+		return files;
+	}
+	public void setFiles(List<MultipartFile> files) {
+		this.files = files;
+	}
 
 }

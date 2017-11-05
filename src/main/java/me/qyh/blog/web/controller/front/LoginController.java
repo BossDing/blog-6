@@ -46,11 +46,10 @@ import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.validator.LoginBeanValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LoginBean;
+import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.security.CaptchaValidator;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
-import me.qyh.blog.web.view.TemplateRequestMappingHandlerMapping;
-
 
 @Controller("loginController")
 public class LoginController implements InitializingBean {
@@ -196,11 +195,8 @@ public class LoginController implements InitializingBean {
 
 		if (ga != null) {
 
-			mapping.registerMapping(
-					mapping.createRequestMappingInfoWithConfig(
-							RequestMappingInfo.paths("login/otpVerify").methods(RequestMethod.POST)),
-					"loginController", LoginController.class.getMethod("otpVerify", String.class,
-							HttpServletRequest.class, HttpServletResponse.class));
+			mapping.registerMapping(RequestMappingInfo.paths("login/otpVerify").methods(RequestMethod.POST), "loginController", LoginController.class.getMethod("otpVerify", String.class,
+					HttpServletRequest.class, HttpServletResponse.class));
 		}
 	}
 }

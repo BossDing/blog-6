@@ -24,6 +24,7 @@ import org.thymeleaf.templateresource.ITemplateResource;
 
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.render.ParseContextHolder;
 import me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateResolver.TemplateResource;
@@ -66,7 +67,11 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 					throw new RuntimeLogicException(new Message("template.notCallable", "模板无法被调用"));
 				}
 				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
-				((IEngineContext) context).setVariable("this", template.cloneTemplate());
+				if (template instanceof PreviewTemplate) {
+					((IEngineContext) context).setVariable("this", ((PreviewTemplate)template).getOriginalTemplate().cloneTemplate());
+				} else {
+					((IEngineContext) context).setVariable("this", template.cloneTemplate());
+				}
 			}
 		}
 		super.setContext(context);

@@ -2,7 +2,7 @@
 <html>
 <head th:replace="mgr/base/head :: head('本地文件管理')"></head>
 <body>
-	<nav th:replace="mgr/base/nav :: active('localFiles')"></nav>
+	<nav th:replace="mgr/base/nav :: active('statics')"></nav>
 	<div id="page-wrapper" style="padding: 10px">
 		<div class="container-fluid">
 			<div class="row" th:if="${error != null}">
@@ -27,9 +27,9 @@
 						<div th:remove="tag">
 							<ol class="breadcrumb"
 								th:unless="${#lists.isEmpty(result.paths)}">
-								<li><a th:href="@{/mgr/localFile/index}">根目录</a></li>
+								<li><a th:href="@{/mgr/static/index}">根目录</a></li>
 								<li th:each="path : ${result.paths}"><a
-									th:href="@{/mgr/localFile/index?path=}+${path.path}"
+									th:href="@{/mgr/static/index?path=}+${path.path}"
 									th:title="${path.name}" data-toggle="tooltip"
 									th:text="${#strings.length(path.name) > 5  ? #strings.substring(path.name,0,5)+'...' : path.name}"></a>
 								</li>
@@ -39,7 +39,7 @@
 				</div>
 				<div class="row">
 					<div class="col-md-12">
-						<form style="display: none" th:action="@{/mgr/localFile/index}"
+						<form style="display: none" th:action="@{/mgr/static/index}"
 							id="pageForm">
 							<input type="hidden" th:if="${param.name != null}" th:value="${param.name}" name="name"/>
 							<input type="hidden" th:if="${param.querySubDir != null}" th:value="${param.querySubDir}" name="querySubDir" id="pageFormSubDir"/>
@@ -60,7 +60,7 @@
 											<img
 												th:src="@{/static/fileicon/file.png}" class="img-responsive"
 												style="height: 80px"  th:if="${!file.dir}" />
-											<a th:href="@{/mgr/localFile/index?path=}+${file.path}" th:if="${file.dir}"><img
+											<a th:href="@{/mgr/static/index?path=}+${file.path}" th:if="${file.dir}"><img
 												th:src="@{/static/fileicon/folder.png}" class="img-responsive"
 												style="height: 80px"   /></a>
 											<div class="caption">
@@ -87,11 +87,21 @@
 												<a style="margin-right: 5px" href="###"
 													data-toggle="tooltip" title="解压缩" data-action="unzip"  th:if="${file.is('zip')}"
 													th:data-path="${file.path}" ><span class="glyphicon glyphicon-level-up" aria-hidden="true"></span></a>
+												
+												
+												<a style="margin-right: 5px" href="###"
+													data-toggle="tooltip" title="压缩" data-action="zip" 
+													th:data-path="${file.path}" ><span class="glyphicon glyphicon-compressed" aria-hidden="true"></span></a>
 													
 												<a style="margin-right: 5px"
 													th:if="${!file.dir}"
 													th:href="${file.url}" target="_blank"><span
 													class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>	
+													
+											<a style="margin-right: 5px"
+													th:if="${!file.dir}"
+													th:data-clipboard-text="${file.url}" target="_blank" title="复制访问地址"><span
+													class="glyphicon glyphicon-share-alt" aria-hidden="true"></span></a>			
 											</div>
 										</div>
 									</div>
@@ -128,7 +138,7 @@
 					<div class="container-fluid">
 						<div class="row" style="padding: 5px">
 							<form id="fileupload" class="form-horizontal" autocomplete="off"
-								th:action="@{/mgr/localFile/upload?v=1}" method="POST"
+								th:action="@{/mgr/static/upload?v=1}" method="POST"
 								enctype="multipart/form-data">
 								<div class="fileupload-buttonbar">
 									<div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
@@ -330,6 +340,33 @@
 			</div>
 		</div>
 	</div>
+	<div class="modal fade" id="zipModal" tabindex="-1" role="dialog"
+		aria-labelledby="zipModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="zipModalLabel">压缩</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						  <div class="form-group">
+						    <label>压缩到</label>
+						    <input type="text" class="form-control" placeholder="" name="path" value="">
+						  </div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="zip">压缩</button>
+				</div>
+			</div>
+		</div>
+	</div>
 	
 	<script type="text/javascript"
 		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
@@ -352,8 +389,21 @@
 		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
 	<script
 		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
-		
-	<script type="text/javascript" th:src="@{/static/js/mgr/localFile.js}"></script>
+		<script
+		th:src="@{/static/js/clipboard.min.js}"></script>	
+	<script type="text/javascript" th:src="@{/static/js/mgr/staticFile.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
+	
+	<script>
+	$(function(){
+		var clipboard=new Clipboard('[data-clipboard-text]');
+		clipboard.on('success',function(){
+			bootbox.alert("拷贝成功");
+		});
+		clipboard.on('error',function(){
+			bootbox.alert("拷贝失败");
+		});
+	});
+	</script>
 </body>
 </html>

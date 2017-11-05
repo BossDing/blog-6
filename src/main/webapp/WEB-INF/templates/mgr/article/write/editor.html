@@ -31,6 +31,11 @@
 		<div class="container-fluid">
 			<div class="row" style="margin-top: 10px">
 				<div class="col-md-12">
+					<div class="alert alert-info"><p>当前编辑器：<span th:text="${editor == 'HTML' ? '富文本' : 'MARKDOWN'}"></span>
+					&nbsp;&nbsp;&nbsp;
+					<a th:href="@{/mgr/article/write?editor=}+${editor == 'HTML' ? 'MD' : 'HTML'}" th:text="${editor == 'HTML' ? 'MARKDOWN' : '富文本'}"></a>
+					</p>
+					</div>
 					<div class="form-group">
 						<label>博客标题</label><input type="text" class="form-control"
 							placeholder="博客标题(1-200个字符)" maxlength="200" id="title"

@@ -39,6 +39,8 @@
 						th:href="@{/mgr/lock/sys/index}"> 系统锁管理</a></li>
 					<li th:class="${tag == 'files'}? active:''"><a
 						th:href="@{/mgr/file/index}"> 文件管理</a></li>
+					<li th:class="${tag == 'files'}? active:''"><a
+						th:href="@{/mgr/static/index}"> 静态资源管理</a></li>
 					<li><a th:href="@{/mgr/article/index}"
 						th:class="${tag == 'article'}? active:''"> 文章管理</a></li>
 					<li><a th:href="@{/mgr/comment/uncheck}"
@@ -48,8 +50,6 @@
 						<ul id="tplMgr" class="nav nav-second-level collapse in">
 							<li><a th:class="${tag == 'tpl-page'}? active:''"
 								th:href="@{/mgr/template/page/index}">页面管理</a></li>
-							<li><a th:class="${tag == 'tpl-path'}? active:''"
-								th:href="@{/mgr/template/path/index}">物理文件模板管理</a></li>
 							<li><a th:class="${tag == 'tpl-fragment'}? active:''"
 								th:href="@{/mgr/template/fragment/index}">模板片段管理</a></li>
 							<li><a th:class="${tag == 'tpl-export'}? active:''"

@@ -19,7 +19,7 @@ import me.qyh.blog.comment.vo.CommentStatistics;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.TagDetailStatistics;
 import me.qyh.blog.file.vo.FileStatistics;
-import me.qyh.blog.file.vo.LocalFileStatistics;
+import me.qyh.blog.file.vo.StaticFileStatistics;
 import me.qyh.blog.template.vo.PageStatistics;
 
 public class StatisticsDetail {
@@ -28,7 +28,7 @@ public class StatisticsDetail {
 	private CommentStatistics commentStatistics;
 	private PageStatistics pageStatistics;
 	private FileStatistics fileStatistics;
-	private LocalFileStatistics localFileStatistics;
+	private StaticFileStatistics staticFileStatistics;
 
 	public ArticleDetailStatistics getArticleStatistics() {
 		return articleStatistics;
@@ -70,12 +70,12 @@ public class StatisticsDetail {
 		this.fileStatistics = fileStatistics;
 	}
 
-	public LocalFileStatistics getLocalFileStatistics() {
-		return localFileStatistics;
+	public StaticFileStatistics getStaticFileStatistics() {
+		return staticFileStatistics;
 	}
 
-	public void setLocalFileStatistics(LocalFileStatistics localFileStatistics) {
-		this.localFileStatistics = localFileStatistics;
+	public void setStaticFileStatistics(StaticFileStatistics staticFileStatistics) {
+		this.staticFileStatistics = staticFileStatistics;
 	}
 
 }

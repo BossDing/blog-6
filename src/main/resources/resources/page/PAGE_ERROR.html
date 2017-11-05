@@ -1,3 +1,4 @@
+<redirect url="/" th:if="${error == null}"/>
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,11 +14,11 @@
 	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
 	  <script th:src="@{/static/js/respond.min.js}"></script>
 	<![endif]-->
-<title>200</title>
+<title th:text="${error == null ? '200' : error.code}"></title>
 </head>
 <body>
 	<fragment name="顶部导航" />
-	<div class="container">
+	<div class="container"> 
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3 text">
 				<div th:if="${error != null}" th:remove="tag">
@@ -36,12 +37,5 @@
 
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
-	<script type="text/javascript">
-		$(document).ready(function() {
-			$("#query-btn").click(function() {
-				$("#queryForm").submit();
-			});
-		})
-	</script>
 </body>
 </html>

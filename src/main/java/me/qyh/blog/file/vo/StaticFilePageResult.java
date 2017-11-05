@@ -26,38 +26,38 @@ import me.qyh.blog.core.vo.PageResult;
  * @author Administrator
  *
  */
-public class LocalFilePageResult {
+public class StaticFilePageResult {
 
 	/**
 	 * 文章路径，例如 a-&gt;b-&gt;c
 	 */
-	private List<LocalFile> paths = new ArrayList<>();
-	private PageResult<LocalFile> page;
+	private List<StaticFile> paths = new ArrayList<>();
+	private PageResult<StaticFile> page;
 	
 
-	public LocalFilePageResult() {
+	public StaticFilePageResult() {
 		super();
 	}
 
-	public LocalFilePageResult(List<LocalFile> paths, PageResult<LocalFile> page) {
+	public StaticFilePageResult(List<StaticFile> paths, PageResult<StaticFile> page) {
 		super();
 		this.paths = paths;
 		this.page = page;
 	}
 
-	public List<LocalFile> getPaths() {
+	public List<StaticFile> getPaths() {
 		return paths;
 	}
 
-	public void setPaths(List<LocalFile> paths) {
+	public void setPaths(List<StaticFile> paths) {
 		this.paths = paths;
 	}
 
-	public PageResult<LocalFile> getPage() {
+	public PageResult<StaticFile> getPage() {
 		return page;
 	}
 
-	public void setPage(PageResult<LocalFile> page) {
+	public void setPage(PageResult<StaticFile> page) {
 		this.page = page;
 	}
 

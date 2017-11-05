@@ -25,4 +25,5 @@ public class ErrorController {
 	public String handlerUI() {
 		return "error/ui";
 	}
+
 }

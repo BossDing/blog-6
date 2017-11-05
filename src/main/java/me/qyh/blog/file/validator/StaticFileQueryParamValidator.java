@@ -21,22 +21,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.file.vo.LocalFileQueryParam;
+import me.qyh.blog.file.vo.StaticFileQueryParam;
 
 @Component
-public class LocalFileQueryParamValidator implements Validator {
+public class StaticFileQueryParamValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_EXTENSION_LENGTH = 5;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return LocalFileQueryParam.class.isAssignableFrom(clazz);
+		return StaticFileQueryParam.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		LocalFileQueryParam param = (LocalFileQueryParam) target;
+		StaticFileQueryParam param = (StaticFileQueryParam) target;
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}

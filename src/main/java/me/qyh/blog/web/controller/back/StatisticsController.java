@@ -73,7 +73,7 @@ public class StatisticsController extends BaseMgrController  {
 			detail.setTagStatistics(tagService.queryTagDetailStatistics(space));
 			
 			if(space == null && editablePathResourceHttpRequestHandler != null){
-				detail.setLocalFileStatistics(editablePathResourceHttpRequestHandler.queryFileStatistics());
+				detail.setStaticFileStatistics(editablePathResourceHttpRequestHandler.queryFileStatistics());
 			}
 			
 			model.addAttribute("statistics", detail);

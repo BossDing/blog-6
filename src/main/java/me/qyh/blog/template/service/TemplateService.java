@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.entity.Page;
@@ -32,8 +31,6 @@ import me.qyh.blog.template.vo.ExportPage;
 import me.qyh.blog.template.vo.FragmentQueryParam;
 import me.qyh.blog.template.vo.ImportRecord;
 import me.qyh.blog.template.vo.PageStatistics;
-import me.qyh.blog.template.vo.PathTemplateBean;
-import me.qyh.blog.template.vo.PathTemplateLoadRecord;
 import me.qyh.blog.template.vo.TemplatePageQueryParam;
 
 /**
@@ -189,75 +186,6 @@ public interface TemplateService {
 	 */
 	void compareTemplate(String templateName, Template template, Consumer<Boolean> consumer);
 
-	/**
-	 * 获取物理文件模板服务
-	 * 
-	 * @return
-	 * @throws LogicException
-	 *             服务不可用
-	 */
-	PathTemplateService getPathTemplateService() throws LogicException;
-
-	/**
-	 * 物理文件模板服务
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public interface PathTemplateService {
-
-		/**
-		 * 查询物理文件模版
-		 * 
-		 * @param str
-		 *            {@code String#contains(CharSequence)}
-		 * @return 只读的模版集合
-		 */
-		List<PathTemplate> queryPathTemplates(String str);
-
-		/**
-		 * 刷新路径
-		 * 
-		 * @param path
-		 * @return
-		 */
-		List<PathTemplateLoadRecord> loadPathTemplateFile(String path);
-
-		/**
-		 * 根据模板名获取一个指定的模板
-		 * 
-		 * @return
-		 */
-		Optional<PathTemplate> getPathTemplate(String templateName);
-
-		/**
-		 * 保存|更新 一个物理文件模板
-		 * 
-		 * @param templateBean
-		 * @return
-		 * @throws LogicException
-		 */
-		PathTemplate build(PathTemplateBean templateBean) throws LogicException;
-
-		/**
-		 * 删除一个物理文件模板
-		 * 
-		 * @param path
-		 *            模板路径
-		 * @throws LogicException
-		 *             删除失败|模板不存在
-		 */
-		void deletePathTemplate(String path) throws LogicException;
-
-		/**
-		 * 预览一个页面
-		 * 
-		 * @param bean
-		 * @return 预览preview
-		 * @throws LogicException
-		 */
-		PathTemplate registerPreview(PathTemplateBean bean) throws LogicException;
-	}
 
 	/**
 	 * 注册一个预览页面

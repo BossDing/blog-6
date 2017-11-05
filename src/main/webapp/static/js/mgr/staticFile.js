@@ -113,7 +113,7 @@ $(document).ready(function(){
 					if(result){
 						$.ajax({
 							type : "post",
-							url : basePath+"/mgr/localFile/delete",
+							url : basePath+"/mgr/static/delete",
 							data : {"path":path},
 							success : function(data){
 								if(data.success){
@@ -146,6 +146,10 @@ $(document).ready(function(){
 				$("#unzipModal input[name='path']").val('');
 				$("#unzipModal").modal("show");
 				break;
+			case "zip":
+				$("#zipModal input[name='path']").val('');
+				$("#zipModal").modal("show");
+				break;
 			case "copy":
 				$("#copyModal").modal("show");
 				$("#copyModal input[name='path']").val(current)
@@ -158,7 +162,7 @@ $(document).ready(function(){
 		$("#query").click(function(){
 			var form = "";
 			$("#query-form").remove();
-			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/localFile/index" method="get">';
+			form += '<form id="query-form" style="display:none" action="'+basePath+'/mgr/static/index" method="get">';
 			var name = $.trim($("#query-name").val());
 			if(name != ''){
 				form += '<input type="hidden" name="name" value="'+name+'"/>';
@@ -182,7 +186,7 @@ $(document).ready(function(){
 			var url ;
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/localFile/createFolder",
+				url : basePath+"/mgr/static/createFolder",
 				data : {path:$("#dir-path").val() + '/'+data.path},
 				success : function(data){
 					if(data.success){
@@ -204,7 +208,7 @@ $(document).ready(function(){
 			$("#copy").prop("disabled",true);
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/localFile/copy?path="+current+"&destPath="+$("#copyModal input[name='path']").val(),
+				url : basePath+"/mgr/static/copy?path="+current+"&destPath="+$("#copyModal input[name='path']").val(),
 				data : {},
 				contentType : 'application/json',
 				success : function(data){
@@ -227,7 +231,7 @@ $(document).ready(function(){
 			$("#move").prop("disabled",true);
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/localFile/move?path="+current+"&destPath="+$("#moveModal input[name='path']").val(),
+				url : basePath+"/mgr/static/move?path="+current+"&destPath="+$("#moveModal input[name='path']").val(),
 				data : {},
 				contentType : 'application/json',
 				success : function(data){
@@ -251,7 +255,7 @@ $(document).ready(function(){
 			var data = $("#unzipModal").find("form").serializeObject();
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/localFile/unzip",
+				url : basePath+"/mgr/static/unzip",
 				data : {zipPath:current,path:data.path,deleteAfterSuccessUnzip:$("#deleteAfterSuccessUnzip").is(":checked"),encoding:data.encoding},
 				success : function(data){
 					if(data.success){
@@ -269,6 +273,29 @@ $(document).ready(function(){
 			});
 		});
 		
+		$("#zip").click(function(){
+			$("#zip").prop("disabled",true);
+			var data = $("#zipModal").find("form").serializeObject();
+			$.ajax({
+				type : "post",
+				url : basePath+"/mgr/static/zip",
+				data : {path:current,zipPath:data.path},
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500)
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+					$("#zip").prop("disabled",false);
+				}
+			});
+		});
+		
 		$("#directorySelectModal").on('shown.bs.modal',function(){
 			$("#directorySelectMain").html('');
 			directorySelectQuery();
@@ -282,7 +309,7 @@ $(document).ready(function(){
 			return ;
 		} else {
 			moving = true;
-			$.post(basePath+"/mgr/localFile/move",{"path":current,"destPath":path},function callBack(data){
+			$.post(basePath+"/mgr/static/move",{"path":current,"destPath":path},function callBack(data){
 				moving = false;
 				if(data.success){
 					success(data.message);
