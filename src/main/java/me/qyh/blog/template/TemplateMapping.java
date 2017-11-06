@@ -321,9 +321,8 @@ public class TemplateMapping {
 		public Optional<PreviewTemplate> getPreviewTemplate(String templateName) {
 			lock.writeLock().lock();
 			try {
-				return Optional.empty();
-//				return previewTemplateMap.values().stream()
-//						.filter(template -> template.getTemplateName().equals(templateName)).findAny();
+				return previewTemplateMap.values().stream()
+						.filter(template -> template.getTemplateName().equals(templateName)).findAny();
 			} finally {
 				lock.writeLock().unlock();
 			}
