@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ import me.qyh.blog.core.util.Validators;
  * 一种是没有包含PathVariable，直接匹配的路径，比如 login,一种是包含
  * 通配符的路径，比如space/{alias}，其中第一种路径优先级是最高的，第二种的优先级是最低的
  * </P>
- * 
+ * @since 5.7
  */
 public class TemplateMapping {
 
@@ -246,8 +247,9 @@ public class TemplateMapping {
 	 * </p>
 	 * 
 	 * @param pattern
+	 * @return 是否成功解除注册 ，如果没有对应的映射，返回false
 	 */
-	public void unregister(String uncleanPattern) {
+	public boolean unregister(String uncleanPattern) {
 		Objects.requireNonNull(uncleanPattern);
 		lock.writeLock().lock();
 		try {
@@ -259,12 +261,13 @@ public class TemplateMapping {
 					highestPriorityPatternMap.put(pattern, sysTemplateName);
 				}
 				highestPriorityHolder.setCondition(new PatternsMatchCondition(highestPriorityPatternMap.keySet()));
-			} else {
-				if (patternMap.remove(pattern) != null) {
-					holder.setCondition(new PatternsMatchCondition(patternMap.keySet()));
-				}
+				return true;
+			} 
+			if (patternMap.remove(pattern) != null) {
+				holder.setCondition(new PatternsMatchCondition(patternMap.keySet()));
+				return true;
 			}
-
+			return false;
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -277,34 +280,6 @@ public class TemplateMapping {
 	 */
 	public PreviewTemplateMapping getPreviewTemplateMapping() {
 		return previewTemplateMapping;
-	}
-
-	/**
-	 * 写锁
-	 */
-	public void lockWrite() {
-		lock.writeLock().lock();
-	}
-
-	/**
-	 * 解除写锁
-	 */
-	public void unlockWrite() {
-		lock.writeLock().unlock();
-	}
-
-	/**
-	 * 读锁
-	 */
-	public void lockRead() {
-		lock.readLock().lock();
-	}
-
-	/**
-	 * 解除读锁
-	 */
-	public void unlockRead() {
-		lock.readLock().unlock();
 	}
 
 	public final class PreviewTemplateMapping {
@@ -615,6 +590,14 @@ public class TemplateMapping {
 		return SystemTemplate.isSystemTemplate(templateName) || sysMap.containsKey(pattern)
 				|| !new PatternsMatchCondition(sysMap.keySet()).getMatchingPatterns(pattern).isEmpty()
 				|| pattern.indexOf('{') == -1;
+	}
+
+	/**
+	 * 获取写锁
+	 * @return
+	 */
+	public Lock getLock() {
+		return this.lock.writeLock();
 	}
 
 }

@@ -876,25 +876,27 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private final class PageRequestMappingRegisterHelper {
 
 		private List<Runnable> rollBackActions = new ArrayList<>();
-
+		
 		public PageRequestMappingRegisterHelper() {
 			super();
+			
 			if (!TransactionSynchronizationManager.isSynchronizationActive()) {
 				throw new SystemException(this.getClass().getName() + " 必须处于一个事务中");
 			}
-			// 锁住RequestMapping
-			templateMapping.lockWrite();
+			
+
+			templateMapping.getLock().lock();
 
 			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-
+				
 				@Override
 				public void afterCompletion(int status) {
-					try {
+					try{
 						if (status == STATUS_ROLLED_BACK) {
 							rollback();
 						}
 					} finally {
-						templateMapping.unlockWrite();
+						templateMapping.getLock().unlock();
 					}
 				}
 
@@ -907,7 +909,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 
 			});
-
 		}
 
 		void registerPage(Page page) throws LogicException {
@@ -922,18 +923,24 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		void unregisterPage(Page page) {
 			String path = page.getTemplatePath();
-			templateMapping.unregister(path);
-			rollBackActions.add(() -> templateMapping.forceRegisterTemplateMapping(page.getTemplateName(), path));
+			if(templateMapping.unregister(path)){
+				rollBackActions.add(() -> templateMapping.forceRegisterTemplateMapping(path, page.getTemplateName()));
+			}
 		}
 
 		private void rollback() {
 			if (!rollBackActions.isEmpty()) {
 				for (Runnable act : rollBackActions) {
-					act.run();
+					try{
+						act.run();
+					}catch (Throwable e) {
+						LOGGER.error(e.getMessage(),e);
+					}
 				}
 			}
 		}
 	}
+	
 
 	private final class SpaceDeleteEventListener implements ApplicationListener<SpaceDeleteEvent> {
 

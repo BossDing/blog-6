@@ -198,18 +198,16 @@ public class FileServiceImpl implements FileService, InitializingBean {
 
 	private void deleteImmediatelyIfNeed(String path) throws LogicException {
 		String clean = FileUtils.cleanPath(path);
-		List<FileDelete> deletes;
 		if (clean.isEmpty()) {
-			deletes = fileDeleteDao.selectAll();
-		} else {
-			String rootKey = clean.split("/")[0];
-			deletes = fileDeleteDao.selectChildren(rootKey);
-		}
-		if (deletes.isEmpty()) {
 			return;
 		}
-		for (FileDelete delete : deletes) {
-			deleteFile(delete);
+		String rootKey = clean.split("/")[0];
+		List<FileDelete> children = fileDeleteDao.selectChildren(rootKey);
+		if (children.isEmpty()) {
+			return;
+		}
+		for (FileDelete child : children) {
+			deleteFile(child);
 		}
 	}
 
