@@ -35,9 +35,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.ArticleService;
@@ -48,7 +48,6 @@ import me.qyh.blog.core.validator.ArticleValidator;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
-
 
 /**
  * 、 文章管理控制器
@@ -123,12 +122,26 @@ public class ArticleMgrController extends BaseMgrController {
 		model.addAttribute("spaces", spaces);
 		model.addAttribute("editor", editor.name());
 		model.addAttribute("article", new Article());
+		/**
+		 * @since 2017/12/2
+		 */
+		if (Editor.MD.equals(editor)) {
+			return "mgr/article/write/new_md";
+		}
 		return "mgr/article/write/editor";
 	}
 
 	@GetMapping("write/preview")
 	public String preview() {
 		return "mgr/article/write/preview";
+	}
+
+	/**
+	 * @since 2017/12/2
+	 */
+	@GetMapping("write/mdPreview")
+	public String mdPreview() {
+		return "mgr/article/write/new_preview";
 	}
 
 	@PostMapping("write")
@@ -167,12 +180,21 @@ public class ArticleMgrController extends BaseMgrController {
 		model.addAttribute("article", article);
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		model.addAttribute("editor", article.getEditor().name());
+		/**
+		 * @since 2017/12/2
+		 */
+		if (Editor.MD.equals(article.getEditor())) {
+			return "mgr/article/write/new_md";
+		}
 		return "mgr/article/write/editor";
 	}
 
 	@PostMapping("write/preview")
 	@ResponseBody
-	public JsonResult preview(@RequestBody @Validated Article article) throws LogicException {
+	public JsonResult preview(@RequestBody Article article) throws LogicException {
+		if (article.getEditor() == null || Validators.isEmptyOrNull(article.getContent(), false)) {
+			return new JsonResult(true, "");
+		}
 		articleService.preparePreview(article);
 		return new JsonResult(true, article.getContent());
 	}

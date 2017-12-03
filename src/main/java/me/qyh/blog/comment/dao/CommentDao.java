@@ -176,4 +176,10 @@ public interface CommentDao {
 	 */
 	List<Comment> queryUncheckComments(PageQueryParam param);
 
+	/**
+	 * @param gravatar
+	 * @return
+	 */
+	boolean checkExistsByGravatar(String gravatar);
+
 }

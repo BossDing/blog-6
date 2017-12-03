@@ -332,7 +332,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 		@Override
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
-			ex.printStackTrace();
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_405)));
 			}

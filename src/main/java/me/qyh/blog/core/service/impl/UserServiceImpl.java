@@ -33,13 +33,14 @@ import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.security.BCrypts;
+import me.qyh.blog.core.service.GravatarSearcher;
 import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.LoginBean;
 
 @Service
-public class UserServiceImpl implements UserService, InitializingBean {
+public class UserServiceImpl implements UserService, InitializingBean, GravatarSearcher {
 
 	private static final Path USER_RES_PATH = Constants.CONFIG_DIR.resolve("user.properties");
 
@@ -125,5 +126,10 @@ public class UserServiceImpl implements UserService, InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		load();
+	}
+
+	@Override
+	public boolean contains(String gravatar) {
+		return gravatar != null && gravatar.equals(user.getGravatar());
 	}
 }

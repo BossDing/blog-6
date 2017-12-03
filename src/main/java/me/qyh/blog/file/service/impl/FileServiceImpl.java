@@ -153,12 +153,12 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			throws LogicException {
 		BlogFile blogFile;
 		String originalFilename = file.getOriginalFilename();
-		
+
 		validateSlashPath(originalFilename);
-		
+
 		String ext = FileUtils.getFileExtension(originalFilename);
 		String name = FileUtils.getNameWithoutExtension(originalFilename);
-		String fullname = ext.isEmpty() ? name :  name + "." + ext.toLowerCase();
+		String fullname = ext.isEmpty() ? name : name + "." + ext.toLowerCase();
 
 		BlogFile checked = blogFileDao.selectByParentAndPath(parent, fullname);
 		if (checked != null) {
@@ -327,13 +327,20 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			param.setParentFile(blogFileDao.selectRoot());
 		}
 		param.setPageSize(configServer.getGlobalConfig().getFilePageSize());
-		int count = blogFileDao.selectCount(param);
+
 		List<BlogFile> datas = blogFileDao.selectPage(param);
 		for (BlogFile file : datas) {
 			setExpandedCommonFile(file);
 		}
 
-		PageResult<BlogFile> page = new PageResult<>(param, count, datas);
+		PageResult<BlogFile> page;
+		if (!param.isIgnorePaging()) {
+			int count = blogFileDao.selectCount(param);
+			page = new PageResult<>(param, count, datas);
+		} else {
+			page = new PageResult<>(param, datas.size(), datas);
+		}
+
 		BlogFilePageResult result = new BlogFilePageResult();
 		result.setPage(page);
 		if (paths != null) {
@@ -634,14 +641,19 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		// param.setType(BlogFileType.FILE);
 		param.setQuerySubDir(true);
 
-		int count = blogFileDao.selectCount(param);
 		List<BlogFile> datas = blogFileDao.selectPage(param);
 
 		for (BlogFile file : datas) {
 			setExpandedCommonFile(file);
 		}
 
-		return new PageResult<>(param, count, datas);
+		if (!param.isIgnorePaging()) {
+			int count = blogFileDao.selectCount(param);
+			return new PageResult<>(param, count, datas);
+		} else {
+			return new PageResult<>(param, datas.size(), datas);
+		}
+
 	}
 
 	@Override

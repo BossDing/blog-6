@@ -41,6 +41,12 @@ public class BlogFileQueryParam extends PageQueryParam {
 	private Set<String> extensions = new HashSet<>();
 	private String name;
 
+	/**
+	 * 是否忽略分页
+	 * @since 2017.11.25
+	 */
+	private boolean ignorePaging;
+
 	public Integer getParent() {
 		return parent;
 	}
@@ -87,6 +93,14 @@ public class BlogFileQueryParam extends PageQueryParam {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public boolean isIgnorePaging() {
+		return ignorePaging;
+	}
+
+	public void setIgnorePaging(boolean ignorePaging) {
+		this.ignorePaging = ignorePaging;
 	}
 
 }

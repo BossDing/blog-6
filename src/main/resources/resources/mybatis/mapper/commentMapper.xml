@@ -210,4 +210,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LIMIT #{offset},#{pageSize}
 	</select>
 	
+	<select id="checkExistsByGravatar" resultType="boolean">
+		SELECT EXISTS(SELECT 1 FROM blog_comment WHERE comment_gravatar = #{gravatar})
+	</select>
+	
 </mapper>

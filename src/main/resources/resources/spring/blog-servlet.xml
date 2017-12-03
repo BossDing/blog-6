@@ -74,7 +74,7 @@
 	<bean class="me.qyh.blog.template.render.TemplateRender">
 		<property name="pros">
 			<map>
-				<entry key="gravatarPrefix" value="https://cn.gravatar.com/avatar/" />
+				<entry key="gravatarPrefix" value="http://localhost:8080/nblog/avatar/" />
 			</map>
 		</property>
 	</bean>
@@ -141,10 +141,13 @@
 	</bean>
 
 	<bean class="me.qyh.blog.file.store.local.StaticResourceHttpRequestHandler" />
+	<bean class="me.qyh.blog.file.store.local.GravatarResourceHttpRequestHandler">
+		<constructor-arg index="0" value="/web/file/gravatar" />
+	</bean>
 
 	<bean class="me.qyh.blog.web.WebConfiguration" />
 
 	<bean class="me.qyh.blog.template.TemplateMapping" />
 	<bean class="me.qyh.blog.web.WebExceptionResolver" />
-
+	
 </beans>

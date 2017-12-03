@@ -74,6 +74,7 @@ public class FileMgrController extends BaseMgrController {
 
 	@GetMapping("index")
 	public String index(@Validated BlogFileQueryParam blogFileQueryParam, Model model) {
+		blogFileQueryParam.setIgnorePaging(false);
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
 			model.addAttribute("stores", fileService.allStorableStores());
@@ -94,6 +95,7 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult query(@Validated BlogFileQueryParam blogFileQueryParam) throws LogicException {
 		blogFileQueryParam.setQuerySubDir(false);
+		blogFileQueryParam.setIgnorePaging(false);
 		blogFileQueryParam.setExtensions(new HashSet<>());
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
@@ -124,16 +126,16 @@ public class FileMgrController extends BaseMgrController {
 	public JsonResult pro(@PathVariable("id") int id) throws LogicException {
 		return new JsonResult(true, fileService.getBlogFileProperty(id));
 	}
-	
-	@PostMapping({"{parent}/createFolder","createFolder"})
+
+	@PostMapping({ "{parent}/createFolder", "createFolder" })
 	@ResponseBody
-	public JsonResult createFolder(@PathVariable Optional<Integer> parent,
-			@RequestParam("path") String path) throws LogicException {
-		if(Validators.isEmptyOrNull(path, true)){
+	public JsonResult createFolder(@PathVariable Optional<Integer> parent, @RequestParam("path") String path)
+			throws LogicException {
+		if (Validators.isEmptyOrNull(path, true)) {
 			return new JsonResult(false, new Message("file.create.emptyPath", "文件夹地址不能为空"));
 		}
 		BlogFile blogFile = new BlogFile();
-		parent.ifPresent(_id->{
+		parent.ifPresent(_id -> {
 			BlogFile _parent = new BlogFile();
 			_parent.setId(_id);
 			blogFile.setParent(_parent);
@@ -148,7 +150,7 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult copy(@RequestParam("sourceId") Integer sourceId, @RequestParam("folderPath") String folderPath)
 			throws LogicException {
-		if(Validators.isEmptyOrNull(folderPath, true)){
+		if (Validators.isEmptyOrNull(folderPath, true)) {
 			return new JsonResult(false, new Message("file.copy.emptyFolderPath", "目标文件夹地址不能为空"));
 		}
 		fileService.copy(sourceId, folderPath);
@@ -159,7 +161,7 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult move(@RequestParam("sourceId") Integer sourceId, @RequestParam("destPath") String destPath)
 			throws LogicException {
-		if(Validators.isEmptyOrNull(destPath, true)){
+		if (Validators.isEmptyOrNull(destPath, true)) {
 			return new JsonResult(false, new Message("file.move.emptyDestPath", "目标地址不能为空"));
 		}
 		fileService.move(sourceId, destPath);
@@ -170,10 +172,11 @@ public class FileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult rename(@RequestParam("sourceId") Integer sourceId, @RequestParam("newName") String newName)
 			throws LogicException {
-		if(Validators.isEmptyOrNull(newName, true)){
+		if (Validators.isEmptyOrNull(newName, true)) {
 			return new JsonResult(false, new Message("file.rename.emptyNewName", "新文件名不能为空"));
 		}
 		fileService.rename(sourceId, newName);
 		return new JsonResult(true, new Message("file.rename.success", "重命名	成功"));
 	}
+	
 }

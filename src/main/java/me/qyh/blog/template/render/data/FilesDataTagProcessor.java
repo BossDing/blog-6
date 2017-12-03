@@ -56,6 +56,11 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 		param.setType(attributes.getEnum("type", BlogFileType.class, null));
 
 		/**
+		 * @since 2017.11.25
+		 */
+		param.setIgnorePaging(attributes.getBoolean("ignorePaging", false));
+
+		/**
 		 * @since 5.7
 		 */
 		param.setName(attributes.get("fileName"));

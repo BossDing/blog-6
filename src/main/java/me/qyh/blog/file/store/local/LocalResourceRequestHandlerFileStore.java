@@ -17,9 +17,7 @@ package me.qyh.blog.file.store.local;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,12 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
@@ -65,7 +61,7 @@ import me.qyh.blog.web.security.RequestMatcher;
  * @author mhlx
  *
  */
-public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpRequestHandler implements FileStore {
+public abstract class LocalResourceRequestHandlerFileStore extends _ResourceHttpRequestHandler implements FileStore {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
@@ -185,26 +181,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends ResourceHttpR
 	}
 
 	protected final String getPath(HttpServletRequest request) {
-		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-		if (path == null) {
-			throw new IllegalStateException("Required request attribute '"
-					+ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE + "' is not set");
-		}
-		path = processPath(path);
-		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
-			return null;
-		}
-		if (path.contains("%")) {
-			try {
-				if (isInvalidPath(URLDecoder.decode(path, "UTF-8"))) {
-					return null;
-				}
-			} catch (IllegalArgumentException ex) {
-				// ignore
-			} catch (UnsupportedEncodingException e) {
-				throw new SystemException(e.getMessage(), e);
-			}
-		}
+		String path = super.getPath(request);
 		if (path.startsWith(urlPatternPrefix)) {
 			path = path.substring(urlPatternPrefix.length());
 		}

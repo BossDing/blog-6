@@ -192,7 +192,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				</foreach>
 			</if>
 		ORDER BY file_createDate DESC,id DESC
+		<if test="!ignorePaging">
 		LIMIT #{offset},#{pageSize}
+		</if>
 	</select>
 	
 	<select id="selectRoot" resultMap="BlogFileDetail">
