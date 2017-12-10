@@ -36,6 +36,13 @@
 				<prop key="prepStmtCacheSize">250</prop>
 				<prop key="prepStmtCacheSqlLimit">2048</prop>
 				<prop key="useServerPrepStmts">true</prop>
+				<prop key="useLocalSessionState">true</prop>
+				<prop key="useLocalTransactionState">true</prop>
+				<prop key="rewriteBatchedStatements">true</prop>
+				<prop key="cacheResultSetMetadata">true</prop>
+				<prop key="cacheServerConfiguration">true</prop>
+				<prop key="elideSetAutoCommits">true</prop>
+				<prop key="maintainTimeStats">true</prop>
 			</props>
 		</property>
 	</bean>

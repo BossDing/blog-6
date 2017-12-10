@@ -51,7 +51,6 @@ import org.springframework.core.io.PathResource;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
@@ -76,7 +75,7 @@ import me.qyh.blog.file.vo.UploadedFile;
  * 
  * @since 5.7
  */
-public class EditablePathResourceHttpRequestHandler extends ResourceHttpRequestHandler {
+public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRequestHandler {
 
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 

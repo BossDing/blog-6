@@ -23,24 +23,29 @@ body {
 		    e.preventDefault();
 		});
 		
-		
-		setInterval(function(){
-			var p = false;
-			$("pre").each(function(){
-				var me = $(this);
-				if(me.hasClass('prettyprint prettyprinted'))
-					return true;
-				if(me.find('code').length == 0)
-					 return true;
-				else{
-					p = true;
-					me.addClass("prettyprint");
-				}
-			});
-			if(p)
-				prettyPrint();
-		},500);
 	});
+	
+	function renderCode(){
+		var p = false;
+		$("pre").each(function(){
+			var me = $(this);
+			if(me.hasClass('prettyprint prettyprinted'))
+				return true;
+			if(me.find('code').length == 0)
+				 return true;
+			else{
+				p = true;
+				me.addClass("prettyprint");
+			}
+		});
+		if(p)
+			prettyPrint();
+	}
+	
+	function setPreview(preview){
+		$("#preview").html(preview);
+		renderCode();
+	}
 	
 	function setStyle(style){
 		//清除所有样式
@@ -61,6 +66,7 @@ body {
 			$("#article-content").addClass(style.preview);
 		}
 	}
+	
 	</script>
 </body>
 </html>

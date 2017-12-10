@@ -63,6 +63,7 @@
 .CodeMirror-scroll {
 	padding: 30px;
 	box-sizing: border-box;
+	overflow-x:hidden !important;
 }
 
 .icon {
@@ -304,6 +305,7 @@ z-index: 9999999}
 				$("#mobile-style").remove();
 				$("head").append("<style type='text/css' id='mobile-style'>.icon {font-size: 30px} .CodeMirror-scroll{margin-top:20px}</style>");
 				$(".embed-responsive").css({"margin-top":'30px'}).height($(window).height()-52);
+				$("#out iframe").height($(".embed-responsive").height());
 			} else {
 				autoParse = true;
 				$("#in").css({
@@ -316,8 +318,23 @@ z-index: 9999999}
 				$("#preview-icon").remove();
 				$("#mobile-style").remove();
 				if (editor)
-					render(editor.getValue());
+					render();
 				$(".embed-responsive").height($("#out").height());
+				
+				document.addEventListener('drop', function(e){
+				      e.preventDefault();
+				      e.stopPropagation();
+ 						var file = e.dataTransfer.files[0];
+				      if(file.name.indexOf('.md') == -1){
+				    	  return false;
+				      }
+				      var reader = new FileReader();
+				      reader.onload = function(e){
+				        editor.setValue(e.target.result);
+				      };
+				      reader.readAsText(file);
+				 }, false);
+				
 			}
 		}
 		detect();
@@ -327,6 +344,7 @@ z-index: 9999999}
 			matchBrackets : true,
 			lineWrapping : true,
 			theme : 'base16-light',
+			dragDrop:false,
 		      extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
 		});
 		
@@ -350,12 +368,13 @@ z-index: 9999999}
 		}
 
 		function toPreview() {
-			render(editor.getValue());
+			render();
 			$("#in").hide();
 			$("#out").css({
 				left : '0%'
 			}).show();
 			$(".embed-responsive").css({"margin-top":'30px'}).height($(window).height()-52);
+			$("#out iframe").height($(".embed-responsive").height());
 			$("#editor-icon").remove();
 			$("#preview-icon").remove();
 			$(".icon").hide();
@@ -364,17 +383,15 @@ z-index: 9999999}
 							'<span onclick="toEditor()" class="glyphicon glyphicon-eye-close icon" id="editor-icon" title="取消预览"></span>');
 		}
 		var renderTimer;
-		var render = function(toParse) {
+		var render = function() {
 			if (renderTimer) {
 				clearTimeout(renderTimer);
 			}
 			renderTimer = setTimeout(function() {
-				if (toParse === undefined) {
-					return;
-				}
-
+				var toParse = editor.getValue();
 				$.ajax({
 					type : "post",
+					async:false,
 					url : basePath + '/mgr/article/write/preview',
 					contentType : "application/json",
 					data : JSON.stringify({
@@ -391,7 +408,30 @@ z-index: 9999999}
 						var preview = $("#out iframe").contents().find(
 								'#preview');
 						try {
-							preview.get(0).innerHTML = parsed;
+							
+						 	var out = preview[0];
+					        var old = out.cloneNode(true);
+					        $("#out iframe")[0].contentWindow.setPreview(parsed);
+					        
+					        var allold = old.getElementsByTagName("*");
+					        if (allold === undefined) return;
+
+					        var allnew = out.getElementsByTagName("*");
+					        if (allnew === undefined) return;
+
+					        for (var i = 0, max = Math.max(allold.length, allnew.length); i < max; i++) {
+					            var _old = allold[i];
+					            var _new = allnew[i]
+					            if(_new === undefined){
+					            	//delete
+					            	return ;
+					            }
+					            if(_old === undefined || !_old.isEqualNode(_new)){
+						        	$('#out iframe').contents().scrollTop(allnew[i].offsetTop);
+						        	return ;
+					            }
+					        }
+							
 						} catch (e) {
 							console.log(e);
 						}
@@ -404,11 +444,11 @@ z-index: 9999999}
 		};
 		
 
-		render(editor.getValue());
+		render();
 
 		editor.on('change', function(e) {
 			if (autoParse) {
-				render(e.getValue());
+				render();
 			}
 		});
 

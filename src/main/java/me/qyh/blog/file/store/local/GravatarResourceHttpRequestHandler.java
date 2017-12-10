@@ -31,7 +31,7 @@ import me.qyh.blog.core.util.FileUtils;
  * 用于缓存gravatar头像，用来解决gravatar有时候访问慢的问题
  *
  */
-public class GravatarResourceHttpRequestHandler extends _ResourceHttpRequestHandler {
+public class GravatarResourceHttpRequestHandler extends CustomResourceHttpRequestHandler {
 
 	@Autowired
 	private StaticResourceUrlHandlerMapping mapping;

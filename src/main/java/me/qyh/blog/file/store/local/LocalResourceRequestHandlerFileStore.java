@@ -61,7 +61,7 @@ import me.qyh.blog.web.security.RequestMatcher;
  * @author mhlx
  *
  */
-public abstract class LocalResourceRequestHandlerFileStore extends _ResourceHttpRequestHandler implements FileStore {
+public abstract class LocalResourceRequestHandlerFileStore extends CustomResourceHttpRequestHandler implements FileStore {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 

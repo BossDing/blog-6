@@ -115,8 +115,11 @@ public final class TemplateRender implements InitializingBean {
 			throw new SystemException(e.getMessage(), e);
 
 		} finally {
-			commit();
-			ParseContextHolder.remove();
+			try {
+				commit();
+			} finally {
+				ParseContextHolder.remove();
+			}
 		}
 	}
 

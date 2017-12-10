@@ -82,7 +82,6 @@ public class StaticFileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult query(@Validated StaticFileQueryParam staticFileQueryParam) throws LogicException {
 		checkHandler();
-		staticFileQueryParam.setQuerySubDir(false);
 		staticFileQueryParam.setExtensions(new HashSet<>());
 		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}
