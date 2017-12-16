@@ -17,8 +17,12 @@
 							name="tag" /> <input type="hidden"
 							th:value="${page.param.query}" name="query" /> <input
 							type="hidden" th:value="${page.param.status.name()}"
-							name="status" /> <input type="hidden"
-							value="false" name="highlight" />
+							name="status" /> <input type="hidden" value="false"
+							name="highlight" />
+							<input type="hidden" th:value="${page.param.space.id}"
+							name="space.id" th:if="${page.param.space != null}"/>
+							<input type="hidden"
+							name="space.id" th:if="${page.param.space == null}"/>
 					</form>
 					<div>
 
@@ -47,15 +51,26 @@
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active"
 								id="articleContainer" style="margin-top: 10px">
-								<div class="input-group"
-									th:if="${page.param.status.name() == 'PUBLISHED'}">
-									<input type="text" id="search-input" class="form-control"
-										placeholder="查询" aria-describedby="basic-addon2"
-										th:value="${page.param.query}"> <span
-										class="input-group-addon" id="basic-addon2"><a
-										href="###" id="search-btn"><span
-											class="glyphicon glyphicon-search" aria-hidden="true"></span></a></span>
-								</div>
+								<form class="form-inline" 
+											th:if="${page.param.status.name() == 'PUBLISHED'}">
+									<div class="form-group">
+										<select class="form-control" id="search-space">
+											<option value="" th:attr="selected=${(page.param.space == null || !page.param.space.hasId()) ? null : 'selected'}">全部</option>
+											<option th:attr="selected=${(page.param.space != null && page.param.space.hasId() && page.param.space.id == space.id) ? 'selected' : null}" th:each="space : ${spaces}" th:value="${space.id}" th:text="${space.name}"></option>
+										</select>
+									</div>
+									<div class="form-group">
+										<div class="input-group">
+											<input type="text" id="search-input" class="form-control"
+												placeholder="查询" aria-describedby="basic-addon2"
+												th:value="${page.param.query}"> <span
+												class="input-group-addon" id="basic-addon2"><a
+												href="###" id="search-btn"><span
+													class="glyphicon glyphicon-search" aria-hidden="true"></span></a></span>
+										</div>
+									</div>
+								</form>
+
 								<div class="alert alert-info"
 									th:if="${#lists.isEmpty(page.datas)}" style="margin-top: 10px">当前没有任何博客</div>
 								<div th:unless="${#lists.isEmpty(page.datas)}">
@@ -112,9 +127,10 @@
 														style="margin-left: 10px" title="编辑"
 														th:if="${page.param.status.name() != 'DELETED'}"><span
 															class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
-														<a style="margin-left: 10px" href="###" 
+														<a style="margin-left: 10px" href="###"
 														th:if="${page.param.status.name() == 'PUBLISHED'}"
-														th:data-clipboard-text="${urls.getUrl(article)}" title="拷贝文章访问地址"><span
+														th:data-clipboard-text="${urls.getUrl(article)}"
+														title="拷贝文章访问地址"><span
 															class="glyphicon glyphicon-share-alt" aria-hidden="true"></span></a>
 													</td>
 												</tr>
@@ -140,18 +156,17 @@
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript" th:src="@{/static/js/mgr/article.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
-		<script
-		th:src="@{/static/js/clipboard.min.js}"></script>
+	<script th:src="@{/static/js/clipboard.min.js}"></script>
 	<script>
-	$(function(){
-		var clipboard=new Clipboard('[data-clipboard-text]');
-		clipboard.on('success',function(){
-			bootbox.alert("拷贝成功");
+		$(function() {
+			var clipboard = new Clipboard('[data-clipboard-text]');
+			clipboard.on('success', function() {
+				bootbox.alert("拷贝成功");
+			});
+			clipboard.on('error', function() {
+				bootbox.alert("拷贝失败");
+			});
 		});
-		clipboard.on('error',function(){
-			bootbox.alert("拷贝失败");
-		});
-	});
 	</script>
 </body>
 </html>

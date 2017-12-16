@@ -138,24 +138,11 @@ body {
 					<p>模板片段标签，引用形式为&lt;fragment
 						name=""/&gt;，其中name属性为模板片段名称，在实际的渲染过程中，通过当前空间和模板名称来确定fragment</p>
 
-					<h2>path标签</h2>
-					<p>
-						物理文件模板片段标签，<b>开启物理文件模板之后才可以使用path标签</b>，引用形式为&lt;template:path
-						path=""/&gt;，其中path属性为相对于当前空间的路径
-					</p>
-					<div class="alert alert-warning">
-						<p>1.path标签必须配合template:前缀使用，这是为了防止和svg中的path标签混淆.</p>
-						<p>
-							2.path属性最终指向的物理文件路径为 <b>物理文件主目录的绝对路径+(当前是否访问空间 ？
-								/space/当前访问空间别名/ ：'') + path属性值</b>
-						</p>
-					</div>
-
 					<h2>lock标签</h2>
 					<p>
 						lock标签的引用形式为：&lt;lock id="" /&gt;其中id为锁的id，当解析到lock标签时，如果<b>锁存在并且用户没有登录并且用户没有打开过该锁</b>，那么将会被重定向至解锁页面，解锁成功后方可浏览该页面
 					</p>
-					<div class="alert alert-info">
+					<div class="alert alert-warning">
 						1.一个页面可以有多把锁<br>2.跟redirect标签相同，应该尽可能的让这个标签第一时间被解析
 					</div>
 
@@ -164,12 +151,11 @@ body {
 					<p>引用形式为:&lt;private/&gt;被该标签标记的页面只有登录后才能被浏览，同样也应该让它尽可能的第一时间被解析</p>
 
 					<div class="alert alert-warning">
-						无论是lock标签还是private标签，它们都是决定一个页面被解析时候的行为，而不是决定一个页面的属性，如果在页面允许评论的情况下，哪怕用户没有登录并且无法解开页面的锁，都可以正常评论这个页面，所以这些标签仅仅保护页面内容，而无法保护跟页面关联的东西(例如评论)
+						<b><i>无论是lock标签还是private标签，它们都是决定一个页面被解析时候的行为，而不是决定一个页面的属性，如果在页面允许评论的情况下，哪怕用户没有登录并且无法解开页面的锁，都可以正常评论这个页面，所以这些标签仅仅保护页面内容，而无法保护跟页面关联的东西(例如评论)</i></b>
 					</div>
 
 					<h2>
-						data标签[<a
-							href="data/index.html">查看数据标签</a>]
+						data标签[<a href="data/index.html">查看数据标签</a>]
 					</h2>
 					<p>数据标签是页面获取数据的主要来源，引用形式：&lt;data
 						name="标签名"/&gt;，标签有两个基本的属性，name和dataName，name用来查找标签，dataName用来传递数据，
@@ -185,23 +171,61 @@ body {
 						<a href="https://www.qyh.me/space/life/data/文章日期归档?mode=YMD"
 							target="_blank">https://www.qyh.me/space/life/data/文章日期归档?mode=YMD</a>
 					</p>
-					
-					
-					
+
+
+
 					<h2>MediaType标签</h2>
-					<p>
-						mediaType标签可以用来决定一个路径的资源类型，例如
-						<pre class="prettyprint lang-xml">&lt;mediaType value=&quot;application/json&quot;/&gt;
+					<p>mediaType标签可以用来决定一个路径的资源类型，例如</p>
+					<pre class="prettyprint lang-xml">&lt;mediaType value=&quot;application/json&quot;/&gt;
 &lt;data name=&quot;文章列表&quot; th:query=&quot;${param.query}&quot;/&gt;
 &lt;div th:utext=&quot;${jsons.write(articlePage)}&quot; th:remove=&quot;tag&quot;&gt;
   
 &lt;/div&gt;</pre>
-						将会将文章列表以json形式输出
-					</p>
+					<p>将会将文章列表以json形式输出</p>
 					<div class="alert alert-warning">
-						一个页面可以放置任意多个&lt;mediaType/&gt;标签，但最终以最后一个mediaType标签为准
+						一个页面可以放置任意多个&lt;mediaType/&gt;标签，但最终以最后一个被解析的mediaType标签为准</div>
+
+
+					<h2>时间段访问标签</h2>
+					<p>该标签主要用来限制页面在指定时间段内，后者时间段之外才能被访问，标签的基本访问形式为：&lt;period
+						begin="" end="" include="true"/&gt;，该标签接受以下几个参数：</p>
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>属性</th>
+									<th>可以省略</th>
+									<th>默认值</th>
+									<th>说明</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>begin</td>
+									<td>是</td>
+									<th></th>
+									<td>开始日期(关于可以接受的日期格式，请见<a
+										href="/doc/appendix.html#accpet-datetime" target="_blank">接受的日期格式</a>)
+									</td>
+								</tr>
+								<tr>
+									<td>end</td>
+									<td>是</td>
+									<td></td>
+									<td>结束日期(关于可以接受的日期格式，请见<a
+										href="/doc/appendix.html#accpet-datetime" target="_blank">接受的日期格式</a>,<b>开始日期以及结束日期必须指定一个或者两个才能使标签工作</b>)
+									</td>
+								</tr>
+								<tr>
+									<td>include</td>
+									<td>是</td>
+									<td>true</td>
+									<td>如果为true，则在begin~end时间段内无法访问，否则只能在begin~end时间段内访问</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
-					
+					<p>在不被接受的时间段，页面会被重定向至逻辑错误页面，所以同样应该让该标签第一时间工作</p>
 				</div>
 			</div>
 		</div>

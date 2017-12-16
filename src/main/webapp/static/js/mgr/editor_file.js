@@ -382,27 +382,19 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 
                 if (link === "" || link === "http://" || link === "https://")
                 {
-                	if(editor_mode == "MD"){
-                		editor.replaceSelection("![" + alt + "](" + url + altAttr + ")")
-                	}else{
-                		if(alt == ""){
-                			editor.replaceSelection('<img src="'+url+'" />')
-                		}else{
-                			editor.replaceSelection('<img src="'+url+'" alt="'+alt+'"/>')
-                		}
-                	}
+            		if(alt == ""){
+            			editor.replaceSelection('<img src="'+url+'" />')
+            		}else{
+            			editor.replaceSelection('<img src="'+url+'" alt="'+alt+'"/>')
+            		}
                 }
                 else
                 {
-                	if(editor_mode == "MD"){
-                    	editor.replaceSelection("[![" + alt + "](" + url + altAttr + ")](" + link + altAttr + ")")
-                	}else{
-                		if(alt == ""){
-                			editor.replaceSelection('<a href="'+link+'"><img src="'+url+'"/></a>')
-                		}else{
-                			editor.replaceSelection('<a href="'+link+'"><img src="'+url+'" alt="'+alt+'"/></a>')
-                		}
-                	}
+            		if(alt == ""){
+            			editor.replaceSelection('<a href="'+link+'"><img src="'+url+'"/></a>')
+            		}else{
+            			editor.replaceSelection('<a href="'+link+'"><img src="'+url+'" alt="'+alt+'"/></a>')
+            		}
                 }
 
                 $("#imageModal").modal("hide");
@@ -425,20 +417,11 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
               	  $("#linkModal").modal("hide");return;
                 }
                 
-                var str = "";
-                if(editor_mode == "MD"){
-                	str = "[" + title + "](" + url + " \"" + title + "\")"
-                } else {
-                	str = '<a href="'+url+'">'+title+'</a>';
-                }
+                var str  = '<a href="'+url+'">'+title+'</a>';
                 
                 if (title == "")
                 {
-                	if(editor_mode == "MD"){
-                		 str = "[" + url + "](" + url + ")";
-                	}else{
-                		str = '<a href="'+url+'">'+url+'</a>';
-                	}
+                	str = '<a href="'+url+'">'+url+'</a>';
                 }                                
 
                 editor.replaceSelection(str);

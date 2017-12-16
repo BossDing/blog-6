@@ -4,6 +4,7 @@ var sfq = (function() {
 	var modal = $("#sfqModal");
 	var statusFunctions = [];
 	var data = [];
+	var fileClickFunction;
 	var fileWriteModal = {
 		
 		id:'commonCopyModal',
@@ -86,16 +87,22 @@ var sfq = (function() {
 	
 	modal.on('click',"a[data-file]",function(){
 		var path = $(this).attr('data-file-path');
-		var data;
-		for(var i=0;i<datas.length;i++){
-			if(datas[i].path == path){
-				data = datas[i];
-				break;
+		if(fileClickFunction){
+			if(fileClickFunction(path)){
+				modal.modal('hide');
 			}
-		}
-		if(data){
-			delStatusFunction("fileWriter");
-			fileWriteModal.show(data);
+		} else {
+			var data;
+			for(var i=0;i<datas.length;i++){
+				if(datas[i].path == path){
+					data = datas[i];
+					break;
+				}
+			}
+			if(data){
+				delStatusFunction("fileWriter");
+				fileWriteModal.show(data);
+			}
 		}
 	});
 	
@@ -215,10 +222,12 @@ var sfq = (function() {
 		}
 		modal.modal('show');
 	}
-	
 	return {
 		show:function(){
 			showModal(true);
+		},
+		setFileClickFunction:function(fun){
+			fileClickFunction = fun;
 		}
 	};
 })();

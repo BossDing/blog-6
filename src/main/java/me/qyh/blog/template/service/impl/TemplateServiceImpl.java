@@ -191,7 +191,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 						fragment.getName());
 			}
 			fragmentDao.update(fragment);
-			if (old.getName().endsWith(fragment.getName())) {
+			if (old.getName().equals(fragment.getName())) {
 				evitFragmentCache(old.getName());
 			} else {
 				evitFragmentCache(old.getName(), fragment.getName());
@@ -876,22 +876,21 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private final class PageRequestMappingRegisterHelper {
 
 		private List<Runnable> rollBackActions = new ArrayList<>();
-		
+
 		public PageRequestMappingRegisterHelper() {
 			super();
-			
+
 			if (!TransactionSynchronizationManager.isSynchronizationActive()) {
 				throw new SystemException(this.getClass().getName() + " 必须处于一个事务中");
 			}
-			
 
 			templateMapping.getLock().lock();
 
 			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-				
+
 				@Override
 				public void afterCompletion(int status) {
-					try{
+					try {
 						if (status == STATUS_ROLLED_BACK) {
 							rollback();
 						}
@@ -923,7 +922,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		void unregisterPage(Page page) {
 			String path = page.getTemplatePath();
-			if(templateMapping.unregister(path)){
+			if (templateMapping.unregister(path)) {
 				rollBackActions.add(() -> templateMapping.forceRegisterTemplateMapping(path, page.getTemplateName()));
 			}
 		}
@@ -931,16 +930,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		private void rollback() {
 			if (!rollBackActions.isEmpty()) {
 				for (Runnable act : rollBackActions) {
-					try{
+					try {
 						act.run();
-					}catch (Throwable e) {
-						LOGGER.error(e.getMessage(),e);
+					} catch (Throwable e) {
+						LOGGER.error(e.getMessage(), e);
 					}
 				}
 			}
 		}
 	}
-	
 
 	private final class SpaceDeleteEventListener implements ApplicationListener<SpaceDeleteEvent> {
 

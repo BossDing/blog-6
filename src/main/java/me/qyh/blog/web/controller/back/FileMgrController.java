@@ -178,5 +178,5 @@ public class FileMgrController extends BaseMgrController {
 		fileService.rename(sourceId, newName);
 		return new JsonResult(true, new Message("file.rename.success", "重命名	成功"));
 	}
-	
+
 }

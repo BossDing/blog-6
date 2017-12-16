@@ -348,7 +348,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 			Builder builder = new Builder();
 			Space space = param.getSpace();
-			if (space != null) {
+			if (space != null && space.hasId()) {
 				Query query = new TermQuery(new Term(SPACE_ID, space.getId().toString()));
 				builder.add(query, Occur.MUST);
 			}

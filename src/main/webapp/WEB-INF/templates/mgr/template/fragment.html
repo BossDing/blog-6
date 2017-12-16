@@ -35,7 +35,7 @@
 		<div class="container-fluid">
 			<div class="row" style="margin-bottom: 10px">
 				<div class="col-md-12">
-					<button class="btn btn-default" id="show-create">新建挂件</button>
+					<a class="btn btn-default" th:href="@{/mgr/template/fragment/new}">新建挂件</a>
 					<button class="btn btn-default" data-toggle="modal"
 						data-target="#queryModal">查询</button>
 				</div>
@@ -89,7 +89,7 @@
 										<td><a href="###" style="margin-right: 10px"
 											data-action="remove" th:data-id="${fragment.id}"><span
 												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-											<a href="###" data-action="edit" th:data-id="${fragment.id}"><span
+											<a th:href="@{/mgr/template/fragment/update?id=}+${fragment.id}"><span
 												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
 										</td>
 									</tr>
@@ -109,116 +109,8 @@
 			</div>
 		</div>
 	</div>
-	<div th:replace="base/foot_source"></div>
-
-	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
-	<div class="modal" id="createFragmentModal" tabindex="-1" role="dialog"
-		aria-labelledby="createFragmentModalLabel" data-backdrop="static">
-		<div class="modal-dialog modal-lg" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal"
-						aria-label="Close">
-						<span aria-hidden="true">&times;</span>
-					</button>
-					<h4 class="modal-title" id="createFragmentModalLabel">新挂件</h4>
-				</div>
-				<div class="modal-body">
-					<div class="tip"></div>
-					<form autocomplete="off">
-						<div class="form-group">
-							<label for="name" class="control-label">名称(1~20个字符):</label> <input
-								type="text" class="form-control" name="name">
-						</div>
-						<div class="form-group">
-							<label for="description" class="control-label">描述(0~500个字符):</label>
-							<textarea rows="8" cols="8" class="form-control"
-								name="description"></textarea>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" name="global" value="true" />全局
-							</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" name="callable"
-								value="true" />外部调用 </label>
-						</div>
-						<div class="form-group">
-							<label>空间</label> <select class="form-control" name="space">
-								<option value="">无</option>
-								<option th:each="space : ${spaces}" th:text="${space.name}"
-									th:value="${space.id}"></option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<textarea rows="8" cols="8" class="form-control" id="editor"></textarea>
-						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary" id="createFragment">创建</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-
-	<div class="modal" id="updateFragmentModal" tabindex="-1" role="dialog"
-		aria-labelledby="updateFragmentModalLabel" data-backdrop="static">
-		<div class="modal-dialog modal-lg" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal"
-						aria-label="Close">
-						<span aria-hidden="true">&times;</span>
-					</button>
-					<h4 class="modal-title" id="updateFragmentModalLabel">挂件更新</h4>
-				</div>
-				<div class="modal-body">
-					<div class="tip"></div>
-					<form autocomplete="off">
-						<div class="form-group">
-							<input type="hidden" class="form-control" name="id"> <label
-								for="name" class="control-label">名称(1~20个字符):</label> <input
-								type="text" class="form-control" name="name">
-						</div>
-						<div class="form-group">
-							<label for="description" class="control-label">描述(0~500个字符):</label>
-							<textarea rows="8" cols="8" class="form-control"
-								name="description"></textarea>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" name="global" value="true" />全局
-							</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" name="callable"
-								value="true" />外部调用 </label>
-						</div>
-						<div class="form-group">
-							<label>空间</label> <select class="form-control" name="space">
-								<option value="">无</option>
-								<option th:each="space : ${spaces}" th:text="${space.name}"
-									th:value="${space.id}"></option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label for="description" class="control-label">模板(0~20000个字符):</label>
-							<textarea rows="8" cols="8" class="form-control" id="upeditor"></textarea>
-						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary" id="updateFragment">更新</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-
+	
+	
 	<div class="modal " id="queryModal" tabindex="-1" role="dialog"
 		aria-labelledby="queryModalLabel">
 		<div class="modal-dialog" role="document">
@@ -268,8 +160,9 @@
 				</div>
 			</div>
 		</div>
-
-		<div th:replace="mgr/template/source"></div>
-		<script th:src="@{/static/js/mgr/fragment.js}"></script>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
+	<script th:src="@{/static/js/mgr/fragment.js}"></script>
 </body>
 </html>

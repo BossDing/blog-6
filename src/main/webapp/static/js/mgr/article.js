@@ -152,6 +152,7 @@ $(document).ready(function() {
 		$("#pageForm").find(
 				"input[name='currentPage']")
 				.val(1);
-		$("#pageForm").find("input[name='query']").val($("#search-input").val())
+		$("#pageForm").find("input[name='query']").val($("#search-input").val());
+		$("#pageForm").find("input[name='space.id']").val($("#search-space").val());
 		$("#pageForm").submit();
 	}	

@@ -130,7 +130,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		LEFT OUTER JOIN blog_space sp
 		ON art.space_id = sp.id
 		<where>
-			<if test="space != null">
+			<if test="space != null and space.hasId()">
 				art.space_id = #{space.id}
 			</if>
 			<if test="!queryPrivate">
@@ -198,7 +198,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		bt ON bat.tag_id =
 		bt.id
 		<where>
-			<if test="space != null">
+			<if test="space != null and space.hasId()">
 				art.space_id = #{space.id}
 			</if>
 			<if test="!queryPrivate">
