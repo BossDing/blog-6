@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
@@ -25,10 +26,16 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 		try {
 			super.handleRequest(request, response);
 		} catch (IOException e) {
-			// 忽略这个异常，因为文件有可能在被操作！
-			logger.debug(e.getMessage(), e);
-			//返回404(可能。。。。)
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			if (!response.isCommitted()) {
+				Resource res = super.getResource(request);
+				if (res == null || !res.exists()) {
+					response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				} else {
+					logger.debug(e.getMessage(), e);
+					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				}
+			}
+
 			return;
 		}
 	}

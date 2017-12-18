@@ -218,11 +218,6 @@ $(document).ready(function() {
 	}
 	
 	
-	function save() {
-		
-	}
-	
-	
 	var fragment_storage = (function() {
 		
 		var current_tpl;
@@ -357,12 +352,15 @@ $(document).ready(function() {
 			success : function(data) {
 				if (data.success) {
 					bootbox.alert("保存成功");
-					fragment_storage.removeCurrent();
-					if(isSave){
-						$("#fragmentId").val(data.data.id);
-						$("#fragmentKey").val("fragment_"+data.data.id)
-					}
-					$("#previewModal").modal('hide');
+//					fragment_storage.removeCurrent();
+//					if(isSave){
+//						$("#fragmentId").val(data.data.id);
+//						$("#fragmentKey").val("fragment_"+data.data.id)
+//					}
+//					$("#previewModal").modal('hide');
+					setTimeout(function(){
+						window.location.href = rootPath + '/mgr/template/fragment/index';
+					},500)
 				} else {
 					bootbox.alert(data.message);
 				}

@@ -21,7 +21,6 @@ import java.util.Arrays;
 
 import me.qyh.blog.core.util.FileUtils;
 
-
 /**
  * 图片辅助类，用来处理图片格式的转化，缩放以及图片的读取
  * 
@@ -40,8 +39,8 @@ public abstract class ImageHelper {
 
 	/**
 	 * <p>
-	 * 用来指定缩放后的文件信息,如果指定了纵横比但同时指定了缩略图宽度和高度，将会以宽度或者长度为准(具体图片不同),如果只希望将长度(或宽度进行缩放)
-	 * ， 那么只要将另一个长度置位 <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/>
+	 * 用来指定缩放后的文件信息,如果指定了纵横比但同时指定了缩略图宽度和高度，将会以宽度或者长度为准(具体图片不同),如果只希望将长度(或宽度进行缩放) ，
+	 * 那么只要将另一个长度置位 <=0就可以了 如果不保持纵横比同时没有指定宽度和高度(都<=0)将返回原图链接<br/>
 	 * <strong>总是缩放(即比原图小)</strong>
 	 * </p>
 	 * 
@@ -212,7 +211,11 @@ public abstract class ImageHelper {
 	 * @return
 	 */
 	public static boolean isSystemAllowedImage(String ext) {
-		return ext != null && Arrays.stream(ALLOWED_IMG_EXTENSIONS).anyMatch(ext::equalsIgnoreCase);
+		if (ext != null) {
+			String lower = ext.toLowerCase();
+			return Arrays.stream(ALLOWED_IMG_EXTENSIONS).anyMatch(lower::equals);
+		}
+		return false;
 	}
 
 	public void formatCheck(String extension) throws IOException {

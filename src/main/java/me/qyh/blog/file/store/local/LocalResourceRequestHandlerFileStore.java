@@ -61,7 +61,8 @@ import me.qyh.blog.web.security.RequestMatcher;
  * @author mhlx
  *
  */
-public abstract class LocalResourceRequestHandlerFileStore extends CustomResourceHttpRequestHandler implements FileStore {
+public abstract class LocalResourceRequestHandlerFileStore extends CustomResourceHttpRequestHandler
+		implements FileStore {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LocalResourceRequestHandlerFileStore.class);
 
@@ -233,7 +234,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 
 	protected Optional<Path> getFile(String oldPath) {
 		Path p = FileUtils.sub(absFolder, oldPath);
-		if (FileUtils.exists(p) && FileUtils.isRegularFile(p)) {
+		if (FileUtils.isRegularFile(p)) {
 			return Optional.of(p);
 		}
 		return Optional.empty();
