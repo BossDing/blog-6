@@ -10,6 +10,13 @@ body {
 	background: #ffff00
 }
 
-.lucene-highlight-summary{
+.lucene-highlight-summary {
 	background: #80ff00
+}
+
+.tooltip-inner {
+	background-color: black;
+	word-wrap: break-word;
+	text-align: left;
+	white-space: pre-line;
 }

@@ -23,12 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -68,9 +63,6 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 
 	private ResizeValidator resizeValidator;
 
-	@Autowired
-	protected ImageHelper imageHelper;
-
 	private boolean supportWebp;
 
 	private String thumbAbsPath;
@@ -80,16 +72,11 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 	protected Resize middleResize;
 	protected Resize largeResize;
 
-	private final Semaphore semaphore;
-	private final Map<String, Resizer> resizeMap = new ConcurrentHashMap<>();
-
-	public ThumbnailSupport(String urlPatternPrefix, int semaphoreNum) {
-		super(urlPatternPrefix);
-		this.semaphore = new Semaphore(semaphoreNum);
-	}
+	@Autowired
+	protected Thumbnailator thumbnailator;
 
 	public ThumbnailSupport(String urlPatternPrefix) {
-		this(urlPatternPrefix, 5);
+		super(urlPatternPrefix);
 	}
 
 	@Override
@@ -193,11 +180,10 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 				poster = local;
 			} else {
 				poster = file.getParent().resolve(FileUtils.getNameWithoutExtension(local.getFileName().toString()) +
-				// e外加个@符号，防止跟缩略图文件冲突
+				// 外加个@符号，防止跟缩略图文件冲突
 						"@." + ImageHelper.PNG);
 
 				if (!FileUtils.exists(poster)) {
-					System.out.println("not exists..." + poster);
 					try {
 						extraPoster(local, poster);
 					} catch (Exception e) {
@@ -212,7 +198,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 			}
 
 			try {
-				doResize(poster, resize, file);
+				thumbnailator.doResize(poster, resize, file);
 				return FileUtils.exists(file) ? Optional.of(new PathResource(file)) : Optional.empty();
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -309,7 +295,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 		super.setLocations(
 				Arrays.asList(new PathResource(Paths.get(thumbAbsPath)), new PathResource(Paths.get(absPath))));
 
-		if (!imageHelper.supportWebp()) {
+		if (!thumbnailator.supportWebp()) {
 			supportWebp = false;
 		}
 
@@ -332,25 +318,6 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 		Path thumbDir = FileUtils.sub(thumbAbsFolder, southPath);
 		String name = new File(path).getName();
 		return FileUtils.sub(thumbDir, name);
-	}
-
-	protected void doResize(Path local, Resize resize, Path thumb) throws IOException {
-		if (FileUtils.exists(thumb)) {
-			return;
-		}
-		String resizeKey = local.toString() + '@' + resize.toString();
-		if (resizeMap.putIfAbsent(resizeKey, new Resizer(thumb, local, resize)) == null) {
-			try {
-				resizeMap.get(resizeKey).resize();
-			} finally {
-				resizeMap.remove(resizeKey);
-			}
-		} else {
-			Resizer resizer = resizeMap.get(resizeKey);
-			if (resizer != null) {
-				resizer.resize();
-			}
-		}
 	}
 
 	protected boolean supportWebp(HttpServletRequest request) {
@@ -462,47 +429,6 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 		return Optional.empty();
 	}
 
-	private final class Resizer {
-
-		private AtomicBoolean resized = new AtomicBoolean(false);
-		private CountDownLatch latch = new CountDownLatch(1);
-		private Path thumb;
-		private Path local;
-		private Resize resize;
-
-		public Resizer(Path thumb, Path local, Resize resize) {
-			super();
-			this.thumb = thumb;
-			this.local = local;
-			this.resize = resize;
-		}
-
-		public void resize() throws IOException {
-			if (resized.compareAndSet(false, true)) {
-				try {
-					semaphore.acquire();
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					throw new SystemException(e.getMessage(), e);
-				}
-				try {
-					FileUtils.forceMkdir(thumb.getParent());
-					imageHelper.resize(resize, local, thumb);
-				} finally {
-					semaphore.release();
-					latch.countDown();
-				}
-			} else {
-				try {
-					latch.await();
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					throw new SystemException(e.getMessage(), e);
-				}
-			}
-		}
-	}
-
 	protected Path getPoster(String key) {
 		Path thumbRoot = FileUtils.sub(thumbAbsFolder, key);
 		String name = FileUtils.getNameWithoutExtension(key);
@@ -511,10 +437,6 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 
 	public void setThumbAbsPath(String thumbAbsPath) {
 		this.thumbAbsPath = thumbAbsPath;
-	}
-
-	public void setImageHelper(ImageHelper imageHelper) {
-		this.imageHelper = imageHelper;
 	}
 
 	public void setResizeValidator(ResizeValidator resizeValidator) {
@@ -535,5 +457,9 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 
 	public void setLargeResize(Resize largeResize) {
 		this.largeResize = largeResize;
+	}
+
+	protected final ImageHelper getImageHelper() {
+		return thumbnailator.getImageHelper();
 	}
 }

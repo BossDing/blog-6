@@ -1,4 +1,4 @@
-<redirect url="/" th:if="${error == null}"/>
+<redirect url="/" th:if="${errorInfo == null}" />
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,21 +14,21 @@
 	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
 	  <script th:src="@{/static/js/respond.min.js}"></script>
 	<![endif]-->
-<title th:text="${error == null ? '200' : error.code}"></title>
+<title th:text="${errorInfo == null ? '200' : errorInfo.code}"></title>
 </head>
 <body>
 	<fragment name="顶部导航" />
-	<div class="container"> 
+	<div class="container">
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3 text">
-				<div th:if="${error != null}" th:remove="tag">
-					<div class="alert alert-info" th:if="${error.code == 200}"
-						th:text="${messages.getMessage(error.message)}">&nbsp;</div>
-					<div class="alert alert-danger" th:if="${error.code == 500}"
-						th:text="${messages.getMessage(error.message)}">&nbsp;</div>
+				<div th:if="${errorInfo != null}" th:remove="tag">
+					<div class="alert alert-info" th:if="${errorInfo.code == 200}"
+						th:text="${messages.getMessage(errorInfo.message)}">&nbsp;</div>
+					<div class="alert alert-danger" th:if="${errorInfo.code == 500}"
+						th:text="${messages.getMessage(errorInfo.message)}">&nbsp;</div>
 					<div class="alert alert-warning"
-						th:if="${error.code > 200 && error.code < 500}"
-						th:text="${messages.getMessage(error.message)}">&nbsp;</div>
+						th:if="${errorInfo.code > 200 && errorInfo.code < 500}"
+						th:text="${messages.getMessage(errorInfo.message)}">&nbsp;</div>
 				</div>
 			</div>
 		</div>

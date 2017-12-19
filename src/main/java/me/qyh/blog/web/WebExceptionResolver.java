@@ -61,19 +61,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	@Autowired
 	private UrlHelper urlHelper;
 
-	/**
-	 * tomcat client abort exception <br>
-	 * 绝大部分不用记录这个异常，所以额外判断一下
-	 */
-	private static Class<?> clientAbortExceptionClass;
-
-	static {
-		try {
-			clientAbortExceptionClass = Class.forName("org.apache.catalina.connector.ClientAbortException");
-		} catch (ClassNotFoundException e) {
-		}
-	}
-
 	private static final Message ERROR_400 = new Message("error.400", "请求异常");
 	private static final Message ERROR_403 = new Message("error.403", "权限不足");
 	private static final Message ERROR_404 = new Message("error.404", "请求不存在");
@@ -111,10 +98,11 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			}
 		}
 
-		if (clientAbortExceptionClass == null
-				|| !ExceptionUtils.getFromChain(ex, clientAbortExceptionClass).isPresent()) {
-			LOGGER.error(ex.getMessage(), ex);
+		if (!Webs.isClientAbortException(ex)) {
+			String url = UrlUtils.buildFullRequestUrl(request);
+			LOGGER.error("[" + url + "]" + ex.getMessage(), ex);
 		}
+
 		if (response.isCommitted()) {
 			return new ModelAndView();
 		}
@@ -244,6 +232,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ex.getLogicMessage())));
 			}
+
 			return getErrorForward(request, new ErrorInfo(ex.getLogicMessage(), 200));
 		}
 
@@ -470,9 +459,17 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error) {
 		Map<String, Object> model = new HashMap<>();
+
 		if (error != null) {
-			model.put(Constants.ERROR, error);
+			/**
+			 * 这里将key改名为errorInfo，因为在RequesetContextUtils.getInputFlashMap 中存在名为error的key时
+			 * 错误页面解析时，${error}表达式获取的是Message而不是这边的ErrorInfo
+			 * 
+			 * @since 2017/12/19
+			 */
+			model.put("errorInfo", error);
 		}
+
 		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=
 		// null来判断
 		// 因为如果空间是私人的，这里会造成循坏重定向

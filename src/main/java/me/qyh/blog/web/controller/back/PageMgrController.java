@@ -104,7 +104,7 @@ public class PageMgrController extends BaseMgrController {
 		Optional<Page> optional = templateService.queryPage(id);
 		if (!optional.isPresent()) {
 			ra.addFlashAttribute(Constants.ERROR, new Message("page.user.notExists", "自定义页面不存在"));
-			return "redirect:/mgr/template/page";
+			return "redirect:/mgr/template/page/index";
 		}
 		Page page = optional.get();
 		model.addAttribute("page", page);

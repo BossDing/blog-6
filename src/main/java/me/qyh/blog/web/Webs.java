@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.vo.JsonResult;
@@ -39,8 +40,32 @@ public class Webs {
 
 	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
 
+	/**
+	 * tomcat client abort exception <br>
+	 * 绝大部分不用记录这个异常，所以额外判断一下
+	 */
+	private static Class<?> clientAbortExceptionClass;
+
+	static {
+		try {
+			clientAbortExceptionClass = Class.forName("org.apache.catalina.connector.ClientAbortException");
+		} catch (ClassNotFoundException e) {
+		}
+	}
+
 	private Webs() {
 
+	}
+
+	/**
+	 * 是否是tomcat client abort exception
+	 * 
+	 * @param ex
+	 * @return
+	 */
+	public static boolean isClientAbortException(Throwable ex) {
+		return clientAbortExceptionClass != null
+				&& ExceptionUtils.getFromChain(ex, clientAbortExceptionClass).isPresent();
 	}
 
 	/**

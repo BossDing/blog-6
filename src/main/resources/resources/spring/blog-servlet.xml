@@ -84,8 +84,6 @@
 		class="me.qyh.blog.template.render.thymeleaf.ThymleafTemplateExceptionTransalater" />
 
 	<bean class="me.qyh.blog.file.store.local.ImageResourceStore" parent="thumbnailSupport">
-		<constructor-arg value="image" index="0" />
-		<constructor-arg value="2" index="1" type="int" />
 		<property name="absPath" value="/web/file/blog_image/" />
 		<property name="id" value="1" />
 		<property name="thumbAbsPath" value="/web/file/blog_image_thumb" />
@@ -100,6 +98,8 @@
 		<property name="thumbAbsPath" value="/web/file/blog_video_thumb" />
 		<property name="name" value="视频存储" />
 	</bean>
+	
+	<bean class="me.qyh.blog.file.store.local.Thumbnailator"/>
 	
 	<bean id="thumbnailSupport" class="me.qyh.blog.file.store.local.ThumbnailSupport" abstract="true">
 		<property name="supportWebp" value="true" />

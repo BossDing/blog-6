@@ -47,12 +47,8 @@ public class ImageResourceStore extends ThumbnailSupport {
 	 */
 	private boolean sourceProtected;
 
-	public ImageResourceStore(String urlPatternPrefix, int semaphoreNum) {
-		super(urlPatternPrefix, semaphoreNum);
-	}
-
 	public ImageResourceStore(String urlPatternPrefix) {
-		this(urlPatternPrefix, 5);
+		super(urlPatternPrefix);
 	}
 
 	public ImageResourceStore() {
@@ -94,7 +90,7 @@ public class ImageResourceStore extends ThumbnailSupport {
 
 	private ImageInfo readImage(Path tmp) throws LogicException {
 		try {
-			return imageHelper.read(tmp);
+			return getImageHelper().read(tmp);
 		} catch (IOException e) {
 			logger.debug(e.getMessage(), e);
 			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");

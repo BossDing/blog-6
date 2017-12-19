@@ -16,6 +16,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.web.Webs;
 
 public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler {
 	private static final Logger logger = LoggerFactory.getLogger(CustomResourceHttpRequestHandler.class);
@@ -26,7 +27,8 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 		try {
 			super.handleRequest(request, response);
 		} catch (IOException e) {
-			if (!response.isCommitted()) {
+
+			if (!response.isCommitted() && !Webs.isClientAbortException(e)) {
 				Resource res = super.getResource(request);
 				if (res == null || !res.exists()) {
 					response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -34,9 +36,8 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 					logger.debug(e.getMessage(), e);
 					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 				}
-			}
 
-			return;
+			}
 		}
 	}
 
