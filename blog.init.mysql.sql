@@ -39,7 +39,6 @@ CREATE TABLE `blog_article` (
   `art_lock` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `art_alias` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `allowComment` tinyint(1) NOT NULL DEFAULT '1',
-  `processable` tinyint(1) NOT NULL DEFAULT '0',
   `feature_image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `alias_index` (`art_alias`)
@@ -184,22 +183,6 @@ CREATE TABLE `blog_lock` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `blog_page_lock`
---
-
-DROP TABLE IF EXISTS `blog_page_lock`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `blog_page_lock` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `space_id` int(11) DEFAULT NULL,
-  `page_tpl` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `page_locktype` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `blog_page_user`
 --
 
@@ -264,4 +247,4 @@ CREATE TABLE `blog_tag` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-12-21 15:27:13
+-- Dump completed on 2017-12-21 16:13:33
