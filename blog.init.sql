@@ -100,14 +100,6 @@ CREATE TABLE IF NOT EXISTS `blog_lock` (
   PRIMARY KEY (`id`)
 ) ;
 
-CREATE TABLE  IF NOT EXISTS `blog_page_sys` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `space_id` int(11) DEFAULT NULL,
-  `page_tpl` mediumtext  NOT NULL,
-  `page_target` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-);
-
 CREATE TABLE IF NOT EXISTS `blog_page_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `page_tpl` mediumtext  NOT NULL,
