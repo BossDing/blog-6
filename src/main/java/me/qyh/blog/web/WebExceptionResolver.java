@@ -27,6 +27,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -461,13 +462,12 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		Map<String, Object> model = new HashMap<>();
 
 		if (error != null) {
+
 			/**
-			 * 这里将key改名为errorInfo，因为在RequesetContextUtils.getInputFlashMap 中存在名为error的key时
-			 * 错误页面解析时，${error}表达式获取的是Message而不是这边的ErrorInfo
-			 * 
-			 * @since 2017/12/19
+			 * 如果仍然包含重定向参数，防止和error冲突
 			 */
-			model.put("errorInfo", error);
+			request.removeAttribute(DispatcherServlet.INPUT_FLASH_MAP_ATTRIBUTE);
+			model.put(Constants.ERROR, error);
 		}
 
 		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=

@@ -308,6 +308,7 @@ z-index: 9999999}
 	<script type="text/javascript" th:src="@{/static/js/mgr/md_file.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/emoji.js}"></script>
+	<script th:src="@{/static/js/modal.js}"></script>
 	<script type="text/javascript">
 	
 		var autoParse = true;
@@ -361,8 +362,11 @@ z-index: 9999999}
 			lineWrapping : true,
 			theme : 'base16-light',
 			dragDrop:false,
-		      extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
+		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
 		});
+		
+		CodeMirror.keyMap.default["Shift-Tab"] = "indentLess";
+		CodeMirror.keyMap.default["Tab"] = "indentMore";
 		
 		emoji.setClick(function(emoji){
 			editor.replaceSelection(emoji);
