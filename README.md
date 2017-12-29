@@ -3,7 +3,7 @@
 
 一个重型博客，采用spring mybatis thymeleaf开发
 
-当前版本: **maintance**
+当前版本: **5.8**
 
 特性：
 
