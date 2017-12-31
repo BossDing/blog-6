@@ -31,11 +31,13 @@
 							<th>模板名</th>
 							<th>行号</th>
 							<th>列号</th>
+							<th>错误信息</th>
 						</tr>
 						<tr th:each="info : ${description.templateErrorInfos}">
 							<td th:text="${info.templateName}"></td>
 							<td th:text="${info.line}"></td>
 							<td th:text="${info.col}"></td>
+							<td th:text="${info.errorMsg == null ? '-' : info.errorMsg}"></td>
 						</tr>
 					</table>
 				</div>

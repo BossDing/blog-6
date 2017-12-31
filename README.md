@@ -3,7 +3,7 @@
 
 一个重型博客，采用spring mybatis thymeleaf开发
 
-当前版本: **5.8**
+当前版本: **5.9 dev**
 
 特性：
 
@@ -41,13 +41,17 @@
 ...
 
 ## upgrade  
-5.6    
+5.9    
 1.
 ``` sql
-alter table blog_comment modify(alter) column module_type varchar(50) not null;
-update blog_comment set module_type = 'article' where module_type = '0';
-update blog_comment set module_type = 'userpage' where module_type = '1';
+CREATE TABLE IF NOT EXISTS blog_history_template (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `template_name` varchar(255) NOT NULL,
+  `template_tpl` mediumtext NOT NULL,
+  `template_time` datetime NOT NULL,
+  `remark` varchar(500) NOT NULL,
+  PRIMARY KEY (`id`)
+);
 ```
-2.包结构变更
 
 

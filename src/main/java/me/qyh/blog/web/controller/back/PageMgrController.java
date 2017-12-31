@@ -24,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -131,5 +132,23 @@ public class PageMgrController extends BaseMgrController {
 	public JsonResult delete(@RequestParam("id") Integer id) throws LogicException {
 		templateService.deletePage(id);
 		return new JsonResult(true, new Message("page.user.delete.success", "删除成功"));
+	}
+
+	@GetMapping("{id}/history")
+	@ResponseBody
+	public JsonResult getHistory(@PathVariable("id") Integer id) {
+		return new JsonResult(true, templateService.queryPageHistory(id));
+	}
+
+	@PostMapping("{id}/saveHistory")
+	@ResponseBody
+	public JsonResult saveHistory(@PathVariable("id") Integer id, @RequestParam("remark") String remark)
+			throws LogicException {
+		Optional<Message> optionalError = HistoryTemplateController.validRemark(remark);
+		if (optionalError.isPresent()) {
+			return new JsonResult(false, optionalError.get());
+		}
+		templateService.savePageHistory(id, remark);
+		return new JsonResult(true, new Message("historyTemplate.save.success", "保存成功"));
 	}
 }

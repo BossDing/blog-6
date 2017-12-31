@@ -58,11 +58,18 @@ public class TemplateRenderErrorDescription implements Serializable {
 		private final Integer line;
 		private final Integer col;
 
-		public TemplateErrorInfo(String templateName, Integer line, Integer col) {
+		private final String errorMsg;
+
+		public TemplateErrorInfo(String templateName, Integer line, Integer col, String errorMsg) {
 			super();
 			this.templateName = templateName;
 			this.line = line;
 			this.col = col;
+			this.errorMsg = errorMsg;
+		}
+
+		public TemplateErrorInfo(String templateName, Integer line, Integer col) {
+			this(templateName, line, col, null);
 		}
 
 		public String getTemplateName() {
@@ -75,6 +82,10 @@ public class TemplateRenderErrorDescription implements Serializable {
 
 		public Integer getCol() {
 			return col;
+		}
+
+		public String getErrorMsg() {
+			return errorMsg;
 		}
 
 	}

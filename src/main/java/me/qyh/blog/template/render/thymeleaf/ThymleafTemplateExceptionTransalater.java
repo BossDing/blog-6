@@ -68,8 +68,9 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 				String templateName2 = templateProcessingException.getTemplateName();
 				if (!Validators.isEmptyOrNull(templateName2, true)) {
 					templateName2 = parseTemplateName(templateName2);
-					description.addTemplateErrorInfos(new TemplateErrorInfo(templateName2,
-							templateProcessingException.getLine(), templateProcessingException.getCol()));
+					description.addTemplateErrorInfos(
+							new TemplateErrorInfo(templateName2, templateProcessingException.getLine(),
+									templateProcessingException.getCol(), th.getMessage()));
 					last = templateProcessingException;
 				}
 			}

@@ -35,7 +35,6 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.EscapedAttributeUtils;
 
 /**
- * 用来处理动态属性
  * 
  * @author mhlx
  *
@@ -51,7 +50,6 @@ abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor
 	}
 
 	/**
-	 * 动态解析将th:开头的属性
 	 * 
 	 * @param context
 	 * @param tag
@@ -88,41 +86,38 @@ abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor
 				return;
 			}
 
-			/*
-			 * Obtain the parser
-			 */
 			final IStandardExpressionParser expressionParser = StandardExpressions
 					.getExpressionParser(context.getConfiguration());
 
 			/*
-			 * Execute the expression, handling nulls in a way consistent with
-			 * the rest of the Standard Dialect
+			 * Execute the expression, handling nulls in a way consistent with the rest of
+			 * the Standard Dialect
 			 */
 			final Object expressionResult;
 			if (attributeValue != null) {
 
 				final IStandardExpression expression = expressionParser.parseExpression(context, attributeValue);
 
-				if (expression != null) {
-					if (expression instanceof FragmentExpression) {
-						// This is merely a FragmentExpression (not complex, not
-						// combined with anything), so we can apply a shortcut
-						// so that we don't require a "null" result for this
-						// expression if the template does not exist. That will
-						// save a call to resource.exists() which might be
-						// costly.
+				if (expression != null && expression instanceof FragmentExpression) {
+					// This is merely a FragmentExpression (not complex, not combined with
+					// anything), so we can apply a shortcut
+					// so that we don't require a "null" result for this expression if the template
+					// does not exist. That will
+					// save a call to resource.exists() which might be costly.
 
-						final FragmentExpression.ExecutedFragmentExpression executedFragmentExpression = FragmentExpression
-								.createExecutedFragmentExpression(context, (FragmentExpression) expression,
-										StandardExpressionExecutionContext.NORMAL);
+					final FragmentExpression.ExecutedFragmentExpression executedFragmentExpression = FragmentExpression
+							.createExecutedFragmentExpression(context, (FragmentExpression) expression);
 
-						expressionResult = FragmentExpression.resolveExecutedFragmentExpression(context,
-								executedFragmentExpression, true);
-					} else {
-						expressionResult = expression.execute(context);
-					}
+					expressionResult = FragmentExpression.resolveExecutedFragmentExpression(context,
+							executedFragmentExpression, true);
+
 				} else {
-					expressionResult = null;
+
+					// Default attributes will ALWAYS be executed in RESTRICTED mode, for safety
+					// reasons (they might
+					// create attributes involved in code execution)
+					expressionResult = expression.execute(context, StandardExpressionExecutionContext.RESTRICTED);
+
 				}
 
 			} else {
@@ -130,18 +125,17 @@ abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor
 			}
 
 			/*
-			 * If the result of this expression is NO-OP, there is nothing to
-			 * execute
+			 * If the result of this expression is NO-OP, there is nothing to execute
 			 */
 			if (expressionResult == NoOpToken.VALUE) {
 				return;
 			}
 
-			final String newAttributeValue = Objects.toString(expressionResult,null);
-			
+			final String newAttributeValue = Objects.toString(expressionResult, null);
+
 			/*
-			 * Set the new value, removing the attribute completely if the
-			 * expression evaluated to null
+			 * Set the new value, removing the attribute completely if the expression
+			 * evaluated to null
 			 */
 			if (newAttributeValue == null || newAttributeValue.length() == 0) {
 				return;

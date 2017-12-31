@@ -24,6 +24,7 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.entity.Fragment;
+import me.qyh.blog.template.entity.HistoryTemplate;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
@@ -186,7 +187,6 @@ public interface TemplateService {
 	 */
 	void compareTemplate(String templateName, Template template, Consumer<Boolean> consumer);
 
-
 	/**
 	 * 注册一个预览页面
 	 * <p>
@@ -212,8 +212,69 @@ public interface TemplateService {
 
 	/**
 	 * 统计模板
+	 * 
 	 * @param space
 	 * @return
 	 */
 	PageStatistics queryPageStatistics(Space space);
+
+	/**
+	 * 删除某条历史模板记录
+	 * 
+	 * @param id
+	 */
+	void deleteHistoryTemplate(Integer id) throws LogicException;
+
+	/**
+	 * 更新历史模板
+	 * 
+	 * @param id
+	 * @param remark
+	 * @return
+	 * @throws LogicException
+	 */
+	HistoryTemplate updateHistoryTemplate(Integer id, String remark) throws LogicException;
+
+	/**
+	 * 保存页面为历史模板
+	 * 
+	 * @param id
+	 * @param remark
+	 * @throws LogicException
+	 */
+	void savePageHistory(Integer id, String remark) throws LogicException;
+
+	/**
+	 * 保存模板片段为历史模板
+	 * 
+	 * @param id
+	 * @param remark
+	 * @throws LogicException
+	 */
+	void saveFragmentHistory(Integer id, String remark) throws LogicException;
+
+	/**
+	 * 查询某个页面的历史模板
+	 * 
+	 * @param id
+	 * @return
+	 */
+	List<HistoryTemplate> queryPageHistory(Integer id);
+
+	/**
+	 * 查询某个模板片段的历史模板
+	 * 
+	 * @param id
+	 * @return
+	 */
+	List<HistoryTemplate> queryFragmentHistory(Integer id);
+
+	/**
+	 * 查询历史模板详情
+	 * 
+	 * @param id
+	 * @return
+	 */
+	Optional<HistoryTemplate> getHistoryTemplate(Integer id);
+
 }

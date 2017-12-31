@@ -133,4 +133,22 @@ public class FragmentMgrController extends BaseMgrController {
 		return templateService.queryFragment(id).map(fragment -> new JsonResult(true, fragment))
 				.orElse(new JsonResult(false));
 	}
+
+	@GetMapping("{id}/history")
+	@ResponseBody
+	public JsonResult getHistory(@PathVariable("id") Integer id) {
+		return new JsonResult(true, templateService.queryFragmentHistory(id));
+	}
+
+	@PostMapping("{id}/saveHistory")
+	@ResponseBody
+	public JsonResult saveHistory(@PathVariable("id") Integer id, @RequestParam("remark") String remark)
+			throws LogicException {
+		Optional<Message> optionalError = HistoryTemplateController.validRemark(remark);
+		if (optionalError.isPresent()) {
+			return new JsonResult(false, optionalError.get());
+		}
+		templateService.saveFragmentHistory(id, remark);
+		return new JsonResult(true, new Message("historyTemplate.save.success", "保存成功"));
+	}
 }

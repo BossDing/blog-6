@@ -149,9 +149,11 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		return uploadedFiles;
 	}
 
-	private UploadedFile storeMultipartFile(MultipartFile file, BlogFile parent, String folderKey, FileStore store)
+	private UploadedFile storeMultipartFile(MultipartFile mf, BlogFile parent, String folderKey, FileStore store)
 			throws LogicException {
-		BlogFile blogFile;
+
+		MultipartFile file = store.preHandler(mf);
+
 		String originalFilename = file.getOriginalFilename();
 
 		validateSlashPath(originalFilename);
@@ -176,7 +178,7 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		}
 		try {
 			commonFileDao.insert(cf);
-			blogFile = new BlogFile();
+			BlogFile blogFile = new BlogFile();
 			blogFile.setCf(cf);
 			blogFile.setPath(fullname);
 			blogFile.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));

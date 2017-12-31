@@ -42,7 +42,7 @@ public class Fragment extends BaseEntity implements Template {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String FRAGMENT_PREFIX = TEMPLATE_PREFIX + "Fragment" + SPLITER;
+	public static final String FRAGMENT_PREFIX = TEMPLATE_PREFIX + "Fragment" + SPLITER;
 
 	private String name;
 	private String tpl;

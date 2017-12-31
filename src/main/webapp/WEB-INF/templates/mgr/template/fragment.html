@@ -89,8 +89,16 @@
 										<td><a href="###" style="margin-right: 10px"
 											data-action="remove" th:data-id="${fragment.id}"><span
 												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-											<a th:href="@{/mgr/template/fragment/update?id=}+${fragment.id}"><span
+											<a
+											th:href="@{/mgr/template/fragment/update?id=}+${fragment.id}" style="margin-right: 10px"><span
 												class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+											<a href="###" th:data-id="${fragment.id}"
+											style="margin-right: 10px" data-action="save-history"
+											title="备份"><span class="glyphicon glyphicon-upload"
+												aria-hidden="true"></span></a> <a href="###"
+											th:data-id="${fragment.id}" style="margin-right: 10px"
+											data-action="load-history" title="查看历史备份"><span
+												class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
 										</td>
 									</tr>
 								</tbody>
@@ -109,8 +117,8 @@
 			</div>
 		</div>
 	</div>
-	
-	
+
+
 	<div class="modal " id="queryModal" tabindex="-1" role="dialog"
 		aria-labelledby="queryModalLabel">
 		<div class="modal-dialog" role="document">
@@ -161,6 +169,30 @@
 			</div>
 		</div>
 	</div>
+	
+	
+	<div class="modal " id="historyModal" tabindex="-1" role="dialog"
+		aria-labelledby="queryModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">历史模板</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<div id="history-tip"></div>
+						<div class="table-responsive" id="historyTableContainer">
+							
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
 	<div th:replace="base/foot_source"></div>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
 	<script th:src="@{/static/js/mgr/fragment.js}"></script>

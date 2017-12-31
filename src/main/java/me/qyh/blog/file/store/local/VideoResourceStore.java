@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.file.entity.CommonFile;
+import me.qyh.blog.file.store.ProcessUtils;
 
 public class VideoResourceStore extends ThumbnailSupport {
 
@@ -49,14 +52,16 @@ public class VideoResourceStore extends ThumbnailSupport {
 	}
 
 	@Override
-	protected Optional<Resource> handleOriginalFile(Path path) {
+	protected Optional<Resource> handleOriginalFile(Path path, HttpServletRequest request) {
 		return Optional.of(new PathResource(path));
 	}
 
 	@Override
 	protected synchronized void extraPoster(Path original, Path poster) throws Exception {
 		Path temp = FileUtils.appTemp(FileUtils.getFileExtension(poster));
-		FFmpegUtils.extraPoster(original, temp, timeoutSecond, TimeUnit.SECONDS);
+		String[] cmdArray = new String[] { "ffmpeg", "-loglevel", "error", "-y", "-ss", "00:00:01", "-i",
+				original.toString(), "-vframes", "1", "-q:v", "2", temp.toString() };
+		ProcessUtils.runProcess(cmdArray, timeoutSecond, TimeUnit.SECONDS);
 		FileUtils.move(temp, poster);
 	}
 

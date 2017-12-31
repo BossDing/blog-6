@@ -86,6 +86,27 @@ public abstract class ImageHelper {
 	public abstract boolean supportWebp();
 
 	/**
+	 * @since 5.9
+	 * @return
+	 */
+	public boolean supportAnimatedWebp() {
+		return false;
+	}
+
+	/**
+	 * @since 5.9
+	 * @param gif
+	 * @throws IOException
+	 */
+	public void makeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException {
+		formatCheck(FileUtils.getFileExtension(gif));
+		formatCheck(FileUtils.getFileExtension(dest));
+		doMakeAnimatedWebp(config, gif, dest);
+	}
+
+	protected abstract void doMakeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException;
+
+	/**
 	 * 图片信息
 	 * 
 	 * @author Administrator

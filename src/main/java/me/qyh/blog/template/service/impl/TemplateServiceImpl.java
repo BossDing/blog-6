@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -62,6 +63,7 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
+import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.template.SystemTemplate;
@@ -69,8 +71,10 @@ import me.qyh.blog.template.Template;
 import me.qyh.blog.template.TemplateMapping;
 import me.qyh.blog.template.TemplateMapping.PatternAlreadyExistsException;
 import me.qyh.blog.template.dao.FragmentDao;
+import me.qyh.blog.template.dao.HistoryTemplateDao;
 import me.qyh.blog.template.dao.PageDao;
 import me.qyh.blog.template.entity.Fragment;
+import me.qyh.blog.template.entity.HistoryTemplate;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.event.PageEvent;
 import me.qyh.blog.template.event.TemplateEvitEvent;
@@ -104,6 +108,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Autowired
 	private FragmentDao fragmentDao;
 	@Autowired
+	private HistoryTemplateDao historyTemplateDao;
+	@Autowired
 	private SpaceCache spaceCache;
 	@Autowired
 	private ConfigServer configServer;
@@ -117,8 +123,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	private List<DataTagProcessor<?>> processors = new ArrayList<>();
-
-	private static final Message USER_PAGE_NOT_EXISTS = new Message("page.user.notExists", "自定义页面不存在");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TemplateServiceImpl.class);
 
@@ -146,7 +150,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			boolean nameExists = db != null;
 			if (nameExists) {
-				throw new LogicException("fragment.user.nameExists", "挂件名:" + fragment.getName() + "已经存在",
+				throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
 						fragment.getName());
 			}
 
@@ -160,10 +164,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized void deleteFragment(Integer id) throws LogicException {
 		Transactions.executeInTransaction(platformTransactionManager, status -> {
-			Fragment fragment = fragmentDao.selectById(id);
-			if (fragment == null) {
-				throw new LogicException("fragment.user.notExists", "挂件不存在");
-			}
+			Fragment fragment = getRequiredFragment(id);
+			historyTemplateDao.deleteByTemplateName(fragment.getTemplateName());
 			fragmentDao.deleteById(id);
 
 			evitFragmentCache(fragment.getName());
@@ -174,10 +176,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	public synchronized Fragment updateFragment(Fragment fragment) throws LogicException {
 		return Transactions.executeInTransaction(platformTransactionManager, status -> {
 			checkSpace(fragment);
-			Fragment old = fragmentDao.selectById(fragment.getId());
-			if (old == null) {
-				throw new LogicException("fragment.user.notExists", "挂件不存在");
-			}
+			Fragment old = getRequiredFragment(fragment.getId());
 			Fragment db;
 			// 查找当前数据库是否存在同名
 			if (fragment.isGlobal()) {
@@ -187,10 +186,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			boolean nameExists = db != null && !db.getId().equals(fragment.getId());
 			if (nameExists) {
-				throw new LogicException("fragment.user.nameExists", "挂件名:" + fragment.getName() + "已经存在",
+				throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
 						fragment.getName());
 			}
 			fragmentDao.update(fragment);
+
+			if (!Objects.equals(old.getTemplateName(), fragment.getTemplateName())) {
+				historyTemplateDao.updateTemplateName(old.getTemplateName(), fragment.getTemplateName());
+			}
+
 			if (old.getName().equals(fragment.getName())) {
 				evitFragmentCache(old.getName());
 			} else {
@@ -244,10 +248,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized void deletePage(Integer id) throws LogicException {
 		Transactions.executeInTransaction(platformTransactionManager, status -> {
-			Page db = pageDao.selectById(id);
-			if (db == null) {
-				throw new LogicException(USER_PAGE_NOT_EXISTS);
-			}
+			Page db = getRequiredPage(id);
+			historyTemplateDao.deleteByTemplateName(db.getTemplateName());
 			pageDao.deleteById(id);
 			String templateName = db.getTemplateName();
 			evitPageCache(templateName);
@@ -297,10 +299,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (space != null) {
 				page.setSpace(spaceCache.checkSpace(space.getId()));
 			}
-			Page db = pageDao.selectById(page.getId());
-			if (db == null) {
-				throw new LogicException(USER_PAGE_NOT_EXISTS);
-			}
+			Page db = getRequiredPage(page.getId());
 			String alias = page.getAlias();
 			// 检查
 			Page aliasPage = pageDao.selectBySpaceAndAlias(page.getSpace(), alias);
@@ -308,6 +307,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
 			pageDao.update(page);
+
+			if (!Objects.equals(db.getTemplateName(), page.getTemplateName())) {
+				historyTemplateDao.updateTemplateName(db.getTemplateName(), page.getTemplateName());
+			}
 
 			evitPageCache(db);
 
@@ -348,13 +351,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public Optional<Template> queryTemplate(String templateName) {
-		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			for (TemplateProcessor processor : templateProcessors) {
-				if (processor.canProcess(templateName)) {
-					return Optional.ofNullable(processor.getTemplate(templateName));
-				}
-			}
-			throw new SystemException("无法处理模板名：" + templateName + "对应的模板");
+		return getTemplateProcessor(templateName).map(processor -> {
+			return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+				return processor.getTemplate(templateName);
+			});
 		});
 	}
 
@@ -581,6 +581,91 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		});
 	}
 
+	@Override
+	public void deleteHistoryTemplate(Integer id) throws LogicException {
+		Transactions.executeInTransaction(platformTransactionManager, status -> {
+			HistoryTemplate db = historyTemplateDao.selectById(id);
+			if (db == null) {
+				throw new LogicException("historyTemplate.notExists", "历史模板不存在");
+			}
+			historyTemplateDao.deleteById(id);
+		});
+	}
+
+	@Override
+	public HistoryTemplate updateHistoryTemplate(Integer id, String remark) throws LogicException {
+		return Transactions.executeInTransaction(platformTransactionManager, status -> {
+			HistoryTemplate db = historyTemplateDao.selectById(id);
+			if (db == null) {
+				throw new LogicException("historyTemplate.notExists", "历史模板不存在");
+			}
+			db.setRemark(remark);
+			historyTemplateDao.update(db);
+
+			db.setTpl(null);
+
+			return db;
+		});
+	}
+
+	@Override
+	public void savePageHistory(Integer id, String remark) throws LogicException {
+		Transactions.executeInTransaction(platformTransactionManager, status -> {
+			Page db = getRequiredPage(id);
+			saveTemplateHistory(db, remark);
+		});
+	}
+
+	@Override
+	public void saveFragmentHistory(Integer id, String remark) throws LogicException {
+		Transactions.executeInTransaction(platformTransactionManager, status -> {
+			Fragment db = getRequiredFragment(id);
+			saveTemplateHistory(db, remark);
+		});
+	}
+
+	private void saveTemplateHistory(Template template, String remark) {
+		HistoryTemplate historyTemplate = new HistoryTemplate(template);
+		historyTemplate.setRemark(remark);
+		historyTemplate.setTime(Timestamp.valueOf(Times.now()));
+
+		historyTemplateDao.insert(historyTemplate);
+	}
+
+	@Override
+	public List<HistoryTemplate> queryPageHistory(Integer id) {
+		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+			Page page = pageDao.selectById(id);
+			return page == null ? new ArrayList<>() : historyTemplateDao.selectByTemplateName(page.getTemplateName());
+		});
+	}
+
+	/**
+	 * 查询某个模板片段的历史模板
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public List<HistoryTemplate> queryFragmentHistory(Integer id) {
+		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+			Fragment fragment = fragmentDao.selectById(id);
+			return fragment == null ? new ArrayList<>()
+					: historyTemplateDao.selectByTemplateName(fragment.getTemplateName());
+		});
+	}
+
+	/**
+	 * 查询历史模板详情
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Optional<HistoryTemplate> getHistoryTemplate(Integer id) {
+		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+			return Optional.ofNullable(historyTemplateDao.selectById(id));
+		});
+	}
+
 	/**
 	 * 容器重新启动时载入mapping
 	 * 
@@ -630,72 +715,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		initSystemTemplates();
 
 		// System Template Processor
-		this.templateProcessors.add(new TemplateProcessor() {
-
-			@Override
-			public Template getTemplate(String templateName) {
-				String[] array = templateName.split(Template.SPLITER);
-				String path;
-				if (array.length == 3) {
-					path = array[2];
-				} else if (array.length == 2) {
-					path = "";
-				} else {
-					throw new SystemException("无法从" + templateName + "中获取路径");
-				}
-				Template template = defaultTemplates.get(path);
-				if (template != null) {
-					template = template.cloneTemplate();
-				}
-				return template;
-			}
-
-			@Override
-			public boolean canProcess(String templateName) {
-				return SystemTemplate.isSystemTemplate(templateName);
-			}
-		});
-
+		this.templateProcessors.add(new SystemTemplateProcessor());
 		// Page Template Processor
-		this.templateProcessors.add(new TemplateProcessor() {
-
-			@Override
-			public Template getTemplate(String templateName) {
-				return queryPageWithTemplateName(templateName).orElse(null);
-			}
-
-			@Override
-			public boolean canProcess(String templateName) {
-				return Page.isPageTemplate(templateName);
-			}
-		});
-
+		this.templateProcessors.add(new PageTemplateProcessor());
 		// Fragment Template Processor
-		this.templateProcessors.add(new TemplateProcessor() {
-
-			@Override
-			public Template getTemplate(String templateName) {
-				return queryFragmentWithTemplateName(templateName).orElse(null);
-			}
-
-			@Override
-			public boolean canProcess(String templateName) {
-				return Fragment.isFragmentTemplate(templateName);
-			}
-		});
-
-		this.templateProcessors.add(new TemplateProcessor() {
-
-			@Override
-			public Template getTemplate(String templateName) {
-				return templateMapping.getPreviewTemplateMapping().getPreviewTemplate(templateName).orElse(null);
-			}
-
-			@Override
-			public boolean canProcess(String templateName) {
-				return Template.isPreviewTemplate(templateName);
-			}
-		});
+		this.templateProcessors.add(new FragmentTemplateProcessor());
+		// Preview Template Processor
+		this.templateProcessors.add(new PreviewTemplateProcessor());
 
 		// add space delete event listener
 		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext.getParent();
@@ -848,25 +874,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		fragmentMap2.clear();
 	}
 
-	private interface TemplateProcessor {
-		/**
-		 * 是否能够处理该模板
-		 * 
-		 * @param templateName
-		 * @return
-		 */
-		boolean canProcess(String templateName);
-
-		/**
-		 * 根据模板名查询模板
-		 * 
-		 * @param templateName
-		 *            模板名
-		 * @return 模板，如果不存在，返回null
-		 */
-		Template getTemplate(String template);
-	}
-
 	/**
 	 * 用来在一个<b>事务</b>中使mapping和页面保持一致
 	 * 
@@ -945,7 +952,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		@Override
 		public void onApplicationEvent(SpaceDeleteEvent event) {
 			// 删除所有的fragments
-			fragmentDao.deleteBySpace(event.getSpace());
+			List<Fragment> fragments = fragmentDao.selectBySpace(event.getSpace());
+			for (Fragment fragment : fragments) {
+				historyTemplateDao.deleteByTemplateName(fragment.getTemplateName());
+				fragmentDao.deleteById(fragment.getId());
+			}
 			// 事务结束之后清空所有页面缓存
 			Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new TemplateEvitEvent(this)));
 			// 查询所有的页面
@@ -953,6 +964,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (!pages.isEmpty()) {
 				PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 				for (Page page : pages) {
+					historyTemplateDao.deleteByTemplateName(page.getTemplateName());
 					pageDao.deleteById(page.getId());
 					// 解除mapping注册
 					helper.unregisterPage(page);
@@ -995,5 +1007,114 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private LogicException convert(PatternAlreadyExistsException ex) {
 		String pattern = ex.getPattern();
 		return new LogicException("templateMapping.register.path.exists", "路径" + pattern + "已经存在", pattern);
+	}
+
+	private interface TemplateProcessor {
+		/**
+		 * 是否能够处理该模板
+		 * 
+		 * @param templateName
+		 * @return
+		 */
+		boolean canProcess(String templateSign);
+
+		/**
+		 * 根据模板名查询模板
+		 * 
+		 * @param templateName
+		 *            模板名
+		 * @return 模板，如果不存在，返回null
+		 */
+		Template getTemplate(String template);
+
+	}
+
+	private final class SystemTemplateProcessor implements TemplateProcessor {
+		@Override
+		public Template getTemplate(String templateName) {
+			String[] array = templateName.split(Template.SPLITER);
+			String path;
+			if (array.length == 3) {
+				path = array[2];
+			} else if (array.length == 2) {
+				path = "";
+			} else {
+				throw new SystemException("无法从" + templateName + "中获取路径");
+			}
+			SystemTemplate template = defaultTemplates.get(path);
+			if (template != null) {
+				template = (SystemTemplate) template.cloneTemplate();
+			}
+			return template;
+		}
+
+		@Override
+		public boolean canProcess(String templateSign) {
+			return SystemTemplate.isSystemTemplate(templateSign);
+		}
+	}
+
+	private final class PageTemplateProcessor implements TemplateProcessor {
+
+		@Override
+		public Template getTemplate(String templateName) {
+			return queryPageWithTemplateName(templateName).orElse(null);
+		}
+
+		@Override
+		public boolean canProcess(String templateSign) {
+			return Page.isPageTemplate(templateSign);
+		}
+	}
+
+	private final class FragmentTemplateProcessor implements TemplateProcessor {
+
+		@Override
+		public Template getTemplate(String templateName) {
+			return queryFragmentWithTemplateName(templateName).orElse(null);
+		}
+
+		@Override
+		public boolean canProcess(String templateSign) {
+			return Fragment.isFragmentTemplate(templateSign);
+		}
+	}
+
+	private final class PreviewTemplateProcessor implements TemplateProcessor {
+
+		@Override
+		public Template getTemplate(String templateName) {
+			return templateMapping.getPreviewTemplateMapping().getPreviewTemplate(templateName).orElse(null);
+		}
+
+		@Override
+		public boolean canProcess(String templateSign) {
+			return Template.isPreviewTemplate(templateSign);
+		}
+	}
+
+	private Optional<TemplateProcessor> getTemplateProcessor(String templateSign) {
+		for (TemplateProcessor processor : templateProcessors) {
+			if (processor.canProcess(templateSign)) {
+				return Optional.of(processor);
+			}
+		}
+		return Optional.empty();
+	}
+
+	private Page getRequiredPage(Integer id) throws LogicException {
+		Page db = pageDao.selectById(id);
+		if (db == null) {
+			throw new LogicException("page.user.notExists", "自定义页面不存在");
+		}
+		return db;
+	}
+
+	private Fragment getRequiredFragment(Integer id) throws LogicException {
+		Fragment fragment = fragmentDao.selectById(id);
+		if (fragment == null) {
+			throw new LogicException("fragment.user.notExists", "模板片段不存在");
+		}
+		return fragment;
 	}
 }

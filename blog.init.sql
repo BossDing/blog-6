@@ -131,3 +131,13 @@ CREATE TABLE IF NOT EXISTS `blog_tag` (
   `create_date` datetime NOT NULL,
   PRIMARY KEY (`id`)
 );
+
+
+CREATE TABLE IF NOT EXISTS blog_history_template (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `template_name` varchar(255) NOT NULL,
+  `template_tpl` mediumtext NOT NULL,
+  `template_time` datetime NOT NULL,
+  `remark` varchar(500) NOT NULL,
+  PRIMARY KEY (`id`)
+);

@@ -172,7 +172,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND is_global = TRUE
 	</select>
 	
-	<delete id="deleteBySpace">
-		DELETE FROM blog_fragment_user WHERE  space_id = #{id}
-	</delete>
+	<select id="selectBySpace" resultMap="FragmentDetail">
+		SELECT
+			id,
+			fragment_name,
+			fragment_description,
+			fragment_create_date,
+			space_id,
+			is_global,
+			is_callable
+		FROM
+			blog_fragment_user
+		WHERE 
+			<choose>
+			<when test="space == null">
+				space_id IS NULL
+			</when>
+			<otherwise>
+				space_id = #{space.id}
+			</otherwise>
+			</choose>
+	</select>
 </mapper>

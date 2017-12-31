@@ -102,9 +102,10 @@ public interface FragmentDao {
 	Fragment selectGlobalByName(String name);
 
 	/**
-	 * 根据空间删除fragment
+	 * 查询某个空间下所有的模板片段
 	 * 
 	 * @param space
+	 * @return
 	 */
-	void deleteBySpace(Space space);
+	List<Fragment> selectBySpace(@Param("space") Space space);
 }

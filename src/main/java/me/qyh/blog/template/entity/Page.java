@@ -41,7 +41,7 @@ public class Page extends BaseEntity implements Template {
 
 	private String templateName;
 
-	private static final String PAGE_PREFIX = TEMPLATE_PREFIX + "Page" + SPLITER;
+	public static final String PAGE_PREFIX = TEMPLATE_PREFIX + "Page" + SPLITER;
 
 	public Page() {
 		super();

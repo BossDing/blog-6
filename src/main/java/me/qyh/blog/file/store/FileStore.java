@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.file.store;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -41,9 +40,8 @@ public interface FileStore {
 	 *            文件路径
 	 * @param multipartFile
 	 *            文件
-	 * @return 尺寸成功后的文件信息
+	 * @return 储存成功后的文件信息
 	 * @throws LogicException
-	 * @throws IOException
 	 */
 	CommonFile store(String key, MultipartFile multipartFile) throws LogicException;
 
@@ -139,5 +137,16 @@ public interface FileStore {
 	 * @return
 	 */
 	boolean move(String oldPath, String path);
+
+	/**
+	 * 
+	 * 预处理文件
+	 * 
+	 * @param file
+	 * @return
+	 */
+	default MultipartFile preHandler(MultipartFile file) throws LogicException {
+		return file;
+	}
 
 }

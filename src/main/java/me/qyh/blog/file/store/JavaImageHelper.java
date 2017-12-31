@@ -37,7 +37,6 @@ import com.madgag.gif.fmsware.GifDecoder;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 
-
 /**
  * 基于java的图片处理
  * <p>
@@ -69,11 +68,14 @@ public class JavaImageHelper extends ImageHelper {
 
 	@Override
 	protected ImageInfo doRead(Path file) throws IOException {
-		String ext = FileUtils.getFileExtension(file);
-		if (isGIF(ext)) {
-			return readGif(file);
-		} else {
-			return readOtherImage(file);
+		try {
+			return readImage(file);
+		} catch (IOException e) {
+			String ext = FileUtils.getFileExtension(file);
+			if (isGIF(ext)) {
+				return readGif(file);
+			}
+			throw e;
 		}
 	}
 
@@ -89,9 +91,8 @@ public class JavaImageHelper extends ImageHelper {
 		}
 	}
 
-	private ImageInfo readOtherImage(Path file) throws IOException {
-		try (InputStream is = Files.newInputStream(file);
-				ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+	private ImageInfo readImage(Path file) throws IOException {
+		try (InputStream is = Files.newInputStream(file); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
 			Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
 			while (imageReaders.hasNext()) {
 				ImageReader reader = imageReaders.next();
@@ -198,5 +199,15 @@ public class JavaImageHelper extends ImageHelper {
 	@Override
 	public final boolean supportWebp() {
 		return false;
+	}
+
+	@Override
+	public final boolean supportAnimatedWebp() {
+		return false;
+	}
+
+	@Override
+	protected void doMakeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException {
+		throw new SystemException("unsupport");
 	}
 }

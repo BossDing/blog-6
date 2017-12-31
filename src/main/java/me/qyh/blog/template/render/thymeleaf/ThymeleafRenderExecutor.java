@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -33,14 +34,15 @@ import org.springframework.web.servlet.support.RequestContext;
 import org.springframework.web.servlet.view.AbstractTemplateView;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.IContext;
 import org.thymeleaf.context.WebExpressionContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring5.context.webmvc.SpringWebMvcThymeleafRequestContext;
 import org.thymeleaf.spring5.expression.ThymeleafEvaluationContext;
 import org.thymeleaf.spring5.naming.SpringContextVariableNames;
+import org.thymeleaf.standard.expression.FragmentExpression;
+import org.thymeleaf.standard.expression.IStandardExpressionParser;
+import org.thymeleaf.standard.expression.StandardExpressions;
 
-import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.TemplateRenderExecutor;
 
@@ -59,22 +61,17 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 	@Autowired
 	private TemplateEngine viewTemplateEngine;
 
-	private boolean exposeEvaluationContext = false;
-
 	// COPIED FROM ThymeleafView 3.0.8.RELEASE
 	@Override
 	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) {
-		IContext context = buildIContext(viewTemplateName, model, request, response);
-		return viewTemplateEngine.process(viewTemplateName, null, context);
+		return doExecutor(viewTemplateName, model, request, response);
 	}
 
-	private IContext buildIContext(String viewTemplateName, final Map<String, Object> model,
+	private String doExecutor(String viewTemplateName, final Map<String, Object> model,
 			final HttpServletRequest request, final HttpServletResponse response) {
+
 		Objects.requireNonNull(viewTemplateName);
-		if (viewTemplateName.contains("::")) {
-			throw new SystemException("模板命中不能包含::");
-		}
 
 		Locale locale = LocaleContextHolder.getLocale();
 
@@ -107,22 +104,69 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		// stays in the context to for compatibility with other dialects)
 		mergedModel.put(SpringContextVariableNames.THYMELEAF_REQUEST_CONTEXT, thymeleafRequestContext);
 
-		if (exposeEvaluationContext) {
-			final ConversionService conversionService = (ConversionService) request
-					.getAttribute(ConversionService.class.getName()); // might
-																		// be
-																		// null!
-			final ThymeleafEvaluationContext evaluationContext = new ThymeleafEvaluationContext(applicationContext,
-					conversionService);
-			mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
-					evaluationContext);
-		}
+		final ConversionService conversionService = (ConversionService) request
+				.getAttribute(ConversionService.class.getName());
+		final FuckRestrictedEvaluationContext evaluationContext = new FuckRestrictedEvaluationContext(
+				applicationContext, conversionService);
+
+		mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
+				evaluationContext);
 
 		final IEngineConfiguration configuration = viewTemplateEngine.getConfiguration();
 		final WebExpressionContext context = new WebExpressionContext(configuration, request, response, servletContext,
 				locale, mergedModel);
 
-		return context;
+		final String templateName;
+		final Set<String> markupSelectors;
+		if (!viewTemplateName.contains("::")) {
+
+			templateName = viewTemplateName;
+			markupSelectors = null;
+
+		} else {
+
+			final IStandardExpressionParser parser = StandardExpressions.getExpressionParser(configuration);
+
+			final FragmentExpression fragmentExpression;
+			try {
+				fragmentExpression = (FragmentExpression) parser.parseExpression(context,
+						"~{" + viewTemplateName + "}");
+			} catch (final TemplateProcessingException e) {
+				throw new IllegalArgumentException("Invalid template name specification: '" + viewTemplateName + "'");
+			}
+
+			final FragmentExpression.ExecutedFragmentExpression fragment = FragmentExpression
+					.createExecutedFragmentExpression(context, fragmentExpression);
+
+			templateName = FragmentExpression.resolveTemplateName(fragment);
+			markupSelectors = FragmentExpression.resolveFragments(fragment);
+			final Map<String, Object> nameFragmentParameters = fragment.getFragmentParameters();
+
+			if (nameFragmentParameters != null) {
+
+				if (fragment.hasSyntheticParameters()) {
+					// We cannot allow synthetic parameters because there is no way to specify them
+					// at the template
+					// engine execution!
+					throw new IllegalArgumentException(
+							"Parameters in a view specification must be named (non-synthetic): '" + viewTemplateName
+									+ "'");
+				}
+
+				context.setVariables(nameFragmentParameters);
+
+			}
+
+		}
+
+		final Set<String> processMarkupSelectors;
+		if (markupSelectors != null && markupSelectors.size() > 0) {
+			processMarkupSelectors = markupSelectors;
+		} else {
+			processMarkupSelectors = null;
+		}
+
+		return viewTemplateEngine.process(templateName, processMarkupSelectors, context);
 	}
 
 	private void addRequestContextAsVariable(final Map<String, Object> model, final String variableName,
@@ -132,9 +176,5 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 			throw new TemplateProcessingException("属性" + variableName + "已经存在与request中");
 		}
 		model.put(variableName, requestContext);
-	}
-
-	public void setExposeEvaluationContext(boolean exposeEvaluationContext) {
-		this.exposeEvaluationContext = exposeEvaluationContext;
 	}
 }

@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
@@ -43,7 +45,7 @@ import com.madgag.gif.fmsware.GifDecoder;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
-
+import me.qyh.blog.file.store.local.ProcessException;
 
 /**
  * 图片处理类，基于{@link http://www.graphicsmagick.org/}，可以用来处理PNG,JPEG,GIF,WEBP等多种格式
@@ -269,6 +271,65 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			Dimension dim = gd.getFrameSize();
 			return new ImageInfo(dim.width, dim.height, GIF);
 		}
+	}
+
+	@Override
+	public boolean supportAnimatedWebp() {
+		return true;
+	}
+
+	/**
+	 * @see https://developers.google.com/speed/webp/docs/gif2webp
+	 */
+	@Override
+	protected void doMakeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException {
+		if (!supportAnimatedWebp()) {
+			throw new SystemException("unsupport !!!");
+		}
+		Path tmp = FileUtils.appTemp(GIF);
+		try {
+			processAnimatedCommand(config, gif, tmp);
+
+			synchronized (this) {
+				FileUtils.move(tmp, dest);
+			}
+
+		} catch (ProcessException e) {
+			throw new IOException(e.getMessage(), e);
+		} finally {
+			FileUtils.deleteQuietly(tmp);
+		}
+	}
+
+	protected static List<String> buildCommand(AnimatedWebpConfig config, Path gif, Path tmp) {
+		List<String> commandList = new ArrayList<>();
+		commandList.add("gif2webp");
+		if (config.isLossy()) {
+			commandList.add("-lossy");
+		}
+		if (config.isMixed()) {
+			commandList.add("-mixed");
+		}
+
+		commandList.add("-q");
+		commandList.add(Float.toString(config.getQ()));
+
+		commandList.add("-m");
+		commandList.add(Integer.toString(config.getMethod()));
+
+		commandList.add("-metadata");
+		commandList.add(config.getMetadata().getValue());
+
+		commandList.add(gif.toString());
+		commandList.add("-o");
+		commandList.add(tmp.toString());
+
+		return commandList;
+	}
+
+	protected void processAnimatedCommand(AnimatedWebpConfig config, Path gif, Path dest) throws ProcessException {
+		List<String> command = buildCommand(config, gif, dest);
+		ProcessUtils.runProcess(command, 10, TimeUnit.SECONDS);
 	}
 
 }
