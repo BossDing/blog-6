@@ -19,16 +19,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.util.WebUtils;
 
-import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.LockKey;
 import me.qyh.blog.core.entity.LockResource;
-import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.vo.LockBean;
 
 /**
@@ -39,34 +39,31 @@ import me.qyh.blog.core.vo.LockBean;
  */
 public final class LockHelper {
 
-	private static final String LOCKKEY_SESSION_KEY = "lockKeys";
-	public static final String LAST_LOCK_SESSION_KEY = "lastLockResource";
+	private static final String LOCKKEY_SESSION_KEY = LockHelper.class.getName() + ".lockKeys";
+	public static final String LOCK_SESSION_KEY = LockHelper.class.getName() + ".lockResources";
 
 	private LockHelper() {
 
 	}
 
 	/**
-	 * 获取最后一次锁，如果锁不存在，抛出MissLockException
+	 * 获取锁
+	 * <p>
+	 * 如果请求中包含锁ID参数lockId，则获取指定的锁，否则获取最后一个锁
+	 * </p>
 	 * 
 	 * @param request
 	 *            请求
-	 * @return null 如果不存在或者空间不匹配
 	 */
-	public static LockBean getLockBean(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			LockBean lockBean = (LockBean) session.getAttribute(LAST_LOCK_SESSION_KEY);
-			if (lockBean == null) {
-				return null;
-			}
-			String alias = lockBean.getSpaceAlias();
-			if (!Environment.match(alias == null ? null : new Space(alias))) {
-				return null;
-			}
-			return lockBean;
+	public static Optional<LockBean> getLockBean(HttpServletRequest request, String beanId) {
+		if (beanId == null) {
+			return Optional.empty();
 		}
-		return null;
+		List<LockBean> lockBeans = getLockBeans(request.getSession(false));
+		if (CollectionUtils.isEmpty(lockBeans)) {
+			return Optional.empty();
+		}
+		return lockBeans.stream().filter(bean -> bean.getId().equals(beanId)).findAny();
 	}
 
 	/**
@@ -95,21 +92,37 @@ public final class LockHelper {
 	 * @param resourceId
 	 *            资源Id
 	 */
-	public static void addKey(HttpServletRequest request, LockKey key, LockResource lockResource) {
-		Map<String, List<LockKey>> keysMap = (Map<String, List<LockKey>>) getKeysMap(request);
-		if (keysMap == null) {
-			keysMap = new HashMap<>();
+	public static void addKey(HttpServletRequest request, LockKey key, LockBean lockBean) {
+		HttpSession session = request.getSession();
+		synchronized (WebUtils.getSessionMutex(session)) {
+			Map<String, List<LockKey>> keysMap = (Map<String, List<LockKey>>) getKeysMap(request);
+			if (keysMap == null) {
+				keysMap = new HashMap<>();
+			}
+			LockResource lockResource = lockBean.getLockResource();
+			List<LockKey> keys = keysMap.get(lockResource.getResource());
+			if (CollectionUtils.isEmpty(keys)) {
+				keys = new ArrayList<>();
+				keys.add(key);
+				keysMap.put(lockResource.getResource(), keys);
+			} else {
+				keys.removeIf(_key -> _key.lockId().equals(key.lockId()));
+				keys.add(key);
+			}
+			session.setAttribute(LOCKKEY_SESSION_KEY, keysMap);
+
+			List<LockBean> beans = getLockBeans(session);
+
+			if (beans != null) {
+				beans.removeIf(bean -> {
+					return bean.getId().equals(lockBean.getId());
+				});
+
+				if (beans.isEmpty()) {
+					session.removeAttribute(LOCK_SESSION_KEY);
+				}
+			}
 		}
-		List<LockKey> keys = keysMap.get(lockResource.getResourceId());
-		if (CollectionUtils.isEmpty(keys)) {
-			keys = new ArrayList<>();
-			keys.add(key);
-			keysMap.put(lockResource.getResourceId(), keys);
-		} else {
-			keys.removeIf(_key -> _key.lockId().equals(key.lockId()));
-			keys.add(key);
-		}
-		request.getSession().setAttribute(LOCKKEY_SESSION_KEY, keysMap);
 	}
 
 	/**
@@ -120,21 +133,34 @@ public final class LockHelper {
 	 * @param lockBean
 	 *            解锁失败后的所对象
 	 */
-	public static void storeLockBean(HttpServletRequest request, LockBean lockBean) {
+	public static void storeLockBean(HttpServletRequest request, final LockBean lockBean) {
 		HttpSession session = request.getSession();
-		session.setAttribute(LAST_LOCK_SESSION_KEY, lockBean);
+		synchronized (WebUtils.getSessionMutex(session)) {
+
+			List<LockBean> beans = getLockBeans(session);
+			if (beans == null) {
+				beans = new ArrayList<>();
+			}
+			if (!beans.isEmpty()) {
+
+				beans.removeIf(bean -> {
+					if (bean.getLockResource().getResource().equals(lockBean.getLockResource().getResource())) {
+						lockBean.setId(bean.getId());
+						return true;
+					}
+					return false;
+				});
+			}
+			beans.add(lockBean);
+			session.setAttribute(LOCK_SESSION_KEY, beans);
+		}
 	}
 
-	/**
-	 * 清除解锁失败后的锁对象
-	 * 
-	 * @param request
-	 *            当前请求
-	 */
-	public static void clearLockBean(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			session.removeAttribute(LAST_LOCK_SESSION_KEY);
+	@SuppressWarnings("unchecked")
+	private static List<LockBean> getLockBeans(HttpSession session) {
+		if (session == null) {
+			return null;
 		}
+		return (List<LockBean>) session.getAttribute(LOCK_SESSION_KEY);
 	}
 }

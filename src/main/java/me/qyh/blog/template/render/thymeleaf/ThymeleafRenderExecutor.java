@@ -61,7 +61,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 	@Autowired
 	private TemplateEngine viewTemplateEngine;
 
-	// COPIED FROM ThymeleafView 3.0.8.RELEASE
+	// COPIED FROM ThymeleafView 3.0.9.RELEASE
 	@Override
 	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) {

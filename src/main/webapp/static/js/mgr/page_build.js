@@ -49,6 +49,9 @@ $(document).ready(function() {
 			case 'lock':
 				showLock();
 				break;
+			case 'historyTemplate':
+				loadHistoryTemplate();
+				break;
 			default:
 				break;
 			}
@@ -402,4 +405,52 @@ $(document).ready(function() {
 				rewriteBaks();
 			}
 		})
+	}
+	
+	function loadHistoryTemplate(){
+		var id = $("#pageId").val();
+		if(id == ''){
+			return ;
+		}
+		$.get(basePath + '/mgr/template/page/'+id+'/history',{},function(data){
+			if(data.success){
+				data = data.data;
+				if(data.length == 0){
+					bootbox.alert("没有历史模板记录");
+				} else {
+					var html = '<table class="table">';
+					html += '<tr><th>备注</th><th>时间</th><th>操作</th></tr>';
+					for(var i=0;i<data.length;i++){
+						var remark = data[i].remark;
+						if(remark.length > 10){
+							remark = remark.substring(0,10)+"...";
+						}
+						html += '<tr><td><a href="###" data-toggle="tooltip" title="'+data[i].remark+'">'+remark+'</a></td><td>'+new Date(data[i].time).format('yyyy-mm-dd HH:MM:ss')+'</td><td><a href="###" data-id="'+data[i].id+'" data-toggle="confirmation"  style="margin-right:10px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a></td></tr>';
+					}
+					html += '</table>';
+					$("#historyTableContainer").html(html);
+					$('#historyTableContainer [data-toggle="tooltip"]').tooltip();
+					$("#history-tip").html('');
+					$("#historyModal").modal('show');
+					
+					$('[data-toggle=confirmation]').confirmation({
+						 rootSelector: '#historyTableContainer',
+						 onConfirm:function(){
+							 var me = $(this);
+							 var id = me.attr('data-id');
+							 $.get(basePath + '/mgr/template/history/get/'+id,{},function(data){
+								if(data.success){
+									editor.setValue(data.data.tpl);
+									$("#historyModal").modal('hide')
+								}else{
+									$("#history-tip").html('<div class="alert alert-warning alert-dismissible"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+data.message+'</div>');
+								}
+							});
+						 }
+					});
+				}
+			}else{
+				bootbox.alert(data.message);
+			}
+		});
 	}

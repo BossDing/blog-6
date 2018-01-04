@@ -31,19 +31,22 @@
 							<th>模板名</th>
 							<th>行号</th>
 							<th>列号</th>
-							<th>错误信息</th>
 						</tr>
 						<tr th:each="info : ${description.templateErrorInfos}">
 							<td th:text="${info.templateName}"></td>
 							<td th:text="${info.line}"></td>
 							<td th:text="${info.col}"></td>
-							<td th:text="${info.errorMsg == null ? '-' : info.errorMsg}"></td>
 						</tr>
 					</table>
 				</div>
 				<p th:if="${description.expression != null}">
 					表达式:<span th:text="${description.expression}"></span>
 				</p>
+
+				<h3 th:if="${description.stackTrace != null}">Stack Trace</h3>
+				<pre th:if="${description.stackTrace != null}"
+					th:text="${description.stackTrace}"></pre>
+
 			</div>
 		</div>
 	</div>

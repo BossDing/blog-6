@@ -47,13 +47,13 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	}
 
 	@Override
-	public String getResourceId() {
+	public String getResource() {
 		return this.getClass().getSimpleName() + ":" + getId();
 	}
 
 	@Override
-	public final Optional<String[]> getLockIds() {
-		return lockId == null ? Optional.empty() : Optional.of(new String[] { lockId });
+	public final Optional<String> getLock() {
+		return lockId == null ? Optional.empty() : Optional.of(lockId);
 	}
 
 	public void setLockId(String lockId) {
@@ -65,6 +65,6 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	}
 
 	public boolean hasLock() {
-		return getLockIds().isPresent();
+		return getLock().isPresent();
 	}
 }

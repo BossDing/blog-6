@@ -15,16 +15,26 @@
  */
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.context.IWebContext;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.core.context.Environment;
-import me.qyh.blog.core.entity.SimpleLockResource;
+import me.qyh.blog.core.entity.Lock;
+import me.qyh.blog.core.entity.LockResource;
+import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.service.LockManager;
+import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.template.render.TemplateLockResource;
+import me.qyh.blog.web.Webs;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
@@ -37,6 +47,9 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 	private static final String TAG_NAME = "lock";
 	private static final int PRECEDENCE = 1000;
 	private static final String ID = "id";
+	private static final String TYPE = "type";
+
+	public static final String VARIABLE_NAME = LockTagProcessor.class.getName();
 
 	public LockTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
 		super(TemplateMode.HTML, // This processor will apply only to HTML mode
@@ -54,14 +67,91 @@ public class LockTagProcessor extends AbstractElementTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-		try {
-			String lockId = tag.getAttributeValue(ID);
-			if (lockId != null && !Environment.isLogin()) {
-				String resourceId = context.getTemplateData().getTemplate();
-				lockManager.openLock(new SimpleLockResource(resourceId, lockId));
-			}
-		} finally {
+		String lockId = tag.getAttributeValue(ID);
+		if (Validators.isEmptyOrNull(lockId, true)) {
 			structureHandler.removeElement();
+			return;
 		}
+		boolean removed = false;
+		try {
+			String resourceId = context.getTemplateData().getTemplate();
+			String type = tag.getAttributeValue(TYPE);
+			boolean block = "block".equalsIgnoreCase(type);
+			LockResource lockResource;
+			if (block) {
+				int line = tag.getLine();
+				int col = tag.getCol();
+				String location = "[" + line + "," + col + "]";
+				lockResource = new TemplateLockResource(resourceId + location, lockId);
+			} else {
+				lockResource = new TemplateLockResource(resourceId, lockId);
+			}
+
+			LockException ex = null;
+			Lock lock = null;
+			try {
+				lockManager.openLock(lockResource);
+			} catch (LockException e) {
+				ex = e;
+				lock = e.getLock();
+			}
+
+			if (ex == null) {
+				if (block) {
+					structureHandler.setLocalVariable(VARIABLE_NAME, new LockStructure());
+					structureHandler.removeTags();
+					removed = true;
+				}
+			} else {
+				if (!block) {
+					throw ex;
+				}
+
+				if (context.getVariable(VARIABLE_NAME) != null) {
+					throw new TemplateProcessingException("lock标签中不能嵌套lock标签");
+				}
+
+				IWebContext webCtx = (IWebContext) context;
+				HttpServletRequest request = webCtx.getRequest();
+
+				String redirectUrl = UrlUtils.buildFullRequestUrl(request);
+				String alias = Webs.getSpaceFromRequest(request);
+
+				LockBean lockBean = new LockBean(lock, lockResource, redirectUrl, alias);
+
+				structureHandler.setLocalVariable(VARIABLE_NAME, new LockStructure(true, lockBean));
+				structureHandler.removeTags();
+				removed = true;
+			}
+
+		} finally {
+			if (!removed) {
+				structureHandler.removeElement();
+			}
+		}
+	}
+
+	public final class LockStructure {
+		private final boolean locked;
+		private final LockBean lockBean;
+
+		public LockStructure() {
+			this(false, null);
+		}
+
+		public LockStructure(boolean locked, LockBean lockBean) {
+			super();
+			this.locked = locked;
+			this.lockBean = lockBean;
+		}
+
+		public boolean isLocked() {
+			return locked;
+		}
+
+		public LockBean getLockBean() {
+			return lockBean;
+		}
+
 	}
 }

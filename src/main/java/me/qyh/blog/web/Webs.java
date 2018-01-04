@@ -38,8 +38,10 @@ import me.qyh.blog.core.vo.JsonResult;
 
 public class Webs {
 
-	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
+	private static final String UNLOCK_ATTR_NAME = Webs.class.getName() + ".UNLOCK";
+	public static final String ERROR_ATTR_NAME = Webs.class.getName() + ".ERROR";
 
+	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
 	/**
 	 * tomcat client abort exception <br>
 	 * 绝大部分不用记录这个异常，所以额外判断一下
@@ -113,13 +115,30 @@ public class Webs {
 	 * @return
 	 */
 	public static boolean unlockRequest(HttpServletRequest request) {
-		String path = request.getRequestURI().substring(request.getContextPath().length());
-		for (String unlockPattern : UNLOCK_PATTERNS) {
-			if (UrlUtils.match(unlockPattern, path)) {
-				return true;
+		Boolean isUnlock = (Boolean) request.getAttribute(UNLOCK_ATTR_NAME);
+		if (isUnlock == null) {
+			String path = request.getRequestURI().substring(request.getContextPath().length());
+			for (String unlockPattern : UNLOCK_PATTERNS) {
+				if (UrlUtils.match(unlockPattern, path)) {
+					request.setAttribute(UNLOCK_ATTR_NAME, Boolean.TRUE);
+					return true;
+				}
 			}
+			request.setAttribute(UNLOCK_ATTR_NAME, Boolean.FALSE);
+			return false;
 		}
-		return false;
+		return isUnlock;
+	}
+
+	/**
+	 * 判断是否是错误页面请求
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public static boolean errorRequest(HttpServletRequest request) {
+		Boolean isError = (Boolean) request.getAttribute(ERROR_ATTR_NAME);
+		return isError != null && isError;
 	}
 
 	/**

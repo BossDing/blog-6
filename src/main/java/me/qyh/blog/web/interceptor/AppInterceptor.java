@@ -47,6 +47,7 @@ import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
+import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.web.Webs;
@@ -81,24 +82,21 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		if (isHandler(handler)) {
 
 			try {
-
 				setUser(request, handler);
 				setLockKeys(request);
 				setSpace(request);
-
 				Environment.setIP(ipGetter.getIp(request));
-
 				csrfCheck(request, response);
-
-			} catch (AuthencationException | SpaceNotFoundException | LockException | CsrfException e) {
-				removeContext();
-				throw e;
 			} catch (Throwable e) {
+				if (ExceptionUtils.getFromChain(e, AuthencationException.class, LockException.class,
+						SpaceNotFoundException.class, CsrfException.class).isPresent()) {
+					throw e;
+				}
 				removeContext();
-				// 防止死循环
 				LOGGER.error(e.getMessage(), e);
 				return false;
 			}
+
 		}
 		return true;
 	}
@@ -130,8 +128,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			if (space.getIsPrivate()) {
 				Environment.doAuthencation();
 			}
-
-			if (space.hasLock() && !Webs.unlockRequest(request)) {
+			if (space.hasLock() && !Webs.unlockRequest(request) && !Webs.errorRequest(request)) {
 				lockManager.openLock(space);
 			}
 
@@ -188,6 +185,13 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		request.setAttribute(csrfToken.getParameterName(), csrfToken);
 		if ("get".equalsIgnoreCase(request.getMethod())) {
 			// GET请求不能检查，否则死循环
+			return;
+		}
+
+		/**
+		 * @since 5.9
+		 */
+		if (Webs.errorRequest(request)) {
 			return;
 		}
 
@@ -283,8 +287,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		/*
 		 * (non-Javadoc)
 		 * 
-		 * @see
-		 * org.springframework.security.web.util.matcher.RequestMatcher#matches(
+		 * @see org.springframework.security.web.util.matcher.RequestMatcher#matches(
 		 * javax.servlet.http.HttpServletRequest)
 		 */
 		public boolean match(HttpServletRequest request) {

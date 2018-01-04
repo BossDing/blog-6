@@ -205,18 +205,14 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			Lock lock = ex.getLock();
 			String redirectUrl = getFullUrl(request);
 			Message error = ex.getError();
-			Map<String, Object> model = new HashMap<>();
-			if (error != null) {
-				model.put("error", error);
-			}
 			// 获取空间别名
 			String alias = Webs.getSpaceFromRequest(request);
-			LockHelper.storeLockBean(request, new LockBean(lock, ex.getLockResource(), redirectUrl, alias));
-			if (alias != null) {
-				return new ModelAndView("forward:/space/" + alias + "/unlock", model);
-			} else {
-				return new ModelAndView("forward:/unlock", model);
+			LockBean bean = new LockBean(lock, ex.getLockResource(), redirectUrl, alias);
+			LockHelper.storeLockBean(request, bean);
+			if (error != null) {
+				RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, error);
 			}
+			return new ModelAndView("redirect:" + urlHelper.getUrlsBySpace(alias).getLockUrl(bean.getId()));
 		}
 	}
 
@@ -461,18 +457,23 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error) {
 		Map<String, Object> model = new HashMap<>();
 
-		if (error != null) {
-
-			/**
-			 * 如果仍然包含重定向参数，防止和error冲突
-			 */
-			request.removeAttribute(DispatcherServlet.INPUT_FLASH_MAP_ATTRIBUTE);
-			model.put(Constants.ERROR, error);
-		}
+		/**
+		 * 如果仍然包含重定向参数，防止和error冲突
+		 */
+		request.removeAttribute(DispatcherServlet.INPUT_FLASH_MAP_ATTRIBUTE);
+		model.put(Constants.ERROR, error);
 
 		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=
 		// null来判断
-		// 因为如果空间是私人的，这里会造成循坏重定向
+		// 因为如果空间是私人的，这里会造成循环重定向
+
+		/**
+		 * 标记ERROR
+		 * 
+		 * @since 5.9
+		 */
+		request.setAttribute(Webs.ERROR_ATTR_NAME, Boolean.TRUE);
+
 		if (Environment.hasSpace()) {
 			return new ModelAndView("forward:/space/" + Environment.getSpaceAlias() + "/error", model,
 					HttpStatus.valueOf(error.getCode()));

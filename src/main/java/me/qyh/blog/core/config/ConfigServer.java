@@ -55,7 +55,7 @@ public class ConfigServer implements InitializingBean {
 	 * 获取全局配置
 	 * @return
 	 */
-	@Cacheable(key = "'globalConfig'", value = "configCache", unless = "#result == null")
+	@Cacheable(key = "'globalConfig'", value = "configCache")
 	public GlobalConfig getGlobalConfig() {
 		GlobalConfig config = new GlobalConfig();
 		config.setArticlePageSize(getInt(PAGE_SIZE_ARICLE, 5));

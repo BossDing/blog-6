@@ -44,7 +44,7 @@ import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
-import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.lock.LockHelper;
 
 /**
@@ -148,9 +148,14 @@ public final class TemplateRender implements InitializingBean {
 		_model.put("user", Environment.getUser());
 		_model.put("space", Environment.getSpace());
 		_model.put("ip", Environment.getIP());
-		LockBean lockBean = LockHelper.getLockBean(request);
-		if (lockBean != null) {
-			_model.put("lock", lockBean.getLock());
+
+		if (Webs.unlockRequest(request)) {
+			// TODO throw Miss Lock Exception ???
+			String lockId = request.getParameter("lockId");
+			LockHelper.getLockBean(request, lockId).ifPresent(lockBean -> {
+				_model.put("lock", lockBean.getLock());
+				_model.put("lockId", lockBean.getId());
+			});
 		}
 
 		return templateRenderer.execute(viewTemplateName, _model, request, response);

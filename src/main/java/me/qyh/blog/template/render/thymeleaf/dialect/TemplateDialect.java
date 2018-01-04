@@ -43,7 +43,8 @@ public class TemplateDialect extends AbstractProcessorDialect {
 				new RedirectTagProcessor(dialectPrefix, applicationContext), 
 				new PrivateTagProcessor(dialectPrefix),
 				new MediaTypeTagProcessor(dialectPrefix),
-				new PeriodTagProcessor(dialectPrefix)));
+				new PeriodTagProcessor(dialectPrefix), new LockedTagProcessor(dialectPrefix),
+				new UnlockedTagProcessor(dialectPrefix)));
 	}
 
 }

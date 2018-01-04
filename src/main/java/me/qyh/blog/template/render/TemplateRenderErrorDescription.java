@@ -29,6 +29,11 @@ public class TemplateRenderErrorDescription implements Serializable {
 	private List<TemplateErrorInfo> templateErrorInfos = new ArrayList<>();
 	private String expression;// 表达式
 
+	/**
+	 * @since 5.9
+	 */
+	private String stackTrace;
+
 	public TemplateRenderErrorDescription() {
 		super();
 	}
@@ -49,6 +54,14 @@ public class TemplateRenderErrorDescription implements Serializable {
 		this.expression = expression;
 	}
 
+	public String getStackTrace() {
+		return stackTrace;
+	}
+
+	public void setStackTrace(String stackTrace) {
+		this.stackTrace = stackTrace;
+	}
+
 	public static class TemplateErrorInfo implements Serializable {
 		/**
 		 * 
@@ -58,18 +71,11 @@ public class TemplateRenderErrorDescription implements Serializable {
 		private final Integer line;
 		private final Integer col;
 
-		private final String errorMsg;
-
-		public TemplateErrorInfo(String templateName, Integer line, Integer col, String errorMsg) {
+		public TemplateErrorInfo(String templateName, Integer line, Integer col) {
 			super();
 			this.templateName = templateName;
 			this.line = line;
 			this.col = col;
-			this.errorMsg = errorMsg;
-		}
-
-		public TemplateErrorInfo(String templateName, Integer line, Integer col) {
-			this(templateName, line, col, null);
 		}
 
 		public String getTemplateName() {
@@ -82,10 +88,6 @@ public class TemplateRenderErrorDescription implements Serializable {
 
 		public Integer getCol() {
 			return col;
-		}
-
-		public String getErrorMsg() {
-			return errorMsg;
 		}
 
 	}

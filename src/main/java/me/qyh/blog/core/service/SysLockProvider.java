@@ -77,7 +77,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	 * @return 如果不存在返回null
 	 */
 	@Transactional(readOnly = true)
-	@Cacheable(value = "lockCache", key = "'lock-'+#id", unless = "#result == null")
+	@Cacheable(value = "lockCache", key = "'lock-'+#id")
 	public Optional<SysLock> findLock(String id) {
 		return Optional.ofNullable(sysLockDao.selectById(id));
 	}

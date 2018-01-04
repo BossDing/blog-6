@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.core.util;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,6 +66,17 @@ public final class ExceptionUtils {
 			}
 		}
 		return Optional.empty();
+	}
+
+	/**
+	 * 
+	 * @param throwable
+	 * @return
+	 */
+	public static String getStackTrace(Throwable throwable) {
+		StringWriter errors = new StringWriter();
+		throwable.printStackTrace(new PrintWriter(errors));
+		return errors.toString();
 	}
 
 	private static boolean matchType(Throwable th, Class<?>... types) {

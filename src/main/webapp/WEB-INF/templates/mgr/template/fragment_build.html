@@ -49,6 +49,8 @@
 						th:href="@{/doc/index.html}">文档</a>
 					<button class="btn-default btn-sm btn" type="button"
 						data-toggle="modal" data-target="#backupModal">备份</button>
+					<button class="btn-default btn-sm btn" type="button"
+						data-handler="historyTemplate" th:if="${fragment.hasId()}">历史备份</button>
 					<a class="btn-default btn-sm btn" type="button" data-toggle="modal"
 						data-target="#previewModal">保存</a>
 					<div
@@ -159,12 +161,13 @@
 							</label> <label th:if="${fragment.callable != null && fragment.callable}"><input
 								type="checkbox" name="callable" checked="checked" />外部调用 </label>
 						</div>
-						<div class="form-group" id="spaceSelector" th:attr="style=${(fragment.global != null && fragment.global) ? 'display:none' : 'display:block'}">
-							<label>所属空间</label>
-							<select class="form-control" name="space">
+						<div class="form-group" id="spaceSelector"
+							th:attr="style=${(fragment.global != null && fragment.global) ? 'display:none' : 'display:block'}">
+							<label>所属空间</label> <select class="form-control" name="space">
 								<option value="">无</option>
 								<option th:each="space : ${spaces}" th:value="${space.id}"
-									th:text="${space.name}" th:attr="selected=${(fragment.space != null && fragment.space.id == space.id) ? 'selected' : null}"></option>
+									th:text="${space.name}"
+									th:attr="selected=${(fragment.space != null && fragment.space.id == space.id) ? 'selected' : null}"></option>
 							</select>
 						</div>
 					</form>
@@ -172,6 +175,26 @@
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
 					<button type="button" class="btn btn-primary" onclick="save()">保存</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal " id="historyModal" tabindex="-1" role="dialog"
+		aria-labelledby="queryModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">历史模板</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<div id="history-tip"></div>
+						<div class="table-responsive" id="historyTableContainer"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
 				</div>
 			</div>
 		</div>

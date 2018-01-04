@@ -40,7 +40,7 @@ public class LockKeyContext {
 	/**
 	 * 从上下文中获取钥匙
 	 * 
-	 * @return 如果不存在返回null
+	 * @return
 	 */
 	public static Optional<LockKey> getKey(String resourceId, String lockId) {
 		Map<String, List<LockKey>> keyMap = KEYS_LOCAL.get();

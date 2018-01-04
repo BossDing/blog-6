@@ -30,7 +30,7 @@
 	<div class="container-fluid">
 		<div class="row">
 			<div class="md-header btn-toolbar">
-				<div class="btn-group" style="width:98%">
+				<div class="btn-group" style="width: 98%">
 					<button class="btn-default btn-sm btn" type="button"
 						data-handler="file">文件</button>
 					<button class="btn-default btn-sm btn" type="button"
@@ -46,15 +46,16 @@
 					<button class="btn-default btn-sm btn" type="button"
 						data-handler="template">模板</button>
 					<a class="btn-default btn-sm btn" target="_blank"
-						th:href="@{/doc/index.html}">文档</a> 
-					<button class="btn-default btn-sm btn" type="button" data-toggle="modal"
-						data-target="#backupModal">备份</button>
+						th:href="@{/doc/index.html}">文档</a>
 					<button class="btn-default btn-sm btn" type="button"
-						data-handler="historyTemplate">历史备份</button>
-					<a
-						class="btn-default btn-sm btn" type="button" data-toggle="modal"
+						data-toggle="modal" data-target="#backupModal">备份</button>
+					<button class="btn-default btn-sm btn" type="button"
+						data-handler="historyTemplate" th:if="${page.hasId()}">历史备份</button>
+					<a class="btn-default btn-sm btn" type="button" data-toggle="modal"
 						data-target="#previewModal">保存</a>
-						<div style="text-align:right;float:right;line-height:30px;font-weight:600;right:30px" id="auto-save-timer"></div>
+					<div
+						style="text-align: right; float: right; line-height: 30px; font-weight: 600; right: 30px"
+						id="auto-save-timer"></div>
 				</div>
 			</div>
 			<textarea style="display: none" id="editor" th:text="${page.tpl}"></textarea>
@@ -122,9 +123,7 @@
 				<div class="modal-header">
 					<h4 class="modal-title">备份</h4>
 				</div>
-				<div class="modal-body" id="backup-body">
-					
-				</div>
+				<div class="modal-body" id="backup-body"></div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
 				</div>
@@ -196,6 +195,27 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="modal " id="historyModal" tabindex="-1" role="dialog"
+		aria-labelledby="queryModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">历史模板</h4>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<div id="history-tip"></div>
+						<div class="table-responsive" id="historyTableContainer"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<form style="display: none" id="tplForm">
 		<input type="hidden"
 			th:value="${page.space == null ? '' : page.space.id}" id="space">

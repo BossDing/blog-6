@@ -15,6 +15,11 @@
 	       me.qyh.blog.web.listener.AppContextLoaderListener
 	    </listener-class>
 	</listener>
+	<listener>
+	    <listener-class>
+	       org.springframework.web.util.HttpSessionMutexListener
+	    </listener-class>
+	</listener>
 	
     <filter>
         <filter-name>CharacterEncodingFilter</filter-name>

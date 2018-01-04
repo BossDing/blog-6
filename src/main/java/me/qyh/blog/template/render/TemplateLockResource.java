@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.entity;
+package me.qyh.blog.template.render;
 
 import java.util.Optional;
 
-public class SimpleLockResource implements LockResource {
+import me.qyh.blog.core.entity.LockResource;
+
+public class TemplateLockResource implements LockResource {
 
 	/**
 	 * 
@@ -26,20 +28,20 @@ public class SimpleLockResource implements LockResource {
 	private final String resourceId;
 	private final String lockId;
 
-	public SimpleLockResource(String resourceId, String lockId) {
+	public TemplateLockResource(String resourceId, String lockId) {
 		super();
 		this.resourceId = resourceId;
 		this.lockId = lockId;
 	}
 
 	@Override
-	public String getResourceId() {
+	public String getResource() {
 		return resourceId;
 	}
 
 	@Override
-	public Optional<String[]> getLockIds() {
-		return lockId == null ? Optional.empty() : Optional.of(new String[] { lockId });
+	public Optional<String> getLock() {
+		return lockId == null ? Optional.empty() : Optional.of(lockId);
 	}
 
 }

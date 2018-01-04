@@ -24,6 +24,7 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
+import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.view.TemplateView;
 
 public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerMapping {
@@ -49,21 +50,22 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 
-		if ("get".equalsIgnoreCase(request.getMethod())) {
+		if (Webs.errorRequest(request) || "get".equalsIgnoreCase(request.getMethod())) {
 			Optional<TemplateMatch> matchOptional;
-			
+
 			if (isLogin(request)) {
-				matchOptional = templateMapping.getPreviewTemplateMapping().getBestHighestPriorityTemplateMatch(lookupPath);
+				matchOptional = templateMapping.getPreviewTemplateMapping()
+						.getBestHighestPriorityTemplateMatch(lookupPath);
 			} else {
 				matchOptional = templateMapping.getBestHighestPriorityTemplateMatch(lookupPath);
 			}
-			
+
 			if (matchOptional.isPresent()) {
 				TemplateMatch match = matchOptional.get();
 				setUriTemplateVariables(match, lookupPath, request);
 				return new HandlerMethod(new TemplateHandler(match.getTemplateName()), method);
 			}
-			
+
 		}
 		return super.getHandlerInternal(request);
 	}
@@ -76,7 +78,8 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			Optional<TemplateMatch> matchOptional;
 
 			if (isLogin(request)) {
-				matchOptional = templateMapping.getPreviewTemplateMapping().getBestPathVariableTemplateMatch(lookupPath);
+				matchOptional = templateMapping.getPreviewTemplateMapping()
+						.getBestPathVariableTemplateMatch(lookupPath);
 			} else {
 				matchOptional = templateMapping.getBestPathVariableTemplateMatch(lookupPath);
 			}

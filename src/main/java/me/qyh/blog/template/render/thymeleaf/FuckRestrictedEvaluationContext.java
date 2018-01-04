@@ -22,6 +22,7 @@ public class FuckRestrictedEvaluationContext implements IThymeleafEvaluationCont
 
 	public FuckRestrictedEvaluationContext(ApplicationContext applicationContext, ConversionService conversionService) {
 		this.evaluationContext = new ThymeleafEvaluationContext(applicationContext, conversionService);
+		this.evaluationContext.setVariableAccessRestricted(false);
 	}
 
 	@Override

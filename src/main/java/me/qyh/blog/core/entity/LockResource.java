@@ -31,13 +31,13 @@ public interface LockResource extends Serializable {
 	 * 
 	 * @return 锁资源id
 	 */
-	String getResourceId();
+	String getResource();
 
 	/**
 	 * 获取锁ID
 	 * 
 	 * @return 锁id
 	 */
-	Optional<String[]> getLockIds();
+	Optional<String> getLock();
 
 }

@@ -16,7 +16,6 @@
 package me.qyh.blog.core.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,6 +41,7 @@ import me.qyh.blog.core.entity.LockResource;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.Validators;
 
 /**
@@ -74,25 +74,23 @@ public class LockManager implements InitializingBean {
 		if (Environment.isLogin()) {
 			return;
 		}
-		Optional<String[]> optionalLockIds = lockResource.getLockIds();
-		if (!optionalLockIds.isPresent()) {
+		Optional<String> optionalLockId = lockResource.getLock();
+		if (!optionalLockId.isPresent()) {
 			return;
 		}
-		String resourceId = lockResource.getResourceId();
-		Arrays.stream(optionalLockIds.get()).forEach(lockId -> {
-			findLock(lockId).ifPresent(lock -> {
-				LockKey key = LockKeyContext.getKey(resourceId, lockId)
-						.orElseThrow(() -> new LockException(lock, lockResource, null));
-				try {
-					lock.tryOpen(key);
-				} catch (LogicException e) {
-					LOGGER.debug("尝试用" + key.getKey() + "打开锁" + lock.getId() + "失败");
-					throw new LockException(lock, lockResource, e.getLogicMessage());
-				} catch (Exception e) {
-					LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
-					throw new LockException(lock, lockResource, Constants.SYSTEM_ERROR);
-				}
-			});
+		String resourceId = lockResource.getResource();
+		String lockId = optionalLockId.get();
+		findLock(lockId).ifPresent(lock -> {
+			LockKey key = LockKeyContext.getKey(resourceId, lockId)
+					.orElseThrow(() -> new LockException(lock, lockResource, null));
+			try {
+				lock.tryOpen(key);
+			} catch (LogicException e) {
+				throw new LockException(lock, lockResource, new Message("lock.update.recheck", "因为锁更新导致解锁失败，请重新解锁"));
+			} catch (Exception e) {
+				LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
+				throw new LockException(lock, lockResource, Constants.SYSTEM_ERROR);
+			}
 		});
 	}
 

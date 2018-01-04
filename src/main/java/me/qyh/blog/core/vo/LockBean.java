@@ -19,6 +19,7 @@ import java.io.Serializable;
 
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.LockResource;
+import me.qyh.blog.core.util.StringUtils;
 
 /**
  * 
@@ -35,6 +36,7 @@ public class LockBean implements Serializable {
 	private final String redirectUrl;
 	private final LockResource lockResource;
 	private final String spaceAlias;
+	private String id;
 
 	/**
 	 * 
@@ -50,6 +52,7 @@ public class LockBean implements Serializable {
 		this.redirectUrl = redirectUrl;
 		this.lockResource = lockResource;
 		this.spaceAlias = spaceAlias;
+		this.id = StringUtils.uuid();
 	}
 
 	public Lock getLock() {
@@ -66,6 +69,14 @@ public class LockBean implements Serializable {
 
 	public String getSpaceAlias() {
 		return spaceAlias;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 }

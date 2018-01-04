@@ -78,7 +78,7 @@ public class Space extends BaseLockResource {
 		this.isDefault = space.isDefault;
 		this.isPrivate = space.isPrivate;
 		this.name = space.name;
-		space.getLockIds().ifPresent(lockIds -> setLockId(lockIds[0]));
+		space.getLock().ifPresent(lockId -> setLockId(lockId));
 	}
 
 	public String getAlias() {
@@ -106,7 +106,7 @@ public class Space extends BaseLockResource {
 	}
 
 	@Override
-	public String getResourceId() {
+	public String getResource() {
 		return "Space-" + alias;
 	}
 

@@ -387,67 +387,171 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 
 
 					<h2>nginx管理文件</h2>
-					<pre class="prettyprint">map $http_accept $img_suffix {
-	default   ".jpeg";
-	"~*webp"  ".webp";
+					<pre class="prettyprint">
+user  root;
+worker_processes  1;
+
+error_log  /web/nginx/logs/error.log crit;
+
+
+events {
+    worker_connections  1024;
 }
 
-server {
-	location ^~ /file/ {
-		if ($http_origin ~* "^https?://(qyh.me|www.qyh.me|mhlx.github.io)$") {
-			add_header Access-Control-Allow-Origin "$http_origin";
-		}
-		alias /web/file/blog_file/;
-		expires      30d; 
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+	client_max_body_size 10m;
+	server_tokens off;
+	
+	map $http_accept $img_suffix {
+		default   ".jpeg";
+		"~*webp"  ".webp";
 	}
-	location ^~ /file_download/ {
-		alias /web/file/blog_file/;
-		limit_req zone=file_limit burst=5 nodelay; 
-		 types        { }
-		default_type application/octet-stream;
-	} 
 	
-	#gif文件寻找原图
-	location ~ ^/image/(.*)\.gif$ {
-		alias /web/file/blog_image;
-		limit_req zone=image_limit burst=20 nodelay;
-		default_type image/gif;
-		try_files  /$1.gif =404;
-		expires      30d; 
-      }  
-   
-   
-	location ~ ^/image/(.*)\.png$ {
-		alias /web/file/blog_image_thumb;
-		default_type image/png;
-		try_files  /$1.png @doThumb;
-		expires      30d; 
-		#rewrite ^/image/(.*)$ /$1 break;
-           #root  /web/file/blog_image_thumb;
-      }  
-	
-	#其他图片寻找缩略图
-	location /image/ {
-		if ($http_origin ~* "^https?://(qyh.me|www.qyh.me|mhlx.github.io)$") {
-			add_header Access-Control-Allow-Origin "$http_origin";
-		}
-		alias /web/file/blog_image_thumb/;
-		try_files  $uri$img_suffix @doThumb;
-		expires      30d; 
+	map $http_accept $gif_suffix {
+		default   ".gif";
+		"~*webp"  ".gif.webp";
 	}
 
+    sendfile        on;
+    keepalive_timeout  65;
 
-	location @doThumb {
-		root   html;
-		limit_req zone=image_resize_limit burst=10  nodelay;
-		proxy_connect_timeout 3;
-		proxy_send_timeout      30;
-		proxy_read_timeout      30;
-		proxy_pass http://localhost:8080$request_uri;
-		proxy_set_header Host $host; 
-		proxy_set_header X-Forwarded-For $remote_addr; 
-	}
+	gzip              on;  
+	gzip_min_length      1000;  
+	gzip_types         text/plain text/css application/x-javascript application/javascript application/json;
+	gzip_comp_level 2;
+	access_log on;
+	
+	
+    server {
+		listen 443 ssl http2;
+		server_name www.qyh.me;
+
+		ssl on;
+		ssl_certificate   /web/key2/sec.pem;
+		ssl_certificate_key /web/key2/sec.key.unsecure;
+		ssl_session_timeout 5m;
+		ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+		ssl_ciphers AESGCM:ALL:!DH:!EXPORT:!RC4:+HIGH:!MEDIUM:!LOW:!aNULL:!eNULL;
+		ssl_prefer_server_ciphers on;
+		
+		location ^~ /lf/ {
+			alias /web/file/lf/;
+			expires      30d; 
+		}
+
+		
+		location ^~ /file/ {
+			alias /web/file/blog_file/;
+			expires      30d; 
+		}
+		
+		location ^~ /avatar/ {
+			expires      7d; 
+			alias /web/file/gravatar/;
+			try_files  $uri @doGravatar;
+			default_type image/jpeg;
+		}
+		
+		location ^~ /file_download/ {
+			alias /web/file/blog_file/;
+			 types        { }
+			default_type application/octet-stream;
+		} 
+		
+			#gif文件寻找原图
+		location ~ ^/image/(.*)\.gif$ {
+			alias /web/file/blog_image;
+			default_type image/gif;
+			expires      30d; 
+			try_files /$1$gif_suffix @doThumb;
+		}  
+	   
+	   
+		location ~ ^/image/(.*)\.png$ {
+			alias /web/file/blog_image_thumb;
+			default_type image/png;
+			try_files  /$1.png @doThumb;
+			expires      30d; 
+       }  
+		
+		#其他图片寻找缩略图
+		location /image/ {
+			alias /web/file/blog_image_thumb/;
+			try_files  $uri$img_suffix @doThumb;
+			expires      30d; 
+		}
+		
+		#mp4文件寻找原文件
+		location ~ ^/video/(.*)\.mp4$ {
+			alias /web/file/blog_video;
+			default_type video/mp4;
+			try_files  /$1.mp4 =404;
+			expires      30d; 
+       }  
+		
+		location /video/ {
+			alias /web/file/blog_video_thumb/;
+			try_files  $uri$img_suffix @doThumb;
+			expires      30d; 
+		}
+	
+	
+		location @doThumb {
+			root   html;
+			proxy_connect_timeout 3;
+			proxy_send_timeout      30;
+			proxy_read_timeout      30;
+			proxy_pass http://localhost:8080$request_uri;
+			proxy_set_header Host $host; 
+			proxy_set_header X-Forwarded-For $remote_addr; 
+		}
+		
+		location @doGravatar {
+			root   html;
+			proxy_connect_timeout 3;
+			proxy_send_timeout      30;
+			proxy_read_timeout      30;
+			proxy_pass http://localhost:8080$request_uri;
+			proxy_set_header Host $host; 
+			proxy_set_header X-Forwarded-For $remote_addr; 
+		}
+		
+		
+		location ^~ /favicon.ico { 
+			root   /web/file/static/img;
+			expires      30d; 
+		} 
+		
+		location ^~ /static/ { 
+		  alias /web/file/static/; 
+		  expires      30d; 
+		} 
+		
+		location ^~ /doc/ { 
+		  alias /web/file/doc/; 
+		  expires      30d; 
+		} 
+
+
+         location / {
+			proxy_connect_timeout 3;
+			proxy_send_timeout      30;
+			proxy_read_timeout      30;
+			proxy_pass http://localhost:8080;
+			proxy_set_header Host $host; 
+			proxy_set_header X-Forwarded-For $remote_addr;
+        }
+		
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
 }
+
 					
 					</pre>
 				</div>
