@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Jsons;
@@ -38,10 +39,11 @@ import me.qyh.blog.core.vo.JsonResult;
 
 public class Webs {
 
-	private static final String UNLOCK_ATTR_NAME = Webs.class.getName() + ".UNLOCK";
+	public static final String UNLOCK_ATTR_NAME = Webs.class.getName() + ".UNLOCK";
 	public static final String ERROR_ATTR_NAME = Webs.class.getName() + ".ERROR";
+	public static final String SPACE_ATTR_NAME = Webs.class.getName() + ".SPACE";
+	public static final String SPACE_URLS_ATTR_NAME = Webs.class.getName() + ".SPACE_URLS";
 
-	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
 	/**
 	 * tomcat client abort exception <br>
 	 * 绝大部分不用记录这个异常，所以额外判断一下
@@ -116,18 +118,7 @@ public class Webs {
 	 */
 	public static boolean unlockRequest(HttpServletRequest request) {
 		Boolean isUnlock = (Boolean) request.getAttribute(UNLOCK_ATTR_NAME);
-		if (isUnlock == null) {
-			String path = request.getRequestURI().substring(request.getContextPath().length());
-			for (String unlockPattern : UNLOCK_PATTERNS) {
-				if (UrlUtils.match(unlockPattern, path)) {
-					request.setAttribute(UNLOCK_ATTR_NAME, Boolean.TRUE);
-					return true;
-				}
-			}
-			request.setAttribute(UNLOCK_ATTR_NAME, Boolean.FALSE);
-			return false;
-		}
-		return isUnlock;
+		return isUnlock != null && isUnlock;
 	}
 
 	/**
@@ -164,8 +155,8 @@ public class Webs {
 	 * @return
 	 */
 	public static String getSpaceFromRequest(HttpServletRequest request) {
-		String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
-		return getSpaceFromPath(path);
+		String alias = (String) request.getAttribute(SPACE_ATTR_NAME);
+		return alias == null ? null : alias.isEmpty() ? null : alias;
 	}
 
 	/**
@@ -179,5 +170,15 @@ public class Webs {
 			return path.split("/")[1];
 		}
 		return null;
+	}
+
+	/**
+	 * 获取请求中的SpaceUrls
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public static SpaceUrls getSpaceUrls(HttpServletRequest request) {
+		return (SpaceUrls) request.getAttribute(SPACE_URLS_ATTR_NAME);
 	}
 }

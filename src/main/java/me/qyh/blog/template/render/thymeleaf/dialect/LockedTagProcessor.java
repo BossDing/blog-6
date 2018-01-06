@@ -56,7 +56,7 @@ public class LockedTagProcessor extends AbstractElementTagProcessor {
 		if (structure.isLocked()) {
 			LockBean bean = structure.getLockBean();
 			LockHelper.storeLockBean(((IWebContext) context).getRequest(), bean);
-			structureHandler.setLocalVariable("lockId", bean.getId());
+			structureHandler.setLocalVariable("unlockId", bean.getId());
 			structureHandler.removeTags();
 		} else {
 			structureHandler.removeElement();

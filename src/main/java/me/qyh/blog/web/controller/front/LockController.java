@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.web.controller.front;
 
+import java.util.Objects;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,7 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.lock.LockHelper;
 import me.qyh.blog.web.security.CaptchaValidator;
 
@@ -44,9 +47,9 @@ public class LockController {
 	private CaptchaValidator captchaValidator;
 
 	@PostMapping({ "space/{alias}/unlock", "/unlock" })
-	public String unlock(HttpServletRequest request, RedirectAttributes ra, @RequestParam("lockId") String lockId) {
-		LockBean lockBean = LockHelper.getLockBean(request, lockId).orElse(null);
-		if (lockBean == null) {
+	public String unlock(HttpServletRequest request, RedirectAttributes ra, @RequestParam("unlockId") String unlockId) {
+		LockBean lockBean = LockHelper.getLockBean(request, unlockId).orElse(null);
+		if (lockBean == null || !Objects.equals(Webs.getSpaceFromRequest(request), lockBean.getSpaceAlias())) {
 			return "redirect:" + urlHelper.getUrl();
 		}
 		Lock lock = lockBean.getLock();
@@ -57,7 +60,7 @@ public class LockController {
 			lock.tryOpen(key);
 		} catch (LogicException e) {
 			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
-			return "redirect:" + urlHelper.getUrlsBySpace(lockBean.getSpaceAlias()).getLockUrl(lockBean.getId());
+			return "redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lockBean.getId());
 		}
 		LockHelper.addKey(request, key, lockBean);
 		return "redirect:" + lockBean.getRedirectUrl();
@@ -65,9 +68,10 @@ public class LockController {
 
 	@PostMapping(value = { "space/{alias}/unlock", "/unlock" }, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
-	public JsonResult unlock(HttpServletRequest request, @RequestParam("lockId") String lockId) throws LogicException {
-		LockBean lockBean = LockHelper.getLockBean(request, lockId).orElse(null);
-		if (lockBean == null) {
+	public JsonResult unlock(HttpServletRequest request, @RequestParam("unlockId") String unlockId)
+			throws LogicException {
+		LockBean lockBean = LockHelper.getLockBean(request, unlockId).orElse(null);
+		if (lockBean == null || !Objects.equals(Webs.getSpaceFromRequest(request), lockBean.getSpaceAlias())) {
 			return new JsonResult(false, new Message("lock.miss", "锁缺失"));
 		}
 		captchaValidator.doValidate(request);

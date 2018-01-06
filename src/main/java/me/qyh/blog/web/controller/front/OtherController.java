@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.ParseConfig;
@@ -72,7 +73,7 @@ public class OtherController {
 			HttpServletResponse response) throws IOException {
 		try {
 
-			RenderResult result = templateRender.render(
+			RenderResult result = templateRender.doRender(
 					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request,
 					new ReadOnlyResponse(response), new ParseConfig(true));
 
@@ -86,6 +87,11 @@ public class OtherController {
 
 		} catch (TemplateRenderException e) {
 			Webs.writeInfo(response, new JsonResult(true, e.getRenderErrorDescription()));
+		} catch (Exception e) {
+			if (e instanceof RuntimeException) {
+				throw (RuntimeException) e;
+			}
+			throw new SystemException(e.getMessage(),e);
 		}
 	}
 

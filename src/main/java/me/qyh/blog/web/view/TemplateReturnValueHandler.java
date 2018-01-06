@@ -32,6 +32,7 @@ import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.RedirectException;
@@ -69,10 +70,10 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 		RenderResult rendered;
 
 		try {
-			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest, new ReadOnlyResponse(nativeResponse),
-					new ParseConfig());
+			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest,
+					new ReadOnlyResponse(nativeResponse), new ParseConfig());
 
-		} catch (RedirectException e) {
+		} catch (RedirectException | MissLockException e) {
 			throw e;
 		} catch (Exception e) {
 

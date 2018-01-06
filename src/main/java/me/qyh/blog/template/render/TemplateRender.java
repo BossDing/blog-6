@@ -31,7 +31,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
@@ -44,6 +43,7 @@ import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.lock.LockHelper;
 
@@ -62,24 +62,11 @@ public final class TemplateRender implements InitializingBean {
 	@Autowired
 	private TemplateExceptionTranslater templateExceptionTranslater;
 	@Autowired
-	private UrlHelper urlHelper;
-	@Autowired
 	private Messages messages;
 
 	private Map<String, Object> pros = new HashMap<>();
 
 	private List<TemplateRenderHandler> renderHandlers = new ArrayList<>();
-
-	public RenderResult render(String templateName, Map<String, Object> model, HttpServletRequest request,
-			ReadOnlyResponse response, ParseConfig config) throws TemplateRenderException {
-		try {
-			return doRender(templateName, model == null ? new HashMap<>() : model, request, response, config);
-		} catch (TemplateRenderException | RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new SystemException(e.getMessage(), e);
-		}
-	}
 
 	public RenderResult doRender(String templateName, Map<String, ?> model, HttpServletRequest request,
 			ReadOnlyResponse response, ParseConfig config) throws Exception {
@@ -101,7 +88,7 @@ public final class TemplateRender implements InitializingBean {
 
 			// 从异常栈中寻找 逻辑异常
 			Optional<Throwable> finded = ExceptionUtils.getFromChain(e, RuntimeLogicException.class,
-					LockException.class, AuthencationException.class, RedirectException.class);
+					LockException.class, AuthencationException.class, RedirectException.class, MissLockException.class);
 			if (finded.isPresent()) {
 				throw (Exception) finded.get();
 			}
@@ -144,18 +131,17 @@ public final class TemplateRender implements InitializingBean {
 			_model.putAll(pros);
 		}
 		_model.put("messages", messages);
-		_model.put("urls", urlHelper.getUrlsBySpace(Environment.getSpaceAlias()));
+		_model.put("urls", Webs.getSpaceUrls(request));
 		_model.put("user", Environment.getUser());
 		_model.put("space", Environment.getSpace());
 		_model.put("ip", Environment.getIP());
 
 		if (Webs.unlockRequest(request)) {
-			// TODO throw Miss Lock Exception ???
-			String lockId = request.getParameter("lockId");
-			LockHelper.getLockBean(request, lockId).ifPresent(lockBean -> {
-				_model.put("lock", lockBean.getLock());
-				_model.put("lockId", lockBean.getId());
-			});
+			String unlockId = request.getParameter("unlockId");
+			LockBean lockBean = LockHelper.getLockBean(request, unlockId)
+					.orElseThrow(() -> new MissLockException(unlockId));
+			_model.put("lock", lockBean.getLock());
+			_model.put("unlockId", lockBean.getId());
 		}
 
 		return templateRenderer.execute(viewTemplateName, _model, request, response);

@@ -47,10 +47,7 @@ public final class LockHelper {
 	}
 
 	/**
-	 * 获取锁
-	 * <p>
-	 * 如果请求中包含锁ID参数lockId，则获取指定的锁，否则获取最后一个锁
-	 * </p>
+	 * 获取指定的锁
 	 * 
 	 * @param request
 	 *            请求

@@ -36,7 +36,6 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.LogicException;
@@ -50,6 +49,7 @@ import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.template.Template;
+import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.web.lock.LockHelper;
@@ -70,6 +70,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	private static final Message ERROR_415 = new Message("error.405", "不支持的媒体类型");
 	private static final Message ERROR_500 = Constants.SYSTEM_ERROR;
 
+	private static final Message ERROR_MISS_LOCK = new Message("error.missLock", "锁不存在");
 	private static final Message ERROR_NO_ERROR_MAPPING = new Message("error.noErrorMapping", "发生了一个错误，但是没有可供显示的错误页面");
 
 	private final List<ExceptionHandler> handlers;
@@ -81,7 +82,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 				new InvalidParamExceptionHandler(), new MethodArgumentNotValidExceptionHandler(),
 				new HttpRequestMethodNotSupportedExceptionHandler(), new HttpMediaTypeNotAcceptableExceptionHandler(),
 				new HttpMediaTypeNotSupportedExceptionHandler(), new MaxUploadSizeExceededExceptionHandler(),
-				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler());
+				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler(), new MissLockExceptionHandler());
 	}
 
 	@Override
@@ -212,7 +213,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			if (error != null) {
 				RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, error);
 			}
-			return new ModelAndView("redirect:" + urlHelper.getUrlsBySpace(alias).getLockUrl(bean.getId()));
+			return new ModelAndView("redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(bean.getId()));
 		}
 	}
 
@@ -428,6 +429,25 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 	}
 
+	private final class MissLockExceptionHandler implements ExceptionHandler {
+
+		@Override
+		public boolean match(Exception ex) {
+			return ex instanceof MissLockException;
+		}
+
+		@Override
+		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
+			LOGGER.debug(ex.getMessage(), ex);
+			if (Webs.isAjaxRequest(request)) {
+				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_MISS_LOCK)));
+			}
+
+			return new ModelAndView("redirect:" + urlHelper.getUrl());
+		}
+
+	}
+
 	private final class JsonView implements View {
 
 		private final JsonResult result;
@@ -463,10 +483,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		request.removeAttribute(DispatcherServlet.INPUT_FLASH_MAP_ATTRIBUTE);
 		model.put(Constants.ERROR, error);
 
-		// 这里必须通过Environment.hasSpace()来判断，而不能通过Webs.getSpace(request) !=
-		// null来判断
-		// 因为如果空间是私人的，这里会造成循环重定向
-
 		/**
 		 * 标记ERROR
 		 * 
@@ -474,9 +490,10 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		 */
 		request.setAttribute(Webs.ERROR_ATTR_NAME, Boolean.TRUE);
 
-		if (Environment.hasSpace()) {
-			return new ModelAndView("forward:/space/" + Environment.getSpaceAlias() + "/error", model,
-					HttpStatus.valueOf(error.getCode()));
+		// 当AppInterceptor preHander发生异常的时候，上下文将会被清空，此时无法从Environment中直接获取space，只能从请求中获取
+		String space = Webs.getSpaceFromRequest(request);
+		if (space != null) {
+			return new ModelAndView("forward:/space/" + space + "/error", model, HttpStatus.valueOf(error.getCode()));
 		} else {
 			return new ModelAndView("forward:/error", model, HttpStatus.valueOf(error.getCode()));
 		}
