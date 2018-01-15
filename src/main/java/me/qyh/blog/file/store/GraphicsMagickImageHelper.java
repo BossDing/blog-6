@@ -82,6 +82,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	protected void doResize(Resize resize, Path src, Path dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
+		/**
+		 * @since 5.9 strip在有些图片上会造成旋转
+		 */
 		op.strip();
 		setResize(resize, op);
 		String ext = FileUtils.getFileExtension(dest);
@@ -91,6 +94,7 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (interlace(dest)) {
 			op.interlace("Line");
 		}
+		op.autoOrient();
 		addCompressOp(op, ext);
 		op.addImage();
 
@@ -159,10 +163,10 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 			throw new SystemException("图片质量应该在(0~100]之间");
 		}
 		if (WINDOWS) {
-			if (Validators.isEmptyOrNull(magickPath, true)) {
-				throw new SystemException("windows下必须设置GraphicsMagick的主目录");
+			if (!Validators.isEmptyOrNull(magickPath, true)) {
+				ProcessStarter.setGlobalSearchPath(magickPath);
+				// throw new SystemException("windows下必须设置GraphicsMagick的主目录");
 			}
-			ProcessStarter.setGlobalSearchPath(magickPath);
 		}
 	}
 

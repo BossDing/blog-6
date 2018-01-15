@@ -19,6 +19,8 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -26,12 +28,21 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
+import com.drew.metadata.exif.ExifIFD0Directory;
 import com.madgag.gif.fmsware.GifDecoder;
 
 import me.qyh.blog.core.exception.SystemException;
@@ -40,7 +51,14 @@ import me.qyh.blog.core.util.FileUtils;
 /**
  * 基于java的图片处理
  * <p>
- * <b>这个类仅供测试使用，请勿在实际项目中使用
+ * <b>这个类仅供测试使用，请勿在实际项目中使用</b>
+ * </p>
+ * 
+ * <p>
+ * <b>BUG</b>
+ * <ul>
+ * <li>图像缩放时旋转90度问题(可能是由于exif信息丢失)</li>
+ * </ul>
  * </p>
  * 
  * @see GraphicsMagickImageHelper
@@ -50,6 +68,7 @@ import me.qyh.blog.core.util.FileUtils;
 public class JavaImageHelper extends ImageHelper {
 
 	private static final WhiteBgFilter WHITE_BG_FILTER = new WhiteBgFilter();
+	private static final Logger logger = LoggerFactory.getLogger(JavaImageHelper.class);
 
 	@Override
 	protected void doResize(Resize resize, Path src, Path dest) throws IOException {
@@ -139,6 +158,17 @@ public class JavaImageHelper extends ImageHelper {
 
 	private BufferedImage doResize(Path todo, Path dest, Resize resize) throws IOException {
 		BufferedImage originalImage = ImageIO.read(todo.toFile());
+		if (ImageHelper.isJPEG(FileUtils.getFileExtension(todo))) {
+			Optional<BufferedImage> orient = Optional.empty();
+			try {
+				orient = autoOrient(originalImage, todo);
+			} catch (ImageProcessingException | MetadataException e) {
+				logger.debug(e.getMessage(), e);
+			}
+			if (orient.isPresent()) {
+				originalImage = orient.get();
+			}
+		}
 		int width = originalImage.getWidth();
 		int height = originalImage.getHeight();
 		int resizeWidth;
@@ -209,5 +239,63 @@ public class JavaImageHelper extends ImageHelper {
 	@Override
 	protected void doMakeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException {
 		throw new SystemException("unsupport");
+	}
+
+	private Optional<BufferedImage> autoOrient(BufferedImage originalImage, Path src)
+			throws ImageProcessingException, IOException, MetadataException {
+		Metadata metadata = ImageMetadataReader.readMetadata(src.toFile());
+		ExifIFD0Directory exifIFD0Directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+		if (exifIFD0Directory == null) {
+			return Optional.empty();
+		}
+		int orientation = exifIFD0Directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+
+		int width = originalImage.getWidth();
+		int height = originalImage.getHeight();
+
+		AffineTransform affineTransform = new AffineTransform();
+
+		switch (orientation) {
+		case 1:
+			break;
+		case 2: // Flip X
+			affineTransform.scale(-1.0, 1.0);
+			affineTransform.translate(-width, 0);
+			break;
+		case 3: // PI rotation
+			affineTransform.translate(width, height);
+			affineTransform.rotate(Math.PI);
+			break;
+		case 4: // Flip Y
+			affineTransform.scale(1.0, -1.0);
+			affineTransform.translate(0, -height);
+			break;
+		case 5: // - PI/2 and Flip X
+			affineTransform.rotate(-Math.PI / 2);
+			affineTransform.scale(-1.0, 1.0);
+			break;
+		case 6: // -PI/2 and -width
+			affineTransform.translate(height, 0);
+			affineTransform.rotate(Math.PI / 2);
+			break;
+		case 7: // PI/2 and Flip
+			affineTransform.scale(-1.0, 1.0);
+			affineTransform.translate(-height, 0);
+			affineTransform.translate(0, width);
+			affineTransform.rotate(3 * Math.PI / 2);
+			break;
+		case 8: // PI / 2
+			affineTransform.translate(0, width);
+			affineTransform.rotate(3 * Math.PI / 2);
+			break;
+		default:
+			break;
+		}
+
+		AffineTransformOp affineTransformOp = new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BILINEAR);
+		BufferedImage destinationImage = new BufferedImage(originalImage.getHeight(), originalImage.getWidth(),
+				originalImage.getType());
+		destinationImage = affineTransformOp.filter(originalImage, destinationImage);
+		return Optional.of(destinationImage);
 	}
 }
