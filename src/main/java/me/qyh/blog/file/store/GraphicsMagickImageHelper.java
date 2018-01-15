@@ -82,9 +82,6 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 	protected void doResize(Resize resize, Path src, Path dest) throws IOException {
 		IMOperation op = new IMOperation();
 		op.addImage();
-		/**
-		 * @since 5.9 strip在有些图片上会造成旋转
-		 */
 		op.strip();
 		setResize(resize, op);
 		String ext = FileUtils.getFileExtension(dest);
@@ -94,6 +91,9 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (interlace(dest)) {
 			op.interlace("Line");
 		}
+		/**
+		 * @since 5.9 防止某些图片旋转90度
+		 */
 		op.autoOrient();
 		addCompressOp(op, ext);
 		op.addImage();
