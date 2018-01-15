@@ -162,11 +162,8 @@ public class GraphicsMagickImageHelper extends ImageHelper implements Initializi
 		if (quality < 0 || quality > 100) {
 			throw new SystemException("图片质量应该在(0~100]之间");
 		}
-		if (WINDOWS) {
-			if (!Validators.isEmptyOrNull(magickPath, true)) {
-				ProcessStarter.setGlobalSearchPath(magickPath);
-				// throw new SystemException("windows下必须设置GraphicsMagick的主目录");
-			}
+		if (WINDOWS && !Validators.isEmptyOrNull(magickPath, true)) {
+			ProcessStarter.setGlobalSearchPath(magickPath);
 		}
 	}
 
