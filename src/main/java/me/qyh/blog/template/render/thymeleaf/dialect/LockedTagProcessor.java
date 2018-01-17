@@ -37,13 +37,7 @@ public class LockedTagProcessor extends AbstractElementTagProcessor {
 	private static final int PRECEDENCE = 1000;
 
 	public LockedTagProcessor(String dialectPrefix) {
-		super(TemplateMode.HTML, // This processor will apply only to HTML mode
-				dialectPrefix, // Prefix to be applied to name for matching
-				TAG_NAME, // Tag name: match specifically this tag
-				false, // Apply dialect prefix to tag name
-				null, // No attribute name: will match by tag name
-				false, // No prefix to be applied to attribute name
-				PRECEDENCE); // Precedence (inside dialect's own precedence)
+		super(TemplateMode.HTML, dialectPrefix, TAG_NAME, false, null, false, PRECEDENCE);
 	}
 
 	@Override

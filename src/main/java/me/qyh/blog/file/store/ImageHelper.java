@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 
 /**
@@ -99,6 +100,9 @@ public abstract class ImageHelper {
 	 * @throws IOException
 	 */
 	public void makeAnimatedWebp(AnimatedWebpConfig config, Path gif, Path dest) throws IOException {
+		if (!supportAnimatedWebp()) {
+			throw new SystemException("not support");
+		}
 		formatCheck(FileUtils.getFileExtension(gif));
 		formatCheck(FileUtils.getFileExtension(dest));
 		doMakeAnimatedWebp(config, gif, dest);
@@ -239,7 +243,7 @@ public abstract class ImageHelper {
 		return false;
 	}
 
-	public void formatCheck(String extension) throws IOException {
+	private void formatCheck(String extension) throws IOException {
 		if (isWEBP(extension)) {
 			if (!supportWebp()) {
 				throw new IOException("文件格式" + extension + "不被支持");

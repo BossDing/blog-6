@@ -51,13 +51,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 	private final TemplateService templateService;
 
 	public DataTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
-		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
-												// for matching
-				TAG_NAME, // Tag name: match specifically this tag
-				false, // Apply dialect prefix to tag name
-				null, // No attribute name: will match by tag name
-				false, // No prefix to be applied to attribute name
-				PRECEDENCE); // Precedence (inside dialect's own precedence)
+		super(TemplateMode.HTML, dialectPrefix, TAG_NAME, false, null, false, PRECEDENCE);
 		this.templateService = applicationContext.getBean(TemplateService.class);
 	}
 
@@ -67,7 +61,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 		try {
 
 			DataTag dataTag = buildDataTag(context, tag);
-			
+
 			if (dataTag == null) {
 				return;
 			}

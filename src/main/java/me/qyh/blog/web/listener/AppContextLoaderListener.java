@@ -34,7 +34,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.core.config.UrlConfig;
 
-
 public class AppContextLoaderListener extends ContextLoaderListener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AppContextLoaderListener.class);
@@ -51,7 +50,10 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 		config.setHttpOnly(true);
 		config.setSecure(helper.isSecure());
 		if (!helper.isLocalDomain()) {
-			config.setDomain(helper.getRootDomain());
+			/**
+			 * @since 5.9 防止影响其他同级域名
+			 */
+			config.setDomain(helper.getDomain());
 		}
 		String contextPath = helper.getContextPath();
 		if (contextPath.isEmpty()) {

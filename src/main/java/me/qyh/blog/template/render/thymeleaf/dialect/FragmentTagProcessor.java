@@ -21,14 +21,17 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.ITemplateContext;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.core.context.Environment;
+import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.thymeleaf.UIStackoverflowError;
 
@@ -45,15 +48,13 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 	private static final String TAG_NAME = "fragment";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME = "name";
+	private static final String TYPE = "type";
 
-	public FragmentTagProcessor(String dialectPrefix) {
-		super(TemplateMode.HTML, // This processor will apply only to HTML mode
-				dialectPrefix, // Prefix to be applied to name for matching
-				TAG_NAME, // Tag name: match specifically this tag
-				false, // Apply dialect prefix to tag name
-				null, // No attribute name: will match by tag name
-				false, // No prefix to be applied to attribute name
-				PRECEDENCE); // Precedence (inside dialect's own precedence)
+	private final Markdown2Html markdown2Html;
+
+	public FragmentTagProcessor(String dialectPrefix, ApplicationContext ctx) {
+		super(TemplateMode.HTML, dialectPrefix, TAG_NAME, false, null, false, PRECEDENCE);
+		this.markdown2Html = ctx.getBean(Markdown2Html.class);
 	}
 
 	@Override
@@ -67,7 +68,28 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 
 				context.getConfiguration().getTemplateManager().parseAndProcess(
 						new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
-				structureHandler.replaceWith(writer.toString(), false);
+
+				String content = writer.toString();
+
+				/**
+				 * @since 5.9
+				 */
+				FragmentType type = getFragmentType(attMap.get(TYPE));
+				switch (type) {
+				case HTML:
+					structureHandler.replaceWith(content, false);
+					break;
+				case MARKDOWN:
+					if (content.trim().isEmpty()) {
+						structureHandler.replaceWith(content, false);
+					} else {
+						structureHandler.replaceWith(markdown2Html.toHtml(content), false);
+					}
+					break;
+				default:
+					throw new TemplateProcessingException("无法处理的FragmentType:" + type);
+				}
+
 				return;
 			} catch (StackOverflowError e) {
 				if (tag.hasLocation()) {
@@ -81,6 +103,21 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 			}
 		}
 		structureHandler.removeElement();
+	}
+
+	protected final FragmentType getFragmentType(String type) {
+		if (type == null || type.isEmpty()) {
+			return FragmentType.HTML;
+		}
+		try {
+			return FragmentType.valueOf(type.toUpperCase());
+		} catch (Exception e) {
+			return FragmentType.HTML;
+		}
+	}
+
+	protected enum FragmentType {
+		HTML, MARKDOWN;
 	}
 
 }

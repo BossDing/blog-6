@@ -41,13 +41,7 @@ public class TransactionBeginTagProcessor extends TransactionSupport {
 	private static final String ISOLATION_LEVEL = "isolationLevel";
 
 	public TransactionBeginTagProcessor(String dialectPrefix, ApplicationContext applicationContext) {
-		super(TemplateMode.HTML, dialectPrefix, // Prefix to be applied to name
-				TAG_NAME, // Tag name: match specifically this tag
-				true, // Apply dialect prefix to tag name
-				null, // No attribute name: will match by tag name
-				false, // No prefix to be applied to attribute name
-				PRECEDENCE, applicationContext); // Precedence (inside dialect's
-													// own precedence)
+		super(TemplateMode.HTML, dialectPrefix, TAG_NAME, true, null, false, PRECEDENCE, applicationContext);
 	}
 
 	@Override
