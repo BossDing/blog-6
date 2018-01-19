@@ -196,6 +196,28 @@
 		</div>
 	</div>
 
+	<div class="modal fade modal-fullscreen" id="fsModal" tabindex="-1"
+		role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="fsModalLabel"></h4>
+				</div>
+				<div class="modal-body">
+					<iframe class="embed-responsive-item" src="" id="fs-url"
+						style="position: absolute; top: 0px; left: 0px; bottom: 0px; right: 0px; width: 100%; border: none; margin: 0; padding: 0; overflow: hidden; z-index: 999999;"></iframe>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<div class="modal " id="historyModal" tabindex="-1" role="dialog"
 		aria-labelledby="queryModalLabel">
 		<div class="modal-dialog" role="document">
@@ -276,6 +298,8 @@
 	<script th:src="@{/static/js/mgr/static_file.js}"></script>
 	<script th:src="@{/static/js/mgr/page_editor.js}"></script>
 	<script th:src="@{/static/js/mgr/page_history.js}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/js/bs-modal-fullscreen.min.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/page_build.js}"></script>
 
 </body>

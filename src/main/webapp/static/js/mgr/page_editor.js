@@ -1,4 +1,4 @@
-var createEditor = function(editorId){
+var createEditor = function(editorId,keys){
 		var mixedMode = {
 			name: "htmlmixed",
 			scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
@@ -6,12 +6,18 @@ var createEditor = function(editorId){
 					  {matches: /(text|application)\/(x-)?vb(a|script)/i,
 					   mode: "vbscript"}]
 		};
+		var extraKeys = {"Alt-/": "autocomplete","Alt-F": "findPersistent","Ctrl-A":"selectAll"};
+		for(var i=0;i<keys.length;i++){
+			var key = keys[i].key;
+			if(!extraKeys[key])
+				extraKeys[key] = keys[i].fun;
+		}
 		var editor = CodeMirror.fromTextArea(document.getElementById(editorId), {
 			mode: mixedMode,
 			lineNumbers: true,
 			autoCloseTags: true,
 			allowDropFileTypes:['text/html'],
-			extraKeys: {"Alt-/": "autocomplete","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
+			extraKeys: extraKeys
 		});
 		
 		var wrap = function(url){

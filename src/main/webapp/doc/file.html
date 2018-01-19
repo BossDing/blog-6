@@ -29,43 +29,14 @@ body {
 				<div class="col-md-12">
 					<h2>概述</h2>
 					<p>
-						文件存储服务由多个文件存储器(
-						<code>me.qyh.blog.core.file.FileStore</code>
-						)组成，系统默认的存储服务由
-						<code>me.qyh.blog.support.file.local.CommonResourceStore</code>
-						和
-						<code>me.qyh.blog.support.file.local.ImageResourceStore</code>
-						两个存储器组成，CommonResourceStore可以存储所有文件，ImageResourceStore则只能存储图片文件，ImageResourceStore同时提供了一个图片的缩放服务。
-						这两个存储器都继承自
-						<code>ResourceHttpRequestHandler</code>
-						，因此它们同时承担着文件访问的工作。
+						系统文件存储关系： <img src="filestore.png" class="img-responsive" />
 					</p>
-
-					<h2>构造函数</h2>
-					<h3>CommonResourceStore</h3>
-					<pre class="prettyprint lang-java">CommonResourceStore()
-CommonResourceStore(String urlPatternPrefix)</pre>
-					默认的urlPatternPrefix为file，也就是说，所有
-					/file/**请求都会被这个文件存储器处理，通过指定urlPatternPrefix可以更改路径，例如
-					<pre class="prettyprint lang-java">CommonResourceStore("file2")</pre>
-					所有 /file2/**请求会被存储器处理
-
-
-					<h3>ImageResourceStore</h3>
-					<pre class="prettyprint lang-java">ImageResourceStore()
-ImageResourceStore(String urlPatternPrefix)
-ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
-					默认的urlPatternPrefix为image，也就是说，所有
-					/image/**请求都会被这个文件存储器处理，通过指定urlPatternPrefix可以更改路径，例如
-					<pre class="prettyprint lang-java">ImageResourceStore("image2")</pre>
-					所有 /image2/**请求会被存储器处理
-					<p>
-						semaphoreNum代表着同一时间，最多允许多少条线程同时缩放文件。<small>在GraphicMagick中，如果同时处理过多文件而没有足够的资源，会出现137错误</small>，默认值为5
-					</p>
-
-					<h2>可配置项</h2>
+					<h2>FileStore</h2>
+					<p>多个FileStore组成一个FileServer，FileServer用于主要的文件存储，并且提供了动态缩放等服务</p>
+					<h3>LocalResourceRequestHandlerFileStore</h3>
+					<p>本地文件存储，同时承担着文件访问的工作</p>
+					<h4>可配置项</h4>
 					<p>由于继承自ResourceHttpRequestHandler,所以支持ResourceHttpRequestHandler的配置项，除此之外，还支持以下配置项</p>
-					<h3>CommonResourceStore</h3>
 					<div class="table-responsive">
 						<table class="table">
 							<thead>
@@ -134,8 +105,24 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 						</table>
 					</div>
 
-					<h3>ImageResourceStore</h3>
-					<p>ImageResourceStore除了支持CommonResourceStore所有配置项之外，还额外支持如下配置项</p>
+					<h4>CommonResourceStore</h4>
+					<p>构造函数</p>
+					<pre class="prettyprint lang-java">CommonResourceStore()
+CommonResourceStore(String urlPatternPrefix)</pre>
+					默认的urlPatternPrefix为file，也就是说，所有
+					/file/**请求都会被这个文件存储器处理，通过指定urlPatternPrefix可以更改路径，例如
+					<pre class="prettyprint lang-java">CommonResourceStore("file2")</pre>
+					所有 /file2/**请求会被存储器处理
+
+					<h5>PrivateResourceStore</h5>
+					<p>构造函数同 CommonResourceStore</p>
+					<div class="alert alert-warning">这个类会被注册为Controller，不能被nginx或者apache代理！</div>
+
+
+					<h4>ThumbnailSupport</h4>
+					<p>用于支持图片的动态缩放服务</p>
+					<h4>可配置项</h4>
+					<p>由于继承自LocalResourceRequestHandlerFileStore,所以支持LocalResourceRequestHandlerFileStore的配置项，除此之外，还支持以下配置项</p>
 					<div class="table-responsive">
 						<table class="table">
 							<thead>
@@ -154,13 +141,6 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 									<td>否</td>
 									<td></td>
 									<td>校验缩放尺寸是否能够被接受，默认为接受任意缩放尺寸</td>
-								</tr>
-								<tr>
-									<td>sourceProtected</td>
-									<td>boolean</td>
-									<td>否</td>
-									<td>false</td>
-									<td>是否开启原图保护，如果开启，那么只能通过缩略图路径访问图片，<b>GIF图片不受限制</b></td>
 								</tr>
 								<tr>
 									<td>supportWebp</td>
@@ -200,69 +180,162 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 									<td>大缩略图尺寸，如果不提供，则为图片原始尺寸</td>
 								</tr>
 								<tr>
-									<td colspan="5"><i>如果提供了resizeValidator，那么提供的尺寸必须能被ResizeValidator校验通过，开启原图保护之后，必须提供至少一个以上尺寸</i></td>
+									<td colspan="5"><i>如果提供了resizeValidator，那么提供的尺寸必须能被ResizeValidator校验通过</i></td>
 								</tr>
 							</tbody>
 						</table>
 					</div>
 
-					<h4>缩略图服务</h4>
-					<p>ImageResoureStore支持缩略图服务，通过不同的路径会生成不同的缩略图，比如某张图片的原图访问地址为http://localhost/image/1.png</p>
-					那么访问如下地址，将会生成不同的缩略图：
+					<div class="alert alert-info">
+						图片的缩放格式：
+						<div class="table-responsive">
+							<table class="table">
+								<tbody>
+									<tr>
+										<td>http://localhost/image/1.png/64</td>
+										<td>生成64尺寸的缩略图</td>
+									</tr>
+									<tr>
+										<td>http://localhost/image/1.png/64X32</td>
+										<td>生成64x32尺寸的缩略图(<b>保持原图的纵横比</b>)
+										</td>
+									</tr>
+									<tr>
+										<td>http://localhost/image/1.png/64X32!</td>
+										<td>生成64x32尺寸的缩略图(<b>强制缩放</b>)
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2">默认情况下，无论何种缩放，都不会将图片放大</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<p id="imagehelper">
+							缩略图服务依赖于
+							<code>ImageHelper</code>
+							，系统默认提供了
+							<code>GraphicsMagickImageHelper</code>
+							和
+							<code>JavaImageHelper</code>
+							两个辅助类，GraphicsMagickImageHelper<b>依赖于<a
+								href="http://www.graphicsmagick.org">GraphicsMagick</a>和<a
+								href="http://mvnrepository.com/artifact/org.im4java/im4java/1.4.0">im4java</a>，以及<a
+								href="https://developers.google.com/speed/webp/docs/precompiled">libwebp</a></b>，JavaImageHelper不依赖任何第三方，但它会消耗更多的内存和CPU，同时不支持webp格式的图片处理
+						</p>
+					</div>
+
+					<h5>ImageResourceStore</h5>
+					<p>用于存储jpg|jpeg|png|gif格式的图片</p>
+					<h4>可配置项</h4>
+					<p>除了ThumbnailSupport的可配置项之外，还支持以下配置项</p>
 					<div class="table-responsive">
 						<table class="table">
-							<tr>
-								<td>http://localhost/image/1.png/64</td>
-								<td>生成64尺寸的缩略图</td>
-							</tr>
-							<tr>
-								<td>http://localhost/image/1.png/64X32</td>
-								<td>生成64x32尺寸的缩略图(<b>保持原图的纵横比</b>)
-								</td>
-							</tr>
-							<tr>
-								<td>http://localhost/image/1.png/64X32!</td>
-								<td>生成64x32尺寸的缩略图(<b>强制缩放</b>)
-								</td>
-							</tr>
-							<tr>
-								<td colspan="2">默认情况下，无论何种缩放，都不会将图片放大</td>
-							</tr>
+							<thead>
+								<tr>
+									<th>属性</th>
+									<th>类型</th>
+									<th>是否必须</th>
+									<th>默认</th>
+									<th class="col-md-6">说明</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>sourceProtected</td>
+									<td>boolean</td>
+									<td>否</td>
+									<td>false</td>
+									<td>是否开启原图保护，如果开启，那么只能通过缩略图路径访问图片，<b>GIF图片不受限制</b></td>
+								</tr>
+								<tr>
+									<td>animatedWebpConfigure</td>
+									<td>AnimatedWebpConfigure</td>
+									<td>否</td>
+									<td>null</td>
+									<td>是否开启AnimatedWebp，如果开启，那么在浏览器支持webp的情况下，会将gif转化为animated
+										webp(<b>该选项的开启受到ImageHelper的限制，如果ImageHelper无法处理animated
+											webp格式的图片，那么无法生成animated webp) 
+									</td>
+								</tr>
+							</tbody>
 						</table>
 					</div>
-					<p id="imagehelper">
-						缩略图服务依赖于
-						<code>me.qyh.blog.core.file.ImageHelper</code>
-						，系统默认提供了
-						<code>me.qyh.blog.core.file.GraphicsMagickImageHelper</code>
-						和
-						<code>me.qyh.blog.core.file.JavaImageHelper</code>
-						两个辅助类，GraphicsMagickImageHelper<b>依赖于<a
-							href="http://www.graphicsmagick.org">GraphicsMagick</a>和<a
-							href="http://mvnrepository.com/artifact/org.im4java/im4java/1.4.0">im4java</a></b>，JavaImageHelper不依赖任何第三方，但它会消耗更多的内存和CPU，同时不支持webp格式的图片处理
-					</p>
-					<h3>配置多个CommonResourceStore和ImageResourceStore</h3>
-					<p>
-						默认情况下，CommonResourceStore和ImageResourceStore都只能分别配置一个，但可以通过在它们的构造函数中指定具体的路径来配置多个，
-						<b>即便如此，每个存储器仍应该指向不同的存储文件夹，并且存储文件夹之间不应该存在父子关系</b>，下面是一个参考配置：
-					</p>
-					<pre class="prettyprint lang-xml">&lt;bean class=&quot;me.qyh.blog.file.local.CommonResourceStore&quot;&gt;
-	&lt;property name=&quot;absPath&quot; value=&quot;/web/file/blog_file&quot; /&gt;
-	&lt;property name=&quot;id&quot; value=&quot;2&quot; /&gt;
-	&lt;property name=&quot;name&quot; value=&quot;文件存储&quot; /&gt;
-	&lt;property name=&quot;cacheSeconds&quot; value=&quot;31556926&quot; /&gt;
-&lt;/bean&gt;
-&lt;bean class=&quot;me.qyh.blog.file.local.CommonResourceStore&quot;&gt;
-	&lt;constructor-arg value=&quot;file2&quot; /&gt;
-	&lt;property name=&quot;absPath&quot; value=&quot;/web/file/blog_file2&quot; /&gt;
-	&lt;property name=&quot;id&quot; value=&quot;3&quot; /&gt;
-	&lt;property name=&quot;name&quot; value=&quot;文件存储2&quot; /&gt;
-	&lt;property name=&quot;cacheSeconds&quot; value=&quot;31556926&quot; /&gt;
-&lt;/bean&gt;
-						</pre>
+					AnimatedWebpConfigure的构造函数如下：
+					<pre class="prettyprint lang-java">AnimatedWebpConfigure(int semaphore);
+</pre>
+					semaphore用来限制同时转化animated webp的线程数，可配置项如下：
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>属性</th>
+									<th>类型</th>
+									<th>是否必须</th>
+									<th>默认</th>
+									<th class="col-md-6">说明</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>lossy</td>
+									<td>boolean</td>
+									<td>否</td>
+									<td>true</td>
+									<td>请见 <a
+										href="https://developers.google.com/speed/webp/docs/gif2webp#options">https://developers.google.com/speed/webp/docs/gif2webp</a></td>
+								</tr>
+								<tr>
+									<td>mixed</td>
+									<td>boolean</td>
+									<td>否</td>
+									<td>false</td>
+									<td>请见 <a
+										href="https://developers.google.com/speed/webp/docs/gif2webp#options">https://developers.google.com/speed/webp/docs/gif2webp</a></td>
+								</tr>
+								<tr>
+									<td>q</td>
+									<td>float(0~100)</td>
+									<td>否</td>
+									<td>75F</td>
+									<td>请见 <a
+										href="https://developers.google.com/speed/webp/docs/gif2webp#options">https://developers.google.com/speed/webp/docs/gif2webp</a></td>
+								</tr>
+								<tr>
+									<td>method</td>
+									<td>int(0~6)</td>
+									<td>否</td>
+									<td>4</td>
+									<td>请见 <a
+										href="https://developers.google.com/speed/webp/docs/gif2webp#options">https://developers.google.com/speed/webp/docs/gif2webp</a></td>
+								</tr>
+								<tr>
+									<td>metadata</td>
+									<td>Metadata</td>
+									<td>否</td>
+									<td>NONE</td>
+									<td>请见 <a
+										href="https://developers.google.com/speed/webp/docs/gif2webp#options">https://developers.google.com/speed/webp/docs/gif2webp</a></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 
-					<h2>第三方存储服务</h2>
-					<p>系统提供了一个AbstractOssFileStore用来支持oss存储</p>
+					<h5>VideoResourceStore</h5>
+					<p>用来存储视频文件</p>
+					<div class="alert alert-warning">
+						这个文件存储器依赖于 <a href="https://www.ffmpeg.org">ffmpeg</a>!
+					</div>
+					<p>构造函数如下：</p>
+					<pre class="prettyprint lang-java">VideoResourceStore(String urlPatternPrefix, String[] allowExtensions, int timeoutSecond)
+					</pre>
+					allowExtensions用于指定允许的视频格式，默认为mp4<br> timeoutSecond
+					用于获取视频封面的最长秒数，如果超过这个时间，则获取失败
+
+
+					<h3>AbstractOssFileStore</h3>
+					<p>用于支持第三方的oss存储</p>
 					<p>AbstractOssFileStore构造函数如下：</p>
 					<pre class="prettyprint lang-java">AbstractOssFileStore(int id, String name)</pre>
 					<p>其中id为存储器ID，全局唯一，name为存储器名称</p>
@@ -310,11 +383,8 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 								</tr>
 						</table>
 					</div>
-					<p>
-						系统还提供了一个
-						<code>me.qyh.blog.support.file.oss.QiniuFileStore</code>
-						来支持七牛云存储
-					</p>
+					<h4>QiniuFileStore</h4>
+					<p>用来支持七牛云的oss存储</p>
 					<p>QiniuFileStore构造函数如下：</p>
 					<pre class="prettyprint lang-java">QiniuFileStore(int id, String name,String ak, String sk, String bucket)</pre>
 					<p>其中id为存储器ID，全局唯一，name为存储器名称，ak为appkey，sk为密钥，bucket为存储空间</p>
@@ -376,7 +446,26 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 						</table>
 					</div>
 
-					<h2>文件删除</h2>
+					<h3>配置多个FileStore</h3>
+					<p>
+						默认情况下，每个类型的FileStore都只能分别配置一个，但可以通过在它们的构造函数中指定具体的路径来配置多个， <b>即便如此，每个存储器仍应该指向不同的存储文件夹，并且存储文件夹之间不应该存在父子关系</b>，下面是一个参考配置：
+					</p>
+					<pre class="prettyprint lang-xml">&lt;bean class=&quot;me.qyh.blog.file.local.CommonResourceStore&quot;&gt;
+	&lt;property name=&quot;absPath&quot; value=&quot;/web/file/blog_file&quot; /&gt;
+	&lt;property name=&quot;id&quot; value=&quot;2&quot; /&gt;
+	&lt;property name=&quot;name&quot; value=&quot;文件存储&quot; /&gt;
+	&lt;property name=&quot;cacheSeconds&quot; value=&quot;31556926&quot; /&gt;
+&lt;/bean&gt;
+&lt;bean class=&quot;me.qyh.blog.file.local.CommonResourceStore&quot;&gt;
+	&lt;constructor-arg value=&quot;file2&quot; /&gt;
+	&lt;property name=&quot;absPath&quot; value=&quot;/web/file/blog_file2&quot; /&gt;
+	&lt;property name=&quot;id&quot; value=&quot;3&quot; /&gt;
+	&lt;property name=&quot;name&quot; value=&quot;文件存储2&quot; /&gt;
+	&lt;property name=&quot;cacheSeconds&quot; value=&quot;31556926&quot; /&gt;
+&lt;/bean&gt;
+						</pre>
+
+					<h3>文件删除</h3>
 					<p>为了尽可能的减少服务器压力，当删除文件时候并不会立即删除实际的文件，只是将实际文件置为待删除状态，通过FileClearJob在某个时刻统一删除，
 						可以在resources/spring/file.xml中配置该job的频率，默认为凌晨三点执行一次删除工作，默认配置如下：</p>
 					<pre class="prettyprint lang-xml">&lt;task:scheduled-tasks scheduler=&quot;taskScheduler&quot;&gt;
@@ -385,175 +474,6 @@ ImageResourceStore(String urlPatternPrefix, int semaphoreNum)</pre>
 					</pre>
 					<div class="alert alert-warning">在文件写入操作下(上传、复制以及移动)，如果写入了一个待删除的文件夹，例如/todelete路径已经被置为待删除状态，而我现在向该路径上传新文件，此时会立即执行删除原文件的操作</div>
 
-
-					<h2>nginx管理文件</h2>
-					<pre class="prettyprint">
-user  root;
-worker_processes  1;
-
-error_log  /web/nginx/logs/error.log crit;
-
-
-events {
-    worker_connections  1024;
-}
-
-
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-	client_max_body_size 10m;
-	server_tokens off;
-	
-	map $http_accept $img_suffix {
-		default   ".jpeg";
-		"~*webp"  ".webp";
-	}
-	
-	map $http_accept $gif_suffix {
-		default   ".gif";
-		"~*webp"  ".gif.webp";
-	}
-
-    sendfile        on;
-    keepalive_timeout  65;
-
-	gzip              on;  
-	gzip_min_length      1000;  
-	gzip_types         text/plain text/css application/x-javascript application/javascript application/json;
-	gzip_comp_level 2;
-	access_log on;
-	
-	
-    server {
-		listen 443 ssl http2;
-		server_name www.qyh.me;
-
-		ssl on;
-		ssl_certificate   /web/key2/sec.pem;
-		ssl_certificate_key /web/key2/sec.key.unsecure;
-		ssl_session_timeout 5m;
-		ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-		ssl_ciphers AESGCM:ALL:!DH:!EXPORT:!RC4:+HIGH:!MEDIUM:!LOW:!aNULL:!eNULL;
-		ssl_prefer_server_ciphers on;
-		
-		location ^~ /lf/ {
-			alias /web/file/lf/;
-			expires      30d; 
-		}
-
-		
-		location ^~ /file/ {
-			alias /web/file/blog_file/;
-			expires      30d; 
-		}
-		
-		location ^~ /avatar/ {
-			expires      7d; 
-			alias /web/file/gravatar/;
-			try_files  $uri @doGravatar;
-			default_type image/jpeg;
-		}
-		
-		location ^~ /file_download/ {
-			alias /web/file/blog_file/;
-			 types        { }
-			default_type application/octet-stream;
-		} 
-		
-			#gif文件寻找原图
-		location ~ ^/image/(.*)\.gif$ {
-			alias /web/file/blog_image;
-			default_type image/gif;
-			expires      30d; 
-			try_files /$1$gif_suffix @doThumb;
-		}  
-	   
-	   
-		location ~ ^/image/(.*)\.png$ {
-			alias /web/file/blog_image_thumb;
-			default_type image/png;
-			try_files  /$1.png @doThumb;
-			expires      30d; 
-       }  
-		
-		#其他图片寻找缩略图
-		location /image/ {
-			alias /web/file/blog_image_thumb/;
-			try_files  $uri$img_suffix @doThumb;
-			expires      30d; 
-		}
-		
-		#mp4文件寻找原文件
-		location ~ ^/video/(.*)\.mp4$ {
-			alias /web/file/blog_video;
-			default_type video/mp4;
-			try_files  /$1.mp4 =404;
-			expires      30d; 
-       }  
-		
-		location /video/ {
-			alias /web/file/blog_video_thumb/;
-			try_files  $uri$img_suffix @doThumb;
-			expires      30d; 
-		}
-	
-	
-		location @doThumb {
-			root   html;
-			proxy_connect_timeout 3;
-			proxy_send_timeout      30;
-			proxy_read_timeout      30;
-			proxy_pass http://localhost:8080$request_uri;
-			proxy_set_header Host $host; 
-			proxy_set_header X-Forwarded-For $remote_addr; 
-		}
-		
-		location @doGravatar {
-			root   html;
-			proxy_connect_timeout 3;
-			proxy_send_timeout      30;
-			proxy_read_timeout      30;
-			proxy_pass http://localhost:8080$request_uri;
-			proxy_set_header Host $host; 
-			proxy_set_header X-Forwarded-For $remote_addr; 
-		}
-		
-		
-		location ^~ /favicon.ico { 
-			root   /web/file/static/img;
-			expires      30d; 
-		} 
-		
-		location ^~ /static/ { 
-		  alias /web/file/static/; 
-		  expires      30d; 
-		} 
-		
-		location ^~ /doc/ { 
-		  alias /web/file/doc/; 
-		  expires      30d; 
-		} 
-
-
-         location / {
-			proxy_connect_timeout 3;
-			proxy_send_timeout      30;
-			proxy_read_timeout      30;
-			proxy_pass http://localhost:8080;
-			proxy_set_header Host $host; 
-			proxy_set_header X-Forwarded-For $remote_addr;
-        }
-		
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   html;
-        }
-    }
-}
-
-					
-					</pre>
 				</div>
 			</div>
 		</div>

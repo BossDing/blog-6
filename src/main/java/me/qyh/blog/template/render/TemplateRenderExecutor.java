@@ -19,6 +19,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.template.entity.Fragment;
+
 /**
  * 渲染模板内容
  */
@@ -38,5 +41,17 @@ public interface TemplateRenderExecutor {
 	 */
 	String execute(String viewTemplateName, Map<String, Object> model, HttpServletRequest request,
 			ReadOnlyResponse readOnlyResponse) throws Exception;
+
+	/**
+	 * 获取fragment模板名称
+	 * 
+	 * @param name
+	 *            fragment 名称
+	 * @param space
+	 * @return
+	 */
+	default String getFragmentName(String name, Space space) {
+		return Fragment.getTemplateName(name, space);
+	}
 
 }

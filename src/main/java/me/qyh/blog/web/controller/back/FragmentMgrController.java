@@ -110,8 +110,7 @@ public class FragmentMgrController extends BaseMgrController {
 		if (fragment.isGlobal()) {
 			fragment.setSpace(null);
 		}
-		templateService.updateFragment(fragment);
-		return new JsonResult(true, new Message("fragment.user.update.success", "更新成功"));
+		return new JsonResult(true, templateService.updateFragment(fragment));
 	}
 
 	@GetMapping(value = "update")

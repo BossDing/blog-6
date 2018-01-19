@@ -32,6 +32,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.context.Environment;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
@@ -108,6 +109,10 @@ public final class TemplateRender implements InitializingBean {
 				ParseContextHolder.remove();
 			}
 		}
+	}
+
+	public String getFragmentName(String name, Space space) {
+		return templateRenderer.getFragmentName(name, space);
 	}
 
 	private void markRollBack() {

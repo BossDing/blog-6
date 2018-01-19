@@ -137,6 +137,10 @@ body {
 					<h2>fragment标签</h2>
 					<p>模板片段标签，引用形式为&lt;fragment
 						name=""/&gt;，其中name属性为模板片段名称，在实际的渲染过程中，通过当前空间和模板名称来确定fragment</p>
+					<div class="alert alert-info">
+						fragment标签实际上会被转化成&lt;div th:replace="" &gt;&lt;/div&gt;<br>因此name属性可以使用选择器，例如&lt;fragment
+						name="nav :: li"/&gt;
+					</div>
 
 					<h2>lock标签</h2>
 					<p>
@@ -160,8 +164,11 @@ body {
 
 
 					<h2>private标签</h2>
-					<p>引用形式为:&lt;private/&gt;被该标签标记的页面只有登录后才能被浏览，同样也应该让它尽可能的第一时间被解析，该标签支持type属性，如果该属性值为block，
-						那么它的行为为：如果用户已经登录，那么private标签的内容将会被解析，否则会忽略该标签</p>
+					<p>
+						引用形式为:&lt;private/&gt;被该标签标记的页面只有登录后才能被浏览，未登录将会抛出
+						<code>AuthencationException</code>
+						异常，同样也应该让它尽可能的第一时间被解析
+					</p>
 
 					<div class="alert alert-warning">
 						<b><i>无论是lock标签还是private标签，它们都是决定一个页面被解析时候的行为，而不是决定一个页面的属性，如果在页面允许评论的情况下，哪怕用户没有登录并且无法解开页面的锁，都可以正常评论这个页面，所以这些标签仅仅保护页面内容，而无法保护跟页面关联的东西(例如评论)</i></b>
@@ -247,6 +254,21 @@ body {
 &lt;/period&gt;
 					</pre>
 
+
+					<h2 id="markdown">markdown标签</h2>
+					<p>该标签内的内容将会通过markdown来渲染</p>
+					<div class="alert alert-warning">
+						markdown标签内的标签以及表达式将不会再被执行，例如
+						<pre class="prettyprint lang-xml">
+&lt;markdown&gt;
+	&lt;h2 th:text=&quot;${articlePage}&quot;&gt;&lt;/h2&gt;
+&lt;/markdown&gt;		</pre>
+						此时th:text将不会被执行，如果需要使用表达式，可以采用内联表达式，例如：
+						<pre class="prettyprint lang-xml">
+&lt;markdown&gt;
+	&lt;h2&gt;[[${articlePage}]]&lt;/h2&gt;
+&lt;/markdown&gt;		</pre>
+					</div>
 				</div>
 			</div>
 		</div>

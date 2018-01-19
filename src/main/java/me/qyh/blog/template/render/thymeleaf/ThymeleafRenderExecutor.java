@@ -43,6 +43,8 @@ import org.thymeleaf.standard.expression.FragmentExpression;
 import org.thymeleaf.standard.expression.IStandardExpressionParser;
 import org.thymeleaf.standard.expression.StandardExpressions;
 
+import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.TemplateRenderExecutor;
 
@@ -66,6 +68,20 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) {
 		return doExecutor(viewTemplateName, model, request, response);
+	}
+
+	@Override
+	public String getFragmentName(String name, Space space) {
+		return getThymeleafFragmentName(name, space);
+	}
+
+	public static String getThymeleafFragmentName(String name, Space space) {
+		int index = name.indexOf("::");
+		if (index <= 0 || index == name.length() - 2) {
+			return Fragment.getTemplateName(name, space);
+		} else {
+			return Fragment.getTemplateName(name.substring(0, index), space) + name.substring(index);
+		}
 	}
 
 	private String doExecutor(String viewTemplateName, final Map<String, Object> model,

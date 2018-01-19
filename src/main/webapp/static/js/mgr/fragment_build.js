@@ -1,5 +1,8 @@
-var editor = createEditor('editor');
+var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
+	save(true);
+}}]);
 var saveFlag = false;
+var preEditorContent;
 var loadTemplates = function(){
 	return [{name : '文章详情',path:rootPath+'/static/js/mgr/fragment_article.html'},{name : '上下文章',path:rootPath+'/static/js/mgr/fragment_articleNav.html'},
 		{name:'文章列表',path:rootPath+'/static/js/mgr/fragment_articles.html'},{name:'文章统计',path:rootPath+'/static/js/mgr/fragment_articleStatistics.html'},
@@ -19,6 +22,8 @@ $(document).ready(function() {
 		}
 	})
 	editor.setSize('100%', $(window).height() - 30);
+	
+	preEditorContent = editor.getValue();
 	sfq.setFileClickFunction(function(path){
 		editor.insertUrl(path,true);
 		return true;
@@ -149,6 +154,7 @@ $(document).ready(function() {
 	function loadTemplate(path){
 		$.get(path,{},function(data){
 			editor.setValue(data);
+			preEditorContent = data;
 			$("#templateModal").modal('hide');
 		})
 	}
@@ -238,9 +244,13 @@ $(document).ready(function() {
 			if(saveFlag) return ;
 			var content = editor.getValue();
 			if($.trim(content) != ''){
-				var time = $.now();
-				local_storage.store(getKey(),JSON.stringify({"id":getKey(),"content":content,"time":time}));
-				$("#auto-save-timer").html("最近备份："+new Date(time).format('yyyy-mm-dd HH:MM:ss'))
+				
+				if(!preEditorContent || content != preEditorContent){
+					var time = $.now();
+					local_storage.store(getKey(),JSON.stringify({"id":getKey(),"content":content,"time":time}));
+					$("#auto-save-timer").html("最近备份："+new Date(time).format('yyyy-mm-dd HH:MM:ss'))
+					preEditorContent = content;
+				}
 			}
 			else
 				fragment_storage.removeCurrent();
@@ -253,6 +263,7 @@ $(document).ready(function() {
 			bootbox.confirm("系统发现在"+new Date(v.time).format('yyyy-mm-dd HH:MM:ss')+"留有备份，是否加载？",function(result){
 				if(result){
 					editor.setValue(v.content);
+					preEditorContent= v.content;
 				}
 			})
 		}
@@ -324,7 +335,7 @@ $(document).ready(function() {
 		})
 	}
 	
-	function save(){
+	function save(quick){
 		var data = $("#previewModal form").serializeObject();
 		var space = data.space;
 		delete data['space'];
@@ -355,17 +366,19 @@ $(document).ready(function() {
 			success : function(data) {
 				if (data.success) {
 					bootbox.alert("保存成功");
-//					fragment_storage.removeCurrent();
-//					if(isSave){
-//						$("#fragmentId").val(data.data.id);
-//						$("#fragmentKey").val("fragment_"+data.data.id)
-//					}
-//					$("#previewModal").modal('hide');
-					setTimeout(function(){
-						window.location.href = rootPath + '/mgr/template/fragment/index';
-					},500)
+					fragment_storage.removeCurrent();
+					$("#fragmentId").val(data.data.id);
+					$("#fragmentKey").val("fragment_"+data.data.id)
+					if(!quick){
+						$("#previewModal").modal('hide');
+					}
 				} else {
-					bootbox.alert(data.message);
+					if(quick){
+						$("#previewModal").modal('show');
+						setTimeout(function(){
+							bootbox.alert(data.message);
+						})
+					}
 				}
 			},
 			complete : function() {
@@ -408,6 +421,7 @@ $(document).ready(function() {
 							 $.get(basePath + '/mgr/template/history/get/'+id,{},function(data){
 								if(data.success){
 									editor.setValue(data.data.tpl);
+									preEditorContent= data.data.tpl;
 									$("#historyModal").modal('hide')
 								}else{
 									$("#history-tip").html('<div class="alert alert-warning alert-dismissible"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+data.message+'</div>');

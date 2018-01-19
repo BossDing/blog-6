@@ -35,7 +35,6 @@ import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.RenderResult;
@@ -74,7 +73,7 @@ public class OtherController {
 		try {
 
 			RenderResult result = templateRender.doRender(
-					Fragment.getTemplateName(Webs.decode(fragment), Environment.getSpace()), null, request,
+					templateRender.getFragmentName(Webs.decode(fragment), Environment.getSpace()), null, request,
 					new ReadOnlyResponse(response), new ParseConfig(true));
 
 			String content = result.getContent();
@@ -91,7 +90,10 @@ public class OtherController {
 			if (e instanceof RuntimeException) {
 				throw (RuntimeException) e;
 			}
-			throw new SystemException(e.getMessage(),e);
+			if (e instanceof SystemException) {
+				throw (SystemException) e;
+			}
+			throw new SystemException(e.getMessage(), e);
 		}
 	}
 

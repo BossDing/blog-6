@@ -15,19 +15,17 @@
  */
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
-import java.util.Map;
-
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.model.IProcessableElementTag;
+import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.context.Environment;
 
-public class PrivateTagProcessor extends DefaultAttributesTagProcessor {
+public class PrivateTagProcessor extends AbstractElementTagProcessor {
 
 	private static final String TAG_NAME = "private";
-	private static final String TYPE = "type";
 	private static final int PRECEDENCE = 1000;
 
 	public PrivateTagProcessor(String dialectPrefix) {
@@ -37,25 +35,10 @@ public class PrivateTagProcessor extends DefaultAttributesTagProcessor {
 	@Override
 	protected final void doProcess(ITemplateContext context, IProcessableElementTag tag,
 			IElementTagStructureHandler structureHandler) {
-
-		Map<String, String> attributeMap = processAttribute(context, tag);
-
-		String type = attributeMap.get(TYPE);
-
-		if ("block".equalsIgnoreCase(type)) {
-
-			if (Environment.isLogin()) {
-				structureHandler.removeTags();
-			} else {
-				structureHandler.removeElement();
-			}
-
-		} else {
-			try {
-				Environment.doAuthencation();
-			} finally {
-				structureHandler.removeElement();
-			}
+		try {
+			Environment.doAuthencation();
+		} finally {
+			structureHandler.removeElement();
 		}
 	}
 

@@ -81,15 +81,13 @@ public class PageMgrController extends BaseMgrController {
 	@PostMapping("create")
 	@ResponseBody
 	public JsonResult creatPage(@RequestBody @Validated Page page) throws LogicException {
-		templateService.createPage(page);
-		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
+		return new JsonResult(true, templateService.createPage(page));
 	}
 
 	@PostMapping("update")
 	@ResponseBody
 	public JsonResult updatePage(@RequestBody @Validated Page page) throws LogicException {
-		templateService.updatePage(page);
-		return new JsonResult(true, new Message("page.user.build.success", "保存成功"));
+		return new JsonResult(true, templateService.updatePage(page));
 	}
 
 	@GetMapping(value = "new")

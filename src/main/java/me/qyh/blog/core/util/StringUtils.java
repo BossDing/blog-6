@@ -29,14 +29,14 @@ public final class StringUtils {
 
 	/**
 	 * <p>
-	 * Gets the String that is nested in between two Strings. Only the first
-	 * match is returned.
+	 * Gets the String that is nested in between two Strings. Only the first match
+	 * is returned.
 	 * </p>
 	 *
 	 * <p>
-	 * A {@code null} input String returns {@code null}. A {@code null}
-	 * open/close returns {@code null} (no match). An empty ("") open and close
-	 * returns an empty string.
+	 * A {@code null} input String returns {@code null}. A {@code null} open/close
+	 * returns {@code null} (no match). An empty ("") open and close returns an
+	 * empty string.
 	 * </p>
 	 *
 	 * <pre>
@@ -76,14 +76,14 @@ public final class StringUtils {
 
 	/**
 	 * <p>
-	 * Searches a String for substrings delimited by a start and end tag,
-	 * returning all matching substrings in an array.
+	 * Searches a String for substrings delimited by a start and end tag, returning
+	 * all matching substrings in an array.
 	 * </p>
 	 *
 	 * <p>
-	 * A {@code null} input String returns {@code null}. A {@code null}
-	 * open/close returns {@code null} (no match). An empty ("") open/close
-	 * returns {@code null} (no match).
+	 * A {@code null} input String returns {@code null}. A {@code null} open/close
+	 * returns {@code null} (no match). An empty ("") open/close returns
+	 * {@code null} (no match).
 	 * </p>
 	 *
 	 * <pre>
@@ -98,13 +98,12 @@ public final class StringUtils {
 	 *            the String containing the substrings, null returns null, empty
 	 *            returns empty
 	 * @param open
-	 *            the String identifying the start of the substring, empty
-	 *            returns null
+	 *            the String identifying the start of the substring, empty returns
+	 *            null
 	 * @param close
 	 *            the String identifying the end of the substring, empty returns
 	 *            empty array
-	 * @return a String Array of substrings, or {@code new String[0]} if no
-	 *         match
+	 * @return a String Array of substrings, or {@code new String[0]} if no match
 	 */
 	public static String[] substringsBetween(final String str, final String open, final String close) {
 		if (str == null || Validators.isEmptyOrNull(open, true) || Validators.isEmptyOrNull(close, true)) {
@@ -144,5 +143,25 @@ public final class StringUtils {
 	 */
 	public static String uuid() {
 		return UUID.randomUUID().toString().replace("-", "");
+	}
+
+	/**
+	 * 清除字符串开头的空格
+	 * 
+	 * @param str
+	 * @return
+	 */
+	public static String trimBegin(String str) {
+		if (str == null) {
+			return null;
+		}
+		int len = str.length();
+		int st = 0;
+		char[] val = str.toCharArray();
+
+		while ((st < len) && (val[st] <= ' ')) {
+			st++;
+		}
+		return ((st > 0) || (len < str.length())) ? str.substring(st, len) : str;
 	}
 }

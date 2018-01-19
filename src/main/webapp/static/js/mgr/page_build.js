@@ -1,4 +1,9 @@
-var editor = createEditor('editor');
+var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
+	save(true);
+}},{key:'Ctrl-P',fun:function(){
+	preview();
+}}]);
+var preEditorContent;
 var saveFlag = false;
 var loadTemplates = function(){
 	return [{name : '基本模板',path:rootPath+'/static/js/mgr/template_simple.html'},{name : '留言模板',path:rootPath+'/static/js/mgr/template_guestbook.html'},
@@ -7,11 +12,17 @@ var loadTemplates = function(){
 		{name:'文章归档页',path:rootPath+'/static/js/mgr/template_archives.html'}]
 }
 $(document).ready(function() {
+	$("#fsModal").on('shown.bs.modal',function(){
+		$("#fsModal .modal-body").css({"overflow-y":'hidden',"padding":"0px"})
+		$("#fs-url").css({'height':$("#fsModal .modal-body").height()+"px"});
+	});
 	editor.setSize('100%', $(window).height() - 30);
 	sfq.setFileClickFunction(function(path){
 		editor.insertUrl(path,true);
 		return true;
 	});
+	
+	preEditorContent = editor.getValue();
 	
 	$('#backupModal').on('show.bs.modal',function(){
 		rewriteBaks();
@@ -138,6 +149,7 @@ $(document).ready(function() {
 	function loadTemplate(path){
 		$.get(path,{},function(data){
 			editor.setValue(data);
+			preEditorContent = data;
 			$("#templateModal").modal('hide');
 		})
 	}
@@ -235,20 +247,17 @@ $(document).ready(function() {
 				if (data.success) {
 					var url = data.data;
 					if(url.hasPathVariable){
-						bootbox.dialog({
-							title : '预览地址',
-							message : '预览路径为<p><b>'+url.url+'</b></p><p>该地址中包含可变参数，请自行访问</p>',
-							buttons : {
-								success : {
-									label : "确定",
-									className : "btn-success"
-								}
+						bootbox.prompt("预览路径为<p><b>"+url.url+"</b></p><p>该地址中包含可变参数，请输入确切地址</p>", function(result){ 
+							if(result != null){
+								$("#fs-url").attr('src',result);
+								$("#fsModalLabel").html("预览:"+result);
+								$("#fsModal").modal('show');
 							}
 						});
 					} else {
-						var win = window.open(url.url,
-							'_blank');
-						win.focus();
+						$("#fs-url").attr('src',url.url);
+						$("#fsModalLabel").html("预览:"+url.url);
+						$("#fsModal").modal('show');
 					}
 				} else {
 					bootbox.alert(data.message);
@@ -259,7 +268,7 @@ $(document).ready(function() {
 		});
 	}
 	
-	function save() {
+	function save(quick) {
 		var page = {"tpl":editor.getValue()};
 		var space = $("#spaceSelect").val();
 		if(space != ''){
@@ -286,15 +295,22 @@ $(document).ready(function() {
 			contentType : 'application/json',
 			success : function(data){
 				if (data.success) {
-					bootbox.alert(data.message);
 					if($("#pageKey").val() == "page_"+$("#pageId").val())
 						page_storage.removeCurrent();
-					setTimeout(function(){
-						window.location.href = basePath + '/mgr/template/page/index';
-					}, 500);
+					$("#pageId").val(data.data.id);
+					$("#pageKey").val("page_"+$("#pageId").val());
+					bootbox.alert("保存成功");
+					if(!quick){
+						$("#previewModal").modal('hide');
+					}
 				} else {
-					bootbox.alert(data.message);
 					saveFlag = false;
+					if(quick){
+						$("#previewModal").modal('show');
+						setTimeout(function(){
+							bootbox.alert(data.message);
+						},500)
+					}
 				}
 			},
 			complete:function(){
@@ -321,9 +337,12 @@ $(document).ready(function() {
 			if(saveFlag) return ;
 			var content = editor.getValue();
 			if($.trim(content) != ''){
-				var time = $.now();
-				local_storage.store(getKey(),JSON.stringify({"id":getKey(),"content":content,"time":time}));
-				$("#auto-save-timer").html("最近备份："+new Date(time).format('yyyy-mm-dd HH:MM:ss'))
+				if(!preEditorContent || content != preEditorContent){
+					var time = $.now();
+					local_storage.store(getKey(),JSON.stringify({"id":getKey(),"content":content,"time":time}));
+					$("#auto-save-timer").html("最近备份："+new Date(time).format('yyyy-mm-dd HH:MM:ss'));
+					preEditorContent = content;
+				}
 			}
 			else
 				page_storage.removeCurrent();
@@ -336,6 +355,7 @@ $(document).ready(function() {
 			bootbox.confirm("系统发现在"+new Date(v.time).format('yyyy-mm-dd HH:MM:ss')+"留有备份，是否加载？",function(result){
 				if(result){
 					editor.setValue(v.content);
+					preEditorContent= v.content;
 				}
 			})
 		}
@@ -441,6 +461,7 @@ $(document).ready(function() {
 							 $.get(basePath + '/mgr/template/history/get/'+id,{},function(data){
 								if(data.success){
 									editor.setValue(data.data.tpl);
+									preEditorContent = data.data.tpl;
 									$("#historyModal").modal('hide')
 								}else{
 									$("#history-tip").html('<div class="alert alert-warning alert-dismissible"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+data.message+'</div>');

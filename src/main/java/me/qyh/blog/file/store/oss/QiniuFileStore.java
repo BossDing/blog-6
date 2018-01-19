@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 package me.qyh.blog.file.store.oss;
-///*
-// * Copyright 2016 qyh.me
-// * 
-// * Licensed under the Apache License, Version 2.0 (the "License");
-// * you may not use this file except in compliance with the License.
-// * You may obtain a copy of the License at
-// * 
-// *     http://www.apache.org/licenses/LICENSE-2.0
-// * 
-// * Unless required by applicable law or agreed to in writing, software
-// * distributed under the License is distributed on an "AS IS" BASIS,
-// * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// * See the License for the specific language governing permissions and
-// * limitations under the License.
-// */
-//package me.qyh.blog.support.file.oss;
-//
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //import java.io.IOException;
 //import java.nio.file.Path;
 //import java.util.ArrayList;
@@ -50,15 +49,14 @@ package me.qyh.blog.file.store.oss;
 //import com.qiniu.util.Auth;
 //
 //import me.qyh.blog.core.exception.SystemException;
-//import me.qyh.blog.core.file.ImageHelper.ImageInfo;
-//import me.qyh.blog.core.file.Resize;
-//import me.qyh.blog.core.file.ThumbnailUrl;
-//import me.qyh.blog.core.service.FileService;
-//import me.qyh.blog.util.Jsons;
-//import me.qyh.blog.util.Jsons.ExpressionExecutor;
-//import me.qyh.blog.util.Resources;
-//import me.qyh.blog.util.UrlUtils;
-//import me.qyh.blog.util.Validators;
+//import me.qyh.blog.core.util.Jsons;
+//import me.qyh.blog.core.util.Jsons.ExpressionExecutor;
+//import me.qyh.blog.core.util.Resources;
+//import me.qyh.blog.core.util.UrlUtils;
+//import me.qyh.blog.core.util.Validators;
+//import me.qyh.blog.file.store.ImageHelper.ImageInfo;
+//import me.qyh.blog.file.store.Resize;
+//import me.qyh.blog.file.store.ThumbnailUrl;
 //
 ///**
 // * 提供了对七牛云存储的简单操作，必须引入七牛云的sdk:
@@ -207,8 +205,7 @@ package me.qyh.blog.file.store.oss;
 //		try {
 //			List<String> keys = new ArrayList<>();
 //			BucketManager bucketManager = new BucketManager(auth);
-//			FileListing fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, null,
-//					RECOMMEND_LIMIT, null);
+//			FileListing fileListing = bucketManager.listFiles(bucket, key + '/', null, RECOMMEND_LIMIT, null);
 //
 //			do {
 //				FileInfo[] items = fileListing.items;
@@ -217,8 +214,7 @@ package me.qyh.blog.file.store.oss;
 //						keys.add(fileInfo.key);
 //					}
 //				}
-//				fileListing = bucketManager.listFiles(bucket, key + FileService.SPLIT_CHAR, fileListing.marker,
-//						RECOMMEND_LIMIT, null);
+//				fileListing = bucketManager.listFiles(bucket, key + '/', fileListing.marker, RECOMMEND_LIMIT, null);
 //			} while (!fileListing.isEOF());
 //
 //			if (keys.isEmpty()) {
@@ -244,12 +240,14 @@ package me.qyh.blog.file.store.oss;
 //			throw new IOException("无法将结果转化为json信息:" + json);
 //		}
 //		try {
-//			String format = executor.execute("format");
-//			Integer width = Integer.parseInt(executor.execute("width"));
-//			Integer height = Integer.parseInt(executor.execute("height"));
+//			String format = executor.execute("format").orElseThrow(() -> new SystemException("无法获取图片的格式：" + json));
+//			Integer width = Integer
+//					.parseInt(executor.execute("width").orElseThrow(() -> new SystemException("无法获取图片的宽度：" + json)));
+//			Integer height = Integer
+//					.parseInt(executor.execute("height").orElseThrow(() -> new SystemException("无法获取图片的高度：" + json)));
 //			return new ImageInfo(width, height, format);
 //		} catch (Exception e) {
-//			throw new IOException("获取图片信息失败:" + json,e);
+//			throw new IOException("获取图片信息失败:" + json, e);
 //		}
 //	}
 //
