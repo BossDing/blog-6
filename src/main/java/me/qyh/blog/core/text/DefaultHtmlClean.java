@@ -39,10 +39,9 @@ import me.qyh.blog.core.util.Validators;
  *
  */
 public class DefaultHtmlClean implements HtmlClean, InitializingBean {
-	
+
 	@Autowired
 	private UrlHelper urlHelper;
-	
 
 	private String[] followRootDomains;
 
@@ -72,7 +71,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 				|| StringUtils.startsWithIgnoreCase(href, "https://"))) {
 			UriComponents uc = UriComponentsBuilder.fromHttpUrl(href).build();
 			String host = uc.getHost();
-			if(StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())){
+			if (StringUtils.endsWithIgnoreCase(host, urlHelper.getUrlConfig().getRootDomain())) {
 				return false;
 			}
 			for (String followRootDomain : followRootDomains) {
@@ -91,7 +90,7 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 		}
 		if (tags == null) {
 			tags = new AllowTags();
-			tags.addSimpleTags(new String[] { "b", "code", "em", "del", "small", "strong" });
+			tags.addSimpleTags(new String[] { "b", "code", "em", "del", "small", "strong", "br" });
 			Tag a = new Tag("a").
 			// 这里protocols必须要标明，否则会有xss
 					addAttributes(new Attribute("href", "ftp", "http", "https", "mailto"), new Attribute("rel"));

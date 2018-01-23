@@ -84,6 +84,7 @@ public class ArticleMgrController extends BaseMgrController {
 			articleQueryParam.setStatus(ArticleStatus.PUBLISHED);
 		}
 		articleQueryParam.setQueryPrivate(true);
+		articleQueryParam.setIgnorePaging(false);
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		model.addAttribute("page", articleService.queryArticle(articleQueryParam));
 		return "mgr/article/index";

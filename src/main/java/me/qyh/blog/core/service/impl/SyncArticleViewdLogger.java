@@ -112,7 +112,7 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 			Collections.reverse(result);
 			int finalNum = Math.min(num, max);
 			if (result.size() > finalNum) {
-				result = result.subList(0, finalNum - 1);
+				result = result.subList(0, finalNum);
 			}
 		}
 		return result;
@@ -123,7 +123,9 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 		long stamp = lock.writeLock();
 		try {
 			articles.remove(article.getId());
-			articles.put(article.getId(), article);
+			Article copied = new Article(article);
+			copied.setContent(null);
+			articles.put(article.getId(), copied);
 		} finally {
 			lock.unlockWrite(stamp);
 		}
@@ -171,9 +173,10 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 				LOGGER.warn("反序列化文件" + sdfile + "失败：" + e.getMessage(), e);
 			} finally {
 				if (!FileUtils.deleteQuietly(sdfile)) {
-					LOGGER.warn("删除文件{}失败",sdfile);
+					LOGGER.warn("删除文件{}失败", sdfile);
 				}
 			}
 		}
 	}
+
 }

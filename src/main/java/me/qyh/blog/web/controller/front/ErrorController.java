@@ -26,4 +26,9 @@ public class ErrorController {
 		return "error/ui";
 	}
 
+	@GetMapping("error/ui2")
+	public String handlerUI2() {
+		return "forward:/space/test/dsadsad";
+	}
+
 }

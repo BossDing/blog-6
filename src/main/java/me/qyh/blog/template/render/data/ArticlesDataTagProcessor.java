@@ -30,8 +30,8 @@ import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.validator.ArticleQueryParamValidator;
 import me.qyh.blog.core.vo.ArticleQueryParam;
-import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
+import me.qyh.blog.core.vo.PageResult;
 
 /**
  * 文章列表数据处理器
@@ -88,6 +88,8 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 		param.setIgnoreLevel(attributes.getBoolean("ignoreLevel", false));
 		param.setQueryLock(attributes.getBoolean("queryLock", true));
 		param.setSpaces(attributes.getSet("spaces", ","));
+
+		param.setIgnorePaging(attributes.getBoolean("ignorePaging", false));
 
 		if (Environment.isLogin()) {
 			param.setQueryPrivate(attributes.getBoolean("queryPrivate", true));

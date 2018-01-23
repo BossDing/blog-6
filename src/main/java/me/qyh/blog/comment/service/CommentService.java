@@ -55,6 +55,7 @@ import me.qyh.blog.comment.vo.CommentPageResult;
 import me.qyh.blog.comment.vo.CommentQueryParam;
 import me.qyh.blog.comment.vo.CommentStatistics;
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
@@ -87,6 +88,8 @@ public class CommentService
 	private Markdown2Html markdown2Html;
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private UrlHelper urlHelper;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -583,6 +586,12 @@ public class CommentService
 	}
 
 	private void completeComment(Comment comment) {
+		CommentModule module = comment.getCommentModule();
+		if (module != null && module.getModule() != null && module.getId() != null) {
+			comment.setUrl(urlHelper.getUrl() + "/comment/link/" + module.getModule() + "/" + module.getId());
+		} else {
+			comment.setUrl(urlHelper.getUrl());
+		}
 		String content = comment.getContent();
 		if (comment.getEditor().equals(Editor.MD)) {
 			content = markdown2Html.toHtml(comment.getContent());

@@ -371,8 +371,13 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (param.hasQuery()) {
 			page = articleIndexer.query(param);
 		} else {
-			int count = articleDao.selectCount(param);
 			List<Article> datas = articleDao.selectPage(param);
+			int count;
+			if (param.isIgnorePaging()) {
+				count = datas.size();
+			} else {
+				count = articleDao.selectCount(param);
+			}
 			page = new PageResult<>(param, count, datas);
 		}
 		// query comments

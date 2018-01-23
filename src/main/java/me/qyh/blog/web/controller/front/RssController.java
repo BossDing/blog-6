@@ -54,6 +54,7 @@ public class RssController {
 		param.setQueryLock(false);
 		param.setQueryPrivate(false);
 		param.setSort(null);
+		param.setIgnorePaging(false);
 		PageResult<Article> page = articleService.queryArticle(param);
 		model.addAttribute("page", page);
 		return rssView;

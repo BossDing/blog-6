@@ -44,6 +44,7 @@ import me.qyh.blog.core.exception.SpaceNotFoundException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.vo.JsonResult;
@@ -61,6 +62,8 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private SpaceService spaceService;
 
 	private static final Message ERROR_400 = new Message("error.400", "请求异常");
 	private static final Message ERROR_403 = new Message("error.403", "权限不足");
@@ -399,17 +402,30 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 			// 防止找不到错误页面重定向
 			String mapping = request.getServletPath();
-			String space = Webs.getSpaceFromRequest(request);
+			/**
+			 * @since 5.9 当nohandlerfound的时候，AppInterceptorHandler不会起作用，因此
+			 *        getSpaceFromRequest始终未空，这里需要额外的判断
+			 */
+			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
+			String space = Webs.getSpaceFromPath(path);
 			String forwardMapping = "";
 			if (space != null) {
-				forwardMapping = "/space/" + space + "/error";
+
+				// 检查空间是否存在
+				if (spaceService.getSpace(space).isPresent()) {
+					forwardMapping = "/space/" + space + "/error";
+				} else {
+					forwardMapping = "/error";
+					space = null;
+				}
+
 			} else {
 				forwardMapping = "/error";
 			}
 			if (forwardMapping.equals(mapping)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_NO_ERROR_MAPPING)));
 			} else {
-				return getErrorForward(request, new ErrorInfo(ERROR_404, 404));
+				return getErrorForward(request, new ErrorInfo(ERROR_404, 404), space);
 			}
 		}
 
@@ -475,6 +491,10 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	}
 
 	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error) {
+		return getErrorForward(request, error, Webs.getSpaceFromRequest(request));
+	}
+
+	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error, String space) {
 		Map<String, Object> model = new HashMap<>();
 
 		/**
@@ -490,8 +510,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		 */
 		request.setAttribute(Webs.ERROR_ATTR_NAME, Boolean.TRUE);
 
-		// 当AppInterceptor preHander发生异常的时候，上下文将会被清空，此时无法从Environment中直接获取space，只能从请求中获取
-		String space = Webs.getSpaceFromRequest(request);
 		if (space != null) {
 			return new ModelAndView("forward:/space/" + space + "/error", model, HttpStatus.valueOf(error.getCode()));
 		} else {

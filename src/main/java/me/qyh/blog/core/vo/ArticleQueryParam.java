@@ -21,9 +21,9 @@ import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Article.ArticleFrom;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.util.Validators;
 
 /**
@@ -54,6 +54,8 @@ public class ArticleQueryParam extends PageQueryParam {
 	private boolean queryLock = true;
 	private Sort sort;
 	private boolean highlight = true;// 查询是否高亮显示
+
+	private boolean ignorePaging = false;
 
 	/**
 	 * 根据<b>别名</b>，只查询某些空间
@@ -91,6 +93,10 @@ public class ArticleQueryParam extends PageQueryParam {
 		this.space = param.space;
 		this.status = param.status;
 		this.tag = param.tag;
+		this.ignorePaging = param.ignorePaging;
+		this.spaces = param.spaces;
+		this.spaceIds = param.spaceIds;
+		this.tagId = param.tagId;
 	}
 
 	public Space getSpace() {
@@ -215,6 +221,14 @@ public class ArticleQueryParam extends PageQueryParam {
 
 	public void setTagId(Integer tagId) {
 		this.tagId = tagId;
+	}
+
+	public boolean isIgnorePaging() {
+		return ignorePaging;
+	}
+
+	public void setIgnorePaging(boolean ignorePaging) {
+		this.ignorePaging = ignorePaging;
 	}
 
 	@Override
