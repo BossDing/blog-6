@@ -96,7 +96,6 @@ DROP TABLE IF EXISTS `blog_common_file`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `blog_common_file` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `file_key` varchar(2000) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `file_extension` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_size` int(11) NOT NULL,
   `file_store` int(11) NOT NULL,

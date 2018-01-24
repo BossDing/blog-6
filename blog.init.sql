@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS `blog_comment` (
 
 CREATE TABLE IF NOT EXISTS `blog_common_file` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `file_key` varchar(2000)  DEFAULT NULL,
   `file_extension` varchar(500)  NOT NULL,
   `file_size` int(11) NOT NULL,
   `file_store` int(11) NOT NULL,

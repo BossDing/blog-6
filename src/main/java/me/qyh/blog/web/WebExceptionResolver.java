@@ -404,7 +404,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			String mapping = request.getServletPath();
 			/**
 			 * @since 5.9 当nohandlerfound的时候，AppInterceptorHandler不会起作用，因此
-			 *        getSpaceFromRequest始终未空，这里需要额外的判断
+			 *        getSpaceFromRequest始终为空，这里需要额外的判断
 			 */
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
 			String space = Webs.getSpaceFromPath(path);
