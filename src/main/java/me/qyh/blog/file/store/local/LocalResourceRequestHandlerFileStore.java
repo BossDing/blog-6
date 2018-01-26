@@ -30,12 +30,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
@@ -87,11 +90,6 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
-
-	@Autowired
-	private TemplateRequestMappingHandlerMapping mapping;
-	@Autowired
-	private StaticResourceUrlHandlerMapping customResourceHttpRequestHandlerUrlHandlerMapping;
 
 	private static Method method;
 
@@ -268,15 +266,6 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 		super.afterPropertiesSet();
 
 		fileManager.addFileStore(this);
-
-		String pattern = urlPatternPrefix + "/**";
-		if (getRegisterMapping()) {
-			mapping.registerMapping(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET), this, method);
-		} else {
-			// 注册为SimpleUrlMapping
-			customResourceHttpRequestHandlerUrlHandlerMapping.registerResourceHttpRequestHandlerMapping(pattern, this);
-		}
-
 	}
 
 	@Override
@@ -332,5 +321,23 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
 		return true;
+	}
+
+	@EventListener(ContextRefreshedEvent.class)
+	void contextRefreshedEvent(ContextRefreshedEvent event) {
+		WebApplicationContext ctx = (WebApplicationContext) event.getApplicationContext();
+		StaticResourceUrlHandlerMapping urlMapping = ctx.getBean(StaticResourceUrlHandlerMapping.class);
+
+		TemplateRequestMappingHandlerMapping templateRequestMappingHandlerMapping = ctx
+				.getBean(TemplateRequestMappingHandlerMapping.class);
+
+		String pattern = urlPatternPrefix + "/**";
+		if (getRegisterMapping()) {
+			templateRequestMappingHandlerMapping
+					.registerMapping(RequestMappingInfo.paths(pattern).methods(RequestMethod.GET), this, method);
+		} else {
+			// 注册为SimpleUrlMapping
+			urlMapping.registerResourceHttpRequestHandlerMapping(pattern, this);
+		}
 	}
 }

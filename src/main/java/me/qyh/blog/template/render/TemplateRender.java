@@ -31,6 +31,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.util.CollectionUtils;
 
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LockException;
@@ -43,6 +44,7 @@ import me.qyh.blog.core.util.Formats;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
+import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.web.Webs;
@@ -64,6 +66,12 @@ public final class TemplateRender implements InitializingBean {
 	private TemplateExceptionTranslater templateExceptionTranslater;
 	@Autowired
 	private Messages messages;
+	@Autowired
+	private UrlHelper urlHelper;
+	@Autowired(required = false)
+	private GravatarUrlGenerator gravatarUrlGenerator;
+
+	private Gravatars gravatars;
 
 	private Map<String, Object> pros = new HashMap<>();
 
@@ -154,11 +162,19 @@ public final class TemplateRender implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+
+		if (gravatarUrlGenerator == null) {
+			gravatarUrlGenerator = new DefaultGravatarUrlGenerator("https://secure.gravatar.com/avatar/");
+		}
+
+		gravatars = new Gravatars(gravatarUrlGenerator);
+
 		pros.put("validators", Validators.class);
 		pros.put("jsons", Jsons.class);
 		pros.put("strings", StringUtils.class);
 		pros.put("times", Times.class);
 		pros.put("formats", Formats.class);
+		pros.put("gravatars", gravatars);
 	}
 
 	public void setPros(Map<String, Object> pros) {
@@ -168,6 +184,44 @@ public final class TemplateRender implements InitializingBean {
 	public void setRenderHandlers(List<TemplateRenderHandler> renderHandlers) {
 		Objects.requireNonNull(renderHandlers);
 		this.renderHandlers = renderHandlers;
+	}
+
+	public final class Gravatars {
+		private final GravatarUrlGenerator generator;
+
+		private Gravatars(GravatarUrlGenerator generator) {
+			super();
+			this.generator = generator;
+		}
+
+		public String getUrl(String emailMd5) {
+			return generator.getUrl(emailMd5);
+		}
+
+		public OptionalGravatarUrl getOptionalUrl(String emailMd5) {
+			return new OptionalGravatarUrl(emailMd5);
+		}
+
+		public final class OptionalGravatarUrl {
+			private final String md5;
+
+			private OptionalGravatarUrl(String md5) {
+				super();
+				this.md5 = md5;
+			}
+
+			public String orElse(String url) {
+				if (!Validators.isEmptyOrNull(md5, true)) {
+					return generator.getUrl(md5);
+				}
+				if (UrlUtils.isAbsoluteUrl(url)) {
+					return url;
+				}
+				return (url.charAt(0) == '/') ? urlHelper.getUrl() + url : urlHelper.getUrl() + "/" + url;
+			}
+
+		}
+
 	}
 
 }

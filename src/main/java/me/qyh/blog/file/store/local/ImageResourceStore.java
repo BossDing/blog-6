@@ -99,7 +99,6 @@ public class ImageResourceStore extends ThumbnailSupport {
 		try {
 			return getImageHelper().read(tmp);
 		} catch (IOException e) {
-			e.printStackTrace();
 			logger.debug(e.getMessage(), e);
 			throw new LogicException("image.corrupt", "不是正确的图片文件或者图片已经损坏");
 		}

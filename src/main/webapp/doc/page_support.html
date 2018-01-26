@@ -113,14 +113,14 @@ body {
 									</td>
 									<td>&#36;{urls.getArticlesUrlHelper(path) }</td>
 								</tr>
-								
+
 								<tr>
 									<td>getUnlockUrl(String unlockId)</td>
 									<td>用于获取指定的解锁地址，通常用于locked标签中</td>
 									<td>String</td>
 									<td>&#36;{urls.getUnlockUrl(unlockId) }</td>
 								</tr>
-								
+
 							</tbody>
 						</table>
 					</div>
@@ -664,6 +664,40 @@ body {
 								</tr>
 							</tbody>
 						</table>
+					</div>
+
+					<h2 id="gravatars">gravatars</h2>
+					<p>用来获取用户的gravatar访问地址</p>
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>方法</th>
+									<th class="col-md-5">说明</th>
+									<th class="col-md-2">返回类型</th>
+									<th class="col-md-3">示例</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>getUrl(emailMd5)</td>
+									<td>根据邮箱的md5值返回gravatar头像访问地址</td>
+									<td>String</td>
+									<td>${gravatars.getUrl(emailMd5)}</td>
+								</tr>
+								<tr>
+									<td>getOptionalUrl(emailMd5)</td>
+									<td>根据邮箱的md5值返回gravatar头像访问地址，emailMd5可以为空</td>
+									<td>OptionalGravatarUrl</td>
+									<td>${gravatars.getOptionalUrl(emailMd5).orElse('/static/img/guest.png')}</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="alert alert-warning">
+						OptionalGravatarUrl只支持一个orElse(String url)方法，orElse()方法的url参数为一个相对或者绝对路径，路径指向一个替换头像
+						例如${gravatars.getOptionalUrl(emailMd5).orElse('/static/img/guest.png')},如果emailMd5为null或者为空，返回
+						urls.url+'/static/img/guest.png',否则等效于${gravatars.getUrl(emailMd5)}
 					</div>
 
 				</div>

@@ -47,9 +47,12 @@ import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.ConfigServer;
@@ -93,8 +96,6 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	private ConfigServer configServer;
 	@Autowired
 	private UrlHelper urlHelper;
-	@Autowired
-	private StaticResourceUrlHandlerMapping mapping;
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
 
@@ -900,7 +901,13 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 
 		super.afterPropertiesSet();
 		setLocations(Arrays.asList(new PathResource(root)));
-		mapping.registerResourceHttpRequestHandlerMapping("/" + prefix + "/**", this);
+	}
+
+	@EventListener(ContextRefreshedEvent.class)
+	void contextRefreshedEvent(ContextRefreshedEvent event) {
+		WebApplicationContext ctx = (WebApplicationContext) event.getApplicationContext();
+		StaticResourceUrlHandlerMapping urlMapping = ctx.getBean(StaticResourceUrlHandlerMapping.class);
+		urlMapping.registerResourceHttpRequestHandlerMapping("/" + prefix + "/**", this);
 	}
 
 	/**

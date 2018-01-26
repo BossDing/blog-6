@@ -19,24 +19,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.service.GravatarSearcher;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.template.render.GravatarUrlGenerator;
 
 /**
  * 用于缓存gravatar头像，用来解决gravatar有时候访问慢的问题
  *
  */
-public class GravatarResourceHttpRequestHandler extends CustomResourceHttpRequestHandler {
+public class GravatarResourceHttpRequestHandler extends CustomResourceHttpRequestHandler
+		implements GravatarUrlGenerator {
 
-	@Autowired
-	private StaticResourceUrlHandlerMapping mapping;
+	// @Autowired
+	// private StaticResourceUrlHandlerMapping mapping;
 
-	private static final String DEFAULT_GRAVATRA_URL = "https://cn.gravatar.com/avatar/";
+	private static final String DEFAULT_GRAVATRA_URL = "https://secure.gravatar.com/avatar/";
 
 	private static final String URL_PREFIX = "/avatar/**";
 
@@ -58,6 +63,9 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 	private static final long CACHE_SECONDS = 7 * 24 * 24 * 60L;
 
 	private long avatarCacheSeconds = CACHE_SECONDS;
+
+	@Autowired
+	private UrlHelper urlHelper;
 
 	public GravatarResourceHttpRequestHandler(String absoluteAvatarPath) {
 		Objects.requireNonNull(absoluteAvatarPath);
@@ -143,7 +151,12 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 		gravatarSearchers.addAll(BeanFactoryUtils
 				.beansOfTypeIncludingAncestors(getApplicationContext(), GravatarSearcher.class, true, false).values());
+	}
 
+	@EventListener(ContextRefreshedEvent.class)
+	void contextRefreshedEvent(ContextRefreshedEvent event) {
+		StaticResourceUrlHandlerMapping mapping = event.getApplicationContext()
+				.getBean(StaticResourceUrlHandlerMapping.class);
 		mapping.registerResourceHttpRequestHandlerMapping(URL_PREFIX, this);
 	}
 
@@ -174,6 +187,11 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 	public void setAvatarCacheSeconds(long avatarCacheSeconds) {
 		this.avatarCacheSeconds = avatarCacheSeconds;
+	}
+
+	@Override
+	public String getUrl(String md5) {
+		return urlHelper.getUrl() + "/avatar/" + md5;
 	}
 
 }
