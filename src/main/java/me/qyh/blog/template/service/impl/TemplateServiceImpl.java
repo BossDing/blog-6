@@ -1117,4 +1117,27 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 		return fragment;
 	}
+
+	@Override
+	public synchronized void restoreLoginPage() throws LogicException {
+		Transactions.executeInTransaction(platformTransactionManager, status -> {
+			Page page = pageDao.selectBySpaceAndAlias(null, "login");
+			if (page == null) {
+				return;
+			}
+			HistoryTemplate historyTemplate = new HistoryTemplate();
+			historyTemplate.setTemplateName(page.getTemplateName());
+			historyTemplate.setTime(Timestamp.valueOf(Times.now()));
+			historyTemplate.setTpl(page.getTpl());
+			historyTemplate.setRemark("");
+
+			historyTemplateDao.insert(historyTemplate);
+
+			SystemTemplate sysTemplate = defaultTemplates.get("login");
+			page.setTpl(sysTemplate.getTemplate());
+
+			pageDao.update(page);
+
+		});
+	}
 }

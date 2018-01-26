@@ -277,4 +277,11 @@ public interface TemplateService {
 	 */
 	Optional<HistoryTemplate> getHistoryTemplate(Integer id);
 
+	/**
+	 * 还原登录页
+	 * 
+	 * @exception
+	 */
+	void restoreLoginPage() throws LogicException;
+
 }

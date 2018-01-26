@@ -47,6 +47,7 @@ import me.qyh.blog.core.validator.LoginBeanValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LoginBean;
 import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
+import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.web.security.CaptchaValidator;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
@@ -69,6 +70,9 @@ public class LoginController implements InitializingBean {
 
 	@Autowired
 	private TemplateRequestMappingHandlerMapping mapping;
+
+	@Autowired
+	private TemplateService templateService;
 
 	/**
 	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
@@ -134,6 +138,7 @@ public class LoginController implements InitializingBean {
 	@ResponseBody
 	public JsonResult otpVerify(@RequestParam("code") String codeStr, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
+		enableOtpRequired();
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			return new JsonResult(false, pwdVerifyRequire);
@@ -155,6 +160,29 @@ public class LoginController implements InitializingBean {
 		session.removeAttribute(GA_SESSION_KEY);
 		String lastAuthencationFailUrl = successLogin(user, request, response);
 		return new JsonResult(true, lastAuthencationFailUrl);
+	}
+
+	@ResponseBody
+	public JsonResult restore(@RequestParam("code") String codeStr, HttpServletRequest request,
+			HttpServletResponse response) throws LogicException {
+		enableOtpRequired();
+		if (Environment.isLogin()) {
+			return new JsonResult(false, new Message("login.restore.isLogin", "当前已经是登录状态，请直接修改页面"));
+		}
+		String ip = Environment.getIP();
+		if (attemptLogger.log(ip)) {
+			captchaValidator.doValidate(request);
+		}
+		if (!ga.checkCode(codeStr)) {
+			return new JsonResult(false, otpVerifyFail);
+		}
+		templateService.restoreLoginPage();
+		attemptLogger.remove(Environment.getIP());
+		return new JsonResult(true, new Message("login.restore.success", "恢复成功"));
+	}
+
+	public String restore() {
+		return "login_restore";
 	}
 
 	private String successLogin(User user, HttpServletRequest request, HttpServletResponse response) {
@@ -189,14 +217,28 @@ public class LoginController implements InitializingBean {
 		}
 	}
 
+	private void enableOtpRequired() throws LogicException {
+		if (ga == null) {
+			throw new LogicException("otp.required", "需要OTP支持");
+		}
+	}
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.attemptLogger = attemptLoggerManager.createAttemptLogger(attemptCount, maxAttemptCount, sleepSec);
 
 		if (ga != null) {
 
-			mapping.registerMapping(RequestMappingInfo.paths("login/otpVerify").methods(RequestMethod.POST), "loginController", LoginController.class.getMethod("otpVerify", String.class,
-					HttpServletRequest.class, HttpServletResponse.class));
+			mapping.registerMapping(RequestMappingInfo.paths("login/otpVerify").methods(RequestMethod.POST),
+					"loginController", LoginController.class.getMethod("otpVerify", String.class,
+							HttpServletRequest.class, HttpServletResponse.class));
+
+			mapping.registerMapping(RequestMappingInfo.paths("login/restore").methods(RequestMethod.POST),
+					"loginController", LoginController.class.getMethod("restore", String.class,
+							HttpServletRequest.class, HttpServletResponse.class));
+			mapping.registerMapping(RequestMappingInfo.paths("login/restore").methods(RequestMethod.GET),
+					"loginController", LoginController.class.getMethod("restore"));
+
 		}
 	}
 }
