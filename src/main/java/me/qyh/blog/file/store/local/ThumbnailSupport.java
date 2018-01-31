@@ -38,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
-import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.file.entity.CommonFile;
 import me.qyh.blog.file.store.ImageHelper;
 import me.qyh.blog.file.store.Resize;
@@ -278,7 +277,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 			return getUrl(path);
 		}
 
-		return urlPrefix + Validators.cleanPath(generateResizePathFromPath(resize, path));
+		return urlPrefix + "/" + FileUtils.cleanPath(generateResizePathFromPath(resize, path));
 	}
 
 	@Override

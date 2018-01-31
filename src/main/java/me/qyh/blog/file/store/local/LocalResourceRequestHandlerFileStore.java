@@ -159,11 +159,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 
 	@Override
 	public String getUrl(String key) {
-		String path = key;
-		if (!key.startsWith("/")) {
-			path = "/" + key;
-		}
-		return urlPrefix + Validators.cleanPath(path);
+		return urlPrefix + "/" + FileUtils.cleanPath(key);
 	}
 
 	@Override

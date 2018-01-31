@@ -34,7 +34,8 @@ import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Jsons;
-import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
 
 public class Webs {
@@ -43,6 +44,7 @@ public class Webs {
 	public static final String ERROR_ATTR_NAME = Webs.class.getName() + ".ERROR";
 	public static final String SPACE_ATTR_NAME = Webs.class.getName() + ".SPACE";
 	public static final String SPACE_URLS_ATTR_NAME = Webs.class.getName() + ".SPACE_URLS";
+	public static final String IP_ATTR_NAME = Webs.class.getName() + ".IP";
 
 	/**
 	 * tomcat client abort exception <br>
@@ -161,15 +163,45 @@ public class Webs {
 
 	/**
 	 * 从路径中获取space
+	 * <p>
+	 * space/ ==> null;<br>
+	 * space/test ==> test<br>
+	 * space ==> null<br>
+	 * test ==> null<br>
+	 * space/1234567891234567891234 ==> 123456789123456789123
+	 * </p>
+	 * <b> 仅负责从路径中获取空间别名，不负责校验空间别名是否合法，需要额外校验返回结果，如果获取别名的长度大于
+	 * {@code SpaceValidator#MAX_ALIAS_LENGTH}，那么将会返回前{@code SpaceValidator#MAX_ALIAS_LENGTH}+1个别名字符
+	 * </b>
 	 * 
+	 * @see SpaceValidator#isValidAlias(String)
 	 * @param path
 	 * @return
 	 */
 	public static String getSpaceFromPath(String path) {
-		if (UrlUtils.match("space/*/**", path)) {
-			return path.split("/")[1];
+		if (Validators.isEmptyOrNull(path, true)) {
+			return null;
 		}
-		return null;
+		if (!path.startsWith("space/")) {
+			return null;
+		}
+		int length = path.length();
+		if (length == 6) {
+			return null;
+		}
+		int maxAliasLength = SpaceValidator.MAX_ALIAS_LENGTH + 6;
+		StringBuilder sb = new StringBuilder();
+		for (int i = 6; i < length; i++) {
+			char ch = path.charAt(i);
+			if (ch == '/') {
+				break;
+			}
+			sb.append(ch);
+			if (i == maxAliasLength) {
+				break;
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -180,5 +212,15 @@ public class Webs {
 	 */
 	public static SpaceUrls getSpaceUrls(HttpServletRequest request) {
 		return (SpaceUrls) request.getAttribute(SPACE_URLS_ATTR_NAME);
+	}
+
+	/**
+	 * 获取请求中的IP
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public static String getIP(HttpServletRequest request) {
+		return (String) request.getAttribute(IP_ATTR_NAME);
 	}
 }

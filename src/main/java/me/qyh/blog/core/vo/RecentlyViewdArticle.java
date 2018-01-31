@@ -13,15 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.service;
+package me.qyh.blog.core.vo;
+
+import java.time.LocalDateTime;
+
+import me.qyh.blog.core.entity.Article;
 
 /**
- * @since 2017.11.16
+ * @since 5.10
  *
- * 用来判断一个gravatar是否在系统中存在
  */
-public interface GravatarSearcher {
+public class RecentlyViewdArticle extends Article {
 
-	boolean contains(String gravatar);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private final String ip;
+	private final LocalDateTime time;
+
+	public RecentlyViewdArticle(Article source, String ip, LocalDateTime time) {
+		super(source);
+		this.ip = ip;
+		this.time = time;
+
+		setContent(null);
+		setSummary(null);
+	}
+
+	public String getIp() {
+		return ip;
+	}
+
+	public LocalDateTime getTime() {
+		return time;
+	}
 
 }

@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.service;
+package me.qyh.blog.template;
 
-/**
- * @since 2017.11.16
- *
- * 用来判断一个gravatar是否在系统中存在
- */
-public interface GravatarSearcher {
+public final class PatternAlreadyExistsException extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final String pattern;
 
-	boolean contains(String gravatar);
+	public PatternAlreadyExistsException(String pattern) {
+		super(null, null, false, false);
+		this.pattern = pattern;
+	}
 
+	public String getPattern() {
+		return pattern;
+	}
 }

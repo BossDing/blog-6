@@ -19,12 +19,12 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.vo.RecentlyViewdArticle;
 
-public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List<Article>> {
+public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List<RecentlyViewdArticle>> {
 
 	@Autowired
 	private ArticleService articleService;
@@ -45,7 +45,7 @@ public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List
 	}
 
 	@Override
-	protected List<Article> query(Attributes attributes) throws LogicException {
+	protected List<RecentlyViewdArticle> query(Attributes attributes) throws LogicException {
 		Integer num = attributes.getInteger("num", max);
 		if (num <= 0 || num > max) {
 			num = max;

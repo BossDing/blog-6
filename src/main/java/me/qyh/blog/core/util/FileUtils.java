@@ -36,6 +36,9 @@ import me.qyh.blog.core.exception.SystemException;
 
 public class FileUtils {
 
+	private static final char SPLITER = '/';
+	private static final char SPLITER2 = '\\';
+
 	private static final char[] ILLEGAL_CHARACTERS = { '/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>',
 			'|', '\"', ':', '\u0000' };
 
@@ -166,12 +169,12 @@ public class FileUtils {
 			return false;
 		}
 	}
-	
-	private static void deleteOneFileQuietly(Path file){
-		try{
+
+	private static void deleteOneFileQuietly(Path file) {
+		try {
 			Files.delete(file);
-		}catch (IOException e) {
-			
+		} catch (IOException e) {
+
 		}
 	}
 
@@ -334,17 +337,46 @@ public class FileUtils {
 	 * @return
 	 */
 	public static String cleanPath(String path) {
-		String cleaned = Validators.cleanPath(path);
-		if ("/".equals(path)) {
+		char[] chars = path.toCharArray();
+		if (chars.length == 0) {
 			return "";
 		}
-		if (cleaned.startsWith("/")) {
-			cleaned = cleaned.substring(1, cleaned.length());
+		char prev = chars[0];
+		char last = SPLITER;
+		if (chars.length == 1) {
+			if (prev == SPLITER || prev == SPLITER2) {
+				return "";
+			}
+			return Character.toString(prev);
 		}
-		if (cleaned.endsWith("/")) {
-			cleaned = cleaned.substring(0, cleaned.length() - 1);
+		if (prev == SPLITER2) {
+			prev = SPLITER;
 		}
-		return cleaned;
+		StringBuilder sb = new StringBuilder();
+		if (prev != SPLITER) {
+			sb.append(prev);
+		}
+		for (int i = 1; i < chars.length; i++) {
+			char ch = chars[i];
+			if (ch == SPLITER || ch == SPLITER2) {
+				if (prev == SPLITER) {
+					continue;
+				}
+				prev = SPLITER;
+				if (i < chars.length - 1) {
+					sb.append(SPLITER);
+					last = SPLITER;
+				}
+			} else {
+				prev = ch;
+				sb.append(ch);
+				last = ch;
+			}
+		}
+		if (last == SPLITER) {
+			sb.deleteCharAt(sb.length() - 1);
+		}
+		return sb.toString();
 	}
 
 	/**

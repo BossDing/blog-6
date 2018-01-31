@@ -28,6 +28,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.template.service.TemplateService;
 
 /**
@@ -59,6 +60,7 @@ public class TemplateSessionListener implements HttpSessionListener, Application
 		if (old != null && old.getAttribute(Constants.USER_SESSION_KEY) != null) {
 			// 清除预览模板
 			templateService.clearPreview();
+			TemplateRequestMappingHandlerMapping.PREVIEW_IP = null;
 		}
 
 	}

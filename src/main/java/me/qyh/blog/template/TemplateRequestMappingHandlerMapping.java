@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.template;
 
 import java.lang.reflect.Field;
@@ -10,7 +25,6 @@ import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +34,12 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConfiguration;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.interceptor.AppInterceptor;
+import me.qyh.blog.web.security.IPGetter;
 import me.qyh.blog.web.view.TemplateView;
 
 public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerMapping {
@@ -32,6 +47,19 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	private static final Method method;
 
 	private List<TemplateInterceptor> templateInterceptors = new ArrayList<>();
+
+	/**
+	 * 用于预览的IP
+	 * <p>
+	 * 成功设置预览界面后设置这个值<br>
+	 * 当用户注销后|删除预览页面时 将此值置为null<br>
+	 * 非线程安全
+	 * </p>
+	 * 
+	 * @since 5.10
+	 * 
+	 */
+	public static String PREVIEW_IP = null;
 
 	static {
 		try {
@@ -43,6 +71,8 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 
 	@Autowired
 	private TemplateMapping templateMapping;
+	@Autowired(required = false)
+	private IPGetter ipGetter;
 
 	private RequestMappingInfo.BuilderConfiguration config;
 
@@ -50,10 +80,13 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 
-		if (Webs.errorRequest(request) || "get".equalsIgnoreCase(request.getMethod())) {
+		String ip = ipGetter.getIp(request);
+		request.setAttribute(Webs.IP_ATTR_NAME, ip);
+
+		if (Webs.errorRequest(request) || "GET".equals(request.getMethod())) {
 			Optional<TemplateMatch> matchOptional;
 
-			if (isLogin(request)) {
+			if (isPreview(request)) {
 				matchOptional = templateMapping.getPreviewTemplateMapping()
 						.getBestHighestPriorityTemplateMatch(lookupPath);
 			} else {
@@ -73,11 +106,10 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	@Override
 	protected HandlerMethod handleNoMatch(Set<RequestMappingInfo> infos, String lookupPath, HttpServletRequest request)
 			throws ServletException {
-
-		if ("get".equalsIgnoreCase(request.getMethod())) {
+		if ("GET".equals(request.getMethod())) {
 			Optional<TemplateMatch> matchOptional;
 
-			if (isLogin(request)) {
+			if (isPreview(request)) {
 				matchOptional = templateMapping.getPreviewTemplateMapping()
 						.getBestPathVariableTemplateMatch(lookupPath);
 			} else {
@@ -137,6 +169,10 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		templateInterceptors.addAll(BeanFactoryUtils
 				.beansOfTypeIncludingAncestors(getApplicationContext(), TemplateInterceptor.class, true, false)
 				.values());
+
+		if (ipGetter == null) {
+			ipGetter = new IPGetter();
+		}
 	}
 
 	private final class TemplateHandler {
@@ -161,12 +197,8 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		return Optional.empty();
 	}
 
-	private boolean isLogin(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			return session.getAttribute(Constants.USER_SESSION_KEY) != null;
-		}
-		return false;
+	private boolean isPreview(HttpServletRequest request) {
+		return PREVIEW_IP != null && PREVIEW_IP.equals(Webs.getIP(request));
 	}
 
 	private void setUriTemplateVariables(TemplateMatch match, String lookupPath, HttpServletRequest request) {
@@ -174,7 +206,11 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		Map<String, String> pathVariables = getUrlPathHelper().decodePathVariables(request,
 				getPathMatcher().extractUriTemplateVariables(pattern, FileUtils.cleanPath(lookupPath)));
 		request.setAttribute(URI_TEMPLATE_VARIABLES_ATTRIBUTE, pathVariables);
+	}
 
+	@Override
+	protected void extendInterceptors(List<Object> interceptors) {
+		interceptors.add(getApplicationContext().getBean(AppInterceptor.class));
 	}
 
 }

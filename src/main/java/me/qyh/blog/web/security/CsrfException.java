@@ -41,6 +41,6 @@ package me.qyh.blog.web.security;
 public class CsrfException extends RuntimeException {
 
 	public CsrfException(String message) {
-		super(message);
+		super(message, null, false, false);
 	}
 }

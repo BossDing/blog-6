@@ -40,7 +40,7 @@ public class RedirectException extends RuntimeException {
 	private Message redirectMsg;
 
 	public RedirectException(String url, boolean permanently) {
-		super();
+		super(null, null, false, false);
 		this.url = url;
 		this.permanently = permanently;
 	}
@@ -59,10 +59,5 @@ public class RedirectException extends RuntimeException {
 
 	public void setRedirectMsg(Message redirectMsg) {
 		this.redirectMsg = redirectMsg;
-	}
-
-	@Override
-	public synchronized Throwable fillInStackTrace() {
-		return this;
 	}
 }

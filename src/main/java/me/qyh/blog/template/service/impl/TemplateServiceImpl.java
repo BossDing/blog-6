@@ -66,10 +66,10 @@ import me.qyh.blog.core.service.impl.Transactions;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.template.PatternAlreadyExistsException;
 import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.TemplateMapping;
-import me.qyh.blog.template.TemplateMapping.PatternAlreadyExistsException;
 import me.qyh.blog.template.dao.FragmentDao;
 import me.qyh.blog.template.dao.HistoryTemplateDao;
 import me.qyh.blog.template.dao.PageDao;
@@ -538,6 +538,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public void registerPreview(String path, Template template) throws LogicException {
+		enablePageAliasNotContainsSpace(path);
 		try {
 			templateMapping.getPreviewTemplateMapping().register(path, template);
 		} catch (PatternAlreadyExistsException e) {
@@ -981,8 +982,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (!Validators.isLetterOrNumOrChinese(processor.getName())) {
 				throw new SystemException("数据名只能为中英文或者数字");
 			}
-			if (!Validators.isLetter(processor.getDataName())) {
-				throw new SystemException("数据dataName只能为英文字母");
+			if (!DataTagProcessor.validDataName(processor.getDataName())) {
+				throw new SystemException("数据dataName只能为英文字母或者数字，并且不能以数字开头");
 			}
 		}
 		this.processors = processors;
@@ -1125,6 +1126,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (page == null) {
 				return;
 			}
+
 			HistoryTemplate historyTemplate = new HistoryTemplate();
 			historyTemplate.setTemplateName(page.getTemplateName());
 			historyTemplate.setTime(Timestamp.valueOf(Times.now()));
@@ -1137,6 +1139,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			page.setTpl(sysTemplate.getTemplate());
 
 			pageDao.update(page);
+
+			evitPageCache(page);
 
 		});
 	}

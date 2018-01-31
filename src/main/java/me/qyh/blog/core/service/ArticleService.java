@@ -23,13 +23,14 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
+import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.core.vo.RecentlyViewdArticle;
 import me.qyh.blog.core.vo.TagCount;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
 
 /**
  * 文章服务
@@ -172,7 +173,7 @@ public interface ArticleService {
 	 *            最大记录数
 	 * @return
 	 */
-	List<Article> getRecentlyViewdArticle(int num);
+	List<RecentlyViewdArticle> getRecentlyViewdArticle(int num);
 
 	/**
 	 * 得到一篇随机文章

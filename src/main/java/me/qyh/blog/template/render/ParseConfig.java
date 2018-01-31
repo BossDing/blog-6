@@ -14,19 +14,30 @@
  * limitations under the License.
  */
 package me.qyh.blog.template.render;
+
 public class ParseConfig {
 	private final boolean onlyCallable;
+	private final boolean writableStackTraceOnTemplateRenderException;
 
-	public ParseConfig(boolean onlyCallable) {
+	public ParseConfig(boolean onlyCallable, boolean writableStackTraceOnTemplateRenderException) {
 		super();
 		this.onlyCallable = onlyCallable;
+		this.writableStackTraceOnTemplateRenderException = writableStackTraceOnTemplateRenderException;
 	}
 
 	public ParseConfig() {
-		this(false);
+		this(false, true);
+	}
+
+	public ParseConfig(boolean onlyCallable) {
+		this(onlyCallable, true);
 	}
 
 	public boolean isOnlyCallable() {
 		return onlyCallable;
+	}
+
+	public boolean isWritableStackTraceOnTemplateRenderException() {
+		return writableStackTraceOnTemplateRenderException;
 	}
 }

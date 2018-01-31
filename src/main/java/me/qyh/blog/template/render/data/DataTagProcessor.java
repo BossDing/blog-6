@@ -33,11 +33,6 @@ import me.qyh.blog.template.vo.DataBind;
 
 public abstract class DataTagProcessor<T> {
 
-	/**
-	 * 是否忽略逻辑异常
-	 */
-	private static final String DATA_NAME = "dataName";
-
 	private String name;// 数据名，唯一
 	private String dataName;// 默认数据绑定名，唯一
 	private boolean callable;// 是否可以被ajax调用
@@ -70,12 +65,7 @@ public abstract class DataTagProcessor<T> {
 		T result = query(atts);
 		DataBind bind = new DataBind();
 		bind.setData(result);
-		String dataNameAttV = attributes.get(DATA_NAME);
-		if (validDataName(dataNameAttV)) {
-			bind.setDataName(dataNameAttV);
-		} else {
-			bind.setDataName(dataName);
-		}
+		bind.setDataName(dataName);
 		return bind;
 	}
 
@@ -101,8 +91,14 @@ public abstract class DataTagProcessor<T> {
 		return Environment.getSpace();
 	}
 
-	private boolean validDataName(String dataName) {
-		return Validators.isLetter(dataName);
+	public static boolean validDataName(String dataName) {
+		if (Validators.isLetterOrNum(dataName)) {
+			char first = dataName.charAt(0);
+			if (!Validators.isNum(first)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public final class Attributes {
@@ -127,10 +123,11 @@ public abstract class DataTagProcessor<T> {
 		 *            属性名
 		 * @param e
 		 *            如果转化失败或者属性不存在，返回null
-		 * @param upperCase 是否转化大写
+		 * @param upperCase
+		 *            是否转化大写
 		 * @return
 		 */
-		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue ,boolean upperCase) {
+		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue, boolean upperCase) {
 			String attV = attMap.get(name);
 			if (attV == null) {
 				return defaultValue;
@@ -142,9 +139,8 @@ public abstract class DataTagProcessor<T> {
 			return defaultValue;
 		}
 
-		
 		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue) {
-			return getEnum(name, e, defaultValue,true);
+			return getEnum(name, e, defaultValue, true);
 		}
 
 		/**

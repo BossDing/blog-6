@@ -45,6 +45,7 @@ public class LockException extends RuntimeException {
 	 *            错误信息
 	 */
 	public LockException(Lock lock, LockResource lockResource, Message error) {
+		super(null, null, false, false);
 		this.lock = lock;
 		this.lockResource = lockResource;
 		this.error = error;
@@ -61,5 +62,4 @@ public class LockException extends RuntimeException {
 	public Message getError() {
 		return error;
 	}
-
 }

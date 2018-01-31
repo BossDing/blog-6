@@ -34,12 +34,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
+import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.validator.PageValidator;
@@ -122,6 +124,12 @@ public class PageMgrController extends BaseMgrController {
 		page.setSpace(space);
 
 		templateService.registerPreview(page.getTemplatePath(), page);
+
+		/**
+		 * @since 5.10
+		 */
+		TemplateRequestMappingHandlerMapping.PREVIEW_IP = Environment.getIP();
+
 		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page)));
 	}
 

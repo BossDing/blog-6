@@ -74,7 +74,7 @@ public class OtherController {
 
 			RenderResult result = templateRender.doRender(
 					templateRender.getFragmentName(Webs.decode(fragment), Environment.getSpace()), null, request,
-					new ReadOnlyResponse(response), new ParseConfig(true));
+					new ReadOnlyResponse(response), new ParseConfig(true, false));
 
 			String content = result.getContent();
 			MediaType type = result.getType();

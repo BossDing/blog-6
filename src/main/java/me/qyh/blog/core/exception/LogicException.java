@@ -37,6 +37,7 @@ public class LogicException extends Exception {
 	 *            异常信息
 	 */
 	public LogicException(Message message) {
+		super(null, null, false, false);
 		this.logicMessage = message;
 	}
 
@@ -65,10 +66,5 @@ public class LogicException extends Exception {
 
 	public Message getLogicMessage() {
 		return logicMessage;
-	}
-
-	@Override
-	public Throwable fillInStackTrace() {
-		return this;
 	}
 }

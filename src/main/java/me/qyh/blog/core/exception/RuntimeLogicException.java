@@ -37,19 +37,15 @@ public class RuntimeLogicException extends RuntimeException {
 	 *            异常信息
 	 */
 	public RuntimeLogicException(LogicException logicException) {
+		super(null, null, false, false);
 		this.logicException = logicException;
 	}
 
 	public RuntimeLogicException(Message message) {
-		this.logicException = new LogicException(message);
+		this(new LogicException(message));
 	}
 
 	public LogicException getLogicException() {
 		return logicException;
-	}
-
-	@Override
-	public Throwable fillInStackTrace() {
-		return this;
 	}
 }

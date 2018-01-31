@@ -34,16 +34,11 @@ public class SpaceNotFoundException extends Exception {
 	 *            别名
 	 */
 	public SpaceNotFoundException(String alias) {
+		super(null, null, false, false);
 		this.alias = alias;
 	}
 
 	public String getAlias() {
 		return alias;
 	}
-
-	@Override
-	public Throwable fillInStackTrace() {
-		return this;
-	}
-
 }

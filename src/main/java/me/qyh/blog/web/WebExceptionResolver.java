@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.web;
 
 import java.io.Serializable;
@@ -47,6 +62,7 @@ import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.template.Template;
@@ -412,7 +428,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			if (space != null) {
 
 				// 检查空间是否存在
-				if (spaceService.getSpace(space).isPresent()) {
+				if (SpaceValidator.isValidAlias(space) && spaceService.getSpace(space).isPresent()) {
 					forwardMapping = "/space/" + space + "/error";
 				} else {
 					forwardMapping = "/error";
@@ -454,7 +470,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 		@Override
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
-			LOGGER.debug(ex.getMessage(), ex);
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_MISS_LOCK)));
 			}

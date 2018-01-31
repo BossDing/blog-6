@@ -26,11 +26,15 @@ import me.qyh.blog.core.util.Validators;
 public class SpaceValidator implements Validator {
 
 	private static final int MAX_NAME_LENGTH = 20;
-	private static final int MAX_ALIAS_LENGTH = 20;
+	public static final int MAX_ALIAS_LENGTH = 20;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return Space.class.equals(clazz);
+	}
+
+	public static boolean isValidAlias(String alias) {
+		return alias != null && alias.length() < MAX_ALIAS_LENGTH && Validators.isLetterOrNum(alias);
 	}
 
 	@Override

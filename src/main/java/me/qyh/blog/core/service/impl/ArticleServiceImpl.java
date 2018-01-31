@@ -74,6 +74,7 @@ import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.core.vo.RecentlyViewdArticle;
 import me.qyh.blog.core.vo.TagCount;
 
 public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
@@ -535,7 +536,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	 * @see ArticleHitManager#hit(Integer)
 	 */
 	@Override
-	public List<Article> getRecentlyViewdArticle(int num) {
+	public List<RecentlyViewdArticle> getRecentlyViewdArticle(int num) {
 		return articleViewedLogger == null ? new ArrayList<>() : articleViewedLogger.getViewdArticles(Math.max(1, num));
 	}
 
@@ -817,7 +818,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		 *            文章数量
 		 * @return
 		 */
-		List<Article> getViewdArticles(int num);
+		List<RecentlyViewdArticle> getViewdArticles(int num);
 
 		/**
 		 * 记录文章

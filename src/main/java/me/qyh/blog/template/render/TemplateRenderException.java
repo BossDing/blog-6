@@ -25,8 +25,9 @@ public class TemplateRenderException extends Exception {
 	private final String templateName;
 	private final TemplateRenderErrorDescription renderErrorDescription;
 
-	public TemplateRenderException(String templateName, TemplateRenderErrorDescription description, Throwable ex) {
-		super(ex);
+	public TemplateRenderException(String templateName, TemplateRenderErrorDescription description, Throwable ex,
+			boolean enableSuppression, boolean writableStackTrace) {
+		super(null, ex, enableSuppression, writableStackTrace);
 		this.renderErrorDescription = description;
 		this.templateName = templateName;
 	}

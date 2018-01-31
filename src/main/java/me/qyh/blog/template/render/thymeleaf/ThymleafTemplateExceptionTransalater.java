@@ -40,13 +40,24 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 
 	@Override
 	public Optional<TemplateRenderException> translate(String templateName, Throwable e) {
+		return translate(templateName, e, true, true);
+	}
+
+	@Override
+	public Optional<TemplateRenderException> translateNoFillTrace(String templateName, Throwable e) {
+		return translate(templateName, e, false, false);
+	}
+
+	private Optional<TemplateRenderException> translate(String templateName, Throwable e, boolean enableSuppression,
+			boolean writableStackTrace) {
 		if (e instanceof TemplateProcessingException) {
 			return Optional.of(new TemplateRenderException(templateName,
-					fromException((TemplateProcessingException) e, templateName), e));
+					fromException((TemplateProcessingException) e, templateName, writableStackTrace), e,
+					enableSuppression, writableStackTrace));
 		}
 		if (e instanceof UIStackoverflowError) {
 			UIStackoverflowError error = (UIStackoverflowError) e;
-			return Optional.of(new TemplateRenderException(templateName, fromError(error), e));
+			return Optional.of(new TemplateRenderException(templateName, fromError(error), e, false, false));
 		}
 		return Optional.empty();
 	}
@@ -58,7 +69,8 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 		return description;
 	}
 
-	private TemplateRenderErrorDescription fromException(TemplateProcessingException e, String templateName) {
+	private TemplateRenderErrorDescription fromException(TemplateProcessingException e, String templateName,
+			boolean writableStackTrace) {
 		TemplateRenderErrorDescription description = new TemplateRenderErrorDescription();
 		List<Throwable> ths = ExceptionUtils.getThrowableList(e);
 		TemplateProcessingException last = null;
@@ -78,7 +90,9 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 			last.setTemplateName(null);
 			description.setExpression(tryGetExpression(last.getMessage()));
 		}
-		description.setStackTrace(ExceptionUtils.getStackTrace(e));
+		if (writableStackTrace) {
+			description.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
 		return description;
 	}
 

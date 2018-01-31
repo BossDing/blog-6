@@ -17,6 +17,7 @@ package me.qyh.blog.core.service.impl;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -33,12 +34,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.ArticleViewedLogger;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.SerializationUtils;
+import me.qyh.blog.core.util.Times;
+import me.qyh.blog.core.vo.RecentlyViewdArticle;
 
 /**
  * 将最近访问的文章纪录在内存中
@@ -58,7 +62,7 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	private static final Logger LOGGER = LoggerFactory.getLogger(SyncArticleViewdLogger.class);
 
 	private final int max;
-	private Map<Integer, Article> articles;
+	private Map<Integer, RecentlyViewdArticle> articles;
 	private StampedLock lock = new StampedLock();
 
 	/**
@@ -72,7 +76,7 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 		}
 		this.max = max;
 
-		articles = new LinkedHashMap<Integer, Article>() {
+		articles = new LinkedHashMap<Integer, RecentlyViewdArticle>() {
 
 			/**
 			 * 
@@ -80,7 +84,7 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected boolean removeEldestEntry(Entry<Integer, Article> eldest) {
+			protected boolean removeEldestEntry(Entry<Integer, RecentlyViewdArticle> eldest) {
 				return size() > max;
 			}
 
@@ -92,9 +96,9 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	}
 
 	@Override
-	public List<Article> getViewdArticles(int num) {
+	public List<RecentlyViewdArticle> getViewdArticles(int num) {
 		long stamp = lock.tryOptimisticRead();
-		List<Article> result = getCurrentViewed(num);
+		List<RecentlyViewdArticle> result = getCurrentViewed(num);
 		if (!lock.validate(stamp)) {
 			stamp = lock.readLock();
 			try {
@@ -106,8 +110,8 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 		return result;
 	}
 
-	private List<Article> getCurrentViewed(int num) {
-		List<Article> result = new ArrayList<>(articles.values());
+	private List<RecentlyViewdArticle> getCurrentViewed(int num) {
+		List<RecentlyViewdArticle> result = new ArrayList<>(articles.values());
 		if (!result.isEmpty()) {
 			Collections.reverse(result);
 			int finalNum = Math.min(num, max);
@@ -120,12 +124,11 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 
 	@Override
 	public void logViewd(Article article) {
+		LocalDateTime time = Times.now();
 		long stamp = lock.writeLock();
 		try {
 			articles.remove(article.getId());
-			Article copied = new Article(article);
-			copied.setContent(null);
-			articles.put(article.getId(), copied);
+			articles.put(article.getId(), new RecentlyViewdArticle(article, Environment.getIP(), time));
 		} finally {
 			lock.unlockWrite(stamp);
 		}
@@ -145,7 +148,10 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 					if (!valid) {
 						articles.remove(art.getId());
 					} else {
-						articles.replace(art.getId(), new Article(art));
+						RecentlyViewdArticle rva = articles.get(art.getId());
+						if (rva != null) {
+							articles.replace(art.getId(), new RecentlyViewdArticle(art, rva.getIp(), rva.getTime()));
+						}
 					}
 				}
 				break;

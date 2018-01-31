@@ -50,12 +50,12 @@ import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.lock.LockHelper;
 import me.qyh.blog.web.security.CsrfException;
 import me.qyh.blog.web.security.CsrfToken;
 import me.qyh.blog.web.security.CsrfTokenRepository;
-import me.qyh.blog.web.security.IPGetter;
 import me.qyh.blog.web.security.InvalidCsrfTokenException;
 import me.qyh.blog.web.security.MissingCsrfTokenException;
 import me.qyh.blog.web.security.RequestMatcher;
@@ -76,9 +76,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 	private RequestMatcher requireCsrfProtectionMatcher = new DefaultRequiresCsrfMatcher();
 
-	private IPGetter ipGetter = new IPGetter();
-
-	private static final String[] UNLOCK_PATTERNS = { "/unlock", "/unlock/", "/space/*/unlock", "/space/*/unlock/" };
+	private static final String UNLOCK_PATTERN = "/unlock";
+	private static final String SPACE_UNLOCK_PATTERN = "/space/*/unlock";
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -90,7 +89,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				setUser(request, handler);
 				setLockKeys(request);
 				setSpace(request);
-				Environment.setIP(ipGetter.getIp(request));
+				Environment.setIP(Webs.getIP(request));
 				csrfCheck(request, response);
 			} catch (AuthencationException | LockException | SpaceNotFoundException | CsrfException e) {
 				removeContext();
@@ -127,6 +126,9 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void setSpace(HttpServletRequest request) throws SpaceNotFoundException {
 		String spaceAlias = Webs.getSpaceFromRequest(request);
 		if (spaceAlias != null) {
+			if (!SpaceValidator.isValidAlias(spaceAlias)) {
+				throw new SpaceNotFoundException(spaceAlias);
+			}
 			Space space = spaceService.getSpace(spaceAlias).orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 
 			if (!Webs.errorRequest(request)) {
@@ -181,24 +183,19 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	private void setRequestAttribute(HttpServletRequest request) {
-		if (request.getAttribute(Webs.UNLOCK_ATTR_NAME) == null) {
-			String path = request.getRequestURI().substring(request.getContextPath().length());
-			boolean isUnlock = false;
-			for (String unlockPattern : UNLOCK_PATTERNS) {
-				if (UrlUtils.match(unlockPattern, path)) {
-					isUnlock = true;
-					break;
-				}
-			}
-			request.setAttribute(Webs.UNLOCK_ATTR_NAME, Boolean.valueOf(isUnlock));
-		}
 		if (request.getAttribute(Webs.SPACE_ATTR_NAME) == null) {
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
 			request.setAttribute(Webs.SPACE_ATTR_NAME, Objects.toString(Webs.getSpaceFromPath(path), ""));
 		}
+		String alias = Webs.getSpaceFromRequest(request);
+		String unlockPattern = alias == null ? UNLOCK_PATTERN : SPACE_UNLOCK_PATTERN;
+		if (request.getAttribute(Webs.UNLOCK_ATTR_NAME) == null) {
+			String path = request.getRequestURI().substring(request.getContextPath().length());
+			boolean isUnlock = UrlUtils.match(unlockPattern, path) && request.getParameter("unlockId") != null;
+			request.setAttribute(Webs.UNLOCK_ATTR_NAME, Boolean.valueOf(isUnlock));
+		}
 		if (request.getAttribute(Webs.SPACE_URLS_ATTR_NAME) == null) {
-			request.setAttribute(Webs.SPACE_URLS_ATTR_NAME,
-					urlHelper.getUrlsBySpace(Webs.getSpaceFromRequest(request)));
+			request.setAttribute(Webs.SPACE_URLS_ATTR_NAME, urlHelper.getUrlsBySpace(alias));
 		}
 	}
 
@@ -331,8 +328,4 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
 	}
 
-	public void setIpGetter(IPGetter ipGetter) {
-		Objects.requireNonNull(ipGetter);
-		this.ipGetter = ipGetter;
-	}
 }

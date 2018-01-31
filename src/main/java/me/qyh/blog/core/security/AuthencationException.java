@@ -32,7 +32,7 @@ public class AuthencationException extends RuntimeException {
 	 * default
 	 */
 	public AuthencationException() {
-		super();
+		this(null);
 	}
 
 	/**
@@ -40,7 +40,7 @@ public class AuthencationException extends RuntimeException {
 	 *            error msg
 	 */
 	public AuthencationException(String msg) {
-		super(msg);
+		super(msg, null, false, false);
 	}
 
 }

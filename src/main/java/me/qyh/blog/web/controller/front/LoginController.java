@@ -182,6 +182,9 @@ public class LoginController implements InitializingBean {
 	}
 
 	public String restore() {
+		if (Environment.isLogin()) {
+			return "redirect:/mgr/template/page/index";
+		}
 		return "login_restore";
 	}
 

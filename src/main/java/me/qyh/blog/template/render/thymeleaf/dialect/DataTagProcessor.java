@@ -45,6 +45,7 @@ import me.qyh.blog.template.vo.DataTag;
 public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private static final String TAG_NAME = "data";
+	private static final String DATA_NAME_TAG_NAME = "dataName";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME_ATTR = "name";
 
@@ -60,16 +61,28 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			IElementTagStructureHandler structureHandler) {
 		try {
 
-			DataTag dataTag = buildDataTag(context, tag);
-
-			if (dataTag == null) {
+			Map<String, String> attMap = processAttribute(context, tag);
+			String name = attMap.get(NAME_ATTR);
+			if (Validators.isEmptyOrNull(name, true)) {
 				return;
 			}
+
+			String dataName = attMap.get(DATA_NAME_TAG_NAME);
+
+			boolean hasDataName = !Validators.isEmptyOrNull(dataName, true);
+			if (hasDataName && !me.qyh.blog.template.render.data.DataTagProcessor.validDataName(dataName)) {
+				throw new TemplateProcessingException("dataName必须为英文字母或者数字，并且不能以数字开头");
+			}
+
+			DataTag dataTag = new DataTag(name, attMap);
 
 			IWebContext webContext = (IWebContext) context;
 			Optional<DataBind> optional = queryDataBind(dataTag);
 			if (optional.isPresent()) {
 				DataBind bind = optional.get();
+				if (hasDataName) {
+					bind.setDataName(dataName);
+				}
 				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
@@ -88,14 +101,5 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 		} catch (LogicException e) {
 			throw new RuntimeLogicException(e);
 		}
-	}
-
-	private DataTag buildDataTag(ITemplateContext context, IProcessableElementTag tag) {
-		Map<String, String> attMap = processAttribute(context, tag);
-		String name = attMap.get(NAME_ATTR);
-		if (Validators.isEmptyOrNull(name, true)) {
-			return null;
-		}
-		return new DataTag(name, attMap);
 	}
 }

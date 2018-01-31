@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.core.util;
 
-import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * 校验辅助
@@ -24,9 +24,11 @@ import java.util.Objects;
  *
  */
 public final class Validators {
+	private static final Pattern LETTER_NUM_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
+	private static final Pattern LETTER_PATTERN = Pattern.compile("^[A-Za-z]+$");
+	private static final Pattern LETTER_NUM_CHINESE_PATTERN = Pattern.compile("^[A-Za-z0-9\u4E00-\u9FA5]+$");
 
-	private static final String LETTER_NUM_PATTERN = "^[A-Za-z0-9]+$";
-	private static final String LETTER_NUM_CHINESE_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5]+$";
+	private static final char[] NUMS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
 	/**
 	 * private
@@ -96,28 +98,13 @@ public final class Validators {
 	}
 
 	/**
-	 * 删除连续的 '/';
-	 * 
-	 * <pre>
-	 * clean("\\\\////123/\\\\////456//\\\\////789.txt") = '/123/456/789.txt';
-	 * </pre>
-	 * 
-	 * @param path
-	 * @return
-	 */
-	public static String cleanPath(String path) {
-		Objects.requireNonNull(path);
-		return org.springframework.util.StringUtils.cleanPath(path).replaceAll("/+", "/");
-	}
-
-	/**
 	 * 判断字符串是否由字母或者数字组成
 	 * 
 	 * @param str
 	 * @return
 	 */
 	public static boolean isLetterOrNum(String str) {
-		return str != null && str.matches(LETTER_NUM_PATTERN);
+		return str != null && LETTER_NUM_PATTERN.matcher(str).find();
 	}
 
 	/**
@@ -127,7 +114,7 @@ public final class Validators {
 	 * @return
 	 */
 	public static boolean isLetter(String str) {
-		return str != null && str.matches(LETTER_NUM_PATTERN);
+		return str != null && LETTER_PATTERN.matcher(str).find();
 	}
 
 	/**
@@ -137,6 +124,21 @@ public final class Validators {
 	 * @return
 	 */
 	public static boolean isLetterOrNumOrChinese(String str) {
-		return str != null && str.matches(LETTER_NUM_CHINESE_PATTERN);
+		return str != null && LETTER_NUM_CHINESE_PATTERN.matcher(str).find();
+	}
+
+	/**
+	 * 判断字符是否时数字
+	 * 
+	 * @param ch
+	 * @return
+	 */
+	public static boolean isNum(char ch) {
+		for (char num : NUMS) {
+			if (num == ch) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

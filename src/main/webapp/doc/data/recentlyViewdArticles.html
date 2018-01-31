@@ -27,13 +27,13 @@ body {
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-md-12">
-				
+
 					<ol class="breadcrumb">
 						<li><a href="../tag.html">标签</a></li>
 						<li><a href="index.html">数据标签</a></li>
 						<li><a href="recentlyViewdArticles.html">最近被访问文章标签</a></li>
 					</ol>
-				
+
 					<h2>最近被访问文章标签</h2>
 					<h3>默认dataName</h3>
 					<p>recentlyViewdArticles</p>
@@ -61,10 +61,9 @@ body {
 						</table>
 					</div>
 					<h3>结果返回</h3>
-					<p>如果存在，返回List&lt;Article&gt;，否则返回一个空集合</p>
+					<p>如果存在，返回List&lt;RecentlyViewedArticle&gt;，否则返回一个空集合</p>
 					<p>
-						Article可访问属性和<a href="article.html">文章详情标签</a>基本一致，
-						<b>但是文章内容不会被处理，同时也无法获取到文章的评论数</b>
+						RecentlyViewedArticle可访问属性和<a href="article.html">文章详情标签</a>基本一致， <b>但无法获取文章评论数、文章概要以及文章内容，可以通过ip(String)属性来获取访问文章的ip，通过time(LocalDateTime)属性来获取访问时间，ip和time属性都不会为null</b>
 					</p>
 
 				</div>

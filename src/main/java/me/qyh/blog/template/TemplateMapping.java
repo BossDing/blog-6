@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.template;
 
 import java.util.HashMap;
@@ -34,6 +49,7 @@ import me.qyh.blog.core.util.Validators;
  * 一种是没有包含PathVariable，直接匹配的路径，比如 login,一种是包含
  * 通配符的路径，比如space/{alias}，其中第一种路径优先级是最高的，第二种的优先级是最低的
  * </P>
+ * 
  * @since 5.7
  */
 public class TemplateMapping {
@@ -262,7 +278,7 @@ public class TemplateMapping {
 				}
 				highestPriorityHolder.setCondition(new PatternsMatchCondition(highestPriorityPatternMap.keySet()));
 				return true;
-			} 
+			}
 			if (patternMap.remove(pattern) != null) {
 				holder.setCondition(new PatternsMatchCondition(patternMap.keySet()));
 				return true;
@@ -476,23 +492,6 @@ public class TemplateMapping {
 
 	}
 
-	public final class PatternAlreadyExistsException extends Exception {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private final String pattern;
-
-		private PatternAlreadyExistsException(String pattern) {
-			this.pattern = pattern;
-		}
-
-		public String getPattern() {
-			return pattern;
-		}
-
-	}
-
 	/**
 	 * 判断路径是否是系统使用的路径
 	 * 
@@ -594,6 +593,7 @@ public class TemplateMapping {
 
 	/**
 	 * 获取写锁
+	 * 
 	 * @return
 	 */
 	public Lock getLock() {
