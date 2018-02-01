@@ -25,13 +25,10 @@ import org.springframework.core.io.Resource;
 
 import me.qyh.blog.core.config.Constants;
 
-
 public final class Resources {
 
 	private Resources() {
 	}
-
-	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	/**
 	 * 读取Resource资源内容
@@ -91,6 +88,6 @@ public final class Resources {
 	 */
 	public static String read(InputStream is) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is, Constants.CHARSET));
-		return reader.lines().collect(Collectors.joining(LINE_SEPARATOR));
+		return reader.lines().collect(Collectors.joining("\r\n"));
 	}
 }

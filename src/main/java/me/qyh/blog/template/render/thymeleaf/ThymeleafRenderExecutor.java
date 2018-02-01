@@ -122,7 +122,7 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 
 		final ConversionService conversionService = (ConversionService) request
 				.getAttribute(ConversionService.class.getName());
-		final FuckRestrictedEvaluationContext evaluationContext = new FuckRestrictedEvaluationContext(
+		final NoRestrictedEvaluationContext evaluationContext = new NoRestrictedEvaluationContext(
 				applicationContext, conversionService);
 
 		mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,

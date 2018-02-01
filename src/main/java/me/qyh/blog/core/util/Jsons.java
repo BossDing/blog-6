@@ -155,7 +155,7 @@ public class Jsons {
 	 *            目标Array类型
 	 * @param json
 	 *            json字符串
-	 * @return
+	 * @return 不可变的List
 	 */
 	public static <T> List<T> readList(Class<T[]> clazz, String json) {
 		final T[] jsonToObject = gson.fromJson(json, clazz);
@@ -186,7 +186,7 @@ public class Jsons {
 	}
 
 	/**
-	 * @see Jsons#read(String, String, UrlReader)
+	 * @see Jsons#read(String, UrlReader)
 	 * @param url
 	 * @param expression
 	 * @return
@@ -196,7 +196,7 @@ public class Jsons {
 	}
 
 	/**
-	 * @see Jsons#read(String, String, UrlReader)
+	 * @see Jsons#read(String, UrlReader)
 	 * @param url
 	 * @param expression
 	 * @return
@@ -353,8 +353,7 @@ public class Jsons {
 	}
 	 * </pre>
 	 * 
-	 * 那么通过表达式 {@code data->data->files[0]->begin} 将会返回Jan 26, 2017 12:00:00
-	 * AM<br>
+	 * 那么通过表达式 {@code data->data->files[0]->begin} 将会返回Jan 26, 2017 12:00:00 AM<br>
 	 * 通过表达式{@code data-data->files} 将会返回
 	 * 
 	 * <pre>
@@ -641,7 +640,7 @@ public class Jsons {
 			return new JsonPrimitive(src.getTime());
 		}
 	}
-	
+
 	private static final class DateDeserializer implements JsonDeserializer<Timestamp> {
 
 		@Override

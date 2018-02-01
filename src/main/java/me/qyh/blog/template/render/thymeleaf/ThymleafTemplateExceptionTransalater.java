@@ -55,18 +55,7 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 					fromException((TemplateProcessingException) e, templateName, writableStackTrace), e,
 					enableSuppression, writableStackTrace));
 		}
-		if (e instanceof UIStackoverflowError) {
-			UIStackoverflowError error = (UIStackoverflowError) e;
-			return Optional.of(new TemplateRenderException(templateName, fromError(error), e, false, false));
-		}
 		return Optional.empty();
-	}
-
-	private TemplateRenderErrorDescription fromError(UIStackoverflowError e) {
-		TemplateRenderErrorDescription description = new TemplateRenderErrorDescription();
-		description.addTemplateErrorInfos(
-				new TemplateErrorInfo(parseTemplateName(e.getTemplateName()), e.getLine(), e.getCol()));
-		return description;
 	}
 
 	private TemplateRenderErrorDescription fromException(TemplateProcessingException e, String templateName,

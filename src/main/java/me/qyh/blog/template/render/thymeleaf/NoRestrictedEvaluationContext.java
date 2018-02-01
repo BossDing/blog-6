@@ -32,10 +32,10 @@ import org.thymeleaf.expression.IExpressionObjects;
 import org.thymeleaf.spring5.expression.IThymeleafEvaluationContext;
 import org.thymeleaf.spring5.expression.ThymeleafEvaluationContext;
 
-public class FuckRestrictedEvaluationContext implements IThymeleafEvaluationContext {
+public class NoRestrictedEvaluationContext implements IThymeleafEvaluationContext {
 	private final ThymeleafEvaluationContext evaluationContext;
 
-	public FuckRestrictedEvaluationContext(ApplicationContext applicationContext, ConversionService conversionService) {
+	public NoRestrictedEvaluationContext(ApplicationContext applicationContext, ConversionService conversionService) {
 		this.evaluationContext = new ThymeleafEvaluationContext(applicationContext, conversionService);
 		this.evaluationContext.setVariableAccessRestricted(false);
 	}
@@ -97,7 +97,6 @@ public class FuckRestrictedEvaluationContext implements IThymeleafEvaluationCont
 
 	@Override
 	public final boolean isVariableAccessRestricted() {
-		// FUCK!!!
 		return false;
 	}
 

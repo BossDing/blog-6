@@ -843,6 +843,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		return Objects.equals(newArticle.getAlias(), old.getAlias())
 				&& Objects.equals(newArticle.getAllowComment(), old.getAllowComment())
 				&& Objects.equals(newArticle.getContent(), old.getContent())
+				&& Objects.equals(newArticle.getFeatureImage(), old.getFeatureImage())
 				&& Objects.equals(newArticle.getFrom(), old.getFrom())
 				&& Objects.equals(newArticle.getIsPrivate(), old.getIsPrivate())
 				&& Objects.equals(newArticle.getLevel(), old.getLevel())

@@ -329,18 +329,22 @@ public class FileUtils {
 	/**
 	 * 删除连续的 '/'，开头和结尾的'/'
 	 * 
-	 * <pre>
-	 * clean("\\\\////123/\\\\////456//\\\\////789.txt") = '123/456/789.txt';
-	 * </pre>
+	 * <p>
+	 * cleanPath("\\\\////123/\\\\////456//\\\\////789.txt") =
+	 * '123/456/789.txt';<br>
+	 * cleanPath("") = ""; <br>
+	 * cleanPath(" ") = " "; <br>
+	 * cleanPath(null) = "";
+	 * </p>
 	 * 
 	 * @param path
 	 * @return
 	 */
 	public static String cleanPath(String path) {
-		char[] chars = path.toCharArray();
-		if (chars.length == 0) {
+		if (Validators.isEmptyOrNull(path, false)) {
 			return "";
 		}
+		char[] chars = path.toCharArray();
 		char prev = chars[0];
 		char last = SPLITER;
 		if (chars.length == 1) {

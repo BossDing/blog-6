@@ -36,6 +36,8 @@ import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
 
+import static me.qyh.blog.template.render.data.DataTagProcessor.validDataName;
+
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
  * 
@@ -70,7 +72,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 			String dataName = attMap.get(DATA_NAME_TAG_NAME);
 
 			boolean hasDataName = !Validators.isEmptyOrNull(dataName, true);
-			if (hasDataName && !me.qyh.blog.template.render.data.DataTagProcessor.validDataName(dataName)) {
+			if (hasDataName && !validDataName(dataName)) {
 				throw new TemplateProcessingException("dataName必须为英文字母或者数字，并且不能以数字开头");
 			}
 
