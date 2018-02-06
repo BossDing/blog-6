@@ -629,7 +629,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		qboostMap.put(SUMMARY, boostMap.getOrDefault(SUMMARY, 3F));
 		qboostMap.put(CONTENT, boostMap.getOrDefault(CONTENT, 1F));
 		// 新增标签
-		addTags(tagDao.selectAll().stream().map(Tag::getName).toArray(i -> new String[i]));
+		addTags(tagDao.selectAll().stream().map(Tag::getName).toArray(String[]::new));
 	}
 
 	/**

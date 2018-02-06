@@ -707,7 +707,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					start = articleDao.selectMinimumScheduleDate();
 					return schedules;
 				});
-				articleIndexer.addOrUpdateDocument(articles.stream().map(Article::getId).toArray(i -> new Integer[i]));
+				articleIndexer.addOrUpdateDocument(articles.stream().map(Article::getId).toArray(Integer[]::new));
 				return articles.size();
 			}
 		}

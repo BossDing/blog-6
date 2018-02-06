@@ -523,8 +523,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 			// 清空template 缓存
-			evitPageCache(pageEvitKeySet.stream().toArray(i -> new String[i]));
-			evitFragmentCache(fragmentEvitKeySet.stream().toArray(i -> new String[i]));
+			evitPageCache(pageEvitKeySet.stream().toArray(String[]::new));
+			evitFragmentCache(fragmentEvitKeySet.stream().toArray(String[]::new));
 			return records;
 		} catch (Throwable e) {
 			LOGGER.error(e.getMessage(), e);
@@ -774,7 +774,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private void evitPageCache(Page... pages) {
-		evitPageCache(Arrays.stream(pages).map(Page::getTemplateName).toArray(i -> new String[i]));
+		evitPageCache(Arrays.stream(pages).map(Page::getTemplateName).toArray(String[]::new));
 	}
 
 	private void evitFragmentCache(String... names) {
@@ -794,7 +794,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 			this.applicationEventPublisher
-					.publishEvent(new TemplateEvitEvent(this, templateNames.stream().toArray(i -> new String[i])));
+					.publishEvent(new TemplateEvitEvent(this, templateNames.stream().toArray(String[]::new)));
 		});
 	}
 

@@ -485,7 +485,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	protected PageResult<StaticFile> doWalkSearch(Path root, StaticFileQueryParam param) throws IOException {
 		Predicate<Path> predicate = !param.needQuery() ? p -> true
 				: p -> matchParam(param, Objects.toString(p.getFileName(), null));
-		Path[] paths = Files.walk(root).filter(predicate).toArray(i -> new Path[i]);
+		Path[] paths = Files.walk(root).filter(predicate).toArray(Path[]::new);
 
 		int total = paths.length;
 		if (param.getOffset() >= total) {
