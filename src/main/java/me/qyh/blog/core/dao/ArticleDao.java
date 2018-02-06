@@ -95,9 +95,7 @@ public interface ArticleDao {
 
 	/**
 	 * 查询某个空间下的所有发布的文章
-	 * 
-	 * @param space
-	 *            空间，如果为空，查询全部发布的文章
+	 *
 	 * @return 文章集合
 	 * @see #selectPublishedPage(int, int)
 	 * @deprecated
@@ -247,7 +245,7 @@ public interface ArticleDao {
 	/**
 	 * 根据alias查询文章的id
 	 * 
-	 * @param id
+	 * @param alias
 	 * @return
 	 */
 	Integer selectIdByAlias(String alias);
@@ -277,7 +275,7 @@ public interface ArticleDao {
 	/**
 	 * 将某个空间下的文章移到另一个空间下
 	 * 
-	 * @param old
+	 * @param oldSpace
 	 * @param newSpace
 	 */
 	void moveSpace(@Param("oldSpace") Space oldSpace, @Param("newSpace") Space newSpace);

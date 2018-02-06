@@ -283,7 +283,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 增加|更新文章索引，如果文章索引存在，则先删除后增加索引
 	 * 
-	 * @param id
+	 * @param ids
 	 *            要增加|更新索引的文章id
 	 */
 	public synchronized void addOrUpdateDocument(Integer... ids) {
@@ -306,7 +306,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	/**
 	 * 删除索引
 	 * 
-	 * @param id
+	 * @param ids
 	 *            文章id
 	 */
 	public synchronized void deleteDocument(Integer... ids) {
@@ -478,8 +478,8 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 * 
 	 * @param article
 	 *            文章
-	 * @param content
-	 *            文章内容
+	 * @param doc
+	 *            文章文档
 	 * @param query
 	 */
 	protected void doHightlight(Article article, Document doc, Query query) {

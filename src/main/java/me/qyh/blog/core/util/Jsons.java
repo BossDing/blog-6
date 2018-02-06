@@ -188,7 +188,6 @@ public class Jsons {
 	/**
 	 * @see Jsons#read(String, UrlReader)
 	 * @param url
-	 * @param expression
 	 * @return
 	 */
 	public static ExpressionExecutor read(String url) {
@@ -198,7 +197,6 @@ public class Jsons {
 	/**
 	 * @see Jsons#read(String, UrlReader)
 	 * @param url
-	 * @param expression
 	 * @return
 	 */
 	public static ExpressionExecutors readForExecutors(String url) {
@@ -210,8 +208,6 @@ public class Jsons {
 	 * 
 	 * @param url
 	 *            url
-	 * @param expression
-	 *            表达式
 	 * @param reader
 	 *            表达式读取
 	 * @return
@@ -229,8 +225,6 @@ public class Jsons {
 	 * 
 	 * @param url
 	 *            url
-	 * @param expression
-	 *            表达式
 	 * @param reader
 	 *            表达式读取
 	 * @return
@@ -244,14 +238,9 @@ public class Jsons {
 	}
 
 	/**
-	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
+	 * 读取内容(必须为json字符串)。通过表达式获取指定内容
 	 * 
-	 * @param url
-	 *            url
-	 * @param expression
-	 *            表达式
-	 * @param reader
-	 *            表达式读取
+	 * @param json
 	 * @return
 	 */
 	public static ExpressionExecutor readJson(String json) {
@@ -268,14 +257,9 @@ public class Jsons {
 	}
 
 	/**
-	 * 读取连接中的内容(必须为json字符串)。通过表达式获取指定内容
-	 * 
-	 * @param url
-	 *            url
-	 * @param expression
-	 *            表达式
-	 * @param reader
-	 *            表达式读取
+	 * 读取内容(必须为json字符串)。通过表达式获取指定内容
+	 *
+	 * @param  json
 	 * @return
 	 */
 	public static ExpressionExecutors readJsonForExecutors(String json) {

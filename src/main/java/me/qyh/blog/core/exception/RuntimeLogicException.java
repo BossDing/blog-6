@@ -33,14 +33,18 @@ public class RuntimeLogicException extends RuntimeException {
 	private final LogicException logicException;
 
 	/**
-	 * @param message
-	 *            异常信息
+	 * @param logicException
+	 *            原始异常
 	 */
 	public RuntimeLogicException(LogicException logicException) {
 		super(null, null, false, false);
 		this.logicException = logicException;
 	}
 
+	/**
+	 * 异常信息
+	 * @param message
+	 */
 	public RuntimeLogicException(Message message) {
 		this(new LogicException(message));
 	}

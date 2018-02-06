@@ -1014,7 +1014,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		/**
 		 * 是否能够处理该模板
 		 * 
-		 * @param templateName
+		 * @param templateSign
 		 * @return
 		 */
 		boolean canProcess(String templateSign);
@@ -1022,7 +1022,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		/**
 		 * 根据模板名查询模板
 		 * 
-		 * @param templateName
+		 * @param template
 		 *            模板名
 		 * @return 模板，如果不存在，返回null
 		 */

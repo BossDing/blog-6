@@ -120,7 +120,7 @@ public class Times {
 	/**
 	 * 格式化日期
 	 * 
-	 * @param localDateTime
+	 * @param temporal
 	 *            日期
 	 * @return pattern
 	 */
@@ -133,7 +133,7 @@ public class Times {
 	/**
 	 * 格式化日期
 	 * 
-	 * @param localDateTime
+	 * @param date
 	 *            日期
 	 * @return pattern
 	 */

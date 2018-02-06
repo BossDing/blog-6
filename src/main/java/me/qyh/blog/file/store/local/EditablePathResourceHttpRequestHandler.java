@@ -545,7 +545,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	/**
 	 * 移动|重命名文件
 	 * 
-	 * @param oldPath
+	 * @param path
 	 *            旧路径
 	 * @param newPath
 	 *            新路径

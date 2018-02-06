@@ -113,7 +113,7 @@ public final class Transactions {
 	 * 在 <b><i>新的</i></b> 只读事务中执行操作，并且返回一个结果
 	 * 
 	 * @param platformTransactionManager
-	 * @param callback
+	 * @param function
 	 * @return
 	 */
 	public static <T> T executeInReadOnlyTransaction(PlatformTransactionManager platformTransactionManager,
@@ -159,7 +159,7 @@ public final class Transactions {
 	 * 在 <b><i>新的</i></b> 默认事务中执行操作
 	 * 
 	 * @param platformTransactionManager
-	 * @param callback
+	 * @param consumer
 	 * @see DefaultTransactionDefinition
 	 * @return
 	 */

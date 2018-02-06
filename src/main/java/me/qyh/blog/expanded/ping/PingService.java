@@ -32,8 +32,6 @@ public abstract class PingService {
 	 *            文章
 	 * @param blogName
 	 *            博客名
-	 * @throws PingException
-	 *             ping异常
 	 * @throws Exception
 	 */
 	public abstract void ping(Article article, String blogName) throws Exception;

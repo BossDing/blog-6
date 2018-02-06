@@ -366,11 +366,8 @@ public class CommentService
 	}
 
 	/**
-	 * 删除评论
-	 * 
-	 * @param ip
-	 * @param referenceId
-	 * @throws LogicException
+	 * 删除某个模块的评论
+	 * @param module 模块
 	 */
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteComment(CommentModule module) {
@@ -382,13 +379,9 @@ public class CommentService
 	 * <p>
 	 * <b>用于DataTag</b>
 	 * </p>
-	 * 
-	 * @param type
-	 *            模块类型
+	 * @param module
 	 * @param limit
-	 *            数目限制
 	 * @param queryAdmin
-	 *            是否包含管理员
 	 * @return
 	 */
 	@Transactional(readOnly = true)

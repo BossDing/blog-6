@@ -42,10 +42,7 @@ import me.qyh.blog.template.render.RedirectException;
  * <b>如果callable fragment中有该标签，那么ajax请求将会返回RedirectJsonResult，而不会返回目标页面内容</b>
  * <br>
  * </p>
- * 
- * @see GlobalControllerExceptionHandler#handleRedirectException(RedirectException,
- *      javax.servlet.http.HttpServletRequest,
- *      javax.servlet.http.HttpServletResponse)
+ *
  * @see RedirectException
  */
 public class RedirectTagProcessor extends DefaultAttributesTagProcessor {

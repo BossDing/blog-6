@@ -102,7 +102,7 @@ public class FileUtils {
 	/**
 	 * 获取文件的后缀名
 	 * 
-	 * @param fullName
+	 * @param path
 	 * @return
 	 */
 	public static String getFileExtension(Path path) {
@@ -126,7 +126,7 @@ public class FileUtils {
 	/**
 	 * 删除文件|文件夹
 	 * 
-	 * @param file
+	 * @param path
 	 * @return
 	 */
 	public static boolean deleteQuietly(Path path) {
@@ -214,7 +214,7 @@ public class FileUtils {
 	/**
 	 * 创建一个文件夹，如果失败，抛出异常
 	 * 
-	 * @param parentFile
+	 * @param path
 	 */
 	public static void forceMkdir(Path path) {
 		if (path == null) {
@@ -263,8 +263,8 @@ public class FileUtils {
 	/**
 	 * 移动一个文件
 	 * 
-	 * @param png
-	 * @param dest
+	 * @param source
+	 * @param target
 	 * @throws IOException
 	 */
 	public static void move(Path source, Path target) throws IOException {
@@ -275,8 +275,8 @@ public class FileUtils {
 	/**
 	 * is write to os
 	 * 
-	 * @param is
-	 * @param os
+	 * @param source
+	 * @param sink
 	 * @throws IOException
 	 */
 	// copied from Files
@@ -397,7 +397,7 @@ public class FileUtils {
 	/**
 	 * Path to string
 	 * 
-	 * @param is
+	 * @param path
 	 * @return
 	 */
 	public static String toString(Path path) throws IOException {

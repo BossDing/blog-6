@@ -99,8 +99,6 @@ public interface CommentDao {
 	 * 
 	 * @param path
 	 *            路径
-	 * @param status
-	 *            状态
 	 */
 	void deleteByPath(String path);
 
@@ -114,15 +112,12 @@ public interface CommentDao {
 	void deleteById(Integer id);
 
 	/**
-	 * 查询某个ip在指定时间内评论的总数
-	 * 
-	 * @param begin
-	 *            开始时间
-	 * @param end
-	 *            结束时间
-	 * @param user
-	 *            用户
-	 * @return 评论数
+	 * 查询某个ip在某个模块指定时间内评论的总数
+	 * @param module 评论模块
+	 * @param begin 开始时间
+	 * @param end 结束时间
+	 * @param ip ip
+	 * @return
 	 */
 	int selectCountByIpAndDatePeriod(@Param("module") CommentModule module, @Param("begin") Timestamp begin,
 			@Param("end") Timestamp end, @Param("ip") String ip);
@@ -147,7 +142,7 @@ public interface CommentDao {
 	/**
 	 * 查询模块评论数
 	 * 
-	 * @param ids
+	 * @param modules
 	 * @return
 	 */
 	List<ModuleCommentCount> selectCommentCounts(List<CommentModule> modules);
@@ -155,7 +150,7 @@ public interface CommentDao {
 	/**
 	 * 查询文章评论数
 	 * 
-	 * @param id
+	 * @param module
 	 *            文章id
 	 * @return 评论数
 	 */

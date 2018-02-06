@@ -48,7 +48,6 @@ public class DefaultHtmlClean implements HtmlClean, InitializingBean {
 	/**
 	 * whitelist的json配置,请小心配置注意xss，当且仅当配置评论允许html之后才会生效;
 	 * 
-	 * @see JsonWhitelist
 	 */
 	private Resource whitelistJsonResource;
 	private AllowTags tags;

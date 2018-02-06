@@ -41,9 +41,7 @@ public interface ArticleCommentDao {
 	
 	/**
 	 * 查询某个类型下的某个空间的评论总数
-	 * 
-	 * @param type
-	 *            类型
+	 *
 	 * @param space
 	 *            空间，如果为空，查询全部
 	 * @param queryPrivate

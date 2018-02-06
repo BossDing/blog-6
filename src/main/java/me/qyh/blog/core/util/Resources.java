@@ -44,7 +44,7 @@ public final class Resources {
 	 * 读取resource内容
 	 * 
 	 * @param resource
-	 * @param reader
+	 * @param consumer
 	 * @throws IOException
 	 */
 	public static void readResource(Resource resource, ResourceConsumer consumer) throws IOException {
@@ -57,7 +57,7 @@ public final class Resources {
 	 * 转化resource中的内容
 	 * 
 	 * @param resource
-	 * @param reader
+	 * @param fun
 	 * @return
 	 * @throws IOException
 	 */

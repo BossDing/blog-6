@@ -64,7 +64,7 @@ public class GoogleAuthenticator {
 	/**
 	 * 根据当前时间校验code
 	 * 
-	 * @param code
+	 * @param codeStr
 	 *            验证码
 	 * @return true 校验通过
 	 */
