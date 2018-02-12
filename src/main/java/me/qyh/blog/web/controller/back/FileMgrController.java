@@ -15,8 +15,10 @@
  */
 package me.qyh.blog.web.controller.back;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,18 +39,23 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.file.entity.BlogFile;
 import me.qyh.blog.file.entity.BlogFile.BlogFileType;
 import me.qyh.blog.file.service.FileService;
 import me.qyh.blog.file.store.FileStore;
+import me.qyh.blog.file.validator.Base64FileUploadValidator;
 import me.qyh.blog.file.validator.BlogFileQueryParamValidator;
 import me.qyh.blog.file.validator.BlogFileUploadValidator;
+import me.qyh.blog.file.vo.Base64FileUpload;
 import me.qyh.blog.file.vo.BlogFileQueryParam;
 import me.qyh.blog.file.vo.BlogFileUpload;
 import me.qyh.blog.file.vo.FileStoreBean;
 import me.qyh.blog.file.vo.UploadedFile;
+import me.qyh.blog.template.vo.Base64MultipareFile;
+import me.qyh.blog.web.Webs;
 
 @Controller
 @RequestMapping("mgr/file")
@@ -61,6 +67,8 @@ public class FileMgrController extends BaseMgrController {
 	private BlogFileQueryParamValidator blogFileParamValidator;
 	@Autowired
 	private BlogFileUploadValidator blogFileUploadValidator;
+	@Autowired
+	private Base64FileUploadValidator base64FileUploadValidator;
 
 	@InitBinder(value = "blogFileQueryParam")
 	protected void initBlogFileQueryParamBinder(WebDataBinder binder) {
@@ -70,6 +78,11 @@ public class FileMgrController extends BaseMgrController {
 	@InitBinder(value = "blogFileUpload")
 	protected void initBlogUploadBinder(WebDataBinder binder) {
 		binder.setValidator(blogFileUploadValidator);
+	}
+
+	@InitBinder(value = "base64FileUpload")
+	protected void initBase64FileUploadBinder(WebDataBinder binder) {
+		binder.setValidator(base64FileUploadValidator);
 	}
 
 	@GetMapping("index")
@@ -100,15 +113,36 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
 
+	@PostMapping("uploadWithBase64")
+	@ResponseBody
+	public JsonResult uploadWithBase64(@Validated Base64FileUpload base64FileUpload, BindingResult result)
+			throws LogicException {
+		Optional<JsonResult> validateError = Webs.getFirstError(result);
+		if (validateError.isPresent()) {
+			return validateError.get();
+		}
+
+		String newName = rename(base64FileUpload);
+
+		Objects.requireNonNull(newName);
+
+		Base64MultipareFile file = new Base64MultipareFile(newName, base64FileUpload.getBase64());
+
+		BlogFileUpload upload = new BlogFileUpload();
+		upload.setFiles(Arrays.asList(file));
+		upload.setParent(base64FileUpload.getParent());
+		upload.setStore(base64FileUpload.getStore());
+
+		List<UploadedFile> uploadedFiles = fileService.upload(upload);
+		return new JsonResult(true, uploadedFiles);
+	}
+
 	@PostMapping("upload")
 	@ResponseBody
 	public JsonResult upload(@Validated BlogFileUpload blogFileUpload, BindingResult result) throws LogicException {
-		if (result.hasErrors()) {
-			List<ObjectError> errors = result.getAllErrors();
-			for (ObjectError error : errors) {
-				return new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
-			}
+		Optional<JsonResult> validateError = Webs.getFirstError(result);
+		if (validateError.isPresent()) {
+			return validateError.get();
 		}
 		List<UploadedFile> uploadedFiles = fileService.upload(blogFileUpload);
 		return new JsonResult(true, uploadedFiles);
@@ -179,4 +213,11 @@ public class FileMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("file.rename.success", "重命名	成功"));
 	}
 
+	protected String rename(Base64FileUpload base64FileUpload) {
+		// 重命名图片
+		// chrome中，复制文件名总是为image.png|.jpeg?
+		String name = base64FileUpload.getName();
+		String ext = FileUtils.getFileExtension(name);
+		return "base64_" + System.currentTimeMillis() + (ext.isEmpty() ? "" : "." + ext);
+	}
 }

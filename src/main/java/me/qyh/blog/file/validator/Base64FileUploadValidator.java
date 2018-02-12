@@ -15,42 +15,39 @@
  */
 package me.qyh.blog.file.validator;
 
-import java.util.List;
-
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.file.vo.BlogFileUpload;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.file.vo.Base64FileUpload;
 
 @Component
-public class BlogFileUploadValidator implements Validator {
+public class Base64FileUploadValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return BlogFileUpload.class.isAssignableFrom(clazz);
+		return Base64FileUpload.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		BlogFileUpload upload = (BlogFileUpload) target;
-		List<MultipartFile> files = upload.getFiles();
-		if (CollectionUtils.isEmpty(files)) {
-			errors.reject("file.upload.files.blank", "需要上传文件为空");
+		Base64FileUpload upload = (Base64FileUpload) target;
+		String name = upload.getName();
+		String base64 = upload.getBase64();
+
+		if (Validators.isEmptyOrNull(name, true)) {
+			errors.reject("base64File.upload.name.blank", "文件名为空");
 			return;
 		}
-		for (MultipartFile file : files) {
-			if (file.isEmpty()) {
-				String originalFilename = file.getOriginalFilename();
-				errors.reject("file.upload.content.blank", new Object[] { originalFilename },
-						"文件" + originalFilename + "内容不能为空");
-				return;
-			}
+
+		if (Validators.isEmptyOrNull(base64, true)) {
+			errors.reject("base64File.upload.base64.blank", "图片内容不能为空");
+			return;
 		}
+
 		if (upload.getStore() == null) {
-			errors.reject("file.upload.store.blank", "文件存储器为空");
+			errors.reject("base64File.upload.store.blank", "文件存储器为空");
 			return;
 		}
 	}

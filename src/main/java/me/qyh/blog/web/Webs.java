@@ -22,16 +22,21 @@ import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Validators;
@@ -170,15 +175,17 @@ public class Webs {
 	 * test ==> null<br>
 	 * space/1234567891234567891234 ==> 123456789123456789123
 	 * </p>
-	 * <b> 仅负责从路径中获取空间别名，不负责校验空间别名是否合法，需要额外校验返回结果，如果获取别名的长度大于
-	 * {@code SpaceValidator#MAX_ALIAS_LENGTH}，那么将会返回前{@code SpaceValidator#MAX_ALIAS_LENGTH}+1个别名字符
-	 * </b>
+	 * <b> 仅负责从路径中获取空间别名，不负责校验空间别名是否合法 </b>
 	 * 
+	 * @see SpaceValidator#MAX_ALIAS_LENGTH
 	 * @see SpaceValidator#isValidAlias(String)
 	 * @param path
 	 * @return
 	 */
-	public static String getSpaceFromPath(String path) {
+	public static String getSpaceFromPath(String path, int maxAliasLength) {
+		if (maxAliasLength < 1) {
+			throw new SystemException("maxAliasLength不能小于1");
+		}
 		if (Validators.isEmptyOrNull(path, true)) {
 			return null;
 		}
@@ -189,7 +196,7 @@ public class Webs {
 		if (length == 6) {
 			return null;
 		}
-		int maxAliasLength = SpaceValidator.MAX_ALIAS_LENGTH + 6;
+		int finalMaxAliasLength = maxAliasLength + 5;
 		StringBuilder sb = new StringBuilder();
 		for (int i = 6; i < length; i++) {
 			char ch = path.charAt(i);
@@ -197,7 +204,7 @@ public class Webs {
 				break;
 			}
 			sb.append(ch);
-			if (i == maxAliasLength) {
+			if (i == finalMaxAliasLength) {
 				break;
 			}
 		}
@@ -222,5 +229,22 @@ public class Webs {
 	 */
 	public static String getIP(HttpServletRequest request) {
 		return (String) request.getAttribute(IP_ATTR_NAME);
+	}
+
+	/**
+	 * 从BindingResult中获取第一个错误，并且转化为JsonResult
+	 * 
+	 * @param result
+	 * @return
+	 */
+	public static Optional<JsonResult> getFirstError(BindingResult result) {
+		if (result.hasErrors()) {
+			List<ObjectError> errors = result.getAllErrors();
+			for (ObjectError error : errors) {
+				return Optional.of(new JsonResult(false,
+						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
+			}
+		}
+		return Optional.empty();
 	}
 }

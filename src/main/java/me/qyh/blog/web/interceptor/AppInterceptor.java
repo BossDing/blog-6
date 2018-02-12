@@ -185,7 +185,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void setRequestAttribute(HttpServletRequest request) {
 		if (request.getAttribute(Webs.SPACE_ATTR_NAME) == null) {
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
-			request.setAttribute(Webs.SPACE_ATTR_NAME, Objects.toString(Webs.getSpaceFromPath(path), ""));
+			request.setAttribute(Webs.SPACE_ATTR_NAME,
+					Objects.toString(Webs.getSpaceFromPath(path, SpaceValidator.MAX_ALIAS_LENGTH + 1), ""));
 		}
 		String alias = Webs.getSpaceFromRequest(request);
 		String unlockPattern = alias == null ? UNLOCK_PATTERN : SPACE_UNLOCK_PATTERN;

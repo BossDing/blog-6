@@ -87,7 +87,6 @@ import me.qyh.blog.template.vo.FragmentQueryParam;
 import me.qyh.blog.template.vo.ImportRecord;
 import me.qyh.blog.template.vo.PageStatistics;
 import me.qyh.blog.template.vo.TemplatePageQueryParam;
-import me.qyh.blog.web.Webs;
 
 /**
  * 模板服务类
@@ -266,7 +265,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized Page createPage(Page page) throws LogicException {
 		return Transactions.executeInTransaction(platformTransactionManager, status -> {
-			enablePageAliasNotContainsSpace(page.getAlias());
 			PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 			Space space = page.getSpace();
 			if (space != null) {
@@ -293,7 +291,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized Page updatePage(Page page) throws LogicException {
 		return Transactions.executeInTransaction(platformTransactionManager, status -> {
-			enablePageAliasNotContainsSpace(page.getAlias());
 			final PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 			Space space = page.getSpace();
 			if (space != null) {
@@ -322,18 +319,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			this.applicationEventPublisher.publishEvent(new PageEvent(this, EventType.UPDATE, page));
 			return page;
 		});
-	}
-
-	/**
-	 * 确保用户自定页面路径中不包含space信息
-	 * 
-	 * @param alias
-	 * @throws LogicException
-	 */
-	private void enablePageAliasNotContainsSpace(String alias) throws LogicException {
-		if (Webs.getSpaceFromPath(alias) != null) {
-			throw new LogicException("page.alias.containsSpace", "路径中不能包含space信息");
-		}
 	}
 
 	@Override
@@ -424,14 +409,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					.collect(Collectors.toList());
 
 			for (Page page : pages) {
-				try {
-					// 确保page的alias中不包含space信息
-					enablePageAliasNotContainsSpace(page.getAlias());
-				} catch (LogicException e) {
-					records.add(new ImportRecord(true, e.getLogicMessage()));
-					ts.setRollbackOnly();
-					return records;
-				}
 				// 设置空间，用于获取templateName
 				page.setSpace(space);
 				String templateName = page.getTemplateName();
@@ -538,7 +515,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public void registerPreview(String path, Template template) throws LogicException {
-		enablePageAliasNotContainsSpace(path);
 		try {
 			templateMapping.getPreviewTemplateMapping().register(path, template);
 		} catch (PatternAlreadyExistsException e) {

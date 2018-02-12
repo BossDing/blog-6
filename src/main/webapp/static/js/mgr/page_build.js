@@ -310,6 +310,8 @@ $(document).ready(function() {
 						setTimeout(function(){
 							bootbox.alert(data.message);
 						},500)
+					} else {
+						bootbox.alert(data.message);
 					}
 				}
 			},

@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,7 +34,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -319,10 +319,9 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception e) {
 			MethodArgumentNotValidException ex = (MethodArgumentNotValidException) e;
 			BindingResult result = ex.getBindingResult();
-			List<ObjectError> errors = result.getAllErrors();
-			for (ObjectError error : errors) {
-				return new ModelAndView(new JsonView(new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()))));
+			Optional<JsonResult> validateError = Webs.getFirstError(result);
+			if (validateError.isPresent()) {
+				return new ModelAndView(new JsonView(validateError.get()));
 			}
 			throw new SystemException("抛出了MethodArgumentNotValidException，但没有发现任何错误");
 		}
@@ -423,7 +422,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			 *        getSpaceFromRequest始终为空，这里需要额外的判断
 			 */
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
-			String space = Webs.getSpaceFromPath(path);
+			String space = Webs.getSpaceFromPath(path, SpaceValidator.MAX_ALIAS_LENGTH + 1);
 			String forwardMapping = "";
 			if (space != null) {
 

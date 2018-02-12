@@ -155,6 +155,8 @@ z-index: 9999999}
 			</div>
 		</div>
 	</div>
+	
+	
 
 	<div class="modal fade" id="baseModal" tabindex="-1" role="dialog"
 		style="z-index: 9999999">
@@ -306,6 +308,7 @@ z-index: 9999999}
 	<script
 		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/md_file.js}"></script>
+	<script type="text/javascript" th:src="@{/static/js/mgr/dirChooser.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
 	<script type="text/javascript" th:src="@{/static/js/mgr/emoji.js}"></script>
 	<script th:src="@{/static/js/modal.js}"></script>
@@ -340,16 +343,16 @@ z-index: 9999999}
 				
 				document.addEventListener('drop', function(e){
 				      e.preventDefault();
-				      e.stopPropagation();
+				      e.stopPropagation(); var reader = new FileReader();
  						var file = e.dataTransfer.files[0];
 				      if(file.name.indexOf('.md') == -1){
-				    	  return false;
+				    	  base64Upload(file);
+				      } else {
+					      reader.onload = function(e){
+					        editor.setValue(e.target.result);
+					      };
+					      reader.readAsText(file);
 				      }
-				      var reader = new FileReader();
-				      reader.onload = function(e){
-				        editor.setValue(e.target.result);
-				      };
-				      reader.readAsText(file);
 				 }, false);
 				
 			}
@@ -364,6 +367,26 @@ z-index: 9999999}
 			dragDrop:false,
 		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
 		});
+		
+		editor.on('paste',function(editor,evt){
+			var clipboardData, pastedData;
+// 		    evt.stopPropagation();
+// 		    evt.preventDefault();
+		    clipboardData = evt.clipboardData || window.clipboardData;
+		    console.log(clipboardData.getData('text/html'))
+		    var files = clipboardData.files;
+		    if(files.length > 0){
+		    	var f = files[0];//上传第一张
+		    	var type = f.type;
+		    	if(type.indexOf('image/') == -1){
+		    		bootbox.alert("只能上传图片文件");
+		    		return ;
+		    	}
+		    	
+		    	base64Upload(f);
+		    	
+		    }
+		})
 		
 		CodeMirror.keyMap.default["Shift-Tab"] = "indentLess";
 		CodeMirror.keyMap.default["Tab"] = "indentMore";
@@ -814,6 +837,51 @@ z-index: 9999999}
 			setTimeout(function(){
 				$("#auto-save-tip").remove();
 			},1500);
+		}
+		
+		function base64Upload(f){
+			//show pick up
+			if(f.size == 0){
+				bootbox.alert('不能上传空文件或者文件夹');
+				return;
+			}
+	    	var reader = new FileReader();
+	    	
+	    	dirChooser.choose(function(dir,store){
+	    		var left = $(window).width()/2 - 64;
+	    		var top = $(window).height()/2 - 64;
+	    		$("#upload-loading").remove();
+	    		$('body').append("<div id='upload-loading'><div class='modal-backdrop in' style='z-index: 1040;'></div><img src='"+basePath+"/static/img/loading.gif' style='position:absolute;top:"+top+"px;left:"+left+"px' /></div>");
+	    		reader.onload = (function(theFile) {
+		            return function(e) {
+		            	var base64 = e.target.result;
+		            	$.post(basePath+'/mgr/file/uploadWithBase64',{parent:dir.id,store:store,name:f.name,base64:base64},function(data){
+				    		$("#upload-loading").remove();
+		            		if(data.success){
+		            			var result = data.data[0];
+		            			if(result.error){
+		            				bootbox.alert(result.error);
+		            			} else {
+		            				var name = result.name;
+		            				var ext = name.split('.').pop().toLowerCase();
+		            				if(ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif'){
+		            					var middle = result.thumbnailUrl ? result.thumbnailUrl.middle : result.url;
+			            				var large = result.thumbnailUrl ? result.thumbnailUrl.large : result.url;
+			            				var md = '[!['+result.name+']('+middle+' "'+result.name+'")]('+large+' "'+result.name+'")';
+			            				editor.replaceSelection(md);
+		            				} else {
+		            					var md = '['+result.name+']('+result.url+')';
+		            					editor.replaceSelection(md);
+		            				}
+		            			}
+		            		}else{
+		            			bootbox.alert(data.message);
+		            		}
+		            	})
+		            };
+		          })(f);
+		         reader.readAsDataURL(f);
+	    	});
 		}
 	</script>
 </body>

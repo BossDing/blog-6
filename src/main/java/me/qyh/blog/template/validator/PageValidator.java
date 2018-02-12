@@ -27,6 +27,7 @@ import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.entity.Page;
+import me.qyh.blog.web.Webs;
 
 @Component
 public class PageValidator implements Validator {
@@ -118,10 +119,6 @@ public class PageValidator implements Validator {
 			return "";
 		}
 
-		if ("/".equals(cleanedAlias)) {
-			return "";
-		}
-
 		if (cleanedAlias.length() > PAGE_ALIAS_MAX_LENGTH) {
 			errors.reject("page.alias.toolong", new Object[] { PAGE_ALIAS_MAX_LENGTH },
 					"页面别名不能超过" + PAGE_ALIAS_MAX_LENGTH + "个字符");
@@ -135,6 +132,11 @@ public class PageValidator implements Validator {
 	}
 
 	private static void validatePageAlias(String alias, Errors errors) {
+
+		if (Webs.getSpaceFromPath(alias, 1) != null) {
+			errors.reject("page.alias.containsSpace", "路径中不能包含space信息");
+			return;
+		}
 
 		if (alias.indexOf('/') == -1) {
 			doValidatePageAlias(alias, errors);
@@ -176,7 +178,7 @@ public class PageValidator implements Validator {
 				errors.reject("page.alias.pathVariable.onlyLetter", "{}中间的内容必须为英文字母");
 				return;
 			}
-			
+
 			// variable 不能为key word
 			for (String keyword : ALIAS_KEY_WORDS) {
 				if (variable.equals(keyword)) {

@@ -17,12 +17,12 @@ package me.qyh.blog.web.controller.back;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +43,7 @@ import me.qyh.blog.file.vo.StaticFileQueryParam;
 import me.qyh.blog.file.vo.StaticFileUpload;
 import me.qyh.blog.file.vo.UnzipConfig;
 import me.qyh.blog.file.vo.UploadedFile;
+import me.qyh.blog.web.Webs;
 
 @Controller
 @RequestMapping("mgr/static")
@@ -50,7 +51,7 @@ public class StaticFileMgrController extends BaseMgrController {
 
 	@Autowired(required = false)
 	private EditablePathResourceHttpRequestHandler handler;
-	
+
 	@Autowired
 	private StaticFileQueryParamValidator staticFileParamValidator;
 	@Autowired
@@ -67,7 +68,7 @@ public class StaticFileMgrController extends BaseMgrController {
 	}
 
 	@GetMapping("index")
-	public String index(@Validated StaticFileQueryParam staticFileQueryParam,Model model) {
+	public String index(@Validated StaticFileQueryParam staticFileQueryParam, Model model) {
 		try {
 			checkHandler();
 			model.addAttribute("result", handler.query(staticFileQueryParam));
@@ -76,7 +77,6 @@ public class StaticFileMgrController extends BaseMgrController {
 		}
 		return "mgr/file/local";
 	}
-	
 
 	@GetMapping("query")
 	@ResponseBody
@@ -85,22 +85,19 @@ public class StaticFileMgrController extends BaseMgrController {
 		staticFileQueryParam.setExtensions(new HashSet<>());
 		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}
-	
+
 	@PostMapping("upload")
 	@ResponseBody
 	public JsonResult upload(@Validated StaticFileUpload staticFileUpload, BindingResult result) throws LogicException {
 		checkHandler();
-		if (result.hasErrors()) {
-			List<ObjectError> errors = result.getAllErrors();
-			for (ObjectError error : errors) {
-				return new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
-			}
+		Optional<JsonResult> validateError = Webs.getFirstError(result);
+		if (validateError.isPresent()) {
+			return validateError.get();
 		}
 		List<UploadedFile> uploadedFiles = handler.upload(staticFileUpload);
 		return new JsonResult(true, uploadedFiles);
 	}
-	
+
 	@PostMapping("copy")
 	@ResponseBody
 	public JsonResult copy(@RequestParam("path") String path, @RequestParam("destPath") String destPath)
@@ -118,7 +115,7 @@ public class StaticFileMgrController extends BaseMgrController {
 		handler.move(path, destPath);
 		return new JsonResult(true, new Message("staticFile.move.success", "移动成功"));
 	}
-	
+
 	@PostMapping("delete")
 	@ResponseBody
 	public JsonResult delete(@RequestParam("path") String path) throws LogicException {
@@ -127,7 +124,6 @@ public class StaticFileMgrController extends BaseMgrController {
 		return new JsonResult(true, new Message("staticFile.delete.success", "删除成功"));
 	}
 
-	
 	@PostMapping("createFolder")
 	@ResponseBody
 	public JsonResult createFolder(@RequestParam("path") String path) throws LogicException {
@@ -135,28 +131,27 @@ public class StaticFileMgrController extends BaseMgrController {
 		handler.createDirectorys(path);
 		return new JsonResult(true, new Message("staticFile.create.success", "创建成功"));
 	}
-	
+
 	@PostMapping("unzip")
 	@ResponseBody
-	public JsonResult unzip( 
-			@RequestParam("zipPath") String zipPath,UnzipConfig config) throws LogicException{
+	public JsonResult unzip(@RequestParam("zipPath") String zipPath, UnzipConfig config) throws LogicException {
 		checkHandler();
-		if(config.getPath() == null){
+		if (config.getPath() == null) {
 			return new JsonResult(false, new Message("file.unzip.emptyPath", "zip文件路径不能为空"));
 		}
-		handler.unzip(zipPath,config);
+		handler.unzip(zipPath, config);
 		return new JsonResult(true, new Message("staticFile.unzip.success", "解压缩成功"));
 	}
-	
+
 	@PostMapping("zip")
 	@ResponseBody
-	public JsonResult zip( 
-			@RequestParam("path") String path,@RequestParam("zipPath") String zipPath) throws LogicException{
+	public JsonResult zip(@RequestParam("path") String path, @RequestParam("zipPath") String zipPath)
+			throws LogicException {
 		checkHandler();
 		handler.packZip(path, zipPath);
 		return new JsonResult(true, new Message("staticFile.zip.success", "压缩成功"));
 	}
-	
+
 	private void checkHandler() throws LogicException {
 		if (handler == null) {
 			throw new LogicException("staticFile.handler.notEnable", "本地文件服务没有启用");
