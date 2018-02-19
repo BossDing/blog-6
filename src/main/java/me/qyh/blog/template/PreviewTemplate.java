@@ -15,25 +15,20 @@
  */
 package me.qyh.blog.template;
 
-public final class PreviewTemplate implements Template {
+public final class PreviewTemplate implements PathTemplate {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private final Template template;
+	private final PathTemplate template;
 
-	public Template getOriginalTemplate() {
+	public PathTemplate getOriginalTemplate() {
 		return template;
 	}
 
-	public PreviewTemplate(Template template) {
+	public PreviewTemplate(PathTemplate template) {
 		super();
 		this.template = template;
-	}
-
-	@Override
-	public boolean isRoot() {
-		return template.isRoot();
 	}
 
 	@Override
@@ -59,5 +54,15 @@ public final class PreviewTemplate implements Template {
 	@Override
 	public boolean equalsTo(Template other) {
 		return false;
+	}
+
+	@Override
+	public String getRelativePath() {
+		return template.getRelativePath();
+	}
+
+	@Override
+	public boolean hasPathVariable() {
+		return template.hasPathVariable();
 	}
 }

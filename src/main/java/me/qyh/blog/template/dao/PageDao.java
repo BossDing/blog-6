@@ -89,9 +89,11 @@ public interface PageDao {
 	 *            空间
 	 * @param alias
 	 *            别名
+	 * @param spaceGlobal
 	 * @return 如果不存在，返回null
 	 */
-	Page selectBySpaceAndAlias(@Param("space") Space space, @Param("alias") String alias);
+	Page selectBySpaceAndAlias(@Param("space") Space space, @Param("alias") String alias,
+			@Param("spaceGlobal") boolean spaceGlobal);
 
 	/**
 	 * 查询某空间下的所有用户自定义页面

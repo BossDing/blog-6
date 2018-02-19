@@ -214,6 +214,7 @@ CREATE TABLE `blog_page_user` (
   `page_create_date` datetime NOT NULL,
   `page_alias` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `page_allowComment` tinyint(1) NOT NULL DEFAULT '0',
+  `page_spaceGlobal` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=207 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

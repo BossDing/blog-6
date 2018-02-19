@@ -88,6 +88,12 @@ public class PageValidator implements Validator {
 					"页面描述不能超过" + PAGE_DESCRIPTION_MAX_LENGTH + "个字符");
 			return;
 		}
+
+		if (page.isSpaceGlobal() && page.getSpace() != null) {
+			errors.reject("page.spaceGlobal.hasSpace", "作用于全部空间的页面不能设置单独的空间");
+			return;
+		}
+
 		String alias = validateAlias(page.getAlias(), errors);
 		if (errors.hasErrors()) {
 			return;

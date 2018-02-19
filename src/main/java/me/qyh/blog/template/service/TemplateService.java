@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.entity.HistoryTemplate;
@@ -196,14 +197,12 @@ public interface TemplateService {
 	 * 如果路径已经存在，那么访问path即可预览该页面
 	 * </p>
 	 * 
-	 * @param path
-	 *            模板映射路径
-	 * @param template
+	 * @param PathTemplate
 	 *            用来预览的模板
 	 * @throws LogicException
 	 *             注册失败
 	 */
-	void registerPreview(String path, Template template) throws LogicException;
+	void registerPreview(PathTemplate template) throws LogicException;
 
 	/**
 	 * 清空预览页面，删除mapping

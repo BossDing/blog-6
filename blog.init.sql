@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS `blog_page_user` (
   `page_create_date` datetime NOT NULL,
   `page_alias` varchar(255)  DEFAULT NULL,
   `page_allowComment` tinyint(1) NOT NULL DEFAULT '0',
+  `page_spaceGlobal` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ;
 

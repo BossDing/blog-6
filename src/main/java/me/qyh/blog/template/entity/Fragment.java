@@ -153,11 +153,6 @@ public class Fragment extends BaseEntity implements Template {
 	}
 
 	@Override
-	public final boolean isRoot() {
-		return false;
-	}
-
-	@Override
 	public final String getTemplate() {
 		return tpl;
 	}

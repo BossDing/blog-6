@@ -15,17 +15,15 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import me.qyh.blog.core.util.StringUtils;
-
 public final class PreviewUrl {
 
 	private final String url;
 	private final boolean hasPathVariable;
 
-	public PreviewUrl(String url) {
+	public PreviewUrl(String url, boolean hasPathVariable) {
 		super();
 		this.url = url;
-		this.hasPathVariable = StringUtils.substringBetween(url, "{", "}") != null;
+		this.hasPathVariable = hasPathVariable;
 	}
 
 	public String getUrl() {

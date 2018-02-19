@@ -51,7 +51,8 @@
 											th:text="${#strings.length(page.name) > 10  ? #strings.substring(page.name,0,10)+'...' : page.name}"></a></td>
 										<td><a href="###" th:if="${page.alias != null}"
 											th:text="${page.alias}"></a></td>
-										<td><span th:if="${page.space == null}" th:text="无"></span>
+										<td><span th:if="${page.space == null && !page.spaceGlobal}" th:text="无"></span>
+										<span th:if="${page.space == null && page.spaceGlobal}" th:text="所有空间"></span>
 											<a href="###" data-toggle="tooltip"
 											th:title="${page.space.name}" th:if="${page.space != null}"
 											th:text="${#strings.length(page.space.name) > 10  ? #strings.substring(page.space.name,0,10)+'...' : page.space.name}"></a>

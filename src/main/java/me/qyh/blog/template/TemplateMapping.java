@@ -439,13 +439,12 @@ public class TemplateMapping {
 		 * @param pattern
 		 * @param preview
 		 */
-		public void register(String uncleanPattern, Template ori) throws PatternAlreadyExistsException {
-			Objects.requireNonNull(uncleanPattern);
+		public void register(PathTemplate ori) throws PatternAlreadyExistsException {
 			Objects.requireNonNull(ori);
 			lock.writeLock().lock();
 			try {
 				PreviewTemplate preview = wrap(ori);
-				String pattern = FileUtils.cleanPath(uncleanPattern);
+				String pattern = ori.getRelativePath();
 				String templateName = preview.getTemplateName();
 
 				if (isKeyPath(pattern)) {
@@ -478,7 +477,7 @@ public class TemplateMapping {
 			}
 		}
 
-		private PreviewTemplate wrap(Template ori) {
+		private PreviewTemplate wrap(PathTemplate ori) {
 			if (ori instanceof PreviewTemplate) {
 				return (PreviewTemplate) ori;
 			}

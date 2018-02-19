@@ -22,9 +22,10 @@ import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.Template;
 
-public class Page extends BaseEntity implements Template {
+public class Page extends BaseEntity implements PathTemplate {
 
 	/**
 	 * 
@@ -42,6 +43,14 @@ public class Page extends BaseEntity implements Template {
 	private String templateName;
 
 	public static final String PAGE_PREFIX = TEMPLATE_PREFIX + "Page" + SPLITER;
+
+	/**
+	 * 是否应用于所有的空间
+	 * 
+	 * @see #getRelativePath()
+	 * @since 5.10
+	 */
+	private boolean spaceGlobal;
 
 	public Page() {
 		super();
@@ -69,6 +78,7 @@ public class Page extends BaseEntity implements Template {
 		this.createDate = page.createDate;
 		this.alias = page.alias;
 		this.allowComment = page.allowComment;
+		this.spaceGlobal = page.spaceGlobal;
 	}
 
 	@Override
@@ -79,11 +89,6 @@ public class Page extends BaseEntity implements Template {
 	@Override
 	public Template cloneTemplate() {
 		return new Page(this);
-	}
-
-	@Override
-	public final boolean isRoot() {
-		return true;
 	}
 
 	@Override
@@ -137,6 +142,7 @@ public class Page extends BaseEntity implements Template {
 		page.setAlias(alias);
 		page.setName(name);
 		page.setDescription(description);
+		page.setSpaceGlobal(spaceGlobal);
 		return page;
 	}
 
@@ -144,6 +150,7 @@ public class Page extends BaseEntity implements Template {
 		if (templateName == null) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(PAGE_PREFIX).append(FileUtils.cleanPath(alias));
+			sb.append(SPLITER).append(Boolean.toString(spaceGlobal));
 			if (space != null && space.hasId()) {
 				sb.append(SPLITER).append(space.getId());
 			}
@@ -166,6 +173,14 @@ public class Page extends BaseEntity implements Template {
 
 	public void setTpl(String tpl) {
 		this.tpl = tpl;
+	}
+
+	public boolean isSpaceGlobal() {
+		return spaceGlobal;
+	}
+
+	public void setSpaceGlobal(boolean spaceGlobal) {
+		this.spaceGlobal = spaceGlobal;
 	}
 
 	@Override
@@ -197,18 +212,24 @@ public class Page extends BaseEntity implements Template {
 		return templateName != null && templateName.startsWith(PAGE_PREFIX);
 	}
 
-	/**
-	 * 获取模板的访问路径
-	 * 
-	 * @return
-	 */
-	public String getTemplatePath() {
-		String templatePath = FileUtils.cleanPath(alias);
-		if (space != null) {
-			Objects.requireNonNull(space.getAlias());
-			templatePath = "space/" + space.getAlias() + (templatePath.isEmpty() ? "" : "/" + templatePath);
+	@Override
+	public String getRelativePath() {
+		StringBuilder sb = new StringBuilder();
+		if (spaceGlobal) {
+			sb.append("space/{alias}");
+		} else {
+			if (space != null) {
+				Objects.requireNonNull(space.getAlias());
+				sb.append("space/").append(space.getAlias());
+			}
 		}
-		return templatePath;
+		String templatePath = FileUtils.cleanPath(alias);
+		if (!templatePath.isEmpty()) {
+			if (sb.length() > 0) {
+				sb.append('/');
+			}
+			sb.append(templatePath);
+		}
+		return sb.toString();
 	}
-
 }

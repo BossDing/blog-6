@@ -24,6 +24,7 @@ import org.thymeleaf.templateresource.ITemplateResource;
 
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.render.ParseContextHolder;
@@ -56,8 +57,7 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 				if (root == null) {
 					ParseContextHolder.getContext().setRoot(template);
 				} else {
-					// 如果已经存在主模板，那么查看当前待解析的模板是否是'主模板'
-					if (template.isRoot()) {
+					if (template instanceof PathTemplate) {
 						throw new TemplateProcessingException("无法再次处理模板:" + templateName);
 					}
 				}
@@ -68,7 +68,8 @@ public final class PreTemplateHandler extends AbstractTemplateHandler {
 				}
 				// TemplateResource 可能来自于缓存，为了防止修改数据，这里clone后传给页面
 				if (template instanceof PreviewTemplate) {
-					((IEngineContext) context).setVariable("this", ((PreviewTemplate)template).getOriginalTemplate().cloneTemplate());
+					((IEngineContext) context).setVariable("this",
+							((PreviewTemplate) template).getOriginalTemplate().cloneTemplate());
 				} else {
 					((IEngineContext) context).setVariable("this", template.cloneTemplate());
 				}

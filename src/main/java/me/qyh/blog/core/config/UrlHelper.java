@@ -35,7 +35,7 @@ import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
-import me.qyh.blog.template.entity.Page;
+import me.qyh.blog.template.PathTemplate;
 
 /**
  * 链接辅助类，用来获取一些对象的访问链接
@@ -145,19 +145,20 @@ public class UrlHelper implements InitializingBean {
 		}
 
 		/**
-		 * 获取用户自定义页面的访问链接
+		 * 获取PathTemplate的访问路径
 		 * <p>
 		 * <b>不会替换PathVariable中的参数</b>
 		 * </p>
 		 * 
-		 * @param page
-		 *            用户自定义页面
-		 * @return 如果存在别名，返回/page/{别名}，否则返回/page/{id}
+		 * @param pathTemplate
+		 * @return 访问路径
 		 */
-		public String getUrl(Page page) {
-			String alias = page.getAlias();
-			Objects.requireNonNull(alias);
-			return getUrl(page.getSpace()) + "/" + alias;
+		public String getUrl(PathTemplate pathTemplate) {
+			String relativePath = pathTemplate.getRelativePath();
+			if (relativePath.isEmpty()) {
+				return url;
+			}
+			return url + '/' + relativePath;
 		}
 	}
 

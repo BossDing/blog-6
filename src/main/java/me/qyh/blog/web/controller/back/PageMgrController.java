@@ -123,14 +123,14 @@ public class PageMgrController extends BaseMgrController {
 		}
 		page.setSpace(space);
 
-		templateService.registerPreview(page.getTemplatePath(), page);
+		templateService.registerPreview(page);
 
 		/**
 		 * @since 5.10
 		 */
 		TemplateRequestMappingHandlerMapping.PREVIEW_IP = Environment.getIP();
 
-		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page)));
+		return new JsonResult(true, new PreviewUrl(urlHelper.getUrls().getUrl(page), page.hasPathVariable()));
 	}
 
 	@PostMapping("delete")

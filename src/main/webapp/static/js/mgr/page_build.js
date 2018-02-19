@@ -286,6 +286,7 @@ $(document).ready(function() {
 		page.name=$("#name").val();
 		page.description=$("#description").val();
 		page.allowComment = $("#allowComment").prop("checked");
+		page.spaceGlobal = $("#spaceGlobal").prop('checked');
 		saveFlag = true;
 		$.ajax({
 			type : "post",

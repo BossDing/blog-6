@@ -66,6 +66,7 @@ import me.qyh.blog.core.service.impl.Transactions;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.PatternAlreadyExistsException;
 import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
@@ -273,7 +274,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 			String alias = page.getAlias();
 			// 检查
-			Page aliasPage = pageDao.selectBySpaceAndAlias(page.getSpace(), alias);
+			Page aliasPage = pageDao.selectBySpaceAndAlias(page.getSpace(), alias, page.isSpaceGlobal());
 			if (aliasPage != null) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
@@ -299,7 +300,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			Page db = getRequiredPage(page.getId());
 			String alias = page.getAlias();
 			// 检查
-			Page aliasPage = pageDao.selectBySpaceAndAlias(page.getSpace(), alias);
+			Page aliasPage = pageDao.selectBySpaceAndAlias(page.getSpace(), alias, page.isSpaceGlobal());
 			if (aliasPage != null && !aliasPage.getId().equals(page.getId())) {
 				throw new LogicException("page.user.aliasExists", "别名" + alias + "已经存在", alias);
 			}
@@ -514,9 +515,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public void registerPreview(String path, Template template) throws LogicException {
+	public void registerPreview(PathTemplate template) throws LogicException {
 		try {
-			templateMapping.getPreviewTemplateMapping().register(path, template);
+			templateMapping.getPreviewTemplateMapping().register(template);
 		} catch (PatternAlreadyExistsException e) {
 			throw convert(e);
 		}
@@ -800,15 +801,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		return Optional.ofNullable(fragment);
 	}
 
+	// Template%Page%{alias}%{spaceGlobal}[%{space.id}]
 	private Optional<Page> queryPageWithTemplateName(String templateName) {
-		Page page = null;
+		Page page;
 		String[] array = templateName.split(Template.SPLITER);
-		if (array.length == 2) {
-			page = pageDao.selectBySpaceAndAlias(null, "");
-		} else if (array.length == 3) {
-			page = pageDao.selectBySpaceAndAlias(null, array[2]);
-		} else if (array.length == 4) {
-			page = pageDao.selectBySpaceAndAlias(new Space(Integer.parseInt(array[3])), array[2]);
+		if (array.length == 4) {
+			page = pageDao.selectBySpaceAndAlias(null, array[2], Boolean.parseBoolean(array[3]));
+		} else if (array.length == 5) {
+			page = pageDao.selectBySpaceAndAlias(new Space(Integer.parseInt(array[4])), array[2], false);
 		} else {
 			throw new SystemException(templateName + "无法转化为用户自定义页面");
 		}
@@ -895,7 +895,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		void registerPage(Page page) throws LogicException {
-			String path = page.getTemplatePath();
+			String path = page.getRelativePath();
 			try {
 				templateMapping.register(path, page.getTemplateName());
 			} catch (PatternAlreadyExistsException e) {
@@ -905,7 +905,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 
 		void unregisterPage(Page page) {
-			String path = page.getTemplatePath();
+			String path = page.getRelativePath();
 			if (templateMapping.unregister(path)) {
 				rollBackActions.add(() -> templateMapping.forceRegisterTemplateMapping(path, page.getTemplateName()));
 			}
@@ -1098,7 +1098,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized void restoreLoginPage() throws LogicException {
 		Transactions.executeInTransaction(platformTransactionManager, status -> {
-			Page page = pageDao.selectBySpaceAndAlias(null, "login");
+			Page page = pageDao.selectBySpaceAndAlias(null, "login", false);
 			if (page == null) {
 				return;
 			}

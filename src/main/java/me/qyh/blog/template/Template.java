@@ -61,16 +61,6 @@ public interface Template extends Serializable {
 	}
 
 	/**
-	 * 是否是根模板
-	 * <p>
-	 * 在一次解析中，根模板只能被解析一次
-	 * </p>
-	 * 
-	 * @return
-	 */
-	boolean isRoot();
-
-	/**
 	 * 获取模板内容
 	 * 
 	 * @return

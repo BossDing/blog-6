@@ -32,7 +32,7 @@ import me.qyh.blog.core.util.Validators;
  * @author mhlx
  *
  */
-public final class SystemTemplate implements Template {
+public final class SystemTemplate implements PathTemplate {
 
 	/**
 	 * 
@@ -56,11 +56,6 @@ public final class SystemTemplate implements Template {
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-	}
-
-	@Override
-	public boolean isRoot() {
-		return true;
 	}
 
 	@Override
@@ -95,10 +90,6 @@ public final class SystemTemplate implements Template {
 		return false;
 	}
 
-	public String getPath() {
-		return path;
-	}
-
 	public static boolean isSystemTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(SYSTEM_PREFIX);
 	}
@@ -106,5 +97,10 @@ public final class SystemTemplate implements Template {
 	public static Optional<String> getPath(String templateName) {
 		return isSystemTemplate(templateName) ? Optional.of(templateName.substring(SYSTEM_PREFIX.length()))
 				: Optional.empty();
+	}
+
+	@Override
+	public String getRelativePath() {
+		return path;
 	}
 }

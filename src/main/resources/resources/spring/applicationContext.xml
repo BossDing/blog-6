@@ -227,5 +227,4 @@
 	<bean id="commentEmailNotifySupport" class="me.qyh.blog.comment.service.CommentEmailNotifySupport">
 		<property name="mailSubject" value="您有新的评论" />
 	</bean>
-
 </beans>      
