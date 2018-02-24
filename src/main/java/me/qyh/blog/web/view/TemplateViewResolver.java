@@ -34,12 +34,11 @@ import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.RenderResult;
 import me.qyh.blog.template.render.TemplateRender;
 
-
 @Component
 public class TemplateViewResolver extends AbstractCachingViewResolver {
 
-	public static final String REDIRECT_URL_PREFIX = "redirect:";
-	public static final String FORWARD_URL_PREFIX = "forward:";
+	private static final String REDIRECT_URL_PREFIX = "redirect:";
+	private static final String FORWARD_URL_PREFIX = "forward:";
 
 	@Autowired
 	private TemplateRender templateRender;
@@ -59,7 +58,7 @@ public class TemplateViewResolver extends AbstractCachingViewResolver {
 	}
 
 	@Override
-	protected View loadView(String viewName, Locale locale) throws Exception {
+	protected View loadView(String viewName, Locale locale) {
 		return new _View(viewName);
 	}
 
@@ -67,7 +66,7 @@ public class TemplateViewResolver extends AbstractCachingViewResolver {
 
 		private final String templateName;
 
-		public _View(String templateName) {
+		_View(String templateName) {
 			super();
 			this.templateName = templateName;
 		}

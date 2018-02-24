@@ -103,7 +103,6 @@ public class PageValidator implements Validator {
 
 		if (page.getAllowComment() == null) {
 			errors.reject("page.allowComment", "是否允许评论不能为空");
-			return;
 		}
 	}
 
@@ -167,7 +166,6 @@ public class PageValidator implements Validator {
 			if (variableArray != null && variableArray.length > 1
 					&& Arrays.stream(variableArray).allMatch(s -> s.equals(variableArray[0]))) {
 				errors.reject("page.alias.variable.same", "多个{}中间的内容不能相同");
-				return;
 			}
 
 		}
@@ -195,7 +193,6 @@ public class PageValidator implements Validator {
 		} else {
 			if (!alias.matches(NO_REGISTRABLE_ALIAS_PATTERN)) {
 				errors.reject("page.alias.valid", "路径只能为英文字母，数字或者-和_");
-				return;
 			}
 		}
 	}

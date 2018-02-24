@@ -86,7 +86,7 @@ public final class Resources {
 	 * @param is
 	 * @return
 	 */
-	public static String read(InputStream is) throws IOException {
+	public static String read(InputStream is) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is, Constants.CHARSET));
 		return reader.lines().collect(Collectors.joining("\r\n"));
 	}

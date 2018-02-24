@@ -91,7 +91,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
 
-	private static Method method;
+	private static final Method method;
 
 	static {
 		try {
@@ -146,10 +146,7 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 	@Override
 	public boolean delete(String key) {
 		Path p = FileUtils.sub(absFolder, key);
-		if (FileUtils.exists(p)) {
-			return FileUtils.deleteQuietly(p);
-		}
-		return true;
+		return !FileUtils.exists(p) || FileUtils.deleteQuietly(p);
 	}
 
 	@Override

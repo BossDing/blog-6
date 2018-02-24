@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -68,10 +69,7 @@ public class Jsons {
 		@Override
 		public boolean shouldSkipField(FieldAttributes f) {
 			Expose expose = f.getAnnotation(Expose.class);
-			if (expose != null) {
-				return !expose.serialize();
-			}
-			return false;
+			return expose != null && !expose.serialize();
 		}
 
 		@Override
@@ -85,10 +83,7 @@ public class Jsons {
 		@Override
 		public boolean shouldSkipField(FieldAttributes f) {
 			Expose expose = f.getAnnotation(Expose.class);
-			if (expose != null) {
-				return !expose.deserialize();
-			}
-			return false;
+			return expose != null && !expose.deserialize();
 		}
 
 		@Override
@@ -244,7 +239,7 @@ public class Jsons {
 	 * @return
 	 */
 	public static ExpressionExecutor readJson(String json) {
-		JsonElement je = null;
+		JsonElement je;
 		try {
 			JsonParser jp = new JsonParser();
 			je = jp.parse(json);
@@ -259,11 +254,11 @@ public class Jsons {
 	/**
 	 * 读取内容(必须为json字符串)。通过表达式获取指定内容
 	 *
-	 * @param  json
+	 * @param json
 	 * @return
 	 */
 	public static ExpressionExecutors readJsonForExecutors(String json) {
-		JsonElement je = null;
+		JsonElement je;
 		try {
 			JsonParser jp = new JsonParser();
 			je = jp.parse(json);
@@ -480,25 +475,25 @@ public class Jsons {
 		private static List<Expression> parseExpressions(String expression) {
 			expression = expression.replaceAll("\\s+", "");
 			if (expression.isEmpty()) {
-				return Arrays.asList(NULL_EXPRESSION);
+				return Collections.singletonList(NULL_EXPRESSION);
 			}
-			if (expression.indexOf(SPLIT_STR) != -1) {
+			if (expression.contains(SPLIT_STR)) {
 				// multi expressions
 				List<Expression> expressionList = new ArrayList<>();
 				for (String _expression : expression.split(SPLIT_STR)) {
 					_expression = _expression.replaceAll("\\s+", "");
 					if (_expression.isEmpty()) {
-						return Arrays.asList(NULL_EXPRESSION);
+						return Collections.singletonList(NULL_EXPRESSION);
 					}
 					Expression parsed = parseExpression(_expression);
 					if (parsed == NULL_EXPRESSION) {
-						return Arrays.asList(NULL_EXPRESSION);
+						return Collections.singletonList(NULL_EXPRESSION);
 					}
 					expressionList.add(parsed);
 				}
 				return expressionList;
 			}
-			return Arrays.asList(parseExpression(expression));
+			return Collections.singletonList(parseExpression(expression));
 		}
 
 		private static Expression parseExpression(String expression) {

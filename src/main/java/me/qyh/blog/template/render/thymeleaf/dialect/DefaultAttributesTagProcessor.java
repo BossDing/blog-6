@@ -137,9 +137,7 @@ abstract class DefaultAttributesTagProcessor extends AbstractElementTagProcessor
 			 * Set the new value, removing the attribute completely if the expression
 			 * evaluated to null
 			 */
-			if (newAttributeValue == null || newAttributeValue.length() == 0) {
-				return;
-			} else {
+			if (newAttributeValue != null && newAttributeValue.length() > 0) {
 				attMap.put(newAttributeName, newAttributeValue);
 			}
 

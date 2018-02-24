@@ -16,7 +16,6 @@
 package me.qyh.blog.web.lock;
 
 import java.io.InputStream;
-import java.lang.reflect.Type;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,16 +31,9 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-
 import me.qyh.blog.core.entity.PasswordLock;
 import me.qyh.blog.core.entity.QALock;
 import me.qyh.blog.core.entity.SysLock;
-import me.qyh.blog.core.entity.SysLock.SysLockType;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Resources;
@@ -55,7 +47,7 @@ import me.qyh.blog.core.util.Validators;
  */
 public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 
-	private SysLockValidator validator = new SysLockValidator();
+	private final SysLockValidator validator = new SysLockValidator();
 
 	private static final String LOCK_NAME = "lock";
 
@@ -68,7 +60,7 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
 		final HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
-		SysLock lock = null;
+		SysLock lock;
 		try {
 			lock = getLockFromRequest(servletRequest);
 		} catch (Exception e) {
@@ -89,28 +81,6 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 	private SysLock getLockFromRequest(HttpServletRequest request) throws Exception {
 		InputStream is = request.getInputStream();
 		return Jsons.readValue(SysLock.class, Resources.read(is));
-	}
-
-	public static final class SysLockDeserializer implements JsonDeserializer<SysLock> {
-
-		@Override
-		public SysLock deserialize(JsonElement element, Type t, JsonDeserializationContext context)
-				throws JsonParseException {
-			if (element.isJsonObject()) {
-				JsonObject obj = element.getAsJsonObject();
-				SysLockType type = SysLockType.valueOf(obj.get("type").getAsString());
-				switch (type) {
-				case QA:
-					return Jsons.readValue(QALock.class, element);
-				case PASSWORD:
-					return Jsons.readValue(PasswordLock.class, element);
-				default:
-					throw new HttpMessageNotReadableException("未知的锁对象:" + type);
-				}
-			}
-			throw new HttpMessageNotReadableException("无法将" + element + "转换为锁对象");
-		}
-
 	}
 
 	private final class SysLockValidator implements Validator {
@@ -160,7 +130,6 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 			}
 			if (password.length() > MAX_PASSWORD_LENGTH) {
 				errors.reject("lock.pwd.toolong", "锁的密码不能超过" + MAX_PASSWORD_LENGTH + "个字符");
-				return;
 			}
 		}
 
@@ -187,7 +156,6 @@ public class LockArgumentResolver implements HandlerMethodArgumentResolver {
 			String[] answerArray = answers.split(",");
 			if (answerArray.length > MAX_ANSWERS_SIZE) {
 				errors.reject("lock.answers.oversize", "答案不能超过" + MAX_ANSWERS_SIZE + "个");
-				return;
 			}
 		}
 	}

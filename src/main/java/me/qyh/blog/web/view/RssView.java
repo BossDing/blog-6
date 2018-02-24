@@ -45,7 +45,7 @@ public class RssView extends AbstractRssFeedView {
 
 	@Override
 	protected List<Item> buildFeedItems(Map<String, Object> model, HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
+			HttpServletResponse response) {
 		@SuppressWarnings("unchecked")
 		PageResult<Article> page = (PageResult<Article>) model.get("page");
 		return page.getDatas().stream().map(this::toItem).collect(Collectors.toList());

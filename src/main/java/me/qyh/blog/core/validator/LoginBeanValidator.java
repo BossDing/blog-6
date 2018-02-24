@@ -49,7 +49,6 @@ public class LoginBeanValidator implements Validator {
 		}
 		if (password.length() > UserValidator.MAX_PWD_LENGTH) {
 			errors.reject("login.password.valid", "无效的密码");
-			return;
 		}
 	}
 

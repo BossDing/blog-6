@@ -16,7 +16,7 @@
 package me.qyh.blog.core.service.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,6 @@ import me.qyh.blog.core.event.ArticleEvent;
 import me.qyh.blog.core.event.EventType;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
-
 
 /**
  * 将点击数缓存起来，每隔一定的时间刷入数据库
@@ -143,7 +142,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		private final Integer id;
 		private final HitsHandler hitsHandler;
 
-		public HitsWrapper(Integer id, HitsHandler hitsHandler) {
+		HitsWrapper(Integer id, HitsHandler hitsHandler) {
 			super();
 			this.id = id;
 			this.hitsHandler = hitsHandler;
@@ -196,7 +195,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 				if (counter.incrementAndGet() >= maxIps) {
 					Integer id = article.getId();
 					if (flushMap.remove(id) != null) {
-						doFlush(Arrays.asList(new HitsWrapper(id, hitsMap.get(id))), false);
+						doFlush(Collections.singletonList(new HitsWrapper(id, hitsMap.get(id))), false);
 					}
 				}
 			}

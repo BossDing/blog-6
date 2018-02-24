@@ -193,7 +193,7 @@ public class ArticleMgrController extends BaseMgrController {
 
 	@PostMapping("write/preview")
 	@ResponseBody
-	public JsonResult preview(@RequestBody Article article) throws LogicException {
+	public JsonResult preview(@RequestBody Article article) {
 		if (article.getEditor() == null || Validators.isEmptyOrNull(article.getContent(), false)) {
 			return new JsonResult(true, "");
 		}

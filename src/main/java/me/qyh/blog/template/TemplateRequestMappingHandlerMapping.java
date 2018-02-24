@@ -46,7 +46,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 
 	private static final Method method;
 
-	private List<TemplateInterceptor> templateInterceptors = new ArrayList<>();
+	private final List<TemplateInterceptor> templateInterceptors = new ArrayList<>();
 
 	/**
 	 * 用于预览的IP

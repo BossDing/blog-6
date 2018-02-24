@@ -63,7 +63,7 @@ public class VideoResourceStore extends ThumbnailSupport {
 	@Override
 	public boolean canStore(MultipartFile multipartFile) {
 		String ext = FileUtils.getFileExtension(multipartFile.getOriginalFilename());
-		return ext.isEmpty() ? false : Arrays.stream(allowExtensions).anyMatch(ext::equalsIgnoreCase);
+		return !ext.isEmpty() && Arrays.stream(allowExtensions).anyMatch(ext::equalsIgnoreCase);
 	}
 
 	@Override

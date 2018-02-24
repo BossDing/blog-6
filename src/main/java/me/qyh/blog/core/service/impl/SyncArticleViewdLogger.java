@@ -63,7 +63,7 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 
 	private final int max;
 	private Map<Integer, RecentlyViewdArticle> articles;
-	private StampedLock lock = new StampedLock();
+	private final StampedLock lock = new StampedLock();
 
 	/**
 	 * 应用关闭时当前访问的文章存入文件中

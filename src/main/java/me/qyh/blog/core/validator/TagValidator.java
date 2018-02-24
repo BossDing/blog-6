@@ -27,7 +27,7 @@ import me.qyh.blog.core.util.Validators;
 @Component
 public class TagValidator implements Validator {
 
-	public static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_NAME_LENGTH = 20;
 
 	@Override
 	public boolean supports(Class<?> clazz) {

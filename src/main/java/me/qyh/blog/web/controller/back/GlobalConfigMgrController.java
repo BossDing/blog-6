@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.GlobalConfig;
-import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.validator.GlobalConfigValidator;
 import me.qyh.blog.core.vo.JsonResult;
@@ -56,7 +55,7 @@ public class GlobalConfigMgrController extends BaseMgrController {
 
 	@PostMapping("update")
 	@ResponseBody
-	public JsonResult update(@Validated @RequestBody GlobalConfig globalConfig) throws LogicException {
+	public JsonResult update(@Validated @RequestBody GlobalConfig globalConfig) {
 		configServer.updateGlobalConfig(globalConfig);
 		return new JsonResult(true, new Message("global.update.success", "更新成功"));
 	}

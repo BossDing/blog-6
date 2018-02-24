@@ -42,10 +42,6 @@ public class CommentValidator implements Validator {
 	@Override
 	public void validate(Object target, Errors errors) {
 		Comment comment = (Comment) target;
-		if (comment == null) {
-			errors.reject("comment.blank", "评论不能为空");
-			return;
-		}
 		String content = comment.getContent();
 		if (Validators.isEmptyOrNull(content, true)) {
 			errors.reject("comment.content.blank", "回复内容不能为空");

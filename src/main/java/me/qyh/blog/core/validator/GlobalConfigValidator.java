@@ -27,7 +27,7 @@ public class GlobalConfigValidator implements Validator {
 	private static final int[] FILE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] USER_FRAGEMENT_PAGE_SIZE_RANGE = { 1, 100 };
 	private static final int[] USER_PAGE_PAGE_SIZE_RANGE = { 1, 100 };
-	static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
+	private static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
 
 	@Override
@@ -99,7 +99,6 @@ public class GlobalConfigValidator implements Validator {
 		if (tagPageSize > TAG_PAGE_SIZE_RANGE[1]) {
 			errors.reject("global.tag.toobig", new Object[] { TAG_PAGE_SIZE_RANGE[1] },
 					"标签每页数量不能大于" + TAG_PAGE_SIZE_RANGE[1]);
-			return;
 		}
 	}
 

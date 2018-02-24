@@ -28,11 +28,11 @@ public enum CommentMode {
 
 	private Message message;
 
-	private CommentMode(Message message) {
+	CommentMode(Message message) {
 		this.message = message;
 	}
 
-	private CommentMode() {
+	CommentMode() {
 
 	}
 

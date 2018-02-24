@@ -172,7 +172,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private long gen;
 
-	private ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MICROSECONDS,
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MICROSECONDS,
 			new LinkedBlockingQueue<>()) {
 
 		@Override
@@ -502,11 +502,10 @@ public abstract class ArticleIndexer implements InitializingBean {
 		if (tags != null && tags.length > 0) {
 			for (String tag : tags) {
 				Optional<Tag> optionalTag = article.getTag(tag);
-				if (optionalTag.isPresent()) {
-					Tag _tag = optionalTag.get();
-					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, _tag.getName())
-							.ifPresent(_tag::setName);
-				}
+				optionalTag.ifPresent(tag1 -> {
+					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag1.getName())
+							.ifPresent(tag1::setName);
+				});
 			}
 		}
 
@@ -654,8 +653,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		@Override
 		public String highlightTerm(String originalText, TokenGroup tokenGroup) {
 			return tokenGroup.getTotalScore() <= 0 ? originalText
-					: new StringBuilder("<b class=\"").append(classes).append("\">").append(originalText).append("</b>")
-							.toString();
+					: "<b class=\"" + classes + "\">" + originalText + "</b>";
 		}
 	}
 

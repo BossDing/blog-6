@@ -28,7 +28,7 @@ public class TemplateRenderErrorDescription implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private List<TemplateErrorInfo> templateErrorInfos = new ArrayList<>();
+	private final List<TemplateErrorInfo> templateErrorInfos = new ArrayList<>();
 	private String expression;// 表达式
 
 	/**

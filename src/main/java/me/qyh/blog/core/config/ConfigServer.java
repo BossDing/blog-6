@@ -31,7 +31,6 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Resources;
 
-
 @Service
 public class ConfigServer implements InitializingBean {
 
@@ -41,7 +40,7 @@ public class ConfigServer implements InitializingBean {
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
 
-	private Properties config = new Properties();
+	private final Properties config = new Properties();
 
 	private static final Path RES_PATH = Constants.CONFIG_DIR.resolve("config.properties");
 
@@ -49,10 +48,11 @@ public class ConfigServer implements InitializingBean {
 		FileUtils.createFile(RES_PATH);
 	}
 
-	private Resource resource = new PathResource(RES_PATH);
+	private final Resource resource = new PathResource(RES_PATH);
 
 	/**
 	 * 获取全局配置
+	 * 
 	 * @return
 	 */
 	@Cacheable(key = "'globalConfig'", value = "configCache")
@@ -67,9 +67,9 @@ public class ConfigServer implements InitializingBean {
 		return config;
 	}
 
-
 	/**
 	 * 保存全局配置
+	 * 
 	 * @param globalConfig
 	 * @return
 	 */

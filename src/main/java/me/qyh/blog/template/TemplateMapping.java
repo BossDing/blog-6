@@ -89,10 +89,6 @@ public class TemplateMapping {
 		super();
 	}
 
-	public Optional<TemplateMatch> getHighestPriorityTemplateMatch(String uncleanPath) {
-		return null;
-	}
-
 	/**
 	 * 查詢最高优先级的匹配模板
 	 * 

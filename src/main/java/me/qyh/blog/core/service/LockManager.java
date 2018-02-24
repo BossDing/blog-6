@@ -57,7 +57,7 @@ public class LockManager implements InitializingBean {
 	@Autowired(required = false)
 	private ExpandedLockProvider expandedLockProvider;
 
-	private List<String> allTypes = new ArrayList<>();
+	private final List<String> allTypes = new ArrayList<>();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LockManager.class);
 
@@ -170,9 +170,7 @@ public class LockManager implements InitializingBean {
 			}
 			types.add(type);
 		}
-		for (String type : sysLockProvider.getLockTypes()) {
-			types.add(type);
-		}
+		Collections.addAll(types, sysLockProvider.getLockTypes());
 		allTypes.addAll(types);
 	}
 

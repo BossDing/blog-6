@@ -337,11 +337,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public Optional<Template> queryTemplate(String templateName) {
-		return getTemplateProcessor(templateName).map(processor -> {
-			return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				return processor.getTemplate(templateName);
-			});
-		});
+		return getTemplateProcessor(templateName)
+				.map(processor -> Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+					return processor.getTemplate(templateName);
+				}));
 	}
 
 	@Override
@@ -501,8 +500,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 			// 清空template 缓存
-			evitPageCache(pageEvitKeySet.stream().toArray(String[]::new));
-			evitFragmentCache(fragmentEvitKeySet.stream().toArray(String[]::new));
+			evitPageCache(pageEvitKeySet.toArray(new String[pageEvitKeySet.size()]));
+			evitFragmentCache(fragmentEvitKeySet.toArray(new String[fragmentEvitKeySet.size()]));
 			return records;
 		} catch (Throwable e) {
 			LOGGER.error(e.getMessage(), e);
@@ -771,7 +770,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				}
 			}
 			this.applicationEventPublisher
-					.publishEvent(new TemplateEvitEvent(this, templateNames.stream().toArray(String[]::new)));
+					.publishEvent(new TemplateEvitEvent(this, templateNames.toArray(new String[templateNames.size()])));
 		});
 	}
 
@@ -840,9 +839,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			Optional<Fragment> optional = queryFragmentWithTemplateName(Fragment.getTemplateName(name, space));
 			fragmentMap.put(name, optional.orElse(null));
-			if (optional.isPresent()) {
-				fragmentMap2.put(name, optional.get());
-			}
+			optional.ifPresent(fragment -> fragmentMap2.put(name, fragment));
 		}
 		for (Map.Entry<String, Fragment> fragmentIterator : fragmentMap2.entrySet()) {
 			Fragment value = fragmentIterator.getValue();

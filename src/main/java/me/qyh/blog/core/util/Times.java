@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
@@ -44,14 +43,7 @@ public class Times {
 	private static final DateTimeFormatterWrapper[] DATE_FORMATTERS = new DateTimeFormatterWrapper[PATTERNS.length];
 
 	private static final LoadingCache<String, DateTimeFormatterWrapper> DATE_TIME_FORMATTER_CACHE = Caffeine
-			.newBuilder().build(new CacheLoader<String, DateTimeFormatterWrapper>() {
-
-				@Override
-				public DateTimeFormatterWrapper load(String key) throws Exception {
-					return new DateTimeFormatterWrapper(key);
-				}
-
-			});
+			.newBuilder().build(key -> new DateTimeFormatterWrapper(key));
 
 	static {
 		for (int i = 0; i < PATTERNS.length; i++) {
@@ -161,7 +153,7 @@ public class Times {
 	 */
 	public static Date parseAndGetDate(String text) {
 		Optional<LocalDateTime> time = parse(text);
-		return time.isPresent() ? toDate(time.get()) : null;
+		return time.map(Times::toDate).orElse(null);
 	}
 
 	/**
@@ -275,7 +267,7 @@ public class Times {
 		private final DateTimeFormatter formatter;
 		private final boolean isDate;
 
-		public DateTimeFormatterWrapper(String pattern) {
+		DateTimeFormatterWrapper(String pattern) {
 			super();
 			Objects.requireNonNull(pattern);
 			this.pattern = pattern.trim();

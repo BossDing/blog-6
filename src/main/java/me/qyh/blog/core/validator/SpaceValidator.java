@@ -76,7 +76,6 @@ public class SpaceValidator implements Validator {
 
 		if (space.getIsDefault() == null) {
 			errors.reject("space.isDefault.blank", "是否是默认空间不能为空");
-			return;
 		}
 	}
 }

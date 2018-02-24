@@ -170,7 +170,7 @@ public class ArticleValidator implements Validator {
 					Integer.parseInt(alias);
 					errors.reject("article.alias.integer", "文章别名不能为数字");
 					return;
-				} catch (Exception e) {
+				} catch (NumberFormatException e) {
 				}
 				if (alias.length() > MAX_ALIAS_LENGTH) {
 					errors.reject("article.alias.toolong", new Object[] { MAX_ALIAS_LENGTH },
@@ -200,7 +200,6 @@ public class ArticleValidator implements Validator {
 		if (!Validators.isEmptyOrNull(featureImage, true) && featureImage.length() > MAX_FEATURE_IMAGE_SIZE) {
 			errors.reject("article.featureImage.toolong", new Object[] { MAX_FEATURE_IMAGE_SIZE },
 					"文章特征图像不能超过" + MAX_FEATURE_IMAGE_SIZE + "个字符");
-			return;
 		}
 	}
 }

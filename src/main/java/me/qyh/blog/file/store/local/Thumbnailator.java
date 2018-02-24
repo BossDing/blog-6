@@ -68,20 +68,20 @@ public class Thumbnailator {
 
 	private final class Resizer {
 
-		private AtomicBoolean resized = new AtomicBoolean(false);
-		private CountDownLatch latch = new CountDownLatch(1);
-		private Path thumb;
-		private Path local;
-		private Resize resize;
+		private final AtomicBoolean resized = new AtomicBoolean(false);
+		private final CountDownLatch latch = new CountDownLatch(1);
+		private final Path thumb;
+		private final Path local;
+		private final Resize resize;
 
-		public Resizer(Path thumb, Path local, Resize resize) {
+		Resizer(Path thumb, Path local, Resize resize) {
 			super();
 			this.thumb = thumb;
 			this.local = local;
 			this.resize = resize;
 		}
 
-		public void resize() throws IOException {
+		void resize() throws IOException {
 			if (resized.compareAndSet(false, true)) {
 				try {
 					semaphore.acquire();

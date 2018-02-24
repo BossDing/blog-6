@@ -53,7 +53,7 @@ public class LockController {
 			return "redirect:" + urlHelper.getUrl();
 		}
 		Lock lock = lockBean.getLock();
-		LockKey key = null;
+		LockKey key;
 		try {
 			captchaValidator.doValidate(request);
 			key = lock.getKeyFromRequest(request);

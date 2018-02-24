@@ -114,7 +114,7 @@ public class ArticleArchiveTree {
 
 	private void setArticles(DateNode node, List<Article> articles) {
 		List<Article> _articles = node.find(articles);
-		Collections.sort(_articles, articleComparator);
+		_articles.sort(articleComparator);
 		node.addAll(_articles);
 		articles.removeAll(_articles);
 	}
@@ -123,10 +123,14 @@ public class ArticleArchiveTree {
 		return Times.toLocalDateTime(article.getPubDate()).toLocalDate();
 	}
 
+	public List<DateNode> getNodes() {
+		return nodes;
+	}
+
 	public abstract class DateNode implements Comparable<DateNode> {
 		protected final int order;
 		private final Message text;
-		private List<Object> nodes = new ArrayList<>();
+		private final List<Object> nodes = new ArrayList<>();
 
 		private DateNode(int order, Message text) {
 			super();
@@ -142,7 +146,7 @@ public class ArticleArchiveTree {
 			return nodes;
 		}
 
-		public void addAll(List<? extends Object> objs) {
+		public void addAll(List<?> objs) {
 			this.nodes.addAll(objs);
 		}
 

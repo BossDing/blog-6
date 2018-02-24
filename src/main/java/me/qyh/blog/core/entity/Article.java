@@ -80,11 +80,11 @@ public class Article extends BaseLockResource {
 
 		private Message message;
 
-		private ArticleFrom(Message message) {
+		ArticleFrom(Message message) {
 			this.message = message;
 		}
 
-		private ArticleFrom() {
+		ArticleFrom() {
 
 		}
 
@@ -111,11 +111,11 @@ public class Article extends BaseLockResource {
 
 		private Message message;
 
-		private ArticleStatus(Message message) {
+		ArticleStatus(Message message) {
 			this.message = message;
 		}
 
-		private ArticleStatus() {
+		ArticleStatus() {
 
 		}
 
@@ -165,7 +165,7 @@ public class Article extends BaseLockResource {
 		this.id = source.id;
 		this.allowComment = source.allowComment;
 		this.featureImage = source.featureImage;
-		source.getLock().ifPresent(lockId -> setLockId(lockId));
+		source.getLock().ifPresent(this::setLockId);
 	}
 
 	public Space getSpace() {

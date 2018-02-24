@@ -59,14 +59,10 @@ public class Constants {
 	public static final Path DAT_DIR = FileUtils.HOME_DIR.resolve("blog/dat");
 
 	/**
-	 * 成功
+	 * 失败
 	 */
 	public static final String ERROR = "error";
 
-	/**
-	 * 失败
-	 */
-	public static final String SUCCESS = "success";
 	/**
 	 * 系统异常消息
 	 */

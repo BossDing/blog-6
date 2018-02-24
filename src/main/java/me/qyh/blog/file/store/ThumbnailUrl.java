@@ -41,7 +41,7 @@ public abstract class ThumbnailUrl implements Serializable {
 	 * @param large
 	 *            大尺寸缩略图链接
 	 */
-	public ThumbnailUrl(String small, String middle, String large) {
+	protected ThumbnailUrl(String small, String middle, String large) {
 		super();
 		this.small = small;
 		this.middle = middle;
@@ -62,6 +62,7 @@ public abstract class ThumbnailUrl implements Serializable {
 
 	/**
 	 * 获取缩放链接
+	 * 
 	 * @param width
 	 * @param height
 	 * @param keepRatio

@@ -16,6 +16,7 @@
 package me.qyh.blog.core.text;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,9 +55,7 @@ public class Tag {
 
 	public Tag addAttributes(Attribute... attributes) {
 		if (attributes != null && attributes.length > 0) {
-			for (Attribute att : attributes) {
-				this.attributes.add(att);
-			}
+			Collections.addAll(this.attributes, attributes);
 		}
 		return this;
 	}

@@ -38,10 +38,6 @@ public class RssController {
 	@Autowired
 	private RssView rssView;
 
-	public View rss() {
-		return rssView;
-	}
-
 	@GetMapping({ "rss", "space/{alias}/rss" })
 	public View rss(ModelMap model) {
 

@@ -80,8 +80,8 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 			IWebContext webContext = (IWebContext) context;
 			Optional<DataBind> optional = queryDataBind(dataTag);
-			if (optional.isPresent()) {
-				DataBind bind = optional.get();
+			optional.ifPresent(dataBind -> {
+				DataBind bind = dataBind;
 				if (hasDataName) {
 					bind.setDataName(dataName);
 				}
@@ -90,7 +90,7 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
 				}
 				request.setAttribute(bind.getDataName(), bind.getData());
-			}
+			});
 		} finally {
 			structureHandler.removeElement();
 		}

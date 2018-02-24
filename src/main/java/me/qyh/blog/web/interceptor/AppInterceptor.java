@@ -193,7 +193,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		if (request.getAttribute(Webs.UNLOCK_ATTR_NAME) == null) {
 			String path = request.getRequestURI().substring(request.getContextPath().length());
 			boolean isUnlock = UrlUtils.match(unlockPattern, path) && request.getParameter("unlockId") != null;
-			request.setAttribute(Webs.UNLOCK_ATTR_NAME, Boolean.valueOf(isUnlock));
+			request.setAttribute(Webs.UNLOCK_ATTR_NAME, isUnlock);
 		}
 		if (request.getAttribute(Webs.SPACE_URLS_ATTR_NAME) == null) {
 			request.setAttribute(Webs.SPACE_URLS_ATTR_NAME, urlHelper.getUrlsBySpace(alias));
@@ -246,7 +246,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 		private final CsrfToken delegate;
 
-		public SaveOnAccessCsrfToken(CsrfTokenRepository tokenRepository, HttpServletRequest request,
+		SaveOnAccessCsrfToken(CsrfTokenRepository tokenRepository, HttpServletRequest request,
 				HttpServletResponse response, CsrfToken delegate) {
 			super();
 			this.tokenRepository = tokenRepository;
@@ -308,7 +308,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	}
 
 	private static final class DefaultRequiresCsrfMatcher implements RequestMatcher {
-		private Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
+		private final Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
 
 		/*
 		 * (non-Javadoc)

@@ -56,7 +56,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Initi
 	private final ICache<ExpressionCacheKey, Object> expressionCache = new ExpressionCache();
 
 	private final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
-			new LinkedBlockingQueue<Runnable>(100));
+			new LinkedBlockingQueue<>(100));
 
 	public ThymeleafCacheManager() {
 		tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
@@ -74,7 +74,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Initi
 
 	private final class TemplateCache implements ICache<TemplateCacheKey, TemplateModel> {
 
-		private Cache<TemplateCacheKey, TemplateModel> cache = Caffeine.newBuilder().build();
+		private final Cache<TemplateCacheKey, TemplateModel> cache = Caffeine.newBuilder().build();
 
 		@Override
 		public void put(TemplateCacheKey key, TemplateModel value) {
@@ -85,8 +85,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Initi
 				String templateName = templateData.getTemplate();
 				tpe.execute(() ->
 				/**
-				 * 如果是Template，此时应该和当前的Template进行比对，如果一致才放入缓存
-				 * 因为如果读写操作并发执行的话，此时的数据可能是旧的数据
+				 * 如果是Template，此时应该和当前的Template进行比对，如果一致才放入缓存 因为如果读写操作并发执行的话，此时的数据可能是旧的数据
 				 * 
 				 * 这个操作可能是同步的，因此在首次载入时效率可能非常低
 				 */

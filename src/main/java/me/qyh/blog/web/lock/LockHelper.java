@@ -40,7 +40,7 @@ import me.qyh.blog.core.vo.LockBean;
 public final class LockHelper {
 
 	private static final String LOCKKEY_SESSION_KEY = LockHelper.class.getName() + ".lockKeys";
-	public static final String LOCK_SESSION_KEY = LockHelper.class.getName() + ".lockResources";
+	private static final String LOCK_SESSION_KEY = LockHelper.class.getName() + ".lockResources";
 
 	private LockHelper() {
 
@@ -92,7 +92,7 @@ public final class LockHelper {
 	public static void addKey(HttpServletRequest request, LockKey key, LockBean lockBean) {
 		HttpSession session = request.getSession();
 		synchronized (WebUtils.getSessionMutex(session)) {
-			Map<String, List<LockKey>> keysMap = (Map<String, List<LockKey>>) getKeysMap(request);
+			Map<String, List<LockKey>> keysMap = getKeysMap(request);
 			if (keysMap == null) {
 				keysMap = new HashMap<>();
 			}
@@ -111,9 +111,7 @@ public final class LockHelper {
 			List<LockBean> beans = getLockBeans(session);
 
 			if (beans != null) {
-				beans.removeIf(bean -> {
-					return bean.getId().equals(lockBean.getId());
-				});
+				beans.removeIf(bean -> bean.getId().equals(lockBean.getId()));
 
 				if (beans.isEmpty()) {
 					session.removeAttribute(LOCK_SESSION_KEY);

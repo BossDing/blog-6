@@ -32,7 +32,6 @@ import me.qyh.blog.core.service.SysLockProvider;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.web.lock.RequestLock;
 
-
 @Controller
 @RequestMapping("mgr/lock/sys")
 public class SysLockMgrController extends BaseMgrController {
@@ -48,7 +47,7 @@ public class SysLockMgrController extends BaseMgrController {
 
 	@PostMapping("add")
 	@ResponseBody
-	public JsonResult addLock(@RequestLock SysLock lock) throws LogicException {
+	public JsonResult addLock(@RequestLock SysLock lock) {
 		sysLockProvider.addLock(lock);
 		return new JsonResult(true, new Message("lock.add.success", "添加成功"));
 	}
@@ -62,7 +61,7 @@ public class SysLockMgrController extends BaseMgrController {
 
 	@PostMapping("delete")
 	@ResponseBody
-	public JsonResult deleteLock(@RequestParam("id") String id) throws LogicException {
+	public JsonResult deleteLock(@RequestParam("id") String id) {
 		sysLockProvider.removeLock(id);
 		return new JsonResult(true, new Message("lock.delete.success", "删除成功"));
 	}

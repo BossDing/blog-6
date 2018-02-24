@@ -44,8 +44,8 @@ public class ExpandedLockProvider implements InitializingBean {
 
 	private List<Lock> expandedLocks = new ArrayList<>();
 
-	private Map<String, List<Lock>> typesMap = new LinkedHashMap<>();
-	private Map<String, Lock> idsMap = new LinkedHashMap<>();
+	private final Map<String, List<Lock>> typesMap = new LinkedHashMap<>();
+	private final Map<String, Lock> idsMap = new LinkedHashMap<>();
 	private Map<String, Resource> defaultTplResource = new LinkedHashMap<>();
 
 	/**

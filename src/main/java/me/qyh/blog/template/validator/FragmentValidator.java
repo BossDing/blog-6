@@ -58,7 +58,7 @@ public class FragmentValidator implements Validator {
 			errors.reject("fragment.user.tpl.null", "模板片段模板不能为空");
 			return;
 		}
-		if (tpl != null && tpl.length() > MAX_TPL_LENGTH) {
+		if (tpl.length() > MAX_TPL_LENGTH) {
 			errors.reject("fragment.user.tpl.toolong", new Object[] { MAX_TPL_LENGTH },
 					"模板片段模板长度不能超过" + MAX_TPL_LENGTH + "个字符");
 			return;
@@ -71,7 +71,6 @@ public class FragmentValidator implements Validator {
 		if (description.length() > MAX_DESCRIPTION_LENGTH) {
 			errors.reject("fragment.user.description.toolong", new Object[] { MAX_DESCRIPTION_LENGTH },
 					"模板片段描述长度不能超过" + MAX_DESCRIPTION_LENGTH + "个字符");
-			return;
 		}
 	}
 

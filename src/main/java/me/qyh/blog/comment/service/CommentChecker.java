@@ -33,6 +33,6 @@ public interface CommentChecker {
 	 *            评论
 	 * @throws LogicException
 	 */
-	public void checkComment(Comment comment, CommentConfig config) throws LogicException;
+	void checkComment(Comment comment, CommentConfig config) throws LogicException;
 
 }

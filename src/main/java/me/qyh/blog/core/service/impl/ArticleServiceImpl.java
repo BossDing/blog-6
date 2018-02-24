@@ -121,7 +121,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired(required = false)
 	private ArticleViewedLogger articleViewedLogger;
 
-	public static final String COMMENT_MODULE = "article";
+	private static final String COMMENT_MODULE = "article";
 	// ArticleCommentModuleHandler.MODULE_NAME;
 
 	@Override
@@ -191,7 +191,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		Timestamp pubDate = null;
 		switch (article.getStatus()) {
 		case DRAFT:
-			pubDate = articleDb.isSchedule() ? null : articleDb.getPubDate() != null ? articleDb.getPubDate() : null;
+			pubDate = articleDb.isSchedule() ? null : articleDb.getPubDate();
 			break;
 		case PUBLISHED:
 			pubDate = articleDb.isSchedule() ? now : articleDb.getPubDate() != null ? articleDb.getPubDate() : now;
@@ -521,7 +521,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	@Transactional(readOnly = true)
 	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.context.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.context.Environment).isLogin())")
-	public List<TagCount> queryTags() throws LogicException {
+	public List<TagCount> queryTags() {
 		return articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin());
 	}
 
@@ -649,7 +649,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	private Optional<Article> getCheckedArticle(String idOrAlias, boolean putInCache) {
-		Article article = null;
+		Article article;
 		try {
 			int id = Integer.parseInt(idOrAlias);
 			article = articleCache.getArticle(id, putInCache);
@@ -712,7 +712,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 		}
 
-		public void update() {
+		void update() {
 			Transactions.executeInReadOnlyTransaction(transactionManager, status -> {
 				start = articleDao.selectMinimumScheduleDate();
 			});
@@ -723,7 +723,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		private final HitsStrategy hitsStrategy;
 
-		public ArticleHitManager(HitsStrategy hitsStrategy) {
+		ArticleHitManager(HitsStrategy hitsStrategy) {
 			super();
 			this.hitsStrategy = hitsStrategy;
 		}

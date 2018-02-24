@@ -91,7 +91,7 @@ public class FragmentMgrController extends BaseMgrController {
 	}
 
 	@GetMapping("new")
-	public String newFragment(Model model) throws LogicException {
+	public String newFragment(Model model) {
 		model.addAttribute("fragment", new Fragment());
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		return "mgr/template/fragment_build";
@@ -128,7 +128,7 @@ public class FragmentMgrController extends BaseMgrController {
 
 	@GetMapping("get/{id}")
 	@ResponseBody
-	public JsonResult get(@PathVariable("id") Integer id) throws LogicException {
+	public JsonResult get(@PathVariable("id") Integer id) {
 		return templateService.queryFragment(id).map(fragment -> new JsonResult(true, fragment))
 				.orElse(new JsonResult(false));
 	}

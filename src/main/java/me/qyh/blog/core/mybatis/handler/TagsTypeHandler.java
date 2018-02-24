@@ -55,7 +55,7 @@ public class TagsTypeHandler extends BaseTypeHandler<Set<Tag>> {
 		throw new SystemException("不支持这个方法");
 	}
 
-	protected Set<Tag> toTags(String str) {
+	private Set<Tag> toTags(String str) {
 		if (Validators.isEmptyOrNull(str, true)) {
 			return new HashSet<>();
 		}

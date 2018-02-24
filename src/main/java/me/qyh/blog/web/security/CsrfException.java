@@ -25,7 +25,7 @@ package me.qyh.blog.web.security;
 @SuppressWarnings("serial")
 public class CsrfException extends RuntimeException {
 
-	public CsrfException(String message) {
+	CsrfException(String message) {
 		super(message, null, false, false);
 	}
 }

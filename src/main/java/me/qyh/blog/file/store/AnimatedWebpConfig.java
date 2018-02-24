@@ -28,7 +28,7 @@ public class AnimatedWebpConfig {
 
 		private final String value;
 
-		private Metadata(String value) {
+		Metadata(String value) {
 			this.value = value;
 		}
 

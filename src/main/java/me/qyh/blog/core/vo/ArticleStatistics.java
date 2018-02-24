@@ -20,7 +20,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArticleStatistics implements Serializable{
+public class ArticleStatistics implements Serializable {
 
 	/**
 	 * 
@@ -30,7 +30,7 @@ public class ArticleStatistics implements Serializable{
 	private Timestamp lastPubDate;
 	private int totalHits;// 点击总数
 	private int totalArticles;// 文章总数
-	
+
 	/**
 	 * 当查询默认空间时，同时将显示所有空间下的文章数
 	 * 
@@ -38,11 +38,11 @@ public class ArticleStatistics implements Serializable{
 	 */
 	private List<ArticleSpaceStatistics> spaceStatisticsList = new ArrayList<>();
 
-	public ArticleStatistics() {
+	ArticleStatistics() {
 		super();
 	}
 
-	public ArticleStatistics(ArticleStatistics statistics) {
+	ArticleStatistics(ArticleStatistics statistics) {
 		super();
 		this.lastModifyDate = statistics.lastModifyDate;
 		this.lastPubDate = statistics.lastPubDate;

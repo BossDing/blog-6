@@ -49,7 +49,7 @@ public class AttemptLoggerManager {
 	@Autowired
 	private ThreadPoolTaskScheduler taskScheduler;
 
-	private Map<Integer, List<AttemptLogger>> map = new HashMap<>();
+	private final Map<Integer, List<AttemptLogger>> map = new HashMap<>();
 
 	private final Object lock = new Object();
 

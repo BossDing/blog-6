@@ -33,7 +33,7 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	/**
 	 * default
 	 */
-	public BaseLockResource() {
+	BaseLockResource() {
 		super();
 	}
 
@@ -42,7 +42,7 @@ public abstract class BaseLockResource extends BaseEntity implements LockResourc
 	 * @param id
 	 *            资源id
 	 */
-	public BaseLockResource(Integer id) {
+	BaseLockResource(Integer id) {
 		super(id);
 	}
 

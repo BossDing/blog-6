@@ -227,12 +227,10 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 				doUnzip(zip, dest, config);
 			} catch (IllegalArgumentException e) {
 				String msg = e.getMessage();
-				if (msg.indexOf(MALFORMED) > -1) {
+				if (msg.contains(MALFORMED)) {
 					throw new LogicException("staticFile.unzip.path.unread", "zip文件中某个路径无法被读取，可能字符不符");
 				}
 				throw e;
-			} catch (LogicException ex) {
-				throw ex;
 			}
 
 			if (config.isDeleteAfterSuccessUnzip()) {
@@ -244,7 +242,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		}
 	}
 
-	private final void doUnzip(Path zip, Path dir, UnzipConfig config) throws LogicException {
+	private void doUnzip(Path zip, Path dir, UnzipConfig config) throws LogicException {
 
 		Charset charset = null;
 		if (!Validators.isEmptyOrNull(config.getEncoding(), true)) {
@@ -453,8 +451,13 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		File rootFile = root.toFile();
 
 		Predicate<String> predicate = !param.needQuery() ? p -> true : p -> matchParam(param, p);
+		String[] nameArray = rootFile.list();
 
-		List<String> names = Arrays.stream(rootFile.list()).filter(predicate).collect(Collectors.toList());
+		if (nameArray == null) {
+			return new PageResult<>(param, 0, new ArrayList<>());
+		}
+
+		List<String> names = Arrays.stream(nameArray).filter(predicate).collect(Collectors.toList());
 
 		int total = names.size();
 		if (param.getOffset() >= total) {
@@ -504,14 +507,11 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	private boolean matchParam(StaticFileQueryParam param, String name) {
 		String ext = FileUtils.getFileExtension(name);
 		if (!CollectionUtils.isEmpty(param.getExtensions())
-				&& !param.getExtensions().stream().anyMatch(ex -> ex.equalsIgnoreCase(ext))) {
+				&& param.getExtensions().stream().noneMatch(ex -> ex.equalsIgnoreCase(ext))) {
 			return false;
 		}
 		String mName = param.getName();
-		if (!Validators.isEmptyOrNull(mName, true)) {
-			return name.contains(mName);
-		}
-		return true;
+		return Validators.isEmptyOrNull(mName, true) || name.contains(mName);
 	}
 
 	private StaticFile toStaticFile(Path path) {
@@ -740,18 +740,6 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		paths.forEach(FileUtils::deleteQuietly);
 	}
 
-	protected final class ZipPathReadFailException extends RuntimeException {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-		protected ZipPathReadFailException(String message, Throwable cause) {
-			super(message, cause);
-		}
-	}
-
 	/**
 	 * 统计文件|文件夹 数目以及 文件总大小
 	 * 
@@ -900,7 +888,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		this.setContentNegotiationManager(contentNegotiationManager);
 
 		super.afterPropertiesSet();
-		setLocations(Arrays.asList(new PathResource(root)));
+		setLocations(Collections.singletonList(new PathResource(root)));
 	}
 
 	@EventListener(ContextRefreshedEvent.class)

@@ -591,7 +591,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 			try {
 				deleteFile(fd);
 			} catch (LogicException e) {
-				continue;
 			}
 		}
 		blogFileDao.deleteUnassociateCommonFile();

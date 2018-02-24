@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.qyh.blog.core.exception.SystemException;
 
-
 /**
  * 用来判断是否需要输入验证码
  * <p>
@@ -132,7 +131,7 @@ public class AttemptLogger {
 	private final class BooleanHolder {
 		private boolean value;
 
-		public BooleanHolder(boolean value) {
+		BooleanHolder(boolean value) {
 			super();
 			this.value = value;
 		}

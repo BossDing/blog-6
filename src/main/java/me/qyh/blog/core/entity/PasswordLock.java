@@ -42,7 +42,7 @@ public class PasswordLock extends SysLock {
 
 	private static final String PASSWORD_PARAMETER = "password";
 
-	@Expose(serialize = false, deserialize = true)
+	@Expose(serialize = false)
 	private String password;
 
 	/**

@@ -50,9 +50,9 @@ public class Comment extends BaseEntity {
 
 	private String website;
 	private String nickname;
-	@Expose(serialize = false, deserialize = true)
+	@Expose(serialize = false)
 	private String email;
-	@Expose(serialize = false, deserialize = true)
+	@Expose(serialize = false)
 	private String ip;
 	private Boolean admin;// 是否是管理员
 
@@ -71,9 +71,9 @@ public class Comment extends BaseEntity {
 	public enum CommentStatus {
 		NORMAL(new Message("comment.status.normal", "正常")), CHECK(new Message("comment.status.check", "审核"));
 
-		private Message message;
+		private final Message message;
 
-		private CommentStatus(Message message) {
+		CommentStatus(Message message) {
 			this.message = message;
 		}
 

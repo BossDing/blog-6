@@ -22,14 +22,12 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.exception.SystemException;
-
 
 /**
  * 文章缓存
@@ -52,19 +50,13 @@ public class ArticleCache {
 		}
 
 		idCache = Caffeine.newBuilder().expireAfterAccess(expireAfterAccessSec, TimeUnit.SECONDS)
-				.build(new CacheLoader<Integer, Article>() {
-
-					@Override
-					public Article load(Integer key) throws Exception {
-						return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-							Article article = articleDao.selectById(key);
-							if (article != null && article.isPublished()) {
-								return article;
-							}
-							return null;
-						});
+				.build(key -> Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+					Article article = articleDao.selectById(key);
+					if (article != null && article.isPublished()) {
+						return article;
 					}
-				});
+					return null;
+				}));
 	}
 
 	public ArticleCache() {

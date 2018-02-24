@@ -18,7 +18,6 @@ package me.qyh.blog.comment.service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -64,13 +63,13 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
 	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
-	private MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
+	private final MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
 	private Resource mailTemplateResource;
 	private String mailTemplate;
 	private String mailSubject;
 
-	private Path toSendSdfile = Constants.DAT_DIR.resolve("comment-toSendSdfile.dat");
-	private Path toProcessesSdfile = Constants.DAT_DIR.resolve("comment-toProcessesSdfile.dat");
+	private final Path toSendSdfile = Constants.DAT_DIR.resolve("comment-toSendSdfile.dat");
+	private final Path toProcessesSdfile = Constants.DAT_DIR.resolve("comment-toProcessesSdfile.dat");
 
 	/**
 	 * 如果待发送列表中有10或以上的评论，立即发送邮件
@@ -100,7 +99,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	}
 
 	private final class MailTemplateEngine extends TemplateEngine {
-		public MailTemplateEngine() {
+		MailTemplateEngine() {
 			setTemplateResolver(new StringTemplateResolver());
 		}
 	}
@@ -200,7 +199,7 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		// 如果回复是管理员
 		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
 			// 直接邮件通知被回复对象
-			sendMail(Arrays.asList(comment), comment.getParent().getEmail());
+			sendMail(Collections.singletonList(comment), comment.getParent().getEmail());
 		}
 	}
 

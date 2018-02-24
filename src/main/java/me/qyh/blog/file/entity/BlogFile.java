@@ -46,11 +46,11 @@ public class BlogFile extends BaseEntity {
 
 		private Message message;
 
-		private BlogFileType(Message message) {
+		BlogFileType(Message message) {
 			this.message = message;
 		}
 
-		private BlogFileType() {
+		BlogFileType() {
 
 		}
 

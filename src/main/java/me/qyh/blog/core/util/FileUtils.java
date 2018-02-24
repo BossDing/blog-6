@@ -458,12 +458,8 @@ public class FileUtils {
 			return false;
 		}
 
-		if (name.endsWith(" ")) {
-			return false;
-		}
-
 		// 一些文件系統的保留名称不做校验 例如windows下的CON
-		return true;
+		return !name.endsWith(" ");
 	}
 
 	private static boolean isIllegalChar(int ch) {

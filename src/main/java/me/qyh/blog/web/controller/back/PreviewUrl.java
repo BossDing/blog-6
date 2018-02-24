@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.web.controller.back;
 
-public final class PreviewUrl {
+final class PreviewUrl {
 
 	private final String url;
 	private final boolean hasPathVariable;

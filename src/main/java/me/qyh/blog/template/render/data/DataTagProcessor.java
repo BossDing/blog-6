@@ -16,6 +16,7 @@
 package me.qyh.blog.template.render.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -94,9 +95,7 @@ public abstract class DataTagProcessor<T> {
 	public static boolean validDataName(String dataName) {
 		if (Validators.isLetterOrNum(dataName)) {
 			char first = dataName.charAt(0);
-			if (!Validators.isNum(first)) {
-				return true;
-			}
+			return !Validators.isNum(first);
 		}
 		return false;
 	}
@@ -211,9 +210,7 @@ public abstract class DataTagProcessor<T> {
 				return new ArrayList<>();
 			}
 			List<String> list = new ArrayList<>(array.length);
-			for (String str : array) {
-				list.add(str);
-			}
+			Collections.addAll(list, array);
 			return list;
 		}
 

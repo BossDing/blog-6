@@ -125,4 +125,9 @@ public class PageResult<T> {
 		this.param = param;
 	}
 
+	public void setListstep(int liststep) {
+		this.liststep = liststep;
+		countListbeginAndListend();
+	}
+
 }

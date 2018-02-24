@@ -281,7 +281,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 	}
 
 	@Override
-	public void moreAfterPropertiesSet() {
+	protected void moreAfterPropertiesSet() {
 
 		validateResize(smallResize);
 		validateResize(middleResize);
@@ -327,20 +327,18 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 			return false;
 		}
 		String accept = request.getHeader("Accept");
-		return accept != null && accept.indexOf(WEBP_ACCEPT) != -1;
+		return accept != null && accept.contains(WEBP_ACCEPT);
 	}
 
 	protected String generateResizePathFromPath(Resize resize, String path) {
 		if (!resizeValidator.valid(resize)) {
 			return path;
 		}
-		StringBuilder sb = new StringBuilder("/");
-		sb.append(getThumname(resize));
-		return StringUtils.cleanPath(path + sb.toString());
+		return StringUtils.cleanPath(path + "/" + getThumname(resize));
 	}
 
 	protected Optional<Resize> getResizeFromPath(String path) {
-		Resize resize = null;
+		Resize resize;
 		String baseName = FileUtils.getNameWithoutExtension(path);
 		try {
 			if (baseName.indexOf(CONCAT_CHAR) != -1) {

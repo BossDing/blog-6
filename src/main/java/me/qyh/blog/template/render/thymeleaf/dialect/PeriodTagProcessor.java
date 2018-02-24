@@ -101,8 +101,7 @@ public class PeriodTagProcessor extends DefaultAttributesTagProcessor {
 			return include ? PeriodStatus.OUT : PeriodStatus.IN;
 		}
 
-		if ((now.isAfter(beginTime) && now.isBefore(endTime))
-				|| now.isEqual(beginTime) || now.isEqual(endTime)) {
+		if ((now.isAfter(beginTime) && now.isBefore(endTime)) || now.isEqual(beginTime) || now.isEqual(endTime)) {
 			return include ? PeriodStatus.IN : PeriodStatus.OUT;
 		}
 
@@ -110,6 +109,6 @@ public class PeriodTagProcessor extends DefaultAttributesTagProcessor {
 	}
 
 	protected enum PeriodStatus {
-		IN, OUT, INVALID;
+		IN, OUT, INVALID
 	}
 }

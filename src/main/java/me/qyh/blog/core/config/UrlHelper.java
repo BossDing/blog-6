@@ -27,7 +27,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
@@ -51,9 +50,6 @@ public class UrlHelper implements InitializingBean {
 
 	@Autowired
 	protected UrlConfig urlConfig;
-
-	// 根域名中 . 的数量
-	protected int rootDomainPCount;
 
 	private Urls urls;
 	private String url;
@@ -170,7 +166,7 @@ public class UrlHelper implements InitializingBean {
 	 */
 	public class SpaceUrls extends Urls {
 
-		private Env env;
+		private final Env env;
 
 		private SpaceUrls(String alias) {
 			// 空间域名
@@ -213,7 +209,7 @@ public class UrlHelper implements InitializingBean {
 			private String space;
 			private String url;
 
-			public boolean isSpaceEnv() {
+			boolean isSpaceEnv() {
 				return space != null;
 			}
 		}
@@ -224,7 +220,7 @@ public class UrlHelper implements InitializingBean {
 		private final String url;
 		private final String path;
 
-		public ArticlesUrlHelper(String url, String path) {
+		ArticlesUrlHelper(String url, String path) {
 			super();
 			this.url = url;
 			this.path = path;
@@ -363,10 +359,10 @@ public class UrlHelper implements InitializingBean {
 	}
 
 	private final class UriBuilder {
-		private String scheme;
-		private int port;
-		private String contextPath;
-		private String serverName;
+		private final String scheme;
+		private final int port;
+		private final String contextPath;
+		private final String serverName;
 
 		UriBuilder(UrlConfig urlConfig) {
 			this.port = urlConfig.getPort();
@@ -379,10 +375,7 @@ public class UrlHelper implements InitializingBean {
 			if ("https".equalsIgnoreCase(scheme)) {
 				return 443 == port;
 			}
-			if ("http".equalsIgnoreCase(scheme)) {
-				return 80 == port;
-			}
-			return false;
+			return "http".equalsIgnoreCase(scheme) && 80 == port;
 		}
 
 		private String toUrl() {
@@ -408,7 +401,6 @@ public class UrlHelper implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		rootDomainPCount = StringUtils.countOccurrencesOf(urlConfig.getRootDomain(), ".");
 		url = new UriBuilder(urlConfig).toUrl();
 		this.urls = new Urls();
 	}

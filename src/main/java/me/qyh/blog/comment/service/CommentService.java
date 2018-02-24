@@ -96,13 +96,11 @@ public class CommentService
 	/**
 	 * 评论配置项
 	 */
-	protected static final String COMMENT_MODE = "commentConfig.commentMode";
-	protected static final String COMMENT_ASC = "commentConfig.commentAsc";
-	protected static final String COMMENT_EDITOR = "commentConfig.editor";
-	protected static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
-	protected static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
-	protected static final String COMMENT_CHECK = "commentConfig.commentCheck";
-	protected static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
+	private static final String COMMENT_EDITOR = "commentConfig.editor";
+	private static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
+	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
+	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
+	private static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
 
 	private final Comparator<Comment> ascCommentComparator = Comparator.comparing(Comment::getCommentDate)
 			.thenComparing(Comment::getId);
@@ -367,7 +365,9 @@ public class CommentService
 
 	/**
 	 * 删除某个模块的评论
-	 * @param module 模块
+	 * 
+	 * @param module
+	 *            模块
 	 */
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void deleteComment(CommentModule module) {
@@ -379,6 +379,7 @@ public class CommentService
 	 * <p>
 	 * <b>用于DataTag</b>
 	 * </p>
+	 * 
 	 * @param module
 	 * @param limit
 	 * @param queryAdmin
@@ -619,9 +620,9 @@ public class CommentService
 
 	private final class CollectFilteredFilter implements Predicate<Comment> {
 		private final Comment parent;
-		private List<Comment> rests = new ArrayList<>();
+		private final List<Comment> rests = new ArrayList<>();
 
-		public CollectFilteredFilter(Comment parent) {
+		CollectFilteredFilter(Comment parent) {
 			this.parent = parent;
 		}
 

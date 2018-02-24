@@ -28,17 +28,17 @@ public interface Template extends Serializable {
 	/**
 	 * 模板分割符
 	 */
-	static final String SPLITER = "%";
+	String SPLITER = "%";
 
 	/**
 	 * 模板前缀，所有的模板名必须以这个开头
 	 */
-	static final String TEMPLATE_PREFIX = "Template" + SPLITER;
+	String TEMPLATE_PREFIX = "Template" + SPLITER;
 
 	/**
 	 * 预览模板前缀
 	 */
-	static final String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
+	String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
 
 	/**
 	 * 判断是否是模板文件名

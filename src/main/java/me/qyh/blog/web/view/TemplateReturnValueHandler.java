@@ -44,7 +44,7 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TemplateReturnValueHandler.class);
 
-	private TemplateRender templateRender;
+	private final TemplateRender templateRender;
 
 	public TemplateReturnValueHandler(TemplateRender templateRender) {
 		this.templateRender = templateRender;

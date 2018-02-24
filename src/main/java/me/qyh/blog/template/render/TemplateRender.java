@@ -71,8 +71,6 @@ public final class TemplateRender implements InitializingBean {
 	@Autowired(required = false)
 	private GravatarUrlGenerator gravatarUrlGenerator;
 
-	private Gravatars gravatars;
-
 	private Map<String, Object> pros = new HashMap<>();
 
 	private List<TemplateRenderHandler> renderHandlers = new ArrayList<>();
@@ -169,14 +167,12 @@ public final class TemplateRender implements InitializingBean {
 			gravatarUrlGenerator = new DefaultGravatarUrlGenerator("https://secure.gravatar.com/avatar/");
 		}
 
-		gravatars = new Gravatars(gravatarUrlGenerator);
-
 		pros.put("validators", Validators.class);
 		pros.put("jsons", Jsons.class);
 		pros.put("strings", StringUtils.class);
 		pros.put("times", Times.class);
 		pros.put("formats", Formats.class);
-		pros.put("gravatars", gravatars);
+		pros.put("gravatars", new Gravatars(gravatarUrlGenerator));
 	}
 
 	public void setPros(Map<String, Object> pros) {

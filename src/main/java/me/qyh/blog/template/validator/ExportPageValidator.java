@@ -30,8 +30,8 @@ import me.qyh.blog.template.vo.ExportPage;
 @Component
 public class ExportPageValidator implements Validator {
 
-	private FragmentValidator fragmentValidator = new FragmentValidator();
-	private ThisPageValidator thisPageValidator = new ThisPageValidator();
+	private final FragmentValidator fragmentValidator = new FragmentValidator();
+	private final ThisPageValidator thisPageValidator = new ThisPageValidator();
 
 	@Override
 	public boolean supports(Class<?> clazz) {

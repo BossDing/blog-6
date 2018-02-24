@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,7 +62,7 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 	private String gravatarServerUrl = DEFAULT_GRAVATRA_URL;
 
-	protected final Path avatarDir;
+	private final Path avatarDir;
 
 	/**
 	 * 用于头像访问失败或者不存在时显示
@@ -129,7 +129,7 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 		if (fromGravatar.isPresent()) {
 			return new PathResource(fromGravatar.get());
 		}
-		return getDefaultAvatar();
+		return fromGravatar.<Resource>map(PathResource::new).orElseGet(this::getDefaultAvatar);
 	}
 
 	protected Path getAvatarFromLocal(String path) {
@@ -161,7 +161,7 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 		setCacheSeconds((int) avatarCacheSeconds);
 
-		setLocations(Arrays.asList(new PathResource(avatarDir)));
+		setLocations(Collections.singletonList(new PathResource(avatarDir)));
 		super.afterPropertiesSet();
 
 		gravatarSearchers.addAll(BeanFactoryUtils

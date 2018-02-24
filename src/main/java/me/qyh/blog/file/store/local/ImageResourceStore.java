@@ -173,9 +173,8 @@ public class ImageResourceStore extends ThumbnailSupport {
 
 	@Override
 	public boolean delete(String key) {
-		getFile(key).filter(path -> ImageHelper.isGIF(FileUtils.getFileExtension(path))).ifPresent(path -> {
-			FileUtils.deleteQuietly(getAnimatedWebpLocation(path));
-		});
+		getFile(key).filter(path -> ImageHelper.isGIF(FileUtils.getFileExtension(path)))
+				.ifPresent(path -> FileUtils.deleteQuietly(getAnimatedWebpLocation(path)));
 		return super.delete(key);
 	}
 
@@ -279,11 +278,11 @@ public class ImageResourceStore extends ThumbnailSupport {
 			Files.copy(tmp, dest.toPath());
 		}
 
-		public ImageInfo getInfo() {
+		protected ImageInfo getInfo() {
 			return info;
 		}
 
-		public Path getTmp() {
+		protected Path getTmp() {
 			return tmp;
 		}
 

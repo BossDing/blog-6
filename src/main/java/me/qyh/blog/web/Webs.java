@@ -16,13 +16,8 @@
 package me.qyh.blog.web;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
@@ -140,22 +134,6 @@ public class Webs {
 	}
 
 	/**
-	 * 保存上传的文件<br>
-	 * <b>保存StandardMultipartFile.transferTo时存在异常</b>
-	 * 
-	 * @param mf
-	 *            上传的文件
-	 * @param file
-	 *            保存的位置
-	 * @throws IOException
-	 */
-	public static void save(MultipartFile mf, Path file) throws IOException {
-		try (InputStream is = mf.getInputStream()) {
-			Files.copy(is, file, StandardCopyOption.REPLACE_EXISTING);
-		}
-	}
-
-	/**
 	 * 从请求中获取space
 	 * 
 	 * @param request
@@ -239,11 +217,9 @@ public class Webs {
 	 */
 	public static Optional<JsonResult> getFirstError(BindingResult result) {
 		if (result.hasErrors()) {
-			List<ObjectError> errors = result.getAllErrors();
-			for (ObjectError error : errors) {
-				return Optional.of(new JsonResult(false,
-						new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
-			}
+			ObjectError error = result.getAllErrors().get(0);
+			return Optional.of(new JsonResult(false,
+					new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
 		}
 		return Optional.empty();
 	}

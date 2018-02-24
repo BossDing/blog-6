@@ -29,9 +29,9 @@ public class JcsegArticleIndexer extends ArticleIndexer {
 
 		SIMPLE(1), COMPLEX(2), DECECT(3), SEARCH(4);
 
-		private int mode;
+		private final int mode;
 
-		private JcsegMode(int mode) {
+		JcsegMode(int mode) {
 			this.mode = mode;
 		}
 
@@ -62,7 +62,7 @@ public class JcsegArticleIndexer extends ArticleIndexer {
 
 	private static final class _Analyzer extends JcsegAnalyzer {
 
-		public _Analyzer(JcsegMode mode) {
+		_Analyzer(JcsegMode mode) {
 			super(mode.mode);
 			JcsegTaskConfig taskConfig = getTaskConfig();
 			taskConfig.setClearStopwords(true);

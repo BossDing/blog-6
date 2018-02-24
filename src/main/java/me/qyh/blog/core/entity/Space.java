@@ -78,7 +78,7 @@ public class Space extends BaseLockResource {
 		this.isDefault = space.isDefault;
 		this.isPrivate = space.isPrivate;
 		this.name = space.name;
-		space.getLock().ifPresent(lockId -> setLockId(lockId));
+		space.getLock().ifPresent(this::setLockId);
 	}
 
 	public String getAlias() {

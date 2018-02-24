@@ -298,6 +298,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 		@Override
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
+			ex.printStackTrace();
 			LOGGER.debug(ex.getMessage(), ex);
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_400)));
@@ -423,7 +424,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			 */
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
 			String space = Webs.getSpaceFromPath(path, SpaceValidator.MAX_ALIAS_LENGTH + 1);
-			String forwardMapping = "";
+			String forwardMapping;
 			if (space != null) {
 
 				// 检查空间是否存在
@@ -531,7 +532,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		}
 	}
 
-	public static final class ErrorInfo implements Serializable {
+	static final class ErrorInfo implements Serializable {
 		/**
 		 * 
 		 */
@@ -555,7 +556,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 	}
 
-	public static final class RedirectJsonResult extends JsonResult {
+	static final class RedirectJsonResult extends JsonResult {
 
 		private final String url;
 		private final boolean permanently;

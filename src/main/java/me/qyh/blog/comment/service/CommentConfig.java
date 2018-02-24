@@ -31,9 +31,9 @@ import me.qyh.blog.core.vo.Limit;
 public class CommentConfig {
 
 	private Editor editor;// 编辑器
-	@Expose(serialize = false, deserialize = true)
+	@Expose(serialize = false)
 	private Integer limitCount;
-	@Expose(serialize = false, deserialize = true)
+	@Expose(serialize = false)
 	private Integer limitSec;
 	private Boolean check;// 审核
 	private Integer pageSize;// 每页显示数量

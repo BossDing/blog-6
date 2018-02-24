@@ -153,7 +153,7 @@ public interface ArticleService {
 	 * 
 	 * @return 标签集
 	 */
-	List<TagCount> queryTags() throws LogicException;
+	List<TagCount> queryTags();
 
 	/**
 	 * 用来处理预览文章，比如将markdown转化为html

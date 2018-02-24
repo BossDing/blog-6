@@ -167,6 +167,7 @@ public final class ReadOnlyResponse extends HttpServletResponseWrapper {
 		unsupport();
 	}
 
+	@Deprecated
 	@Override
 	public void setStatus(int sc, String sm) {
 		unsupport();

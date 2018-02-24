@@ -59,7 +59,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 					OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
 				osw.write(xml);
 			}
-			// 获得响应状态	
+			// 获得响应状态
 			int responseCode = conn.getResponseCode();
 
 			if (HttpURLConnection.HTTP_OK == responseCode) {// 连接成功
@@ -100,7 +100,7 @@ public abstract class XmlRpcPingSupport extends PingService {
 		sb.append("<methodName>weblogUpdates.extendedPing</methodName>");
 		sb.append("<params>");
 		sb.append(" <param>");
-		sb.append(" <value><string>" + blogName + "</string></value>");
+		sb.append(" <value><string>").append(blogName).append("</string></value>");
 		sb.append(" </param>");
 		sb.append("<param>");
 		String rootUrl = urlHelper.getUrls().getUrl(article.getSpace());

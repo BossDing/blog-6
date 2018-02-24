@@ -47,10 +47,7 @@ public final class Validators {
 	 * @return 如果为null|空 返回true,否则返回false
 	 */
 	public static boolean isEmptyOrNull(String str, boolean trim) {
-		if (str == null) {
-			return true;
-		}
-		return trim ? str.trim().isEmpty() : str.isEmpty();
+		return str == null || (trim ? str.trim().isEmpty() : str.isEmpty());
 	}
 
 	/**
@@ -69,10 +66,7 @@ public final class Validators {
 	 * @return
 	 */
 	public static boolean isAlpha(String str) {
-		if (isEmptyOrNull(str, false)) {
-			return false;
-		}
-		return !str.chars().anyMatch(i -> !Character.isLetter(i));
+		return !isEmptyOrNull(str, false) && str.chars().allMatch(i -> Character.isLetter(i));
 	}
 
 	/**
@@ -91,10 +85,7 @@ public final class Validators {
 		if (b == null) {
 			return false;
 		}
-		if (a == b) {
-			return true;
-		}
-		return a.getClass() == b.getClass();
+		return a == b || a.getClass() == b.getClass();
 	}
 
 	/**

@@ -101,4 +101,24 @@ public class CommonFile extends BaseEntity {
 	public void setStore(int store) {
 		this.store = store;
 	}
+
+	/**
+	 * @since 5.10
+	 * @param exts
+	 * @return
+	 */
+	public boolean is(String... exts) {
+		if (exts == null || exts.length == 0) {
+			return false;
+		}
+		if (extension == null) {
+			return false;
+		}
+		for (String ext : exts) {
+			if (ext.equalsIgnoreCase(extension)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

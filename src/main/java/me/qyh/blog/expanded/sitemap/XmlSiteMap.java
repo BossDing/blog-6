@@ -17,7 +17,6 @@ package me.qyh.blog.expanded.sitemap;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -43,55 +42,46 @@ public class XmlSiteMap implements InitializingBean {
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
 
-	private final Comparator<SiteMapUrlItem> siteMapUrlItemComparator = new Comparator<SiteMapUrlItem>() {
-
-		@Override
-		public int compare(SiteMapUrlItem o1, SiteMapUrlItem o2) {
-			if (o1.getLastmod() != null && o2.getLastmod() != null) {
-				return -o1.getLastmod().compareTo(o2.getLastmod());
-			}
-			return 0;
+	private final Comparator<SiteMapUrlItem> siteMapUrlItemComparator = (o1, o2) -> {
+		if (o1.getLastmod() != null && o2.getLastmod() != null) {
+			return -o1.getLastmod().compareTo(o2.getLastmod());
 		}
+		return 0;
 	};
 
 	private SiteMapConfigure configure;
 
-	private final Comparator<Article> lastModifyDateComparator = new Comparator<Article>() {
+	private final Comparator<Article> lastModifyDateComparator = (o1, o2) -> {
+		Timestamp lastModifyDate1 = o1.getLastModifyDate();
+		Timestamp lastModifyDate2 = o2.getLastModifyDate();
+		if (lastModifyDate1 == null && lastModifyDate2 != null) {
+			return 1;
+		}
 
-		@Override
-		public int compare(Article o1, Article o2) {
-			Timestamp lastModifyDate1 = o1.getLastModifyDate();
-			Timestamp lastModifyDate2 = o2.getLastModifyDate();
-			if (lastModifyDate1 == null && lastModifyDate2 != null) {
-				return 1;
+		if (lastModifyDate1 != null && lastModifyDate2 == null) {
+			return -1;
+		}
+
+		if (lastModifyDate1 == null && lastModifyDate2 == null) {
+			int compare = -o1.getPubDate().compareTo(o2.getPubDate());
+			if (compare == 0) {
+				compare = -o1.getId().compareTo(o2.getId());
 			}
+			return compare;
+		}
 
-			if (lastModifyDate1 != null && lastModifyDate2 == null) {
-				return -1;
-			}
-
-			if (lastModifyDate1 == null && lastModifyDate2 == null) {
-				int compare = -o1.getPubDate().compareTo(o2.getPubDate());
+		if (lastModifyDate1 != null && lastModifyDate2 != null) {
+			int compare = -lastModifyDate1.compareTo(lastModifyDate2);
+			if (compare == 0) {
+				compare = -o1.getPubDate().compareTo(o2.getPubDate());
 				if (compare == 0) {
 					compare = -o1.getId().compareTo(o2.getId());
 				}
-				return compare;
 			}
-
-			if (lastModifyDate1 != null && lastModifyDate2 != null) {
-				int compare = -lastModifyDate1.compareTo(lastModifyDate2);
-				if (compare == 0) {
-					compare = -o1.getPubDate().compareTo(o2.getPubDate());
-					if (compare == 0) {
-						compare = -o1.getId().compareTo(o2.getId());
-					}
-				}
-				return compare;
-			}
-			return 0;
+			return compare;
 		}
+		return 0;
 	};
-
 	private String siteMapXml;
 
 	public String getSiteMap() {
@@ -127,7 +117,6 @@ public class XmlSiteMap implements InitializingBean {
 		});
 
 		SpaceUrls urls = urlHelper.getUrlsBySpace(null);
-		List<SiteMapUrlItem> items = new ArrayList<>();
 
 		List<SiteMapUrlItem> articlesItems = new ArrayList<>();
 		for (Article article : articles) {
@@ -136,8 +125,8 @@ public class XmlSiteMap implements InitializingBean {
 					article.getLastModifyDate() == null ? article.getPubDate() : article.getLastModifyDate(),
 					config.getFreq(), config.getFormattedPriority()));
 		}
-		Collections.sort(articlesItems, siteMapUrlItemComparator);
-		items.addAll(articlesItems);
+		articlesItems.sort(siteMapUrlItemComparator);
+		List<SiteMapUrlItem> items = new ArrayList<>(articlesItems);
 
 		List<SiteMapUrlItem> spaceItems = new ArrayList<>();
 		Map<Space, List<Article>> map = articles.stream().collect(Collectors.groupingBy(Article::getSpace));
@@ -151,7 +140,7 @@ public class XmlSiteMap implements InitializingBean {
 			spaceItems.add(
 					new SiteMapUrlItem(urls.getUrl(space), lastmod, config.getFreq(), config.getFormattedPriority()));
 		}
-		Collections.sort(spaceItems, siteMapUrlItemComparator);
+		spaceItems.sort(siteMapUrlItemComparator);
 		items.addAll(spaceItems);
 
 		return items;

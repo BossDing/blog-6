@@ -89,7 +89,7 @@ public class TemplateMgrController extends BaseMgrController {
 	public JsonResult importPage(@RequestParam("json") String json,
 			@RequestParam(value = "spaceId", required = false) Integer spaceId) {
 		List<ImportRecord> records = new ArrayList<>();
-		List<ExportPage> exportPages = new ArrayList<>();
+		List<ExportPage> exportPages;
 		try {
 			exportPages = Jsons.readList(ExportPage[].class, json);
 		} catch (Exception e) {

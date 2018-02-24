@@ -21,7 +21,6 @@ import org.springframework.validation.Validator;
 
 import me.qyh.blog.comment.service.CommentConfig;
 
-
 @Component
 public class CommentConfigValidator implements Validator {
 
@@ -86,7 +85,6 @@ public class CommentConfigValidator implements Validator {
 		if (pageSize > COMMENT_PAGE_SIZE_RANGE[1]) {
 			errors.reject("commentConfig.pagesize.toobig", new Object[] { COMMENT_PAGE_SIZE_RANGE[1] },
 					"评论每页数量不能大于" + COMMENT_PAGE_SIZE_RANGE[1]);
-			return;
 		}
 
 	}

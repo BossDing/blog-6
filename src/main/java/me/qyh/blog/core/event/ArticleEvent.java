@@ -30,13 +30,12 @@
  */
 package me.qyh.blog.core.event;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.context.ApplicationEvent;
 
 import me.qyh.blog.core.entity.Article;
-
 
 /**
  * 文章事件 <b>文章更新点击次数时不会被推送</b>
@@ -64,7 +63,7 @@ public class ArticleEvent extends ApplicationEvent {
 	 */
 	public ArticleEvent(Object source, Article article, EventType eventType) {
 		super(source);
-		this.articles = Arrays.asList(article);
+		this.articles = Collections.singletonList(article);
 		this.eventType = eventType;
 	}
 

@@ -130,7 +130,7 @@ public abstract class ImageHelper {
 		 * @param extension
 		 *            实际后缀
 		 */
-		public ImageInfo(int width, int height, String extension) {
+		ImageInfo(int width, int height, String extension) {
 			super();
 			this.width = width;
 			this.height = height;
@@ -197,22 +197,6 @@ public abstract class ImageHelper {
 	 */
 	public static boolean isGIF(String extension) {
 		return GIF.equalsIgnoreCase(extension);
-	}
-
-	/**
-	 * 判断后缀是否指向相同的图片格式
-	 * 
-	 * @param ext1
-	 *            后缀1
-	 * @param ext2
-	 *            后缀2
-	 * @return 是: true ,否:false
-	 */
-	public static boolean sameFormat(String ext1, String ext2) {
-		if (ext1.equalsIgnoreCase(ext2)) {
-			return true;
-		}
-		return isJPEG(ext1) && isJPEG(ext2);
 	}
 
 	/**

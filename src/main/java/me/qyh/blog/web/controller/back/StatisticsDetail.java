@@ -22,7 +22,7 @@ import me.qyh.blog.file.vo.FileStatistics;
 import me.qyh.blog.file.vo.StaticFileStatistics;
 import me.qyh.blog.template.vo.PageStatistics;
 
-public class StatisticsDetail {
+class StatisticsDetail {
 	private ArticleDetailStatistics articleStatistics;
 	private TagDetailStatistics tagStatistics;
 	private CommentStatistics commentStatistics;

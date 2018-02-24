@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.template.render.thymeleaf;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,7 +49,7 @@ public class ThymeleafTemplateEngine extends SpringTemplateEngine implements Ini
 			@Override
 			public Set<IPreProcessor> getPreProcessors() {
 				return new HashSet<>(
-						Arrays.asList(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000)));
+						Collections.singletonList(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000)));
 			}
 
 			@Override

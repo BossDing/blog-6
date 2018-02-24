@@ -97,7 +97,7 @@ public class OtherController {
 		}
 	}
 
-	protected void write(String content, MediaType type, HttpServletResponse response) throws IOException {
+	private void write(String content, MediaType type, HttpServletResponse response) throws IOException {
 		if (MediaType.TEXT_HTML.equals(type)) {
 			Webs.writeInfo(response, new JsonResult(true, content));
 		} else {

@@ -74,7 +74,7 @@ public class JavaImageHelper extends ImageHelper {
 	protected void doResize(Resize resize, Path src, Path dest) throws IOException {
 		String ext = FileUtils.getFileExtension(src);
 		Path todo = src;
-		Path tmp = null;
+		Path tmp;
 		if (isGIF(ext)) {
 			// 获取封面
 			tmp = FileUtils.appTemp(PNG);
@@ -113,7 +113,7 @@ public class JavaImageHelper extends ImageHelper {
 	private ImageInfo readImage(Path file) throws IOException {
 		try (InputStream is = Files.newInputStream(file); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
 			Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(iis);
-			while (imageReaders.hasNext()) {
+			if (imageReaders.hasNext()) {
 				ImageReader reader = imageReaders.next();
 				reader.setInput(iis);
 				int minIndex = reader.getMinIndex();
@@ -124,7 +124,7 @@ public class JavaImageHelper extends ImageHelper {
 	}
 
 	private void doGetGifCover(Path gif, Path dest) throws IOException {
-		Path png = null;
+		Path png;
 		try (InputStream is = Files.newInputStream(gif)) {
 			GifDecoder gd = new GifDecoder();
 			int flag = gd.read(is);
