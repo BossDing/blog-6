@@ -1,4 +1,4 @@
-版本：5.10 realease
+版本：5.10 release
 
 重型博客
 
