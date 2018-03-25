@@ -360,7 +360,23 @@ public class CommentService
 			}
 			break;
 		}
-		return new CommentPageResult(param, count, datas, new CommentConfig(config));
+
+		CommentPageResult result = new CommentPageResult(param, count, datas, new CommentConfig(config));
+
+		if (Environment.isLogin()) {
+			CommentQueryParam copy = new CommentQueryParam(param);
+			copy.setStatus(CommentStatus.CHECK);
+			switch (mode) {
+			case TREE:
+				result.setCheckCount(commentDao.selectCountWithTree(copy));
+				break;
+			default:
+				result.setCheckCount(commentDao.selectCountWithList(copy));
+				break;
+			}
+		}
+
+		return result;
 	}
 
 	/**

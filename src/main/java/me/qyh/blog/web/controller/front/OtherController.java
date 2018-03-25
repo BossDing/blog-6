@@ -18,6 +18,7 @@ package me.qyh.blog.web.controller.front;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
@@ -71,10 +73,14 @@ public class OtherController {
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		try {
+			Optional<String> op = templateRender.getFragmentName(Webs.decode(fragment), Environment.getSpace());
+			if (!op.isPresent()) {
+				Webs.writeInfo(response, new JsonResult(false, new Message("fragment.name.invalid", "无效的模板片段名称")));
+				return;
+			}
 
-			RenderResult result = templateRender.doRender(
-					templateRender.getFragmentName(Webs.decode(fragment), Environment.getSpace()), null, request,
-					new ReadOnlyResponse(response), new ParseConfig(true, false));
+			RenderResult result = templateRender.doRender(op.get(), null, request, new ReadOnlyResponse(response),
+					new ParseConfig(true, false));
 
 			String content = result.getContent();
 			MediaType type = result.getType();
@@ -85,7 +91,7 @@ public class OtherController {
 			write(content, type, response);
 
 		} catch (TemplateRenderException e) {
-			Webs.writeInfo(response, new JsonResult(true, e.getRenderErrorDescription()));
+			Webs.writeInfo(response, new JsonResult(false, e.getRenderErrorDescription()));
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
 				throw (RuntimeException) e;

@@ -139,7 +139,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	
 	<select id="selectById" resultMap="CommentDetail">
 		 SELECT 
-		  a.id,a.parent_id,a.parent_path,a.content,a.module_type,a.module_id,a.comment_date,comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,a.comment_editor
+		  a.id,a.parent_id,a.parent_path,a.content,a.module_type,a.module_id,a.comment_date,a.comment_status,a.comment_nickname,a.comment_email,a.comment_ip,a.comment_admin,a.comment_gravatar,a.comment_website,a.comment_editor
 		 FROM blog_comment a 
 		 WHERE a.id = #{id}
 	</select>

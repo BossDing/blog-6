@@ -11,18 +11,15 @@
 					<constructor-arg index="0" value="文章详情" />
 					<constructor-arg index="1" value="article" />
 				</bean>
-				<bean
-					class="me.qyh.blog.template.render.data.ArticlesDataTagProcessor">
+				<bean class="me.qyh.blog.template.render.data.ArticlesDataTagProcessor">
 					<constructor-arg index="0" value="文章列表" />
 					<constructor-arg index="1" value="articlePage" />
 				</bean>
-				<bean
-					class="me.qyh.blog.template.render.data.ArticleNavDataTagProcessor">
+				<bean class="me.qyh.blog.template.render.data.ArticleNavDataTagProcessor">
 					<constructor-arg index="0" value="上一篇下一篇" />
 					<constructor-arg index="1" value="articleNav" />
 				</bean>
-				<bean
-					class="me.qyh.blog.template.render.data.ArticleTagDataTagProcessor">
+				<bean class="me.qyh.blog.template.render.data.ArticleTagDataTagProcessor">
 					<constructor-arg index="0" value="标签集" />
 					<constructor-arg index="1" value="articleTags" />
 				</bean>
@@ -31,8 +28,7 @@
 					<constructor-arg index="1" value="spaces" />
 				</bean>
 
-				<bean
-					class="me.qyh.blog.template.render.data.CommentsDataTagProcessor">
+				<bean class="me.qyh.blog.template.render.data.CommentsDataTagProcessor">
 					<constructor-arg index="0" value="评论" />
 					<constructor-arg index="1" value="commentPage" />
 					<property name="callable" value="true" />
@@ -87,6 +83,11 @@
 					class="me.qyh.blog.template.render.data.ArticleArchivesDataTagProcessor">
 					<constructor-arg index="0" value="文章归档" />
 					<constructor-arg index="1" value="archives" />
+				</bean>
+
+				<bean class="me.qyh.blog.template.render.data.TweetsDataTagProcessor">
+					<constructor-arg index="0" value="短博客" />
+					<constructor-arg index="1" value="tweetPage" />
 				</bean>
 
 			</list>

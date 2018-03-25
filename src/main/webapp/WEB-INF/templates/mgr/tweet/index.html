@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/base/head :: head('微博客管理')"></head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('tweet')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2">
+					<a class="btn btn-primary" th:href="@{/mgr/tweet/write}">新增</a>
+				</div>
+			</div>
+			<div class="row" style="margin-top: 10px">
+				<div class="col-md-8 col-md-offset-2">
+					<div class="alert alert-danger" th:unless="${error == null}"
+						th:text="${messages.getMessage(error)}"></div>
+					<form style="display: none" th:action="@{/mgr/tweet/index}"
+						id="pageForm">
+						<input type="hidden" th:value="${page.currentPage}"
+							name="currentPage" id="currentPage"/>
+					</form>
+					<div class="alert alert-info" th:if="${#lists.isEmpty(page.datas)}"
+						style="margin-top: 10px">当前没有任何微博客</div>
+					<div th:unless="${#lists.isEmpty(page.datas)}">
+						<div class="media" th:each="tweet:${page.datas}">
+							<div class="media-left">
+								<a href="javascript:void(0)"> <img class="media-object"
+									th:src="${gravatars.getOptionalUrl(user.gravatar).orElse('/static/img/guest.png')}"
+									style="width: 32px; height: 32px">
+								</a>
+							</div>
+							<div class="media-body">
+								<h6 class="media-heading">
+									<span th:text="${times.format(tweet.write,'yyyy-MM-dd HH:mm')}"></span>
+									<a href="javascript:void(0)" th:data-del="${tweet.id}"
+										style="margin-left: 5px">删除</a> <a
+										th:href="@{/mgr/tweet/update/}+${tweet.id}"
+										style="margin-left: 5px">更新</a>
+								</h6>
+								<p th:utext="${tweet.content}"></p>
+								<p class="text text-info" th:if="${tweet.comments > 0}">共有[[${tweet.comments}]]条评论</p>
+							</div>
+						</div>
+					</div>
+					<div th:if="${page.totalPage > 1}">
+						<ul class="pagination">
+							<li
+								th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
+								<a th:text="${i}" th:data-page="${i}" href="###"></a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
+
+	<script type="text/javascript">
+		$(function() {
+			$("[data-page]").click(function(){
+				$("#currentPage").val($(this).attr('data-page'));
+				$("#pageForm").submit();
+			});
+			$('[data-del]').click(
+					function() {
+						var id = $(this).attr('data-del');
+						bootbox.confirm("确定要删除吗？这将无法被恢复！！！", function(result) {
+							if (result) {
+								$.post(basePath + '/mgr/tweet/del/' + id, {},
+										function(data) {
+											if (data.success) {
+												bootbox.alert("删除成功");
+												setTimeout(function() {
+													window.location.reload();
+												}, 500)
+											} else {
+												bootbox.alert(data.message);
+											}
+										});
+							}
+						});
+					});
+		})
+	</script>
+</body>
+</html>

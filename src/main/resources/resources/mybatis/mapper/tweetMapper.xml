@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.qyh.blog.core.dao.TweetDao">
+
+	<resultMap type="Tweet" id="TweetDetail">
+		<id column="id" property="id" />
+		<result column="tweet_content" property="content" />
+		<result column="tweet_write" property="write" />
+		<result column="tweet_update" property="update" />
+		<result column="tweet_private" property="isPrivate" />
+		<result column="tweet_allowComment" property="allowComment" />
+	</resultMap>
+
+	<insert id="insert" keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO blog_tweet(tweet_content,tweet_write,tweet_update,tweet_private,tweet_allowComment)
+		VALUES(#{content},#{write},#{update},#{isPrivate},#{allowComment})
+	</insert>
+
+	<update id="update">
+		UPDATE blog_tweet
+		<set>
+			<if test="content != null">
+				tweet_content = #{content},
+			</if>
+			<if test="write != null">
+				tweet_write = #{write},
+			</if>
+			<if test="update != null">
+				tweet_update = #{update},
+			</if>
+			<if test="isPrivate != null">
+				tweet_private = #{isPrivate},
+			</if>
+			<if test="allowComment != null">
+				tweet_allowComment = #{allowComment}
+			</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<delete id="deleteById">
+		DELETE FROM blog_tweet WHERE id = #{id}
+	</delete>
+
+	<select id="selectById" resultMap="TweetDetail">
+		SELECT id,tweet_content,tweet_write,tweet_update,tweet_private,tweet_allowComment FROM blog_tweet WHERE id = #{id}
+	</select>
+
+	<select id="selectByIds" resultMap="TweetDetail">
+		SELECT
+		id,tweet_content,tweet_write,tweet_update,tweet_private,tweet_allowComment FROM blog_tweet
+		WHERE id IN
+		<foreach collection="collection" item="id" open="(" close=")"
+			separator=",">#{id}</foreach>
+	</select>
+	
+	<select id="selectPage" resultMap="TweetDetail">
+		SELECT id,tweet_content,tweet_write,tweet_update,tweet_private,tweet_allowComment FROM blog_tweet
+		<where>
+			<if test="begin != null and begin != null">
+				tweet_write BETWEEN #{begin} AND #{end}
+			</if>
+			<if test="!queryPrivate">
+				AND tweet_private = false
+			</if>
+		</where>
+		<choose>
+			<when test="asc">
+				ORDER BY tweet_write
+			</when>
+			<otherwise>
+				ORDER BY tweet_write DESC,id DESC
+			</otherwise>
+		</choose>
+		LIMIT #{offset},#{pageSize}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		SELECT COUNT(id)  FROM blog_tweet
+		<where>
+			<if test="begin != null and begin != null">
+				tweet_write BETWEEN #{begin} AND #{end}
+			</if>
+			<if test="!queryPrivate">
+				AND tweet_private = false
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectLast" resultMap="TweetDetail">
+		SELECT id,tweet_content,tweet_write,tweet_update,tweet_private,tweet_allowComment FROM blog_tweet
+		<where>
+			<if test="!queryPrivate">
+				tweet_private = #{queryPrivate}
+			</if>
+		</where>
+		ORDER BY tweet_write DESC,id DESC 
+		LIMIT 0,#{limit}
+	</select>
+</mapper>

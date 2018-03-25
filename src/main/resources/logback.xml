@@ -23,9 +23,9 @@
 
 	<appender name="errorDailyRollingFileAppender"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>/web/logs/blog/error.log</File>
+		<File>${user.home}/blog/logs/error.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<FileNamePattern>/web/logs/blog/error.%d{yyyy-MM-dd}.log
+			<FileNamePattern>${user.home}/blog/logs/error.%d{yyyy-MM-dd}.log
 			</FileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
@@ -34,11 +34,22 @@
 			</Pattern>
 			<charset>UTF-8</charset>
 		</encoder>
-		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>ERROR</level>
-			<onMatch>ACCEPT</onMatch>
-			<onMismatch>DENY</onMismatch>
-		</filter>
+	</appender>
+
+
+	<appender name="cpAppender"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${user.home}/blog/logs/cp.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>${user.home}/blog/logs/cp.%d{yyyy-MM-dd}.log
+			</FileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n
+			</Pattern>
+			<charset>UTF-8</charset>
+		</encoder>
 	</appender>
 
 	<!-- 关闭这个类的日志 -->
@@ -54,12 +65,14 @@
 	<logger name="me.qyh.blog.expanded.mail.MailSender" level="ERROR"
 		additivity="false">
 		<appender-ref ref="errorDailyRollingFileAppender" />
-		<appender-ref ref="consoleAppender" />
+	</logger>
+
+	<logger name="com.zaxxer.hikari.pool" level="DEBUG">
+		<appender-ref ref="cpAppender" />
 	</logger>
 
 	<root level="ERROR">
 		<appender-ref ref="consoleAppender" />
 	</root>
-
 
 </configuration>

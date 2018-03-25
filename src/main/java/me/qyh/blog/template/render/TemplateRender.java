@@ -119,7 +119,7 @@ public final class TemplateRender implements InitializingBean {
 		}
 	}
 
-	public String getFragmentName(String name, Space space) {
+	public Optional<String> getFragmentName(String name, Space space) {
 		return templateRenderer.getFragmentName(name, space);
 	}
 

@@ -29,7 +29,10 @@
 								</span> <span th:case="'userpage'" th:remove="tag">来自于页面[ <a
 										th:attr="href=${obj == null ? null : urls.getUrl(obj)}"
 										th:target="_blank" th:text="${obj == null ? '未知' :obj.name}"></a>]
-								</span> 的评论
+										</span><span th:case="'tweet'" th:remove="tag">来自于短博客[ <a
+											href="javascript:void(0)"
+											th:text="${obj == null ? '未知' :times.format(obj.write,'yyyy-MM-dd HH:mm')}"></a>]
+									</span> 的评论
 								</small>
 								<div class="media">
 									<div class="media-left">
@@ -42,12 +45,13 @@
 									<div class="media-body">
 										<h4 class="media-heading" th:text="${comment.nickname}"></h4>
 										<p th:text="${comment.content}"></p>
-										<p>	
-											<a href="###" th:data-remove-id="${comment.id}" style="margin-right:10px"><span
+										<p>
+											<a href="###" th:data-remove-id="${comment.id}"
+												style="margin-right: 10px"><span
 												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-											<a href="###" th:data-check-id="${comment.id}" ><span
+											<a href="###" th:data-check-id="${comment.id}"><span
 												class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>
-												
+
 										</p>
 									</div>
 								</div>

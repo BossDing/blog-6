@@ -122,12 +122,15 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 			if(parent == ""){
 				delete data["parent"];
 			}
+			var url ;
+			if(data.parent){
+				url = basePath + '/mgr/file/'+data.parent.id+'/createFolder';
+			}else{
+				url = basePath + '/mgr/file/createFolder'
+			}
 			$.ajax({
 				type : "post",
-				url : basePath+"/mgr/file/createFolder",
-				data : JSON.stringify(data),
-				dataType : "json",
-				contentType : 'application/json',
+				url : url + "?path="+data.path,
 				success : function(data){
 					if(data.success){
 						$("#createFolderModal").modal("hide");

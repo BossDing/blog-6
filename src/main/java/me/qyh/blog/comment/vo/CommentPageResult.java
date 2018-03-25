@@ -30,6 +30,12 @@ import me.qyh.blog.core.vo.PageResult;
  */
 public final class CommentPageResult extends PageResult<Comment> {
 	private final CommentConfig commentConfig;
+	
+	/**
+	 * 审核中评论数目
+	 * @since 6.0
+	 */
+	private int checkCount;
 
 	public CommentPageResult(PageQueryParam param, int totalRow, List<Comment> datas, CommentConfig commentConfig) {
 		super(param, totalRow, datas);
@@ -38,5 +44,13 @@ public final class CommentPageResult extends PageResult<Comment> {
 
 	public CommentConfig getCommentConfig() {
 		return commentConfig;
+	}
+
+	public int getCheckCount() {
+		return checkCount;
+	}
+
+	public void setCheckCount(int checkCount) {
+		this.checkCount = checkCount;
 	}
 }

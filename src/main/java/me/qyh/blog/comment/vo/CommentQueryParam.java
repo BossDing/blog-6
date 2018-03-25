@@ -32,6 +32,17 @@ public class CommentQueryParam extends PageQueryParam {
 	private boolean asc;
 	private CommentMode mode;
 
+	public CommentQueryParam() {
+		super();
+	}
+
+	public CommentQueryParam(CommentQueryParam param) {
+		this.status = param.status;
+		this.mode = param.mode;
+		this.module = param.module;
+		this.asc = param.asc;
+	}
+
 	public CommentStatus getStatus() {
 		return status;
 	}

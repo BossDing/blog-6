@@ -16,11 +16,14 @@
 package me.qyh.blog.template.render;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.entity.Fragment;
+import me.qyh.blog.template.validator.FragmentValidator;
 
 /**
  * 渲染模板内容
@@ -50,8 +53,14 @@ public interface TemplateRenderExecutor {
 	 * @param space
 	 * @return
 	 */
-	default String getFragmentName(String name, Space space) {
-		return Fragment.getTemplateName(name, space);
+	default Optional<String> getFragmentName(String name, Space space) {
+		if (Validators.isEmptyOrNull(name, true)) {
+			return Optional.empty();
+		}
+		if (!name.matches(FragmentValidator.NAME_PATTERN)) {
+			return Optional.empty();
+		}
+		return Optional.of(Fragment.getTemplateName(name, space));
 	}
 
 }

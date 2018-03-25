@@ -15,23 +15,21 @@
  */
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
+import java.io.Writer;
 import java.util.Map;
 
+import org.thymeleaf.TemplateSpec;
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.model.IModelFactory;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.util.FastStringWriter;
 
 import me.qyh.blog.core.context.Environment;
-import me.qyh.blog.template.render.thymeleaf.ThymeleafRenderExecutor;
+import me.qyh.blog.template.entity.Fragment;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}
- * 
- * <p>
- * 同&lt;div th:replace="" &gt&lt;/div&gt;
- * </p>
  * 
  * @author mhlx
  *
@@ -43,7 +41,13 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 	private static final String NAME = "name";
 
 	public FragmentTagProcessor(String dialectPrefix) {
-		super(TemplateMode.HTML, dialectPrefix, TAG_NAME, false, null, false, PRECEDENCE);
+		super(TemplateMode.HTML, // This processor will apply only to HTML mode
+				dialectPrefix, // Prefix to be applied to name for matching
+				TAG_NAME, // Tag name: match specifically this tag
+				false, // Apply dialect prefix to tag name
+				null, // No attribute name: will match by tag name
+				false, // No prefix to be applied to attribute name
+				PRECEDENCE); // Precedence (inside dialect's own precedence)
 	}
 
 	@Override
@@ -52,23 +56,15 @@ public class FragmentTagProcessor extends DefaultAttributesTagProcessor {
 		Map<String, String> attMap = processAttribute(context, tag);
 		String name = attMap.get(NAME);
 		if (name != null) {
-			/**
-			 * @since 5.9
-			 */
-			String templateName = ThymeleafRenderExecutor.getThymeleafFragmentName(name, Environment.getSpace());
-			IModelFactory factory = context.getModelFactory();
-			boolean replace = false;
-			try {
-				structureHandler.replaceWith(
-						factory.parse(context.getTemplateData(), "<div th:replace=\"" + templateName + "\"></div>"),
-						true);
-				replace = true;
-				return;
-			} finally {
-				if (!replace)
-					structureHandler.removeElement();
-			}
+			String templateName = Fragment.getTemplateName(name, Environment.getSpace());
+			Writer writer = new FastStringWriter(200);
+
+			context.getConfiguration().getTemplateManager()
+					.parseAndProcess(new TemplateSpec(templateName, null, TemplateMode.HTML, null), context, writer);
+			structureHandler.replaceWith(writer.toString(), false);
+			return;
 		}
 		structureHandler.removeElement();
 	}
+
 }

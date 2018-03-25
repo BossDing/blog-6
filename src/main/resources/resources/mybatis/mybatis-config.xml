@@ -27,7 +27,8 @@
 		<typeAlias type="me.qyh.blog.core.entity.SysLock" alias="SysLock" />
 		<typeAlias type="me.qyh.blog.core.entity.SysLock$SysLockType"
 			alias="LockType" />
-		<typeAlias type="me.qyh.blog.core.entity.PasswordLock" alias="PasswordLock" />
+		<typeAlias type="me.qyh.blog.core.entity.PasswordLock"
+			alias="PasswordLock" />
 		<typeAlias type="me.qyh.blog.core.entity.QALock" alias="QALock" />
 
 		<typeAlias type="me.qyh.blog.file.vo.BlogFileCount" alias="BlogFileCount" />
@@ -38,11 +39,9 @@
 		<typeAlias type="me.qyh.blog.template.entity.HistoryTemplate"
 			alias="HistoryTemplate" />
 
-		<typeAlias
-			type="me.qyh.blog.core.vo.ArticleStatistics"
+		<typeAlias type="me.qyh.blog.core.vo.ArticleStatistics"
 			alias="ArticleStatistics" />
-		<typeAlias
-			type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
+		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
 			alias="ArticleSpaceStatistics" />
 
 		<typeAlias type="me.qyh.blog.comment.entity.Comment" alias="Comment" />
@@ -50,6 +49,8 @@
 			alias="CommentStatus" />
 		<typeAlias type="me.qyh.blog.comment.entity.CommentModule"
 			alias="CommentModule" />
+
+		<typeAlias type="me.qyh.blog.core.entity.Tweet" alias="Tweet" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />
@@ -75,5 +76,9 @@
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/articleCommentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/pageCommentMapper.xml" />
+		
+		
+		<mapper resource="resources/mybatis/mapper/tweetMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/tweetCommentMapper.xml" />
 	</mappers>
 </configuration>

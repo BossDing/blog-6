@@ -21,66 +21,6 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 	modal += '</div>';
 	modal += '</div>';
 	
-	var imageModal = '<div class="modal " id="imageModal" tabindex="-1"';
-	imageModal += 'role="dialog">';
-	imageModal += '<div class="modal-dialog modal-lg" role="document">';
-	imageModal += '<div class="modal-content">';
-	imageModal += '<div class="modal-header">';
-	imageModal += '<button type="button" class="close" data-dismiss="modal"';
-	imageModal += 'aria-label="Close">';
-	imageModal += '<span aria-hidden="true">&times;</span>';
-	imageModal += '</button>';
-	imageModal += '<h4 class="modal-title"></h4>';
-	imageModal += '</div>';
-	imageModal += '<div class="modal-body">';
-	imageModal += '<div class="container-fluid">';
-	imageModal += '<div class="form-group">';
-	imageModal += '<label >图片地址</label> <input  class="form-control" placeholder="图片地址" >';
-	imageModal += '</div>';
-	imageModal += '<div class="form-group">';
-	imageModal += '<label >图片描述</label> <input  class="form-control" placeholder="图片描述" >';
-	imageModal += '</div>';
-	imageModal += '<div class="form-group">';
-	imageModal += '<label >图片链接</label> <input class="form-control" placeholder="图片链接" >';
-	imageModal += '</div>';
-	imageModal += '</div>';
-	imageModal += '<div class="modal-footer">';
-	imageModal += '<button type="button" class="btn btn-default" id="image-confirm-btn">确定</button>';
-	imageModal += '<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>';
-	imageModal += '</div>';
-	imageModal += '</div>';
-	imageModal += '</div>';
-	imageModal += '</div>';
-	
-	
-	var linkModal = '<div class="modal " id="linkModal" tabindex="-1"';
-	linkModal += 'role="dialog">';
-	linkModal += '<div class="modal-dialog modal-lg" role="document">';
-	linkModal += '<div class="modal-content">';
-	linkModal += '<div class="modal-header">';
-	linkModal += '<button type="button" class="close" data-dismiss="modal"';
-	linkModal += 'aria-label="Close">';
-	linkModal += '<span aria-hidden="true">&times;</span>';
-	linkModal += '</button>';
-	linkModal += '<h4 class="modal-title"></h4>';
-	linkModal += '</div>';
-	linkModal += '<div class="modal-body">';
-	linkModal += '<div class="container-fluid">';
-	linkModal += '<div class="form-group">';
-	linkModal += '<label >链接地址</label> <input  class="form-control" placeholder="链接地址" >';
-	linkModal += '</div>';
-	linkModal += '<div class="form-group">';
-	linkModal += '<label >链接标题</label> <input  class="form-control" placeholder="链接标题" >';
-	linkModal += '</div>';
-	linkModal += '</div>';
-	linkModal += '<div class="modal-footer">';
-	linkModal += '<button type="button" class="btn btn-default" id="link-confirm-btn">确定</button>';
-	linkModal += '<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>';
-	linkModal += '</div>';
-	linkModal += '</div>';
-	linkModal += '</div>';
-	linkModal += '</div>';
-	
 	var createFolderModal = '<div class="modal fade" id="createFolderModal" tabindex="-1" role="dialog" aria-labelledby="createFolderModalLabel">';
 	createFolderModal += '<div class="modal-dialog" role="document">';
 	createFolderModal += '<div class="modal-content">';
@@ -348,87 +288,24 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 		$("#fileSelectModal").on('click','a[data-extension][data-url][data-description]',function(){
 			$("#fileSelectModal").modal('hide');
 			var me = $(this);
-			var ext = me.attr("data-extension");
+			var ext = me.attr("data-extension");var url = me.attr('data-url');
 			if(isImage(ext)){
-				$("#imageModal").find("input").eq(0).val(me.find('img').attr("data-middle"));
-				$("#imageModal").find("input").eq(1).val(me.attr("data-description"));
-				$("#imageModal").find("input").eq(2).val(me.attr("data-url"));
-				$("#imageModal").modal("show")
+				$('#content').summernote('insertImage', url, function ($image) {
+				  $image.addClass('img-responsive');
+				});
 			} else {
-				$("#linkModal").find("input").eq(0).val(me.attr("data-url"));
-				$("#linkModal").find("input").eq(1).val(me.attr("data-description"));
-				$("#linkModal").modal("show")
+				$('#content').summernote('createLink', {
+				  text: url,
+				  url: url,
+				  isNewWindow: true
+				});
 			}
 		});
 		
-		
-		if($("#imageModal").length == 0){
-			$(imageModal).appendTo($('body'));
-			$("#imageModal").on('hidden.bs.modal',function(){
-				fileSelectPageQuery(lastParam.currentPage,lastParam.parent);
-				$("#fileSelectModal").modal("show");
-			});
-			
-			
-			$("#image-confirm-btn").click(function(){
-				  var url  = $("#imageModal").find("input").eq(0).val();
-                var alt  = $("#imageModal").find("input").eq(1).val();
-                var link = $("#imageModal").find("input").eq(2).val();
-
-                if (url === "")
-                {
-              	  $("#imageModal").modal("hide");
-              	  return ;
-                }
-
-					var altAttr = (alt !== "") ? " \"" + alt + "\"" : "";
-
-                if (link === "" || link === "http://" || link === "https://")
-                {
-                	editor.replaceSelection("![" + alt + "](" + url + altAttr + ")")
-                }
-                else
-                {
-                    editor.replaceSelection("[![" + alt + "](" + url + altAttr + ")](" + link + altAttr + ")")
-                	
-                }
-
-                $("#imageModal").modal("hide");
-			});
-		}
-		
-		if($("#linkModal").length == 0){
-			$(linkModal).appendTo($('body'));
-			$("#linkModal").on('hidden.bs.modal',function(){
-				fileSelectPageQuery(lastParam.currentPage,lastParam.parent);
-				$("#fileSelectModal").modal("show");
-			});
-			
-			$("#link-confirm-btn").click(function(){
-				  var url  = $("#linkModal").find("input").eq(0).val();
-                var title  = $("#linkModal").find("input").eq(1).val();
-
-                if (url === "http://" || url === "https://" || url === "")
-                {
-              	  $("#linkModal").modal("hide");return;
-                }
-                
-                var str  = "[" + title + "](" + url + " \"" + title + "\")"
-                
-                if (title == "")
-                {
-                	str = "[" + url + "](" + url + ")";
-                }                                
-
-                editor.replaceSelection(str);
-
-                $("#linkModal").modal("hide");
-			});
-		}
 	}
 	
 
-	var imageExtensions = ["jpg","jpeg","png","gif","webp"];
+	var imageExtensions = ["jpg","jpeg","png","gif"];
 	var isImage = function(ext){
 		for(var i=0;i<imageExtensions.length;i++){
 			if(ext.toLowerCase() == imageExtensions[i]){

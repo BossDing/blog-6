@@ -50,7 +50,7 @@ import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.impl.ArticleCache;
 
 @Component
-public class ArticleCommentModuleHandler extends CommentModuleHandler implements InitializingBean{
+public class ArticleCommentModuleHandler extends CommentModuleHandler implements InitializingBean {
 
 	@Autowired
 	private ArticleCache articleCache;
@@ -62,20 +62,20 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 	private ArticleCommentDao articleCommentDao;
 	@Autowired
 	private ArticleDao articleDao;
-	
+
 	@Autowired
 	private CommentService commentService;
-	
+
 	@Autowired
 	private UrlHelper urlHelper;
-	
+
 	@Autowired
 	private Messages messages;
-	
+
 	private static final String MODULE_NAME = "article";
-	
-	private static final Message PROTECTED_COMMENT_MD = new Message("comment.protected","\\*\\*\\*\\*\\*\\*");
-	private static final Message PROTECTED_COMMENT_HTML = new Message("comment.protected","******");
+
+	private static final Message PROTECTED_COMMENT_MD = new Message("comment.protected", "\\*\\*\\*\\*\\*\\*");
+	private static final Message PROTECTED_COMMENT_HTML = new Message("comment.protected", "******");
 
 	public ArticleCommentModuleHandler() {
 		super(MODULE_NAME);
@@ -104,8 +104,8 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 		if (article == null || !article.isPublished()) {
 			return false;
 		}
-		if (article.isPrivate()) {
-			Environment.doAuthencation();
+		if (article.isPrivate() && !Environment.isLogin()) {
+			return false;
 		}
 		if (!Environment.match(article.getSpace())) {
 			return false;
@@ -138,7 +138,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 	@Override
 	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
 		List<Article> articles = articleDao.selectSimpleByIds(ids);
-		return articles.stream().collect(Collectors.toMap(Article::getId, art->art));
+		return articles.stream().collect(Collectors.toMap(Article::getId, art -> art));
 	}
 
 	@EventListener
@@ -154,18 +154,19 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		commentService.addCommentModuleHandler(this);	
+		commentService.addCommentModuleHandler(this);
 	}
 
 	@Override
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin) {
-		
+
 		User user = Environment.getUser();
 		List<Comment> comments = articleCommentDao.selectLastComments(space, limit, queryPrivate, queryAdmin);
-		for(Comment comment : comments){
-			LastArticleComment lac = (LastArticleComment)comment;
-			if(user == null && lac.getArticle() != null && lac.getArticle().hasLock()){
-				comment.setContent(messages.getMessage(Editor.MD.equals(comment.getEditor()) ? PROTECTED_COMMENT_MD : PROTECTED_COMMENT_HTML));
+		for (Comment comment : comments) {
+			LastArticleComment lac = (LastArticleComment) comment;
+			if (user == null && lac.getArticle() != null && lac.getArticle().hasLock()) {
+				comment.setContent(messages.getMessage(
+						Editor.MD.equals(comment.getEditor()) ? PROTECTED_COMMENT_MD : PROTECTED_COMMENT_HTML));
 			}
 		}
 		return comments;

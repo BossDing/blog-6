@@ -39,6 +39,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -171,7 +172,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
 			TemplateRenderException tre = (TemplateRenderException) ex;
 			if (!Template.isPreviewTemplate(tre.getTemplateName())) {
-				LOGGER.error(tre.getMessage(), tre);
+				LOGGER.error("[" + UrlUtils.buildFullRequestUrl(request) + "]" + ex.getMessage(), ex);
 			}
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, tre.getRenderErrorDescription())));
@@ -289,7 +290,11 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 		private final Class<?>[] exceptionClasses = { BindException.class, HttpMessageNotReadableException.class,
 				HttpMessageNotReadableException.class, MissingServletRequestParameterException.class,
-				MissingServletRequestPartException.class, TypeMismatchException.class };
+				MissingServletRequestPartException.class, TypeMismatchException.class,
+				/**
+				 * @since 6.0
+				 */
+				ServletRequestBindingException.class };
 
 		@Override
 		public boolean match(Exception ex) {
@@ -298,7 +303,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 		@Override
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
-			ex.printStackTrace();
 			LOGGER.debug(ex.getMessage(), ex);
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_400)));

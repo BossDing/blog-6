@@ -41,35 +41,35 @@ public class FragmentValidator implements Validator {
 		Fragment fragment = (Fragment) target;
 		String name = fragment.getName();
 		if (Validators.isEmptyOrNull(name, true)) {
-			errors.reject("fragment.user.name.blank", "模板片段名为空");
+			errors.reject("fragment.name.blank", "模板片段名为空");
 			return;
 		}
 		if (name.length() > MAX_NAME_LENGTH) {
-			errors.reject("fragment.user.name.toolong", new Object[] { MAX_NAME_LENGTH },
+			errors.reject("fragment.name.toolong", new Object[] { MAX_NAME_LENGTH },
 					"模板片段名长度不能超过" + MAX_NAME_LENGTH + "个字符");
 			return;
 		}
 		if (!name.matches(NAME_PATTERN)) {
-			errors.reject("fragment.user.name.invalid", "模板片段名称校验失败");
+			errors.reject("fragment.name.invalid", "无效的模板片段名称");
 			return;
 		}
 		String tpl = fragment.getTpl();
 		if (Validators.isEmptyOrNull(tpl, true)) {
-			errors.reject("fragment.user.tpl.null", "模板片段模板不能为空");
+			errors.reject("fragment.tpl.null", "模板片段模板不能为空");
 			return;
 		}
 		if (tpl.length() > MAX_TPL_LENGTH) {
-			errors.reject("fragment.user.tpl.toolong", new Object[] { MAX_TPL_LENGTH },
+			errors.reject("fragment.tpl.toolong", new Object[] { MAX_TPL_LENGTH },
 					"模板片段模板长度不能超过" + MAX_TPL_LENGTH + "个字符");
 			return;
 		}
 		String description = fragment.getDescription();
 		if (description == null) {
-			errors.reject("fragment.user.description.null", "模板片段描述不能为空");
+			errors.reject("fragment.description.null", "模板片段描述不能为空");
 			return;
 		}
 		if (description.length() > MAX_DESCRIPTION_LENGTH) {
-			errors.reject("fragment.user.description.toolong", new Object[] { MAX_DESCRIPTION_LENGTH },
+			errors.reject("fragment.description.toolong", new Object[] { MAX_DESCRIPTION_LENGTH },
 					"模板片段描述长度不能超过" + MAX_DESCRIPTION_LENGTH + "个字符");
 		}
 	}

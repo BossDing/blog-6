@@ -43,8 +43,6 @@ import org.thymeleaf.standard.expression.FragmentExpression;
 import org.thymeleaf.standard.expression.IStandardExpressionParser;
 import org.thymeleaf.standard.expression.StandardExpressions;
 
-import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.TemplateRenderExecutor;
 
@@ -70,18 +68,10 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		return doExecutor(viewTemplateName, model, request, response);
 	}
 
-	@Override
-	public String getFragmentName(String name, Space space) {
-		return getThymeleafFragmentName(name, space);
-	}
-
-	public static String getThymeleafFragmentName(String name, Space space) {
-		int index = name.indexOf("::");
-		if (index <= 0 || index == name.length() - 2) {
-			return Fragment.getTemplateName(name, space);
-		} else {
-			return Fragment.getTemplateName(name.substring(0, index), space) + name.substring(index);
-		}
+	public static void main(String[] arggs) {
+		String str = "Template%Fragment%底部 :: div";
+		int index = str.indexOf("::");
+		System.out.println(str.substring(0, index));
 	}
 
 	private String doExecutor(String viewTemplateName, final Map<String, Object> model,
@@ -122,8 +112,8 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 
 		final ConversionService conversionService = (ConversionService) request
 				.getAttribute(ConversionService.class.getName());
-		final NoRestrictedEvaluationContext evaluationContext = new NoRestrictedEvaluationContext(
-				applicationContext, conversionService);
+		final NoRestrictedEvaluationContext evaluationContext = new NoRestrictedEvaluationContext(applicationContext,
+				conversionService);
 
 		mergedModel.put(ThymeleafEvaluationContext.THYMELEAF_EVALUATION_CONTEXT_CONTEXT_VARIABLE_NAME,
 				evaluationContext);

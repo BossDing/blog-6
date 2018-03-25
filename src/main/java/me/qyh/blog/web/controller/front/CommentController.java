@@ -95,17 +95,14 @@ public class CommentController implements InitializingBean {
 	@ResponseBody
 	public JsonResult queryConversations(@PathVariable("type") String type, @PathVariable("id") Integer moduleId,
 			@PathVariable("commentId") Integer commentId) throws LogicException {
-		return new JsonResult(true,
-				commentService.queryConversations(new CommentModule(type, moduleId), commentId));
+		return new JsonResult(true, commentService.queryConversations(new CommentModule(type, moduleId), commentId));
 	}
-	
+
 	@GetMapping("comment/link/{module}/{id}")
-	public String jumpToArticle(@PathVariable("module") String module , @PathVariable("id") Integer id) {
-		
+	public String jumpToArticle(@PathVariable("module") String module, @PathVariable("id") Integer id) {
 		String url = commentService.queryCommentModuleUrl(new CommentModule(module, id)).orElse(urlHelper.getUrl());
-		return "redirect:"+ url;
+		return "redirect:" + url;
 	}
-	
 
 	@GetMapping("comment/needCaptcha")
 	@ResponseBody

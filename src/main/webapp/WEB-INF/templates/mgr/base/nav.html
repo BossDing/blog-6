@@ -43,6 +43,8 @@
 						th:href="@{/mgr/static/index}"> 静态资源管理</a></li>
 					<li><a th:href="@{/mgr/article/index}"
 						th:class="${tag == 'article'}? active:''"> 文章管理</a></li>
+					<li th:class="${tag == 'tweet'}? active:''"><a
+						th:href="@{/mgr/tweet/index}">微博客管理</a></li>
 					<li><a th:href="@{/mgr/comment/uncheck}"
 						th:class="${tag == 'uncheckComment'}? active:''"> 未审核评论 <span class="badge" id="uncheck-comment-count" style="display:none">0</span></a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
