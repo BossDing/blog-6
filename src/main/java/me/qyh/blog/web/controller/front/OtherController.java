@@ -59,11 +59,7 @@ public class OtherController {
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		Map<String, String> attMap = new HashMap<>();
-		for (Map.Entry<String, String> it : allRequestParams.entrySet()) {
-			attMap.put(it.getKey(), it.getValue());
-		}
-		DataTag tag = new DataTag(Webs.decode(tagName), attMap);
+		DataTag tag = new DataTag(Webs.decode(tagName), new HashMap<>(allRequestParams));
 		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind))
 				.orElse(new JsonResult(false));
 	}
@@ -95,9 +91,6 @@ public class OtherController {
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
 				throw (RuntimeException) e;
-			}
-			if (e instanceof SystemException) {
-				throw (SystemException) e;
 			}
 			throw new SystemException(e.getMessage(), e);
 		}

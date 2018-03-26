@@ -28,58 +28,58 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import me.qyh.blog.comment.dao.CommentDao;
-import me.qyh.blog.comment.dao.TweetCommentDao;
+import me.qyh.blog.comment.dao.NewsCommentDao;
 import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.vo.ModuleCommentCount;
 import me.qyh.blog.core.context.Environment;
-import me.qyh.blog.core.dao.TweetDao;
+import me.qyh.blog.core.dao.NewsDao;
+import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.entity.Tweet;
 import me.qyh.blog.core.event.EventType;
-import me.qyh.blog.core.event.TweetEvent;
+import me.qyh.blog.core.event.NewsEvent;
 import me.qyh.blog.core.exception.LogicException;
 
 @Component
-public class TweetCommentModuleHandler extends CommentModuleHandler implements InitializingBean {
+public class NewsCommentModuleHandler extends CommentModuleHandler implements InitializingBean {
 
-	private static final String MODULE_NAME = "tweet";
+	private static final String MODULE_NAME = "news";
 
 	@Autowired
 	private CommentDao commentDao;
 	@Autowired
-	private TweetDao tweetDao;
+	private NewsDao newsDao;
 	@Autowired
-	private TweetCommentDao tweetCommentDao;
+	private NewsCommentDao newsCommentDao;
 
 	@Autowired
 	private CommentService commentService;
 	// @Autowired
 	// private UrlHelper urlHelper;
 
-	public TweetCommentModuleHandler() {
+	public NewsCommentModuleHandler() {
 		super(MODULE_NAME);
 	}
 
 	@Override
 	public void doValidateBeforeInsert(Integer id) throws LogicException {
-		Tweet tweet = tweetDao.selectById(id);
-		if (tweet == null) {
-			throw new LogicException("tweet.notExists", "短博客不存在");
+		News news = newsDao.selectById(id);
+		if (news == null) {
+			throw new LogicException("news.notExists", "动态不存在");
 		}
-		if (!tweet.getAllowComment() && !Environment.isLogin()) {
-			throw new LogicException("tweet.notAllowComment", "短博客不允许评论");
+		if (!news.getAllowComment() && !Environment.isLogin()) {
+			throw new LogicException("news.notAllowComment", "动态不允许评论");
 		}
 	}
 
 	@Override
 	public boolean doValidateBeforeQuery(Integer id) {
-		Tweet tweet = tweetDao.selectById(id);
-		if (tweet == null) {
+		News news = newsDao.selectById(id);
+		if (news == null) {
 			return false;
 		}
-		if (tweet.getIsPrivate() && !Environment.isLogin()) {
+		if (news.getIsPrivate() && !Environment.isLogin()) {
 			return false;
 		}
 		return true;
@@ -101,8 +101,8 @@ public class TweetCommentModuleHandler extends CommentModuleHandler implements I
 
 	@Override
 	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
-		List<Tweet> pages = tweetDao.selectByIds(ids);
-		return pages.stream().collect(Collectors.toMap(Tweet::getId, p -> p));
+		List<News> pages = newsDao.selectByIds(ids);
+		return pages.stream().collect(Collectors.toMap(News::getId, p -> p));
 	}
 
 	@Override
@@ -111,29 +111,26 @@ public class TweetCommentModuleHandler extends CommentModuleHandler implements I
 	}
 
 	@EventListener
-	public void handleTweetEvent(TweetEvent event) {
+	public void handleNewsEvent(NewsEvent event) {
 		if (event.getEventType().equals(EventType.DELETE)) {
-			for (Tweet tweet : event.getTweets()) {
-				commentDao.deleteByModule(new CommentModule(MODULE_NAME, tweet.getId()));
+			for (News news : event.getNews()) {
+				commentDao.deleteByModule(new CommentModule(MODULE_NAME, news.getId()));
 			}
 		}
 	}
 
 	@Override
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin) {
-		return tweetCommentDao.selectLastComments(limit, queryPrivate, queryAdmin);
+		return newsCommentDao.selectLastComments(limit, queryPrivate, queryAdmin);
 	}
 
 	@Override
 	public int queryCommentNum(Space space, boolean queryPrivate) {
-		return tweetCommentDao.selectTotalCommentCount(queryPrivate);
+		return newsCommentDao.selectTotalCommentCount(queryPrivate);
 	}
 
 	@Override
 	public Optional<String> getUrl(Integer id) {
-		// Tweet tweet = tweetDao.selectById(id);
-		// return Optional.ofNullable(tweet == null ? null :
-		// urlHelper.getUrls().getUrl(tweet));
 		return Optional.empty();
 	}
 

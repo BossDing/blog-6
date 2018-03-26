@@ -16,13 +16,14 @@
 			th:unless="${#lists.isEmpty(article.tags)}">
 			<span class="glyphicon glyphicon-tag" aria-hidden="true"></span> <span
 				th:each="tag : ${article.tags}" style="margin-right: 10px"> <a
-				th:href=" ${urls.getArticlesUrlHelper().getArticlesUrl(tag)}" th:utext=" ${tag.name}"></a>
+				th:href=" ${urls.getArticlesUrlHelper().getArticlesUrl(tag)}"
+				th:utext=" ${tag.name}"></a>
 			</span>
 		</div>
 		<div style="margin-top: 5px; margin-bottom: 10px">
-			<span class="glyphicon glyphicon-time" aria-hidden="true"></span>
-			 <span
-				th:text="${times.format(article.pubDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(article.pubDate)}"></span>
+			<span class="glyphicon glyphicon-time" aria-hidden="true"></span>  <span
+				th:text="${times.format(article.pubDate,'yyyy-MM-dd HH:mm')}"
+				th:data-timestamp="${times.getTime(article.pubDate)}"></span>
 		</div>
 
 		<div style="margin-top: 5px; margin-bottom: 10px">
@@ -46,6 +47,7 @@
 		<li
 			th:each=" i : ${#numbers.sequence(articlePage.listbegin, articlePage.listend-1)}"
 			th:class="${(i == articlePage.currentPage) ? 'active' : ''}"><a
-			th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articlePage.param,i)}" th:text="${i}"></a>
+			th:href="${urls.getArticlesUrlHelper().getArticlesUrl(articlePage.param,i)}"
+			th:text="${i}"></a></li>
 	</ul>
 </div>

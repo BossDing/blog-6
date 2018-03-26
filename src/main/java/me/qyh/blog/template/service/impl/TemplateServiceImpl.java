@@ -736,7 +736,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		defaultTemplates.put("space/{alias}/error",
 				new SystemTemplate("space/{alias}/error", "resources/page/PAGE_ERROR.html"));
 
-		defaultTemplates.put("tweets", new SystemTemplate("tweets", "resources/page/PAGE_TWEET.html"));
+		defaultTemplates.put("news", new SystemTemplate("news", "resources/page/PAGE_NEWS.html"));
+		defaultTemplates.put("news/{id}", new SystemTemplate("news/{id}", "resources/page/PAGE_NEWS_DETAIL.html"));
 
 		for (Map.Entry<String, SystemTemplate> it : defaultTemplates.entrySet()) {
 			templateMapping.register(it.getKey(), it.getValue().getTemplateName());

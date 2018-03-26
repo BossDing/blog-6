@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import me.qyh.blog.core.vo.TweetQueryParam;
+import me.qyh.blog.core.vo.NewsQueryParam;
 
 /**
  * 
@@ -29,16 +29,16 @@ import me.qyh.blog.core.vo.TweetQueryParam;
  *
  */
 @Component
-public class TweetQueryParamValidator implements Validator {
+public class NewsQueryParamValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return TweetQueryParam.class.isAssignableFrom(clazz);
+		return NewsQueryParam.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		TweetQueryParam param = (TweetQueryParam) target;
+		NewsQueryParam param = (NewsQueryParam) target;
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}

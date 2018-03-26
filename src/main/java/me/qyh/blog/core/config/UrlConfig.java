@@ -19,7 +19,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.Validators;
 
 /**
@@ -85,16 +84,18 @@ public class UrlConfig implements InitializingBean {
 			String[] splitResult = domain.split("\\.");
 			String last = splitResult[splitResult.length - 1];
 			if (!Validators.isAlpha(last)) {
-				throw new SystemException("错误的域名:" + domain);
+				// throw new SystemException("错误的域名:" + domain);
+				rootDomain = domain;
+			} else {
+				// www.abc.com
+				// abc.com
+				if (domain.startsWith("www.") && splitResult.length == 3) {
+					rootDomain = splitResult[1] + "." + splitResult[2];
+				} else {
+					rootDomain = domain;
+				}
 			}
 
-			// www.abc.com
-			// abc.com
-			if (domain.startsWith("www.") && splitResult.length == 3) {
-				rootDomain = splitResult[1] + "." + splitResult[2];
-			} else {
-				rootDomain = domain;
-			}
 		}
 		contextPath = contextPath.trim();
 

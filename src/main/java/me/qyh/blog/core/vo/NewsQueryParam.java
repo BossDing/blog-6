@@ -4,7 +4,7 @@ import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-public class TweetQueryParam extends PageQueryParam {
+public class NewsQueryParam extends PageQueryParam {
 
 	/**
 	 * 
@@ -16,6 +16,18 @@ public class TweetQueryParam extends PageQueryParam {
 	private Date end;
 	private boolean queryPrivate;
 	private boolean asc;
+
+	public NewsQueryParam() {
+		super();
+	}
+
+	public NewsQueryParam(NewsQueryParam param) {
+		super(param);
+		this.begin = param.begin;
+		this.end = param.end;
+		this.queryPrivate = param.queryPrivate;
+		this.asc = param.asc;
+	}
 
 	public Date getBegin() {
 		return begin;

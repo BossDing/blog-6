@@ -29,7 +29,7 @@
 								</span> <span th:case="'userpage'" th:remove="tag">来自于页面[ <a
 										th:attr="href=${obj == null ? null : urls.getUrl(obj)}"
 										th:target="_blank" th:text="${obj == null ? '未知' :obj.name}"></a>]
-										</span><span th:case="'tweet'" th:remove="tag">来自于短博客[ <a
+										</span><span th:case="'news'" th:remove="tag">来自于短博客[ <a
 											href="javascript:void(0)"
 											th:text="${obj == null ? '未知' :times.format(obj.write,'yyyy-MM-dd HH:mm')}"></a>]
 									</span> 的评论

@@ -35,6 +35,11 @@
 								class="form-control integer" placeholder="标签每页显示数量"
 								th:value="${config.tagPageSize}" name="tagPageSize">
 						</div>
+						<div class="form-group">
+							<label for="">动态每页显示数量</label> <input
+								class="form-control integer" placeholder="短博客每页显示数量"
+								th:value="${config.newsPageSize}" name="newsPageSize">
+						</div>
 						<button type="button" id="update" class="btn btn-default">修改全局配置</button>
 					</form>
 				</div>

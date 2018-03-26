@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
+import static me.qyh.blog.template.render.data.DataTagProcessor.validDataName;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,8 +37,6 @@ import me.qyh.blog.template.render.ParseContextHolder;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
-
-import static me.qyh.blog.template.render.data.DataTagProcessor.validDataName;
 
 /**
  * {@link http://www.thymeleaf.org/doc/tutorials/3.0/extendingthymeleaf.html#creating-our-own-dialect}

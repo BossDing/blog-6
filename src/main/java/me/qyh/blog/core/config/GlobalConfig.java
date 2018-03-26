@@ -48,7 +48,7 @@ public class GlobalConfig {
 	 */
 	private int tagPageSize;
 
-	private int tweetPageSize;
+	private int newsPageSize;
 
 	public int getFilePageSize() {
 		return filePageSize;
@@ -90,11 +90,11 @@ public class GlobalConfig {
 		this.tagPageSize = tagPageSize;
 	}
 
-	public int getTweetPageSize() {
-		return tweetPageSize;
+	public int getNewsPageSize() {
+		return newsPageSize;
 	}
 
-	public void setTweetPageSize(int tweetPageSize) {
-		this.tweetPageSize = tweetPageSize;
+	public void setNewsPageSize(int newsPageSize) {
+		this.newsPageSize = newsPageSize;
 	}
 }

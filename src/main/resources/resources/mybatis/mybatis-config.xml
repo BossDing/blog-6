@@ -50,7 +50,7 @@
 		<typeAlias type="me.qyh.blog.comment.entity.CommentModule"
 			alias="CommentModule" />
 
-		<typeAlias type="me.qyh.blog.core.entity.Tweet" alias="Tweet" />
+		<typeAlias type="me.qyh.blog.core.entity.News" alias="News" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />
@@ -78,7 +78,7 @@
 		<mapper resource="resources/mybatis/mapper/pageCommentMapper.xml" />
 		
 		
-		<mapper resource="resources/mybatis/mapper/tweetMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/tweetCommentMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/newsMapper.xml" />
+		<mapper resource="resources/mybatis/mapper/newsCommentMapper.xml" />
 	</mappers>
 </configuration>

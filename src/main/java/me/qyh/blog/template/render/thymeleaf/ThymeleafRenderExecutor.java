@@ -68,12 +68,6 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 		return doExecutor(viewTemplateName, model, request, response);
 	}
 
-	public static void main(String[] arggs) {
-		String str = "Template%Fragment%底部 :: div";
-		int index = str.indexOf("::");
-		System.out.println(str.substring(0, index));
-	}
-
 	private String doExecutor(String viewTemplateName, final Map<String, Object> model,
 			final HttpServletRequest request, final HttpServletResponse response) {
 

@@ -29,11 +29,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
+import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.template.PathTemplate;
 
 /**
@@ -156,6 +158,24 @@ public class UrlHelper implements InitializingBean {
 			}
 			return url + '/' + relativePath;
 		}
+
+		/**
+		 * 获取动态的详情地址
+		 * 
+		 * @param news
+		 * @return
+		 */
+		public String getUrl(News news) {
+			return url + "/news/" + news.getId();
+		}
+
+		public NewsUrlHelper getNewsUrlHelper() {
+			return new NewsUrlHelper(url, "news");
+		}
+
+		public NewsUrlHelper getNewsUrlHelper(String path) {
+			return new NewsUrlHelper(url, path);
+		}
 	}
 
 	/**
@@ -212,6 +232,52 @@ public class UrlHelper implements InitializingBean {
 			boolean isSpaceEnv() {
 				return space != null;
 			}
+		}
+	}
+
+	protected final class NewsUrlHelper {
+		private final String url;
+		private final String path;
+
+		NewsUrlHelper(String url, String path) {
+			super();
+			this.url = url;
+			this.path = path;
+		}
+
+		public String getNewsUrl(NewsQueryParam param, int page) {
+			StringBuilder sb = new StringBuilder(url);
+			if (!path.isEmpty()) {
+				if (!path.startsWith("/")) {
+					sb.append('/');
+				}
+				sb.append(path);
+			}
+			sb.append("?currentPage=").append(page);
+			Date begin = param.getBegin();
+			Date end = param.getEnd();
+			if (begin != null && end != null) {
+				sb.append("&begin=").append(Times.format(Times.toLocalDateTime(begin), "yyyy-MM-dd HH:mm:ss"));
+				sb.append("&end=").append(Times.format(Times.toLocalDateTime(end), "yyyy-MM-dd HH:mm:ss"));
+			}
+			sb.append("&asc=").append(param.isAsc());
+			return sb.toString();
+		}
+
+		public String getNewsUrl(String begin, String end) {
+			NewsQueryParam param = new NewsQueryParam();
+			param.setBegin(Times.parseAndGetDate(begin));
+			if (param.getBegin() != null) {
+				param.setEnd(Times.parseAndGetDate(end));
+			}
+			return getNewsUrl(param, 1);
+		}
+
+		public String getNewsUrl(Date begin, Date end) {
+			NewsQueryParam param = new NewsQueryParam();
+			param.setBegin(begin);
+			param.setEnd(end);
+			return getNewsUrl(param, 1);
 		}
 	}
 

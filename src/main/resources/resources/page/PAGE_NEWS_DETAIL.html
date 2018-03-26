@@ -1,4 +1,4 @@
-<data name="短博客" />
+<data name="动态" th:id="${id}" />
 <data name="用户信息" />
 <!DOCTYPE html>
 <html>
@@ -17,7 +17,7 @@
 	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
 	  <script th:src="@{/static/js/respond.min.js}"></script>
 	<![endif]-->
-    <title>短博客</title>
+    <title >动态</title>
 </head>
 
 <body>
@@ -25,11 +25,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
-                <a th:href="@{/mgr/tweet/write}">新增</a>
-                <div class="alert alert-info" th:if="${#lists.isEmpty(tweetPage.datas)}">
-                    没有任何短博客
-                </div>
-                <div class="media" th:each="tweet : ${tweetPage.datas}" th:data-tweet="${tweet.id}">
+                <div class="media" th:data-news="${news.id}">
                     <div class="media-left">
                         <a href="#">
                           <img class="media-object" th:src="${gravatars.getOptionalUrl(myInfo.gravatar).orElse('/static/img/guest.png')}" style="width:32px;height:32px;">
@@ -37,14 +33,11 @@
                     </div>
                     <div class="media-body">
                         <h5 class="media-heading">
-                            <span th:text="${times.format(tweet.write,'yyyy-MM-dd HH:mm')}"></span>
-                            <a href="javascript:void(0)" th:data-comment="${tweet.id}" style="margin-left:5px" th:if="${tweet.allowComment || user != null}"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>
+                            <span th:text="${times.format(news.write,'yyyy-MM-dd HH:mm')}"></span>
+                            <a href="javascript:void(0)" th:data-comment="${news.id}" style="margin-left:5px" th:if="${news.allowComment || user != null}"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>
                         </h5>
-                        <p th:utext="${tweet.content}">
+                        <p th:utext="${news.content}">
 
-                        </p>
-                        <p th:attr="style=${tweet.comments > 0 ? 'null' : 'display:none'}" class="text text-info" data-comment-info>
-                            <a href="javascript:void(0)" th:onclick="'loadComments(\''+${tweet.id}+'\',\'1\')'"><small>共有<span class="num">[[${tweet.comments}]]</span>条评论</small></a>
                         </p>
                         <div data-comment-detail style="display:none">
 
@@ -54,8 +47,8 @@
             </div>
         </div>
     </div>
-
-    <div class="modal" tabindex="-1" role="dialog" id="comment-modal">
+  
+      <div class="modal" tabindex="-1" role="dialog" id="comment-modal">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -110,14 +103,17 @@
 
     <input type="hidden" id="gravatarPrefix" th:value="${gravatars.getUrl('')}" />
     <input type="hidden" id="login" th:value="${user != null}" />
+	<inpu type="hidden" id="newsId" th:value="${news.id}"/>
 
     <fragment name="底部" />
     <div th:replace="base/foot_source">&nbsp;</div>
     <script>
-        var tweetId;
+        var newsId = $('[data-news]').attr('data-news');
         var parentId;
         var login = $("#login").val() == 'true';
         $(function() {
+          
+          loadComments(newsId,1);
             var loadUserInfo = function() {
                 var name = '';
                 var email = '';
@@ -168,11 +164,10 @@
             cm.on('hidden.bs.modal', function() {
                 $("#content").val('');
                 $("#comment-error-tip").html('').hide();
-                tweetId = undefined;
                 parentId = undefined;
             });
             $('[data-comment]').click(function() {
-                tweetId = $(this).attr('data-comment');
+                newsId = $(this).attr('data-comment');
                 cm.modal('show');
             });
             $("#comment-btn").click(function() {
@@ -187,10 +182,10 @@
                         id: parentId
                     };
                 }
-                var tId = tweetId;
+                var tId = newsId;
                 $.ajax({
                     type: "post",
-                    url: basePath + '/tweet/' + tId + '/addComment',
+                    url: basePath + '/news/' + tId + '/addComment',
                     contentType: "application/json",
                     data: JSON.stringify(comment),
                     success: function(data) {
@@ -200,7 +195,7 @@
                                 bootbox.alert('评论将会在审核通过后显示');
                                 return;
                             }
-                            var t = $("[data-tweet='" + tId + "']");
+                            var t = $("[data-news='" + tId + "']");
                             var commentsPage = t.find('[data-comment-detail]').attr('data-page');
                             if (commentsPage) {
                                 loadComments(tId, parseInt(commentsPage));
@@ -220,45 +215,33 @@
             });
         });
 
-        function reply(comment, tweet) {
-            tweetId = tweet;
+        function reply(comment, news) {
+            newsId = news;
             parentId = comment;
             $("#comment-modal").modal('show');
         }
 
         function hideComment(id, o) {
             o.remove();
-            $("[data-tweet='" + id + "']").find('[data-comment-detail]').html('').hide();
+            $("[data-news='" + id + "']").find('[data-comment-detail]').html('').hide();
         }
 
         function loadComments(id, currentPage) {
-            var t = $("[data-tweet='" + id + "']");
+            var t = $("[data-news='" + id + "']");
             var c = t.find('[data-comment-detail]');
             $.get(basePath + '/data/评论', {
-                moduleType: 'tweet',
+                moduleType: 'news',
                 moduleId: id,
                 currentPage: currentPage,
-                pageSize: 5
+                pageSize: 20
             }, function(data) {
                 if (data.success) {
                     var page = data.data.data;
                     var datas = page.datas;
-                    var ci = t.find('[data-comment-info]');
-                    if (login) {
-                        ci.find('.num').html(page.totalRow - page.checkCount);
-                    } else {
-                        ci.find('.num').html(page.totalRow);
-                    }
                     if (page.totalRow == 0) {
                         c.html('').hide();
-                        ci.hide();
-                        bootbox.alert('没有评论');
                     } else {
-                        if (ci.find('[data-comment-hide]').length == 0) {
-                            ci.append('<a href="javascript:void(0)" data-comment-hide onclick="hideComment(\'' + id + '\',$(this))"><small>收起</small></a>')
-                        }
                         c.attr('data-page', page.currentPage);
-                        ci.show();
                         var html = '<hr>';
                         if (datas.length > 0) {
                             for (var i = 0; i < datas.length; i++) {
@@ -317,7 +300,7 @@
             });
         }
 
-        function checkComment(id, tweetId) {
+        function checkComment(id, newsId) {
             bootbox.confirm("确定要审核通过吗？", function(result) {
                 if (result) {
                     $.ajax({
@@ -331,12 +314,12 @@
                         },
                         crossDomain: true,
                         success: function(data) {
-                            var t = $("[data-tweet='" + tweetId + "']");
+                            var t = $("[data-news='" + newsId + "']");
                             var commentsPage = t.find('[data-comment-detail]').attr('data-page');
                             if (commentsPage) {
-                                loadComments(tweetId, parseInt(commentsPage));
+                                loadComments(newsId, parseInt(commentsPage));
                             } else {
-                                loadComments(tweetId, 1);
+                                loadComments(newsId, 1);
                             }
                         },
                         complete: function() {}
@@ -345,7 +328,7 @@
             });
         }
 
-        function removeComment(id, tweetId) {
+        function removeComment(id, newsId) {
             bootbox.confirm("确定要删除该评论吗？", function(result) {
                 if (result) {
                     $.ajax({
@@ -359,12 +342,12 @@
                         crossDomain: true,
                         success: function(data) {
                             if (data.success) {
-                                var t = $("[data-tweet='" + tweetId + "']");
+                                var t = $("[data-news='" + newsId + "']");
                                 var commentsPage = t.find('[data-comment-detail]').attr('data-page');
                                 if (commentsPage) {
-                                    loadComments(tweetId, parseInt(commentsPage));
+                                    loadComments(newsId, parseInt(commentsPage));
                                 } else {
-                                    loadComments(tweetId, 1);
+                                    loadComments(newsId, 1);
                                 }
                             } else {
                                 bootbox.alert(data.message);
@@ -378,7 +361,7 @@
 
         function queryConversations(id, tId) {
             $.get(
-                basePath + '/tweet/' + tId + '/comment/' +
+                basePath + '/news/' + tId + '/comment/' +
                 id + '/conversations', {},
                 function(data) {
                     if (!data.success) {
@@ -462,5 +445,3 @@
         }
     </script>
 </body>
-
-</html>

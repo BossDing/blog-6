@@ -35,20 +35,20 @@ import java.util.List;
 
 import org.springframework.context.ApplicationEvent;
 
-import me.qyh.blog.core.entity.Tweet;
+import me.qyh.blog.core.entity.News;
 
 /**
  * 
  * @author Administrator
  *
  */
-public class TweetEvent extends ApplicationEvent {
+public class NewsEvent extends ApplicationEvent {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private final List<Tweet> tweets;
+	private final List<News> news;
 	private final EventType eventType;
 
 	/**
@@ -60,9 +60,9 @@ public class TweetEvent extends ApplicationEvent {
 	 * @param eventType
 	 *            操作方式
 	 */
-	public TweetEvent(Object source, Tweet article, EventType eventType) {
+	public NewsEvent(Object source, News news, EventType eventType) {
 		super(source);
-		this.tweets = Collections.singletonList(article);
+		this.news = Collections.singletonList(news);
 		this.eventType = eventType;
 	}
 
@@ -75,14 +75,14 @@ public class TweetEvent extends ApplicationEvent {
 	 * @param eventType
 	 *            操作方式
 	 */
-	public TweetEvent(Object source, List<Tweet> tweets, EventType eventType) {
+	public NewsEvent(Object source, List<News> news, EventType eventType) {
 		super(source);
-		this.tweets = tweets;
+		this.news = news;
 		this.eventType = eventType;
 	}
 
-	public List<Tweet> getTweets() {
-		return tweets;
+	public List<News> getNews() {
+		return news;
 	}
 
 	public EventType getEventType() {

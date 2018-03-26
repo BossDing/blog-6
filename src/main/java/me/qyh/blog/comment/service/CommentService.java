@@ -606,7 +606,11 @@ public class CommentService
 		if (comment.getEditor().equals(Editor.MD)) {
 			content = markdown2Html.toHtml(comment.getContent());
 		}
-		comment.setContent(htmlClean.clean(content));
+		if (!comment.getAdmin()) {
+			comment.setContent(htmlClean.clean(content));
+		} else {
+			comment.setContent(content);
+		}
 		Comment p = comment.getParent();
 		if (p != null) {
 			fillComment(p);

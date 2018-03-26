@@ -85,9 +85,19 @@
 					<constructor-arg index="1" value="archives" />
 				</bean>
 
-				<bean class="me.qyh.blog.template.render.data.TweetsDataTagProcessor">
-					<constructor-arg index="0" value="短博客" />
-					<constructor-arg index="1" value="tweetPage" />
+				<bean class="me.qyh.blog.template.render.data.NewsPageDataTagProcessor">
+					<constructor-arg index="0" value="动态列表" />
+					<constructor-arg index="1" value="newsPage" />
+				</bean>
+
+				<bean class="me.qyh.blog.template.render.data.LastNewsDataTagProcessor">
+					<constructor-arg index="0" value="最近动态" />
+					<constructor-arg index="1" value="lastNews" />
+				</bean>
+				
+				<bean class="me.qyh.blog.template.render.data.NewsDataTagProcessor">
+					<constructor-arg index="0" value="动态" />
+					<constructor-arg index="1" value="news" />
 				</bean>
 
 			</list>

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="me.qyh.blog.comment.dao.TweetCommentDao">
+<mapper namespace="me.qyh.blog.comment.dao.NewsCommentDao">
 
 	<select id="selectLastComments" resultMap="me.qyh.blog.comment.dao.CommentDao.CommentDetail">
 		SELECT 
@@ -12,11 +12,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		p.comment_nickname AS p_comment_nickname,p.comment_email AS p_comment_email,p.comment_ip AS p_comment_ip,p.comment_admin AS p_comment_admin,p.comment_gravatar AS p_comment_gravatar
 		FROM blog_comment a
 		LEFT OUTER JOIN blog_comment p ON a.parent_id = p.id
-		LEFT OUTER JOIN blog_tweet bt ON a.module_id = bt.id
+		LEFT OUTER JOIN blog_news bt ON a.module_id = bt.id
 		WHERE a.comment_status = 0
-		AND a.module_type = 'tweet'
+		AND a.module_type = 'news'
 		<if test="!queryPrivate">
-			AND bt.tweet_private = FALSE
+			AND bt.news_private = FALSE
 		</if>
 		<if test="!queryAdmin">
 			AND a.comment_admin = FALSE
@@ -31,12 +31,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			COUNT(a.id)
 		FROM
 			blog_comment a
-		LEFT OUTER JOIN blog_tweet bt ON a.module_id = bt.id
+		LEFT OUTER JOIN blog_news bt ON a.module_id = bt.id
 		WHERE 
 			a.comment_status = 0<!-- NORMAL -->
-			AND a.module_type = 'tweet'
+			AND a.module_type = 'news'
 		<if test="!queryPrivate">
-			AND bt.tweet_private = false
+			AND bt.news_private = false
 		</if>
 	</select>
 </mapper>

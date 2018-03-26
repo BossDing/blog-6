@@ -39,7 +39,7 @@ public class ConfigServer implements InitializingBean {
 	private static final String PAGE_SIZE_USERPAGE = "pagesize.userpage";
 	private static final String PAGE_SIZE_ARICLE = "pagesize.article";
 	private static final String PAGE_SIZE_TAG = "pagesize.tag";
-	private static final String PAGE_SIZE_TWEET = "pagesize.tweet";
+	private static final String PAGE_SIZE_NEWS = "pagesize.news";
 
 	private final Properties config = new Properties();
 
@@ -64,7 +64,7 @@ public class ConfigServer implements InitializingBean {
 		config.setTagPageSize(getInt(PAGE_SIZE_TAG, 5));
 		config.setPagePageSize(getInt(PAGE_SIZE_USERPAGE, 5));
 		config.setFragmentPageSize(getInt(PAGE_SIZE_USERFRAGEMENT, 5));
-		config.setTweetPageSize(getInt(PAGE_SIZE_TWEET, 5));
+		config.setNewsPageSize(getInt(PAGE_SIZE_NEWS, 5));
 
 		return config;
 	}
@@ -82,7 +82,7 @@ public class ConfigServer implements InitializingBean {
 		config.setProperty(PAGE_SIZE_ARICLE, Integer.toString(globalConfig.getArticlePageSize()));
 		config.setProperty(PAGE_SIZE_USERFRAGEMENT, Integer.toString(globalConfig.getFragmentPageSize()));
 		config.setProperty(PAGE_SIZE_USERPAGE, Integer.toString(globalConfig.getPagePageSize()));
-		config.setProperty(PAGE_SIZE_TWEET, Integer.toString(globalConfig.getTweetPageSize()));
+		config.setProperty(PAGE_SIZE_NEWS, Integer.toString(globalConfig.getNewsPageSize()));
 		store();
 		return globalConfig;
 	}

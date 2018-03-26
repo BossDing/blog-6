@@ -1,0 +1,554 @@
+<data name="动态列表" th:currentPage="${param.currentPage}" th:begin="${param.begin}" th:end="${param.end}" th:asc="${param.asc}" />
+<data name="用户信息" />
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
+    <link th:href="@{/static/css/blog.css}" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+	  <script th:src="@{/static/js/html5shiv.min.js}"></script>
+	  <script th:src="@{/static/js/respond.min.js}"></script>
+	<![endif]-->
+    <title>动态</title>
+</head>
+
+<body>
+    <fragment name="顶部导航" />
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="alert alert-info" th:if="${#lists.isEmpty(newsPage.datas)}">没有任何短博客</div>
+                <div th:unless="${#lists.isEmpty(newsPage.datas)}">
+                    <div style="text-align:right"><input type="checkbox" id="asc" th:attr="checked=${newsPage.param.asc ? 'checked' : null}" />正序</div>
+                    <div class="media" th:each="news : ${newsPage.datas}" th:data-news="${news.id}">
+                        <div class="media-left">
+                            <a href="#"> <img class="media-object"
+								th:src="${gravatars.getOptionalUrl(myInfo.gravatar).orElse('/static/img/guest.png')}"
+								style="width: 32px; height: 32px;">
+							</a>
+                        </div>
+                        <div class="media-body">
+                            <h5 class="media-heading">
+                                <span th:text="${times.format(news.write,'yyyy-MM-dd HH:mm')}"></span>
+                                <a href="javascript:void(0)" th:data-comment="${news.id}" style="margin-left: 5px" th:if="${news.allowComment || user != null}"><span
+									class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>
+                            </h5>
+                            <p th:utext="${news.content}"></p>
+                            <p th:attr="style=${news.comments > 0 ? 'null' : 'display:none'}" class="text text-info" data-comment-info>
+                                <a href="javascript:void(0)" th:onclick="'loadComments(\''+${news.id}+'\',\'1\')'"><small>共有<span
+										class="num">[[${news.comments}]]</span>条评论
+								</small></a>
+                            </p>
+                            <div data-comment-detail style="display: none"></div>
+                        </div>
+                    </div>
+                </div>
+                <nav th:if="${newsPage.totalPage > 1}" th:with="newsUrlHelper=${urls.newsUrlHelper}">
+                    <ul class="pagination">
+                        <li><a th:href="${newsUrlHelper.getNewsUrl(newsPage.param,1)}"><span
+								aria-hidden="true">&laquo;</span></a></li>
+                        <li th:each=" i : ${#numbers.sequence(newsPage.listbegin, newsPage.listend-1)}" th:class="${(i == newsPage.currentPage) ? 'active' : ''}"><a th:href="${newsUrlHelper.getNewsUrl(newsPage.param,i)}" th:text="${i}"></a></li>
+                        <li><a th:href="${newsUrlHelper.getNewsUrl(newsPage.param,newsPage.totalPage)}"><span
+								aria-hidden="true">&raquo;</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" role="dialog" id="comment-modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+                    <h4 class="modal-title">评论</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" style="display: none" id="comment-error-tip"></div>
+                    <form class="form-horizontal">
+                        <div class="form-group" th:if="${user == null}">
+                            <label class="col-sm-2 control-label">昵称</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="nickname" placeholder="必填">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">内容</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" id="content" style="height: 270px" placeholder="必填"></textarea>
+                            </div>
+                        </div>
+                        <div th:remove="tag" th:if="${user == null}">
+                            <p class="text text-info" style="text-align: right">
+                                <a href="javascript:void(0)" onclick="$('#other-info').toggle()"><small>补充其他信息</small></a>
+                            </p>
+                            <div id="other-info" style="display: none">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">邮箱</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="email" placeholder="用于显示gravatar头像" maxlength="100">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">网址</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="website" placeholder="">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="comment-btn">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="gravatarPrefix" th:value="${gravatars.getUrl('')}" />
+    <input type="hidden" id="login" th:value="${user != null}" />
+
+    <fragment name="底部" />
+    <div th:replace="base/foot_source">&nbsp;</div>
+    <script>
+        var newsId;
+        var parentId;
+        var login = $("#login").val() == 'true';
+        $(function() {
+            $("#asc").change(function() {
+                var asc = $(this).is(":checked");
+                window.location.href = basePath + '/news?asc=' + asc;
+            });
+            var loadUserInfo = function() {
+                var name = '';
+                var email = '';
+                var website = '';
+                if (window.localStorage) {
+                    if (localStorage.commentName) {
+                        name = localStorage.commentName;
+                    }
+                    if (localStorage.commentEmail) {
+                        email = localStorage.commentEmail;
+                    }
+                    if (localStorage.commentWebsite) {
+                        website = localStorage.commentWebsite;
+                    }
+                }
+                $("#nickname").val(name);
+                $("#email").val(email);
+                $("#website").val(website);
+            }
+
+            var storeUserInfo = function(name, email, website) {
+                if (window.localStorage) {
+                    if (name && name != '')
+                        localStorage.commentName = name;
+                    else
+                        localStorage.commentName = "";
+                    if (email && email != '')
+                        localStorage.commentEmail = email;
+                    else
+                        localStorage.commentEmail = "";
+                    if (website && website != '')
+                        localStorage.commentWebsite = website;
+                    else
+                        localStorage.commentWebsite = "";
+                }
+            }
+            var cm = $("#comment-modal");
+            cm.on('show.bs.modal', function() {
+                loadUserInfo();
+                $.ajax({
+                    url: basePath + '/comment/needCaptcha',
+                    async: false,
+                    success: function(data) {
+
+                    }
+                })
+            });
+            cm.on('hidden.bs.modal', function() {
+                $("#content").val('');
+                $("#comment-error-tip").html('').hide();
+                newsId = undefined;
+                parentId = undefined;
+            });
+            $('[data-comment]').click(function() {
+                newsId = $(this).attr('data-comment');
+                cm.modal('show');
+            });
+            $("#comment-btn").click(
+                function() {
+                    var me = $(this)
+                    var comment = {};
+                    comment.content = $("#content").val();
+                    comment.website = $("#website").val();
+                    comment.email = $("#email").val();
+                    comment.nickname = $("#nickname").val();
+                    if (parentId) {
+                        comment.parent = {
+                            id: parentId
+                        };
+                    }
+                    var tId = newsId;
+                    $.ajax({
+                        type: "post",
+                        url: basePath + '/news/' + tId + '/addComment',
+                        contentType: "application/json",
+                        data: JSON.stringify(comment),
+                        success: function(data) {
+                            if (data.success) {
+                                $("#comment-modal").modal('hide');
+                                if (data.data.status == 'CHECK') {
+                                    bootbox.alert('评论将会在审核通过后显示');
+                                    return;
+                                }
+                                var t = $("[data-news='" + tId + "']");
+                                var commentsPage = t.find(
+                                    '[data-comment-detail]').attr(
+                                    'data-page');
+                                if (commentsPage) {
+                                    loadComments(tId,
+                                        parseInt(commentsPage));
+                                } else {
+                                    loadComments(tId, 1);
+                                }
+                                storeUserInfo(comment.nickname,
+                                    comment.email, comment.website);
+                            } else {
+                                $("#comment-error-tip").html(data.message)
+                                    .show();
+                            }
+                        },
+                        complete: function() {
+                            me.prop("disabled", false);
+                        }
+                    });
+
+                });
+        });
+
+        function reply(comment, news) {
+            newsId = news;
+            parentId = comment;
+            $("#comment-modal").modal('show');
+        }
+
+        function hideComment(id, o) {
+            o.remove();
+            $("[data-news='" + id + "']").find('[data-comment-detail]')
+                .html('').hide();
+        }
+
+        function loadComments(id, currentPage) {
+            var t = $("[data-news='" + id + "']");
+            var c = t.find('[data-comment-detail]');
+            $
+                .get(
+                    basePath + '/data/评论', {
+                        moduleType: 'news',
+                        moduleId: id,
+                        currentPage: currentPage,
+                        pageSize: 5
+                    },
+                    function(data) {
+                        if (data.success) {
+                            var page = data.data.data;
+                            var datas = page.datas;
+                            var ci = t.find('[data-comment-info]');
+                            if (login) {
+                                ci
+                                    .find('.num')
+                                    .html(
+                                        page.totalRow -
+                                        page.checkCount);
+                            } else {
+                                ci.find('.num').html(page.totalRow);
+                            }
+                            if (page.totalRow == 0) {
+                                c.html('').hide();
+                                ci.hide();
+                                bootbox.alert('没有评论');
+                            } else {
+                                if (ci.find('[data-comment-hide]').length == 0) {
+                                    ci
+                                        .append('<a href="javascript:void(0)" data-comment-hide onclick="hideComment(\'' +
+                                            id +
+                                            '\',$(this))"><small>收起</small></a>')
+                                }
+                                c.attr('data-page', page.currentPage);
+                                ci.show();
+                                var html = '<hr>';
+                                if (datas.length > 0) {
+                                    for (var i = 0; i < datas.length; i++) {
+                                        var data = datas[i];
+                                        html += '<div class="media">';
+                                        html += '<div class="media-left">';
+                                        html += '<a href="#"> <img class="media-object" src="' +
+                                            getAvatar(data) +
+                                            '" style="width:24px;height:24px"></a>';
+                                        html += '</div>';
+                                        html += '<div class="media-body">';
+                                        var time = new Date(
+                                                data.commentDate)
+                                            .format('yyyy-mm HH:MM');
+                                        html += '<h6 class="media-heading">' +
+                                            getUsername(data) +
+                                            '</h6>';
+                                        if (data.parent) {
+                                            var pnickname = getUsername(data.parent);
+                                            html += '<small style="margin-right:10px">回复' +
+                                                pnickname +
+                                                ':</small>';
+                                        }
+                                        html += data.content;
+                                        html += '<p><small>' + time +
+                                            '</small>';
+                                        if (login) {
+                                            html += '<a href="javascript:void(0)" onclick="removeComment(\'' +
+                                                data.id +
+                                                '\',\'' +
+                                                id +
+                                                '\')" style="margin-left:10px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+                                        }
+                                        if (data.status == 'CHECK') {
+                                            html += '<a href="javascript:void(0)" onclick="checkComment(\'' +
+                                                data.id +
+                                                '\',\'' +
+                                                id +
+                                                '\')" style="margin-left:10px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
+                                        } else {
+                                            html += '<a href="javascript:void(0)" onclick="reply(\'' +
+                                                data.id +
+                                                '\',\'' +
+                                                id +
+                                                '\')" style="margin-left:10px"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
+                                            if (data.parent) {
+                                                html += '<a href="javascript:void(0)" onclick="queryConversations(\'' +
+                                                    data.id +
+                                                    '\',\'' +
+                                                    id +
+                                                    '\')" style="margin-left:10px"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>';
+                                            }
+                                        }
+                                        html += '</p>';
+                                        html += '</div>';
+                                        html += '</div>';
+                                    };
+                                } else {
+                                    html += '<div class="alert alert-info">没有评论</div>';
+                                }
+                                if (page.totalPage > 1) {
+                                    html += '<nav>';
+                                    html += '<ul class="pagination">';
+                                    html += '<li><a href="javascript:void(0)" onclick="loadComments(\'' +
+                                        id +
+                                        '\',\'1\')">«</a></li>';
+                                    for (var j = page.listbegin; j < page.listend; j++) {
+                                        if (j == page.currentPage) {
+                                            html += '<li class="active"><a href="javascript:void(0)" >' +
+                                                j + '</a></li>';
+                                        } else {
+                                            html += '<li><a href="javascript:void(0)" onclick="loadComments(\'' +
+                                                id +
+                                                '\',\'' +
+                                                j +
+                                                '\')">' +
+                                                j +
+                                                '</a></li>';
+                                        }
+                                    }
+                                    html += '<li><a href="javascript:void(0)" onclick="loadComments(\'' +
+                                        id +
+                                        '\',\'' +
+                                        page.totalPage +
+                                        '\')">»</a></li>';
+                                    html += '</ul>';
+                                    html += '</nav>';
+                                }
+                                c.html(html).show();
+                            }
+                        } else {
+                            bootbox.alert(data.message);
+                        }
+                    });
+        }
+
+        function checkComment(id, newsId) {
+            bootbox.confirm("确定要审核通过吗？", function(result) {
+                if (result) {
+                    $.ajax({
+                        type: "post",
+                        url: rootPath + "/mgr/comment/check?id=" + id,
+                        data: {
+                            id: id
+                        },
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        crossDomain: true,
+                        success: function(data) {
+                            var t = $("[data-news='" + newsId + "']");
+                            var commentsPage = t.find('[data-comment-detail]')
+                                .attr('data-page');
+                            if (commentsPage) {
+                                loadComments(newsId, parseInt(commentsPage));
+                            } else {
+                                loadComments(newsId, 1);
+                            }
+                        },
+                        complete: function() {}
+                    });
+                }
+            });
+        }
+
+        function removeComment(id, newsId) {
+            bootbox
+                .confirm(
+                    "确定要删除该评论吗？",
+                    function(result) {
+                        if (result) {
+                            $
+                                .ajax({
+                                    type: "post",
+                                    url: rootPath +
+                                        "/mgr/comment/delete?id=" +
+                                        id,
+                                    contentType: "application/json",
+                                    data: {},
+                                    xhrFields: {
+                                        withCredentials: true
+                                    },
+                                    crossDomain: true,
+                                    success: function(data) {
+                                        if (data.success) {
+                                            var t = $("[data-news='" +
+                                                newsId + "']");
+                                            var commentsPage = t
+                                                .find(
+                                                    '[data-comment-detail]')
+                                                .attr(
+                                                    'data-page');
+                                            if (commentsPage) {
+                                                loadComments(
+                                                    newsId,
+                                                    parseInt(commentsPage));
+                                            } else {
+                                                loadComments(
+                                                    newsId, 1);
+                                            }
+                                        } else {
+                                            bootbox
+                                                .alert(data.message);
+                                        }
+                                    },
+                                    complete: function() {}
+                                });
+                        }
+                    });
+        }
+
+        function queryConversations(id, tId) {
+            $
+                .get(
+                    basePath + '/news/' + tId + '/comment/' + id +
+                    '/conversations', {},
+                    function(data) {
+                        if (!data.success) {
+                            bootbox.alert(data.message);
+                            return;
+                        }
+                        data = data.data;
+                        var html = '';
+                        for (var i = 0; i < data.length; i++) {
+                            var c = data[i];
+                            var p = i == 0 ? null : data[i - 1];
+                            html += '<div class="media" id="comment-' +
+                                c.id +
+                                '" data-p="' +
+                                ((!c.parent || c.parent == null) ? '' :
+                                    c.parent.id) + '">';
+                            html += '<a class="pull-left">';
+                            html += '<img class="media-object"  src="' +
+                                getAvatar(c) +
+                                '" data-holder-rendered="true" style="width: 32px; height: 32px;">';
+                            html += '</a>';
+                            html += '<div class="media-body">';
+                            var username = getUsername(c);
+                            var user = '<strong>' + username +
+                                '</strong>';
+                            var p_username = getUsername(p);
+                            html += '<h5 class="media-heading">' + user +
+                                '</h5>';
+                            if (p) {
+                                var pnickname = getUsername(p);
+                                html += '<small style="margin-right:10px">回复' +
+                                    pnickname + ':</small>';
+                            }
+                            html += c.content;
+                            html += '<h5>' +
+                                new Date(c.commentDate)
+                                .format('yyyy-mm-dd HH:MM') +
+                                '&nbsp;&nbsp;&nbsp;</h5>';
+                            html += '</div>';
+                            html += '</div>';
+                        }
+                        if ($('#conversationsModal').length == 0) {
+                            var modal = '<div class="modal " id="conversationsModal" tabindex="-1" role="dialog" >';
+                            modal += '<div class="modal-dialog" role="document">';
+                            modal += '<div class="modal-content">';
+                            modal += '<div class="modal-header">';
+                            modal += '<h4 class="modal-title">对话</h4>';
+                            modal += '</div>';
+                            modal += '<div class="modal-body" id="conversationsBody">';
+                            modal += '<div class="tip"></div>';
+                            modal += '</div>';
+                            modal += '<div class="modal-footer">';
+                            modal += '<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>';
+                            modal += '</div>';
+                            modal += '</div>';
+                            modal += '</div>';
+                            modal += '</div>';
+                            $(modal).appendTo($('body'));
+                        }
+                        $('#conversationsBody').html(html);
+                        $('#conversationsModal').modal('show');
+                    });
+        }
+
+        function getAvatar(c) {
+            if (c.gravatar) {
+                return $("#gravatarPrefix").val() + c.gravatar;
+            }
+            return rootPath + '/static/img/guest.png';
+        }
+
+        function getUsername(c) {
+            if (c == null || !c) {
+                return '';
+            }
+            var username = '';
+            if (c.admin) {
+                username = '<span class="glyphicon glyphicon-user" style="color:red"  title="管理员"></span>&nbsp;' +
+                    c.nickname
+            } else {
+                username = c.nickname
+            }
+            return username;
+        }
+    </script>
+</body>
+
+</html>

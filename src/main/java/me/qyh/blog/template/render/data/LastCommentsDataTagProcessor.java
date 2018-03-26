@@ -26,7 +26,7 @@ import me.qyh.blog.core.exception.LogicException;
 
 public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>> {
 
-	private static final Integer DEFAULT_LIMIT = 10;
+	private static final int DEFAULT_LIMIT = 10;
 	private static final int MAX_LIMIT = 50;
 
 	@Autowired

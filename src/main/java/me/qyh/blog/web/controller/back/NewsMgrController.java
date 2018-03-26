@@ -16,77 +16,77 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import me.qyh.blog.core.entity.Tweet;
+import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.service.TweetService;
-import me.qyh.blog.core.validator.TweetQueryParamValidator;
-import me.qyh.blog.core.validator.TweetValidator;
+import me.qyh.blog.core.service.NewsService;
+import me.qyh.blog.core.validator.NewsQueryParamValidator;
+import me.qyh.blog.core.validator.NewsValidator;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.core.vo.TweetQueryParam;
+import me.qyh.blog.core.vo.NewsQueryParam;
 
 @Controller
-@RequestMapping("mgr/tweet")
-public class TweetMgrController extends BaseMgrController {
+@RequestMapping("mgr/news")
+public class NewsMgrController extends BaseMgrController {
 	@Autowired
-	private TweetValidator tweetValidator;
+	private NewsValidator newsValidator;
 	@Autowired
-	private TweetService tweetService;
+	private NewsService newsService;
 	@Autowired
-	private TweetQueryParamValidator tweetQueryParamValidator;
+	private NewsQueryParamValidator newsQueryParamValidator;
 
-	@InitBinder(value = "tweet")
+	@InitBinder(value = "news")
 	protected void initBinder(WebDataBinder binder) {
-		binder.setValidator(tweetValidator);
+		binder.setValidator(newsValidator);
 	}
 
-	@InitBinder(value = "tweetQueryParam")
+	@InitBinder(value = "newsQueryParam")
 	protected void initQueryBinder(WebDataBinder binder) {
-		binder.setValidator(tweetQueryParamValidator);
+		binder.setValidator(newsQueryParamValidator);
 	}
 
 	@GetMapping("index")
-	public String index(@Validated TweetQueryParam tweetQueryParam, Model model) {
-		tweetQueryParam.setQueryPrivate(true);
-		model.addAttribute("page", tweetService.queryTweet(tweetQueryParam));
-		return "mgr/tweet/index";
+	public String index(@Validated NewsQueryParam newsQueryParam, Model model) {
+		newsQueryParam.setQueryPrivate(true);
+		model.addAttribute("page", newsService.queryNews(newsQueryParam));
+		return "mgr/news/index";
 	}
 
 	@PostMapping("del/{id}")
 	@ResponseBody
 	public JsonResult del(@PathVariable("id") Integer id) throws LogicException {
-		tweetService.deleteTweet(id);
+		newsService.deleteNews(id);
 		return new JsonResult(true, "删除成功");
 	}
 
 	@GetMapping("write")
 	public String write(Model model) {
-		model.addAttribute("tweet", new Tweet());
-		return "mgr/tweet/write";
+		model.addAttribute("news", new News());
+		return "mgr/news/write";
 	}
 
 	@PostMapping("write")
 	@ResponseBody
-	public JsonResult write(@Validated @RequestBody Tweet tweet) throws LogicException {
-		tweetService.saveTweet(tweet);
-		return new JsonResult(true, new Message("tweet.save.success", "保存成功"));
+	public JsonResult write(@Validated @RequestBody News news) throws LogicException {
+		newsService.saveNews(news);
+		return new JsonResult(true, new Message("news.save.success", "保存成功"));
 	}
 
 	@GetMapping("update/{id}")
 	public String edit(@PathVariable("id") Integer id, Model model, RedirectAttributes ra) {
-		Optional<Tweet> op = tweetService.getTweet(id);
+		Optional<News> op = newsService.getNews(id);
 		if (op.isPresent()) {
-			model.addAttribute("tweet", op.get());
-			return "mgr/tweet/write";
+			model.addAttribute("news", op.get());
+			return "mgr/news/write";
 		}
-		ra.addFlashAttribute("error", new Message("tweet.notExists", "微博客不存在"));
-		return "redirect:/mgr/tweet/index";
+		ra.addFlashAttribute("error", new Message("news.notExists", "微博客不存在"));
+		return "redirect:/mgr/news/index";
 	}
 
 	@PostMapping("update")
 	@ResponseBody
-	public JsonResult update(@Validated @RequestBody Tweet tweet) throws LogicException {
-		tweetService.updateTweet(tweet);
-		return new JsonResult(true, new Message("tweet.update.success", "更新成功"));
+	public JsonResult update(@Validated @RequestBody News news) throws LogicException {
+		newsService.updateNews(news);
+		return new JsonResult(true, new Message("news.update.success", "更新成功"));
 	}
 }

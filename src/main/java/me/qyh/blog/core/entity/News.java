@@ -3,13 +3,13 @@ package me.qyh.blog.core.entity;
 import java.sql.Timestamp;
 
 /**
- * 短博客
+ * 动态
  * 
  * @since 6.0
  * @author wwwqyhme
  *
  */
-public class Tweet extends BaseEntity {
+public class News extends BaseEntity {
 
 	/**
 	 * 
