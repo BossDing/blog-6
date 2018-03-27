@@ -224,4 +224,8 @@ public class Fragment extends BaseEntity implements Template {
 	public static boolean isFragmentTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(FRAGMENT_PREFIX);
 	}
+
+	public static boolean isPreviewFragmentTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX + FRAGMENT_PREFIX);
+	}
 }

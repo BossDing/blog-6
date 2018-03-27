@@ -90,7 +90,11 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 	@Override
 	protected Resource getResource(HttpServletRequest request) throws IOException {
-		String path = super.getPath(request);
+		Optional<String> op = super.getPath(request);
+		if (!op.isPresent()) {
+			return null;
+		}
+		String path = op.get();
 		if (path.startsWith("/avatar")) {
 			path = path.substring(7);
 		}

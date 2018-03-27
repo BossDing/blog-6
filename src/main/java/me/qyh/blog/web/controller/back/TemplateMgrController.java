@@ -46,7 +46,6 @@ import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
-import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.validator.ExportPageValidator;
@@ -134,7 +133,6 @@ public class TemplateMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult clearPreview() {
 		templateService.clearPreview();
-		TemplateRequestMappingHandlerMapping.PREVIEW_IP = null;
 		return new JsonResult(true, new Message("clearPreview.success", "清除预览页面成功"));
 	}
 

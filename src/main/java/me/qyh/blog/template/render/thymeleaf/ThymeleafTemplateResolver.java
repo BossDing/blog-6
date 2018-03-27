@@ -59,7 +59,7 @@ public class ThymeleafTemplateResolver implements ITemplateResolver {
 		if (!Template.isTemplate(templateName)) {
 			return null;
 		}
-
+		
 		Optional<Template> optional = templateService.queryTemplate(templateName);
 		ITemplateResource templateResource = optional.<ITemplateResource>map(TemplateResource::new)
 				.orElseGet(() -> new StringTemplateResource(""));

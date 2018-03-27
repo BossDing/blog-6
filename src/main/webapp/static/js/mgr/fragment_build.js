@@ -1,5 +1,7 @@
 var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
 	save(true);
+}},{key:'Ctrl-P',fun:function(){
+	preview();
 }}]);
 var saveFlag = false;
 var preEditorContent;
@@ -101,7 +103,33 @@ $(document).ready(function() {
 		editor.replaceSelection('<fragment name="'+name+'"/>');
 		$("#lookupModal").modal('hide')
 	}
-	
+	function preview() {
+		var data = $("#previewModal form").serializeObject();
+		var space = data.space;
+		delete data['space'];
+		if(space != ''){
+			data.space = {"id":space};
+		}
+		data.global = $("#previewModal form input[type=checkbox]").eq(0).prop("checked");
+		data.callable = $("#previewModal form input[type=checkbox]").eq(1).prop("checked");
+		data.tpl = editor.getValue();
+		$.ajax({
+			type : "post",
+			url : basePath + '/mgr/template/fragment/preview',
+			data : JSON.stringify(data),
+			dataType : "json",
+			contentType : 'application/json',
+			success : function(data){
+				if (data.success) {
+					bootbox.alert("预览成功，请自行访问拥有该模板片段的页面预览效果");
+				} else {
+					bootbox.alert(data.message);
+				}
+			},
+			complete:function(){
+			}
+		});
+	}
 	function showLock(){
 		$.get(basePath + '/mgr/lock/all',{},function(data){
 			var oldLock = $("#oldLock").val();

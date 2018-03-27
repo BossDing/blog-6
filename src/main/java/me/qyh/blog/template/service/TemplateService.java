@@ -179,7 +179,7 @@ public interface TemplateService {
 	/**
 	 * 检查template是否和当前的template一致
 	 * <p>
-	 * <b> 这个方法执行期间的时候不应该出现写操作并行执行 所以consumer应该简短</b>
+	 * <b> 这个方法执行期间的时候不应该出现写操作并行执行 consumer应该简短</b>
 	 * </p>
 	 * 
 	 * @param templateName
@@ -282,5 +282,39 @@ public interface TemplateService {
 	 * @exception
 	 */
 	void restoreLoginPage() throws LogicException;
+
+	/**
+	 * 用于预览的IP
+	 * <p>
+	 * 成功设置预览界面|模板片段后返回当前设置的IP<br>
+	 * 当用户注销后|删除预览页面时 将此返回空<br>
+	 * </p>
+	 * 
+	 * @since 5.10
+	 * @return
+	 * 
+	 */
+	Optional<String> getPreviewIp();
+
+	/**
+	 * 注册用于预览的模板片段
+	 * 
+	 * @param fragment
+	 * @throws LogicException
+	 */
+	void registerPreview(Fragment fragment) throws LogicException;
+
+	/**
+	 * 获取模板片段的模板名称
+	 * 
+	 * @param name
+	 *            名称
+	 * @param space
+	 *            空间
+	 * @param ip
+	 *            ip地址
+	 * @return
+	 */
+	String getFragmentTemplateName(String name, Space space, String ip);
 
 }

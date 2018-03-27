@@ -117,7 +117,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 
 	@Override
 	protected Resource findResource(HttpServletRequest request) throws IOException {
-		return findResource(getPath(request), request).orElse(null);
+		return getPath(request).flatMap(path -> findResource(path, request)).orElse(null);
 	}
 
 	/**

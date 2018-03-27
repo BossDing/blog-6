@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,7 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.event.EventType;
 import me.qyh.blog.core.event.SpaceDeleteEvent;
@@ -137,6 +139,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private Map<String, SystemTemplate> defaultTemplates;
 
 	private final List<TemplateProcessor> templateProcessors = new ArrayList<>();
+
+	private String previewIp;
+
+	private List<Fragment> previewFragments = new ArrayList<>();
 
 	@Override
 	public synchronized Fragment insertFragment(Fragment fragment) throws LogicException {
@@ -514,17 +520,38 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public void registerPreview(PathTemplate template) throws LogicException {
+	public synchronized void registerPreview(PathTemplate template) throws LogicException {
 		try {
 			templateMapping.getPreviewTemplateMapping().register(template);
+			previewIp = Environment.getIP();
 		} catch (PatternAlreadyExistsException e) {
 			throw convert(e);
 		}
 	}
 
 	@Override
-	public void clearPreview() {
+	public synchronized void registerPreview(Fragment fragment) throws LogicException {
+		String templateName = fragment.getTemplateName();
+		for (Iterator<Fragment> it = previewFragments.iterator(); it.hasNext();) {
+			Fragment pFragment = it.next();
+			if (pFragment.getTemplateName().equals(templateName)) {
+				// Template%Fragment%top%1
+				if (pFragment.getSpace() != null || (pFragment.isGlobal() == fragment.isGlobal())) {
+					it.remove();
+					break;
+				}
+			}
+
+		}
+		previewFragments.add(fragment);
+		previewIp = Environment.getIP();
+	}
+
+	@Override
+	public synchronized void clearPreview() {
 		templateMapping.getPreviewTemplateMapping().clear();
+		previewFragments.clear();
+		previewIp = null;
 	}
 
 	/**
@@ -778,7 +805,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private Optional<Fragment> queryFragmentWithTemplateName(String templateName) {
-		String[] array = templateName.split(Template.SPLITER);
+		boolean preview = Template.isPreviewTemplate(templateName);
+		String finalTemplateName;
+		if (preview) {
+			finalTemplateName = templateName.substring(Template.TEMPLATE_PREVIEW_PREFIX.length());
+		} else {
+			finalTemplateName = templateName;
+		}
+		String[] array = finalTemplateName.split(Template.SPLITER);
 		String name;
 		Space space = null;
 		if (array.length == 3) {
@@ -787,8 +821,29 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			name = array[2];
 			space = new Space(Integer.parseInt(array[3]));
 		} else {
-			throw new SystemException(templateName + "无法转化为Fragment");
+			throw new SystemException(finalTemplateName + "无法转化为Fragment");
 		}
+
+		if (preview) {
+			synchronized (TemplateServiceImpl.this) {
+				if (!previewFragments.isEmpty()) {
+					Fragment best = null;
+					for (Fragment previewFragment : previewFragments) {
+						if (previewFragment.getTemplateName().equals(finalTemplateName)) {
+							if (!previewFragment.isGlobal() || previewFragment.getSpace() != null) {
+								best = previewFragment;
+								break;
+							}
+							best = previewFragment;
+						}
+					}
+					if (best != null) {
+						return Optional.of(best);
+					}
+				}
+			}
+		}
+
 		Fragment fragment = fragmentDao.selectBySpaceAndName(space, name);
 		if (fragment == null) { // 查找全局
 			fragment = fragmentDao.selectGlobalByName(name);
@@ -1053,7 +1108,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public boolean canProcess(String templateSign) {
-			return Fragment.isFragmentTemplate(templateSign);
+			return Fragment.isFragmentTemplate(templateSign) || Fragment.isPreviewFragmentTemplate(templateSign);
 		}
 	}
 
@@ -1119,5 +1174,29 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			evitPageCache(page);
 
 		});
+	}
+
+	@Override
+	public Optional<String> getPreviewIp() {
+		return Optional.ofNullable(previewIp);
+	}
+
+	@Override
+	public String getFragmentTemplateName(String name, Space space, String ip) {
+		String templateName = Fragment.getTemplateName(name, space);
+		if (previewIp == null || !previewIp.equals(ip)) {
+			return templateName;
+		}
+		synchronized (this) {
+			if (previewFragments.isEmpty()) {
+				return templateName;
+			}
+			for (Fragment previewFragment : previewFragments) {
+				if (previewFragment.getTemplateName().equals(templateName)) {
+					return Template.TEMPLATE_PREVIEW_PREFIX + templateName;
+				}
+			}
+		}
+		return templateName;
 	}
 }

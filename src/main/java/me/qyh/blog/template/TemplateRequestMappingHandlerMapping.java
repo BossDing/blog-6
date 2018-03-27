@@ -37,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
+import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.interceptor.AppInterceptor;
 import me.qyh.blog.web.security.IPGetter;
@@ -47,19 +48,6 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	private static final Method method;
 
 	private final List<TemplateInterceptor> templateInterceptors = new ArrayList<>();
-
-	/**
-	 * 用于预览的IP
-	 * <p>
-	 * 成功设置预览界面后设置这个值<br>
-	 * 当用户注销后|删除预览页面时 将此值置为null<br>
-	 * 非线程安全
-	 * </p>
-	 * 
-	 * @since 5.10
-	 * 
-	 */
-	public static String PREVIEW_IP = null;
 
 	static {
 		try {
@@ -73,6 +61,8 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	private TemplateMapping templateMapping;
 	@Autowired(required = false)
 	private IPGetter ipGetter;
+	@Autowired
+	private TemplateService templateService;
 
 	private RequestMappingInfo.BuilderConfiguration config;
 
@@ -198,7 +188,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	}
 
 	private boolean isPreview(HttpServletRequest request) {
-		return PREVIEW_IP != null && PREVIEW_IP.equals(Webs.getIP(request));
+		return templateService.getPreviewIp().map(ip -> ip.equals(Webs.getIP(request))).orElse(Boolean.FALSE);
 	}
 
 	private void setUriTemplateVariables(TemplateMatch match, String lookupPath, HttpServletRequest request) {

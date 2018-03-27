@@ -18,6 +18,7 @@ package me.qyh.blog.file.store.local;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Optional;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +57,7 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 		}
 	}
 
-	protected String getPath(HttpServletRequest request) {
+	protected Optional<String> getPath(HttpServletRequest request) {
 		String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 		if (path == null) {
 			throw new IllegalStateException("Required request attribute '"
@@ -64,13 +65,13 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 		}
 		path = processPath(path);
 		if (!StringUtils.hasText(path) || isInvalidPath(path)) {
-			return null;
+			return Optional.empty();
 		}
 		if (path.contains("%")) {
 			try {
 				// Use URLDecoder (vs UriUtils) to preserve potentially decoded UTF-8 chars
 				if (isInvalidPath(URLDecoder.decode(path, "UTF-8"))) {
-					return null;
+					return Optional.empty();
 				}
 			} catch (IllegalArgumentException ex) {
 				// ignore
@@ -78,7 +79,7 @@ public class CustomResourceHttpRequestHandler extends ResourceHttpRequestHandler
 				throw new SystemException(ex.getMessage(), ex);
 			}
 		}
-		return path;
+		return Optional.of(path);
 	}
 
 }

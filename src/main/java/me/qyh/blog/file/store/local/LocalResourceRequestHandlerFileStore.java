@@ -172,20 +172,23 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 		return this.findResource(request);
 	}
 
-	protected final String getPath(HttpServletRequest request) {
-		String path = super.getPath(request);
+	protected final Optional<String> getPath(HttpServletRequest request) {
+		Optional<String> op = super.getPath(request);
+		if (!op.isPresent()) {
+			return Optional.empty();
+		}
+		String path = op.get();
 		if (path.startsWith(urlPatternPrefix)) {
 			path = path.substring(urlPatternPrefix.length());
 		}
 		if (path.startsWith("/")) {
 			path = path.substring(1);
 		}
-		return path;
+		return Optional.of(path);
 	}
 
 	protected Resource findResource(HttpServletRequest request) throws IOException {
-		Path file = absFolder.resolve(getPath(request));
-		return FileUtils.exists(file) ? new PathResource(file) : null;
+		return getPath(request).map(absFolder::resolve).filter(FileUtils::exists).map(PathResource::new).orElse(null);
 	}
 
 	@Override

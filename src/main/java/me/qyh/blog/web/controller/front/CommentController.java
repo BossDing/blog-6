@@ -62,7 +62,7 @@ public class CommentController implements InitializingBean {
 	@Value("${comment.attempt.maxCount:50}")
 	private int maxAttemptCount;
 
-	@Value("${comment.attempt.sleepSec:60}")
+	@Value("${comment.attempt.sleepSec:300}")
 	private int sleepSec;
 
 	private AttemptLogger attemptLogger;

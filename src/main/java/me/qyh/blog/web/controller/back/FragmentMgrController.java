@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.SpaceService;
@@ -149,5 +150,19 @@ public class FragmentMgrController extends BaseMgrController {
 		}
 		templateService.saveFragmentHistory(id, remark);
 		return new JsonResult(true, new Message("historyTemplate.save.success", "保存成功"));
+	}
+
+	@PostMapping("preview")
+	@ResponseBody
+	public JsonResult preview(@RequestBody @Validated Fragment fragment) throws LogicException {
+		Space space = fragment.getSpace();
+		if (space != null) {
+			space = spaceService.getSpace(space.getId()).orElse(null);
+		}
+		fragment.setSpace(space);
+
+		templateService.registerPreview(fragment);
+
+		return new JsonResult(true);
 	}
 }
