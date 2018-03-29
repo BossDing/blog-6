@@ -89,7 +89,7 @@
         });
         
         modal.on('hidden.bs.modal', function() {
-            $("#content").val('');
+        	editor.clear();
             $("#comment-error-tip").html('').hide();
             moduleId = undefined;
             parentId = undefined;
@@ -100,7 +100,7 @@
                 function() {
                     var me = $(this)
                     var comment = {};
-                    comment.content = $("#content").val();
+                    comment.content = editor.get();
                     comment.website = $("#website").val();
                     comment.email = $("#email").val();
                     comment.nickname = $("#nickname").val();
@@ -118,11 +118,12 @@
                             if (data.success) {
                             	 storeUserInfo(comment.nickname,
                                          comment.email, comment.website);
-                                     if(commentFunction){
-                                     	commentFunction();
-                                     }
+                            	 var check = data.data.status == 'CHECK';
+                            	 if(!check && commentFunction){
+                            		 commentFunction();
+                            	 }
                                      $("#comment-modal").modal('hide');
-                                	if (data.data.status == 'CHECK') {
+                                	if (check) {
                                         bootbox.alert('评论将会在审核通过后显示');
                                         return;
                                     }
@@ -418,6 +419,95 @@
                 });
         }
         
+        var commentConfig;
+        
+        $.ajax({
+        	
+        	url : basePath + '/comment/config',
+        	async : false,
+        	success:function(data){
+        		
+        		if(data.success){
+        			commentConfig = data.data;
+        		}
+        	}
+        	
+        });
+        
+        var editor ;
+        
+        loadCSS = function(href) {
+
+        	  var cssLink = $("<link>");
+        	  $("head").append(cssLink); 
+
+        	  cssLink.attr({
+        	    rel:  "stylesheet",
+        	    type: "text/css",
+        	    href: href
+        	  });
+
+        };
+        
+        if(commentConfig.editor == 'HTML'){
+        	if(config.isLogin){
+        		loadCSS(basePath + '/static/summernote/dist/summernote.css');
+            	$.getScript(basePath + "/static/summernote/dist/summernote.min.js" ,function(){
+            		 $.getScript(basePath + "/static/summernote/dist/lang/summernote-zh-CN.min.js",function(){
+            			 
+            			 $('#content').summernote({
+            					lang: 'zh-CN',
+            					height:270,
+            					focus:true,
+            					toolbar:[
+            						['style', ['style']],
+            			            ['font', ['bold', 'underline', 'clear']],
+            			            ['fontname', ['fontname']],
+            			            ['color', ['color']],
+            			            ['para', ['ul', 'ol', 'paragraph']],
+            			            ['insert', ['link', 'video']],
+            			            ['view', ['fullscreen', 'codeview']]
+            					]
+            				});
+            			 
+            			 editor = {
+            					 
+            					 get : function(){
+            						 return $("#content").summernote('code');
+            					 },
+            					 clear : function(){
+            						 $("#content").summernote('code','');
+            					 }
+            			 }
+            			 
+            		 });
+            	})
+        	} else {
+        		editor = {
+            			
+                		get:function(){
+                			return   $("#content").val();
+                		}	,
+                		clear:function(){
+                			$("#content").val('');
+                		}
+                		
+                	}
+        	}
+        } else {
+        	
+        	editor = {
+        			
+        		get:function(){
+        			return   $("#content").val();
+        		}	,
+        		clear:function(){
+        			$("#content").val('');
+        		}
+        		
+        	}
+        	
+        }
         
         
         var cache = [];

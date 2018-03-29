@@ -22,21 +22,39 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-8  col-sm-8 text">
-          <data name="评论" moduleType="userpage" th:moduleId="${this.id}" asc="false"/>
-          <div id="comments-content-container">
-            <fragment name="评论"/>
-          </div>
-          <div id="comments-container">
+          	<button class="btn btn-primary" data-comment>
+              留言
+          </button>
+          <div id="comments-container" style="margin-top:10px">
           </div>
         </div>
       </div>
     </div>
     <div th:replace="base/foot_source">&nbsp;
     </div>
-    <input type="hidden" id="moduleId" th:value="${this.id}"/>
-    <input type="hidden" id="login" th:value="${user != null}"/>
-    <input type="hidden" id="avatarPrefix" th:value="${gravatarPrefix == null ? 'http://cn.gravatar.com/avatar/' : gravatarPrefix}"/>
-	 <script th:src="@{/static/js/_modulecomment.js}"></script>
+  <script th:inline="javascript">
+    var c = $("#comments-container");
+  	var config = {isLogin:[[${user != null}]],gravatarPrefix:[[${gravatars.getUrl('')}]]};
+    var _config = {
+    	pageSize:20,
+      	page:1,
+       moduleId:[[${this.id}]],
+      moduleType:'userpage',
+      asc:false,
+      container : c
+    }
+  </script>
+	 <script th:src="@{/static/js/new_comment.js}"></script>
+  <script>
+  	$(function(){
+    	cmt.renderComment(_config);
+       $('[data-comment]').click(function(){
+       	cmt.doComment(_config.moduleId,_config.moduleType,function(){
+        	cmt.renderComment(_config);
+        });
+       });
+    });
+  </script>
     <fragment name="底部" />
 </body>
 </html>
