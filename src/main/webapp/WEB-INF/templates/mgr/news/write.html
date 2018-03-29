@@ -61,7 +61,7 @@
 						  </div>
 						  <div class="checkbox">
 						    <label>
-						      <input id="allowComment" type="checkbox" th:attr="checked=${news.allowComment !=null && news.allowComment ? 'checked' : null}"> 允许评论
+						      <input id="allowComment" type="checkbox" th:attr="checked=${news.allowComment == null ? 'checked' : (news.allowComment != null  && news.allowComment  ? 'checked' : null)}"> 允许评论
 						    </label>
 						  </div>
 						<button type="button" id="edit-btn" class="btn btn-default">提交</button>
@@ -101,6 +101,8 @@
 	<script type="text/javascript"
 		th:src="@{/static/summernote/plugin/file/summernote-ext-file.js}"></script>
 	<script type="text/javascript"
+		th:src="@{/static/summernote/plugin/music/summernote-ext-music.js}"></script>
+	<script type="text/javascript"
 		th:src="@{/static/summernote/plugin/file/file.js}"></script>
 	<script>
 		$(function(){
@@ -109,7 +111,7 @@
 				height:270,
 				focus:true,
 				toolbar:[
-					['custom', ['file']],
+					['custom', ['file','music']],
 					['style', ['style']],
 		            ['font', ['bold', 'underline', 'clear']],
 		            ['fontname', ['fontname']],
