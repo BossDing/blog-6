@@ -2,6 +2,7 @@ package me.qyh.blog.template.render.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
@@ -33,6 +34,7 @@ public class NewsPageDataTagProcessor extends DataTagProcessor<PageResult<News>>
 		}
 
 		param.setAsc(attributes.getBoolean("asc", false));
+		param.setPageSize(attributes.getInteger("pageSize", Constants.DEFAULT_PAGE_SIZE));
 
 		param.setCurrentPage(attributes.getInteger("currentPage", 1));
 
