@@ -18,18 +18,25 @@ package me.qyh.blog.comment.service;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -54,6 +61,7 @@ import me.qyh.blog.comment.module.CommentModuleHandler;
 import me.qyh.blog.comment.vo.CommentPageResult;
 import me.qyh.blog.comment.vo.CommentQueryParam;
 import me.qyh.blog.comment.vo.CommentStatistics;
+import me.qyh.blog.comment.vo.IPQueryParam;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
@@ -68,6 +76,7 @@ import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.text.HtmlClean;
 import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.Limit;
@@ -124,6 +133,8 @@ public class CommentService
 	private CommentConfig config;
 
 	private Map<String, CommentModuleHandler> handlerMap = new HashMap<>();
+
+	private final BlacklistHandler blacklistHandler = new BlacklistHandler();
 
 	static {
 		FileUtils.createFile(RES_PATH);
@@ -230,6 +241,11 @@ public class CommentService
 		long now = System.currentTimeMillis();
 		String ip = comment.getIp();
 		if (!Environment.isLogin()) {
+
+			if (blacklistHandler.match(ip)) {
+				throw new LogicException("comment.ip.forbidden", "ip被禁止评论");
+			}
+
 			// 检查频率
 			Limit limit = config.getLimit();
 			long start = now - limit.getUnit().toMillis(limit.getTime());
@@ -297,7 +313,7 @@ public class CommentService
 
 		commentDao.insert(comment);
 
-		completeComment(comment);
+		handleComment(comment);
 
 		applicationEventPublisher.publishEvent(new CommentEvent(this, comment));
 
@@ -349,14 +365,14 @@ public class CommentService
 		case TREE:
 			datas = commentDao.selectPageWithTree(param);
 			for (Comment comment : datas) {
-				completeComment(comment);
+				handleComment(comment);
 			}
 			datas = handleTree(datas, param.isAsc());
 			break;
 		default:
 			datas = commentDao.selectPageWithList(param);
 			for (Comment comment : datas) {
-				completeComment(comment);
+				handleComment(comment);
 			}
 			break;
 		}
@@ -413,7 +429,7 @@ public class CommentService
 		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit, Environment.isLogin(),
 				queryAdmin);
 		for (Comment comment : comments) {
-			completeComment(comment);
+			handleComment(comment);
 		}
 		return comments;
 	}
@@ -440,12 +456,12 @@ public class CommentService
 		if (!comment.getCommentModule().equals(module)) {
 			return new ArrayList<>();
 		}
-		completeComment(comment);
+		handleComment(comment);
 		List<Comment> comments = new ArrayList<>();
 		if (!comment.getParents().isEmpty()) {
 			for (Integer pid : comment.getParents()) {
 				Comment p = commentDao.selectById(pid);
-				completeComment(p);
+				handleComment(p);
 				comments.add(p);
 			}
 		}
@@ -497,7 +513,7 @@ public class CommentService
 		for (Comment comment : comments) {
 			CommentModule module = comment.getCommentModule();
 			module.setObject(referenceMap.get(module));
-			completeComment(comment);
+			handleComment(comment);
 		}
 
 		return new PageResult<>(param, count, comments);
@@ -569,6 +585,38 @@ public class CommentService
 		return Optional.empty();
 	}
 
+	/**
+	 * 禁止某条评论的ip评论
+	 * 
+	 * @param commentId
+	 */
+	@Transactional(readOnly = true)
+	public void banIp(Integer commentId) {
+		Comment comment = commentDao.selectById(commentId);
+		if (comment != null) {
+			blacklistHandler.add(comment.getIp());
+		}
+	}
+
+	/**
+	 * 取消禁止某个ip
+	 * 
+	 * @param ip
+	 */
+	public void removeBan(String ip) {
+		blacklistHandler.remove(ip);
+	}
+
+	/**
+	 * 分页查询被禁止的ip
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public PageResult<String> queryBlacklist(IPQueryParam param) {
+		return blacklistHandler.query(param);
+	}
+
 	private List<Comment> buildTree(List<Comment> comments) {
 		CollectFilteredFilter filter = new CollectFilteredFilter(null);
 		List<Comment> roots = new ArrayList<>();
@@ -595,7 +643,7 @@ public class CommentService
 		return tree;
 	}
 
-	private void completeComment(Comment comment) {
+	private void handleComment(Comment comment) {
 		CommentModule module = comment.getCommentModule();
 		if (module != null && module.getModule() != null && module.getId() != null) {
 			comment.setUrl(urlHelper.getUrl() + "/comment/link/" + module.getModule() + "/" + module.getId());
@@ -619,6 +667,9 @@ public class CommentService
 	}
 
 	private void fillComment(Comment comment) {
+		if (Environment.isLogin()) {
+			comment.setBan(blacklistHandler.match(comment.getIp()));
+		}
 		if (comment.getAdmin() == null || !comment.getAdmin()) {
 			return;
 		}
@@ -676,4 +727,103 @@ public class CommentService
 	public boolean contains(String gravatar) {
 		return commentDao.checkExistsByGravatar(gravatar);
 	}
+
+	private final class BlacklistHandler {
+		private final StampedLock lock = new StampedLock();
+		private final Path json = Constants.CONFIG_DIR.resolve("commentBlackList.json");
+		private Set<String> blacklist = new LinkedHashSet<>();
+
+		BlacklistHandler() {
+			if (FileUtils.exists(json)) {
+				try {
+					String str = Resources.readResourceToString(new PathResource(json));
+					if (!Validators.isEmptyOrNull(str, false)) {
+						blacklist = new HashSet<>(Jsons.readList(String[].class, str));
+					}
+				} catch (Exception e) {
+					throw new SystemException(e.getMessage(), e);
+				}
+			} else {
+				FileUtils.createFile(json);
+			}
+		}
+
+		public PageResult<String> query(IPQueryParam param) {
+			long stamp = lock.readLock();
+			try {
+				int offset = param.getOffset();
+				List<String> list = new ArrayList<>(blacklist);
+				String ip = param.getIp();
+				if (!Validators.isEmptyOrNull(ip, true)) {
+					for (Iterator<String> it = list.iterator(); it.hasNext();) {
+						String ban = it.next();
+						if (!ban.contains(ip)) {
+							it.remove();
+						}
+					}
+				}
+				int size = list.size();
+				if (offset >= size) {
+					return new PageResult<>(param, size, new ArrayList<>());
+				}
+				int end = offset + param.getPageSize();
+				return new PageResult<String>(param, size, list.subList(offset, Math.min(end, size)));
+			} finally {
+				lock.unlockRead(stamp);
+			}
+		}
+
+		public void remove(String ip) {
+			long stamp = lock.writeLock();
+			try {
+				if (blacklist.remove(ip)) {
+					try (Writer writer = Files.newBufferedWriter(json)) {
+						Jsons.write(blacklist, writer);
+					} catch (IOException e) {
+						blacklist.add(ip);
+						throw new SystemException(e.getMessage(), e);
+					}
+				}
+			} finally {
+				lock.unlockWrite(stamp);
+			}
+		}
+
+		public void add(String ip) {
+			long stamp = lock.writeLock();
+			try {
+				blacklist.add(ip);
+				try (Writer writer = Files.newBufferedWriter(json)) {
+					Jsons.write(blacklist, writer);
+				} catch (IOException e) {
+					blacklist.remove(ip);
+					throw new SystemException(e.getMessage(), e);
+				}
+			} finally {
+				lock.unlockWrite(stamp);
+			}
+		}
+
+		public boolean match(String ip) {
+			long stamp = lock.tryOptimisticRead();
+			boolean match = doMatch(ip);
+			if (!lock.validate(stamp)) {
+				stamp = lock.readLock();
+				try {
+					match = doMatch(ip);
+				} finally {
+					lock.unlockRead(stamp);
+				}
+			}
+			return match;
+		}
+
+		private boolean doMatch(String ip) {
+			if (blacklist.isEmpty()) {
+				return false;
+			}
+			return blacklist.contains(ip);
+		}
+	}
+
 }

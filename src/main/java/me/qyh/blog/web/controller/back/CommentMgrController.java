@@ -31,11 +31,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import me.qyh.blog.comment.service.CommentConfig;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.validator.CommentConfigValidator;
+import me.qyh.blog.comment.vo.IPQueryParam;
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.PageQueryParam;
-
 
 @RequestMapping("mgr/comment")
 @Controller
@@ -56,6 +57,30 @@ public class CommentMgrController extends BaseMgrController {
 	public JsonResult remove(@RequestParam("id") Integer id) throws LogicException {
 		commentService.deleteComment(id);
 		return new JsonResult(true, new Message("comment.delete.success", "删除成功"));
+	}
+
+	@PostMapping(value = "ban", params = { "id" })
+	@ResponseBody
+	public JsonResult ban(@RequestParam("id") Integer id) throws LogicException {
+		commentService.banIp(id);
+		return new JsonResult(true, new Message("comment.ban.success", "禁止成功"));
+	}
+
+	@PostMapping(value = "removeBan")
+	@ResponseBody
+	public JsonResult removeBan(@RequestParam("ip") String ip) throws LogicException {
+		commentService.removeBan(ip);
+		return new JsonResult(true, new Message("comment.removeBan.success", "删除成功"));
+	}
+
+	@GetMapping("blacklist")
+	@ResponseBody
+	public JsonResult blacklist(IPQueryParam param) {
+		if (param.getCurrentPage() < 1) {
+			param.setCurrentPage(1);
+		}
+		param.setPageSize(Constants.DEFAULT_PAGE_SIZE);
+		return new JsonResult(true, commentService.queryBlacklist(param));
 	}
 
 	@PostMapping("check")

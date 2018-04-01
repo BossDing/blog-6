@@ -63,6 +63,13 @@ public class Comment extends BaseEntity {
 	private CommentModule commentModule;
 
 	/**
+	 * ip是否被禁止评论
+	 * 
+	 * @since 6.0
+	 */
+	private boolean ban;
+
+	/**
 	 * 评论状态
 	 * 
 	 * @author Administrator
@@ -234,5 +241,13 @@ public class Comment extends BaseEntity {
 
 	public void setCommentModule(CommentModule commentModule) {
 		this.commentModule = commentModule;
+	}
+
+	public boolean isBan() {
+		return ban;
+	}
+
+	public void setBan(boolean ban) {
+		this.ban = ban;
 	}
 }

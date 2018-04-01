@@ -8,33 +8,31 @@
         modal += '<div class="modal-dialog" role="document">';
         modal += '<div class="modal-content">';
         modal += '<div class="modal-header">';
-        modal += '<button type="button" class="close" data-dismiss="modal" aria-label="Close">';
-        modal += '<span aria-hidden="true">&times;</span>';
-        modal += '</button>';
-        modal += '<h4 class="modal-title">评论</h4>';
+        modal += '<h5 class="modal-title">评论</h5>';
+        modal += '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
         modal += '</div>';
         modal += '<div class="modal-body">';
         modal += '<div class="alert alert-danger" style="display: none" id="comment-error-tip"></div>';
-        modal += '<form class="form-horizontal">';
+        modal += '<form >';
         if (!config.isLogin) {
-            modal += '<div class="form-group" >';
+            modal += '<div class="form-group row" >';
             modal += '<label class="col-sm-2 control-label">昵称</label>';
             modal += '<div class="col-sm-10">';
             modal += ' <input type="text" class="form-control" id="nickname" placeholder="必填">';
             modal += ' </div>';
             modal += '</div>';
         }
-        modal += '<div class="form-group" >';
+        modal += '<div class="form-group row" >';
         modal += '<label class="col-sm-2 control-label">内容</label>';
         modal += '<div class="col-sm-10">';
         modal += '<textarea class="form-control" id="content" style="height: 270px" placeholder="必填"></textarea>';
         modal += '</div>';
         modal += '</div>';
         
-        modal += '<div class="form-group" style="display:none" id="captchaContainer">';
+        modal += '<div class="form-group row" style="display:none" id="captchaContainer">';
         modal += '<label class="col-sm-2 control-label"></label>';
         modal += '<div class="col-sm-10">';
-        modal += '<img src="'+basePath+'/captcha" class="img-responsive" id="captcha-img"/>'
+        modal += '<img src="'+basePath+'/captcha" class="img-fluid" id="captcha-img"/>'
         modal += ' <input type="text" class="form-control" id="comment-captcha" placeholder="验证码">';
         modal += '</div>';
         modal += '</div>';
@@ -44,13 +42,13 @@
             modal += '<a href="javascript:void(0)" onclick="$(\'#other-info\').toggle()"><small>补充其他信息</small></a>';
             modal += '</p>';
             modal += '<div id="other-info" style="display: none">';
-            modal += '<div class="form-group">';
+            modal += '<div class="form-group row">';
             modal += ' <label class="col-sm-2 control-label">邮箱</label>';
             modal += '<div class="col-sm-10">';
             modal += '<input type="text" class="form-control" id="email" placeholder="用于显示gravatar头像" maxlength="100">';
             modal += '</div>';
             modal += '</div>';
-            modal += '<div class="form-group">';
+            modal += '<div class="form-group row">';
             modal += '<label class="col-sm-2 control-label">网址</label>';
             modal += '<div class="col-sm-10">';
             modal += '<input type="text" class="form-control" id="website" placeholder="">';
@@ -69,7 +67,7 @@
         modal += '</div>';
         modal += '</div>';
         $(modal).appendTo($('body'));
-        var modal = $('#comment-modal');
+        var modal = $("#comment-modal");
         modal.on('show.bs.modal', function() {
             loadUserInfo();
             $.ajax({
@@ -124,7 +122,7 @@
                             	 }
                                      $("#comment-modal").modal('hide');
                                 	if (check) {
-                                        bootbox.alert('评论将会在审核通过后显示');
+                                        doAlert('评论将会在审核通过后显示');
                                         return;
                                     }
                                
@@ -140,7 +138,74 @@
                     });
 
                 });
+        	
+        var confirmModal = '';
+        confirmModal += '<div class="modal" tabindex="-1" role="dialog">';
+        confirmModal += '<div class="modal-dialog" role="document">';
+        confirmModal += '<div class="modal-content">';
+        confirmModal += '<div class="modal-header">';
+        confirmModal += '<h5 class="modal-title">确认</h5>';
+        confirmModal += ' <button type="button" class="close" data-dismiss="modal" aria-label="Close">';
+        confirmModal += ' <span aria-hidden="true">&times;</span>';
+        confirmModal += '</button>';
+        confirmModal += '</div>';
+        confirmModal += '<div class="modal-body">';
+        confirmModal += '<p>确定要这么做吗？</p>';
+        confirmModal += '</div>';
+        confirmModal += '<div class="modal-footer">';
+        confirmModal += '<button type="button" class="btn btn-primary" data-confirm>确定</button>';
+        confirmModal += '<button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>';
+        confirmModal += '</div>';
+        confirmModal += '</div>';
+        confirmModal += '</div>';
+        confirmModal += '</div>';
         
+        $(confirmModal).appendTo($('body'));
+        
+        var $confirmModal = $(confirmModal);
+        
+        
+        var doConfirm =  function(text,cb){
+        	$confirmModal.find('.modal-body p').text(text);
+        	$confirmModal.find('[data-confirm]').unbind('click').click(function(){
+        		try{
+        			cb();
+        		}finally{
+        			$confirmModal.modal('hide');
+        		}
+        	});
+        	$confirmModal.modal('show');
+        }
+        
+        var alertModal = '';
+        alertModal += '<div class="modal" tabindex="-1" role="dialog">';
+        alertModal += '<div class="modal-dialog" role="document">';
+        alertModal += '<div class="modal-content">';
+        alertModal += '<div class="modal-header">';
+        alertModal += '<h5 class="modal-title">提示</h5>';
+        alertModal += ' <button type="button" class="close" data-dismiss="modal" aria-label="Close">';
+        alertModal += ' <span aria-hidden="true">&times;</span>';
+        alertModal += '</button>';
+        alertModal += '</div>';
+        alertModal += '<div class="modal-body">';
+        alertModal += '<p></p>';
+        alertModal += '</div>';
+        alertModal += '<div class="modal-footer">';
+        alertModal += '<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>';
+        alertModal += '</div>';
+        alertModal += '</div>';
+        alertModal += '</div>';
+        alertModal += '</div>';
+        
+        $(alertModal).appendTo($('body'));
+        
+        var $alertModal = $(alertModal);
+        
+        
+        var doAlert =  function(text){
+        	$alertModal.find('.modal-body p').text(text);
+        	$alertModal.modal('show');
+        }
         
         var conversationsModal = '<div class="modal " id="conversationsModal" tabindex="-1" role="dialog" >';
         conversationsModal += '<div class="modal-dialog" role="document">';
@@ -166,7 +231,7 @@
                     '/conversations', {},
                     function(data) {
                         if (!data.success) {
-                            bootbox.alert(data.message);
+                            doAlert(data.message);
                             return;
                         }
                         data = data.data;
@@ -175,18 +240,16 @@
                             var c = data[i];
                             var p = i == 0 ? null : data[i - 1];
                             html += '<div class="media">';
-                            html += '<div class="media-left">';
-                            html += '<img class="media-object"  src="' +
+                            html += '<img class="mr-3"  src="' +
                                 getAvatar(c) +
                                 '" data-holder-rendered="true" style="width: 32px; height: 32px;">';
-                            html += '</div>';
                             html += '<div class="media-body"  >';
                             var username = getUsername(c);
                             var user = '<strong>' + username +
                                 '</strong>';
                             var p_username = getUsername(p);
-                            html += '<h5 class="media-heading">' + user +
-                                '</h5>';
+                            html += '<h6 class="mr-0">' + user +
+                                '</h6>';
                             if (p) {
                                 var pnickname = getUsername(p);
                                 html += '<small style="margin-right:10px">回复' +
@@ -195,10 +258,10 @@
                             html += '<div class="media-content">'
                             html += c.content;
                             html += '</div>';
-                            html += '<h5>' +
+                            html += '<p>' +
                                 new Date(c.commentDate)
                                 .format('yyyy-mm-dd HH:MM') +
-                                '&nbsp;&nbsp;&nbsp;</h5>';
+                                '&nbsp;&nbsp;&nbsp;</p>';
                             html += '</div>';
                             html += '</div>';
                         }
@@ -208,80 +271,74 @@
         }
         
         var checkComment = function(id,callback){
-        	 bootbox.confirm("确定要审核通过吗？", function(result) {
-                 if (result) {
-                     $.ajax({
-                         type: "post",
-                         url: basePath + "/mgr/comment/check?id=" + id,
-                         data: {
-                             id: id
-                         },
-                         xhrFields: {
-                             withCredentials: true
-                         },
-                         crossDomain: true,
-                         success: function(data) {
-                            if(callback){
-                            	callback();
-                            }
-                         },
-                         complete: function() {}
-                     });
-                 }
+        	doConfirm("确定要审核通过吗？", function() {
+                 $.ajax({
+                     type: "post",
+                     url: basePath + "/mgr/comment/check?id=" + id,
+                     data: {
+                         id: id
+                     },
+                     xhrFields: {
+                         withCredentials: true
+                     },
+                     crossDomain: true,
+                     success: function(data) {
+                        if(callback){
+                        	callback();
+                        }
+                     },
+                     complete: function() {}
+                 });
              });
         }
         
         var removeComment =  function(id, callback) {
-            bootbox.confirm(
+            doConfirm(
                     "确定要删除该评论吗？",
-                    function(result) {
-                        if (result) {
-                            $.ajax({
-                                type: "post",
-                                url: basePath +
-                                    "/mgr/comment/delete?id=" +
-                                    id,
-                                contentType: "application/json",
-                                data: {},
-                                xhrFields: {
-                                    withCredentials: true
-                                },
-                                crossDomain: true,
-                                success: function(data) {
-                                   if(callback){
-                                	   callback();
-                                   }
-                                },
-                                complete: function() {}
-                            });
-                        }
+                    function() {
+                        $.ajax({
+                            type: "post",
+                            url: basePath +
+                                "/mgr/comment/delete?id=" +
+                                id,
+                            contentType: "application/json",
+                            data: {},
+                            xhrFields: {
+                                withCredentials: true
+                            },
+                            crossDomain: true,
+                            success: function(data) {
+                               if(callback){
+                            	   callback();
+                               }
+                            },
+                            complete: function() {}
+                        });
                     });
             }
         
         var banComment =  function(id, callback) {
-            bootbox.confirm(
+        	doConfirm(
                     "确定要禁止该ip评论吗？",
-                    function(result) {
-                        if (result) {
-                            $.ajax({
-                                type: "post",
-                                url: basePath +
-                                    "/mgr/comment/ban?id=" +
-                                    id,
-                                contentType: "application/json",
-                                data: {},
-                                xhrFields: {
-                                    withCredentials: true
-                                },
-                                crossDomain: true,
-                                success: function(data) {
-                                   if(callback){
-                                	   callback();
-                                   }
-                                },
-                                complete: function() {}
-                            });
-                        }
+                    function() {
+                        $.ajax({
+                            type: "post",
+                            url: basePath +
+                                "/mgr/comment/ban?id=" +
+                                id,
+                            contentType: "application/json",
+                            data: {},
+                            xhrFields: {
+                                withCredentials: true
+                            },
+                            crossDomain: true,
+                            success: function(data) {
+                               if(callback){
+                            	   callback();
+                               }
+                            },
+                            complete: function() {}
+                        });
                     });
             }
 
@@ -351,7 +408,7 @@
                 page = 1;
             }
             var c = config.container;
-            c.html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
+            c.html('<img src="'+basePath+'/static/img/loading.gif" class="img-fluid mx-auto"/>')
             $.get(actPath + '/data/评论', {
                     moduleType: config.moduleType,
                     moduleId: config.moduleId,
@@ -369,28 +426,26 @@
                             for (var i = 0; i < page.datas.length; i++) {
                                 var data = page.datas[i];
                                 html += '<div class="media">';
-                                html += '<div class="media-left">';
                                 if(data.admin){
-                                	 html += '<a href="javascript:void(0)"> <img class="media-object" src="' +
+                                	 html += '<a href="javascript:void(0)"> <img class="mr-3" src="' +
                                      getAvatar(data) +
                                      '" style="width:24px;height:24px"></a>';
                                 }else{
                                 	var website = data.website;
                                     if(website){
-                                    	 html += '<a href="'+website+'" target="_blank" rel="external nofollow"> <img class="media-object" src="' +
+                                    	 html += '<a href="'+website+'" target="_blank" rel="external nofollow"> <img class="mr-3" src="' +
                                          getAvatar(data) +
                                          '" style="width:24px;height:24px"></a>';
                                     }else{
-                                    	html += '<a href="javascript:void(0)"> <img class="media-object" src="' +
+                                    	html += '<a href="javascript:void(0)"> <img class="mr-3" src="' +
                                         getAvatar(data) +
                                         '" style="width:24px;height:24px"></a>';
                                     }
                                 }
-                                html += '</div>';
-                                html += '<div class="media-body"  >';
+                                html += '<div class="media-body">';
                                 var time = new Date(data.commentDate)
                                     .format('yyyy-mm HH:MM');
-                                html += '<h6 class="media-heading">' +
+                                html += '<h6 class="mt-0">' +
                                     getUsername(data) + '</h6>';
                                 if (data.parent) {
                                     var pnickname = getUsername(data.parent);
@@ -404,18 +459,18 @@
                                     '</small>';
                                 if (isLogin) {
                                 	if(!data.admin && !data.ban){
-                                    	html += '<a href="javascript:void(0)" data-ban data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span></a>';
+                                    	html += '<a href="javascript:void(0)" data-ban data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px">禁IP</a>';
                                 	}
-                                    html += '<a href="javascript:void(0)" data-del data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+                                    html += '<a href="javascript:void(0)" data-del data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px">删除</a>';
                                 }
                                 if (data.status == 'CHECK') {
-                                    html += '<a href="javascript:void(0)" data-check data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'"  style="margin-left:10px"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>';
+                                    html += '<a href="javascript:void(0)" data-check data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'"  style="margin-left:10px">审核</a>';
                                 } else {
                                 	if(config.allowComment || isLogin){
-                                		html += '<a href="javascript:void(0)" data-reply data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'"   style="margin-left:10px"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></a>';
+                                		html += '<a href="javascript:void(0)" data-reply data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'"   style="margin-left:10px">回复</a>';
                                 	}
                                     if (data.parent) {
-                                        html += '<a href="javascript:void(0)" data-conversations data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>';
+                                        html += '<a href="javascript:void(0)" data-conversations data-moduletype="'+config.moduleType+'" data-moduleId="'+config.moduleId+'" data-comment="'+data.id+'" style="margin-left:10px">查看对话</a>';
                                     }
                                 }
                                 html += '</p>';
@@ -424,17 +479,17 @@
                             }
                         }
                         if (page.totalPage > 1) {
-                            html += '<nav>';
-                            html += '<ul class="pagination">';
-                            html += '<li><a href="javascript:void(0)" data-page="1">«</a></li>';
+                            html += '<nav >';
+                            html += '<ul  class="pagination">';
+                            html += '<li class="page-item"><a class="page-link" href="javascript:void(0)" data-page="1"><span aria-hidden="true">&laquo;</span></a></li>';
                             for (var j = page.listbegin; j < page.listend; j++) {
                                 if (j == page.currentPage) {
-                                    html += '<li class="active"><a href="javascript:void(0)" >' +j + '</a></li>';
+                                    html += '<li class="page-item active"><a class="page-link" href="javascript:void(0)" >' +j + '</a></li>';
                                 } else {
-                                    html += '<li><a href="javascript:void(0)" data-page="'+j+'">'+j+'</a></li>';
+                                    html += '<li class="page-item"><a class="page-link" href="javascript:void(0)" data-page="'+j+'">'+j+'</a></li>';
                                 }
                             }
-                            html += '<li><a href="javascript:void(0)" data-page="'+page.totalPage+'">»</a></li>';
+                            html += '<li class="page-item"><a class="page-link" href="javascript:void(0)" data-page="'+page.totalPage+'"><span aria-hidden="true">&raquo;</span></a></a></li>';
                             html += '</ul>';
                             html += '</nav>';
                         }
@@ -444,7 +499,7 @@
                         	afterLoad(page);
                         }
                     } else {
-                        bootbox.alert(data.message);
+                        doAlert(data.message);
                     }
                 });
         }
@@ -479,55 +534,8 @@
 
         };
         
-        if(commentConfig.editor == 'HTML'){
-        	if(config.isLogin){
-        		loadCSS(basePath + '/static/summernote/dist/summernote.css');
-            	$.getScript(basePath + "/static/summernote/dist/summernote.min.js" ,function(){
-            		 $.getScript(basePath + "/static/summernote/dist/lang/summernote-zh-CN.min.js",function(){
-            			 
-            			 $('#content').summernote({
-            					lang: 'zh-CN',
-            					height:270,
-            					focus:true,
-            					toolbar:[
-            						['style', ['style']],
-            			            ['font', ['bold', 'underline', 'clear']],
-            			            ['fontname', ['fontname']],
-            			            ['color', ['color']],
-            			            ['para', ['ul', 'ol', 'paragraph']],
-            			            ['insert', ['link', 'video']],
-            			            ['view', ['fullscreen', 'codeview']]
-            					]
-            				});
-            			 
-            			 editor = {
-            					 
-            					 get : function(){
-            						 return $("#content").summernote('code');
-            					 },
-            					 clear : function(){
-            						 $("#content").summernote('code','');
-            					 }
-            			 }
-            			 
-            		 });
-            	})
-        	} else {
-        		editor = {
-            			
-                		get:function(){
-                			return   $("#content").val();
-                		}	,
-                		clear:function(){
-                			$("#content").val('');
-                		}
-                		
-                	}
-        	}
-        } else {
-        	
-        	editor = {
-        			
+        editor = {
+    			
         		get:function(){
         			return   $("#content").val();
         		}	,
@@ -536,9 +544,6 @@
         		}
         		
         	}
-        	
-        }
-        
         
         var cache = [];
         return {
@@ -568,6 +573,7 @@
                 		loadComment(config);
                 	});
                 });
+                
                 c.on('click','[data-ban]',function(){
                 	banComment($(this).data('comment'),function(){
                 		loadComment(config);

@@ -46,6 +46,9 @@
 										<h4 class="media-heading" th:text="${comment.nickname}"></h4>
 										<p th:text="${comment.content}"></p>
 										<p>
+										<a href="###" th:if="${!comment.ban}" th:data-ban-id="${comment.id}"
+												style="margin-right: 10px"><span
+												class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span></a>
 											<a href="###" th:data-remove-id="${comment.id}"
 												style="margin-right: 10px"><span
 												class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
@@ -113,6 +116,33 @@
 						$.ajax({
 							type : "post",
 							url : rootPath + "/mgr/comment/delete?id=" + id,
+							data : {
+								id : id
+							},
+							xhrFields : {
+								withCredentials : true
+							},
+							crossDomain : true,
+							success : function(data) {
+								if (data.success) {
+									window.location.reload();
+								} else {
+									bootbox.alert(data.msg);
+								}
+							},
+							complete : function() {
+							}
+						});
+					}
+				});
+			});
+			$("[data-ban-id]").click(function() {
+				var id = $(this).attr('data-ban-id');
+				bootbox.confirm("确定要禁止该IP吗？", function(result) {
+					if (result) {
+						$.ajax({
+							type : "post",
+							url : rootPath + "/mgr/comment/ban?id=" + id,
 							data : {
 								id : id
 							},
