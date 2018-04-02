@@ -134,22 +134,11 @@ public class CommentService
 
 	private Map<String, CommentModuleHandler> handlerMap = new HashMap<>();
 
-	private final BlacklistHandler blacklistHandler = new BlacklistHandler();
+	@Autowired(required = false)
+	private BlacklistHandler blacklistHandler;
 
 	static {
 		FileUtils.createFile(RES_PATH);
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-
-		if (commentChecker == null) {
-			commentChecker = (comment, config) -> {
-			};
-		}
-
-		Resources.readResource(configResource, pros::load);
-		loadConfig();
 	}
 
 	/**
@@ -589,9 +578,10 @@ public class CommentService
 	 * 禁止某条评论的ip评论
 	 * 
 	 * @param commentId
+	 * @throws LogicException
 	 */
 	@Transactional(readOnly = true)
-	public void banIp(Integer commentId) {
+	public void banIp(Integer commentId) throws LogicException {
 		Comment comment = commentDao.selectById(commentId);
 		if (comment != null) {
 			blacklistHandler.add(comment.getIp());
@@ -615,6 +605,22 @@ public class CommentService
 	 */
 	public PageResult<String> queryBlacklist(IPQueryParam param) {
 		return blacklistHandler.query(param);
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+
+		if (commentChecker == null) {
+			commentChecker = (comment, config) -> {
+			};
+		}
+
+		if (blacklistHandler == null) {
+			blacklistHandler = new DefaultBlacklistHandler();
+		}
+
+		Resources.readResource(configResource, pros::load);
+		loadConfig();
 	}
 
 	private List<Comment> buildTree(List<Comment> comments) {
@@ -728,12 +734,12 @@ public class CommentService
 		return commentDao.checkExistsByGravatar(gravatar);
 	}
 
-	private final class BlacklistHandler {
+	private final class DefaultBlacklistHandler implements BlacklistHandler {
 		private final StampedLock lock = new StampedLock();
 		private final Path json = Constants.CONFIG_DIR.resolve("commentBlackList.json");
 		private Set<String> blacklist = new LinkedHashSet<>();
 
-		BlacklistHandler() {
+		DefaultBlacklistHandler() {
 			if (FileUtils.exists(json)) {
 				try {
 					String str = Resources.readResourceToString(new PathResource(json));
@@ -748,6 +754,7 @@ public class CommentService
 			}
 		}
 
+		@Override
 		public PageResult<String> query(IPQueryParam param) {
 			long stamp = lock.readLock();
 			try {
@@ -773,6 +780,7 @@ public class CommentService
 			}
 		}
 
+		@Override
 		public void remove(String ip) {
 			long stamp = lock.writeLock();
 			try {
@@ -789,6 +797,7 @@ public class CommentService
 			}
 		}
 
+		@Override
 		public void add(String ip) {
 			long stamp = lock.writeLock();
 			try {
@@ -804,6 +813,7 @@ public class CommentService
 			}
 		}
 
+		@Override
 		public boolean match(String ip) {
 			long stamp = lock.tryOptimisticRead();
 			boolean match = doMatch(ip);
