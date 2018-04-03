@@ -98,7 +98,7 @@ public class Jsons {
 			.registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
 			.registerTypeAdapter(Date.class, new DateSerializer())
-			.registerTypeAdapter(SysLock.class, new SysLockDeserializer()).create();
+			.registerTypeAdapter(SysLock.class, new SysLockDeserializer()).setPrettyPrinting().create();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Jsons.class);
 	private static final String SPLIT_STR = "->";
