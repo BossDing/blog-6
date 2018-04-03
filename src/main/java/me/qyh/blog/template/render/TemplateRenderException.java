@@ -15,6 +15,13 @@
  */
 package me.qyh.blog.template.render;
 
+import java.util.List;
+
+import org.springframework.util.CollectionUtils;
+
+import me.qyh.blog.template.Template;
+import me.qyh.blog.template.render.TemplateRenderErrorDescription.TemplateErrorInfo;
+
 public class TemplateRenderException extends Exception {
 
 	/**
@@ -43,5 +50,20 @@ public class TemplateRenderException extends Exception {
 	 */
 	public String getTemplateName() {
 		return templateName;
+	}
+
+	public boolean isFromPreview() {
+		if (Template.isPreviewTemplate(templateName)) {
+			return true;
+		}
+		List<TemplateErrorInfo> templateErrorInfos = renderErrorDescription.getTemplateErrorInfos();
+		if (!CollectionUtils.isEmpty(templateErrorInfos)) {
+			for (TemplateErrorInfo info : templateErrorInfos) {
+				if (Template.isPreviewTemplate(info.getTemplateName())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

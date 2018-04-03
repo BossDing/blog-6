@@ -33,6 +33,7 @@ import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.vo.ModuleCommentCount;
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.NewsDao;
 import me.qyh.blog.core.entity.News;
@@ -55,8 +56,8 @@ public class NewsCommentModuleHandler extends CommentModuleHandler implements In
 
 	@Autowired
 	private CommentService commentService;
-	// @Autowired
-	// private UrlHelper urlHelper;
+	@Autowired
+	private UrlHelper urlHelper;
 
 	public NewsCommentModuleHandler() {
 		super(MODULE_NAME);
@@ -131,7 +132,8 @@ public class NewsCommentModuleHandler extends CommentModuleHandler implements In
 
 	@Override
 	public Optional<String> getUrl(Integer id) {
-		return Optional.empty();
+		News news = newsDao.selectById(id);
+		return news == null ? Optional.empty() : Optional.of(urlHelper.getUrls().getUrl(news));
 	}
 
 }

@@ -98,7 +98,7 @@ public class ThymleafTemplateExceptionTransalater implements TemplateExceptionTr
 	}
 
 	private String parseTemplateName(String name) {
-		if (!Validators.isEmptyOrNull(name, true) && name.startsWith(SERVLET_RESOURCE_PREFIX)) {
+		if (name.startsWith(SERVLET_RESOURCE_PREFIX)) {
 			int first = name.indexOf('[');
 			int last = name.lastIndexOf(']');
 			if (first != -1 && last != -1) {

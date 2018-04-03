@@ -702,9 +702,19 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@EventListener
 	public void handleTemplateEvitEvent(TemplateEvitEvent evt) {
 		if (evt.clear()) {
-			templateMapping.getPreviewTemplateMapping().clear();
+			clearPreview();
 		} else {
-			templateMapping.getPreviewTemplateMapping().unregister(evt.getTemplateNames());
+			synchronized (this) {
+				String[] templateNames = evt.getTemplateNames();
+				previewFragments.removeIf(fragment -> {
+					for (String templateName : templateNames) {
+						if (templateName.equals(fragment.getTemplateName())) {
+							return true;
+						}
+					}
+					return false;
+				});
+			}
 		}
 	}
 

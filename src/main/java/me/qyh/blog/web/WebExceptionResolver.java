@@ -66,7 +66,6 @@ import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
-import me.qyh.blog.template.Template;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
@@ -171,7 +170,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		@Override
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
 			TemplateRenderException tre = (TemplateRenderException) ex;
-			if (!Template.isPreviewTemplate(tre.getTemplateName())) {
+			if (!tre.isFromPreview()) {
 				LOGGER.error("[" + UrlUtils.buildFullRequestUrl(request) + "]" + ex.getMessage(), ex);
 			}
 			if (Webs.isAjaxRequest(request)) {
