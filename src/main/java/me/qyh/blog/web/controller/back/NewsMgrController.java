@@ -79,7 +79,7 @@ public class NewsMgrController extends BaseMgrController {
 			model.addAttribute("news", op.get());
 			return "mgr/news/write";
 		}
-		ra.addFlashAttribute("error", new Message("news.notExists", "微博客不存在"));
+		ra.addFlashAttribute("error", new Message("news.notExists", "动态不存在"));
 		return "redirect:/mgr/news/index";
 	}
 
