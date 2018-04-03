@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -36,7 +37,6 @@ import me.qyh.blog.core.validator.TagQueryParamValidator;
 import me.qyh.blog.core.validator.TagValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.TagQueryParam;
-
 
 @RequestMapping("mgr/tag")
 @Controller
@@ -48,6 +48,8 @@ public class TagMgrController extends BaseMgrController {
 	private TagValidator tagValidator;
 	@Autowired
 	private TagQueryParamValidator tagQueryParamValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "tag")
 	protected void initBinder(WebDataBinder binder) {
@@ -61,6 +63,7 @@ public class TagMgrController extends BaseMgrController {
 
 	@GetMapping("index")
 	public String index(@Validated TagQueryParam tagQueryParam, Model model) {
+		tagQueryParam.setPageSize(configServer.getGlobalConfig().getTagPageSize());
 		model.addAttribute("page", tagService.queryTag(tagQueryParam));
 		return "mgr/tag/index";
 	}

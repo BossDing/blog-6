@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
@@ -67,6 +68,8 @@ public class ArticleMgrController extends BaseMgrController {
 	private ArticleValidator articleValidator;
 	@Autowired
 	private ArticleQueryParamValidator articleQueryParamValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "article")
 	protected void initBinder(WebDataBinder binder) {
@@ -85,6 +88,7 @@ public class ArticleMgrController extends BaseMgrController {
 		}
 		articleQueryParam.setQueryPrivate(true);
 		articleQueryParam.setIgnorePaging(false);
+		articleQueryParam.setPageSize(configServer.getGlobalConfig().getArticlePageSize());
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		model.addAttribute("page", articleService.queryArticle(articleQueryParam));
 		return "mgr/article/index";

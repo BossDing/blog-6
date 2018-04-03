@@ -211,7 +211,7 @@ public class Jsons {
 		try {
 			return readJson(reader.read(url));
 		} catch (IOException e) {
-			return new ExpressionExecutor(JsonNull.INSTANCE);
+			return new ExpressionExecutor(JsonNull.INSTANCE, e);
 		}
 	}
 
@@ -228,7 +228,7 @@ public class Jsons {
 		try {
 			return readJsonForExecutors(reader.read(url));
 		} catch (IOException e) {
-			return new ExpressionExecutors(toJsonArray(JsonNull.INSTANCE));
+			return new ExpressionExecutors(toJsonArray(JsonNull.INSTANCE), e);
 		}
 	}
 
@@ -353,9 +353,15 @@ public class Jsons {
 
 		private final JsonElement ele;
 
+		private final Throwable ex;
+
 		private ExpressionExecutor(JsonElement ele) {
-			super();
+			this(ele, null);
+		}
+
+		private ExpressionExecutor(JsonElement ele, Throwable ex) {
 			this.ele = ele;
+			this.ex = ex;
 		}
 
 		/**
@@ -472,6 +478,10 @@ public class Jsons {
 			return ele == JsonNull.INSTANCE;
 		}
 
+		public Throwable getEx() {
+			return ex;
+		}
+
 		private static List<Expression> parseExpressions(String expression) {
 			expression = expression.replaceAll("\\s+", "");
 			if (expression.isEmpty()) {
@@ -577,10 +587,16 @@ public class Jsons {
 
 	public static final class ExpressionExecutors implements Iterable<ExpressionExecutor> {
 		private final JsonArray array;
+		private final Throwable ex;
 
-		public ExpressionExecutors(JsonArray array) {
+		public ExpressionExecutors(JsonArray array, Throwable ex) {
 			super();
 			this.array = array;
+			this.ex = ex;
+		}
+
+		public ExpressionExecutors(JsonArray array) {
+			this(array, null);
 		}
 
 		public int size() {
@@ -589,6 +605,10 @@ public class Jsons {
 
 		public ExpressionExecutor getExpressionExecutor(int index) {
 			return new ExpressionExecutor(array.get(index));
+		}
+
+		public Throwable getEx() {
+			return ex;
 		}
 
 		@Override

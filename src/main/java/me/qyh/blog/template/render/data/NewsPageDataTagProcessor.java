@@ -2,6 +2,7 @@ package me.qyh.blog.template.render.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.News;
@@ -15,6 +16,8 @@ public class NewsPageDataTagProcessor extends DataTagProcessor<PageResult<News>>
 
 	@Autowired
 	private NewsService newsService;
+	@Autowired
+	private ConfigServer configServer;
 
 	public NewsPageDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -40,6 +43,11 @@ public class NewsPageDataTagProcessor extends DataTagProcessor<PageResult<News>>
 
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
+		}
+
+		int pageSize = configServer.getGlobalConfig().getNewsPageSize();
+		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
+			param.setPageSize(pageSize);
 		}
 
 		return newsService.queryNews(param);

@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import me.qyh.blog.core.config.ConfigServer;
-import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.NewsDao;
 import me.qyh.blog.core.entity.News;
@@ -24,16 +22,14 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.util.Times;
-import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.NewsQueryParam;
+import me.qyh.blog.core.vo.PageResult;
 
 @Service
 public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAware {
 
 	@Autowired
 	private NewsDao newsDao;
-	@Autowired
-	private ConfigServer configServer;
 
 	@Autowired
 	private CommentServer commentServer;
@@ -48,8 +44,6 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 		if (!Environment.isLogin()) {
 			param.setQueryPrivate(false);
 		}
-		GlobalConfig globalConfig = configServer.getGlobalConfig();
-		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getNewsPageSize()));
 		List<News> newsList = newsDao.selectPage(param);
 		setNewsComments(newsList);
 		return new PageResult<>(param, newsDao.selectCount(param), newsList);

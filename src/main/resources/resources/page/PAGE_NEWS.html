@@ -30,7 +30,7 @@
                     <div style="text-align:right"><input type="checkbox" id="asc" th:attr="checked=${newsPage.param.asc ? 'checked' : null}" />正序</div>
                     <div class="media" th:each="news : ${newsPage.datas}" th:data-news="${news.id}">
                         <div class="media-left">
-                            <a href="#"> <img class="media-object"
+                            <a th:href="${urls.getUrl(news)}"> <img class="media-object"
 								th:src="${gravatars.getOptionalUrl(myInfo.gravatar).orElse('/static/img/guest.png')}"
 								style="width: 32px; height: 32px;">
 							</a>

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.MapBindingResult;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Article.ArticleFrom;
@@ -45,6 +46,8 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	private ArticleQueryParamValidator validator;
 	@Autowired
 	private ArticleService articleService;
+	@Autowired
+	private ConfigServer configServer;
 
 	/**
 	 * 构造器
@@ -97,6 +100,11 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 
 		param.setSpace(getCurrentSpace());
 		param.setStatus(ArticleStatus.PUBLISHED);
+
+		int pageSize = configServer.getGlobalConfig().getArticlePageSize();
+		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
+			param.setPageSize(pageSize);
+		}
 
 		validator.validate(param, new MapBindingResult(new HashMap<>(), "articleQueryParam"));
 		return param;

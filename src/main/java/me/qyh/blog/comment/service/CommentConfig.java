@@ -36,7 +36,6 @@ public class CommentConfig {
 	@Expose(serialize = false)
 	private Integer limitSec;
 	private Boolean check;// 审核
-	private Integer pageSize;// 每页显示数量
 
 	public CommentConfig() {
 		super();
@@ -47,7 +46,6 @@ public class CommentConfig {
 		this.check = source.check;
 		this.limitCount = source.limitCount;
 		this.limitSec = source.limitSec;
-		this.pageSize = source.pageSize;
 	}
 
 	public Integer getLimitSec() {
@@ -72,14 +70,6 @@ public class CommentConfig {
 
 	public void setCheck(Boolean check) {
 		this.check = check;
-	}
-
-	public Integer getPageSize() {
-		return pageSize;
-	}
-
-	public void setPageSize(Integer pageSize) {
-		this.pageSize = pageSize;
 	}
 
 	public Editor getEditor() {

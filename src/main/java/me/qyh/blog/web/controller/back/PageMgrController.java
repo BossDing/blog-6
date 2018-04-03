@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.entity.Space;
@@ -60,6 +61,8 @@ public class PageMgrController extends BaseMgrController {
 	private PageValidator pageValidator;
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "page")
 	protected void initBinder(WebDataBinder binder) {
@@ -73,6 +76,7 @@ public class PageMgrController extends BaseMgrController {
 
 	@GetMapping("index")
 	public String index(@Validated TemplatePageQueryParam templatePageQueryParam, Model model) {
+		templatePageQueryParam.setPageSize(configServer.getGlobalConfig().getPagePageSize());
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		model.addAttribute("result", templateService.queryPage(templatePageQueryParam));
 		return "mgr/template/page";

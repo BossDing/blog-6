@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -69,6 +70,8 @@ public class FileMgrController extends BaseMgrController {
 	private BlogFileUploadValidator blogFileUploadValidator;
 	@Autowired
 	private Base64FileUploadValidator base64FileUploadValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "blogFileQueryParam")
 	protected void initBlogFileQueryParamBinder(WebDataBinder binder) {
@@ -88,6 +91,7 @@ public class FileMgrController extends BaseMgrController {
 	@GetMapping("index")
 	public String index(@Validated BlogFileQueryParam blogFileQueryParam, Model model) {
 		blogFileQueryParam.setIgnorePaging(false);
+		blogFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		try {
 			model.addAttribute("result", fileService.queryBlogFiles(blogFileQueryParam));
 			model.addAttribute("stores", fileService.allStorableStores());
@@ -110,6 +114,7 @@ public class FileMgrController extends BaseMgrController {
 		blogFileQueryParam.setQuerySubDir(false);
 		blogFileQueryParam.setIgnorePaging(false);
 		blogFileQueryParam.setExtensions(new HashSet<>());
+		blogFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
 

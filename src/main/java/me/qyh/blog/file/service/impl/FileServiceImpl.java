@@ -37,7 +37,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
@@ -85,8 +84,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	private FileDeleteDao fileDeleteDao;
 	@Autowired
 	private CommonFileDao commonFileDao;
-	@Autowired
-	private ConfigServer configServer;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileServiceImpl.class);
 
@@ -328,7 +325,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 		} else {
 			param.setParentFile(blogFileDao.selectRoot());
 		}
-		param.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 
 		List<BlogFile> datas = blogFileDao.selectPage(param);
 		for (BlogFile file : datas) {
@@ -614,7 +610,6 @@ public class FileServiceImpl implements FileService, InitializingBean {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<BlogFile> queryFiles(String path, BlogFileQueryParam param) {
-		param.setPageSize(Math.min(configServer.getGlobalConfig().getFilePageSize(), param.getPageSize()));
 		BlogFile parent = blogFileDao.selectRoot();
 		String cleanedPath =
 				// since 5.7

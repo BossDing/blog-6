@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.MapBindingResult;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
@@ -37,6 +38,8 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 	private FileService fileService;
 	@Autowired
 	private BlogFileQueryParamValidator validator;
+	@Autowired
+	private ConfigServer configServer;
 
 	public FilesDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -64,6 +67,11 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 		 * @since 5.7
 		 */
 		param.setName(attributes.get("fileName"));
+
+		int pageSize = configServer.getGlobalConfig().getFilePageSize();
+		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
+			param.setPageSize(pageSize);
+		}
 
 		validator.validate(param, new MapBindingResult(new HashMap<>(), "blogFileQueryParam"));
 

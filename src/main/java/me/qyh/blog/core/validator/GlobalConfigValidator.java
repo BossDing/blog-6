@@ -30,6 +30,7 @@ public class GlobalConfigValidator implements Validator {
 	private static final int[] ARTICLE_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] TAG_PAGE_SIZE_RANGE = { 1, 50 };
 	private static final int[] NEWS_PAGE_SIZE_RANGE = { 1, 50 };
+	private static final int[] COMMNET_PAGE_SIZE_RANGE = { 1, 50 };
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -112,6 +113,18 @@ public class GlobalConfigValidator implements Validator {
 		if (newsPageSize > NEWS_PAGE_SIZE_RANGE[1]) {
 			errors.reject("global.pagesize.news.toobig", new Object[] { NEWS_PAGE_SIZE_RANGE[1] },
 					"动态每页数量不能大于" + NEWS_PAGE_SIZE_RANGE[1]);
+		}
+
+		int commentPageSize = config.getCommentPageSize();
+		if (commentPageSize < COMMNET_PAGE_SIZE_RANGE[0]) {
+			errors.reject("global.pagesize.comment.toosmall", new Object[] { COMMNET_PAGE_SIZE_RANGE[0] },
+					"评论每页数量不能小于" + NEWS_PAGE_SIZE_RANGE[0]);
+			return;
+		}
+
+		if (commentPageSize > NEWS_PAGE_SIZE_RANGE[1]) {
+			errors.reject("global.pagesize.comment.toobig", new Object[] { COMMNET_PAGE_SIZE_RANGE[1] },
+					"评论每页数量不能大于" + COMMNET_PAGE_SIZE_RANGE[1]);
 		}
 	}
 

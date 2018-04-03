@@ -32,6 +32,7 @@ import me.qyh.blog.comment.service.CommentConfig;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.validator.CommentConfigValidator;
 import me.qyh.blog.comment.vo.IPQueryParam;
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -46,6 +47,8 @@ public class CommentMgrController extends BaseMgrController {
 	private CommentService commentService;
 	@Autowired
 	private CommentConfigValidator commentConfigValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "commentConfig")
 	protected void initCommentConfigBinder(WebDataBinder binder) {
@@ -108,6 +111,7 @@ public class CommentMgrController extends BaseMgrController {
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}
+		param.setPageSize(configServer.getGlobalConfig().getCommentPageSize());
 		model.addAttribute("page", commentService.queryUncheckComments(param));
 		return "mgr/comment/uncheck";
 	}

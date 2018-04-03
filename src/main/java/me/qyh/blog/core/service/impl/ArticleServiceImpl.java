@@ -43,8 +43,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.core.config.ConfigServer;
-import me.qyh.blog.core.config.GlobalConfig;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.ArticleTagDao;
@@ -93,8 +91,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private LockManager lockManager;
 	@Autowired
 	private ArticleCache articleCache;
-	@Autowired
-	private ConfigServer configServer;
 	@Autowired(required = false)
 	private CommentServer commentServer;
 	@Autowired
@@ -395,8 +391,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	private void checkParam(ArticleQueryParam param) {
-		GlobalConfig globalConfig = configServer.getGlobalConfig();
-		param.setPageSize(Math.min(param.getPageSize(), globalConfig.getArticlePageSize()));
 		// 如果查询私有文章，但是用户没有登录
 		if (param.isQueryPrivate() && !Environment.isLogin()) {
 			param.setQueryPrivate(false);

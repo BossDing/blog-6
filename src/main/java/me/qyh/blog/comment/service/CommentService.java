@@ -109,7 +109,6 @@ public class CommentService
 	private static final String COMMENT_LIMIT_SEC = "commentConfig.commentLimitSec";
 	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
 	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
-	private static final String COMMENT_PAGESIZE = "commentConfig.commentPageSize";
 
 	private final Comparator<Comment> ascCommentComparator = Comparator.comparing(Comment::getCommentDate)
 			.thenComparing(Comment::getId);
@@ -191,7 +190,6 @@ public class CommentService
 		pros.setProperty(COMMENT_CHECK, config.getCheck().toString());
 		pros.setProperty(COMMENT_LIMIT_COUNT, config.getLimitCount().toString());
 		pros.setProperty(COMMENT_LIMIT_SEC, config.getLimitSec().toString());
-		pros.setProperty(COMMENT_PAGESIZE, config.getPageSize() + "");
 		try (OutputStream os = new FileOutputStream(configResource.getFile())) {
 			pros.store(os, "");
 		} catch (IOException e) {
@@ -317,7 +315,6 @@ public class CommentService
 	 */
 	@Transactional(readOnly = true)
 	public CommentPageResult queryComment(CommentQueryParam param) {
-		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
 		if (!param.complete()) {
 			return new CommentPageResult(param, 0, new ArrayList<>(), new CommentConfig(config));
 		}
@@ -337,7 +334,7 @@ public class CommentService
 			count = commentDao.selectCountWithList(param);
 			break;
 		}
-		int pageSize = config.getPageSize();
+		int pageSize = param.getPageSize();
 		if (count == 0) {
 			return new CommentPageResult(param, 0, new ArrayList<>(), new CommentConfig(config));
 		}
@@ -477,7 +474,6 @@ public class CommentService
 	 */
 	@Transactional(readOnly = true)
 	public PageResult<Comment> queryUncheckComments(PageQueryParam param) {
-		param.setPageSize(Math.min(config.getPageSize(), param.getPageSize()));
 		int count = commentDao.queryUncheckCommentsCount();
 		List<Comment> comments = commentDao.queryUncheckComments(param);
 		Map<String, List<CommentModule>> moduleMap = comments.stream().map(Comment::getCommentModule)
@@ -692,7 +688,6 @@ public class CommentService
 		config.setCheck(Boolean.parseBoolean(pros.getProperty(COMMENT_CHECK, "false")));
 		config.setLimitCount(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_COUNT, "10")));
 		config.setLimitSec(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_SEC, "60")));
-		config.setPageSize(Integer.parseInt(pros.getProperty(COMMENT_PAGESIZE, "10")));
 	}
 
 	private final class CollectFilteredFilter implements Predicate<Comment> {

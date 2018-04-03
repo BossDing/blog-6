@@ -17,8 +17,6 @@ package me.qyh.blog.core.vo;
 
 import java.io.Serializable;
 
-import me.qyh.blog.core.config.Constants;
-
 public class PageQueryParam implements Serializable {
 
 	/**
@@ -48,7 +46,7 @@ public class PageQueryParam implements Serializable {
 	}
 
 	public final int getPageSize() {
-		return pageSize < 1 ? Constants.DEFAULT_PAGE_SIZE : pageSize;
+		return pageSize;
 	}
 
 	public void setPageSize(int pageSize) {

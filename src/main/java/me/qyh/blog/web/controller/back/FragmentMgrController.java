@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
@@ -57,6 +58,8 @@ public class FragmentMgrController extends BaseMgrController {
 	private FragmentValidator fragmentValidator;
 	@Autowired
 	private SpaceService spaceService;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "fragmentQueryParam")
 	protected void initFragmentQueryParamBinder(WebDataBinder binder) {
@@ -70,6 +73,7 @@ public class FragmentMgrController extends BaseMgrController {
 
 	@GetMapping("index")
 	public String index(@Validated FragmentQueryParam fragmentQueryParam, Model model) {
+		fragmentQueryParam.setPageSize(configServer.getGlobalConfig().getFragmentPageSize());
 		model.addAttribute("page", templateService.queryFragment(fragmentQueryParam));
 		model.addAttribute("spaces", spaceService.querySpace(new SpaceQueryParam()));
 		return "mgr/template/fragment";
@@ -78,6 +82,7 @@ public class FragmentMgrController extends BaseMgrController {
 	@GetMapping("list")
 	@ResponseBody
 	public JsonResult listJson(@Validated FragmentQueryParam fragmentQueryParam, Model model) {
+		fragmentQueryParam.setPageSize(configServer.getGlobalConfig().getFragmentPageSize());
 		return new JsonResult(true, templateService.queryFragment(fragmentQueryParam));
 	}
 

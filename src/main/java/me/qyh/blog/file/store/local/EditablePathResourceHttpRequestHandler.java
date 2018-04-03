@@ -55,7 +55,6 @@ import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 
-import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
@@ -92,8 +91,6 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 
 	private static final int MAX_NAME_LENGTH = 255;
 
-	@Autowired
-	private ConfigServer configServer;
 	@Autowired
 	private UrlHelper urlHelper;
 	@Autowired
@@ -410,7 +407,6 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	public StaticFilePageResult query(StaticFileQueryParam param) {
 		lock.readLock().lock();
 		try {
-			param.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 			Path root = resolve(this.root, param.getPath());
 
 			if (!FileUtils.exists(root) || FileUtils.isRegularFile(root) || !FileUtils.isSub(root, this.root)) {

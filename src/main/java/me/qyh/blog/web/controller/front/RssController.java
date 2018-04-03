@@ -21,6 +21,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.View;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
@@ -37,6 +38,8 @@ public class RssController {
 	private ArticleService articleService;
 	@Autowired
 	private RssView rssView;
+	@Autowired
+	private ConfigServer configServer;
 
 	@GetMapping({ "rss", "space/{alias}/rss" })
 	public View rss(ModelMap model) {
@@ -51,6 +54,7 @@ public class RssController {
 		param.setQueryPrivate(false);
 		param.setSort(null);
 		param.setIgnorePaging(false);
+		param.setPageSize(configServer.getGlobalConfig().getArticlePageSize());
 		PageResult<Article> page = articleService.queryArticle(param);
 		model.addAttribute("page", page);
 		return rssView;

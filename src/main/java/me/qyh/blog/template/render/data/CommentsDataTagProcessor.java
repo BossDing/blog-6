@@ -23,12 +23,15 @@ import me.qyh.blog.comment.entity.CommentModule;
 import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.vo.CommentPageResult;
 import me.qyh.blog.comment.vo.CommentQueryParam;
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 
 public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult> {
 	@Autowired
 	private CommentService commentService;
+	@Autowired
+	private ConfigServer configServer;
 
 	public CommentsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -42,8 +45,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 		String moduleIdStr = attributes.get("moduleId");
 		if (moduleIdStr != null && moduleTypeStr != null) {
 			try {
-				param.setModule(new CommentModule(moduleTypeStr,
-						Integer.parseInt(moduleIdStr)));
+				param.setModule(new CommentModule(moduleTypeStr, Integer.parseInt(moduleIdStr)));
 			} catch (Exception e) {
 				LOGGER.debug(e.getMessage(), e);
 			}
@@ -56,6 +58,11 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 
 		if (param.getCurrentPage() < 0) {
 			param.setCurrentPage(0);
+		}
+
+		int pageSize = configServer.getGlobalConfig().getCommentPageSize();
+		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
+			param.setPageSize(pageSize);
 		}
 
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);

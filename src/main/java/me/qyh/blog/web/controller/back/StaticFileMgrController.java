@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -56,6 +57,8 @@ public class StaticFileMgrController extends BaseMgrController {
 	private StaticFileQueryParamValidator staticFileParamValidator;
 	@Autowired
 	private StaticFileUploadValidator staticFileUploadValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "staticFileQueryParam")
 	protected void initStaticFileQueryParamBinder(WebDataBinder binder) {
@@ -71,6 +74,7 @@ public class StaticFileMgrController extends BaseMgrController {
 	public String index(@Validated StaticFileQueryParam staticFileQueryParam, Model model) {
 		try {
 			checkHandler();
+			staticFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 			model.addAttribute("result", handler.query(staticFileQueryParam));
 		} catch (LogicException e) {
 			model.addAttribute(Constants.ERROR, e.getLogicMessage());
@@ -83,6 +87,7 @@ public class StaticFileMgrController extends BaseMgrController {
 	public JsonResult query(@Validated StaticFileQueryParam staticFileQueryParam) throws LogicException {
 		checkHandler();
 		staticFileQueryParam.setExtensions(new HashSet<>());
+		staticFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}
 

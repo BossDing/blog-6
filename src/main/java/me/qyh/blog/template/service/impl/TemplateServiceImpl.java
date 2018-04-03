@@ -706,6 +706,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} else {
 			synchronized (this) {
 				String[] templateNames = evt.getTemplateNames();
+				templateMapping.getPreviewTemplateMapping().unregister(templateNames);
 				previewFragments.removeIf(fragment -> {
 					for (String templateName : templateNames) {
 						if (templateName.equals(fragment.getTemplateName())) {

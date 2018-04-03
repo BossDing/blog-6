@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -34,6 +35,8 @@ public class NewsMgrController extends BaseMgrController {
 	private NewsService newsService;
 	@Autowired
 	private NewsQueryParamValidator newsQueryParamValidator;
+	@Autowired
+	private ConfigServer configServer;
 
 	@InitBinder(value = "news")
 	protected void initBinder(WebDataBinder binder) {
@@ -48,6 +51,7 @@ public class NewsMgrController extends BaseMgrController {
 	@GetMapping("index")
 	public String index(@Validated NewsQueryParam newsQueryParam, Model model) {
 		newsQueryParam.setQueryPrivate(true);
+		newsQueryParam.setPageSize(configServer.getGlobalConfig().getNewsPageSize());
 		model.addAttribute("page", newsService.queryNews(newsQueryParam));
 		return "mgr/news/index";
 	}
