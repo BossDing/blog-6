@@ -29,7 +29,7 @@
 
 		<div class="navbar-default sidebar  navbar-collapse collapse"
 			role="navigation">
-			<div class="sidebar-nav navbar-collapse">
+			<div class="sidebar-nav navbar-collapse" >
 				<ul class="nav" id="side-menu">
 					<li><a th:href="@{/mgr/user/index}"
 						th:class="${tag == 'userinfo'}? active:''"> 个人信息管理</a></li>
@@ -46,7 +46,8 @@
 					<li th:class="${tag == 'news'}? active:''"><a
 						th:href="@{/mgr/news/index}">动态管理</a></li>
 					<li><a th:href="@{/mgr/comment/uncheck}"
-						th:class="${tag == 'uncheckComment'}? active:''"> 未审核评论 <span class="badge" id="uncheck-comment-count" style="display:none">0</span></a></li>
+						th:class="${tag == 'uncheckComment'}? active:''"> 未审核评论 <span
+							class="badge" id="uncheck-comment-count" style="display: none">0</span></a></li>
 					<li><a href="javascript:;" data-toggle="collapse"
 						data-target="#tplMgr"> 模板管理</a>
 						<ul id="tplMgr" class="nav nav-second-level collapse in">
@@ -70,7 +71,22 @@
 								th:href="@{/mgr/config/global/index}">分页数目配置</a></li>
 							<li><a th:class="${tag == 'config-comment'}? active:''"
 								th:href="@{/mgr/comment/updateConfig}">评论配置</a></li>
-						</ul> <!-- /.nav-second-level --></li>
+						</ul></li>
+					<div th:remove="tag" th:each="menu : ${menus}">
+						<div th:with="children=${menu.children}" th:remove="tag">
+							<li th:if="${#lists.isEmpty(children)}"><a
+								th:href="${urls.url}+'/'+${menu.path}">[[${menu.name}]]</a></li>
+
+							<li th:unless="${#lists.isEmpty(children)}">
+							<a href="javascript:;" data-toggle="collapse"
+								th:data-target="'#plugin_'+${menu.id}">[[${menu.name}]]</a>
+								<ul th:id="'plugin_'+${menu.id}"
+									class="nav nav-second-level collapse in">
+									<li th:each="child : ${children}"><a
+										th:href="${urls.url}+'/'+${child.path}">[[${child.name}]]</a></li>
+								</ul></li>
+						</div>
+					</div>
 				</ul>
 			</div>
 		</div>

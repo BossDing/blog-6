@@ -47,6 +47,7 @@ import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.plugin.MenuRegistry;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.lock.LockHelper;
 
@@ -143,6 +144,7 @@ public final class TemplateRender implements InitializingBean {
 		if (!CollectionUtils.isEmpty(pros)) {
 			_model.putAll(pros);
 		}
+		_model.put("menus", MenuRegistry.getInstance().getMenus());
 		_model.put("messages", messages);
 		_model.put("urls", Webs.getSpaceUrls(request));
 		_model.put("user", Environment.getUser());

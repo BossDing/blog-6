@@ -1,0 +1,18 @@
+<!DOCTYPE HTML>
+<html>
+<head th:replace="mgr/base/head :: head('test')"></head>
+<body>
+	<nav th:replace="mgr/base/nav :: active('')"></nav>
+	<div id="page-wrapper" style="padding: 10px">
+		<div class="container-fluid">
+			<div class="row" style="padding: 5px">
+				<div class="col-md-6 col-md-offset-3">
+					<div class="tip" style="margin-top: 10px"></div>
+					[[${user}]]
+				</div>
+			</div>
+		</div>
+	</div>
+	<div th:replace="base/foot_source"></div>
+</body>
+</html>

@@ -3,10 +3,13 @@ package me.qyh.blog.plugin;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.qyh.blog.core.util.StringUtils;
+
 public class Menu {
 
 	private final String name;
 	private final String path;
+	private final String id;
 
 	private List<Menu> children = new ArrayList<>();
 
@@ -14,6 +17,11 @@ public class Menu {
 		super();
 		this.name = name;
 		this.path = path;
+		this.id = StringUtils.uuid();
+	}
+
+	public Menu(String name) {
+		this(name, null);
 	}
 
 	public String getName() {
@@ -35,6 +43,10 @@ public class Menu {
 	public Menu addChild(Menu child) {
 		children.add(child);
 		return this;
+	}
+
+	public String getId() {
+		return id;
 	}
 
 }
