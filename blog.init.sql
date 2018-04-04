@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS blog_history_template (
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `blog_news` (
+CREATE TABLE IF NOT EXISTS `blog_news` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `news_content` varchar(4000) NOT NULL,
   `news_private` tinyint(1) NOT NULL DEFAULT '0',
