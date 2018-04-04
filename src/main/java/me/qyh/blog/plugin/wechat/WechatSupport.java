@@ -1,4 +1,4 @@
-package me.qyh.blog.expanded.wechat;
+package me.qyh.blog.plugin.wechat;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;

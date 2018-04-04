@@ -57,27 +57,19 @@
 	</typeHandlers>
 	<mappers>
 		<mapper resource="resources/mybatis/mapper/spaceMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/articleMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/articleTagMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/tagMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/blogFileMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/blogCommonFileMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/lockMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/fragmentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/pageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/historyTemplateMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
-
 		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/articleCommentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/pageCommentMapper.xml" />
-		
-		
 		<mapper resource="resources/mybatis/mapper/newsMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/newsCommentMapper.xml" />
 	</mappers>

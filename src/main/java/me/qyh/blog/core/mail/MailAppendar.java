@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.expanded.mail;
+package me.qyh.blog.core.mail;
 
 import org.slf4j.Marker;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.spi.CyclicBufferTracker;
 import ch.qos.logback.core.util.ContentTypeUtil;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.expanded.mail.MailSender.MessageBean;
+import me.qyh.blog.core.mail.MailSender.MessageBean;
 
 /**
  * 这个用来将错误信息发送至管理员邮箱，由于借用了MailSender来发送邮件，所以append()方法必须在Spring容器初始化完成之后被调用

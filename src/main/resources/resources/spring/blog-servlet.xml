@@ -15,7 +15,7 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
-	<context:property-placeholder location="classpath:resources/app.properties" />
+	<context:property-placeholder location="classpath:resources/app.properties,classpath:resources/plugin.properties" />
 
 	<import resource="template.xml" />
 
@@ -29,7 +29,8 @@
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
 			me.qyh.blog.web.listener,
-			me.qyh.blog.web.view" />
+			me.qyh.blog.web.view,
+			me.qyh.blog.plugin.*.controller" />
 
 
 	<!-- csrf token store stragey -->
@@ -157,5 +158,7 @@
 
 	<bean class="me.qyh.blog.template.TemplateMapping" />
 	<bean class="me.qyh.blog.web.WebExceptionResolver" />
+
+	<bean class="me.qyh.blog.plugin.PluginHandlerRegistry"/>
 
 </beans>

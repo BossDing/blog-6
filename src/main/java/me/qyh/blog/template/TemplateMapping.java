@@ -494,7 +494,7 @@ public class TemplateMapping {
 	 * @return
 	 * @see RequestMappingHandlerMapping
 	 */
-	private boolean isKeyPath(String path) {
+	public boolean isKeyPath(String path) {
 		if (requestMappingHandlerMapping == null) {
 			return false;
 		}

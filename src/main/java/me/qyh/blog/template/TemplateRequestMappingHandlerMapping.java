@@ -31,11 +31,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo.Builder;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConfiguration;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.plugin.RequestMappingRegistry;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.web.Webs;
@@ -43,7 +45,8 @@ import me.qyh.blog.web.interceptor.AppInterceptor;
 import me.qyh.blog.web.security.IPGetter;
 import me.qyh.blog.web.view.TemplateView;
 
-public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerMapping {
+public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerMapping
+		implements RequestMappingRegistry {
 
 	private static final Method method;
 
@@ -201,6 +204,12 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	@Override
 	protected void extendInterceptors(List<Object> interceptors) {
 		interceptors.add(getApplicationContext().getBean(AppInterceptor.class));
+	}
+
+	@Override
+	public RequestMappingRegistry register(Builder builder, Object handler, Method method) {
+		this.registerMapping(builder, handler, method);
+		return this;
 	}
 
 }

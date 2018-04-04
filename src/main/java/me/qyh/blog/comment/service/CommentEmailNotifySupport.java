@@ -42,12 +42,12 @@ import me.qyh.blog.comment.event.CommentEvent;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.mail.MailSender;
+import me.qyh.blog.core.mail.MailSender.MessageBean;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.SerializationUtils;
-import me.qyh.blog.expanded.mail.MailSender;
-import me.qyh.blog.expanded.mail.MailSender.MessageBean;
 
 /**
  * 用来向管理员发送评论|回复通知邮件

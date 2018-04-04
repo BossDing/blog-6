@@ -9,7 +9,7 @@
 		</filter>
 	</appender>
 
-	<appender name="mailAppender" class="me.qyh.blog.expanded.mail.MailAppendar">
+	<appender name="mailAppender" class="me.qyh.blog.core.mail.MailAppendar">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
 			</pattern>
@@ -62,7 +62,7 @@
 		<prudent>false</prudent> </appender> -->
 
 	<!-- 如果采用了MailAppender来纪录日志，那么必须单独配置MailSender的日志记录，防止MailAppender陷入死循环 -->
-	<logger name="me.qyh.blog.expanded.mail.MailSender" level="ERROR"
+	<logger name="me.qyh.blog.core.mail.MailSender" level="ERROR"
 		additivity="false">
 		<appender-ref ref="errorDailyRollingFileAppender" />
 	</logger>

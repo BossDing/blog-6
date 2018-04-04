@@ -46,6 +46,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -65,9 +66,12 @@ import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
+import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.plugin.DataTagProcessorRegistry;
+import me.qyh.blog.plugin.TemplateRegistry;
 import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.PatternAlreadyExistsException;
 import me.qyh.blog.template.SystemTemplate;
@@ -103,7 +107,8 @@ import me.qyh.blog.template.vo.TemplatePageQueryParam;
  * @author mhlx
  *
  */
-public class TemplateServiceImpl implements TemplateService, ApplicationEventPublisherAware, InitializingBean {
+public class TemplateServiceImpl implements TemplateService, ApplicationEventPublisherAware, InitializingBean,
+		DataTagProcessorRegistry, TemplateRegistry {
 
 	@Autowired
 	private PageDao pageDao;
@@ -751,31 +756,37 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private void initSystemTemplates() throws Exception {
 		defaultTemplates = new HashMap<>();
 		// 博客主页
-		defaultTemplates.put("", new SystemTemplate("", "resources/page/PAGE_INDEX.html"));
+		defaultTemplates.put("", new SystemTemplate("", new ClassPathResource("resources/page/PAGE_INDEX.html")));
 		// 博客登录页
-		defaultTemplates.put("login", new SystemTemplate("login", "resources/page/LOGIN.html"));
+		defaultTemplates.put("login", new SystemTemplate("login", new ClassPathResource("resources/page/LOGIN.html")));
 		// 各个空间的主页
-		defaultTemplates.put("space/{alias}", new SystemTemplate("space/{alias}", "resources/page/PAGE_INDEX.html"));
+		defaultTemplates.put("space/{alias}",
+				new SystemTemplate("space/{alias}", new ClassPathResource("resources/page/PAGE_INDEX.html")));
 		// 主空间解锁页
-		defaultTemplates.put("unlock", new SystemTemplate("unlock", "resources/page/PAGE_LOCK.html"));
+		defaultTemplates.put("unlock",
+				new SystemTemplate("unlock", new ClassPathResource("resources/page/PAGE_LOCK.html")));
 		// 各个空间解锁页面
 		defaultTemplates.put("space/{alias}/unlock",
-				new SystemTemplate("space/{alias}/unlock", "resources/page/PAGE_LOCK.html"));
+				new SystemTemplate("space/{alias}/unlock", new ClassPathResource("resources/page/PAGE_LOCK.html")));
 		// 各个空间文章详情页面
-		defaultTemplates.put("space/{alias}/article/{idOrAlias}",
-				new SystemTemplate("space/{alias}/article/{idOrAlias}", "resources/page/PAGE_ARTICLE_DETAIL.html"));
+		defaultTemplates.put("space/{alias}/article/{idOrAlias}", new SystemTemplate(
+				"space/{alias}/article/{idOrAlias}", new ClassPathResource("resources/page/PAGE_ARTICLE_DETAIL.html")));
 		// 文章归档页面
-		defaultTemplates.put("archives", new SystemTemplate("archives", "resources/page/PAGE_ARCHIVES.html"));
-		defaultTemplates.put("space/{alias}/archives",
-				new SystemTemplate("space/{alias}/archives", "resources/page/PAGE_ARCHIVES.html"));
+		defaultTemplates.put("archives",
+				new SystemTemplate("archives", new ClassPathResource("resources/page/PAGE_ARCHIVES.html")));
+		defaultTemplates.put("space/{alias}/archives", new SystemTemplate("space/{alias}/archives",
+				new ClassPathResource("resources/page/PAGE_ARCHIVES.html")));
 
-		defaultTemplates.put("error", new SystemTemplate("error", "resources/page/PAGE_ERROR.html"));
+		defaultTemplates.put("error",
+				new SystemTemplate("error", new ClassPathResource("resources/page/PAGE_ERROR.html")));
 		// 各个空间错误显示页面
 		defaultTemplates.put("space/{alias}/error",
-				new SystemTemplate("space/{alias}/error", "resources/page/PAGE_ERROR.html"));
+				new SystemTemplate("space/{alias}/error", new ClassPathResource("resources/page/PAGE_ERROR.html")));
 
-		defaultTemplates.put("news", new SystemTemplate("news", "resources/page/PAGE_NEWS.html"));
-		defaultTemplates.put("news/{id}", new SystemTemplate("news/{id}", "resources/page/PAGE_NEWS_DETAIL.html"));
+		defaultTemplates.put("news",
+				new SystemTemplate("news", new ClassPathResource("resources/page/PAGE_NEWS.html")));
+		defaultTemplates.put("news/{id}",
+				new SystemTemplate("news/{id}", new ClassPathResource("resources/page/PAGE_NEWS_DETAIL.html")));
 
 		for (Map.Entry<String, SystemTemplate> it : defaultTemplates.entrySet()) {
 			templateMapping.register(it.getKey(), it.getValue().getTemplateName());
@@ -1209,5 +1220,33 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 		return templateName;
+	}
+
+	@Override
+	public DataTagProcessorRegistry register(DataTagProcessor<?> processor) {
+		processors.add(processor);
+		return this;
+	}
+
+	@Override
+	public TemplateRegistry register(String path, String template) {
+		synchronized (this) {
+			String clean = FileUtils.cleanPath(path);
+			if (templateMapping.isKeyPath(clean)) {
+				throw new SystemException("路径" + clean + "为系统保留路径");
+			}
+			if (defaultTemplates.containsKey(clean)) {
+				throw new SystemException("已经存在路径为" + clean + "的系统模板了");
+			}
+			SystemTemplate systemTemplate = new SystemTemplate(clean, template);
+			try {
+				templateMapping.register(clean, systemTemplate.getTemplateName());
+				defaultTemplates.put(clean, systemTemplate);
+			} catch (PatternAlreadyExistsException e) {
+				// 忽略这个异常，可能被用户覆盖
+			}
+
+		}
+		return this;
 	}
 }

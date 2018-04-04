@@ -16,11 +16,12 @@
 						     http://www.springframework.org/schema/cache/spring-cache-4.0.xsd 
 						     http://www.springframework.org/schema/task
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
-		   					 
+
 	<context:property-placeholder
 		location="classpath:resources/mybatis/db.properties,
 			classpath:resources/mail.properties,
-			classpath:resources/app.properties" />
+			classpath:resources/app.properties,
+			classpath:resources/plugin.properties" />
 
 	<!-- database -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
@@ -46,7 +47,7 @@
 			</props>
 		</property>
 	</bean>
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+	<bean id="sqlSessionFactory" class="me.qyh.blog.plugin.PluginSqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 
@@ -58,12 +59,13 @@
 
 
 	<!-- mybatis -->
-	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" >
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
 			value="me.qyh.blog.core.dao,
 				   me.qyh.blog.comment.dao,
 			 	   me.qyh.blog.file.dao,
-				   me.qyh.blog.template.dao" />
+				   me.qyh.blog.template.dao
+				   me.qyh.blog.plugin.*.dao" />
 	</bean>
 
 
@@ -78,7 +80,8 @@
 					  me.qyh.blog.comment.validator,
 					  me.qyh.blog.file.validator,
 					  me.qyh.blog.template.validator,
-					  me.qyh.blog.core.config" />
+					  me.qyh.blog.core.config,
+					  me.qyh.blog.plugin.*.service" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 
@@ -139,15 +142,15 @@
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<!-- HTML清理 -->
-	<bean id="htmlClean" class="me.qyh.blog.core.text.DefaultHtmlClean" >
+	<bean id="htmlClean" class="me.qyh.blog.core.text.DefaultHtmlClean">
 		<property name="followRootDomains">
 			<array>
-				<!-- 如果网址中包含下列域名，不会被加上ref nofollow  -->
+				<!-- 如果网址中包含下列域名，不会被加上ref nofollow -->
 				<value>qyh.me</value>
 			</array>
 		</property>
 	</bean>
-	
+
 	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.service.SimpleCommentChecker">
 		<property name="disallowUsernamePatterns">
 			<array>
@@ -180,8 +183,8 @@
 		<!-- 每隔30min将索引写入物理文件 -->
 		<task:scheduled ref="articleIndexer" method="commit"
 			fixed-rate="1800000" />
-			
-		
+
+
 		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
 		<task:scheduled ref="mailSender" method="sendMailFromQueue"
 			fixed-delay="1000" />
@@ -196,7 +199,7 @@
 			fixed-rate="5000" />
 		<!-- 每隔300s中发送待发送邮件 -->
 		<task:scheduled ref="commentEmailNotifySupport" method="forceSend"
-			fixed-rate="300000" />	
+			fixed-rate="300000" />
 
 	</task:scheduled-tasks>
 
@@ -206,7 +209,7 @@
 	<bean class="me.qyh.blog.file.store.DefaultFileManager" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="mailSender" class="me.qyh.blog.expanded.mail.MailSender" />
+	<bean id="mailSender" class="me.qyh.blog.core.mail.MailSender" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
 	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">

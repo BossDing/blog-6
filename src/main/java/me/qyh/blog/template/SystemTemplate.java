@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
@@ -48,11 +48,16 @@ public final class SystemTemplate implements PathTemplate {
 		this.template = systemTemplate.template;
 	}
 
-	public SystemTemplate(String path, String templateClassPath) {
+	public SystemTemplate(String path, String template) {
+		this.path = path;
+		this.template = template;
+	}
+
+	public SystemTemplate(String path, Resource resource) {
 		super();
 		this.path = path;
 		try {
-			this.template = Resources.readResourceToString(new ClassPathResource(templateClassPath));
+			this.template = Resources.readResourceToString(resource);
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
