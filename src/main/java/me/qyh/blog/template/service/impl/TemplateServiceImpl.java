@@ -1248,7 +1248,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					// 忽略这个异常，可能被用户覆盖
 				}
 			}
+			return this;
 		}
-		return this;
 	}
 }
