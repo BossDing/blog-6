@@ -1235,17 +1235,19 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			if (templateMapping.isKeyPath(clean)) {
 				throw new SystemException("路径" + clean + "为系统保留路径");
 			}
-			if (defaultTemplates.containsKey(clean)) {
-				throw new SystemException("已经存在路径为" + clean + "的系统模板了");
-			}
 			SystemTemplate systemTemplate = new SystemTemplate(clean, template);
-			try {
-				templateMapping.register(clean, systemTemplate.getTemplateName());
+			if (defaultTemplates.containsKey(clean)) {
+				// replace
 				defaultTemplates.put(clean, systemTemplate);
-			} catch (PatternAlreadyExistsException e) {
-				// 忽略这个异常，可能被用户覆盖
+			} else {
+				// add
+				try {
+					templateMapping.register(clean, systemTemplate.getTemplateName());
+					defaultTemplates.put(clean, systemTemplate);
+				} catch (PatternAlreadyExistsException e) {
+					// 忽略这个异常，可能被用户覆盖
+				}
 			}
-
 		}
 		return this;
 	}
