@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -40,6 +41,8 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 	private CommentCheckerRegistry commentCheckerRegistry;
 	@Autowired
 	private FileStoreRegistry fileStoreRegistry;
+	@Autowired
+	private TemplateInterceptorRegistry templateInterceptorRegistry;
 
 	private ResourceLoader resourceLoader;
 
@@ -68,30 +71,39 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 				}
 			}
 
+			CountDownLatch cdl = new CountDownLatch(1);
+
 			new Thread(() -> {
 
-				for (PluginHandler pluginHandler : handlers) {
-					SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
+				try {
+					for (PluginHandler pluginHandler : handlers) {
+						SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
 
-					pluginHandler.init(applicationContext);
-					pluginHandler.addDataTagProcessor(dataTagProcessorRegistry);
-					pluginHandler.addTemplate(templateRegistry);
-					pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
-					pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
-					if (articleContentHandlerRegistry != null) {
-						pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
+						pluginHandler.init(applicationContext);
+						pluginHandler.addDataTagProcessor(dataTagProcessorRegistry);
+						pluginHandler.addTemplate(templateRegistry);
+						pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
+						pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
+						if (articleContentHandlerRegistry != null) {
+							pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
+						}
+						pluginHandler.addCommentModuleHandler(commentModuleHandlerRegistry);
+						pluginHandler.addCommentChecker(commentCheckerRegistry);
+						pluginHandler.addMenu(MenuRegistry.getInstance());
+						pluginHandler.addFileStore(fileStoreRegistry);
+						pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
+
+						String fullName = pluginHandler.getClass().getPackage().getName();
+						String pluginName = fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
+						plugins.add(pluginName);
 					}
-					pluginHandler.addCommentModuleHandler(commentModuleHandlerRegistry);
-					pluginHandler.addCommentChecker(commentCheckerRegistry);
-					pluginHandler.addMenu(MenuRegistry.getInstance());
-					pluginHandler.addFileStore(fileStoreRegistry);
-
-					String fullName = pluginHandler.getClass().getPackage().getName();
-					String pluginName = fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
-					plugins.add(pluginName);
+				} finally {
+					cdl.countDown();
 				}
 
 			}).start();
+
+			cdl.await();
 
 		}
 	}

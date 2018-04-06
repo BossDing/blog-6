@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -38,6 +40,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.plugin.RequestMappingRegistry;
+import me.qyh.blog.plugin.TemplateInterceptorRegistry;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.web.Webs;
@@ -46,7 +49,7 @@ import me.qyh.blog.web.security.IPGetter;
 import me.qyh.blog.web.view.TemplateView;
 
 public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerMapping
-		implements RequestMappingRegistry {
+		implements RequestMappingRegistry, TemplateInterceptorRegistry {
 
 	private static final Method method;
 
@@ -159,13 +162,19 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			throw new SystemException(e.getMessage(), e);
 		}
 
-		templateInterceptors.addAll(BeanFactoryUtils
-				.beansOfTypeIncludingAncestors(getApplicationContext(), TemplateInterceptor.class, true, false)
-				.values());
-
 		if (ipGetter == null) {
 			ipGetter = new IPGetter();
 		}
+	}
+
+	@EventListener
+	void start(ContextRefreshedEvent evt) {
+		if (evt.getApplicationContext().getParent() == null) {
+			return;
+		}
+		templateInterceptors.addAll(BeanFactoryUtils
+				.beansOfTypeIncludingAncestors(getApplicationContext(), TemplateInterceptor.class, true, false)
+				.values());
 	}
 
 	private final class TemplateHandler {
@@ -209,6 +218,12 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	@Override
 	public RequestMappingRegistry register(Builder builder, Object handler, Method method) {
 		this.registerMapping(builder, handler, method);
+		return this;
+	}
+
+	@Override
+	public TemplateInterceptorRegistry register(TemplateInterceptor interceptor) {
+		templateInterceptors.add(interceptor);
 		return this;
 	}
 

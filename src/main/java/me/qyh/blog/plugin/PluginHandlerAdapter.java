@@ -56,6 +56,11 @@ public abstract class PluginHandlerAdapter implements PluginHandler {
 	}
 
 	@Override
+	public void addTemplateInterceptor(TemplateInterceptorRegistry registry) {
+
+	}
+
+	@Override
 	public int getOrder() {
 		return Ordered.LOWEST_PRECEDENCE;
 	}

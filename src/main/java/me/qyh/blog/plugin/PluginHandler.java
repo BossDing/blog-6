@@ -91,4 +91,11 @@ public interface PluginHandler extends Ordered {
 	 * @param registry
 	 */
 	void addFileStore(FileStoreRegistry registry);
+
+	/**
+	 * 添加模板拦截器
+	 * 
+	 * @param registry
+	 */
+	void addTemplateInterceptor(TemplateInterceptorRegistry registry);
 }
