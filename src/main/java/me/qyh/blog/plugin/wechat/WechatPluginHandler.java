@@ -32,7 +32,7 @@ public class WechatPluginHandler extends PluginHandlerAdapter {
 	public void addRequestHandlerMapping(RequestMappingRegistry registry) {
 		Map<String, String> map = PluginProperties.getInstance().gets(ENABLE_KEY, APPID_KEY, APPSECRET_KEY);
 		if (Boolean.parseBoolean(map.get(ENABLE_KEY))) {
-			wechatSupport = new WechatSupport(map.get(APPID_KEY), map.get(APPID_KEY));
+			wechatSupport = new WechatSupport(map.get(APPID_KEY), map.get(APPSECRET_KEY));
 
 			Method method = getDeclaredMethod(WechatController.class, "jsConfig", String.class);
 			registry.register(RequestMappingInfo.paths("wechat/jsConfig").methods(RequestMethod.GET),
