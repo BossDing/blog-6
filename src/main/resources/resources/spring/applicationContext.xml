@@ -82,7 +82,8 @@
 					  me.qyh.blog.template.validator,
 					  me.qyh.blog.core.config,
 					  me.qyh.blog.plugin.*.service,
-					  me.qyh.blog.plugin.*.validator" />
+					  me.qyh.blog.plugin.*.validator,
+					  me.qyh.blog.plugin.*.component" />
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 

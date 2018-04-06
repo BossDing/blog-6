@@ -21,6 +21,7 @@ import java.util.List;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.plugin.ArticleContentHandlerRegistry;
 
 /**
  * 用于支持多个ArticleContentHandler
@@ -28,7 +29,7 @@ import me.qyh.blog.core.entity.Article;
  * @author Administrator
  *
  */
-public class ArticleContentHandlers implements ArticleContentHandler {
+public class ArticleContentHandlers implements ArticleContentHandler, ArticleContentHandlerRegistry {
 
 	private List<ArticleContentHandler> handlers = new ArrayList<>();
 
@@ -52,6 +53,12 @@ public class ArticleContentHandlers implements ArticleContentHandler {
 
 	public void setHandlers(List<ArticleContentHandler> handlers) {
 		this.handlers = handlers;
+	}
+
+	@Override
+	public ArticleContentHandlerRegistry register(ArticleContentHandler handler) {
+		this.handlers.add(handler);
+		return this;
 	}
 
 }

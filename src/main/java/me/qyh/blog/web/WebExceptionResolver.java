@@ -16,6 +16,7 @@
 package me.qyh.blog.web;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -47,7 +47,6 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
 import me.qyh.blog.core.config.Constants;
@@ -66,13 +65,15 @@ import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.plugin.ExceptionHandlerRegistry;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.web.lock.LockHelper;
 import me.qyh.blog.web.security.CsrfException;
+import me.qyh.blog.web.view.JsonView;
 
-public class WebExceptionResolver implements HandlerExceptionResolver {
+public class WebExceptionResolver implements HandlerExceptionResolver, ExceptionHandlerRegistry {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WebExceptionResolver.class);
 
@@ -95,13 +96,13 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	private final List<ExceptionHandler> handlers;
 
 	public WebExceptionResolver() {
-		handlers = Arrays.asList(new AuthencationExceptionHandler(), new TemplateRenderExceptionHandler(),
-				new RedirectExceptionHandler(), new LockExceptionHandler(), new LogicExceptionHandler(),
-				new RuntimeLogicExceptionHandler(), new SpaceNotFoundExceptionHandler(),
+		handlers = new ArrayList<>(Arrays.asList(new AuthencationExceptionHandler(),
+				new TemplateRenderExceptionHandler(), new RedirectExceptionHandler(), new LockExceptionHandler(),
+				new LogicExceptionHandler(), new RuntimeLogicExceptionHandler(), new SpaceNotFoundExceptionHandler(),
 				new InvalidParamExceptionHandler(), new MethodArgumentNotValidExceptionHandler(),
 				new HttpRequestMethodNotSupportedExceptionHandler(), new HttpMediaTypeNotAcceptableExceptionHandler(),
 				new HttpMediaTypeNotSupportedExceptionHandler(), new MaxUploadSizeExceededExceptionHandler(),
-				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler(), new MissLockExceptionHandler());
+				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler(), new MissLockExceptionHandler()));
 	}
 
 	@Override
@@ -131,12 +132,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 			return new ModelAndView(new JsonView(new JsonResult(false, ERROR_500)));
 		}
 		return getErrorForward(request, new ErrorInfo(ERROR_500, 500));
-	}
-
-	private interface ExceptionHandler {
-		boolean match(Exception ex);
-
-		ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex);
 	}
 
 	private final class AuthencationExceptionHandler implements ExceptionHandler {
@@ -482,28 +477,6 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 
 	}
 
-	private final class JsonView implements View {
-
-		private final JsonResult result;
-
-		private JsonView(JsonResult result) {
-			super();
-			this.result = result;
-		}
-
-		@Override
-		public String getContentType() {
-			return MediaType.APPLICATION_JSON_UTF8_VALUE;
-		}
-
-		@Override
-		public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response)
-				throws Exception {
-			Webs.writeInfo(response, result);
-		}
-
-	}
-
 	private String getFullUrl(HttpServletRequest request) {
 		return UrlUtils.buildFullRequestUrl(request);
 	}
@@ -577,6 +550,12 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		public String getUrl() {
 			return url;
 		}
+	}
+
+	@Override
+	public ExceptionHandlerRegistry register(ExceptionHandler exceptionHandler) {
+		this.handlers.add(exceptionHandler);
+		return this;
 	}
 
 }

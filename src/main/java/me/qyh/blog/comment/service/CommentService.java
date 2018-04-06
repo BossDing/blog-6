@@ -40,15 +40,19 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import me.qyh.blog.comment.dao.CommentDao;
@@ -82,13 +86,14 @@ import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.Limit;
 import me.qyh.blog.core.vo.PageQueryParam;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.plugin.CommentCheckerRegistry;
+import me.qyh.blog.plugin.CommentModuleHandlerRegistry;
 
 @Service
-public class CommentService
-		implements InitializingBean, CommentServer, ApplicationEventPublisherAware, GravatarSearcher {
+public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware,
+		GravatarSearcher, CommentModuleHandlerRegistry, CommentCheckerRegistry {
 
-	@Autowired(required = false)
-	private CommentChecker commentChecker;
+	private List<CommentChecker> checkers = new ArrayList<>();
 	@Autowired
 	private HtmlClean htmlClean;
 	@Autowired
@@ -241,9 +246,11 @@ public class CommentService
 			if (count > limit.getCount()) {
 				throw new LogicException("comment.overlimit", "评论太过频繁，请稍作休息");
 			}
-		}
 
-		commentChecker.checkComment(comment, config);
+			for (CommentChecker checker : checkers) {
+				checker.checkComment(new Comment(comment), new CommentConfig(config));
+			}
+		}
 
 		String parentPath = "/";
 		// 判断是否存在父评论
@@ -606,17 +613,36 @@ public class CommentService
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
-		if (commentChecker == null) {
-			commentChecker = (comment, config) -> {
-			};
-		}
-
 		if (blacklistHandler == null) {
 			blacklistHandler = new DefaultBlacklistHandler();
 		}
 
 		Resources.readResource(configResource, pros::load);
 		loadConfig();
+	}
+
+	@EventListener
+	void start(ContextRefreshedEvent evt) throws Exception {
+
+		if (evt.getApplicationContext().getParent() == null) {
+			Collection<CommentModuleHandler> handlers = BeanFactoryUtils
+					.beansOfTypeIncludingAncestors(evt.getApplicationContext(), CommentModuleHandler.class, true, false)
+					.values();
+
+			if (!CollectionUtils.isEmpty(handlers)) {
+				for (CommentModuleHandler handler : handlers) {
+					this.addCommentModuleHandler(handler);
+				}
+			}
+
+			Collection<CommentChecker> checkers = BeanFactoryUtils
+					.beansOfTypeIncludingAncestors(evt.getApplicationContext(), CommentChecker.class, true, false)
+					.values();
+			if (!CollectionUtils.isEmpty(checkers)) {
+				this.checkers.addAll(checkers);
+			}
+		}
+
 	}
 
 	private List<Comment> buildTree(List<Comment> comments) {
@@ -720,7 +746,6 @@ public class CommentService
 	 */
 	public void addCommentModuleHandler(CommentModuleHandler handler) {
 		Objects.requireNonNull(handler);
-		handlerMap.remove(handler.getType());
 		handlerMap.put(handler.getType(), handler);
 	}
 
@@ -829,6 +854,18 @@ public class CommentService
 			}
 			return blacklist.contains(ip);
 		}
+	}
+
+	@Override
+	public CommentModuleHandlerRegistry register(CommentModuleHandler commentModuleHandler) {
+		this.addCommentModuleHandler(commentModuleHandler);
+		return this;
+	}
+
+	@Override
+	public CommentCheckerRegistry registry(CommentChecker commentChecker) {
+		this.checkers.add(commentChecker);
+		return this;
 	}
 
 }

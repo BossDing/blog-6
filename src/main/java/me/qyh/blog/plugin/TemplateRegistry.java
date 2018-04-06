@@ -21,6 +21,19 @@ public interface TemplateRegistry {
 	 * @param template
 	 * @return
 	 */
-	TemplateRegistry register(String path, String template);
+	TemplateRegistry registerSystemTemplate(String path, String template);
+
+	/**
+	 * 注册全局默认模板片段
+	 * <p>
+	 * 如果模板片段已经存在，则替换，否则增加新的模板片段
+	 * </p>
+	 * 
+	 * @param name
+	 * @param template
+	 * @param callable
+	 * @return
+	 */
+	TemplateRegistry registerGlobalFragment(String name, String template, boolean callable);
 
 }

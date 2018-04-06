@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,6 @@ import me.qyh.blog.comment.dao.CommentDao;
 import me.qyh.blog.comment.dao.NewsCommentDao;
 import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
-import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.vo.ModuleCommentCount;
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
@@ -43,7 +41,7 @@ import me.qyh.blog.core.event.NewsEvent;
 import me.qyh.blog.core.exception.LogicException;
 
 @Component
-public class NewsCommentModuleHandler extends CommentModuleHandler implements InitializingBean {
+public class NewsCommentModuleHandler extends CommentModuleHandler {
 
 	private static final String MODULE_NAME = "news";
 
@@ -53,9 +51,6 @@ public class NewsCommentModuleHandler extends CommentModuleHandler implements In
 	private NewsDao newsDao;
 	@Autowired
 	private NewsCommentDao newsCommentDao;
-
-	@Autowired
-	private CommentService commentService;
 	@Autowired
 	private UrlHelper urlHelper;
 
@@ -104,11 +99,6 @@ public class NewsCommentModuleHandler extends CommentModuleHandler implements In
 	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
 		List<News> pages = newsDao.selectByIds(ids);
 		return pages.stream().collect(Collectors.toMap(News::getId, p -> p));
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		this.commentService.addCommentModuleHandler(this);
 	}
 
 	@EventListener

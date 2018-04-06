@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
@@ -54,6 +53,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.context.WebApplicationContext;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
@@ -123,9 +123,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
-
-	@Autowired
-	private ApplicationContext applicationContext;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -683,20 +680,25 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 */
 	@EventListener
 	public void handleContextRefreshEvent(ContextRefreshedEvent evt) throws Exception {
-		if (evt.getApplicationContext().getParent() != null) {
-
-			Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
-				List<Page> allPage = pageDao.selectAll();
-				for (Page page : allPage) {
-					try {
-						helper.registerPage(page);
-					} catch (LogicException e) {
-						throw new SystemException(e.getLogicMessage().getCodes()[0]);
-					}
-				}
-			});
+		if (evt.getApplicationContext().getParent() == null) {
+			return;
 		}
+
+		WebApplicationContext applicationContext = (WebApplicationContext) evt.getApplicationContext();
+		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext.getParent();
+		appContext.addApplicationListener(new SpaceDeleteEventListener());
+
+		Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
+			PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
+			List<Page> allPage = pageDao.selectAll();
+			for (Page page : allPage) {
+				try {
+					helper.registerPage(page);
+				} catch (LogicException e) {
+					throw new SystemException(e.getLogicMessage().getCodes()[0]);
+				}
+			}
+		});
 	}
 
 	/**
@@ -743,9 +745,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		// Preview Template Processor
 		this.templateProcessors.add(new PreviewTemplateProcessor());
 
-		// add space delete event listener
-		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext.getParent();
-		appContext.addApplicationListener(new SpaceDeleteEventListener());
 	}
 
 	/**
@@ -1229,7 +1228,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public TemplateRegistry register(String path, String template) {
+	public TemplateRegistry registerSystemTemplate(String path, String template) {
 		synchronized (this) {
 			String clean = FileUtils.cleanPath(path);
 			if (templateMapping.isKeyPath(clean)) {
@@ -1251,4 +1250,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			return this;
 		}
 	}
+
+	@Override
+	public TemplateRegistry registerGlobalFragment(String name, String template, boolean callable) {
+		this.fragments.removeIf(fragment -> fragment.getName().equals(name));
+		Fragment fragment = new Fragment(name);
+		fragment.setTpl(template);
+		fragment.setCallable(callable);
+		this.fragments.add(fragment);
+		return this;
+	}
+
 }

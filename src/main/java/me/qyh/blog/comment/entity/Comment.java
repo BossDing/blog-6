@@ -89,6 +89,31 @@ public class Comment extends BaseEntity {
 		}
 	}
 
+	public Comment() {
+		super();
+	}
+
+	public Comment(Comment source) {
+		this.parent = source.parent;
+		this.admin = source.admin;
+		this.ban = source.ban;
+		this.children = source.children;
+		this.commentDate = source.commentDate;
+		this.commentModule = source.commentModule;
+		this.content = source.content;
+		this.editor = source.editor;
+		this.email = source.email;
+		this.gravatar = source.gravatar;
+		this.ip = source.ip;
+		this.nickname = source.nickname;
+		this.id = source.id;
+		this.parentPath = source.parentPath;
+		this.parents = source.parents;
+		this.status = source.status;
+		this.url = source.url;
+		this.website = source.website;
+	}
+
 	public Comment getParent() {
 		return parent;
 	}

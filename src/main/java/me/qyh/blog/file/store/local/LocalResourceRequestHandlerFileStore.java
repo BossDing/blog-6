@@ -80,8 +80,6 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 
 	@Autowired
 	protected UrlHelper urlHelper;
-	@Autowired
-	private FileManager fileManager;
 
 	/**
 	 * 是否注册为Controller
@@ -260,8 +258,6 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 		 * spring 4.3 fix
 		 */
 		super.afterPropertiesSet();
-
-		fileManager.addFileStore(this);
 	}
 
 	@Override
@@ -320,8 +316,15 @@ public abstract class LocalResourceRequestHandlerFileStore extends CustomResourc
 	}
 
 	@EventListener(ContextRefreshedEvent.class)
-	void contextRefreshedEvent(ContextRefreshedEvent event) {
+	void start(ContextRefreshedEvent event) {
+		if (event.getApplicationContext().getParent() == null) {
+			return;
+		}
 		WebApplicationContext ctx = (WebApplicationContext) event.getApplicationContext();
+
+		FileManager fileManager = ctx.getBean(FileManager.class);
+		fileManager.addFileStore(this);
+
 		StaticResourceUrlHandlerMapping urlMapping = ctx.getBean(StaticResourceUrlHandlerMapping.class);
 
 		TemplateRequestMappingHandlerMapping templateRequestMappingHandlerMapping = ctx

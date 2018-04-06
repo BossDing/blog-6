@@ -21,11 +21,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.util.CollectionUtils;
 import org.thymeleaf.cache.AbstractCacheManager;
@@ -45,10 +45,7 @@ import me.qyh.blog.template.event.TemplateEvitEvent;
 import me.qyh.blog.template.render.thymeleaf.ThymeleafTemplateResolver.TemplateResource;
 import me.qyh.blog.template.service.TemplateService;
 
-public class ThymeleafCacheManager extends AbstractCacheManager implements InitializingBean {
-
-	@Autowired
-	private ApplicationContext applicationContext;
+public class ThymeleafCacheManager extends AbstractCacheManager implements ApplicationListener<ContextRefreshedEvent> {
 
 	@Autowired
 	private TemplateService templateService;
@@ -59,7 +56,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Initi
 	private final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<>(100));
 
-	public ThymeleafCacheManager() {
+	public ThymeleafCacheManager() {	
 		tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
 	}
 
@@ -217,14 +214,17 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Initi
 		}
 	}
 
+	@SuppressWarnings("resource")
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void onApplicationEvent(ContextRefreshedEvent evt) {
+		if (evt.getApplicationContext().getParent() == null) {
+			return;
+		}
+		ApplicationContext applicationContext = evt.getApplicationContext();
 		EvitListener evitListener = new EvitListener();
 		AbstractApplicationContext appContext = (AbstractApplicationContext) applicationContext;
 		appContext.addApplicationListener(evitListener);
 		appContext.addApplicationListener(new ContextCloseListener());
-
-		AbstractApplicationContext parentContext = (AbstractApplicationContext) applicationContext.getParent();
-		parentContext.addApplicationListener(evitListener);
 	}
+
 }

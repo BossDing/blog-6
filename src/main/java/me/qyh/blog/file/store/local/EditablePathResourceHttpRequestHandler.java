@@ -888,7 +888,10 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	}
 
 	@EventListener(ContextRefreshedEvent.class)
-	void contextRefreshedEvent(ContextRefreshedEvent event) {
+	void start(ContextRefreshedEvent event) {
+		if (event.getApplicationContext().getParent() == null) {
+			return;
+		}
 		WebApplicationContext ctx = (WebApplicationContext) event.getApplicationContext();
 		StaticResourceUrlHandlerMapping urlMapping = ctx.getBean(StaticResourceUrlHandlerMapping.class);
 		urlMapping.registerResourceHttpRequestHandlerMapping("/" + prefix + "/**", this);

@@ -27,7 +27,7 @@ import me.qyh.blog.core.exception.LogicException;
 public interface CommentChecker {
 
 	/**
-	 * 插入评论前检查
+	 * 校验评论人昵称、邮箱以及内容、网址等是否被允许
 	 * 
 	 * @param comment
 	 *            评论

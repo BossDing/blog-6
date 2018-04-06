@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.plugin.FileStoreRegistry;
 
 /**
  * 默认文件存储管理器
@@ -34,7 +34,7 @@ import me.qyh.blog.core.exception.SystemException;
  * @author Administrator
  *
  */
-public class DefaultFileManager implements FileManager, InitializingBean {
+public class DefaultFileManager implements FileManager, FileStoreRegistry {
 
 	private List<FileStore> stores = new ArrayList<>();
 	private Map<Integer, FileStore> storeMap = new HashMap<>();
@@ -45,21 +45,16 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 	}
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
-		if (!CollectionUtils.isEmpty(stores)) {
-			storeMap = stores.stream().collect(Collectors.toMap(FileStore::id, store -> store));
-		}
-	}
-
-	@Override
 	public List<FileStore> getAllStores() {
 		return Collections.unmodifiableList(stores);
 	}
 
 	public void setStores(List<FileStore> stores) {
 		this.stores = stores;
+		if (!CollectionUtils.isEmpty(stores)) {
+			storeMap = stores.stream().collect(Collectors.toMap(FileStore::id, store -> store));
+		}
 	}
-
 
 	@Override
 	public void addFileStore(FileStore fs) {
@@ -69,5 +64,11 @@ public class DefaultFileManager implements FileManager, InitializingBean {
 		}
 		stores.add(fs);
 		storeMap.put(id, fs);
+	}
+
+	@Override
+	public FileStoreRegistry register(FileStore fileStore) {
+		addFileStore(fileStore);
+		return this;
 	}
 }

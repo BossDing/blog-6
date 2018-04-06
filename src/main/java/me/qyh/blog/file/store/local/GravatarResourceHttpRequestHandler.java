@@ -162,18 +162,18 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-
 		setCacheSeconds((int) avatarCacheSeconds);
-
 		setLocations(Collections.singletonList(new PathResource(avatarDir)));
 		super.afterPropertiesSet();
-
-		gravatarSearchers.addAll(BeanFactoryUtils
-				.beansOfTypeIncludingAncestors(getApplicationContext(), GravatarSearcher.class, true, false).values());
 	}
 
 	@EventListener(ContextRefreshedEvent.class)
-	void contextRefreshedEvent(ContextRefreshedEvent event) {
+	void start(ContextRefreshedEvent event) {
+		if (event.getApplicationContext().getParent() == null) {
+			return;
+		}
+		gravatarSearchers.addAll(BeanFactoryUtils
+				.beansOfTypeIncludingAncestors(getApplicationContext(), GravatarSearcher.class, true, false).values());
 		StaticResourceUrlHandlerMapping mapping = event.getApplicationContext()
 				.getBean(StaticResourceUrlHandlerMapping.class);
 		mapping.registerResourceHttpRequestHandlerMapping(URL_PREFIX, this);

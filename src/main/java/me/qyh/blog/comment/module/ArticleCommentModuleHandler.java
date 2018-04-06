@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,6 @@ import me.qyh.blog.comment.dao.ArticleCommentDao;
 import me.qyh.blog.comment.dao.CommentDao;
 import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.entity.CommentModule;
-import me.qyh.blog.comment.service.CommentService;
 import me.qyh.blog.comment.vo.LastArticleComment;
 import me.qyh.blog.comment.vo.ModuleCommentCount;
 import me.qyh.blog.core.config.UrlHelper;
@@ -50,7 +48,7 @@ import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.impl.ArticleCache;
 
 @Component
-public class ArticleCommentModuleHandler extends CommentModuleHandler implements InitializingBean {
+public class ArticleCommentModuleHandler extends CommentModuleHandler {
 
 	@Autowired
 	private ArticleCache articleCache;
@@ -62,9 +60,6 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 	private ArticleCommentDao articleCommentDao;
 	@Autowired
 	private ArticleDao articleDao;
-
-	@Autowired
-	private CommentService commentService;
 
 	@Autowired
 	private UrlHelper urlHelper;
@@ -150,11 +145,6 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler implements
 				commentDao.deleteByModule(module);
 			}
 		}
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		commentService.addCommentModuleHandler(this);
 	}
 
 	@Override

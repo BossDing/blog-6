@@ -853,4 +853,5 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
+
 }
