@@ -62,7 +62,6 @@
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage"
 			value="me.qyh.blog.core.dao,
-				   me.qyh.blog.comment.dao,
 			 	   me.qyh.blog.file.dao,
 				   me.qyh.blog.template.dao
 				   me.qyh.blog.plugin.*.dao" />
@@ -75,9 +74,6 @@
 					  me.qyh.blog.core.text,
 					  me.qyh.blog.core.validator,
 					  me.qyh.blog.file.service,
-					  me.qyh.blog.comment.service,
-					  me.qyh.blog.comment.module,
-					  me.qyh.blog.comment.validator,
 					  me.qyh.blog.file.validator,
 					  me.qyh.blog.template.validator,
 					  me.qyh.blog.core.config,
@@ -153,22 +149,22 @@
 		</property>
 	</bean>
 
-	<bean id="simpleCommentChecker" class="me.qyh.blog.comment.service.SimpleCommentChecker">
-		<property name="disallowUsernamePatterns">
-			<array>
-				<value>qyh</value>
-				<value>mhlx</value>
-				<value>梦海澜心</value>
-				<value>钱宇豪</value>
-			</array>
-		</property>
-		<property name="disallowEmailPatterns">
-			<array>
-				<value>*@qyh.me</value>
-				<value>1187500344@qq.com</value>
-			</array>
-		</property>
-	</bean>
+	<!-- <bean id="simpleCommentChecker" class="me.qyh.blog.comment.service.SimpleCommentChecker"> -->
+	<!-- <property name="disallowUsernamePatterns"> -->
+	<!-- <array> -->
+	<!-- <value>qyh</value> -->
+	<!-- <value>mhlx</value> -->
+	<!-- <value>梦海澜心</value> -->
+	<!-- <value>钱宇豪</value> -->
+	<!-- </array> -->
+	<!-- </property> -->
+	<!-- <property name="disallowEmailPatterns"> -->
+	<!-- <array> -->
+	<!-- <value>*@qyh.me</value> -->
+	<!-- <value>1187500344@qq.com</value> -->
+	<!-- </array> -->
+	<!-- </property> -->
+	<!-- </bean> -->
 
 
 	<!-- 定时任务 -->

@@ -21,6 +21,8 @@ import java.util.Objects;
 
 import org.springframework.context.MessageSourceResolvable;
 
+import me.qyh.blog.core.util.Validators;
+
 /**
  * 用于Json结果的返回
  * 
@@ -49,7 +51,7 @@ public class Message implements MessageSourceResolvable, Serializable {
 	 */
 	public Message(String code, String defaultMessage, Object... arguments) {
 		this.code = code;
-		this.arguments = (arguments == null || arguments.length == 0) ? null
+		this.arguments = Validators.isEmpty(arguments) ? null
 				: Arrays.stream(arguments).map(Objects::toString).toArray(String[]::new);
 		this.defaultMessage = defaultMessage;
 	}

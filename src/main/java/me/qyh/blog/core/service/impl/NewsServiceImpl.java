@@ -1,11 +1,13 @@
 package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -16,8 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.NewsDao;
 import me.qyh.blog.core.entity.News;
-import me.qyh.blog.core.event.EventType;
-import me.qyh.blog.core.event.NewsEvent;
+import me.qyh.blog.core.event.NewsCreateEvent;
+import me.qyh.blog.core.event.NewsDelEvent;
+import me.qyh.blog.core.event.NewsUpdateEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.NewsService;
@@ -26,12 +29,12 @@ import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.core.vo.PageResult;
 
 @Service
-public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAware {
+public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAware, InitializingBean {
 
 	@Autowired
 	private NewsDao newsDao;
 
-	@Autowired
+	@Autowired(required = false)
 	private CommentServer commentServer;
 
 	private ApplicationEventPublisher applicationEventPublisher;
@@ -56,7 +59,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 			news.setWrite(Timestamp.valueOf(Times.now()));
 		}
 		newsDao.insert(news);
-		applicationEventPublisher.publishEvent(new NewsEvent(this, news, EventType.INSERT));
+		applicationEventPublisher.publishEvent(new NewsCreateEvent(this, news));
 	}
 
 	@Override
@@ -69,7 +72,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 		news.setUpdate(Timestamp.valueOf(Times.now()));
 
 		newsDao.update(news);
-		applicationEventPublisher.publishEvent(new NewsEvent(this, news, EventType.UPDATE));
+		applicationEventPublisher.publishEvent(new NewsUpdateEvent(this, old, news));
 	}
 
 	@Override
@@ -93,7 +96,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 			throw new LogicException("news.notExists", "动态不存在");
 		}
 		newsDao.deleteById(id);
-		applicationEventPublisher.publishEvent(new NewsEvent(this, old, EventType.DELETE));
+		applicationEventPublisher.publishEvent(new NewsDelEvent(this, Arrays.asList(old)));
 	}
 
 	@Override
@@ -127,6 +130,13 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 			return;
 		}
 		news.setComments(commentServer.queryCommentNum(COMMENT_MODULE_NAME, news.getId()).orElse(0));
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		if (commentServer == null) {
+			commentServer = EmptyCommentServer.INSTANCE;
+		}
 	}
 
 }

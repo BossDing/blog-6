@@ -28,7 +28,6 @@
 			me.qyh.blog.template.render,
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
-			me.qyh.blog.web.listener,
 			me.qyh.blog.web.view,
 			me.qyh.blog.plugin.*.controller" />
 

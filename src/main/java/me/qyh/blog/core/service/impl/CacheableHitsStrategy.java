@@ -38,8 +38,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.event.ArticleEvent;
-import me.qyh.blog.core.event.EventType;
+import me.qyh.blog.core.event.ArticleDelEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
 
@@ -235,8 +234,8 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	}
 
 	@TransactionalEventListener
-	public void handleArticleEvent(ArticleEvent evt) {
-		if (EventType.DELETE.equals(evt.getEventType())) {
+	public void handleArticleEvent(ArticleDelEvent evt) {
+		if (!evt.isLogicDelete()) {
 			evt.getArticles().stream().map(Article::getId).forEach(id -> {
 				flushMap.remove(id);
 				hitsMap.remove(id);

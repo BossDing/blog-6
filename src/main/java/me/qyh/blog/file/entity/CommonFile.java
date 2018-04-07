@@ -16,6 +16,7 @@
 package me.qyh.blog.file.entity;
 
 import me.qyh.blog.core.entity.BaseEntity;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 系统存储的文件
@@ -108,7 +109,7 @@ public class CommonFile extends BaseEntity {
 	 * @return
 	 */
 	public boolean is(String... exts) {
-		if (exts == null || exts.length == 0) {
+		if (Validators.isEmpty(exts)) {
 			return false;
 		}
 		if (extension == null) {

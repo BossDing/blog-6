@@ -43,13 +43,6 @@
 			alias="ArticleStatistics" />
 		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
 			alias="ArticleSpaceStatistics" />
-
-		<typeAlias type="me.qyh.blog.comment.entity.Comment" alias="Comment" />
-		<typeAlias type="me.qyh.blog.comment.entity.Comment$CommentStatus"
-			alias="CommentStatus" />
-		<typeAlias type="me.qyh.blog.comment.entity.CommentModule"
-			alias="CommentModule" />
-
 		<typeAlias type="me.qyh.blog.core.entity.News" alias="News" />
 	</typeAliases>
 	<typeHandlers>
@@ -67,10 +60,6 @@
 		<mapper resource="resources/mybatis/mapper/pageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/historyTemplateMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/fileDeleteMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/commentMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/articleCommentMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/pageCommentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/newsMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/newsCommentMapper.xml" />
 	</mappers>
 </configuration>

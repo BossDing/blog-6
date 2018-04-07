@@ -96,6 +96,7 @@ import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.PageResult;
 
@@ -291,7 +292,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 */
 	public synchronized void addOrUpdateDocument(Integer... ids) {
 		executor.submit(() -> {
-			if (ids == null || ids.length == 0) {
+			if (Validators.isEmpty(ids)) {
 				return null;
 			}
 			articleDao.selectByIds(Arrays.asList(ids)).stream().filter(Article::isPublished).forEach(art -> {

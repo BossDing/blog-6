@@ -50,6 +50,10 @@ public final class Validators {
 		return str == null || (trim ? str.trim().isEmpty() : str.isEmpty());
 	}
 
+	public static boolean isEmpty(Object[] array) {
+		return array == null || array.length == 0;
+	}
+
 	/**
 	 * is alpha
 	 * 

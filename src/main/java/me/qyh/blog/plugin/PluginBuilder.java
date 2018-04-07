@@ -8,10 +8,10 @@ import java.nio.file.Paths;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternUtils;
-import org.thymeleaf.util.ArrayUtils;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Validators;
 
 public class PluginBuilder {
 
@@ -30,7 +30,7 @@ public class PluginBuilder {
 		Resource[] resources = resolver.getResources("classpath:me/qyh/blog/plugin/" + name + "/**");
 		Path root = plugin.resolve(name);
 		FileUtils.deleteQuietly(root);
-		if (!ArrayUtils.isEmpty(resources)) {
+		if (!Validators.isEmpty(resources)) {
 			Path classRoot = root.resolve("WEB-INF/classes/me/qyh/blog/plugin/" + name);
 
 			FileUtils.forceMkdir(classRoot);

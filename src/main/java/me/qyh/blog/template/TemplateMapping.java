@@ -334,7 +334,7 @@ public class TemplateMapping {
 		 * @param pattern
 		 */
 		public void unregister(String... templateNames) {
-			if (templateNames == null || templateNames.length == 0) {
+			if (Validators.isEmpty(templateNames)) {
 				return;
 			}
 			lock.writeLock().lock();

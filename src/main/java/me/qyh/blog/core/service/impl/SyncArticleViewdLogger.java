@@ -36,7 +36,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.event.ArticleEvent;
+import me.qyh.blog.core.event.ArticleDelEvent;
+import me.qyh.blog.core.event.ArticleUpdateEvent;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.impl.ArticleServiceImpl.ArticleViewedLogger;
 import me.qyh.blog.core.util.FileUtils;
@@ -135,28 +136,28 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	}
 
 	@TransactionalEventListener
-	public void handleArticleEvent(ArticleEvent evt) {
+	public void handleArticleEvent(ArticleDelEvent evt) {
 		long stamp = lock.writeLock();
 		try {
-			switch (evt.getEventType()) {
-			case DELETE:
-				evt.getArticles().forEach(art -> articles.remove(art.getId()));
-				break;
-			case UPDATE:
-				for (Article art : evt.getArticles()) {
-					boolean valid = art.isPublished() && !art.isPrivate();
-					if (!valid) {
-						articles.remove(art.getId());
-					} else {
-						RecentlyViewdArticle rva = articles.get(art.getId());
-						if (rva != null) {
-							articles.replace(art.getId(), new RecentlyViewdArticle(art, rva.getIp(), rva.getTime()));
-						}
-					}
+			evt.getArticles().forEach(art -> articles.remove(art.getId()));
+		} finally {
+			lock.unlockWrite(stamp);
+		}
+	}
+
+	@TransactionalEventListener
+	public void handleArticleEvent(ArticleUpdateEvent evt) {
+		long stamp = lock.writeLock();
+		try {
+			Article art = evt.getNewArticle();
+			boolean valid = art.isPublished() && !art.isPrivate();
+			if (!valid) {
+				articles.remove(art.getId());
+			} else {
+				RecentlyViewdArticle rva = articles.get(art.getId());
+				if (rva != null) {
+					articles.replace(art.getId(), new RecentlyViewdArticle(art, rva.getIp(), rva.getTime()));
 				}
-				break;
-			default:
-				break;
 			}
 		} finally {
 			lock.unlockWrite(stamp);

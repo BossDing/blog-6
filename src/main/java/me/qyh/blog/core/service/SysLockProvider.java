@@ -32,10 +32,13 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import me.qyh.blog.core.dao.SysLockDao;
+import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.PasswordLock;
 import me.qyh.blog.core.entity.SysLock;
 import me.qyh.blog.core.entity.SysLock.SysLockType;
-import me.qyh.blog.core.event.LockDeleteEvent;
+import me.qyh.blog.core.event.LockDelEvent;
+import me.qyh.blog.core.event.LockCreateEvent;
+import me.qyh.blog.core.event.LockUpdateEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.BCrypts;
 import me.qyh.blog.core.util.StringUtils;
@@ -65,8 +68,11 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 	@Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
 	@CacheEvict(value = "lockCache", key = "'lock-'+#id")
 	public void removeLock(String id) {
-		sysLockDao.delete(id);
-		applicationEventPublisher.publishEvent(new LockDeleteEvent(this, id));
+		Lock lock = sysLockDao.selectById(id);
+		if (lock != null) {
+			sysLockDao.delete(id);
+			applicationEventPublisher.publishEvent(new LockDelEvent(this, lock));
+		}
 	}
 
 	/**
@@ -104,6 +110,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 		lock.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
 		encryptPasswordLock(lock);
 		sysLockDao.insert(lock);
+		applicationEventPublisher.publishEvent(new LockCreateEvent(this, lock));
 		return lock;
 	}
 
@@ -127,6 +134,7 @@ public class SysLockProvider implements ApplicationEventPublisherAware {
 		}
 		encryptPasswordLock(lock);
 		sysLockDao.update(lock);
+		applicationEventPublisher.publishEvent(new LockUpdateEvent(this, db, lock));
 		return lock;
 	}
 

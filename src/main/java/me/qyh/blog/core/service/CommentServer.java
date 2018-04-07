@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.vo.CommentStatistics;
 
 public interface CommentServer {
 
@@ -52,4 +53,12 @@ public interface CommentServer {
 	 */
 	OptionalInt queryCommentNum(String module, Space space, boolean queryPrivate);
 
+	/**
+	 * 查询评论统计
+	 * 
+	 * @param space
+	 *            空间，如果为空，查询所有空间
+	 * @return
+	 */
+	CommentStatistics queryCommentStatistics(Space space);
 }

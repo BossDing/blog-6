@@ -17,6 +17,8 @@ package me.qyh.blog.template.event;
 
 import org.springframework.context.ApplicationEvent;
 
+import me.qyh.blog.core.util.Validators;
+
 /**
  * 用来监听template缓存清除事件
  * 
@@ -45,7 +47,7 @@ public class TemplateEvitEvent extends ApplicationEvent {
 	}
 
 	public boolean clear() {
-		return templateNames == null || templateNames.length == 0;
+		return Validators.isEmpty(templateNames);
 	}
 
 }

@@ -50,8 +50,6 @@ public class GlobalConfig {
 
 	private int newsPageSize;
 
-	private int commentPageSize;
-
 	public int getFilePageSize() {
 		return filePageSize;
 	}
@@ -98,13 +96,5 @@ public class GlobalConfig {
 
 	public void setNewsPageSize(int newsPageSize) {
 		this.newsPageSize = newsPageSize;
-	}
-
-	public int getCommentPageSize() {
-		return commentPageSize;
-	}
-
-	public void setCommentPageSize(int commentPageSize) {
-		this.commentPageSize = commentPageSize;
 	}
 }

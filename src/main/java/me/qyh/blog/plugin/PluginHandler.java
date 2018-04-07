@@ -96,24 +96,6 @@ public interface PluginHandler extends Ordered {
 	}
 
 	/**
-	 * 添加评论处理模块
-	 * 
-	 * @param registry
-	 */
-	default void addCommentModuleHandler(CommentModuleHandlerRegistry registry) {
-
-	}
-
-	/**
-	 * 添加评论校验
-	 * 
-	 * @param registry
-	 */
-	default void addCommentChecker(CommentCheckerRegistry registry) {
-
-	}
-
-	/**
 	 * 添加文件存储器
 	 * 
 	 * @param registry

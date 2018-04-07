@@ -17,6 +17,7 @@ import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.util.Validators;
 
 public class PluginProperties {
 
@@ -109,7 +110,7 @@ public class PluginProperties {
 	}
 
 	public Map<String, String> gets(String... keys) {
-		if (keys == null || keys.length == 0) {
+		if (Validators.isEmpty(keys)) {
 			return new HashMap<>();
 		}
 		long stamp = lock.tryOptimisticRead();

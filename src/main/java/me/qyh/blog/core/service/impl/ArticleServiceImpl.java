@@ -18,7 +18,7 @@ package me.qyh.blog.core.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,11 +52,13 @@ import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.ArticleTag;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
-import me.qyh.blog.core.event.ArticleEvent;
+import me.qyh.blog.core.event.ArticleCreateEvent;
+import me.qyh.blog.core.event.ArticleDelEvent;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
-import me.qyh.blog.core.event.EventType;
-import me.qyh.blog.core.event.LockDeleteEvent;
-import me.qyh.blog.core.event.SpaceDeleteEvent;
+import me.qyh.blog.core.event.ArticlePublishEvent;
+import me.qyh.blog.core.event.ArticleUpdateEvent;
+import me.qyh.blog.core.event.LockDelEvent;
+import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
@@ -228,7 +229,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 		});
 		applicationEventPublisher
-				.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()), EventType.UPDATE));
+				.publishEvent(new ArticleUpdateEvent(this, articleDb, articleDao.selectById(article.getId())));
 		return article;
 
 	}
@@ -289,8 +290,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				}
 			}
 		});
-		applicationEventPublisher
-				.publishEvent(new ArticleEvent(this, articleDao.selectById(article.getId()), EventType.INSERT));
+		applicationEventPublisher.publishEvent(new ArticleCreateEvent(this, articleDao.selectById(article.getId())));
 		return article;
 	}
 
@@ -311,7 +311,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
 		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+		applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, Arrays.asList(article)));
 		return article;
 	}
 
@@ -435,7 +435,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleIndexer.deleteDocument(id);
 		});
 
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, Arrays.asList(article), true));
 
 		return article;
 	}
@@ -452,6 +452,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (!article.isDeleted()) {
 			throw new LogicException("article.undeleted", "文章未删除");
 		}
+		Article old = new Article(article);
 		ArticleStatus status = ArticleStatus.PUBLISHED;
 		if (article.getPubDate().after(Timestamp.valueOf(LocalDateTime.now()))) {
 			status = ArticleStatus.SCHEDULED;
@@ -461,7 +462,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
 
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.UPDATE));
+		applicationEventPublisher.publishEvent(new ArticleUpdateEvent(this, old, article));
 		return article;
 	}
 
@@ -479,7 +480,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		articleTagDao.deleteByArticle(article);
 		articleDao.deleteById(id);
 
-		applicationEventPublisher.publishEvent(new ArticleEvent(this, article, EventType.DELETE));
+		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, Arrays.asList(article), false));
 	}
 
 	@Override
@@ -583,12 +584,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@EventListener
-	public void handleLockDeleteEvent(LockDeleteEvent event) {
-		articleDao.deleteLock(event.getLockId());
+	public void handleLockDeleteEvent(LockDelEvent event) {
+		articleDao.deleteLock(event.getLock().getId());
 	}
 
 	@EventListener
-	public void handleSpaceDeleteEvent(SpaceDeleteEvent event) {
+	public void handleSpaceDeleteEvent(SpaceDelEvent event) {
 		Space deleted = event.getSpace();
 		// 查询该空间下是否存在文章
 		int count = articleDao.selectCountBySpace(deleted);
@@ -622,23 +623,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		scheduleManager.update();
 
 		if (commentServer == null) {
-			commentServer = new CommentServer() {
-
-				@Override
-				public Map<Integer, Integer> queryCommentNums(String module, Collection<Integer> moduleIds) {
-					return new HashMap<>();
-				}
-
-				@Override
-				public OptionalInt queryCommentNum(String module, Space space, boolean queryPrivate) {
-					return OptionalInt.empty();
-				}
-
-				@Override
-				public OptionalInt queryCommentNum(String module, Integer moduleId) {
-					return OptionalInt.empty();
-				}
-			};
+			commentServer = EmptyCommentServer.INSTANCE;
 		}
 	}
 
@@ -696,7 +681,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 							article.setStatus(ArticleStatus.PUBLISHED);
 							articleDao.update(article);
 						}
-						applicationEventPublisher.publishEvent(new ArticleEvent(this, schedules, EventType.UPDATE));
+						applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, schedules));
 					}
 					start = articleDao.selectMinimumScheduleDate();
 					return schedules;

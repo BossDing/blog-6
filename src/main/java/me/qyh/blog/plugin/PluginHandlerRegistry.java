@@ -27,9 +27,9 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-import org.thymeleaf.util.ArrayUtils;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.util.Validators;
 
 public class PluginHandlerRegistry
 		implements ResourceLoaderAware, ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -46,10 +46,6 @@ public class PluginHandlerRegistry
 	private ExceptionHandlerRegistry exceptionHandlerRegistry;
 	@Autowired(required = false)
 	private ArticleContentHandlerRegistry articleContentHandlerRegistry;
-	@Autowired
-	private CommentModuleHandlerRegistry commentModuleHandlerRegistry;
-	@Autowired
-	private CommentCheckerRegistry commentCheckerRegistry;
 	@Autowired
 	private FileStoreRegistry fileStoreRegistry;
 	@Autowired
@@ -115,8 +111,6 @@ public class PluginHandlerRegistry
 		if (articleContentHandlerRegistry != null) {
 			pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
 		}
-		pluginHandler.addCommentModuleHandler(commentModuleHandlerRegistry);
-		pluginHandler.addCommentChecker(commentCheckerRegistry);
 		pluginHandler.addMenu(MenuRegistry.getInstance());
 		pluginHandler.addFileStore(fileStoreRegistry);
 		pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
@@ -141,7 +135,7 @@ public class PluginHandlerRegistry
 			throw new SystemException(e.getMessage(), e);
 		}
 
-		if (!ArrayUtils.isEmpty(resources)) {
+		if (!Validators.isEmpty(resources)) {
 
 			for (Resource res : resources) {
 				Class<?> handlerClass;

@@ -35,8 +35,10 @@ import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
-import me.qyh.blog.core.event.LockDeleteEvent;
-import me.qyh.blog.core.event.SpaceDeleteEvent;
+import me.qyh.blog.core.event.LockDelEvent;
+import me.qyh.blog.core.event.SpaceDelEvent;
+import me.qyh.blog.core.event.SpaceCreateEvent;
+import me.qyh.blog.core.event.SpaceUpdateEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.LockManager;
@@ -73,6 +75,9 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 			spaceDao.resetDefault();
 		}
 		spaceDao.insert(space);
+
+		this.applicationEventPublisher.publishEvent(new SpaceCreateEvent(this, space));
+
 		spaceCache.init();
 
 		return space;
@@ -102,6 +107,9 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		}
 
 		spaceDao.update(space);
+
+		this.applicationEventPublisher.publishEvent(new SpaceUpdateEvent(this, db, space));
+
 		spaceCache.init();
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 		return space;
@@ -118,7 +126,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 			throw new LogicException("space.default.canNotDelete", "默认空间不能被删除");
 		}
 		// 推送空间删除事件，通知文章等删除
-		this.applicationEventPublisher.publishEvent(new SpaceDeleteEvent(this, space));
+		this.applicationEventPublisher.publishEvent(new SpaceDelEvent(this, space));
 
 		spaceDao.deleteById(id);
 
@@ -146,8 +154,8 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	}
 
 	@EventListener
-	public void handleLockDeleteEvent(LockDeleteEvent event) {
-		spaceDao.deleteLock(event.getLockId());
+	public void handleLockDeleteEvent(LockDelEvent event) {
+		spaceDao.deleteLock(event.getLock().getId());
 	}
 
 	@Override

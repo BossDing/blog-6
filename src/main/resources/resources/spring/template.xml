@@ -28,27 +28,10 @@
 					<constructor-arg index="1" value="spaces" />
 				</bean>
 
-				<bean class="me.qyh.blog.template.render.data.CommentsDataTagProcessor">
-					<constructor-arg index="0" value="评论" />
-					<constructor-arg index="1" value="commentPage" />
-					<property name="callable" value="true" />
-				</bean>
-
-				<bean
-					class="me.qyh.blog.template.render.data.LastCommentsDataTagProcessor">
-					<constructor-arg index="0" value="最近评论" />
-					<constructor-arg index="1" value="comments" />
-				</bean>
-
 				<bean
 					class="me.qyh.blog.template.render.data.ArticleStatisticsDataTagProcessor">
 					<constructor-arg index="0" value="文章统计" />
 					<constructor-arg index="1" value="articleStatistics" />
-				</bean>
-				<bean
-					class="me.qyh.blog.template.render.data.CommentStatisticsDataTagProcessor">
-					<constructor-arg index="0" value="评论统计" />
-					<constructor-arg index="1" value="commentStatistics" />
 				</bean>
 				<bean
 					class="me.qyh.blog.template.render.data.TagStatisticsDataTagProcessor">
@@ -147,13 +130,6 @@
 				</bean>
 
 				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="评论统计" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/commentStatistics.html" type="org.springframework.core.io.Resource" />
-				</bean>
-
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
 					<constructor-arg index="0" value="标签统计" />
 					<constructor-arg index="1"
 						value="classpath:resources/fragment/tagStatistics.html" type="org.springframework.core.io.Resource" />
@@ -177,29 +153,7 @@
 					<constructor-arg index="1"
 						value="classpath:resources/fragment/lock_password.html" type="org.springframework.core.io.Resource" />
 				</bean>
-
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="评论" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/comments.html" />
-					<constructor-arg index="2" value="true" />
-				</bean>
-
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="评论挂件" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/commentWidget.html" />
-					<constructor-arg index="2" value="true" />
-				</bean>
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="最近评论" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/lastComments.html" />
-					<constructor-arg index="2" value="false" />
-				</bean>
+			
 			</list>
 		</property>
 	</bean>

@@ -59,8 +59,7 @@ import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.event.EventType;
-import me.qyh.blog.core.event.SpaceDeleteEvent;
+import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
@@ -83,7 +82,9 @@ import me.qyh.blog.template.dao.PageDao;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.entity.HistoryTemplate;
 import me.qyh.blog.template.entity.Page;
-import me.qyh.blog.template.event.PageEvent;
+import me.qyh.blog.template.event.PageCreateEvent;
+import me.qyh.blog.template.event.PageDelEvent;
+import me.qyh.blog.template.event.PageUpdateEvent;
 import me.qyh.blog.template.event.TemplateEvitEvent;
 import me.qyh.blog.template.render.data.DataTagProcessor;
 import me.qyh.blog.template.service.TemplateService;
@@ -261,7 +262,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			pageDao.deleteById(id);
 			String templateName = db.getTemplateName();
 			evitPageCache(templateName);
-			this.applicationEventPublisher.publishEvent(new PageEvent(this, EventType.DELETE, db));
+			this.applicationEventPublisher.publishEvent(new PageDelEvent(this, Arrays.asList(db)));
 			new PageRequestMappingRegisterHelper().unregisterPage(db);
 		});
 	}
@@ -292,7 +293,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			evitPageCache(page);
 			// 注册现在的页面
 			helper.registerPage(page);
-			this.applicationEventPublisher.publishEvent(new PageEvent(this, EventType.INSERT, page));
+			this.applicationEventPublisher.publishEvent(new PageCreateEvent(this, page));
 			return page;
 		});
 	}
@@ -325,7 +326,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			// 注册现在的页面
 			helper.registerPage(page);
 
-			this.applicationEventPublisher.publishEvent(new PageEvent(this, EventType.UPDATE, page));
+			this.applicationEventPublisher.publishEvent(new PageUpdateEvent(this, db, page));
 			return page;
 		});
 	}
@@ -806,7 +807,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	private void evitFragmentCache(String... names) {
 		Transactions.afterCommit(() -> {
-			if (names == null || names.length == 0) {
+			if (Validators.isEmpty(names)) {
 				return;
 			}
 
@@ -1000,10 +1001,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 	}
 
-	private final class SpaceDeleteEventListener implements ApplicationListener<SpaceDeleteEvent> {
+	private final class SpaceDeleteEventListener implements ApplicationListener<SpaceDelEvent> {
 
 		@Override
-		public void onApplicationEvent(SpaceDeleteEvent event) {
+		public void onApplicationEvent(SpaceDelEvent event) {
 			// 删除所有的fragments
 			List<Fragment> fragments = fragmentDao.selectBySpace(event.getSpace());
 			for (Fragment fragment : fragments) {
@@ -1021,9 +1022,9 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					pageDao.deleteById(page.getId());
 					// 解除mapping注册
 					helper.unregisterPage(page);
-					// 发送事件
-					applicationEventPublisher.publishEvent(new PageEvent(this, EventType.DELETE, page));
 				}
+				// 发送事件
+				applicationEventPublisher.publishEvent(new PageDelEvent(this, pages));
 			}
 		}
 
