@@ -223,6 +223,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	@EventListener
 	public void handleCloseEvent(ContextClosedEvent event) {
+		if (event.getApplicationContext().getParent() != null) {
+			return;
+		}
 		executor.shutdown();
 		try {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);

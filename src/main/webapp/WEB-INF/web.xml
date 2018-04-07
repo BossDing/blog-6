@@ -61,4 +61,9 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
     
+    <context-param>
+    	<param-name>contextInitializerClasses</param-name>
+  		<param-value>me.qyh.blog.plugin.PluginHandlerRegistry</param-value>
+    </context-param>
+    
 </web-app>

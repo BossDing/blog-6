@@ -161,8 +161,11 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 
 	@Override
 	public void onApplicationEvent(ContextClosedEvent event) {
+		if (event.getApplicationContext().getParent() != null) {
+			return;
+		}
 		if (!queue.isEmpty()) {
-			LOGGER.debug("队列中存在未发送邮件，序列化到本地:{}" , sdfile);
+			LOGGER.debug("队列中存在未发送邮件，序列化到本地:{}", sdfile);
 			try {
 				SerializationUtils.serialize(queue, sdfile);
 			} catch (IOException e) {

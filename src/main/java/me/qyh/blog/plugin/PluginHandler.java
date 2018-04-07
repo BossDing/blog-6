@@ -1,6 +1,7 @@
 package me.qyh.blog.plugin;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -14,7 +15,16 @@ import me.qyh.blog.web.WebExceptionResolver;
 public interface PluginHandler extends Ordered {
 
 	/**
-	 * 初始化，会被最先调用
+	 * 在ApplicationContext初始化前调用
+	 * 
+	 * @param applicationContext
+	 */
+	default void initialize(ConfigurableApplicationContext applicationContext) {
+
+	}
+
+	/**
+	 * 当ApplicationContext<b>加载完成后</b>，初始化插件时调用
 	 * 
 	 * @param applicationContext
 	 *            child application context for name space 'blog-serlvet'
@@ -137,6 +147,5 @@ public interface PluginHandler extends Ordered {
 	default int getOrder() {
 		return 0;
 	}
-	
-	
+
 }

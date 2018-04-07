@@ -228,6 +228,9 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 
 	@EventListener
 	public void handleContextEvent(ContextClosedEvent event) {
+		if (event.getApplicationContext().getParent() != null) {
+			return;
+		}
 		flush(true);
 	}
 

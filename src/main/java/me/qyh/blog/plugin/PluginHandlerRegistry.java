@@ -1,5 +1,6 @@
 package me.qyh.blog.plugin;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,8 +8,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -22,8 +27,14 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
+import org.thymeleaf.util.ArrayUtils;
 
-public class PluginHandlerRegistry implements ResourceLoaderAware {
+import me.qyh.blog.core.exception.SystemException;
+
+public class PluginHandlerRegistry
+		implements ResourceLoaderAware, ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+	private static final Logger logger = LoggerFactory.getLogger(PluginHandlerRegistry.class);
 
 	@Autowired
 	private DataTagProcessorRegistry dataTagProcessorRegistry;
@@ -48,7 +59,9 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 
 	private ResourceLoader resourceLoader;
 
-	public Set<String> plugins = new HashSet<>();
+	private Set<String> plugins = new HashSet<>();
+
+	private List<PluginHandler> handlerInstances = new ArrayList<>();
 
 	@EventListener
 	@Order(value = Ordered.LOWEST_PRECEDENCE)
@@ -56,29 +69,14 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 		if (evt.getApplicationContext().getParent() == null) {
 			return;
 		}
-		ApplicationContext applicationContext = evt.getApplicationContext();
-		ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
-		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory(resolver);
-		Resource[] resources = resolver.getResources("classpath:me/qyh/blog/plugin/*/*PluginHandler.class");
-		if (resources != null) {
-
-			List<PluginHandler> handlers = new ArrayList<>();
-
-			for (Resource res : resources) {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(res);
-
-				Class<?> handler = Class.forName(reader.getClassMetadata().getClassName());
-				if (PluginHandler.class.isAssignableFrom(handler)) {
-					handlers.add((PluginHandler) handler.newInstance());
-				}
-			}
-
+		if (!handlerInstances.isEmpty()) {
+			ApplicationContext applicationContext = evt.getApplicationContext();
 			CountDownLatch cdl = new CountDownLatch(1);
 
 			new Thread(() -> {
 
 				try {
-					for (PluginHandler pluginHandler : handlers) {
+					for (PluginHandler pluginHandler : handlerInstances) {
 						SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
 
 						pluginHandler.init(applicationContext);
@@ -108,6 +106,7 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 
 			cdl.await();
 
+			handlerInstances.clear();
 		}
 	}
 
@@ -118,6 +117,45 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 	@Override
 	public void setResourceLoader(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
+	}
+
+	@Override
+	public void initialize(ConfigurableApplicationContext applicationContext) {
+		// create new PluginHandler instance
+
+		ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
+		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory(resolver);
+		Resource[] resources;
+		try {
+			resources = resolver.getResources("classpath:me/qyh/blog/plugin/*/*PluginHandler.class");
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
+		}
+
+		if (!ArrayUtils.isEmpty(resources)) {
+
+			for (Resource res : resources) {
+				Class<?> handlerClass;
+				try {
+					MetadataReader reader = metadataReaderFactory.getMetadataReader(res);
+					handlerClass = Class.forName(reader.getClassMetadata().getClassName());
+				} catch (ClassNotFoundException | IOException e) {
+					throw new SystemException(e.getMessage(), e);
+				}
+				if (PluginHandler.class.isAssignableFrom(handlerClass)) {
+					PluginHandler newInstance;
+					try {
+						newInstance = (PluginHandler) handlerClass.newInstance();
+						newInstance.initialize(applicationContext);
+						handlerInstances.add(newInstance);
+					} catch (Exception e) {
+						logger.warn("加载插件：" + PluginHandler.class.getName() + "失败");
+						continue;
+					}
+				}
+			}
+
+		}
 	}
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.comment.service;
+package me.qyh.blog.plugin.cen;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,10 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thymeleaf.TemplateEngine;
@@ -41,13 +43,13 @@ import me.qyh.blog.comment.entity.Comment;
 import me.qyh.blog.comment.event.CommentEvent;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.mail.MailSender;
 import me.qyh.blog.core.mail.MailSender.MessageBean;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.SerializationUtils;
+import me.qyh.blog.core.util.Validators;
 
 /**
  * 用来向管理员发送评论|回复通知邮件
@@ -58,25 +60,24 @@ import me.qyh.blog.core.util.SerializationUtils;
  * @author Administrator
  *
  */
-public class CommentEmailNotifySupport implements InitializingBean {
+public class CommentEmailNotify implements ResourceLoaderAware, InitializingBean {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotifySupport.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommentEmailNotify.class);
 	private ConcurrentLinkedQueue<Comment> toProcesses = new ConcurrentLinkedQueue<>();
 	private List<Comment> toSend = Collections.synchronizedList(new ArrayList<>());
 	private final MailTemplateEngine mailTemplateEngine = new MailTemplateEngine();
-	private Resource mailTemplateResource;
-	private String mailTemplate;
-	private String mailSubject;
 
 	private final Path toSendSdfile = Constants.DAT_DIR.resolve("comment-toSendSdfile.dat");
 	private final Path toProcessesSdfile = Constants.DAT_DIR.resolve("comment-toProcessesSdfile.dat");
 
-	/**
-	 * 如果待发送列表中有10或以上的评论，立即发送邮件
-	 */
-	private static final Integer MESSAGE_TIP_COUNT = 10;
+	private static final String TEMPLATE_LOCATION = "classpath:me/qyh/blog/plugin/cen/defaultMailTemplate.html";
 
-	private int messageTipCount = MESSAGE_TIP_COUNT;
+	private String templateLocation;
+	private String mailTemplate;
+	private String mailSubject;
+	private int messageTipCount;
+	private int processSendSec;
+	private int forceSendSec;
 
 	@Autowired
 	private MailSender mailSender;
@@ -84,6 +85,34 @@ public class CommentEmailNotifySupport implements InitializingBean {
 	private Messages messages;
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private TaskScheduler taskScheduler;
+
+	private ResourceLoader resourceLoader;
+
+	public CommentEmailNotify(CenConfig config) throws Exception {
+		this.mailSubject = config.getMailSubject();
+		if (Validators.isEmptyOrNull(mailSubject, true)) {
+			mailSubject = "您有新的评论";
+		}
+		this.messageTipCount = config.getMessageTipCount();
+		if (messageTipCount <= 0) {
+			messageTipCount = 10;
+		}
+		String location = config.getTemplateLocation();
+		if (Validators.isEmptyOrNull(location, true)) {
+			location = TEMPLATE_LOCATION;
+		}
+		this.templateLocation = location;
+		this.processSendSec = config.getProcessSendSec();
+		if (processSendSec <= 0) {
+			processSendSec = 5;
+		}
+		this.forceSendSec = config.getForceSendSec();
+		if (forceSendSec <= 0) {
+			forceSendSec = 300;
+		}
+	}
 
 	private void sendMail(List<Comment> comments, String to) {
 		Context context = new Context();
@@ -104,22 +133,57 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 	}
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		if (mailSubject == null) {
-			throw new SystemException("邮件标题不能为空");
+	private void forceSend() {
+		synchronized (toSend) {
+			if (!toSend.isEmpty()) {
+				LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到{}", messageTipCount);
+				sendMail(toSend, null);
+				toSend.clear();
+			}
 		}
+	}
 
-		if (mailTemplateResource == null) {
-			mailTemplateResource = new ClassPathResource("resources/page/defaultMailTemplate.html");
+	private void processToSend() {
+		synchronized (toSend) {
+			int size = toSend.size();
+			for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
+				Comment toProcess = iterator.next();
+				toSend.add(toProcess);
+				size++;
+				iterator.remove();
+				if (size >= messageTipCount) {
+					LOGGER.debug("发送列表尺寸达到{}立即发送邮件通知", messageTipCount);
+					sendMail(toSend, null);
+					toSend.clear();
+					break;
+				}
+			}
 		}
+	}
 
-		mailTemplate = Resources.readResourceToString(mailTemplateResource);
-
-		if (messageTipCount <= 0) {
-			messageTipCount = MESSAGE_TIP_COUNT;
+	@Async
+	@TransactionalEventListener
+	public void handleCommentEvent(CommentEvent evt) {
+		Comment comment = evt.getComment();
+		Comment parent = comment.getParent();
+		// 如果在用户登录的情况下评论，一律不发送邮件
+		// 如果回复了管理员
+		if (!comment.getAdmin() && (parent == null || parent.getAdmin())) {
+			toProcesses.add(comment);
 		}
+		// 如果父评论不是管理员的评论
+		// 如果回复是管理员
+		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
+			// 直接邮件通知被回复对象
+			sendMail(Collections.singletonList(comment), comment.getParent().getEmail());
+		}
+	}
 
+	@EventListener
+	void start(ContextRefreshedEvent event) {
+		if (event.getApplicationContext().getParent() != null) {
+			return;
+		}
 		if (FileUtils.exists(toSendSdfile)) {
 			try {
 				this.toSend = SerializationUtils.deserialize(toSendSdfile);
@@ -145,66 +209,11 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 	}
 
-	public void forceSend() {
-		synchronized (toSend) {
-			if (!toSend.isEmpty()) {
-				LOGGER.debug("待发送列表不为空，将会发送邮件，无论发送列表是否达到{}", messageTipCount);
-				sendMail(toSend, null);
-				toSend.clear();
-			}
-		}
-	}
-
-	public void processToSend() {
-		synchronized (toSend) {
-			int size = toSend.size();
-			for (Iterator<Comment> iterator = toProcesses.iterator(); iterator.hasNext();) {
-				Comment toProcess = iterator.next();
-				toSend.add(toProcess);
-				size++;
-				iterator.remove();
-				if (size >= messageTipCount) {
-					LOGGER.debug("发送列表尺寸达到{}立即发送邮件通知", messageTipCount);
-					sendMail(toSend, null);
-					toSend.clear();
-					break;
-				}
-			}
-		}
-	}
-
-	public void setMailTemplateResource(Resource mailTemplateResource) {
-		this.mailTemplateResource = mailTemplateResource;
-	}
-
-	public void setMailSubject(String mailSubject) {
-		this.mailSubject = mailSubject;
-	}
-
-	public void setMessageTipCount(int messageTipCount) {
-		this.messageTipCount = messageTipCount;
-	}
-
-	@Async
-	@TransactionalEventListener
-	public void handleCommentEvent(CommentEvent evt) {
-		Comment comment = evt.getComment();
-		Comment parent = comment.getParent();
-		// 如果在用户登录的情况下评论，一律不发送邮件
-		// 如果回复了管理员
-		if (!comment.getAdmin() && (parent == null || parent.getAdmin())) {
-			toProcesses.add(comment);
-		}
-		// 如果父评论不是管理员的评论
-		// 如果回复是管理员
-		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
-			// 直接邮件通知被回复对象
-			sendMail(Collections.singletonList(comment), comment.getParent().getEmail());
-		}
-	}
-
 	@EventListener
 	public void handleContextClosedEvent(ContextClosedEvent event) {
+		if (event.getApplicationContext().getParent() != null) {
+			return;
+		}
 		try {
 			if (!toSend.isEmpty()) {
 				SerializationUtils.serialize(toSend, toSendSdfile);
@@ -217,4 +226,15 @@ public class CommentEmailNotifySupport implements InitializingBean {
 		}
 	}
 
+	@Override
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		this.mailTemplate = Resources.readResourceToString(resourceLoader.getResource(templateLocation));
+		taskScheduler.scheduleAtFixedRate(this::forceSend, forceSendSec * 1000L);
+		taskScheduler.scheduleAtFixedRate(this::processToSend, processSendSec * 1000L);
+	}
 }

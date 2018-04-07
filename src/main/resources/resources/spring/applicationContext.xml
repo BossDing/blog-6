@@ -195,14 +195,6 @@
 		<task:scheduled ref="fileService" method="clear" cron="0 0 3 * * ?" />
 
 
-		<!-- 如果配置了评论邮件通知服务 -->
-		<!-- 每隔5s中将队列中的评论取出来放到待发送列表中 -->
-		<task:scheduled ref="commentEmailNotifySupport" method="processToSend"
-			fixed-rate="5000" />
-		<!-- 每隔300s中发送待发送邮件 -->
-		<task:scheduled ref="commentEmailNotifySupport" method="forceSend"
-			fixed-rate="300000" />
-
 	</task:scheduled-tasks>
 
 
@@ -226,10 +218,5 @@
 				<prop key="mail.from">${mail.from}</prop>
 			</props>
 		</property>
-	</bean>
-
-	<!-- 评论服务邮件提醒 -->
-	<bean id="commentEmailNotifySupport" class="me.qyh.blog.comment.service.CommentEmailNotifySupport">
-		<property name="mailSubject" value="您有新的评论" />
 	</bean>
 </beans>      

@@ -165,6 +165,9 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 
 	@EventListener
 	public void handleContextCloseEvent(ContextClosedEvent evt) throws IOException {
+		if (evt.getApplicationContext().getParent() != null) {
+			return;
+		}
 		if (!articles.isEmpty()) {
 			SerializationUtils.serialize(new LinkedHashMap<>(articles), sdfile);
 		}

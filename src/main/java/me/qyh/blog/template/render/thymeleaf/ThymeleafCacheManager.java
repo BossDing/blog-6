@@ -56,7 +56,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Appli
 	private final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
 			new LinkedBlockingQueue<>(100));
 
-	public ThymeleafCacheManager() {	
+	public ThymeleafCacheManager() {
 		tpe.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
 	}
 
@@ -177,6 +177,9 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Appli
 
 		@Override
 		public void onApplicationEvent(ContextClosedEvent event) {
+			if (event.getApplicationContext().getParent() == null) {
+				return;
+			}
 			tpe.shutdownNow();
 		}
 
