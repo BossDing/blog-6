@@ -60,8 +60,7 @@ public class PluginHandlerRegistry
 	private ResourceLoader resourceLoader;
 
 	private Set<String> plugins = new HashSet<>();
-
-	private List<PluginHandler> handlerInstances = new ArrayList<>();
+	private static final List<PluginHandler> handlerInstances = new ArrayList<>();
 
 	@EventListener
 	@Order(value = Ordered.LOWEST_PRECEDENCE)
@@ -77,26 +76,12 @@ public class PluginHandlerRegistry
 
 				try {
 					for (PluginHandler pluginHandler : handlerInstances) {
-						SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
-
-						pluginHandler.init(applicationContext);
-						pluginHandler.addDataTagProcessor(dataTagProcessorRegistry);
-						pluginHandler.addTemplate(templateRegistry);
-						pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
-						pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
-						if (articleContentHandlerRegistry != null) {
-							pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
+						try {
+							invokePluginHandler(pluginHandler, applicationContext);
+							plugins.add(getPluginName(pluginHandler.getClass()));
+						} catch (Exception e) {
+							logger.warn("加载插件：" + PluginHandler.class.getName() + "失败", e);
 						}
-						pluginHandler.addCommentModuleHandler(commentModuleHandlerRegistry);
-						pluginHandler.addCommentChecker(commentCheckerRegistry);
-						pluginHandler.addMenu(MenuRegistry.getInstance());
-						pluginHandler.addFileStore(fileStoreRegistry);
-						pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
-						pluginHandler.addHandlerInterceptorRegistry(handlerInterceptorRegistry);
-
-						String fullName = pluginHandler.getClass().getPackage().getName();
-						String pluginName = fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
-						plugins.add(pluginName);
 					}
 				} finally {
 					cdl.countDown();
@@ -112,6 +97,30 @@ public class PluginHandlerRegistry
 
 	public Set<String> getPlugins() {
 		return Collections.unmodifiableSet(plugins);
+	}
+
+	private String getPluginName(Class<? extends PluginHandler> clazz) {
+		String fullName = clazz.getClass().getPackage().getName();
+		return fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
+	}
+
+	private void invokePluginHandler(PluginHandler pluginHandler, ApplicationContext applicationContext) {
+		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
+
+		pluginHandler.init(applicationContext);
+		pluginHandler.addDataTagProcessor(dataTagProcessorRegistry);
+		pluginHandler.addTemplate(templateRegistry);
+		pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
+		pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
+		if (articleContentHandlerRegistry != null) {
+			pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
+		}
+		pluginHandler.addCommentModuleHandler(commentModuleHandlerRegistry);
+		pluginHandler.addCommentChecker(commentCheckerRegistry);
+		pluginHandler.addMenu(MenuRegistry.getInstance());
+		pluginHandler.addFileStore(fileStoreRegistry);
+		pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
+		pluginHandler.addHandlerInterceptorRegistry(handlerInterceptorRegistry);
 	}
 
 	@Override
@@ -149,8 +158,7 @@ public class PluginHandlerRegistry
 						newInstance.initialize(applicationContext);
 						handlerInstances.add(newInstance);
 					} catch (Exception e) {
-						logger.warn("加载插件：" + PluginHandler.class.getName() + "失败");
-						continue;
+						logger.warn("加载插件：" + PluginHandler.class.getName() + "失败", e);
 					}
 				}
 			}
