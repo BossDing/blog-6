@@ -3,10 +3,10 @@ package me.qyh.blog.plugin.pte;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
-import me.qyh.blog.plugin.PluginHandlerAdapter;
+import me.qyh.blog.plugin.PluginHandler;
 import me.qyh.blog.template.service.TemplateService;
 
-public class PtePluginHandler extends PluginHandlerAdapter {
+public class PtePluginHandler implements PluginHandler {
 
 	@Override
 	public void init(ApplicationContext applicationContext) {

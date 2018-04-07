@@ -2,10 +2,10 @@ package me.qyh.blog.plugin.qiniu;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.plugin.FileStoreRegistry;
-import me.qyh.blog.plugin.PluginHandlerAdapter;
+import me.qyh.blog.plugin.PluginHandler;
 import me.qyh.blog.plugin.PluginProperties;
 
-public class QiniuPluginHandler extends PluginHandlerAdapter {
+public class QiniuPluginHandler implements PluginHandler {
 
 	private PluginProperties pluginProperties = PluginProperties.getInstance();
 

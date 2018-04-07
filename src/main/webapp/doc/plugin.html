@@ -103,8 +103,7 @@ body {
 							</tr>
 							<tr>
 								<td>void addTemplate(TemplateRegistry registry)</td>
-								<td>添加<b>系统模板</b>，如果存在对应路径的系统模板，将会替换该系统模板，但是无法替换用户模板
-								<br>添加<b>全局模板片段</b>，如果存在对应名称的模板片段，将会替换该模板片段，但是无法替换用户自定义模板片段
+								<td>添加<b>系统模板</b>，如果存在对应路径的系统模板，将会替换该系统模板，但是无法替换用户模板 <br>添加<b>全局模板片段</b>，如果存在对应名称的模板片段，将会替换该模板片段，但是无法替换用户自定义模板片段
 								</td>
 							</tr>
 							<tr>
@@ -119,24 +118,40 @@ body {
 								<td>添加管理台左侧导航的菜单链接，<b>虽然Menu为树结构，但是最多支持2层菜单</b></td>
 							</tr>
 							<tr>
-								<td>void addExceptionHandler(ExceptionHandlerRegistry registry)</td>
+								<td>void addExceptionHandler(ExceptionHandlerRegistry
+									registry)</td>
 								<td>添加自定义的异常处理器，<b>优先级低于系统的异常处理器，并且只能处理checked异常</b></td>
 							</tr>
 							<tr>
-								<td>void addArticleContentHandler(ArticleContentHandlerRegistry registry)</td>
+								<td>void
+									addArticleContentHandler(ArticleContentHandlerRegistry
+									registry)</td>
 								<td>添加文章内容处理器</td>
 							</tr>
 							<tr>
-								<td>void addCommentModuleHandler(CommentModuleHandlerRegistry registry)</td>
+								<td>void
+									addCommentModuleHandler(CommentModuleHandlerRegistry registry)</td>
 								<td>添加评论模块处理器</td>
 							</tr>
 							<tr>
-								<td>void addCommentChecker(CommentCheckerRegistry registry) </td>
+								<td>void addCommentChecker(CommentCheckerRegistry registry)
+								</td>
 								<td>添加评论校验器</td>
 							</tr>
 							<tr>
-								<td>void addFileStore(FileStoreRegistry registry) </td>
+								<td>void addFileStore(FileStoreRegistry registry)</td>
 								<td>添加额外的文件存储</td>
+							</tr>
+							<tr>
+								<td>void addTemplateInterceptor(TemplateInterceptorRegistry
+									registry)</td>
+								<td>添加模板拦截器</td>
+							</tr>
+							<tr>
+								<td>void
+									addHandlerInterceptorRegistry(HandlerInterceptorRegistry
+									registry)</td>
+								<td>添加拦截器,<b>优先级低于系统自带的拦截器</b></td>
 							</tr>
 						</table>
 					</div>

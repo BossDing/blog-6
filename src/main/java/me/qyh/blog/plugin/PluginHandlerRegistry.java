@@ -43,6 +43,8 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 	private FileStoreRegistry fileStoreRegistry;
 	@Autowired
 	private TemplateInterceptorRegistry templateInterceptorRegistry;
+	@Autowired
+	private HandlerInterceptorRegistry handlerInterceptorRegistry;
 
 	private ResourceLoader resourceLoader;
 
@@ -92,6 +94,7 @@ public class PluginHandlerRegistry implements ResourceLoaderAware {
 						pluginHandler.addMenu(MenuRegistry.getInstance());
 						pluginHandler.addFileStore(fileStoreRegistry);
 						pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
+						pluginHandler.addHandlerInterceptorRegistry(handlerInterceptorRegistry);
 
 						String fullName = pluginHandler.getClass().getPackage().getName();
 						String pluginName = fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());

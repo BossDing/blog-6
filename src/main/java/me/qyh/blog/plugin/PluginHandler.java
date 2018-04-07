@@ -19,7 +19,9 @@ public interface PluginHandler extends Ordered {
 	 * @param applicationContext
 	 *            child application context for name space 'blog-serlvet'
 	 */
-	void init(ApplicationContext applicationContext);
+	default void init(ApplicationContext applicationContext) {
+
+	}
 
 	/**
 	 * 添加DataTagProcessor
@@ -27,14 +29,18 @@ public interface PluginHandler extends Ordered {
 	 * @see DataTagProcessor
 	 * @param registry
 	 */
-	void addDataTagProcessor(DataTagProcessorRegistry registry);
+	default void addDataTagProcessor(DataTagProcessorRegistry registry) {
+
+	}
 
 	/**
 	 * 添加模板
 	 * 
 	 * @param registry
 	 */
-	void addTemplate(TemplateRegistry registry);
+	default void addTemplate(TemplateRegistry registry) {
+
+	}
 
 	/**
 	 * 添加RequestMapping
@@ -42,14 +48,18 @@ public interface PluginHandler extends Ordered {
 	 * @see RequestMapping
 	 * @param registry
 	 */
-	void addRequestHandlerMapping(RequestMappingRegistry registry);
+	default void addRequestHandlerMapping(RequestMappingRegistry registry) {
+
+	}
 
 	/**
 	 * 添加管理台餐单
 	 * 
 	 * @param registry
 	 */
-	void addMenu(MenuRegistry registry);
+	default void addMenu(MenuRegistry registry) {
+
+	}
 
 	/**
 	 * 添加异常处理
@@ -62,40 +72,71 @@ public interface PluginHandler extends Ordered {
 	 * 
 	 * @param registry
 	 */
-	void addExceptionHandler(ExceptionHandlerRegistry registry);
+	default void addExceptionHandler(ExceptionHandlerRegistry registry) {
+
+	}
 
 	/**
 	 * 添加文章内容处理器
 	 * 
 	 * @param registry
 	 */
-	void addArticleContentHandler(ArticleContentHandlerRegistry registry);
+	default void addArticleContentHandler(ArticleContentHandlerRegistry registry) {
+
+	}
 
 	/**
 	 * 添加评论处理模块
 	 * 
 	 * @param registry
 	 */
-	void addCommentModuleHandler(CommentModuleHandlerRegistry registry);
+	default void addCommentModuleHandler(CommentModuleHandlerRegistry registry) {
+
+	}
 
 	/**
 	 * 添加评论校验
 	 * 
 	 * @param registry
 	 */
-	void addCommentChecker(CommentCheckerRegistry registry);
+	default void addCommentChecker(CommentCheckerRegistry registry) {
+
+	}
 
 	/**
 	 * 添加文件存储器
 	 * 
 	 * @param registry
 	 */
-	void addFileStore(FileStoreRegistry registry);
+	default void addFileStore(FileStoreRegistry registry) {
+
+	}
 
 	/**
 	 * 添加模板拦截器
 	 * 
 	 * @param registry
 	 */
-	void addTemplateInterceptor(TemplateInterceptorRegistry registry);
+	default void addTemplateInterceptor(TemplateInterceptorRegistry registry) {
+
+	}
+
+	/**
+	 * 注册拦截器
+	 * <p>
+	 * <b>优先级低于系统自带的拦截器</b>
+	 * </p>
+	 * 
+	 * @param registry
+	 */
+	default void addHandlerInterceptorRegistry(HandlerInterceptorRegistry registry) {
+
+	}
+
+	@Override
+	default int getOrder() {
+		return 0;
+	}
+	
+	
 }
