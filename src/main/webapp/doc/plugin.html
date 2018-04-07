@@ -93,8 +93,12 @@ body {
 					<div class="table-responsive">
 						<table class="table">
 							<tr>
+								<td>void initialize(ConfigurableApplicationContext applicationContext)</td>
+								<td>在ApplicationContext初始化前调用</td>
+							</tr>
+							<tr>
 								<td>void init(ApplicationContext applicationContext)</td>
-								<td>初始化方法，该方法会被首先调用</td>
+								<td>当ApplicationContext<b>加载完成后</b>，初始化插件时调用</td>
 							</tr>
 							<tr>
 								<td>void addDataTagProcessor(DataTagProcessorRegistry
