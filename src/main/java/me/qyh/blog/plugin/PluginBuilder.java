@@ -3,6 +3,7 @@ package me.qyh.blog.plugin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -54,6 +55,9 @@ public class PluginBuilder {
 
 	private static void copyDir(Path source, Path dest, String resolvePath) throws IOException {
 		Path resolve = source.resolve(resolvePath);
+		if (!FileUtils.exists(resolve)) {
+			return;
+		}
 		Path _resolve = dest.resolve(resolvePath);
 
 		Files.walk(resolve).forEach(p -> {
@@ -69,6 +73,10 @@ public class PluginBuilder {
 			}
 
 		});
+	}
+
+	public static void main(String[] args) throws Exception {
+		build("pte", Paths.get("C:\\java\\projects\\nblog"), Paths.get("f:/plugin"));
 	}
 
 }
