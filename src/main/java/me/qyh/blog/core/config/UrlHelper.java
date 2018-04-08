@@ -128,7 +128,7 @@ public class UrlHelper implements InitializingBean {
 			if (space == null) {
 				return url;
 			}
-			return url + "/space/" + space.getAlias();
+			return url + SPACE_IN_URL + space.getAlias();
 		}
 
 		/**
@@ -186,29 +186,28 @@ public class UrlHelper implements InitializingBean {
 	 */
 	public class SpaceUrls extends Urls {
 
-		private final Env env;
+		private String space;
+		private String url;
 
 		private SpaceUrls(String alias) {
-			// 空间域名
-			this.env = new Env();
-			env.space = alias;
-			if (env.isSpaceEnv()) {
-				env.url = url + SPACE_IN_URL + env.space;
+			space = alias;
+			if (space != null) {
+				url = UrlHelper.this.url + SPACE_IN_URL + space;
 			} else {
-				env.url = url;
+				url = UrlHelper.this.url;
 			}
 		}
 
 		public String getUnlockUrl(String unlockId) {
-			return env.url + "/unlock?unlockId=" + "" + Objects.toString(unlockId, "");
+			return url + "/unlock?unlockId=" + "" + Objects.toString(unlockId, "");
 		}
 
 		public String getSpace() {
-			return env.space;
+			return space;
 		}
 
 		public String getCurrentUrl() {
-			return env.url;
+			return url;
 		}
 
 		/**
@@ -218,20 +217,11 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public ArticlesUrlHelper getArticlesUrlHelper(String path) {
-			return new ArticlesUrlHelper(env.url, path);
+			return new ArticlesUrlHelper(url, path);
 		}
 
 		public ArticlesUrlHelper getArticlesUrlHelper() {
 			return getArticlesUrlHelper("");
-		}
-
-		private class Env {
-			private String space;
-			private String url;
-
-			boolean isSpaceEnv() {
-				return space != null;
-			}
 		}
 	}
 

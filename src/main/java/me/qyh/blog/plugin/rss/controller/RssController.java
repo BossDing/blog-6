@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.web.controller.front;
+package me.qyh.blog.plugin.rss.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,7 +29,6 @@ import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.web.view.RssView;
 
 @Controller
 public class RssController {
