@@ -15,38 +15,54 @@
  */
 package me.qyh.blog.core.vo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+
+import me.qyh.blog.core.service.ArticleService;
+import me.qyh.blog.core.service.NewsService;
+import me.qyh.blog.template.service.TemplateService;
 
 public class CommentStatistics {
 
-	private Map<String, Integer> stMap = new HashMap<>();
+	private List<CommentModuleStatistics> modules = new ArrayList<>();
 
-	public Map<String, Integer> getStMap() {
-		return stMap;
+	public void addModule(CommentModuleStatistics st) {
+		this.modules.add(st);
 	}
 
-	public void setStMap(Map<String, Integer> stMap) {
-		this.stMap = stMap;
+	public List<CommentModuleStatistics> getModules() {
+		return modules;
 	}
+
 	/**
 	 * 适配以前
+	 * 
 	 * @return
 	 */
 	public int getTotalArticleComments() {
-		return getComments("article");
+		return getComments(ArticleService.COMMENT_MODULE_TYPE);
 	}
+
 	/**
 	 * 适配以前
+	 * 
 	 * @return
 	 */
 	public int getTotalPageComments() {
-		return getComments("userpage");
+		return getComments(TemplateService.COMMENT_MODULE_TYPE);
 	}
 
-	public int getComments(String key) {
-		Integer count = stMap.get(key);
-		return count == null ? 0 : count;
+	public int getNewsComments() {
+		return getComments(NewsService.COMMENT_MODULE_TYPE);
+	}
+
+	public int getComments(String type) {
+		for (CommentModuleStatistics module : modules) {
+			if (module.getType().equals(type)) {
+				return module.getCount();
+			}
+		}
+		return 0;
 	}
 
 }

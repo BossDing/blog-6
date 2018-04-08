@@ -23,16 +23,23 @@ import java.util.OptionalInt;
 
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.plugin.comment.entity.Comment;
 
 public abstract class CommentModuleHandler {
 
 	// 模块类型
+	private final Message name;
 	private final String type;
 
-	public CommentModuleHandler(String type) {
+	public CommentModuleHandler(Message name, String type) {
 		super();
 		this.type = type;
+		this.name = name;
+	}
+
+	public Message getName() {
+		return name;
 	}
 
 	public String getType() {
@@ -90,20 +97,25 @@ public abstract class CommentModuleHandler {
 	 * @return key 項目ID，value 項目明細
 	 */
 	public abstract Map<Integer, Object> getReferences(Collection<Integer> ids);
-	
+
 	/**
-	 * 查询最近的评论 
-	 * @param space 空间
-	 * @param limit 最大评论数
-	 * @param queryPrivate 是否查询私人项目
-	 * @param queryAdmin 是否查询管理员的回復
+	 * 查询最近的评论
+	 * 
+	 * @param space
+	 *            空间
+	 * @param limit
+	 *            最大评论数
+	 * @param queryPrivate
+	 *            是否查询私人项目
+	 * @param queryAdmin
+	 *            是否查询管理员的回復
 	 * @return
 	 */
-	public abstract List<Comment> queryLastComments(Space space,int limit,boolean queryPrivate,boolean queryAdmin);
-	
-	
+	public abstract List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin);
+
 	/**
 	 * 获取某个项目的访问地址
+	 * 
 	 * @param id
 	 * @return
 	 */

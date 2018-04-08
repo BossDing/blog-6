@@ -118,9 +118,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Autowired(required = false)
 	private ArticleViewedLogger articleViewedLogger;
 
-	private static final String COMMENT_MODULE = "article";
-	// ArticleCommentModuleHandler.MODULE_NAME;
-
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
@@ -128,7 +125,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		if (optionalArticle.isPresent()) {
 
 			Article clone = new Article(optionalArticle.get());
-			clone.setComments(commentServer.queryCommentNum(COMMENT_MODULE, clone.getId()).orElse(0));
+			clone.setComments(commentServer.queryCommentNum(COMMENT_MODULE_TYPE, clone.getId()).orElse(0));
 
 			if (articleContentHandler != null) {
 				articleContentHandler.handle(clone);
@@ -381,7 +378,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		List<Article> datas = page.getDatas();
 		if (!CollectionUtils.isEmpty(datas)) {
 			List<Integer> ids = datas.stream().map(Article::getId).collect(Collectors.toList());
-			Map<Integer, Integer> countsMap = commentServer.queryCommentNums(COMMENT_MODULE, ids);
+			Map<Integer, Integer> countsMap = commentServer.queryCommentNums(COMMENT_MODULE_TYPE, ids);
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
 				article.setComments(comments == null ? 0 : comments);

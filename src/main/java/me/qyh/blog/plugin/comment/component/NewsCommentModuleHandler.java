@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.plugin.comment.component;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,8 @@ import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.event.NewsDelEvent;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.plugin.comment.dao.CommentDao;
 import me.qyh.blog.plugin.comment.dao.NewsCommentDao;
 import me.qyh.blog.plugin.comment.entity.Comment;
@@ -43,7 +46,7 @@ import me.qyh.blog.plugin.comment.vo.ModuleCommentCount;
 @Component
 public class NewsCommentModuleHandler extends CommentModuleHandler {
 
-	private static final String MODULE_NAME = "news";
+	private static final String MODULE_NAME = NewsService.COMMENT_MODULE_TYPE;
 
 	@Autowired
 	private CommentDao commentDao;
@@ -55,7 +58,7 @@ public class NewsCommentModuleHandler extends CommentModuleHandler {
 	private UrlHelper urlHelper;
 
 	public NewsCommentModuleHandler() {
-		super(MODULE_NAME);
+		super(new Message("comment.module.news","动态"),MODULE_NAME);
 	}
 
 	@Override
@@ -106,16 +109,22 @@ public class NewsCommentModuleHandler extends CommentModuleHandler {
 		for (News news : event.getNewsList()) {
 			commentDao.deleteByModule(new CommentModule(MODULE_NAME, news.getId()));
 		}
-		}
+	}
 
 	@Override
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin) {
-		return newsCommentDao.selectLastComments(limit, queryPrivate, queryAdmin);
+		if (space == null) {
+			return newsCommentDao.selectLastComments(limit, queryPrivate, queryAdmin);
+		}
+		return new ArrayList<>();
 	}
 
 	@Override
 	public int queryCommentNum(Space space, boolean queryPrivate) {
-		return newsCommentDao.selectTotalCommentCount(queryPrivate);
+		if (space == null) {
+			return newsCommentDao.selectTotalCommentCount(queryPrivate);
+		}
+		return 0;
 	}
 
 	@Override

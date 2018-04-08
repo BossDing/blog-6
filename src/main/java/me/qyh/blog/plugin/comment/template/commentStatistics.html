@@ -3,9 +3,7 @@
 		<h3 class="panel-title">评论统计</h3>
 	</div>
 	<ul class="list-group">
-		<li class="list-group-item"><strong>文章评论数：</strong><span
-			th:text="${commentStatistics.getTotalArticleComments()}"></span></li>
-		<li class="list-group-item"><strong>页面评论数：</strong><span
-			th:text="${commentStatistics.getTotalPageComments()}"></span></li>
+		<li class="list-group-item"
+			th:each="module : ${commentStatistics.modules}"><strong>[[${messages.getMessage(module.name)}]]：</strong><span>[[${module.count}]]</span></li>
 	</ul>
 </div>

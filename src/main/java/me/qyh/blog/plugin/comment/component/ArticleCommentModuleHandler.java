@@ -37,6 +37,7 @@ import me.qyh.blog.core.event.ArticleDelEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
+import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.impl.ArticleCache;
 import me.qyh.blog.plugin.comment.dao.ArticleCommentDao;
@@ -67,13 +68,13 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 	@Autowired
 	private Messages messages;
 
-	private static final String MODULE_NAME = "article";
+	private static final String MODULE_NAME = ArticleService.COMMENT_MODULE_TYPE;
 
 	private static final Message PROTECTED_COMMENT_MD = new Message("comment.protected", "\\*\\*\\*\\*\\*\\*");
 	private static final Message PROTECTED_COMMENT_HTML = new Message("comment.protected", "******");
 
 	public ArticleCommentModuleHandler() {
-		super(MODULE_NAME);
+		super(new Message("comment.module.article", "文章"), MODULE_NAME);
 	}
 
 	@Override

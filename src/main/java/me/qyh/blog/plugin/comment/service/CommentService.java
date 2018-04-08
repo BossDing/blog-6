@@ -72,6 +72,7 @@ import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.core.vo.CommentModuleStatistics;
 import me.qyh.blog.core.vo.CommentStatistics;
 import me.qyh.blog.core.vo.Limit;
 import me.qyh.blog.core.vo.PageQueryParam;
@@ -552,11 +553,10 @@ public class CommentService
 	public CommentStatistics queryCommentStatistics(Space space) {
 		CommentStatistics commentStatistics = new CommentStatistics();
 		boolean queryPrivate = Environment.isLogin();
-		Map<String, Integer> map = new HashMap<>(handlerMap.size());
 		for (CommentModuleHandler handler : handlerMap.values()) {
-			map.put(handler.getType(), handler.queryCommentNum(space, queryPrivate));
+			commentStatistics.addModule(new CommentModuleStatistics(handler.getType(), handler.getName(),
+					handler.queryCommentNum(space, queryPrivate)));
 		}
-		commentStatistics.setStMap(map);
 		return commentStatistics;
 	}
 

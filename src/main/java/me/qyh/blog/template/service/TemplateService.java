@@ -42,6 +42,8 @@ import me.qyh.blog.template.vo.TemplatePageQueryParam;
  */
 public interface TemplateService {
 
+	static final String COMMENT_MODULE_TYPE = "userpage";
+
 	/**
 	 * 插入用户自定义模板片段
 	 * 
@@ -284,17 +286,13 @@ public interface TemplateService {
 	void restoreLoginPage() throws LogicException;
 
 	/**
-	 * 用于预览的IP
-	 * <p>
-	 * 成功设置预览界面|模板片段后返回当前设置的IP<br>
-	 * 当用户注销后|删除预览页面时 将此返回空<br>
-	 * </p>
+	 * 判断IP是否为预览IP
 	 * 
 	 * @since 5.10
 	 * @return
 	 * 
 	 */
-	Optional<String> getPreviewIp();
+	boolean isPreviewIp(String ip);
 
 	/**
 	 * 注册用于预览的模板片段
@@ -306,6 +304,9 @@ public interface TemplateService {
 
 	/**
 	 * 获取模板片段的模板名称
+	 * <p>
+	 * 如果IP为预览IP，并且为预览模板，返回预览模板名
+	 * </p>
 	 * 
 	 * @param name
 	 *            名称

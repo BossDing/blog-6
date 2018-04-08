@@ -31,6 +31,7 @@ import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.plugin.comment.dao.CommentDao;
 import me.qyh.blog.plugin.comment.dao.PageCommentDao;
 import me.qyh.blog.plugin.comment.entity.Comment;
@@ -40,11 +41,12 @@ import me.qyh.blog.plugin.comment.vo.ModuleCommentCount;
 import me.qyh.blog.template.dao.PageDao;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.event.PageDelEvent;
+import me.qyh.blog.template.service.TemplateService;
 
 @Component
 public class PageCommentModuleHandler extends CommentModuleHandler {
 
-	private static final String MODULE_NAME = "userpage";
+	private static final String MODULE_NAME = TemplateService.COMMENT_MODULE_TYPE;
 
 	@Autowired
 	private CommentDao commentDao;
@@ -56,7 +58,7 @@ public class PageCommentModuleHandler extends CommentModuleHandler {
 	private UrlHelper urlHelper;
 
 	public PageCommentModuleHandler() {
-		super(MODULE_NAME);
+		super(new Message("comment.module.page", "页面"), MODULE_NAME);
 	}
 
 	@Override

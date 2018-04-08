@@ -10,6 +10,8 @@ import me.qyh.blog.core.vo.PageResult;
 
 public interface NewsService {
 
+	static final String COMMENT_MODULE_TYPE = "news";
+
 	/**
 	 * 分页查询动态
 	 * 

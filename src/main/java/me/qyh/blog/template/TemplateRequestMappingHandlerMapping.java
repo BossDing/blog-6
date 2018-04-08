@@ -209,7 +209,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	}
 
 	private boolean isPreview(HttpServletRequest request) {
-		return templateService.getPreviewIp().map(ip -> ip.equals(Webs.getIP(request))).orElse(Boolean.FALSE);
+		return templateService.isPreviewIp(Webs.getIP(request));
 	}
 
 	private void setUriTemplateVariables(TemplateMatch match, String lookupPath, HttpServletRequest request) {

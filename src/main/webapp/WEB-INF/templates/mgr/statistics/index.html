@@ -78,13 +78,9 @@
 							<table class="table">
 								<caption>评论统计</caption>
 								<tbody>
-									<tr>
-										<th>文章总评论数</th>
-										<td th:text="${commentStatistics.totalArticleComments}"></td>
-									</tr>
-									<tr>
-										<th>自定义页面评论数</th>
-										<td th:text="${commentStatistics.totalPageComments}"></td>
+									<tr th:each="module : ${commentStatistics.modules}">
+										<th th:text="${messages.getMessage(module.name)}"></th>
+										<td th:text="${module.count}"></td>
 									</tr>
 								</tbody>
 							</table>

@@ -40,6 +40,8 @@ import me.qyh.blog.core.vo.TagCount;
  */
 public interface ArticleService {
 
+	static final String COMMENT_MODULE_TYPE = "article";
+
 	/**
 	 * 获取一篇可以被访问的文章
 	 * 
