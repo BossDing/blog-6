@@ -42,11 +42,6 @@ public class Page extends BaseEntity implements PathTemplate {
 
 	private String templateName;
 
-	/**
-	 * @since 6.0
-	 */
-	private int comments;
-
 	public static final String PAGE_PREFIX = TEMPLATE_PREFIX + "Page" + SPLITER;
 
 	/**
@@ -84,7 +79,6 @@ public class Page extends BaseEntity implements PathTemplate {
 		this.alias = page.alias;
 		this.allowComment = page.allowComment;
 		this.spaceGlobal = page.spaceGlobal;
-		this.comments = page.comments;
 	}
 
 	@Override
@@ -187,14 +181,6 @@ public class Page extends BaseEntity implements PathTemplate {
 
 	public void setSpaceGlobal(boolean spaceGlobal) {
 		this.spaceGlobal = spaceGlobal;
-	}
-
-	public int getComments() {
-		return comments;
-	}
-
-	public void setComments(int comments) {
-		this.comments = comments;
 	}
 
 	@Override

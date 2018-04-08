@@ -244,13 +244,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public Optional<Page> queryPage(Integer id) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-
-			Page page = pageDao.selectById(id);
-			if (page != null) {
-				page.setComments(commentServer.queryCommentNum(COMMENT_MODULE_TYPE, page.getId()).orElse(0));
-			}
-
-			return Optional.ofNullable(page);
+			return Optional.ofNullable(pageDao.selectById(id));
 		});
 	}
 
@@ -260,14 +254,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			param.setPageSize(configServer.getGlobalConfig().getPagePageSize());
 			int count = pageDao.selectCount(param);
 			List<Page> datas = pageDao.selectPage(param);
-
-			List<Integer> ids = datas.stream().map(Page::getId).collect(Collectors.toList());
-			Map<Integer, Integer> countsMap = commentServer.queryCommentNums(COMMENT_MODULE_TYPE, ids);
-			for (Page page : datas) {
-				Integer comments = countsMap.get(page.getId());
-				page.setComments(comments == null ? 0 : comments);
-			}
-
 			return new PageResult<>(param, count, datas);
 		});
 	}
@@ -912,9 +898,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			page = pageDao.selectBySpaceAndAlias(new Space(Integer.parseInt(array[4])), array[2], false);
 		} else {
 			throw new SystemException(templateName + "无法转化为用户自定义页面");
-		}
-		if (page != null) {
-			page.setComments(commentServer.queryCommentNum(COMMENT_MODULE_TYPE, page.getId()).orElse(0));
 		}
 		return Optional.ofNullable(page);
 	}

@@ -17,7 +17,6 @@ import me.qyh.blog.plugin.MenuRegistry;
 import me.qyh.blog.plugin.PluginHandler;
 import me.qyh.blog.plugin.PluginProperties;
 import me.qyh.blog.plugin.TemplateRegistry;
-import me.qyh.blog.plugin.comment.data.CommentStatisticsDataTagProcessor;
 import me.qyh.blog.plugin.comment.data.CommentsDataTagProcessor;
 import me.qyh.blog.plugin.comment.data.LastCommentsDataTagProcessor;
 
@@ -61,10 +60,8 @@ public class CommentPluginHandler implements PluginHandler {
 
 	@Override
 	public void addTemplate(TemplateRegistry registry) {
-		registry.registerGlobalFragment(messages.getMessage("plugin.comment.data.stat", "评论统计"),
-				read(new ClassPathResource("me/qyh/blog/plugin/comment/template/commentStatistics.html")), false)
-				.registerGlobalFragment(messages.getMessage("plugin.comment.data.comment", "评论"),
-						read(new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")), true)
+		registry.registerGlobalFragment(messages.getMessage("plugin.comment.data.comment", "评论"),
+				read(new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")), true)
 				.registerGlobalFragment(messages.getMessage("plugin.comment.data.widget", "评论挂件"),
 						read(new ClassPathResource("me/qyh/blog/plugin/comment/template/commentWidget.html")), true)
 				.registerGlobalFragment(messages.getMessage("plugin.comment.data.lastComments", "最近评论"),
@@ -83,11 +80,6 @@ public class CommentPluginHandler implements PluginHandler {
 				messages.getMessage("plugin.comment.data.lastComment", "最近评论"), "comments");
 		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(lcdtp);
 		registry.register(lcdtp);
-
-		CommentStatisticsDataTagProcessor csdtp = new CommentStatisticsDataTagProcessor(
-				messages.getMessage("plugin.comment.data.stat", "评论统计"), "commentStatistics");
-		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(csdtp);
-		registry.register(csdtp);
 	}
 
 	private String read(Resource resource) {

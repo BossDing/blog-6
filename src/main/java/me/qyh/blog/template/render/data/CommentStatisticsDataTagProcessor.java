@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.comment.data;
+package me.qyh.blog.template.render.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.vo.CommentStatistics;
-import me.qyh.blog.plugin.comment.service.CommentService;
-import me.qyh.blog.template.render.data.DataTagProcessor;
 
 public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentStatistics> {
 
 	@Autowired
-	private CommentService commentService;
+	private CommentServer commentServer;
 
 	public CommentStatisticsDataTagProcessor(String name, String dataName) {
 		super(name, dataName);
@@ -34,7 +33,7 @@ public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentS
 
 	@Override
 	protected CommentStatistics query(Attributes attributes) throws LogicException {
-		return commentService.queryCommentStatistics(Environment.getSpace());
+		return commentServer.queryCommentStatistics(Environment.getSpace());
 	}
 
 }
