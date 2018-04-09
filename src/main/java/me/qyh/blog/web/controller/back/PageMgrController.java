@@ -154,4 +154,10 @@ public class PageMgrController extends BaseMgrController {
 		templateService.savePageHistory(id, remark);
 		return new JsonResult(true, new Message("historyTemplate.save.success", "保存成功"));
 	}
+
+	@GetMapping("default")
+	@ResponseBody
+	public JsonResult getDefaul() {
+		return new JsonResult(true, templateService.getSystemTemplates());
+	}
 }

@@ -5,16 +5,23 @@ var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
 }}]);
 var saveFlag = false;
 var preEditorContent;
-var loadTemplates = function(){
-	return [{name : '文章详情',path:rootPath+'/static/js/mgr/fragment_article.html'},{name : '上下文章',path:rootPath+'/static/js/mgr/fragment_articleNav.html'},
-		{name:'文章列表',path:rootPath+'/static/js/mgr/fragment_articles.html'},{name:'文章统计',path:rootPath+'/static/js/mgr/fragment_articleStatistics.html'},
-		{name:'文章标签',path:rootPath+'/static/js/mgr/fragment_articleTags.html'},{name:'评论',path:rootPath+'/static/js/mgr/fragment_comments.html'},
-		{name:'评论统计',path:rootPath+'/static/js/mgr/fragment_commentStatistics.html'},{name:'评论挂件',path:rootPath+'/static/js/mgr/fragment_commentWidget.html'},
-		{name:'底部',path:rootPath+'/static/js/mgr/fragment_foot.html'},{name:'最近评论',path:rootPath+'/static/js/mgr/fragment_lastComments.html'},
-		{name:'密码锁',path:rootPath+'/static/js/mgr/fragment_lock_password.html'},{name:'问答锁',path:rootPath+'/static/js/mgr/fragment_lock_qa.html'},
-		{name:'导航',path:rootPath+'/static/js/mgr/fragment_nav.html'},{name:'最近被访问文章',path:rootPath+'/static/js/mgr/fragment_recentlyViewdArticles.html'},
-		{name:'标签统计',path:rootPath+'/static/js/mgr/fragment_tagStatistics.html'}]
-}
+var templates = [];
+$.ajax({
+	type : 'get',
+	url : rootPath + '/mgr/template/fragment/default',
+	success : function(data){
+		if(data.success){
+			var fragments = data.data;
+			for(var i=0;i<fragments.length;i++){
+				var fragment = fragments[i];
+				templates.push({name : fragment.name,content : fragment.tpl})
+			}
+		} else {
+			bootbox.alert(data.message);
+		}
+	}
+	
+})
 $(document).ready(function() {
 	$("input[name='global']").change(function(){
 		if($(this).is(":checked")){
@@ -162,16 +169,16 @@ $(document).ready(function() {
 	
 	
 	function showTemplateModal(){
-		var templates = loadTemplates();
 		if(!templates || templates.length == 0){
 			bootbox.alert("沒有可供访问的地址");
 			return ;
 		}
 		var html = "<div class='table-responsive'>";
 		html += '<table class="table">';
-		html += '<tr><td>模板名称</td><td></td></tr>';
+		html += '<tr><td>名称</td><td></td></tr>';
 		for(var i=0;i<templates.length;i++){
-			html += '<tr><td>'+templates[i].name+'</td><td><a href="javascript:void(0)" onclick="loadTemplate(\''+templates[i].path+'\')">加载</a></td></tr>';
+			var name = templates[i].name;
+			html += '<tr><td>'+name+'</td><td><a href="javascript:void(0)" onclick="loadTemplate(\''+templates[i].name+'\')">加载</a></td></tr>';
 		}
 		html += '</table>';
 		html += '</div>';
@@ -179,12 +186,16 @@ $(document).ready(function() {
 		$("#templateModal").modal('show');
 	}
 	
-	function loadTemplate(path){
-		$.get(path,{},function(data){
-			editor.setValue(data);
-			preEditorContent = data;
-			$("#templateModal").modal('hide');
-		})
+	function loadTemplate(name){
+		for(var i=0;i<templates.length;i++){
+			var template = templates[i];
+			if(template.name == name){
+				editor.setValue(template.content);
+				preEditorContent = template.content;
+				$("#templateModal").modal('hide');
+				break;
+			}
+		}
 	}
 	
 	function addLock(id){

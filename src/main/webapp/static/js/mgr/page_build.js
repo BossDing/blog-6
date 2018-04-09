@@ -5,13 +5,23 @@ var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
 }}]);
 var preEditorContent;
 var saveFlag = false;
-var loadTemplates = function(){
-	return [{name : '基本模板',path:rootPath+'/static/js/mgr/template_simple.html'},{name : '留言模板',path:rootPath+'/static/js/mgr/template_guestbook.html'},
-		{name:'首页',path:rootPath+'/static/js/mgr/template_index.html'},{name:'登录页',path:rootPath+'/static/js/mgr/template_login.html'},
-		{name:'解锁页',path:rootPath+'/static/js/mgr/template_lock.html'},{name:'文章详情页',path:rootPath+'/static/js/mgr/template_article_detail.html'},
-		{name:'文章归档页',path:rootPath+'/static/js/mgr/template_archives.html'},{name:'动态列表页',path:rootPath+'/static/js/mgr/template_news.html'},
-		{name:'动态详情页',path:rootPath+'/static/js/mgr/template_news_detail.html'}]
-}
+var templates = [];
+$.ajax({
+	type : 'get',
+	url : rootPath + '/mgr/template/page/default',
+	success : function(data){
+		if(data.success){
+			var pages = data.data;
+			for(var i=0;i<pages.length;i++){
+				var page = pages[i];
+				templates.push({name : page.path,content : page.template})
+			}
+		} else {
+			bootbox.alert(data.message);
+		}
+	}
+	
+})
 $(document).ready(function() {
 	$("#fsModal").on('shown.bs.modal',function(){
 		$("#fsModal .modal-body").css({"overflow-y":'hidden',"padding":"0px"})
@@ -130,16 +140,19 @@ $(document).ready(function() {
 	
 	
 	function showTemplateModal(){
-		var templates = loadTemplates();
 		if(!templates || templates.length == 0){
 			bootbox.alert("沒有可供访问的地址");
 			return ;
 		}
 		var html = "<div class='table-responsive'>";
 		html += '<table class="table">';
-		html += '<tr><td>模板名称</td><td></td></tr>';
+		html += '<tr><td>路径</td><td></td></tr>';
 		for(var i=0;i<templates.length;i++){
-			html += '<tr><td>'+templates[i].name+'</td><td><a href="javascript:void(0)" onclick="loadTemplate(\''+templates[i].path+'\')">加载</a></td></tr>';
+			var name = templates[i].name;
+			if(name == ''){
+				name = '/'
+			}
+			html += '<tr><td>'+name+'</td><td><a href="javascript:void(0)" onclick="loadTemplate(\''+templates[i].name+'\')">加载</a></td></tr>';
 		}
 		html += '</table>';
 		html += '</div>';
@@ -147,12 +160,16 @@ $(document).ready(function() {
 		$("#templateModal").modal('show');
 	}
 	
-	function loadTemplate(path){
-		$.get(path,{},function(data){
-			editor.setValue(data);
-			preEditorContent = data;
-			$("#templateModal").modal('hide');
-		})
+	function loadTemplate(name){
+		for(var i=0;i<templates.length;i++){
+			var template = templates[i];
+			if(template.name == name){
+				editor.setValue(template.content);
+				preEditorContent = template.content;
+				$("#templateModal").modal('hide');
+				break;
+			}
+		}
 	}
 	
 	function addLock(id){

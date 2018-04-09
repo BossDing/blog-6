@@ -170,4 +170,10 @@ public class FragmentMgrController extends BaseMgrController {
 
 		return new JsonResult(true);
 	}
+
+	@GetMapping("default")
+	@ResponseBody
+	public JsonResult getDefaul() {
+		return new JsonResult(true, templateService.getDefaultFragment());
+	}
 }

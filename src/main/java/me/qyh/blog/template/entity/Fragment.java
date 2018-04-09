@@ -180,7 +180,7 @@ public class Fragment extends BaseEntity implements Template {
 	}
 
 	@Override
-	public Template cloneTemplate() {
+	public Fragment cloneTemplate() {
 		return new Fragment(this);
 	}
 

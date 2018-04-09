@@ -23,6 +23,7 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.template.PathTemplate;
+import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.entity.HistoryTemplate;
@@ -317,5 +318,19 @@ public interface TemplateService {
 	 * @return
 	 */
 	String getFragmentTemplateName(String name, Space space, String ip);
+
+	/**
+	 * 获取系统模板
+	 * 
+	 * @return
+	 */
+	List<SystemTemplate> getSystemTemplates();
+
+	/**
+	 * 获取内置的模板片段
+	 * 
+	 * @return
+	 */
+	List<Fragment> getDefaultFragment();
 
 }

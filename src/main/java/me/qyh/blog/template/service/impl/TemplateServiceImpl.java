@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1268,6 +1269,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		fragment.setCallable(callable);
 		this.fragments.add(fragment);
 		return this;
+	}
+
+	@Override
+	public List<SystemTemplate> getSystemTemplates() {
+		return Collections.unmodifiableList(new ArrayList<>(defaultTemplates.values()));
+	}
+
+	@Override
+	public List<Fragment> getDefaultFragment() {
+		return Collections.unmodifiableList(fragments);
 	}
 
 }

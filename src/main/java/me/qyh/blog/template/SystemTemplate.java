@@ -77,7 +77,7 @@ public final class SystemTemplate implements PathTemplate {
 	}
 
 	@Override
-	public Template cloneTemplate() {
+	public SystemTemplate cloneTemplate() {
 		return new SystemTemplate(this);
 	}
 
