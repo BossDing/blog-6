@@ -90,8 +90,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private TagDao tagDao;
 	@Autowired
 	private LockManager lockManager;
-	@Autowired
-	private ArticleCache articleCache;
 	@Autowired(required = false)
 	private CommentServer commentServer;
 	@Autowired
@@ -144,6 +142,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void hit(Integer id) {
 		articleHitManager.hit(id);
 	}
@@ -215,7 +214,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				scheduleManager.update();
 			}
 
-			articleCache.evit(article.getId());
 			if (rebuildIndexWhenTagChange) {
 				applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this));
 			} else {
@@ -428,7 +426,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		articleDao.update(article);
 
 		Transactions.afterCommit(() -> {
-			articleCache.evit(id);
 			articleIndexer.deleteDocument(id);
 		});
 
@@ -600,8 +597,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			}
 
 			articleDao.moveSpace(deleted, defaultSpace);
-			// 清空文章缓存
-			Transactions.afterCommit(articleCache::clear);
 		}
 	}
 
@@ -628,9 +623,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		Article article;
 		try {
 			int id = Integer.parseInt(idOrAlias);
-			article = articleCache.getArticle(id, putInCache);
+			article = articleDao.selectById(id);
 		} catch (NumberFormatException e) {
-			article = articleCache.getArticle(idOrAlias, putInCache);
+			article = articleDao.selectByAlias(idOrAlias);
 		}
 		if (article != null && article.isPublished() && Environment.match(article.getSpace())) {
 			if (article.isPrivate()) {
@@ -705,7 +700,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		}
 
 		void hit(Integer id) {
-			Article article = articleCache.getArticle(id, false);
+			Article article = articleDao.selectById(id);
 			if (article != null && validHit(article)) {
 				hitsStrategy.hit(article);
 
@@ -771,7 +766,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 					Transactions.afterCommit(() -> {
 						Map<Integer, Integer> hitsMap = new HashMap<>();
 						hitsMap.put(article.getId(), hits);
-						articleCache.updateHits(hitsMap);
 						articleIndexer.addOrUpdateDocument(article.getId());
 					});
 				});

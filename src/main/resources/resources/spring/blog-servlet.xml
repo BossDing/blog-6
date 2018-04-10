@@ -29,7 +29,8 @@
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
 			me.qyh.blog.web.view,
-			me.qyh.blog.plugin.*.controller" />
+			me.qyh.blog.plugin.*.web.controller,
+			me.qyh.blog.plugin.*.web.component" />
 
 
 	<!-- csrf token store stragey -->

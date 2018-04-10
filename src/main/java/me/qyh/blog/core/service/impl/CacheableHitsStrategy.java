@@ -54,8 +54,6 @@ import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
 public final class CacheableHitsStrategy implements HitsStrategy {
 
 	@Autowired
-	private ArticleCache articleCache;
-	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private ArticleIndexer articleIndexer;
@@ -116,7 +114,6 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 							}
 						}
 						articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
-						articleCache.updateHits(hitsMap);
 					});
 				}
 

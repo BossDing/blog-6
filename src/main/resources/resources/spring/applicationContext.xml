@@ -117,7 +117,6 @@
 	<bean class="me.qyh.blog.core.service.impl.SyncArticleViewdLogger" />
 
 	<!-- 文章缓存 -->
-	<bean class="me.qyh.blog.core.service.impl.ArticleCache" />
 	<bean id="articleService" class="me.qyh.blog.core.service.impl.ArticleServiceImpl" />
 
 	<bean id="taskExecutor"

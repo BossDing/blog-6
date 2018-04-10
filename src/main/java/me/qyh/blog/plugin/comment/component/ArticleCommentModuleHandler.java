@@ -39,7 +39,6 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.LockManager;
-import me.qyh.blog.core.service.impl.ArticleCache;
 import me.qyh.blog.plugin.comment.dao.ArticleCommentDao;
 import me.qyh.blog.plugin.comment.dao.CommentDao;
 import me.qyh.blog.plugin.comment.entity.Comment;
@@ -51,8 +50,6 @@ import me.qyh.blog.plugin.comment.vo.ModuleCommentCount;
 @Component
 public class ArticleCommentModuleHandler extends CommentModuleHandler {
 
-	@Autowired
-	private ArticleCache articleCache;
 	@Autowired
 	private LockManager lockManager;
 	@Autowired
@@ -79,7 +76,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 
 	@Override
 	public void doValidateBeforeInsert(Integer id) throws LogicException {
-		Article article = articleCache.getArticle(id, false);
+		Article article = articleDao.selectById(id);
 		// 博客不存在
 		if (article == null || !Environment.match(article.getSpace()) || !article.isPublished()) {
 			throw new LogicException("article.notExists", "文章不存在");
@@ -96,7 +93,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 
 	@Override
 	public boolean doValidateBeforeQuery(Integer id) {
-		Article article = articleCache.getArticle(id, false);
+		Article article = articleDao.selectById(id);
 		if (article == null || !article.isPublished()) {
 			return false;
 		}
@@ -165,7 +162,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 
 	@Override
 	public Optional<String> getUrl(Integer id) {
-		Article article = articleCache.getArticle(id, false);
+		Article article = articleDao.selectById(id);
 		return article == null ? Optional.empty() : Optional.of(urlHelper.getUrls().getUrl(article));
 	}
 
