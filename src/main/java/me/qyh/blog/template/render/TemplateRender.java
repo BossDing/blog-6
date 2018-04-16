@@ -38,6 +38,7 @@ import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
+import me.qyh.blog.core.plugin.MenuRegistry;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Formats;
@@ -47,9 +48,8 @@ import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.LockBean;
-import me.qyh.blog.plugin.MenuRegistry;
+import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.lock.LockHelper;
 
 /**
  * 用来将模板解析成字符串

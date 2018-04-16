@@ -34,8 +34,8 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
-import me.qyh.blog.web.lock.LockHelper;
 import me.qyh.blog.web.security.CaptchaValidator;
 
 @Controller
@@ -60,7 +60,7 @@ public class LockController {
 			lock.tryOpen(key);
 		} catch (LogicException e) {
 			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
-			return "redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lockBean.getId());
+			return "redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock.getLockType(), lockBean.getId());
 		}
 		LockHelper.addKey(request, key, lockBean);
 		return "redirect:" + lockBean.getRedirectUrl();

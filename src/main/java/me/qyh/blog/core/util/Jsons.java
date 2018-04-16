@@ -50,8 +50,6 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.Expose;
 
-import me.qyh.blog.core.entity.SysLock;
-import me.qyh.blog.core.entity.SysLockDeserializer;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.MessageSerializer;
 import me.qyh.blog.core.vo.JsonResult;
@@ -97,8 +95,7 @@ public class Jsons {
 			.addDeserializationExclusionStrategy(DESERIALIZATION_EXCLUSION_STRATEGY).enableComplexMapKeySerialization()
 			.registerTypeAdapter(Message.class, new MessageSerializer())
 			.registerTypeAdapter(Timestamp.class, new DateDeserializer())
-			.registerTypeAdapter(Date.class, new DateSerializer())
-			.registerTypeAdapter(SysLock.class, new SysLockDeserializer()).setPrettyPrinting().create();
+			.registerTypeAdapter(Date.class, new DateSerializer()).setPrettyPrinting().create();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Jsons.class);
 	private static final String SPLIT_STR = "->";

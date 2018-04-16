@@ -390,7 +390,7 @@
             }
             var username = '';
             if (c.admin) {
-                username = '<span class="glyphicon glyphicon-user" style="color:red"  title="管理员"></span>&nbsp;' +
+                username = '<span style="color:red"  title="管理员">*</span>&nbsp;' +
                     c.nickname
             } else {
                 username = c.nickname

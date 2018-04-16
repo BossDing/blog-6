@@ -24,13 +24,6 @@
 		<typeAlias type="me.qyh.blog.file.entity.CommonFile" alias="CommonFile" />
 		<typeAlias type="me.qyh.blog.file.entity.FileDelete" alias="FileDelete" />
 
-		<typeAlias type="me.qyh.blog.core.entity.SysLock" alias="SysLock" />
-		<typeAlias type="me.qyh.blog.core.entity.SysLock$SysLockType"
-			alias="LockType" />
-		<typeAlias type="me.qyh.blog.core.entity.PasswordLock"
-			alias="PasswordLock" />
-		<typeAlias type="me.qyh.blog.core.entity.QALock" alias="QALock" />
-
 		<typeAlias type="me.qyh.blog.file.vo.BlogFileCount" alias="BlogFileCount" />
 
 		<typeAlias type="me.qyh.blog.template.entity.Page" alias="Page" />
@@ -55,7 +48,6 @@
 		<mapper resource="resources/mybatis/mapper/tagMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/blogFileMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/blogCommonFileMapper.xml" />
-		<mapper resource="resources/mybatis/mapper/lockMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/fragmentMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/pageMapper.xml" />
 		<mapper resource="resources/mybatis/mapper/historyTemplateMapper.xml" />

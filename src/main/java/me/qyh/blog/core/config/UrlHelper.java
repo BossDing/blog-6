@@ -198,8 +198,8 @@ public class UrlHelper implements InitializingBean {
 			}
 		}
 
-		public String getUnlockUrl(String unlockId) {
-			return url + "/unlock?unlockId=" + "" + Objects.toString(unlockId, "");
+		public String getUnlockUrl(String lockType, String unlockId) {
+			return url + "/unlock/" + lockType + "?unlockId=" + "" + Objects.toString(unlockId, "");
 		}
 
 		public String getSpace() {

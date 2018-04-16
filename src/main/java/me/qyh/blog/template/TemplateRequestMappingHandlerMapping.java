@@ -33,16 +33,18 @@ import org.springframework.context.event.EventListener;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.handler.MappedInterceptor;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo.Builder;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConfiguration;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.plugin.HandlerInterceptorRegistry;
+import me.qyh.blog.core.plugin.RequestMappingRegistry;
+import me.qyh.blog.core.plugin.TemplateInterceptorRegistry;
 import me.qyh.blog.core.util.FileUtils;
-import me.qyh.blog.plugin.HandlerInterceptorRegistry;
-import me.qyh.blog.plugin.RequestMappingRegistry;
-import me.qyh.blog.plugin.TemplateInterceptorRegistry;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.TemplateMapping.TemplateMatch;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.web.Webs;
@@ -130,7 +132,9 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 
 	@Override
 	protected HandlerExecutionChain getHandlerExecutionChain(Object handler, HttpServletRequest request) {
-		HandlerExecutionChain chain = super.getHandlerExecutionChain(handler, request);
+		HandlerExecutionChain chain = (handler instanceof HandlerExecutionChain ? (HandlerExecutionChain) handler
+				: new HandlerExecutionChain(handler));
+		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 		if (!templateInterceptors.isEmpty()) {
 			getTemplateHandler(handler).ifPresent(th -> {
 				String templateName = th.templateName;
@@ -141,9 +145,8 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 				}
 			});
 		}
-		if (interceptorArray != null) {
-			chain.addInterceptors(interceptorArray);
-		}
+		addInterceptor(chain, getAdaptedInterceptors(), lookupPath);
+		addInterceptor(chain, interceptorArray, lookupPath);
 		return chain;
 	}
 
@@ -241,6 +244,22 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		interceptors.add(handlerInterceptor);
 		this.interceptorArray = interceptors.toArray(new HandlerInterceptor[interceptors.size()]);
 		return this;
+	}
+
+	private void addInterceptor(HandlerExecutionChain chain, HandlerInterceptor[] interceptors, String lookupPath) {
+		if (Validators.isEmpty(interceptors)) {
+			return;
+		}
+		for (HandlerInterceptor interceptor : interceptors) {
+			if (interceptor instanceof MappedInterceptor) {
+				MappedInterceptor mappedInterceptor = (MappedInterceptor) interceptor;
+				if (mappedInterceptor.matches(lookupPath, getPathMatcher())) {
+					chain.addInterceptor(mappedInterceptor.getInterceptor());
+				}
+			} else {
+				chain.addInterceptor(interceptor);
+			}
+		}
 	}
 
 }

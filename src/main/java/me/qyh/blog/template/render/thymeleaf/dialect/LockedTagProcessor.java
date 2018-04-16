@@ -25,7 +25,7 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.template.render.thymeleaf.dialect.LockTagProcessor.LockStructure;
-import me.qyh.blog.web.lock.LockHelper;
+import me.qyh.blog.web.LockHelper;
 
 /**
  * 

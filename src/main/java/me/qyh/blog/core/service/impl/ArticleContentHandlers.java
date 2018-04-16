@@ -21,7 +21,7 @@ import java.util.List;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.plugin.ArticleContentHandlerRegistry;
+import me.qyh.blog.core.plugin.ArticleContentHandlerRegistry;
 
 /**
  * 用于支持多个ArticleContentHandler

@@ -280,13 +280,6 @@ public interface TemplateService {
 	Optional<HistoryTemplate> getHistoryTemplate(Integer id);
 
 	/**
-	 * 还原登录页
-	 * 
-	 * @exception
-	 */
-	void restoreLoginPage() throws LogicException;
-
-	/**
 	 * 判断IP是否为预览IP
 	 * 
 	 * @since 5.10

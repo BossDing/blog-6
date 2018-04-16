@@ -47,7 +47,7 @@
 			</props>
 		</property>
 	</bean>
-	<bean id="sqlSessionFactory" class="me.qyh.blog.plugin.PluginSqlSessionFactoryBean"
+	<bean id="sqlSessionFactory" class="me.qyh.blog.core.plugin.PluginSqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 

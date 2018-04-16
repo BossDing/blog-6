@@ -10,13 +10,13 @@ import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
+import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
+import me.qyh.blog.core.plugin.Menu;
+import me.qyh.blog.core.plugin.MenuRegistry;
+import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.PluginProperties;
+import me.qyh.blog.core.plugin.TemplateRegistry;
 import me.qyh.blog.core.util.Resources;
-import me.qyh.blog.plugin.DataTagProcessorRegistry;
-import me.qyh.blog.plugin.Menu;
-import me.qyh.blog.plugin.MenuRegistry;
-import me.qyh.blog.plugin.PluginHandler;
-import me.qyh.blog.plugin.PluginProperties;
-import me.qyh.blog.plugin.TemplateRegistry;
 import me.qyh.blog.plugin.comment.data.CommentsDataTagProcessor;
 import me.qyh.blog.plugin.comment.data.LastCommentsDataTagProcessor;
 
@@ -36,18 +36,20 @@ public class CommentPluginHandler implements PluginHandler {
 
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
-		if (!Boolean.parseBoolean(pluginProperties.get(ENABLE_KEY).orElse("false"))) {
-			return;
+		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false));
+
+		if (cc.isEnableEmailNotify()) {
+			EmailNofityConfig config = new EmailNofityConfig();
+			pluginProperties.get(LOCATION_KEY).ifPresent(config::setTemplateLocation);
+			pluginProperties.get(SUBJECT_KEY).ifPresent(config::setMailSubject);
+			pluginProperties.get(TIPCOUNT_KEY).map(Integer::parseInt).ifPresent(config::setMessageTipCount);
+			pluginProperties.get(PROCESS_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setProcessSendSec);
+			pluginProperties.get(FORCE_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setForceSendSec);
+
+			cc.setConfig(config);
 		}
 
-		EmailNofityConfig config = new EmailNofityConfig();
-		pluginProperties.get(LOCATION_KEY).ifPresent(config::setTemplateLocation);
-		pluginProperties.get(SUBJECT_KEY).ifPresent(config::setMailSubject);
-		pluginProperties.get(TIPCOUNT_KEY).map(Integer::parseInt).ifPresent(config::setMessageTipCount);
-		pluginProperties.get(PROCESS_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setProcessSendSec);
-		pluginProperties.get(FORCE_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setForceSendSec);
-
-		applicationContext.addBeanFactoryPostProcessor(new EmailNotifyBeanDefinitionRegistryPostProcessor(config));
+		applicationContext.addBeanFactoryPostProcessor(new CommentBeanDefinitionRegistryPostProcessor(cc));
 	}
 
 	@Override

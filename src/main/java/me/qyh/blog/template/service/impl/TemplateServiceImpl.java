@@ -64,6 +64,8 @@ import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
+import me.qyh.blog.core.plugin.TemplateRegistry;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.impl.EmptyCommentServer;
 import me.qyh.blog.core.service.impl.SpaceCache;
@@ -72,8 +74,6 @@ import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.plugin.DataTagProcessorRegistry;
-import me.qyh.blog.plugin.TemplateRegistry;
 import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.PatternAlreadyExistsException;
 import me.qyh.blog.template.SystemTemplate;
@@ -441,7 +441,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					try {
 						helper.registerPage(page);
 					} catch (LogicException ex) {
-						records.add(new ImportRecord(true, ex.getLogicMessage()));
+						records.add(new ImportRecord(false, ex.getLogicMessage()));
 						ts.setRollbackOnly();
 						return records;
 					}
@@ -460,7 +460,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 						try {
 							helper.registerPage(current);
 						} catch (LogicException ex) {
-							records.add(new ImportRecord(true, ex.getLogicMessage()));
+							records.add(new ImportRecord(false, ex.getLogicMessage()));
 							ts.setRollbackOnly();
 							return records;
 						}
@@ -520,7 +520,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} catch (Throwable e) {
 			LOGGER.error(e.getMessage(), e);
 			ts.setRollbackOnly();
-			records.add(new ImportRecord(true, Constants.SYSTEM_ERROR));
+			records.add(new ImportRecord(false, Constants.SYSTEM_ERROR));
 			return records;
 		} finally {
 			platformTransactionManager.commit(ts);
@@ -771,12 +771,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		// 各个空间的主页
 		defaultTemplates.put("space/{alias}",
 				new SystemTemplate("space/{alias}", new ClassPathResource("resources/page/PAGE_INDEX.html")));
-		// 主空间解锁页
-		defaultTemplates.put("unlock",
-				new SystemTemplate("unlock", new ClassPathResource("resources/page/PAGE_LOCK.html")));
-		// 各个空间解锁页面
-		defaultTemplates.put("space/{alias}/unlock",
-				new SystemTemplate("space/{alias}/unlock", new ClassPathResource("resources/page/PAGE_LOCK.html")));
 		// 各个空间文章详情页面
 		defaultTemplates.put("space/{alias}/article/{idOrAlias}", new SystemTemplate(
 				"space/{alias}/article/{idOrAlias}", new ClassPathResource("resources/page/PAGE_ARTICLE_DETAIL.html")));
@@ -1179,32 +1173,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			throw new LogicException("fragment.user.notExists", "模板片段不存在");
 		}
 		return fragment;
-	}
-
-	@Override
-	public synchronized void restoreLoginPage() throws LogicException {
-		Transactions.executeInTransaction(platformTransactionManager, status -> {
-			Page page = pageDao.selectBySpaceAndAlias(null, "login", false);
-			if (page == null) {
-				return;
-			}
-
-			HistoryTemplate historyTemplate = new HistoryTemplate();
-			historyTemplate.setTemplateName(page.getTemplateName());
-			historyTemplate.setTime(Timestamp.valueOf(Times.now()));
-			historyTemplate.setTpl(page.getTpl());
-			historyTemplate.setRemark("");
-
-			historyTemplateDao.insert(historyTemplate);
-
-			SystemTemplate sysTemplate = defaultTemplates.get("login");
-			page.setTpl(sysTemplate.getTemplate());
-
-			pageDao.update(page);
-
-			evitPageCache(page);
-
-		});
 	}
 
 	@Override

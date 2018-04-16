@@ -58,6 +58,7 @@ import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SpaceNotFoundException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.plugin.ExceptionHandlerRegistry;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.ExceptionUtils;
@@ -65,12 +66,9 @@ import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LockBean;
-import me.qyh.blog.plugin.ExceptionHandlerRegistry;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
-import me.qyh.blog.web.lock.LockHelper;
-import me.qyh.blog.web.security.CsrfException;
 import me.qyh.blog.web.view.JsonView;
 
 public class WebExceptionResolver implements HandlerExceptionResolver, ExceptionHandlerRegistry {
@@ -82,16 +80,16 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 	@Autowired
 	private SpaceService spaceService;
 
-	private static final Message ERROR_400 = new Message("error.400", "请求异常");
-	private static final Message ERROR_403 = new Message("error.403", "权限不足");
-	private static final Message ERROR_404 = new Message("error.404", "请求不存在");
-	private static final Message ERROR_405 = new Message("error.405", "请求方法不被允许");
-	private static final Message ERROR_406 = new Message("error.406", "不被接受的请求");
-	private static final Message ERROR_415 = new Message("error.405", "不支持的媒体类型");
-	private static final Message ERROR_500 = Constants.SYSTEM_ERROR;
+	public static final Message ERROR_400 = new Message("error.400", "请求异常");
+	public static final Message ERROR_403 = new Message("error.403", "权限不足");
+	public static final Message ERROR_404 = new Message("error.404", "请求不存在");
+	public static final Message ERROR_405 = new Message("error.405", "请求方法不被允许");
+	public static final Message ERROR_406 = new Message("error.406", "不被接受的请求");
+	public static final Message ERROR_415 = new Message("error.405", "不支持的媒体类型");
+	public static final Message ERROR_500 = Constants.SYSTEM_ERROR;
 
-	private static final Message ERROR_MISS_LOCK = new Message("error.missLock", "锁不存在");
-	private static final Message ERROR_NO_ERROR_MAPPING = new Message("error.noErrorMapping", "发生了一个错误，但是没有可供显示的错误页面");
+	public static final Message ERROR_MISS_LOCK = new Message("error.missLock", "锁不存在");
+	public static final Message ERROR_NO_ERROR_MAPPING = new Message("error.noErrorMapping", "发生了一个错误，但是没有可供显示的错误页面");
 
 	private final List<ExceptionHandler> handlers;
 
@@ -138,7 +136,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 
 		@Override
 		public boolean match(Exception ex) {
-			return ex instanceof AuthencationException || ex instanceof CsrfException;
+			return ex instanceof AuthencationException;
 		}
 
 		@Override
@@ -227,7 +225,8 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 			if (error != null) {
 				RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, error);
 			}
-			return new ModelAndView("redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(bean.getId()));
+			return new ModelAndView(
+					"redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock.getLockType(), bean.getId()));
 		}
 	}
 
@@ -477,15 +476,15 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 
 	}
 
-	private String getFullUrl(HttpServletRequest request) {
+	public static final String getFullUrl(HttpServletRequest request) {
 		return UrlUtils.buildFullRequestUrl(request);
 	}
 
-	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error) {
+	public static final ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error) {
 		return getErrorForward(request, error, Webs.getSpaceFromRequest(request));
 	}
 
-	private ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error, String space) {
+	public static final ModelAndView getErrorForward(HttpServletRequest request, ErrorInfo error, String space) {
 		Map<String, Object> model = new HashMap<>();
 
 		/**
@@ -508,7 +507,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 		}
 	}
 
-	static final class ErrorInfo implements Serializable {
+	public static final class ErrorInfo implements Serializable {
 		/**
 		 * 
 		 */
@@ -516,7 +515,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 		private final Message message;
 		private final int code;
 
-		private ErrorInfo(Message message, int code) {
+		public ErrorInfo(Message message, int code) {
 			super();
 			this.message = message;
 			this.code = code;
@@ -532,7 +531,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 
 	}
 
-	static final class RedirectJsonResult extends JsonResult {
+	public static final class RedirectJsonResult extends JsonResult {
 
 		private final String url;
 		private final boolean permanently;

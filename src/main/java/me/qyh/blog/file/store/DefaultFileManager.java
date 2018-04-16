@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.plugin.FileStoreRegistry;
+import me.qyh.blog.core.plugin.FileStoreRegistry;
 
 /**
  * 默认文件存储管理器

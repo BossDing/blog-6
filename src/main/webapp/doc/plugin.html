@@ -32,45 +32,59 @@ body {
 					<div>
 						插件的所有的逻辑代码都要处于
 						<code>me.qyh.blog.plugin.{pluginName}</code>
-						包下， 例如插件名称为 test，那么代码应处于
-						<code>me.qyh.blog.plugin.test</code>
-						包下。下面几个包中的类将会被自动扫描注册为spring bean：
+						下面几个包中的类将会被自动扫描注册为spring bean(@service,@contoller,@component)：
 						<div class="table-responsive">
 							<table class="table">
 								<tr>
-									<th>me.qyh.blog.plugin.test.dao</th>
+									<th>me.qyh.blog.plugin.{pluginName}.dao</th>
 									<td>存放dao类</td>
 								</tr>
 								<tr>
-									<th>me.qyh.blog.plugin.test.service</th>
+									<th>me.qyh.blog.plugin.{pluginName}.service</th>
 									<td>存放逻辑处理类</td>
 								</tr>
 								<tr>
-									<th>me.qyh.blog.plugin.test.mapper</th>
+									<th>me.qyh.blog.plugin.{pluginName}.mapper</th>
 									<td>存放mybaits mapper.xml文件</td>
 								</tr>
 								<tr>
-									<th>me.qyh.blog.plugin.test.validator</th>
+									<th>me.qyh.blog.plugin.{pluginName}.validator</th>
 									<td>存放validator类</td>
 								</tr>
 								<tr>
-									<th>me.qyh.blog.plugin.test.controller</th>
+									<th>me.qyh.blog.plugin.{pluginName}.component</th>
+									<td>存放组件类</td>
+								</tr>
+								<tr>
+									<th>me.qyh.blog.plugin.{pluginName}.web.controller</th>
 									<td>存放处理器类</td>
 								</tr>
 								<tr>
-									<th>me.qyh.blog.plugin.test.component</th>
-									<td>存放组件类</td>
+									<th>me.qyh.blog.plugin.{pluginName}.web.component</th>
+									<td>存放组件类，注册在child application context中</td>
 								</tr>
 							</table>
 						</div>
 						<p class="alert alert-warning">
 							上述几个包都应该是
-							<code>me.qyh.blog.plugin.test</code>
+							<code>me.qyh.blog.plugin.{pluginName}</code>
 							的直接子包才会被自动扫描，例如
-							<code>me.qyh.blog.plugin.test.a.dao</code>
+							<code>me.qyh.blog.plugin.{pluginName}.a.dao</code>
 							就不会被扫描注册
 						</p>
 					</div>
+					<h4>typeAlias</h4>
+					<p>
+						如果需要注册额外的typeAlias,可以在
+						<code>me.qyh.blog.plugin.{pluginName}.mapper</code>
+						包下建立一个名为typeAlias的txt文件，文件内容中每行都代表着一个别名，例如
+					</p>
+					<pre>me.qyh.blog.plugin.comment.entity.Comment
+me.qyh.blog.plugin.comment.entity.Comment$CommentStatus
+me.qyh.blog.plugin.comment.entity.CommentModule</pre>
+					对应的别名分别为Comment、CommentStatus和CommentModule，如果需要别的别名，可以在类上加@Alias标记，具体请见
+					<code>org.apache.ibatis.type.TypeAliasRegistry#registerAlias(Class&lt;?&gt;
+						type)</code>
 					<h4>页面</h4>
 					<p>插件额外的页面都应处于 WEB-INF/templates/plugin/{pluginName} 文件夹下</p>
 
@@ -81,9 +95,7 @@ body {
 					<p>
 						<code>PluginHandler</code>
 						实现于
-						<code>me.qyh.blog.plugin.PluginHandler</code>
-						，或者 继承自
-						<code>me.qyh.blog.plugin.PluginHandlerAdapter</code>
+						<code>me.qyh.blog.core.plugin.PluginHandler</code>
 						，一个插件只能拥有一个PluginHandler，该类必须要处于
 						<code>me.qyh.blog.plugin.{pluginName}</code>
 						包下，名称一般为
@@ -93,12 +105,14 @@ body {
 					<div class="table-responsive">
 						<table class="table">
 							<tr>
-								<td>void initialize(ConfigurableApplicationContext applicationContext)</td>
+								<td>void initialize(ConfigurableApplicationContext
+									applicationContext)</td>
 								<td>在ApplicationContext初始化前调用</td>
 							</tr>
 							<tr>
 								<td>void init(ApplicationContext applicationContext)</td>
-								<td>当ApplicationContext<b>加载完成后</b>，初始化插件时调用</td>
+								<td>当ApplicationContext<b>加载完成后</b>，初始化插件时<b>首先</b>调用
+								</td>
 							</tr>
 							<tr>
 								<td>void addDataTagProcessor(DataTagProcessorRegistry
@@ -146,6 +160,21 @@ body {
 									addHandlerInterceptorRegistry(HandlerInterceptorRegistry
 									registry)</td>
 								<td>添加拦截器,<b>优先级低于系统自带的拦截器</b></td>
+							</tr>
+							<tr>
+								<td>void addLockProvider(LockProviderRegistry registry)</td>
+								<td>添加锁提供器</td>
+							</tr>
+							<tr>
+								<td>default void
+									addSuccessfulLoginHandler(SuccessfulLoginHandlerRegistry
+									registry)</td>
+								<td>添加登录成功后的处理器</td>
+							</tr>
+							<tr>
+								<td>default void addLogoutHandler(LogoutHandlerRegistry
+									registry)</td>
+								<td>添加注销后的处理器</td>
 							</tr>
 						</table>
 					</div>

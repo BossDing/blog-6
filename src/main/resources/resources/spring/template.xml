@@ -155,18 +155,6 @@
 				</bean>
 
 				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="qa" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/lock_qa.html" type="org.springframework.core.io.Resource" />
-				</bean>
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
-					<constructor-arg index="0" value="password" />
-					<constructor-arg index="1"
-						value="classpath:resources/fragment/lock_password.html" type="org.springframework.core.io.Resource" />
-				</bean>
-
-				<bean class="me.qyh.blog.template.entity.Fragment">
 					<constructor-arg index="0" value="评论统计" />
 					<constructor-arg index="1"
 						value="classpath:resources/fragment/commentStatistics.html" type="org.springframework.core.io.Resource" />

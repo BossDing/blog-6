@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -35,7 +34,6 @@ import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.file.store.local.StaticResourceUrlHandlerMapping;
 import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.template.render.TemplateRender;
-import me.qyh.blog.web.lock.LockArgumentResolver;
 import me.qyh.blog.web.view.TemplateReturnValueHandler;
 
 /**
@@ -105,11 +103,6 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 		GsonHttpMessageConverter msgConverter = new GsonHttpMessageConverter();
 		msgConverter.setGson(Jsons.getGson());
 		converters.add(msgConverter);
-	}
-
-	@Override
-	protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-		argumentResolvers.add(new LockArgumentResolver());
 	}
 
 	@Override

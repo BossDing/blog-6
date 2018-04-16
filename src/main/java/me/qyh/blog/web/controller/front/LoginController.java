@@ -15,10 +15,15 @@
  */
 package me.qyh.blog.web.controller.front;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +44,7 @@ import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.plugin.SuccessfulLoginHandlerRegistry;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.AttemptLoggerManager;
 import me.qyh.blog.core.security.GoogleAuthenticator;
@@ -47,16 +53,14 @@ import me.qyh.blog.core.validator.LoginBeanValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LoginBean;
 import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
-import me.qyh.blog.template.service.TemplateService;
+import me.qyh.blog.web.SuccessfulLoginHandler;
 import me.qyh.blog.web.security.CaptchaValidator;
-import me.qyh.blog.web.security.CsrfToken;
-import me.qyh.blog.web.security.CsrfTokenRepository;
 
 @Controller("loginController")
-public class LoginController implements InitializingBean {
+public class LoginController implements InitializingBean, SuccessfulLoginHandlerRegistry {
 
-	@Autowired
-	private CsrfTokenRepository csrfTokenRepository;
+	private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+
 	@Autowired
 	private LoginBeanValidator loginBeanValidator;
 	@Autowired
@@ -71,8 +75,7 @@ public class LoginController implements InitializingBean {
 	@Autowired
 	private TemplateRequestMappingHandlerMapping mapping;
 
-	@Autowired
-	private TemplateService templateService;
+	private List<SuccessfulLoginHandler> successfulLoginHandlers = new ArrayList<>();
 
 	/**
 	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
@@ -162,39 +165,19 @@ public class LoginController implements InitializingBean {
 		return new JsonResult(true, lastAuthencationFailUrl);
 	}
 
-	@ResponseBody
-	public JsonResult restore(@RequestParam("code") String codeStr, HttpServletRequest request,
-			HttpServletResponse response) throws LogicException {
-		enableOtpRequired();
-		if (Environment.isLogin()) {
-			return new JsonResult(false, new Message("login.restore.isLogin", "当前已经是登录状态，请直接修改页面"));
-		}
-		String ip = Environment.getIP();
-		if (attemptLogger.log(ip)) {
-			captchaValidator.doValidate(request);
-		}
-		if (!ga.checkCode(codeStr)) {
-			return new JsonResult(false, otpVerifyFail);
-		}
-		templateService.restoreLoginPage();
-		attemptLogger.remove(Environment.getIP());
-		return new JsonResult(true, new Message("login.restore.success", "恢复成功"));
-	}
-
-	public String restore() {
-		if (Environment.isLogin()) {
-			return "redirect:/mgr/template/page/index";
-		}
-		return "login_restore";
-	}
-
 	private String successLogin(User user, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		changeSessionId(request);
-		changeCsrf(request, response);
-
 		attemptLogger.remove(Environment.getIP());
+
+		for (SuccessfulLoginHandler handler : successfulLoginHandlers) {
+			try {
+				handler.afterSuccessfulLogin(new User(user), request, response);
+			} catch (Throwable e) {
+				logger.warn(e.getMessage(), e);
+			}
+		}
 
 		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
 		if (lastAuthencationFailUrl != null) {
@@ -206,17 +189,6 @@ public class LoginController implements InitializingBean {
 	private void changeSessionId(HttpServletRequest request) {
 		if (SUPPORT_CHANGE_SESSION_ID) {
 			request.changeSessionId();
-		}
-	}
-
-	private void changeCsrf(HttpServletRequest request, HttpServletResponse response) {
-		// 更改 csrf
-		boolean containsToken = csrfTokenRepository.loadToken(request) != null;
-		if (containsToken) {
-			this.csrfTokenRepository.saveToken(null, request, response);
-
-			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
-			this.csrfTokenRepository.saveToken(newToken, request, response);
 		}
 	}
 
@@ -236,12 +208,12 @@ public class LoginController implements InitializingBean {
 					"loginController", LoginController.class.getMethod("otpVerify", String.class,
 							HttpServletRequest.class, HttpServletResponse.class));
 
-			mapping.registerMapping(RequestMappingInfo.paths("login/restore").methods(RequestMethod.POST),
-					"loginController", LoginController.class.getMethod("restore", String.class,
-							HttpServletRequest.class, HttpServletResponse.class));
-			mapping.registerMapping(RequestMappingInfo.paths("login/restore").methods(RequestMethod.GET),
-					"loginController", LoginController.class.getMethod("restore"));
-
 		}
+	}
+
+	@Override
+	public SuccessfulLoginHandlerRegistry registry(SuccessfulLoginHandler handler) {
+		successfulLoginHandlers.add(handler);
+		return this;
 	}
 }

@@ -49,7 +49,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -87,7 +86,6 @@ import me.qyh.blog.plugin.comment.vo.CommentPageResult;
 import me.qyh.blog.plugin.comment.vo.CommentQueryParam;
 import me.qyh.blog.plugin.comment.vo.IPQueryParam;
 
-@Service
 public class CommentService
 		implements InitializingBean, CommentServer, ApplicationEventPublisherAware, GravatarSearcher {
 

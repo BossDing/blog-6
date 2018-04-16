@@ -7,7 +7,7 @@ import me.qyh.blog.core.service.CommentServer;
 
 public class CommentCountDataTagProcessor extends DataTagProcessor<Integer> {
 
-	@Autowired
+	@Autowired(required = false)
 	private CommentServer commentServer;
 
 	public CommentCountDataTagProcessor(String name, String dataName) {
@@ -16,7 +16,9 @@ public class CommentCountDataTagProcessor extends DataTagProcessor<Integer> {
 
 	@Override
 	protected Integer query(Attributes attributes) throws LogicException {
-
+		if (commentServer == null) {
+			return 0;
+		}
 		String moduleType = attributes.get("moduleType");
 		String moduleId = attributes.get("moduleId");
 		if (moduleType != null && moduleId != null) {

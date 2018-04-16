@@ -11,10 +11,10 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.PluginProperties;
+import me.qyh.blog.core.plugin.RequestMappingRegistry;
 import me.qyh.blog.core.util.FileUtils;
-import me.qyh.blog.plugin.PluginHandler;
-import me.qyh.blog.plugin.PluginProperties;
-import me.qyh.blog.plugin.RequestMappingRegistry;
 import me.qyh.blog.plugin.wechat.WechatSupport.Signature;
 
 public class WechatPluginHandler implements PluginHandler {

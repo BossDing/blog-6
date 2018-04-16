@@ -33,9 +33,6 @@
 			me.qyh.blog.plugin.*.web.component" />
 
 
-	<!-- csrf token store stragey -->
-	<bean class="me.qyh.blog.web.security.HttpSessionCsrfTokenRepository" />
-
 	<bean class="me.qyh.blog.web.security.ProxyIPGetter" />
 
 	<bean id="templateEngine"
@@ -159,6 +156,6 @@
 	<bean class="me.qyh.blog.template.TemplateMapping" />
 	<bean class="me.qyh.blog.web.WebExceptionResolver" />
 
-	<bean class="me.qyh.blog.plugin.PluginHandlerRegistry"/>
+	<bean class="me.qyh.blog.core.plugin.PluginHandlerRegistry"/>
 
 </beans>

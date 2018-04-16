@@ -1,9 +1,9 @@
 package me.qyh.blog.plugin.qiniu;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.plugin.FileStoreRegistry;
-import me.qyh.blog.plugin.PluginHandler;
-import me.qyh.blog.plugin.PluginProperties;
+import me.qyh.blog.core.plugin.FileStoreRegistry;
+import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.PluginProperties;
 
 public class QiniuPluginHandler implements PluginHandler {
 

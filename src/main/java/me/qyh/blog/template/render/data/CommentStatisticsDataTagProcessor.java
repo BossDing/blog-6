@@ -24,7 +24,7 @@ import me.qyh.blog.core.vo.CommentStatistics;
 
 public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentStatistics> {
 
-	@Autowired
+	@Autowired(required = false)
 	private CommentServer commentServer;
 
 	public CommentStatisticsDataTagProcessor(String name, String dataName) {
@@ -33,6 +33,9 @@ public class CommentStatisticsDataTagProcessor extends DataTagProcessor<CommentS
 
 	@Override
 	protected CommentStatistics query(Attributes attributes) throws LogicException {
+		if (commentServer == null) {
+			return new CommentStatistics();
+		}
 		return commentServer.queryCommentStatistics(Environment.getSpace());
 	}
 

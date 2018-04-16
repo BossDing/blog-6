@@ -50,7 +50,7 @@ public class SimpleCommentChecker implements CommentChecker {
 		User user = userService.getUser();
 		String emailOrAdmin = user.getEmail();
 		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email)) {
-			throw new LogicException("comment.email.invalid", "邮件不被允许");
+			throw new LogicException("comment.email.invalid", "邮箱不被允许");
 		}
 		if (user.getName().equalsIgnoreCase(name)) {
 			throw new LogicException("comment.nickname.invalid", "昵称不被允许");
@@ -61,7 +61,7 @@ public class SimpleCommentChecker implements CommentChecker {
 
 		if (email != null && disallowEmailPatterns != null
 				&& PatternMatchUtils.simpleMatch(disallowEmailPatterns, email.trim())) {
-			throw new LogicException("comment.email.invalid", "邮件不被允许");
+			throw new LogicException("comment.email.invalid", "邮箱不被允许");
 		}
 		if (website != null) {
 			try {
