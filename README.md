@@ -5,7 +5,7 @@
 
 重型博客
 
-需要 **jdk8**
+需要 **jdk 10**
 
 spring & mybatis & thymeleaf
 
