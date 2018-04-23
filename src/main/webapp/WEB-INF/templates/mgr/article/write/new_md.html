@@ -170,6 +170,7 @@ z-index: 9999999}
 					<h4 class="modal-title">基本信息</h4>
 				</div>
 				<div class="modal-body">
+					<div class="alert alert-danger" id="error-tip" style="display:none"></div>
 					<form>
 						<div class="form-group">
 							<label>博客标题</label><input type="text" class="form-control"
@@ -626,7 +627,7 @@ z-index: 9999999}
 								window.location.href = basePath+'/mgr/article/index';
 							},500)
 						} else {
-							bootbox.alert(data.message);
+							$("#error-tip").html(data.message).show();
 							publishing = false;
 						}
 					},
@@ -634,6 +635,10 @@ z-index: 9999999}
 						me.prop("disabled",false);
 					}
 				});
+			});
+			
+			$("#baseModal").on("show.bs.modal",function(){
+				$("#error-tip").html('').hide();
 			})
 		});
 		

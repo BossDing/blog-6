@@ -1,10 +1,25 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.core.plugin;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.Ordered;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import me.qyh.blog.core.service.impl.HitsStrategy;
 import me.qyh.blog.template.render.data.DataTagProcessor;
 import me.qyh.blog.web.WebExceptionResolver;
 
@@ -12,7 +27,7 @@ import me.qyh.blog.web.WebExceptionResolver;
  * @author wwwqyhme
  *
  */
-public interface PluginHandler extends Ordered {
+public interface PluginHandler {
 
 	/**
 	 * 在ApplicationContext初始化前调用
@@ -155,9 +170,18 @@ public interface PluginHandler extends Ordered {
 
 	}
 
-	@Override
-	default int getOrder() {
-		return 0;
+	/**
+	 * 增加文章点击处理器
+	 * <p>
+	 * <b>不应该在处理器内改变文章的点击数，如果需要改变点击数，可以通过{@code HitsStrategy}来处理</b>
+	 * </p>
+	 * 
+	 * @see HitsStrategy
+	 * @param hitHandler
+	 * @throws Exception
+	 */
+	default void addHitHandler(ArticleHitHandlerRegistry registry) throws Exception {
+
 	}
 
 }

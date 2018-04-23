@@ -70,32 +70,34 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	private ArticleQueryParam buildFromAttributes(Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
 
-		String beginStr = attributes.get("begin");
-		String endStr = attributes.get("end");
+		String beginStr = attributes.get("begin").orElse(null);
+		String endStr = attributes.get("end").orElse(null);
 		if (beginStr != null && endStr != null) {
 			param.setBegin(Times.parseAndGetDate(beginStr));
 			param.setEnd(Times.parseAndGetDate(endStr));
 		}
 
-		String query = attributes.get("query");
+		String query = attributes.get("query").orElse(null);
 		if (!Validators.isEmptyOrNull(query, true)) {
 			param.setQuery(query);
 		}
 
-		param.setFrom(attributes.getEnum("from", ArticleFrom.class, null));
-		param.setTag(attributes.get("tag"));
-		param.setSort(attributes.getEnum("sort", Sort.class, null));
-		param.setCurrentPage(attributes.getInteger("currentPage", 0));
-		param.setPageSize(attributes.getInteger("pageSize", 0));
-		param.setHighlight(attributes.getBoolean("highlight", true));
-		param.setIgnoreLevel(attributes.getBoolean("ignoreLevel", false));
-		param.setQueryLock(attributes.getBoolean("queryLock", true));
+		attributes.getEnum("from", ArticleFrom.class).ifPresent(param::setFrom);
+		attributes.get("tag").ifPresent(param::setTag);
+		attributes.getEnum("sort", Sort.class).ifPresent(param::setSort);
+		param.setCurrentPage(attributes.getInteger("currentPage").orElse(0));
+		param.setPageSize(attributes.getInteger("pageSize").orElse(0));
+		param.setHighlight(attributes.getBoolean("highlight").orElse(true));
+
+		attributes.getBoolean("ignoreLevel").ifPresent(param::setIgnoreLevel);
+
+		param.setQueryLock(attributes.getBoolean("queryLock").orElse(true));
 		param.setSpaces(attributes.getSet("spaces", ","));
 
-		param.setIgnorePaging(attributes.getBoolean("ignorePaging", false));
+		attributes.getBoolean("ignorePaging").ifPresent(param::setIgnorePaging);
 
 		if (Environment.isLogin()) {
-			param.setQueryPrivate(attributes.getBoolean("queryPrivate", true));
+			param.setQueryPrivate(attributes.getBoolean("queryPrivate").orElse(true));
 		}
 
 		param.setSpace(getCurrentSpace());

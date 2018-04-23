@@ -15,6 +15,7 @@
  */
 package me.qyh.blog.template;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,13 +71,15 @@ public class TemplateMapping {
 	 * </p>
 	 */
 	private final Map<String, String> highestPriorityPatternMap = new HashMap<>();
+
+	private final EmptyPatternsMatchCondition EMPTY_PATTERNS_MATCH_CONDITION = new EmptyPatternsMatchCondition();
+
 	private final PatternsRequestConditionHolder highestPriorityHolder = new PatternsRequestConditionHolder();
 
 	/**
 	 * 存放PathVariable类型的pattern
 	 */
 	private final Map<String, String> patternMap = new HashMap<>();
-	private final PatternsRequestConditionHolder holder = new PatternsRequestConditionHolder();
 
 	private final PathMatcher pathMatcher = new AntPathMatcher();
 
@@ -84,6 +87,7 @@ public class TemplateMapping {
 	private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
 	private final PreviewTemplateMapping previewTemplateMapping = new PreviewTemplateMapping();
+	private final PatternsRequestConditionHolder holder = new PatternsRequestConditionHolder();
 
 	public TemplateMapping() {
 		super();
@@ -322,7 +326,7 @@ public class TemplateMapping {
 			lock.writeLock().lock();
 			try {
 				previewTemplateMap.clear();
-				previewHolder.setCondition(new PatternsMatchCondition(new HashSet<>()));
+				previewHolder.setCondition(EMPTY_PATTERNS_MATCH_CONDITION);
 			} finally {
 				lock.writeLock().unlock();
 			}
@@ -523,10 +527,10 @@ public class TemplateMapping {
 	}
 
 	private final class PatternsRequestConditionHolder {
-		private PatternsMatchCondition condition = new PatternsMatchCondition(new HashSet<>());
+		private PatternsMatchCondition condition;
 
 		PatternsMatchCondition getCondition() {
-			return condition;
+			return condition == null ? EMPTY_PATTERNS_MATCH_CONDITION : condition;
 		}
 
 		void setCondition(PatternsMatchCondition condition) {
@@ -536,7 +540,20 @@ public class TemplateMapping {
 
 	}
 
-	private final class PatternsMatchCondition {
+	private class EmptyPatternsMatchCondition extends PatternsMatchCondition {
+
+		public EmptyPatternsMatchCondition() {
+			super(Set.of());
+		}
+
+		@Override
+		List<String> getMatchingPatterns(String lookupPath) {
+			return Collections.emptyList();
+		}
+
+	}
+
+	private class PatternsMatchCondition {
 		private final Set<String> patterns;
 
 		public PatternsMatchCondition(Set<String> patterns) {

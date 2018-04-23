@@ -884,7 +884,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		this.setContentNegotiationManager(contentNegotiationManager);
 
 		super.afterPropertiesSet();
-		setLocations(Collections.singletonList(new PathResource(root)));
+		setLocations(List.of(new PathResource(root)));
 	}
 
 	@EventListener(ContextRefreshedEvent.class)

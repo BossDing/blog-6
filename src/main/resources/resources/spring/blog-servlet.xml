@@ -26,6 +26,7 @@
 	<context:component-scan
 		base-package="me.qyh.blog.web.controller,
 			me.qyh.blog.template.render,
+			me.qyh.blog.template.validator,
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
 			me.qyh.blog.web.view,

@@ -18,6 +18,7 @@ package me.qyh.blog.template.render.thymeleaf.dialect;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -29,6 +30,7 @@ import org.thymeleaf.processor.element.IElementModelStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.util.FastStringWriter;
 
+import me.qyh.blog.core.text.CommonMarkdown2Html;
 import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Validators;
@@ -47,11 +49,15 @@ public class MarkdownModelProcessor extends AbstractElementModelProcessor {
 
 	private static final int PRECEDENCE = 1000;
 
-	private final Markdown2Html markdown2Html;
+	private Markdown2Html markdown2Html;
 
 	public MarkdownModelProcessor(String dialectPrefix, ApplicationContext ctx) {
 		super(TemplateMode.HTML, dialectPrefix, "markdown", false, null, false, PRECEDENCE);
-		this.markdown2Html = ctx.getBean(Markdown2Html.class);
+		try {
+			this.markdown2Html = ctx.getBean(Markdown2Html.class);
+		} catch (BeansException e) {
+			this.markdown2Html = CommonMarkdown2Html.INSTANCE;
+		}
 	}
 
 	@Override

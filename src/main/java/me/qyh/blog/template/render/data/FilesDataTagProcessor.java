@@ -50,23 +50,22 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 
 		BlogFileQueryParam param = new BlogFileQueryParam();
 
-		String extensionStr = attributes.get("extensions");
+		String extensionStr = attributes.get("extensions").orElse(null);
 		if (!Validators.isEmptyOrNull(extensionStr, true)) {
 			param.setExtensions(Arrays.stream(extensionStr.split(",")).collect(Collectors.toSet()));
 		}
-		param.setPageSize(attributes.getInteger("pageSize", 0));
-		param.setCurrentPage(attributes.getInteger("currentPage", 0));
-		param.setType(attributes.getEnum("type", BlogFileType.class, null));
-
+		param.setPageSize(attributes.getInteger("pageSize").orElse(0));
+		param.setCurrentPage(attributes.getInteger("currentPage").orElse(0));
+		attributes.getEnum("type", BlogFileType.class).ifPresent(param::setType);
 		/**
 		 * @since 2017.11.25
 		 */
-		param.setIgnorePaging(attributes.getBoolean("ignorePaging", false));
+		attributes.getBoolean("ignorePaging").ifPresent(param::setIgnorePaging);
 
 		/**
 		 * @since 5.7
 		 */
-		param.setName(attributes.get("fileName"));
+		attributes.get("fileName").ifPresent(param::setName);
 
 		int pageSize = configServer.getGlobalConfig().getFilePageSize();
 		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
@@ -75,7 +74,7 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 
 		validator.validate(param, new MapBindingResult(new HashMap<>(), "blogFileQueryParam"));
 
-		String path = attributes.get("path");
+		String path = attributes.get("path").orElse(null);
 		return fileService.queryFiles(path, param);
 	}
 

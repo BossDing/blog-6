@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -163,7 +162,7 @@ public class GravatarResourceHttpRequestHandler extends CustomResourceHttpReques
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		setCacheSeconds((int) avatarCacheSeconds);
-		setLocations(Collections.singletonList(new PathResource(avatarDir)));
+		setLocations(List.of(new PathResource(avatarDir)));
 		super.afterPropertiesSet();
 	}
 

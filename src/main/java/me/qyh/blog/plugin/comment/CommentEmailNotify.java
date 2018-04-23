@@ -175,7 +175,7 @@ public class CommentEmailNotify implements ResourceLoaderAware, InitializingBean
 		// 如果回复是管理员
 		if (parent != null && parent.getEmail() != null && !parent.getAdmin() && comment.getAdmin()) {
 			// 直接邮件通知被回复对象
-			sendMail(Collections.singletonList(comment), comment.getParent().getEmail());
+			sendMail(List.of(comment), comment.getParent().getEmail());
 		}
 	}
 

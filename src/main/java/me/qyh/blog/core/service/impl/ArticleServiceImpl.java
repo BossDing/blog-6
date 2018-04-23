@@ -18,7 +18,6 @@ package me.qyh.blog.core.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +49,7 @@ import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.ArticleTag;
+import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.event.ArticleCreateEvent;
@@ -62,9 +62,12 @@ import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.plugin.ArticleHitHandlerRegistry;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.LockManager;
+import me.qyh.blog.core.text.CommonMarkdown2Html;
+import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.ArticleArchiveTree;
 import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
@@ -73,10 +76,10 @@ import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.core.vo.RecentlyViewdArticle;
 import me.qyh.blog.core.vo.TagCount;
 
-public class ArticleServiceImpl implements ArticleService, InitializingBean, ApplicationEventPublisherAware {
+public class ArticleServiceImpl
+		implements ArticleService, ArticleHitHandlerRegistry, InitializingBean, ApplicationEventPublisherAware {
 
 	@Autowired
 	private ArticleDao articleDao;
@@ -101,7 +104,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	private boolean rebuildIndex = true;
 
-	@Autowired(required = false)
+	@Autowired
 	private ArticleContentHandler articleContentHandler;
 	private final ScheduleManager scheduleManager = new ScheduleManager();
 
@@ -114,7 +117,9 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	private ArticleHitManager articleHitManager;
 
 	@Autowired(required = false)
-	private ArticleViewedLogger articleViewedLogger;
+	private Markdown2Html markdown2Html;
+
+	private List<ArticleHitHandler> hitHandlers = new ArrayList<>();
 
 	@Override
 	@Transactional(readOnly = true)
@@ -122,14 +127,20 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias, true);
 		if (optionalArticle.isPresent()) {
 
-			Article clone = new Article(optionalArticle.get());
-			clone.setComments(commentServer.queryCommentNum(COMMENT_MODULE_TYPE, clone.getId()).orElse(0));
+			Article article = optionalArticle.get();
+			article.setComments(commentServer.queryCommentNum(COMMENT_MODULE_TYPE, article.getId()).orElse(0));
 
-			if (articleContentHandler != null) {
-				articleContentHandler.handle(clone);
+			String content = article.getContent();
+
+			if (Editor.MD.equals(article.getEditor())) {
+				content = markdown2Html.toHtml(content);
 			}
 
-			return Optional.of(clone);
+			content = articleContentHandler.handle(content);
+
+			article.setContent(content);
+
+			return Optional.of(article);
 		}
 		return Optional.empty();
 	}
@@ -306,7 +317,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		article.setStatus(ArticleStatus.PUBLISHED);
 		articleDao.update(article);
 		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
-		applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, Arrays.asList(article)));
+		applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, List.of(article)));
 		return article;
 	}
 
@@ -429,7 +440,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 			articleIndexer.deleteDocument(id);
 		});
 
-		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, Arrays.asList(article), true));
+		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, List.of(article), true));
 
 		return article;
 	}
@@ -474,7 +485,7 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		articleTagDao.deleteByArticle(article);
 		articleDao.deleteById(id);
 
-		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, Arrays.asList(article), false));
+		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, List.of(article), false));
 	}
 
 	@Override
@@ -512,21 +523,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Cacheable(value = "hotTags", key = "'hotTags-'+'space-'+(T(me.qyh.blog.core.context.Environment).getSpace())+'-private-'+(T(me.qyh.blog.core.context.Environment).isLogin())")
 	public List<TagCount> queryTags() {
 		return articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin());
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * 由于点击后才会被记录，而点击方法和浏览文章的方法是事分离的，因为可能更多的反应的是点击过的文章
-	 * 
-	 * @param num
-	 *            记录数，该记录数受到 {@code ArticleViewdLogger}的限制
-	 * @see ArticleViewedLogger#getViewdArticles(int)
-	 * @see ArticleHitManager#hit(Integer)
-	 */
-	@Override
-	public List<RecentlyViewdArticle> getRecentlyViewdArticle(int num) {
-		return articleViewedLogger == null ? new ArrayList<>() : articleViewedLogger.getViewdArticles(Math.max(1, num));
 	}
 
 	@Override
@@ -572,9 +568,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 	@Override
 	public void preparePreview(Article article) {
-		if (articleContentHandler != null) {
-			articleContentHandler.handlePreview(article);
+		String content = article.getContent();
+		if (Editor.MD.equals(article.getEditor())) {
+			content = markdown2Html.toHtml(content);
 		}
+		if (articleContentHandler != null) {
+			content = articleContentHandler.handlePreview(content);
+		}
+		article.setContent(content);
 	}
 
 	@EventListener
@@ -616,6 +617,10 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 
 		if (commentServer == null) {
 			commentServer = EmptyCommentServer.INSTANCE;
+		}
+
+		if (markdown2Html == null) {
+			markdown2Html = CommonMarkdown2Html.INSTANCE;
 		}
 	}
 
@@ -702,11 +707,14 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 		void hit(Integer id) {
 			Article article = articleDao.selectById(id);
 			if (article != null && validHit(article)) {
-				hitsStrategy.hit(article);
 
-				if (articleViewedLogger != null) {
-					articleViewedLogger.logViewd(article);
+				if (!hitHandlers.isEmpty()) {
+					for (ArticleHitHandler hitHandler : hitHandlers) {
+						hitHandler.hit(article);
+					}
 				}
+
+				hitsStrategy.hit(article);
 			}
 		}
 
@@ -722,34 +730,11 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	}
 
 	/**
-	 * 文章缓存点击策略
-	 * <p>
-	 * 文章可能存在于缓存中，需要在合适的时机手动更新缓存和文章索引
-	 * </p>
-	 * 
-	 * @see ArticleCache#updateHits(Map)
-	 * @see ArticleIndexer#addOrUpdateDocument(Integer...)
-	 * 
-	 * @see DefaultHitsStrategy
-	 * @author mhlx
-	 *
-	 */
-	public interface HitsStrategy {
-		/**
-		 * 点击文章
-		 * 
-		 * @param article
-		 */
-		void hit(Article article);
-	}
-
-	/**
 	 * 默认文章点击策略，文章的点击数将会实时显示
 	 * <p>
 	 * <b>这种策略下每次点击都会增加点击量</b>
 	 * </p>
 	 * 
-	 * @see CacheableHitsStrategy
 	 * @author mhlx
 	 *
 	 */
@@ -771,31 +756,6 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 				});
 			}
 		}
-	}
-
-	/**
-	 * 用来记录最近被访问的文章
-	 * 
-	 * @author Administrator
-	 *
-	 */
-	public interface ArticleViewedLogger {
-
-		/**
-		 * 查询最近被访问的文章
-		 * 
-		 * @param num
-		 *            文章数量
-		 * @return
-		 */
-		List<RecentlyViewdArticle> getViewdArticles(int num);
-
-		/**
-		 * 记录文章
-		 * 
-		 * @param article
-		 */
-		void logViewd(Article article);
 	}
 
 	/**
@@ -828,6 +788,12 @@ public class ArticleServiceImpl implements ArticleService, InitializingBean, App
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
+	}
+
+	@Override
+	public ArticleHitHandlerRegistry register(ArticleHitHandler handler) {
+		this.hitHandlers.add(handler);
+		return this;
 	}
 
 }

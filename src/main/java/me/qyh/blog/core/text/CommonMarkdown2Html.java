@@ -16,7 +16,7 @@
 package me.qyh.blog.core.text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.commonmark.Extension;
@@ -27,8 +27,6 @@ import org.commonmark.ext.heading.anchor.HeadingAnchorExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -38,19 +36,28 @@ import org.springframework.util.CollectionUtils;
  * @author Administrator
  *
  */
-@Component
-public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
+public class CommonMarkdown2Html implements Markdown2Html {
 
-	private List<Extension> extensions = new ArrayList<>();
-
-	/**
-	 * singleton?
-	 */
 	private Parser parser;
 	private HtmlRenderer renderer;
 
-	private static final List<Extension> BASE_EXTENSIONS = Arrays.asList(AutolinkExtension.create(),
-			TablesExtension.create(), StrikethroughExtension.create(), HeadingAnchorExtension.create());
+	private static final List<Extension> BASE_EXTENSIONS = List.of(AutolinkExtension.create(), TablesExtension.create(),
+			StrikethroughExtension.create(), HeadingAnchorExtension.create());
+
+	public static final CommonMarkdown2Html INSTANCE = new CommonMarkdown2Html();
+
+	private CommonMarkdown2Html() {
+		this(Collections.emptyList());
+	}
+
+	public CommonMarkdown2Html(List<Extension> extensions) {
+		List<Extension> baseExtensions = new ArrayList<>(BASE_EXTENSIONS);
+		if (!CollectionUtils.isEmpty(extensions)) {
+			baseExtensions.addAll(extensions);
+		}
+		parser = Parser.builder().extensions(baseExtensions).build();
+		renderer = HtmlRenderer.builder().extensions(baseExtensions).build();
+	}
 
 	@Override
 	public String toHtml(String markdown) {
@@ -59,20 +66,6 @@ public class CommonMarkdown2Html implements Markdown2Html, InitializingBean {
 		}
 		Node document = parser.parse(markdown);
 		return renderer.render(document);
-	}
-
-	public void setExtensions(List<Extension> extensions) {
-		this.extensions = extensions;
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		List<Extension> extensions = new ArrayList<>(BASE_EXTENSIONS);
-		if (!CollectionUtils.isEmpty(this.extensions)) {
-			extensions.addAll(this.extensions);
-		}
-		parser = Parser.builder().extensions(extensions).build();
-		renderer = HtmlRenderer.builder().extensions(extensions).build();
 	}
 
 }

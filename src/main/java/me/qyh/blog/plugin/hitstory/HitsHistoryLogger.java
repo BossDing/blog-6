@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.service.impl;
+package me.qyh.blog.plugin.hitstory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,31 +39,28 @@ import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.event.ArticleDelEvent;
 import me.qyh.blog.core.event.ArticleUpdateEvent;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.service.impl.ArticleServiceImpl.ArticleViewedLogger;
+import me.qyh.blog.core.service.impl.ArticleHitHandler;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.SerializationUtils;
 import me.qyh.blog.core.util.Times;
-import me.qyh.blog.core.vo.RecentlyViewdArticle;
 
 /**
  * 将最近访问的文章纪录在内存中
  * <p>
  * <b>可能文章状态可能会变更，所以实际返回的数量可能小于<i>max</i></b> <br>
  * 
- * <b>如果在记录日志的过程中文章状态发生了变更，并且记录过程发生在处理事件之后，那么被纪录的数据则为脏数据，但这种情况发生的概率非常小<b/>
- * </p>
  * <p>
  * </p>
  * 
  * @author Administrator
  *
  */
-public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLogger {
+public class HitsHistoryLogger implements InitializingBean, ArticleHitHandler {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SyncArticleViewdLogger.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(HitsHistoryLogger.class);
 
 	private final int max;
-	private Map<Integer, RecentlyViewdArticle> articles;
+	private Map<Integer, HitsHistory> articles;
 	private final StampedLock lock = new StampedLock();
 
 	/**
@@ -71,13 +68,13 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 	 */
 	private final Path sdfile = Constants.DAT_DIR.resolve("sync_articles_viewd.dat");
 
-	public SyncArticleViewdLogger(int max) {
+	public HitsHistoryLogger(int max) {
 		if (max < 0) {
 			throw new SystemException("max必须大于0");
 		}
 		this.max = max;
 
-		articles = new LinkedHashMap<Integer, RecentlyViewdArticle>() {
+		articles = new LinkedHashMap<Integer, HitsHistory>() {
 
 			/**
 			 * 
@@ -85,21 +82,20 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected boolean removeEldestEntry(Entry<Integer, RecentlyViewdArticle> eldest) {
+			protected boolean removeEldestEntry(Entry<Integer, HitsHistory> eldest) {
 				return size() > max;
 			}
 
 		};
 	}
 
-	public SyncArticleViewdLogger() {
+	public HitsHistoryLogger() {
 		this(10);
 	}
 
-	@Override
-	public List<RecentlyViewdArticle> getViewdArticles(int num) {
+	public List<HitsHistory> getHistory(int num) {
 		long stamp = lock.tryOptimisticRead();
-		List<RecentlyViewdArticle> result = getCurrentViewed(num);
+		List<HitsHistory> result = getCurrentViewed(num);
 		if (!lock.validate(stamp)) {
 			stamp = lock.readLock();
 			try {
@@ -111,8 +107,8 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 		return result;
 	}
 
-	private List<RecentlyViewdArticle> getCurrentViewed(int num) {
-		List<RecentlyViewdArticle> result = new ArrayList<>(articles.values());
+	private List<HitsHistory> getCurrentViewed(int num) {
+		List<HitsHistory> result = new ArrayList<>(articles.values());
 		if (!result.isEmpty()) {
 			Collections.reverse(result);
 			int finalNum = Math.min(num, max);
@@ -121,18 +117,6 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public void logViewd(Article article) {
-		LocalDateTime time = Times.now();
-		long stamp = lock.writeLock();
-		try {
-			articles.remove(article.getId());
-			articles.put(article.getId(), new RecentlyViewdArticle(article, Environment.getIP(), time));
-		} finally {
-			lock.unlockWrite(stamp);
-		}
 	}
 
 	@TransactionalEventListener
@@ -154,9 +138,9 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 			if (!valid) {
 				articles.remove(art.getId());
 			} else {
-				RecentlyViewdArticle rva = articles.get(art.getId());
+				HitsHistory rva = articles.get(art.getId());
 				if (rva != null) {
-					articles.replace(art.getId(), new RecentlyViewdArticle(art, rva.getIp(), rva.getTime()));
+					articles.replace(art.getId(), new HitsHistory(art, rva.getIp(), rva.getTime()));
 				}
 			}
 		} finally {
@@ -186,6 +170,18 @@ public class SyncArticleViewdLogger implements InitializingBean, ArticleViewedLo
 					LOGGER.warn("删除文件{}失败", sdfile);
 				}
 			}
+		}
+	}
+
+	@Override
+	public void hit(Article article) {
+		LocalDateTime time = Times.now();
+		long stamp = lock.writeLock();
+		try {
+			articles.remove(article.getId());
+			articles.put(article.getId(), new HitsHistory(article, Environment.getIP(), time));
+		} finally {
+			lock.unlockWrite(stamp);
 		}
 	}
 

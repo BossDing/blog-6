@@ -15,9 +15,9 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -86,7 +86,7 @@ public class StaticFileMgrController extends BaseMgrController {
 	@ResponseBody
 	public JsonResult query(@Validated StaticFileQueryParam staticFileQueryParam) throws LogicException {
 		checkHandler();
-		staticFileQueryParam.setExtensions(new HashSet<>());
+		staticFileQueryParam.setExtensions(Set.of());
 		staticFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}

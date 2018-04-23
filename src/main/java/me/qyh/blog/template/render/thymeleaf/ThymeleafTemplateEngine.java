@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.template.render.thymeleaf;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.context.ApplicationContext;
@@ -32,7 +30,8 @@ import me.qyh.blog.template.render.thymeleaf.dialect.PreTemplateHandler;
 import me.qyh.blog.template.render.thymeleaf.dialect.TemplateDialect;
 import me.qyh.blog.template.render.thymeleaf.dialect.TransactionDialect;
 
-public class ThymeleafTemplateEngine extends SpringTemplateEngine implements ApplicationListener<ContextRefreshedEvent> {
+public class ThymeleafTemplateEngine extends SpringTemplateEngine
+		implements ApplicationListener<ContextRefreshedEvent> {
 
 	public ThymeleafTemplateEngine() {
 		super();
@@ -45,8 +44,7 @@ public class ThymeleafTemplateEngine extends SpringTemplateEngine implements App
 
 			@Override
 			public Set<IPreProcessor> getPreProcessors() {
-				return new HashSet<>(
-						Collections.singletonList(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000)));
+				return Set.of(new PreProcessor(TemplateMode.HTML, PreTemplateHandler.class, 1000));
 			}
 
 			@Override

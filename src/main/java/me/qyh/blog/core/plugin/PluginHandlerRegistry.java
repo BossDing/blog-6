@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.core.plugin;
 
 import java.io.IOException;
@@ -44,7 +59,7 @@ public class PluginHandlerRegistry
 	private RequestMappingRegistry requestMappingRegistry;
 	@Autowired
 	private ExceptionHandlerRegistry exceptionHandlerRegistry;
-	@Autowired(required = false)
+	@Autowired
 	private ArticleContentHandlerRegistry articleContentHandlerRegistry;
 	@Autowired
 	private FileStoreRegistry fileStoreRegistry;
@@ -58,6 +73,8 @@ public class PluginHandlerRegistry
 	private SuccessfulLoginHandlerRegistry successfulLoginHandlerRegistry;
 	@Autowired
 	private LogoutHandlerRegistry logoutHandlerRegistry;
+	@Autowired
+	private ArticleHitHandlerRegistry articleHitHandlerRegistry;
 
 	private ResourceLoader resourceLoader;
 
@@ -115,9 +132,7 @@ public class PluginHandlerRegistry
 		pluginHandler.addTemplate(templateRegistry);
 		pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
 		pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
-		if (articleContentHandlerRegistry != null) {
-			pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
-		}
+		pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
 		pluginHandler.addMenu(MenuRegistry.getInstance());
 		pluginHandler.addFileStore(fileStoreRegistry);
 		pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
@@ -125,6 +140,7 @@ public class PluginHandlerRegistry
 		pluginHandler.addLockProvider(lockProviderRegistry);
 		pluginHandler.addSuccessfulLoginHandler(successfulLoginHandlerRegistry);
 		pluginHandler.addLogoutHandler(logoutHandlerRegistry);
+		pluginHandler.addHitHandler(articleHitHandlerRegistry);
 	}
 
 	@Override
@@ -158,7 +174,7 @@ public class PluginHandlerRegistry
 				if (PluginHandler.class.isAssignableFrom(handlerClass)) {
 					PluginHandler newInstance;
 					try {
-						newInstance = (PluginHandler) handlerClass.newInstance();
+						newInstance = (PluginHandler) handlerClass.getConstructor().newInstance();
 						newInstance.initialize(applicationContext);
 						handlerInstances.add(newInstance);
 					} catch (Exception e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 qyh.me
+ * Copyright 2016 qyh.me
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.vo;
-
-import java.time.LocalDateTime;
+package me.qyh.blog.core.service.impl;
 
 import me.qyh.blog.core.entity.Article;
 
 /**
- * @since 5.10
+ * 文章缓存点击策略
+ * <p>
+ * 文章可能存在于缓存中，需要在合适的时机手动更新缓存和文章索引
+ * </p>
+ * 
+ * @see ArticleIndexer#addOrUpdateDocument(Integer...)
+ * 
+ * @see DefaultHitsStrategy
+ * @author mhlx
  *
  */
-public class RecentlyViewdArticle extends Article {
-
+public interface HitsStrategy {
 	/**
+	 * 点击文章
 	 * 
+	 * @param article
 	 */
-	private static final long serialVersionUID = 1L;
-
-	private final String ip;
-	private final LocalDateTime time;
-
-	public RecentlyViewdArticle(Article source, String ip, LocalDateTime time) {
-		super(source);
-		this.ip = ip;
-		this.time = time;
-
-		setContent(null);
-		setSummary(null);
-	}
-
-	public String getIp() {
-		return ip;
-	}
-
-	public LocalDateTime getTime() {
-		return time;
-	}
-
+	void hit(Article article);
 }

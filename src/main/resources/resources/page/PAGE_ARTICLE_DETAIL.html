@@ -1,6 +1,6 @@
 <transaction:begin />
 <data name="上一篇下一篇" th:idOrAlias="${idOrAlias}" />
-<data name="文章详情" th:idOrAlias="${idOrAlias}"/>
+<data name="文章详情" th:idOrAlias="${idOrAlias}" />
 <transaction:end />
 <!DOCTYPE html>
 <html>
@@ -42,14 +42,16 @@
 	<input type="hidden" id="urlPrefix" th:value="${urls.currentUrl}" />
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
-	<script type="text/javascript" th:src="@{/static/js/article.js}"></script>
-		<script th:inline="javascript">
+	<script th:inline="javascript">
+			$.post([[${urls.currentUrl}]] + "/article/hit/"
+					+ [[${article.id}]], {}, function(data) {
+			})
         var config = {
             isLogin: [[${user != null}]],
             gravatarPrefix: [[${gravatars.getUrl('')}]]
         };
     </script>
-     <script th:inline="javascript">
+	<script th:inline="javascript">
      	var c = $("#comments-container");
      	var _config = {
          	 pageSize:10,
@@ -69,8 +71,8 @@
              }
          }
      </script>
-    <script th:src="@{/static/plugin/comment/js/new_comment.js}"></script>
-    <script>
+	<script th:src="@{/static/plugin/comment/js/new_comment.js}"></script>
+	<script>
     	$(function(){
     		cmt.renderComment(_config);
     		$('[data-comment]').click(function(){

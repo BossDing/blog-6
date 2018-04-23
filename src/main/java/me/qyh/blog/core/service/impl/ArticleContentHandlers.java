@@ -17,10 +17,11 @@ package me.qyh.blog.core.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.plugin.ArticleContentHandlerRegistry;
 
 /**
@@ -29,30 +30,20 @@ import me.qyh.blog.core.plugin.ArticleContentHandlerRegistry;
  * @author Administrator
  *
  */
+@Component
 public class ArticleContentHandlers implements ArticleContentHandler, ArticleContentHandlerRegistry {
 
 	private List<ArticleContentHandler> handlers = new ArrayList<>();
 
 	@Override
-	public void handle(Article article) {
+	public String handle(String content) {
+		String handled = content;
 		if (!CollectionUtils.isEmpty(handlers)) {
 			for (ArticleContentHandler handler : handlers) {
-				handler.handle(article);
+				handled = Objects.requireNonNull(handler.handle(handled));
 			}
 		}
-	}
-
-	@Override
-	public void handlePreview(Article article) {
-		if (!CollectionUtils.isEmpty(handlers)) {
-			for (ArticleContentHandler handler : handlers) {
-				handler.handlePreview(article);
-			}
-		}
-	}
-
-	public void setHandlers(List<ArticleContentHandler> handlers) {
-		this.handlers = handlers;
+		return handled;
 	}
 
 	@Override

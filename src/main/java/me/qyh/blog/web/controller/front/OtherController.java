@@ -18,7 +18,6 @@ package me.qyh.blog.web.controller.front;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +42,7 @@ import me.qyh.blog.template.render.RenderResult;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.template.service.TemplateService;
+import me.qyh.blog.template.validator.FragmentValidator;
 import me.qyh.blog.template.vo.DataTag;
 import me.qyh.blog.web.Webs;
 
@@ -68,14 +68,19 @@ public class OtherController {
 	public void queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
-		try {
-			Optional<String> op = templateRender.getFragmentName(Webs.decode(fragment), Environment.getSpace());
-			if (!op.isPresent()) {
-				Webs.writeInfo(response, new JsonResult(false, new Message("fragment.name.invalid", "无效的模板片段名称")));
-				return;
-			}
+		String name = Webs.decode(fragment);
 
-			RenderResult result = templateRender.doRender(op.get(), null, request, new ReadOnlyResponse(response),
+		if (!name.matches(FragmentValidator.NAME_PATTERN)) {
+			Webs.writeInfo(response, new JsonResult(false, new Message("fragment.name.invalid", "无效的模板片段名称")));
+			return;
+		}
+
+		try {
+
+			String templateName = templateService.getFragmentTemplateName(name, Environment.getSpace(),
+					Environment.getIP());
+
+			RenderResult result = templateRender.doRender(templateName, null, request, new ReadOnlyResponse(response),
 					new ParseConfig(true, false));
 
 			String content = result.getContent();

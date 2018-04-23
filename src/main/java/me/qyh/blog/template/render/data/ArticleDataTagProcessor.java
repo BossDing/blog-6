@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.template.render.data;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.entity.Article;
@@ -39,12 +41,22 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	@Override
 	protected Article query(Attributes attributes) throws LogicException {
 		// 首先从属性中获取
-		String idOrAlias = attributes.get("idOrAlias");
+		String idOrAlias = attributes.get("idOrAlias").orElse(null);
+		boolean ignoreException = attributes.getBoolean("ignoreException").orElse(false);
 		if (idOrAlias == null) {
+			if (ignoreException) {
+				return null;
+			}
 			throw new LogicException("article.notExists", "文章不存在");
 		}
-		return articleService.getArticleForView(idOrAlias)
-				.orElseThrow(() -> new LogicException("article.notExists", "文章不存在"));
+		Optional<Article> op = articleService.getArticleForView(idOrAlias);
+		if (op.isPresent()) {
+			return op.get();
+		}
+		if (!ignoreException) {
+			throw new LogicException("article.notExists", "文章不存在");
+		}
+		return null;
 	}
 
 }

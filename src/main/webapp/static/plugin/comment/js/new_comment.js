@@ -480,50 +480,16 @@
         };
         
         if(commentConfig.editor == 'HTML'){
-        	if(config.isLogin){
-        		loadCSS(basePath + '/static/summernote/dist/summernote.css');
-            	$.getScript(basePath + "/static/summernote/dist/summernote.min.js" ,function(){
-            		 $.getScript(basePath + "/static/summernote/dist/lang/summernote-zh-CN.min.js",function(){
-            			 
-            			 $('#content').summernote({
-            					lang: 'zh-CN',
-            					height:270,
-            					focus:true,
-            					toolbar:[
-            						['style', ['style']],
-            			            ['font', ['bold', 'underline', 'clear']],
-            			            ['fontname', ['fontname']],
-            			            ['color', ['color']],
-            			            ['para', ['ul', 'ol', 'paragraph']],
-            			            ['insert', ['link', 'video']],
-            			            ['view', ['fullscreen', 'codeview']]
-            					]
-            				});
-            			 
-            			 editor = {
-            					 
-            					 get : function(){
-            						 return $("#content").summernote('code');
-            					 },
-            					 clear : function(){
-            						 $("#content").summernote('code','');
-            					 }
-            			 }
-            			 
-            		 });
-            	})
-        	} else {
-        		editor = {
-            			
-                		get:function(){
-                			return   $("#content").val();
-                		}	,
-                		clear:function(){
-                			$("#content").val('');
-                		}
-                		
-                	}
-        	}
+    		editor = {
+        			
+            		get:function(){
+            			return   $("#content").val();
+            		}	,
+            		clear:function(){
+            			$("#content").val('');
+            		}
+            		
+            	}
         } else {
         	
         	editor = {

@@ -15,11 +15,10 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +112,7 @@ public class FileMgrController extends BaseMgrController {
 	public JsonResult query(@Validated BlogFileQueryParam blogFileQueryParam) throws LogicException {
 		blogFileQueryParam.setQuerySubDir(false);
 		blogFileQueryParam.setIgnorePaging(false);
-		blogFileQueryParam.setExtensions(new HashSet<>());
+		blogFileQueryParam.setExtensions(Set.of());
 		blogFileQueryParam.setPageSize(configServer.getGlobalConfig().getFilePageSize());
 		return new JsonResult(true, fileService.queryBlogFiles(blogFileQueryParam));
 	}
@@ -134,7 +133,7 @@ public class FileMgrController extends BaseMgrController {
 		Base64MultipareFile file = new Base64MultipareFile(newName, base64FileUpload.getBase64());
 
 		BlogFileUpload upload = new BlogFileUpload();
-		upload.setFiles(Arrays.asList(file));
+		upload.setFiles(List.of(file));
 		upload.setParent(base64FileUpload.getParent());
 		upload.setStore(base64FileUpload.getStore());
 

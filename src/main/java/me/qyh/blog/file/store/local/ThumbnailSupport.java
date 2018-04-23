@@ -22,7 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -291,8 +291,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 			throw new SystemException("缩略图存储路径不能为null");
 		}
 
-		super.setLocations(
-				Arrays.asList(new PathResource(Paths.get(thumbAbsPath)), new PathResource(Paths.get(absPath))));
+		super.setLocations(List.of(new PathResource(Paths.get(thumbAbsPath)), new PathResource(Paths.get(absPath))));
 
 		if (!thumbnailator.supportWebp()) {
 			supportWebp = false;

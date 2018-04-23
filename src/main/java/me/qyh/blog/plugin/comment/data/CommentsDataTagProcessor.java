@@ -39,8 +39,8 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	protected CommentPageResult query(Attributes attributes) throws LogicException {
 		CommentQueryParam param = new CommentQueryParam();
 
-		String moduleTypeStr = attributes.get("moduleType");
-		String moduleIdStr = attributes.get("moduleId");
+		String moduleTypeStr = attributes.get("moduleType").orElse(null);
+		String moduleIdStr = attributes.get("moduleId").orElse(null);
 		if (moduleIdStr != null && moduleTypeStr != null) {
 			try {
 				param.setModule(new CommentModule(moduleTypeStr, Integer.parseInt(moduleIdStr)));
@@ -49,10 +49,10 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 			}
 		}
 
-		param.setMode(attributes.getEnum("mode", CommentMode.class, CommentMode.LIST));
-		param.setAsc(attributes.getBoolean("asc", true));
-		param.setCurrentPage(attributes.getInteger("currentPage", 0));
-		param.setPageSize(attributes.getInteger("pageSize", 0));
+		param.setMode(attributes.getEnum("mode", CommentMode.class).orElse(CommentMode.LIST));
+		param.setAsc(attributes.getBoolean("asc").orElse(true));
+		param.setCurrentPage(attributes.getInteger("currentPage").orElse(0));
+		param.setPageSize(attributes.getInteger("pageSize").orElse(0));
 
 		if (param.getCurrentPage() < 0) {
 			param.setCurrentPage(0);
@@ -62,7 +62,7 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
 			param.setPageSize(pageSize);
 		}
-		
+
 		param.setStatus(!Environment.isLogin() ? CommentStatus.NORMAL : null);
 
 		return commentService.queryComment(param);

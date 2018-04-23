@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.service.impl;
+package me.qyh.blog.plugin.cachehits;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +28,11 @@ import java.util.stream.Collectors;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -40,7 +41,9 @@ import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.event.ArticleDelEvent;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
+import me.qyh.blog.core.service.impl.ArticleIndexer;
+import me.qyh.blog.core.service.impl.HitsStrategy;
+import me.qyh.blog.core.service.impl.Transactions;
 
 /**
  * 将点击数缓存起来，每隔一定的时间刷入数据库
@@ -51,7 +54,7 @@ import me.qyh.blog.core.service.impl.ArticleServiceImpl.HitsStrategy;
  * @author Administrator
  *
  */
-public final class CacheableHitsStrategy implements HitsStrategy {
+public final class CacheableHitsStrategy implements HitsStrategy, InitializingBean {
 
 	@Autowired
 	private PlatformTransactionManager transactionManager;
@@ -59,6 +62,8 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	private ArticleIndexer articleIndexer;
 	@Autowired
 	private SqlSessionFactory sqlSessionFactory;
+	@Autowired
+	private TaskScheduler taskScheduler;
 	/**
 	 * 存储所有文章的点击数
 	 */
@@ -75,17 +80,35 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 	 * 例如我点击一次增加了一次点击量，一分钟后flush，那么我在这一分钟内(ip的不变的情况下)，无论我点击了多少次，都只算一次
 	 * </p>
 	 */
-	private boolean validIp = true;
+	private final boolean validIp;
 
 	/**
 	 * 最多保存的ip数，如果达到或超过该数目，将会立即更新
 	 */
-	private int maxIps = 100;
+	private final int maxIps;
 
 	/**
 	 * 每50条写入数据库
 	 */
-	private int flushNum = 50;
+	private final int flushNum;
+
+	private final int flushSec;
+
+	public CacheableHitsStrategy(boolean validIp, int maxIps, int flushNum, int flushSec) {
+		if (maxIps < 0) {
+			throw new SystemException("maxIps不能小于0");
+		}
+		if (flushNum < 0) {
+			throw new SystemException("flushNum不能小于0");
+		}
+		if (flushSec < 0) {
+			throw new SystemException("flushSec不能小于0");
+		}
+		this.maxIps = maxIps;
+		this.flushNum = flushNum;
+		this.validIp = validIp;
+		this.flushSec = flushSec;
+	}
 
 	@Override
 	public void hit(Article article) {
@@ -191,7 +214,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 				if (counter.incrementAndGet() >= maxIps) {
 					Integer id = article.getId();
 					if (flushMap.remove(id) != null) {
-						doFlush(Collections.singletonList(new HitsWrapper(id, hitsMap.get(id))), false);
+						doFlush(List.of(new HitsWrapper(id, hitsMap.get(id))), false);
 					}
 				}
 			}
@@ -203,7 +226,7 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		}
 	}
 
-	public void flush() {
+	private void flush() {
 		flush(false);
 	}
 
@@ -240,21 +263,8 @@ public final class CacheableHitsStrategy implements HitsStrategy {
 		}
 	}
 
-	public void setValidIp(boolean validIp) {
-		this.validIp = validIp;
-	}
-
-	public void setMaxIps(int maxIps) {
-		if (maxIps <= 0) {
-			throw new SystemException("每篇文章允许最多允许保存的ip数应该大于0");
-		}
-		this.maxIps = maxIps;
-	}
-
-	public void setFlushNum(int flushNum) {
-		if (flushNum < 1) {
-			throw new SystemException("flushNum不能小于1");
-		}
-		this.flushNum = flushNum;
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		taskScheduler.scheduleAtFixedRate(this::flush, flushSec * 1000L);
 	}
 }

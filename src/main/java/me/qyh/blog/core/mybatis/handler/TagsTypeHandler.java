@@ -59,7 +59,8 @@ public class TagsTypeHandler extends BaseTypeHandler<Set<Tag>> {
 		if (Validators.isEmptyOrNull(str, true)) {
 			return new HashSet<>();
 		}
-		return Arrays.stream(str.split(",")).map(Tag::new).collect(Collectors.toCollection(LinkedHashSet::new));
+		return Arrays.stream(str.split(",")).sorted().map(Tag::new)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Override

@@ -23,7 +23,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -147,11 +146,11 @@ public class Jsons {
 	 *            目标Array类型
 	 * @param json
 	 *            json字符串
-	 * @return 不可变的List
+	 * @return 可变的list
 	 */
 	public static <T> List<T> readList(Class<T[]> clazz, String json) {
 		final T[] jsonToObject = gson.fromJson(json, clazz);
-		return Arrays.asList(jsonToObject);
+		return new ArrayList<>(Arrays.asList(jsonToObject));
 	}
 
 	/**
@@ -482,7 +481,7 @@ public class Jsons {
 		private static List<Expression> parseExpressions(String expression) {
 			expression = expression.replaceAll("\\s+", "");
 			if (expression.isEmpty()) {
-				return Collections.singletonList(NULL_EXPRESSION);
+				return List.of(NULL_EXPRESSION);
 			}
 			if (expression.contains(SPLIT_STR)) {
 				// multi expressions
@@ -490,17 +489,17 @@ public class Jsons {
 				for (String _expression : expression.split(SPLIT_STR)) {
 					_expression = _expression.replaceAll("\\s+", "");
 					if (_expression.isEmpty()) {
-						return Collections.singletonList(NULL_EXPRESSION);
+						return List.of(NULL_EXPRESSION);
 					}
 					Expression parsed = parseExpression(_expression);
 					if (parsed == NULL_EXPRESSION) {
-						return Collections.singletonList(NULL_EXPRESSION);
+						return List.of(NULL_EXPRESSION);
 					}
 					expressionList.add(parsed);
 				}
 				return expressionList;
 			}
-			return Collections.singletonList(parseExpression(expression));
+			return List.of(parseExpression(expression));
 		}
 
 		private static Expression parseExpression(String expression) {

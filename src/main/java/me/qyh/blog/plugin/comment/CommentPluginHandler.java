@@ -1,14 +1,25 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.plugin.comment;
-
-import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
-import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
 import me.qyh.blog.core.plugin.Menu;
@@ -61,13 +72,19 @@ public class CommentPluginHandler implements PluginHandler {
 	}
 
 	@Override
-	public void addTemplate(TemplateRegistry registry) {
+	public void addTemplate(TemplateRegistry registry) throws Exception {
 		registry.registerGlobalFragment(messages.getMessage("plugin.comment.data.comment", "评论"),
-				read(new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")), true)
+				Resources.readResourceToString(
+						new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")),
+				true)
 				.registerGlobalFragment(messages.getMessage("plugin.comment.data.widget", "评论挂件"),
-						read(new ClassPathResource("me/qyh/blog/plugin/comment/template/commentWidget.html")), true)
+						Resources.readResourceToString(
+								new ClassPathResource("me/qyh/blog/plugin/comment/template/commentWidget.html")),
+						true)
 				.registerGlobalFragment(messages.getMessage("plugin.comment.data.lastComments", "最近评论"),
-						read(new ClassPathResource("me/qyh/blog/plugin/comment/template/lastComments.html")), false);
+						Resources.readResourceToString(
+								new ClassPathResource("me/qyh/blog/plugin/comment/template/lastComments.html")),
+						false);
 	}
 
 	@Override
@@ -82,14 +99,6 @@ public class CommentPluginHandler implements PluginHandler {
 				messages.getMessage("plugin.comment.data.lastComment", "最近评论"), "comments");
 		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(lcdtp);
 		registry.register(lcdtp);
-	}
-
-	private String read(Resource resource) {
-		try {
-			return Resources.readResourceToString(resource);
-		} catch (IOException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
 	}
 
 }

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -91,10 +90,13 @@ import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.TagDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Article.ArticleFrom;
+import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.text.CommonMarkdown2Html;
+import me.qyh.blog.core.text.Markdown2Html;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.ArticleQueryParam;
@@ -151,7 +153,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	 */
 	private static final int DEFAULT_PAGE_SIZE = 100;
 
-	@Autowired(required = false)
+	@Autowired
 	private ArticleContentHandler articleContentHandler;
 
 	@Autowired
@@ -160,6 +162,8 @@ public abstract class ArticleIndexer implements InitializingBean {
 	private TagDao tagDao;
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+	@Autowired(required = false)
+	private Markdown2Html markdown2Html;
 
 	private static final Path INDEX_DIR = FileUtils.HOME_DIR.resolve("blog/index");
 
@@ -295,7 +299,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			if (Validators.isEmpty(ids)) {
 				return null;
 			}
-			articleDao.selectByIds(Arrays.asList(ids)).stream().filter(Article::isPublished).forEach(art -> {
+			articleDao.selectByIds(List.of(ids)).stream().filter(Article::isPublished).forEach(art -> {
 				try {
 					doDeleteDocument(art.getId());
 					gen = oriWriter.addDocument(buildDocument(art));
@@ -529,10 +533,12 @@ public abstract class ArticleIndexer implements InitializingBean {
 	}
 
 	private String cleanContent(Article article) {
-		if (articleContentHandler != null) {
-			articleContentHandler.handle(article);
+		String content = article.getContent();
+		if (Editor.MD.equals(article.getEditor())) {
+			content = markdown2Html.toHtml(content);
 		}
-		return clean(article.getContent());
+		content = articleContentHandler.handle(content);
+		return clean(content);
 	}
 
 	/**
@@ -625,6 +631,9 @@ public abstract class ArticleIndexer implements InitializingBean {
 		}
 		if (summaryFormatter == null) {
 			summaryFormatter = new DefaultFormatter("lucene-highlight-summary");
+		}
+		if (markdown2Html == null) {
+			markdown2Html = CommonMarkdown2Html.INSTANCE;
 		}
 		qboostMap.put(TAG, boostMap.getOrDefault(TAG, 20F));
 		qboostMap.put(ALIAS, boostMap.getOrDefault(ALIAS, 10F));

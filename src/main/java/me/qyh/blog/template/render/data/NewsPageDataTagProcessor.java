@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 qyh.me
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.qyh.blog.template.render.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,20 +41,19 @@ public class NewsPageDataTagProcessor extends DataTagProcessor<PageResult<News>>
 	@Override
 	protected PageResult<News> query(Attributes attributes) throws LogicException {
 		NewsQueryParam param = new NewsQueryParam();
-		String beginStr = attributes.get("begin");
-		String endStr = attributes.get("end");
+		String beginStr = attributes.get("begin").orElse(null);
+		String endStr = attributes.get("end").orElse(null);
 		if (beginStr != null && endStr != null) {
 			param.setBegin(Times.parseAndGetDate(beginStr));
 			param.setEnd(Times.parseAndGetDate(endStr));
 		}
 		if (Environment.isLogin()) {
-			param.setQueryPrivate(attributes.getBoolean("queryPrivate", true));
+			param.setQueryPrivate(attributes.getBoolean("queryPrivate").orElse(true));
 		}
 
-		param.setAsc(attributes.getBoolean("asc", false));
-		param.setPageSize(attributes.getInteger("pageSize", Constants.DEFAULT_PAGE_SIZE));
-
-		param.setCurrentPage(attributes.getInteger("currentPage", 1));
+		param.setAsc(attributes.getBoolean("asc").orElse(false));
+		param.setPageSize(attributes.getInteger("pageSize").orElse(Constants.DEFAULT_PAGE_SIZE));
+		param.setCurrentPage(attributes.getInteger("currentPage").orElse(1));
 
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);

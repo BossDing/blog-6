@@ -32,7 +32,7 @@ public class RandomArticleDataTagProcessor extends DataTagProcessor<Article> {
 
 	@Override
 	protected Article query(Attributes attributes) throws LogicException {
-		return articleService.selectRandom(Boolean.parseBoolean(attributes.get("queryLock"))).orElse(null);
+		return articleService.selectRandom(attributes.getBoolean("queryLock").orElse(false)).orElse(null);
 	}
 
 }

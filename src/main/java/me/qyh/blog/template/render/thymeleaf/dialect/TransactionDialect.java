@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.context.ApplicationContext;
@@ -34,8 +32,8 @@ public class TransactionDialect extends AbstractProcessorDialect {
 
 	@Override
 	public Set<IProcessor> getProcessors(String dialectPrefix) {
-		return new HashSet<>(Arrays.asList(new TransactionBeginTagProcessor(dialectPrefix, applicationContext),
-				new TransactionEndTagProcessor(dialectPrefix, applicationContext)));
+		return Set.of(new TransactionBeginTagProcessor(dialectPrefix, applicationContext),
+				new TransactionEndTagProcessor(dialectPrefix, applicationContext));
 	}
 
 }

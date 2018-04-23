@@ -34,12 +34,9 @@ public class ArticleNavDataTagProcessor extends DataTagProcessor<ArticleNav> {
 
 	@Override
 	protected ArticleNav query(Attributes attributes) throws LogicException {
-		String idOrAlias = attributes.get(ID_OR_ALIAS);
-		if (idOrAlias != null) {
-			return articleService.getArticleNav(idOrAlias, Boolean.parseBoolean(attributes.get("queryLock")))
-					.orElse(null);
-		}
-		return null;
+		return attributes.get(ID_OR_ALIAS).flatMap(
+				idOrAlias -> articleService.getArticleNav(idOrAlias, attributes.getBoolean("queryLock").orElse(false)))
+				.orElse(null);
 	}
 
 }

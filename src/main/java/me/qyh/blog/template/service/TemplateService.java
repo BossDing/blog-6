@@ -31,9 +31,11 @@ import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
 import me.qyh.blog.template.vo.ExportPage;
+import me.qyh.blog.template.vo.ExportPages;
 import me.qyh.blog.template.vo.FragmentQueryParam;
 import me.qyh.blog.template.vo.ImportRecord;
 import me.qyh.blog.template.vo.PageStatistics;
+import me.qyh.blog.template.vo.PreviewImport;
 import me.qyh.blog.template.vo.TemplatePageQueryParam;
 
 /**
@@ -168,16 +170,11 @@ public interface TemplateService {
 	/**
 	 * 导入模板
 	 * 
-	 * @param spaceId
-	 *            空间Id
 	 * @param exportPages
-	 *            要导入的页面
-	 * @param importOption
-	 *            操作选择
 	 * @throws LogicException
 	 *             空间不存在
 	 */
-	List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages);
+	List<ImportRecord> importPage(ExportPages exportPages);
 
 	/**
 	 * 检查template是否和当前的template一致
@@ -325,5 +322,14 @@ public interface TemplateService {
 	 * @return
 	 */
 	List<Fragment> getDefaultFragment();
+
+	/**
+	 * 预览要导入的模板
+	 * 
+	 * @param exportPages
+	 * @return
+	 * @throws LogicException
+	 */
+	PreviewImport previewImport(ExportPages exportPages) throws LogicException;
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.template.render.data;
+package me.qyh.blog.plugin.hitstory;
 
 import java.util.List;
 
@@ -21,17 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.service.ArticleService;
-import me.qyh.blog.core.vo.RecentlyViewdArticle;
+import me.qyh.blog.template.render.data.DataTagProcessor;
 
-public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List<RecentlyViewdArticle>> {
+public class HitsHistoryDataTagProcessor extends DataTagProcessor<List<HitsHistory>> {
 
 	@Autowired
-	private ArticleService articleService;
+	private HitsHistoryLogger hitsHistoryLogger;
 
 	private final int max;
 
-	public RecentlyViewdArticlesDataTagProcessor(String name, String dataName, int max) {
+	public HitsHistoryDataTagProcessor(String name, String dataName, int max) {
 		super(name, dataName);
 		this.max = max;
 
@@ -40,17 +39,14 @@ public class RecentlyViewdArticlesDataTagProcessor extends DataTagProcessor<List
 		}
 	}
 
-	public RecentlyViewdArticlesDataTagProcessor(String name, String dataName) {
+	public HitsHistoryDataTagProcessor(String name, String dataName) {
 		this(name, dataName, 10);
 	}
 
 	@Override
-	protected List<RecentlyViewdArticle> query(Attributes attributes) throws LogicException {
-		Integer num = attributes.getInteger("num", max);
-		if (num <= 0 || num > max) {
-			num = max;
-		}
-		return articleService.getRecentlyViewdArticle(num);
+	protected List<HitsHistory> query(Attributes attributes) throws LogicException {
+		Integer num = attributes.getInteger("num").filter(_num -> _num > 0 && _num <= max).orElse(max);
+		return hitsHistoryLogger.getHistory(num);
 	}
 
 }

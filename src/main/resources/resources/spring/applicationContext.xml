@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
 	xmlns:context="http://www.springframework.org/schema/context"
-	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:cache="http://www.springframework.org/schema/cache"
-	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
 		   					 http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
 						     http://www.springframework.org/schema/context 
@@ -47,7 +50,8 @@
 			</props>
 		</property>
 	</bean>
-	<bean id="sqlSessionFactory" class="me.qyh.blog.core.plugin.PluginSqlSessionFactoryBean"
+	<bean id="sqlSessionFactory"
+		class="me.qyh.blog.core.plugin.PluginSqlSessionFactoryBean"
 		p:configLocation="classpath:resources/mybatis/mybatis-config.xml"
 		p:dataSource-ref="dataSource" />
 
@@ -55,7 +59,8 @@
 	<bean id="txManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
 		p:dataSource-ref="dataSource" />
-	<tx:annotation-driven transaction-manager="txManager" />
+	<tx:annotation-driven
+		transaction-manager="txManager" />
 
 
 	<!-- mybatis -->
@@ -75,7 +80,6 @@
 					  me.qyh.blog.core.validator,
 					  me.qyh.blog.file.service,
 					  me.qyh.blog.file.validator,
-					  me.qyh.blog.template.validator,
 					  me.qyh.blog.core.config,
 					  me.qyh.blog.plugin.*.service,
 					  me.qyh.blog.plugin.*.validator,
@@ -85,45 +89,36 @@
 
 	<!-- 缓存配置 -->
 	<cache:annotation-driven />
-	<bean id="cacheManager" class="org.springframework.cache.caffeine.CaffeineCacheManager">
-		<property name="cacheSpecification" value="maximumSize=500,expireAfterAccess=20m" />
+	<bean id="cacheManager"
+		class="org.springframework.cache.caffeine.CaffeineCacheManager">
+		<property name="cacheSpecification"
+			value="maximumSize=500,expireAfterAccess=20m" />
 	</bean>
 
 	<bean id="messageSource"
 		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-		<property name="basenames" value="classpath:resources/messages/message" />
+		<property name="basenames"
+			value="classpath:resources/messages/message" />
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
 	<bean class="me.qyh.blog.core.message.Messages" />
 
-	<bean id="articleIndexer" class="me.qyh.blog.core.service.impl.JcsegArticleIndexer">
+	<bean id="articleIndexer"
+		class="me.qyh.blog.core.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="SEARCH" />
 	</bean>
 
-	<!-- article content handler -->
-	<bean class="me.qyh.blog.core.service.impl.ArticleContentHandlers">
-		<property name="handlers">
-			<list>
-				<bean class="me.qyh.blog.core.service.impl.DefaultArticleContentHandler" />
-			</list>
-		</property>
-	</bean>
-
-	<!-- 缓存点击策略 -->
-	<bean id="cacheableHitsStrategy" class="me.qyh.blog.core.service.impl.CacheableHitsStrategy" />
-
-	<!-- 纪录最近被访问的文章 -->
-	<bean class="me.qyh.blog.core.service.impl.SyncArticleViewdLogger" />
-
 	<!-- 文章缓存 -->
-	<bean id="articleService" class="me.qyh.blog.core.service.impl.ArticleServiceImpl" />
+	<bean id="articleService"
+		class="me.qyh.blog.core.service.impl.ArticleServiceImpl" />
 
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
 		destroy-method="destroy">
 		<property name="awaitTerminationSeconds" value="60" />
-		<property name="waitForTasksToCompleteOnShutdown" value="true" />
+		<property name="waitForTasksToCompleteOnShutdown"
+			value="true" />
 	</bean>
 
 	<bean id="taskScheduler"
@@ -132,14 +127,16 @@
 		<property name="errorHandler" ref="loggingErrorHandler" />
 		<property name="poolSize" value="10" />
 		<property name="awaitTerminationSeconds" value="60" />
-		<property name="waitForTasksToCompleteOnShutdown" value="true" />
+		<property name="waitForTasksToCompleteOnShutdown"
+			value="true" />
 	</bean>
 
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
 
 	<!-- HTML清理 -->
-	<bean id="htmlClean" class="me.qyh.blog.core.text.DefaultHtmlClean">
+	<bean id="htmlClean"
+		class="me.qyh.blog.core.text.DefaultHtmlClean">
 		<property name="followRootDomains">
 			<array>
 				<!-- 如果网址中包含下列域名，不会被加上ref nofollow -->
@@ -169,13 +166,9 @@
 	<!-- 定时任务 -->
 	<task:scheduled-tasks scheduler="taskScheduler">
 
-		<!-- 如果配置了缓存点击量策略，那么每隔600s更新文章点击量 -->
-		<task:scheduled ref="cacheableHitsStrategy" method="flush"
-			fixed-rate="600000" />
-
 		<!-- 默认5秒查询一次 待发布的文章 -->
-		<task:scheduled ref="articleService" method="publishScheduled"
-			fixed-rate="5000" />
+		<task:scheduled ref="articleService"
+			method="publishScheduled" fixed-rate="5000" />
 
 		<!-- 每隔30min将索引写入物理文件 -->
 		<task:scheduled ref="articleIndexer" method="commit"
@@ -183,11 +176,12 @@
 
 
 		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
-		<task:scheduled ref="mailSender" method="sendMailFromQueue"
-			fixed-delay="1000" />
+		<task:scheduled ref="mailSender"
+			method="sendMailFromQueue" fixed-delay="1000" />
 
 		<!-- 每天凌晨3点清空待刪除的文件 -->
-		<task:scheduled ref="fileService" method="clear" cron="0 0 3 * * ?" />
+		<task:scheduled ref="fileService" method="clear"
+			cron="0 0 3 * * ?" />
 
 
 	</task:scheduled-tasks>
@@ -201,7 +195,8 @@
 	<bean id="mailSender" class="me.qyh.blog.core.mail.MailSender" />
 
 	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+	<bean id="javaMailSender"
+		class="org.springframework.mail.javamail.JavaMailSenderImpl">
 		<property name="protocol" value="${mail.protocol}" />
 		<property name="host" value="${mail.host}" />
 		<property name="port" value="${mail.port}" />

@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.web.controller.back;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +24,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.validation.MapBindingResult;
-import org.springframework.validation.ObjectError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -46,11 +46,10 @@ import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
-import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.service.TemplateService;
-import me.qyh.blog.template.validator.ExportPageValidator;
+import me.qyh.blog.template.validator.ExportPagesValidator;
 import me.qyh.blog.template.vo.ExportPage;
-import me.qyh.blog.template.vo.ImportRecord;
+import me.qyh.blog.template.vo.ExportPages;
 
 @Controller
 @RequestMapping("mgr/template")
@@ -63,7 +62,12 @@ public class TemplateMgrController extends BaseMgrController {
 	@Autowired
 	private TemplateEngine templateEngine;
 	@Autowired
-	private ExportPageValidator exportPageValidator;
+	private ExportPagesValidator exportPagesValidator;
+
+	@InitBinder(value = "exportPages")
+	protected void initBinder(WebDataBinder binder) {
+		binder.setValidator(exportPagesValidator);
+	}
 
 	@PostMapping("export")
 	public Object export(@RequestParam(value = "spaceId", required = false) Integer spaceId, RedirectAttributes ra) {
@@ -85,41 +89,14 @@ public class TemplateMgrController extends BaseMgrController {
 
 	@PostMapping("import")
 	@ResponseBody
-	public JsonResult importPage(@RequestParam("json") String json,
-			@RequestParam(value = "spaceId", required = false) Integer spaceId) {
-		List<ImportRecord> records = new ArrayList<>();
-		List<ExportPage> exportPages;
-		try {
-			exportPages = Jsons.readList(ExportPage[].class, json);
-		} catch (Exception e) {
-			records.add(new ImportRecord(false, new Message("tpl.parse.fail", "模板解析失败")));
-			return new JsonResult(true, records);
-		}
-		List<ExportPage> toImportPages = new ArrayList<>();
-		MapBindingResult bindingResult = new MapBindingResult(new HashMap<>(), "exportPage");
-		// validate
-		for (ExportPage exportPage : exportPages) {
-			Page page = exportPage.getPage();
-			if (page == null) {
-				continue;
-			}
-			exportPageValidator.validate(exportPage, bindingResult);
-			if (bindingResult.hasErrors()) {
+	public JsonResult importPage(@Validated @RequestBody ExportPages exportPages) {
+		return new JsonResult(true, templateService.importPage(exportPages));
+	}
 
-				List<ObjectError> errors = bindingResult.getAllErrors();
-				for (ObjectError error : errors) {
-					records.add(new ImportRecord(false,
-							new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
-					break;
-				}
-
-				return new JsonResult(true, records);
-			}
-			toImportPages.add(exportPage);
-			bindingResult.getTargetMap().clear();
-		}
-		records.addAll(templateService.importPage(spaceId, toImportPages));
-		return new JsonResult(true, records);
+	@PostMapping("previewImport")
+	@ResponseBody
+	public JsonResult previewImportPage(@Validated @RequestBody ExportPages exportPages) throws LogicException {
+		return new JsonResult(true, templateService.previewImport(exportPages));
 	}
 
 	@PostMapping("clearCache")

@@ -39,7 +39,7 @@ public class ArticleArchivesDataTagProcessor extends DataTagProcessor<ArticleArc
 
 	@Override
 	protected ArticleArchiveTree query(Attributes attributes) throws LogicException {
-		ArticleArchiveMode mode = attributes.getEnum("mode", ArticleArchiveMode.class, ArticleArchiveMode.YMD);
+		ArticleArchiveMode mode = attributes.getEnum("mode", ArticleArchiveMode.class).orElse(ArticleArchiveMode.YMD);
 		return articleService.selectArticleArchives(mode);
 	}
 

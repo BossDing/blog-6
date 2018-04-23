@@ -88,6 +88,6 @@ public final class Resources {
 	 */
 	public static String read(InputStream is) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is, Constants.CHARSET));
-		return reader.lines().collect(Collectors.joining("\r\n"));
+		return reader.lines().collect(Collectors.joining(System.lineSeparator()));
 	}
 }

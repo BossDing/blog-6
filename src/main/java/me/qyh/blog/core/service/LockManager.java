@@ -16,7 +16,6 @@
 package me.qyh.blog.core.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -109,7 +108,7 @@ public class LockManager implements LockProviderRegistry {
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<Lock> allLock() {
 		return providers.stream().map(LockProvider::getAllLocks).flatMap(List::stream)
-				.collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+				.collect(Collectors.toUnmodifiableList());
 
 	}
 

@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.core.service.impl;
 
-import me.qyh.blog.core.entity.Article;
-
 /**
  * 文章内容处理器，用于文章内容的调整,<b>同时也将用于构建索引时文章内容的预处理</b>
  * <p>
@@ -33,14 +31,20 @@ public interface ArticleContentHandler {
 	/**
 	 * 用来处理文章
 	 * 
-	 * @param article
+	 * @return 处理后的内容
+	 * @param content
+	 *            文章内容 <b>HTML文本</b>
 	 */
-	void handle(Article article);
+	String handle(String content);
 
 	/**
 	 * 用来处理预览文章
 	 * 
-	 * @param article
+	 * @return 处理后的内容
+	 * @param content
+	 *            文章内容 <b>HTML文本</b>
 	 */
-	void handlePreview(Article article);
+	default String handlePreview(String content) {
+		return handle(content);
+	}
 }

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -107,12 +108,8 @@ public abstract class DataTagProcessor<T> {
 			this.attMap = attMap == null ? new HashMap<>() : attMap;
 		}
 
-		public String getOrDefault(String key, String defaultValue) {
-			return attMap.getOrDefault(key, defaultValue);
-		}
-
-		public String get(String key) {
-			return attMap.get(key);
+		public Optional<String> get(String key) {
+			return Optional.ofNullable(attMap.get(key));
 		}
 
 		/**
@@ -126,20 +123,12 @@ public abstract class DataTagProcessor<T> {
 		 *            是否转化大写
 		 * @return
 		 */
-		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue, boolean upperCase) {
-			String attV = attMap.get(name);
-			if (attV == null) {
-				return defaultValue;
-			}
+		public <E extends Enum<E>> Optional<E> getEnum(String name, Class<E> e) {
 			try {
-				return Enum.valueOf(e, upperCase ? attV.toUpperCase() : attV);
+				return get(name).map(String::toUpperCase).map(attV -> Enum.valueOf(e, attV));
 			} catch (IllegalArgumentException ex) {
+				return Optional.empty();
 			}
-			return defaultValue;
-		}
-
-		public <E extends Enum<E>> E getEnum(String name, Class<E> e, E defaultValue) {
-			return getEnum(name, e, defaultValue, true);
 		}
 
 		/**
@@ -151,12 +140,8 @@ public abstract class DataTagProcessor<T> {
 		 *            默认值 如果属性不存在，返回默认值
 		 * @return 如果属性不存在，返回null
 		 */
-		public Boolean getBoolean(String name, Boolean defaultValue) {
-			String attV = attMap.get(name);
-			if (attV == null) {
-				return defaultValue;
-			}
-			return Boolean.parseBoolean(attV);
+		public Optional<Boolean> getBoolean(String name) {
+			return get(name).map(Boolean::parseBoolean);
 		}
 
 		/**
@@ -170,16 +155,12 @@ public abstract class DataTagProcessor<T> {
 		 * 
 		 * @see NumberFormatException
 		 */
-		public Integer getInteger(String name, Integer defaultValue) {
-			String attV = attMap.get(name);
-			if (attV == null) {
-				return defaultValue;
-			}
+		public Optional<Integer> getInteger(String name) {
 			try {
-				return Integer.parseInt(attV);
+				return get(name).map(Integer::parseInt);
 			} catch (NumberFormatException e) {
+				return Optional.empty();
 			}
-			return defaultValue;
 		}
 
 		/**

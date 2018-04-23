@@ -29,7 +29,6 @@ import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
-import me.qyh.blog.core.vo.RecentlyViewdArticle;
 import me.qyh.blog.core.vo.TagCount;
 
 /**
@@ -164,18 +163,6 @@ public interface ArticleService {
 	 *            预览文章
 	 */
 	void preparePreview(Article article);
-
-	/**
-	 * 得到最近浏览过的文章
-	 * <p>
-	 * <b>只会返回非管理员浏览过的文章</b>
-	 * </p>
-	 * 
-	 * @param num
-	 *            最大记录数
-	 * @return
-	 */
-	List<RecentlyViewdArticle> getRecentlyViewdArticle(int num);
 
 	/**
 	 * 得到一篇随机文章

@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
@@ -79,6 +80,7 @@ import me.qyh.blog.template.PatternAlreadyExistsException;
 import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.TemplateMapping;
+import me.qyh.blog.template.TemplateMapping.PreviewTemplateMapping;
 import me.qyh.blog.template.dao.FragmentDao;
 import me.qyh.blog.template.dao.HistoryTemplateDao;
 import me.qyh.blog.template.dao.PageDao;
@@ -94,9 +96,11 @@ import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
 import me.qyh.blog.template.vo.ExportPage;
+import me.qyh.blog.template.vo.ExportPages;
 import me.qyh.blog.template.vo.FragmentQueryParam;
 import me.qyh.blog.template.vo.ImportRecord;
 import me.qyh.blog.template.vo.PageStatistics;
+import me.qyh.blog.template.vo.PreviewImport;
 import me.qyh.blog.template.vo.TemplatePageQueryParam;
 
 /**
@@ -267,7 +271,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			pageDao.deleteById(id);
 			String templateName = db.getTemplateName();
 			evitPageCache(templateName);
-			this.applicationEventPublisher.publishEvent(new PageDelEvent(this, Arrays.asList(db)));
+			this.applicationEventPublisher.publishEvent(new PageDelEvent(this, List.of(db)));
 			new PageRequestMappingRegisterHelper().unregisterPage(db);
 		});
 	}
@@ -388,14 +392,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public synchronized List<ImportRecord> importPage(Integer spaceId, List<ExportPage> exportPages) {
-		if (CollectionUtils.isEmpty(exportPages)) {
+	public synchronized List<ImportRecord> importPage(ExportPages exportPages) {
+		List<ExportPage> exportPageList = exportPages.getPages();
+		if (CollectionUtils.isEmpty(exportPageList)) {
 			return new ArrayList<>();
 		}
 		// 如果导入的空间不存在，直接返回
 		Space space;
 		try {
-			space = spaceCache.checkSpace(spaceId);
+			space = spaceCache.checkSpace(exportPages.getSpaceId());
 		} catch (LogicException e) {
 			List<ImportRecord> list = new ArrayList<>();
 			list.add(new ImportRecord(false, e.getLogicMessage()));
@@ -416,10 +421,18 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			Set<String> pageEvitKeySet = new HashSet<>();
 			Set<String> fragmentEvitKeySet = new HashSet<>();
 
+			/**
+			 * 非默认空间不能拥有space global页面
+			 * 
+			 * @since 6.1
+			 */
+			Predicate<Page> filter = space == null ? page -> true : page -> !page.isSpaceGlobal();
+
 			// 从导入页面中获取页面
-			List<Page> pages = exportPages.stream().map(ExportPage::getPage).collect(Collectors.toList());
+			List<Page> pages = exportPageList.stream().map(ExportPage::getPage).filter(filter)
+					.collect(Collectors.toList());
 			// 从导入页面中获取fragments，按照name去重
-			List<Fragment> fragments = exportPages.stream().flatMap(ep -> ep.getFragments().stream()).distinct()
+			List<Fragment> fragments = exportPageList.stream().flatMap(ep -> ep.getFragments().stream()).distinct()
 					.collect(Collectors.toList());
 
 			for (Page page : pages) {
@@ -525,6 +538,75 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} finally {
 			platformTransactionManager.commit(ts);
 		}
+	}
+
+	/**
+	 * 预览 导入的模板
+	 * 
+	 * @param spaceId
+	 *            空间
+	 * @param exportPages
+	 * @throws LogicException
+	 */
+	@Override
+	public synchronized PreviewImport previewImport(ExportPages exportPages) throws LogicException {
+		List<ExportPage> exportPageList = exportPages.getPages();
+		PreviewImport previewImport = new PreviewImport();
+		if (CollectionUtils.isEmpty(exportPageList)) {
+			return previewImport;
+		}
+		Space space = spaceCache.checkSpace(exportPages.getSpaceId());
+		Predicate<Page> filter = space == null ? page -> true : page -> !page.isSpaceGlobal();
+		List<Page> pages = exportPageList.stream().map(ExportPage::getPage).filter(filter).collect(Collectors.toList());
+		if (!pages.isEmpty()) {
+			PreviewTemplateMapping previewTemplateMapping = templateMapping.getPreviewTemplateMapping();
+
+			for (int i = 0; i < pages.size(); i++) {
+				Page page = pages.get(i);
+				try {
+					previewTemplateMapping.register(page);
+					Page copy = new Page(page);
+					copy.setTpl(null);
+					previewImport.addPages(copy);
+				} catch (PatternAlreadyExistsException e) {
+					if (i > 0) {
+						previewTemplateMapping.clear();
+					}
+					throw convert(e);
+				}
+			}
+		}
+
+		boolean inPreview = previewIp != null;
+
+		List<Fragment> fragments = exportPageList.stream().flatMap(ep -> ep.getFragments().stream()).distinct()
+				.collect(Collectors.toList());
+
+		if (!fragments.isEmpty()) {
+			for (int i = 0; i < fragments.size(); i++) {
+				Fragment fragment = fragments.get(i);
+				try {
+					registerPreview(fragment);
+					Fragment copy = new Fragment(fragment);
+					copy.setTpl(null);
+					previewImport.addFragments(copy);
+				} catch (LogicException e) {
+					if (i > 0) {
+						previewFragments.clear();
+
+						if (!inPreview) {
+							previewIp = null;
+						}
+					}
+					throw e;
+				}
+
+			}
+		}
+
+		this.previewIp = Environment.getIP();
+
+		return previewImport;
 	}
 
 	@Override
