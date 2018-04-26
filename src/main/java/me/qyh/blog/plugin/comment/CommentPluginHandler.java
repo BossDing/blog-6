@@ -76,7 +76,7 @@ public class CommentPluginHandler implements PluginHandler {
 		registry.registerGlobalFragment(messages.getMessage("plugin.comment.data.comment", "评论"),
 				Resources.readResourceToString(
 						new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")),
-				true)
+				false)
 				.registerGlobalFragment(messages.getMessage("plugin.comment.data.widget", "评论挂件"),
 						Resources.readResourceToString(
 								new ClassPathResource("me/qyh/blog/plugin/comment/template/commentWidget.html")),

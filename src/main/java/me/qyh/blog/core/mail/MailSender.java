@@ -111,7 +111,7 @@ public class MailSender implements InitializingBean, ApplicationListener<Context
 				helper.setSubject(mb.subject);
 				mimeMessage.setFrom();
 			});
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			LOGGER.error(e.getMessage(), e);
 		}
 	}

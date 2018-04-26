@@ -100,7 +100,7 @@ public class HitsHistoryPluginHandler implements PluginHandler {
 		if (enable) {
 			registry.registerGlobalFragment(messages.getMessage("plugin.hitstory.data.history", "最近被访问文章"),
 					Resources.readResourceToString(new ClassPathResource("me/qyh/blog/plugin/hitstory/history.html")),
-					true);
+					false);
 		}
 	}
 

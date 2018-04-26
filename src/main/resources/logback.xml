@@ -1,5 +1,6 @@
 <configuration>
-	<appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+	<appender name="consoleAppender"
+		class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<Pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
 			</Pattern>
@@ -9,39 +10,12 @@
 		</filter>
 	</appender>
 
-	<appender name="mailAppender" class="me.qyh.blog.core.mail.MailAppendar">
-		<layout class="ch.qos.logback.classic.PatternLayout">
-			<pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
-			</pattern>
-		</layout>
-		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>ERROR</level>
-			<onMatch>ACCEPT</onMatch>
-			<onMismatch>DENY</onMismatch>
-		</filter>
-	</appender>
-
 	<appender name="errorDailyRollingFileAppender"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>${user.home}/blog/logs/error.log</File>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<FileNamePattern>${user.home}/blog/logs/error.%d{yyyy-MM-dd}.log
-			</FileNamePattern>
-			<maxHistory>30</maxHistory>
-		</rollingPolicy>
-		<encoder>
-			<Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n
-			</Pattern>
-			<charset>UTF-8</charset>
-		</encoder>
-	</appender>
-
-
-	<appender name="cpAppender"
-		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>${user.home}/blog/logs/cp.log</File>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<FileNamePattern>${user.home}/blog/logs/cp.%d{yyyy-MM-dd}.log
 			</FileNamePattern>
 			<maxHistory>30</maxHistory>
 		</rollingPolicy>
@@ -54,22 +28,6 @@
 
 	<!-- 关闭这个类的日志 -->
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
-
-
-	<!-- <appender name="fileAppender" class="ch.qos.logback.core.FileAppender"> 
-		<file>c:/logs/rendertime.log</file> <encoder> <pattern>%d{HH:mm:ss.SSS} [%thread] 
-		%-5level %logger{5} - %msg%n </pattern> </encoder> <append>true</append> 
-		<prudent>false</prudent> </appender> -->
-
-	<!-- 如果采用了MailAppender来纪录日志，那么必须单独配置MailSender的日志记录，防止MailAppender陷入死循环 -->
-	<logger name="me.qyh.blog.core.mail.MailSender" level="ERROR"
-		additivity="false">
-		<appender-ref ref="errorDailyRollingFileAppender" />
-	</logger>
-
-	<logger name="com.zaxxer.hikari.pool" level="DEBUG">
-		<appender-ref ref="cpAppender" />
-	</logger>
 
 	<root level="ERROR">
 		<appender-ref ref="consoleAppender" />

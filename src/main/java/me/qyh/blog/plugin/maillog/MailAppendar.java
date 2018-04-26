@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.core.mail;
+package me.qyh.blog.plugin.maillog;
 
 import org.slf4j.Marker;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import ch.qos.logback.classic.ClassicConstants;
 import ch.qos.logback.classic.PatternLayout;
@@ -35,6 +33,7 @@ import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.spi.CyclicBufferTracker;
 import ch.qos.logback.core.util.ContentTypeUtil;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.mail.MailSender;
 import me.qyh.blog.core.mail.MailSender.MessageBean;
 
 /**
@@ -53,8 +52,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	long lastTrackerStatusPrint = 0;
 	long delayBetweenStatusMessages = 300 * CoreConstants.MILLIS_IN_ONE_SECOND;
 
-	@Autowired(required = false)
-	private MailSender mailSender;
+	private final MailSender mailSender;
 
 	private Layout<ILoggingEvent> subjectLayout;
 	private Layout<ILoggingEvent> layout;
@@ -65,19 +63,19 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 	private int errorCount;
 
 	private boolean includeCallerData = false;
-	private String subjectPattern;
+	private final String subjectPattern;
 
-	// value "%logger{20} - %m" is referenced in the docs!
-	private static final String DEFAULT_SUBJECT_PATTERN = "%logger{20} - %m";
+	public MailAppendar(MailSender mailSender, String subjectPattern) {
+		super();
+		this.mailSender = mailSender;
+		this.subjectPattern = subjectPattern;
+	}
 
 	/**
 	 * 这个方法的调用必须在spring容器初始化之后
 	 */
 	@Override
 	protected void append(ILoggingEvent eventObject) {
-		if (mailSender == null) {
-			SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
-		}
 		if (!checkEntryConditions()) {
 			return;
 		}
@@ -189,9 +187,6 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 			this.eventEvaluator = onError;
 		}
 
-		if (subjectPattern == null) {
-			subjectPattern = DEFAULT_SUBJECT_PATTERN;
-		}
 		PatternLayout pl = new PatternLayout();
 		pl.setContext(getContext());
 		pl.setPattern(subjectPattern);
@@ -246,10 +241,6 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 
 	public void setEvaluator(EventEvaluator<ILoggingEvent> eventEvaluator) {
 		this.eventEvaluator = eventEvaluator;
-	}
-
-	public void setSubjectPattern(String subjectPattern) {
-		this.subjectPattern = subjectPattern;
 	}
 
 	public void setIncludeCallerData(boolean includeCallerData) {

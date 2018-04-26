@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.vo.PageQueryParam;
 import me.qyh.blog.template.entity.Page;
+import me.qyh.blog.template.vo.TemplatePageQueryParam;
 
 /**
  * 
@@ -63,7 +63,7 @@ public interface PageDao {
 	 *            查询参数
 	 * @return 数目
 	 */
-	int selectCount(PageQueryParam param);
+	int selectCount(TemplatePageQueryParam param);
 
 	/**
 	 * 查询用户自定义页面集合
@@ -72,7 +72,7 @@ public interface PageDao {
 	 *            查询参数
 	 * @return 结果集
 	 */
-	List<Page> selectPage(PageQueryParam param);
+	List<Page> selectPage(TemplatePageQueryParam param);
 
 	/**
 	 * 根据id删除用户自定义页面

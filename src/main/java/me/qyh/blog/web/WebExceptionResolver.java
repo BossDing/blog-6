@@ -186,6 +186,13 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
 			RedirectException re = (RedirectException) ex;
 
+			/**
+			 * tomcat 9.0.6+ 设置status不是200再重定向无法显示页面 ？？？
+			 * 
+			 * @since 6.1
+			 */
+			response.reset();
+
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new RedirectJsonResult(re.getUrl(), re.isPermanently())));
 			}

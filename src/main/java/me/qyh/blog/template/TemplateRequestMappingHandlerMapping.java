@@ -104,6 +104,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			}
 
 		}
+
 		return super.getHandlerInternal(request);
 	}
 
