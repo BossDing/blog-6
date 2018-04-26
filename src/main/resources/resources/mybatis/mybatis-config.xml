@@ -36,7 +36,9 @@
 			alias="ArticleStatistics" />
 		<typeAlias type="me.qyh.blog.core.vo.ArticleSpaceStatistics"
 			alias="ArticleSpaceStatistics" />
+			
 		<typeAlias type="me.qyh.blog.core.entity.News" alias="News" />
+		<typeAlias type="me.qyh.blog.core.vo.NewsStatistics" alias="NewsStatistics" />
 	</typeAliases>
 	<typeHandlers>
 		<typeHandler handler="me.qyh.blog.core.mybatis.handler.TagsTypeHandler" />

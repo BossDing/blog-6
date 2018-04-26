@@ -332,4 +332,18 @@ public interface TemplateService {
 	 */
 	PreviewImport previewImport(ExportPages exportPages) throws LogicException;
 
+	/**
+	 * 解除某些预览的页面
+	 * 
+	 * @param templates
+	 */
+	void unregisterPreview(PathTemplate... templates);
+
+	/**
+	 * 解除某些预览的模板片段
+	 * 
+	 * @param names
+	 */
+	void unregisterPreview(Fragment... fragments);
+
 }

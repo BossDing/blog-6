@@ -40,6 +40,8 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,11 +93,10 @@ public class CommentService
 		implements InitializingBean, CommentServer, ApplicationEventPublisherAware, GravatarSearcher {
 
 	private List<CommentChecker> checkers = new ArrayList<>();
-	@Autowired
+	@Autowired(required = false)
 	private HtmlClean htmlClean;
 	@Autowired
 	protected CommentDao commentDao;
-	@Autowired(required = false)
 	private Markdown2Html markdown2Html;
 	@Autowired
 	private UserService userService;
@@ -620,6 +621,9 @@ public class CommentService
 			markdown2Html = CommonMarkdown2Html.INSTANCE;
 		}
 
+		if (htmlClean == null) {
+			htmlClean = html -> Jsoup.clean(html, Whitelist.simpleText());
+		}
 		Resources.readResource(configResource, pros::load);
 		loadConfig();
 	}
@@ -760,6 +764,10 @@ public class CommentService
 
 	public void setCheckers(List<CommentChecker> checkers) {
 		this.checkers = checkers;
+	}
+
+	public void setHtmlClean(HtmlClean htmlClean) {
+		this.htmlClean = htmlClean;
 	}
 
 	private final class DefaultBlacklistHandler implements BlacklistHandler {

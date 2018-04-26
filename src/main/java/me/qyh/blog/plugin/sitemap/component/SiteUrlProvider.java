@@ -1,4 +1,4 @@
-package me.qyh.blog.plugin.sitemap.web.component;
+package me.qyh.blog.plugin.sitemap.component;
 
 import java.util.List;
 

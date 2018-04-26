@@ -89,9 +89,4 @@ public class ArticleStatistics implements Serializable {
 	public void setSpaceStatisticsList(List<ArticleSpaceStatistics> spaceStatisticsList) {
 		this.spaceStatisticsList = spaceStatisticsList;
 	}
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
-
 }

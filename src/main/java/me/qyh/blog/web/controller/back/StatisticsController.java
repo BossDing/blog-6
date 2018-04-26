@@ -28,6 +28,7 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.ArticleService;
 import me.qyh.blog.core.service.CommentServer;
+import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.service.TagService;
 import me.qyh.blog.core.vo.CommentStatistics;
@@ -52,6 +53,8 @@ public class StatisticsController extends BaseMgrController {
 	private TemplateService templateService;
 	@Autowired
 	private SpaceService spaceService;
+	@Autowired
+	private NewsService newsService;
 	@Autowired(required = false)
 	private EditablePathResourceHttpRequestHandler editablePathResourceHttpRequestHandler;
 
@@ -69,14 +72,14 @@ public class StatisticsController extends BaseMgrController {
 
 			if (space == null) {
 				detail.setFileStatistics(fileService.queryFileStatistics());
+				detail.setNewsStatistics(newsService.queryNewsStatistics());
+				if (editablePathResourceHttpRequestHandler != null) {
+					detail.setStaticFileStatistics(editablePathResourceHttpRequestHandler.queryFileStatistics());
+				}
 			}
 
 			detail.setPageStatistics(templateService.queryPageStatistics(space));
 			detail.setTagStatistics(tagService.queryTagDetailStatistics(space));
-
-			if (space == null && editablePathResourceHttpRequestHandler != null) {
-				detail.setStaticFileStatistics(editablePathResourceHttpRequestHandler.queryFileStatistics());
-			}
 
 			model.addAttribute("statistics", detail);
 			return "mgr/statistics/index";

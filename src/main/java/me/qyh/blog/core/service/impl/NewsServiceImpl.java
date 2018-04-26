@@ -40,6 +40,7 @@ import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.NewsQueryParam;
+import me.qyh.blog.core.vo.NewsStatistics;
 import me.qyh.blog.core.vo.PageResult;
 
 @Service
@@ -119,6 +120,12 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 		List<News> newsList = newsDao.selectLast(limit, Environment.isLogin());
 		setNewsComments(newsList);
 		return newsList;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public NewsStatistics queryNewsStatistics() {
+		return newsDao.selectStatistics(Environment.isLogin());
 	}
 
 	@Override

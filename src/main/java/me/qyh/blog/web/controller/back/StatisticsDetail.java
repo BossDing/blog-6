@@ -17,6 +17,7 @@ package me.qyh.blog.web.controller.back;
 
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.CommentStatistics;
+import me.qyh.blog.core.vo.NewsStatistics;
 import me.qyh.blog.core.vo.TagDetailStatistics;
 import me.qyh.blog.file.vo.FileStatistics;
 import me.qyh.blog.file.vo.StaticFileStatistics;
@@ -29,6 +30,7 @@ class StatisticsDetail {
 	private PageStatistics pageStatistics;
 	private FileStatistics fileStatistics;
 	private StaticFileStatistics staticFileStatistics;
+	private NewsStatistics newsStatistics;
 
 	public ArticleDetailStatistics getArticleStatistics() {
 		return articleStatistics;
@@ -76,6 +78,14 @@ class StatisticsDetail {
 
 	public void setStaticFileStatistics(StaticFileStatistics staticFileStatistics) {
 		this.staticFileStatistics = staticFileStatistics;
+	}
+
+	public NewsStatistics getNewsStatistics() {
+		return newsStatistics;
+	}
+
+	public void setNewsStatistics(NewsStatistics newsStatistics) {
+		this.newsStatistics = newsStatistics;
 	}
 
 }

@@ -2,7 +2,7 @@ package me.qyh.blog.plugin.sitemap;
 
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.plugin.sitemap.web.component.SiteMapSupport;
+import me.qyh.blog.plugin.sitemap.component.SiteMapSupport;
 
 public class SiteMapController {
 

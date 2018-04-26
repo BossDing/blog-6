@@ -1,4 +1,4 @@
-package me.qyh.blog.plugin.sitemap.web.component;
+package me.qyh.blog.plugin.sitemap.component;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -10,10 +10,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -45,6 +47,8 @@ public class SiteMapSupport implements InitializingBean {
 	private UrlHelper urlHelper;
 	@Autowired
 	private TaskScheduler taskScheduler;
+
+	private ScheduledFuture<?> future;
 
 	private List<SiteUrlProvider> providers = new ArrayList<>();
 
@@ -160,6 +164,13 @@ public class SiteMapSupport implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		String cron = PluginProperties.getInstance().get(CRON_KEY).orElse("0 0 1 * * ?");
 		CronTrigger trigger = new CronTrigger(cron);
-		taskScheduler.schedule(this::refresh, trigger);
+		future = taskScheduler.schedule(this::refresh, trigger);
+	}
+
+	@EventListener
+	void close(ContextClosedEvent evt) {
+		if (!future.isCancelled()) {
+			future.cancel(true);
+		}
 	}
 }

@@ -134,35 +134,6 @@
 	<task:annotation-driven executor="taskExecutor"
 		scheduler="taskScheduler" proxy-target-class="true" />
 
-	<!-- HTML清理 -->
-	<bean id="htmlClean"
-		class="me.qyh.blog.core.text.DefaultHtmlClean">
-		<property name="followRootDomains">
-			<array>
-				<!-- 如果网址中包含下列域名，不会被加上ref nofollow -->
-				<value>qyh.me</value>
-			</array>
-		</property>
-	</bean>
-
-	<!-- <bean id="simpleCommentChecker" class="me.qyh.blog.comment.service.SimpleCommentChecker"> -->
-	<!-- <property name="disallowUsernamePatterns"> -->
-	<!-- <array> -->
-	<!-- <value>qyh</value> -->
-	<!-- <value>mhlx</value> -->
-	<!-- <value>梦海澜心</value> -->
-	<!-- <value>钱宇豪</value> -->
-	<!-- </array> -->
-	<!-- </property> -->
-	<!-- <property name="disallowEmailPatterns"> -->
-	<!-- <array> -->
-	<!-- <value>*@qyh.me</value> -->
-	<!-- <value>1187500344@qq.com</value> -->
-	<!-- </array> -->
-	<!-- </property> -->
-	<!-- </bean> -->
-
-
 	<!-- 定时任务 -->
 	<task:scheduled-tasks scheduler="taskScheduler">
 

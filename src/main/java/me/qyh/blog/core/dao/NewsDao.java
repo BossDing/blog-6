@@ -22,6 +22,7 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.vo.NewsQueryParam;
+import me.qyh.blog.core.vo.NewsStatistics;
 
 public interface NewsDao {
 
@@ -74,5 +75,11 @@ public interface NewsDao {
 	 * @return
 	 */
 	List<News> selectByIds(Collection<Integer> ids);
+
+	/**
+	 * @since 6.1
+	 * @return
+	 */
+	NewsStatistics selectStatistics(@Param("queryPrivate") boolean queryPrivate);
 
 }

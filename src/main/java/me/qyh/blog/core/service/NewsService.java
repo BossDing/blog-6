@@ -21,6 +21,7 @@ import java.util.Optional;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.NewsQueryParam;
+import me.qyh.blog.core.vo.NewsStatistics;
 import me.qyh.blog.core.vo.PageResult;
 
 public interface NewsService {
@@ -75,5 +76,12 @@ public interface NewsService {
 	 * @return
 	 */
 	List<News> queryLastNews(int limit);
+
+	/**
+	 * 查询动态统计
+	 * 
+	 * @return
+	 */
+	NewsStatistics queryNewsStatistics();
 
 }

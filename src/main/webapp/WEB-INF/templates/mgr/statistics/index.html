@@ -29,12 +29,12 @@
 									<tr th:if="${articleStatistics.lastPubDate != null}">
 										<th>最后发布日期</th>
 										<td
-											th:text="${times.format(articleStatistics.lastPubDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastPubDate)}"></td>
+											th:text="${times.format(articleStatistics.lastPubDate,'yyyy-MM-dd HH:mm')}"></td>
 									</tr>
 									<tr th:if="${articleStatistics.lastModifyDate != null}">
 										<th>最后修改日期</th>
 										<td
-											th:text="${times.format(articleStatistics.lastModifyDate,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(articleStatistics.lastModifyDate)}"></td>
+											th:text="${times.format(articleStatistics.lastModifyDate,'yyyy-MM-dd HH:mm')}"></td>
 									</tr>
 									<tr>
 										<th>文章总数</th>
@@ -49,6 +49,29 @@
 										<th
 											th:text="${messages.getMessage(statusCountMap.key.message)}"></th>
 										<td th:text="${statusCountMap.value}"></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						
+						<div class="table-responsive"
+							th:with="newsStatistics=${statistics.newsStatistics}" th:if="${statistics.newsStatistics != null}">
+							<table class="table">
+								<caption>动态统计</caption>
+								<tbody>
+									<tr th:if="${newsStatistics.lastWrite != null}">
+										<th>最后发布日期</th>
+										<td
+											th:text="${times.format(newsStatistics.lastWrite,'yyyy-MM-dd HH:mm')}" ></td>
+									</tr>
+									<tr th:if="${newsStatistics.lastModify != null}">
+										<th>最后修改日期</th>
+										<td
+											th:text="${times.format(newsStatistics.lastModify,'yyyy-MM-dd HH:mm')}" ></td>
+									</tr>
+									<tr>
+										<th>动态总数</th>
+										<td th:text="${newsStatistics.total}"></td>
 									</tr>
 								</tbody>
 							</table>

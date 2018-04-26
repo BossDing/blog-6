@@ -27,6 +27,8 @@
 				th:from="${param.from}"/>
 			<data name="标签集" />
 			<data name="文章统计" />
+			<data name="动态统计" />
+            <data name="评论统计"/>
 			<transaction:end />
 			<div class="col-lg-8 col-md-8  col-sm-8 text">
 				<div th:with="showSortLab=false">
@@ -37,15 +39,7 @@
 			<div class="col-lg-4 col-md-4 col-sm-4 text hidden-xs">
 				<fragment name="标签集" />
 				<fragment name="文章统计" />
-				
-				<div th:with="moduleType='article',title='最近文章评论'"  th:remove="tag">
-                	<fragment  name="最近评论"/>
-              	</div>
-              	<div th:with="moduleType='userpage',title='最近页面评论'" th:remove="tag">
-                	<fragment  name="最近评论"/>
-              	</div>
-              	
-              	<data name="评论统计"/>
+	            <fragment name="动态统计"/>
 	            <fragment name="评论统计"/>
 			</div>
 		</div>

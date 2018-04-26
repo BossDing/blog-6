@@ -621,6 +621,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public synchronized void registerPreview(Fragment fragment) throws LogicException {
+		unregisterFragment(fragment);
+		previewFragments.add(fragment);
+		previewIp = Environment.getIP();
+	}
+
+	private void unregisterFragment(Fragment fragment) {
 		String templateName = fragment.getTemplateName();
 		for (Iterator<Fragment> it = previewFragments.iterator(); it.hasNext();) {
 			Fragment pFragment = it.next();
@@ -631,10 +637,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					break;
 				}
 			}
-
 		}
-		previewFragments.add(fragment);
-		previewIp = Environment.getIP();
 	}
 
 	@Override
@@ -1329,6 +1332,29 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public List<Fragment> getDefaultFragment() {
 		return Collections.unmodifiableList(fragments);
+	}
+
+	@Override
+	public void unregisterPreview(PathTemplate... templates) {
+		if (Validators.isEmpty(templates)) {
+			return;
+		}
+		synchronized (this) {
+			String[] paths = Arrays.stream(templates).map(PathTemplate::getTemplateName).toArray(String[]::new);
+			templateMapping.getPreviewTemplateMapping().unregister(paths);
+		}
+	}
+
+	@Override
+	public void unregisterPreview(Fragment... fragments) {
+		if (Validators.isEmpty(fragments)) {
+			return;
+		}
+		synchronized (this) {
+			for (Fragment fragment : fragments) {
+				unregisterFragment(fragment);
+			}
+		}
 	}
 
 }
