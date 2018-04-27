@@ -563,6 +563,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 			for (int i = 0; i < pages.size(); i++) {
 				Page page = pages.get(i);
+				page.setSpace(space);
 				try {
 					previewTemplateMapping.register(page);
 					Page copy = new Page(page);
@@ -585,6 +586,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		if (!fragments.isEmpty()) {
 			for (int i = 0; i < fragments.size(); i++) {
 				Fragment fragment = fragments.get(i);
+				fragment.setSpace(space);
 				try {
 					registerPreview(fragment);
 					Fragment copy = new Fragment(fragment);
