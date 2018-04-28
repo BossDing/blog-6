@@ -27,14 +27,22 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.file.entity.CommonFile;
 import me.qyh.blog.file.store.ProcessUtils;
 
+/**
+ * FFMPEG 4.0+
+ * 
+ * @author wwwqyhme
+ *
+ */
 public class VideoResourceStore extends ThumbnailSupport {
 
 	private final String[] allowExtensions;
 
+	private Integer maxSize;// 视频最大尺寸
 	private final int timeoutSecond;
 
 	public VideoResourceStore(String urlPatternPrefix, String[] allowExtensions, int timeoutSecond) {
@@ -44,19 +52,25 @@ public class VideoResourceStore extends ThumbnailSupport {
 	}
 
 	public VideoResourceStore() {
-		this("video", new String[] { "mp4" }, 30);
+		this("video", new String[] { "mp4" }, 60);
 	}
 
 	@Override
 	protected CommonFile doStore(Path dest, String key, MultipartFile mf) throws LogicException {
 		CommonFile file = super.doStore(dest, key, mf);
 		try {
-			extraPoster(dest, getPoster(key));
+			synchronized (this) {
+				if (maxSize != null) {
+					compress(dest);
+				}
+				extraPoster(dest, getPoster(key));
+			}
 		} catch (Exception e) {
 			FileUtils.deleteQuietly(dest);
-			logger.error(e.getMessage(), e);
+			logger.warn(e.getMessage(), e);
 			throw new LogicException("video.corrupt", "不是正确的视频文件或者视频已经损坏");
 		}
+		file.setSize(FileUtils.getSize(dest));
 		return file;
 	}
 
@@ -72,12 +86,76 @@ public class VideoResourceStore extends ThumbnailSupport {
 	}
 
 	@Override
-	protected synchronized void extraPoster(Path original, Path poster) throws Exception {
+	protected void extraPoster(Path original, Path poster) throws Exception {
 		Path temp = FileUtils.appTemp(FileUtils.getFileExtension(poster));
-		String[] cmdArray = new String[] { "ffmpeg", "-loglevel", "error", "-y", "-ss", "00:00:01", "-i",
+		String[] cmdArray = new String[] { "ffmpeg", "-loglevel", "error", "-y", "-ss", "00:00:00", "-i",
 				original.toString(), "-vframes", "1", "-q:v", "2", temp.toString() };
 		ProcessUtils.runProcess(cmdArray, timeoutSecond, TimeUnit.SECONDS);
 		FileUtils.move(temp, poster);
+	}
+
+	protected void compress(Path original) throws Exception {
+		Path temp = FileUtils.appTemp(FileUtils.getFileExtension(original));
+		VideoSize ori = getVideoSize(original);
+		VideoSize cal = calc(ori, maxSize);
+		String[] cmdArray = new String[] { "ffmpeg", "-i", original.toString(), "-loglevel", "error", "-y", "-vf",
+				"scale=w=" + cal.width + ":h=" + cal.height + ":force_original_aspect_ratio=decrease", "-vcodec",
+				"h264", "-acodec", "aac", temp.toString() };
+		ProcessUtils.runProcess(cmdArray, timeoutSecond, TimeUnit.SECONDS);
+		if (!FileUtils.deleteQuietly(original)) {
+			throw new SystemException("删除原文件失败");
+		}
+		FileUtils.move(temp, original);
+	}
+
+	protected class VideoSize {
+		private final int width;
+		private final int height;
+
+		public VideoSize(int width, int height) {
+			super();
+			this.width = width;
+			this.height = height;
+		}
+
+		public int getWidth() {
+			return width;
+		}
+
+		public int getHeight() {
+			return height;
+		}
+
+	}
+
+	protected VideoSize getVideoSize(Path video) throws ProcessException {
+		String[] cmdArray = new String[] { "ffprobe", "-v", "error", "-show_entries", "stream=width,height", "-of",
+				"default=noprint_wrappers=1", video.toString() };
+		String result = ProcessUtils.runProcess(cmdArray, 10, TimeUnit.SECONDS)
+				.orElseThrow(() -> new SystemException("没有返回预期的尺寸信息"));
+		String[] sizes = result.split(System.lineSeparator());
+		return new VideoSize(Integer.parseInt(sizes[0].split("=")[1]), Integer.parseInt(sizes[1].split("=")[1]));
+	}
+
+	public void setMaxSize(Integer maxSize) {
+		this.maxSize = maxSize;
+	}
+
+	private VideoSize calc(VideoSize size, int max) {
+		if (size.height <= max && size.width <= max) {
+			return size;
+		}
+		if (size.height > size.width) {
+			int height = max;
+			int width = size.width * max / size.height;
+			return new VideoSize(width, height);
+		}
+		if (size.height < size.width) {
+			int width = max;
+			int height = size.height * max / size.width;
+			return new VideoSize(width, height);
+		}
+		return new VideoSize(max, max);
 	}
 
 }

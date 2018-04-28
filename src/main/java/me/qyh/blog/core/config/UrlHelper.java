@@ -15,16 +15,19 @@
  */
 package me.qyh.blog.core.config;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -32,6 +35,7 @@ import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
+import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
@@ -45,16 +49,43 @@ import me.qyh.blog.template.PathTemplate;
  *
  */
 @Component
-public class UrlHelper implements InitializingBean {
+public class UrlHelper {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(UrlHelper.class);
 	private static final String SPACE_IN_URL = "/space/";
+	private static final Path CONFIG = FileUtils.HOME_DIR.resolve("blog/app.properties");
 
-	@Autowired
-	protected UrlConfig urlConfig;
+	private final Urls urls;
+	private final String url;
 
-	private Urls urls;
-	private String url;
+	private final String scheme;
+	private final String domain;
+	private final int port;
+	private final String contextPath;
+
+	public UrlHelper() throws IOException {
+		Properties pros = new Properties();
+		if (FileUtils.exists(CONFIG)) {
+			try (InputStream is = Files.newInputStream(CONFIG)) {
+				pros.load(is);
+			}
+		}
+		scheme = (String) pros.getOrDefault("app.scheme", "http");
+		domain = (String) pros.getOrDefault("app.domain", "localhost");
+		port = Integer.parseInt((String) pros.getOrDefault("app.port", "8080"));
+		contextPath = FileUtils.cleanPath((String) pros.getOrDefault("app.contextPath", ""));
+		StringBuilder sb = new StringBuilder();
+		sb.append(scheme).append("://");
+		sb.append(domain);
+		if (!isDefaultPort()) {
+			sb.append(":").append(port);
+		}
+		if (!contextPath.isEmpty()) {
+			sb.append("/").append(contextPath);
+		}
+		this.url = sb.toString();
+		this.urls = new Urls();
+	}
 
 	/**
 	 * 获取空间地址辅助
@@ -72,6 +103,38 @@ public class UrlHelper implements InitializingBean {
 
 	public String getUrl() {
 		return url;
+	}
+
+	public String getSchema() {
+		return scheme;
+	}
+
+	public String getDomain() {
+		return domain;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	/**
+	 * 不以 / 开头
+	 * 
+	 * @return
+	 */
+	public String getContextPath() {
+		return contextPath;
+	}
+
+	public boolean isDefaultPort() {
+		if ("https".equalsIgnoreCase(scheme)) {
+			return 443 == port;
+		}
+		return "http".equalsIgnoreCase(scheme) && 80 == port;
+	}
+
+	public boolean isSecure() {
+		return "https".equalsIgnoreCase(scheme);
 	}
 
 	/**
@@ -92,24 +155,11 @@ public class UrlHelper implements InitializingBean {
 		 * @return
 		 */
 		public String getDomain() {
-			return urlConfig.getDomain();
+			return domain;
 		}
 
 		/**
-		 * 获取根域名
-		 * <p>
-		 * www.abc.com => abc.com <br>
-		 * abc.com => abc.com
-		 * </p>
-		 * 
-		 * @return
-		 */
-		public String getRootDomain() {
-			return urlConfig.getRootDomain();
-		}
-
-		/**
-		 * 获取系统主页地址(schema://domain:port/contextPath)
+		 * 获取系统主页地址(scheme://domain:port/contextPath)
 		 * 
 		 * @return
 		 */
@@ -412,52 +462,5 @@ public class UrlHelper implements InitializingBean {
 			}
 			return getArticlesUrl(param, 1);
 		}
-	}
-
-	private final class UriBuilder {
-		private final String scheme;
-		private final int port;
-		private final String contextPath;
-		private final String serverName;
-
-		UriBuilder(UrlConfig urlConfig) {
-			this.port = urlConfig.getPort();
-			this.scheme = urlConfig.getSchema();
-			this.serverName = urlConfig.getDomain();
-			this.contextPath = urlConfig.getContextPath();
-		}
-
-		private boolean isDefaultPort() {
-			if ("https".equalsIgnoreCase(scheme)) {
-				return 443 == port;
-			}
-			return "http".equalsIgnoreCase(scheme) && 80 == port;
-		}
-
-		private String toUrl() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(scheme).append("://");
-			sb.append(serverName);
-			if (!isDefaultPort()) {
-				sb.append(":").append(port);
-			}
-			sb.append(contextPath);
-			String buildUrl = sb.toString();
-			if (buildUrl.endsWith("/")) {
-				buildUrl = buildUrl.substring(0, buildUrl.length() - 1);
-			}
-			return buildUrl;
-		}
-
-	}
-
-	public UrlConfig getUrlConfig() {
-		return urlConfig;
-	}
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		url = new UriBuilder(urlConfig).toUrl();
-		this.urls = new Urls();
 	}
 }

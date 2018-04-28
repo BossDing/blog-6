@@ -444,7 +444,7 @@
                                 }
                                 html += '<div class="media-body">';
                                 var time = new Date(data.commentDate)
-                                    .format('yyyy-mm HH:MM');
+                                    .format('yyyy-mm-dd HH:MM');
                                 html += '<h6 class="mt-0">' +
                                     getUsername(data) + '</h6>';
                                 if (data.parent) {

@@ -40,7 +40,7 @@ public class HitsHistoryPluginHandler implements PluginHandler {
 	private final PluginProperties pluginProperties = PluginProperties.getInstance();
 
 	private final boolean enable = pluginProperties.get("plugin.hitstory.enable").map(Boolean::parseBoolean)
-			.orElse(false);
+			.orElse(true);
 
 	private HitsHistoryLogger logger;
 

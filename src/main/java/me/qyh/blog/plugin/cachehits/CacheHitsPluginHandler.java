@@ -30,9 +30,9 @@ public class CacheHitsPluginHandler implements PluginHandler {
 
 	private final PluginProperties pluginProperties = PluginProperties.getInstance();
 	private final boolean enable = pluginProperties.get("plugin.cachehits.enable").map(Boolean::parseBoolean)
-			.orElse(false);
+			.orElse(true);
 
-	private static final String VALIDIP_KEY = "plugin.cachehits.validip";
+	private static final String CACHEIP_KEY = "plugin.cachehits.cacheIp";
 	private static final String MAXIPS_KEY = "plugin.cachehits.maxIps";
 	private static final String FLUSHNUM_KEY = "plugin.cachehits.flushNum";
 	private static final String FLUSHSEC_KEY = "plugin.cachehits.flushSec";
@@ -49,13 +49,13 @@ public class CacheHitsPluginHandler implements PluginHandler {
 
 				@Override
 				public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-					boolean validIp = pluginProperties.get(VALIDIP_KEY).map(Boolean::parseBoolean).orElse(false);
+					boolean cacheIp = pluginProperties.get(CACHEIP_KEY).map(Boolean::parseBoolean).orElse(true);
 					int maxIps = pluginProperties.get(MAXIPS_KEY).map(Integer::parseInt).orElse(100);
 					int flushNum = pluginProperties.get(FLUSHNUM_KEY).map(Integer::parseInt).orElse(50);
 					int flushSec = pluginProperties.get(FLUSHSEC_KEY).map(Integer::parseInt).orElse(600);
 
 					BeanDefinition definition = BeanDefinitionBuilder.genericBeanDefinition(CacheableHitsStrategy.class)
-							.setScope(BeanDefinition.SCOPE_SINGLETON).addConstructorArgValue(validIp)
+							.setScope(BeanDefinition.SCOPE_SINGLETON).addConstructorArgValue(cacheIp)
 							.addConstructorArgValue(maxIps).addConstructorArgValue(flushNum)
 							.addConstructorArgValue(flushSec).getBeanDefinition();
 					registry.registerBeanDefinition(CacheableHitsStrategy.class.getName(), definition);

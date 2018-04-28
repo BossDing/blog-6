@@ -13,7 +13,7 @@ public class SiteMapPluginHandler implements PluginHandler {
 
 	private PluginProperties pluginProperties = PluginProperties.getInstance();
 	private final boolean enable = pluginProperties.get("plugin.sitemap.enable").map(Boolean::parseBoolean)
-			.orElse(false);
+			.orElse(true);
 
 	private SiteMapSupport siteMapSupport;
 

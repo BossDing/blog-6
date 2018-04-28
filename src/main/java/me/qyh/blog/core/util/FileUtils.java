@@ -42,6 +42,9 @@ public class FileUtils {
 	private static final char[] ILLEGAL_CHARACTERS = { '/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>',
 			'|', '\"', ':', '\u0000' };
 
+	/**
+	 * ${user.home}
+	 */
 	public static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
 
 	/**

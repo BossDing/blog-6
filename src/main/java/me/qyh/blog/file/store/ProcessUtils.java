@@ -18,6 +18,7 @@ package me.qyh.blog.file.store;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import me.qyh.blog.core.exception.SystemException;
@@ -27,7 +28,8 @@ import me.qyh.blog.file.store.local.ProcessException;
 
 public class ProcessUtils {
 
-	private static void runProcess(ProcessBuilder builder, long time, TimeUnit unit) throws ProcessException {
+	private static Optional<String> runProcess(ProcessBuilder builder, long time, TimeUnit unit)
+			throws ProcessException {
 		Process process;
 		try {
 			process = builder.start();
@@ -60,16 +62,25 @@ public class ProcessUtils {
 			}
 			throw new ProcessException("操作异常：" + builder.command() + "，未正确执行操作，状态码:" + status);
 		}
+		InputStream is = process.getInputStream();
+		if (is != null) {
+			try (is) {
+				return Optional.of(Resources.read(is));
+			} catch (IOException e) {
+				throw new ProcessException("操作异常：" + builder.command() + "，读取信息失败：" + e.getMessage(), e);
+			}
+		}
+		return Optional.empty();
 	}
 
-	public static void runProcess(List<String> command, long time, TimeUnit unit) throws ProcessException {
+	public static Optional<String> runProcess(List<String> command, long time, TimeUnit unit) throws ProcessException {
 		ProcessBuilder builder = new ProcessBuilder(command);
-		runProcess(builder, time, unit);
+		return runProcess(builder, time, unit);
 	}
 
-	public static void runProcess(String[] command, long time, TimeUnit unit) throws ProcessException {
+	public static Optional<String> runProcess(String[] command, long time, TimeUnit unit) throws ProcessException {
 		ProcessBuilder builder = new ProcessBuilder(command);
-		runProcess(builder, time, unit);
+		return runProcess(builder, time, unit);
 	}
 
 	private static void destory(Process p) {

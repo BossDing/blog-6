@@ -41,9 +41,9 @@ import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper;
-import me.qyh.blog.core.mail.MailSender;
-import me.qyh.blog.core.mail.MailSender.MessageBean;
 import me.qyh.blog.core.message.Messages;
+import me.qyh.blog.core.plugin.MailSender;
+import me.qyh.blog.core.plugin.MessageBean;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.SerializationUtils;
@@ -124,7 +124,7 @@ public class CommentEmailNotify implements ResourceLoaderAware, InitializingBean
 		if (to != null) {
 			mb.setTo(to);
 		}
-		mailSender.send(mb);
+		mailSender.sendAsync(mb);
 	}
 
 	private final class MailTemplateEngine extends TemplateEngine {

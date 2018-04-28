@@ -66,7 +66,7 @@ public class RssView extends AbstractRssFeedView {
 	protected void buildFeedMetadata(Map<String, Object> model, Channel feed, HttpServletRequest request) {
 		if (!Environment.hasSpace()) {
 			feed.setLink(urlHelper.getUrl());
-			String domain = urlHelper.getUrlConfig().getDomain();
+			String domain = urlHelper.getDomain();
 			feed.setDescription(domain);
 			feed.setTitle(domain);
 		} else {

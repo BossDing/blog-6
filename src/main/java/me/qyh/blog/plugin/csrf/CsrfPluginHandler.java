@@ -40,7 +40,7 @@ public class CsrfPluginHandler implements PluginHandler {
 
 	private CsrfToken emptyToken;
 
-	private boolean enable = PluginProperties.getInstance().get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false);
+	private boolean enable = PluginProperties.getInstance().get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(true);
 
 	@Override
 	public void init(ApplicationContext applicationContext) throws Exception {

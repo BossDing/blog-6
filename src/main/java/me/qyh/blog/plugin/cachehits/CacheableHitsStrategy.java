@@ -80,7 +80,7 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 	 * 例如我点击一次增加了一次点击量，一分钟后flush，那么我在这一分钟内(ip的不变的情况下)，无论我点击了多少次，都只算一次
 	 * </p>
 	 */
-	private final boolean validIp;
+	private final boolean cacheIp;
 
 	/**
 	 * 最多保存的ip数，如果达到或超过该数目，将会立即更新
@@ -94,7 +94,7 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 
 	private final int flushSec;
 
-	public CacheableHitsStrategy(boolean validIp, int maxIps, int flushNum, int flushSec) {
+	public CacheableHitsStrategy(boolean cacheIp, int maxIps, int flushNum, int flushSec) {
 		if (maxIps < 0) {
 			throw new SystemException("maxIps不能小于0");
 		}
@@ -106,14 +106,14 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 		}
 		this.maxIps = maxIps;
 		this.flushNum = flushNum;
-		this.validIp = validIp;
+		this.cacheIp = cacheIp;
 		this.flushSec = flushSec;
 	}
 
 	@Override
 	public void hit(Article article) {
 		// increase
-		hitsMap.computeIfAbsent(article.getId(), k -> validIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
+		hitsMap.computeIfAbsent(article.getId(), k -> cacheIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
 				: new DefaultHitsHandler(article.getHits())).hit(article);
 		flushMap.putIfAbsent(article.getId(), Boolean.TRUE);
 	}

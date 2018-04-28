@@ -76,7 +76,7 @@ public class LoginRestorePluginHandler implements PluginHandler {
 	@Override
 	public void addRequestHandlerMapping(RequestMappingRegistry registry) throws Exception {
 
-		if (ga != null && Boolean.parseBoolean(properties.get(ENABLE_KEY).orElse("false"))) {
+		if (ga != null && properties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(true)) {
 
 			loginTemplate = Resources.readResourceToString(new ClassPathResource("resources/page/LOGIN.html"));
 

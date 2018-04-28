@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.maillog;
+package me.qyh.blog.plugin.mail;
 
 import org.slf4j.Marker;
 
@@ -33,8 +33,8 @@ import ch.qos.logback.core.sift.Discriminator;
 import ch.qos.logback.core.spi.CyclicBufferTracker;
 import ch.qos.logback.core.util.ContentTypeUtil;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.mail.MailSender;
-import me.qyh.blog.core.mail.MailSender.MessageBean;
+import me.qyh.blog.core.plugin.MailSender;
+import me.qyh.blog.core.plugin.MessageBean;
 
 /**
  * 这个用来将错误信息发送至管理员邮箱，由于借用了MailSender来发送邮件，所以append()方法必须在Spring容器初始化完成之后被调用
@@ -167,7 +167,7 @@ public class MailAppendar extends AppenderBase<ILoggingEvent> {
 			}
 			String contentType = layout.getContentType();
 			MessageBean mb = new MessageBean(subjectStr, !ContentTypeUtil.isTextual(contentType), sbuf.toString());
-			mailSender.send(mb);
+			mailSender.sendAsync(mb);
 		} catch (Exception e) {
 			addError("Error occurred while sending e-mail notification.", e);
 		}

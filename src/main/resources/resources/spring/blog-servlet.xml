@@ -15,8 +15,6 @@
 	 http://www.springframework.org/schema/task
 	 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
-	<context:property-placeholder location="classpath:resources/app.properties,classpath:resources/plugin.properties" />
-
 	<import resource="template.xml" />
 
 	<bean id="multipartResolver"
@@ -90,6 +88,7 @@
 		<property name="id" value="4" />
 		<property name="thumbAbsPath" value="/web/file/blog_video_thumb" />
 		<property name="name" value="视频存储" />
+		<property name="maxSize" value="960"/>
 	</bean>
 
 	<bean class="me.qyh.blog.file.store.local.Thumbnailator" />

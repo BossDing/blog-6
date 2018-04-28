@@ -150,7 +150,6 @@ public class PluginHandlerRegistry
 
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
-		// create new PluginHandler instance
 
 		ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
 		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory(resolver);

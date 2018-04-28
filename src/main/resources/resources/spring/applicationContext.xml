@@ -21,10 +21,7 @@
 		   					 http://www.springframework.org/schema/task/spring-task-4.0.xsd ">
 
 	<context:property-placeholder
-		location="classpath:resources/mybatis/db.properties,
-			classpath:resources/mail.properties,
-			classpath:resources/app.properties,
-			classpath:resources/plugin.properties" />
+		location="classpath:resources/mybatis/db.properties" />
 
 	<!-- database -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
@@ -145,11 +142,6 @@
 		<task:scheduled ref="articleIndexer" method="commit"
 			fixed-rate="1800000" />
 
-
-		<!-- 每延迟1秒发送邮件队列中的第一封邮件 -->
-		<task:scheduled ref="mailSender"
-			method="sendMailFromQueue" fixed-delay="1000" />
-
 		<!-- 每天凌晨3点清空待刪除的文件 -->
 		<task:scheduled ref="fileService" method="clear"
 			cron="0 0 3 * * ?" />
@@ -159,25 +151,6 @@
 
 
 	<!-- 文件管理 -->
-	<bean class="me.qyh.blog.file.store.JavaImageHelper" />
+	<bean class="me.qyh.blog.file.store.GraphicsMagickImageHelper" />
 	<bean class="me.qyh.blog.file.store.DefaultFileManager" />
-
-	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="mailSender" class="me.qyh.blog.core.mail.MailSender" />
-
-	<!-- 如果不需要邮件通知这个服务请不要设置 -->
-	<bean id="javaMailSender"
-		class="org.springframework.mail.javamail.JavaMailSenderImpl">
-		<property name="protocol" value="${mail.protocol}" />
-		<property name="host" value="${mail.host}" />
-		<property name="port" value="${mail.port}" />
-		<property name="username" value="${mail.username}" />
-		<property name="password" value="${mail.password}" />
-		<property name="javaMailProperties">
-			<props>
-				<prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
-				<prop key="mail.from">${mail.from}</prop>
-			</props>
-		</property>
-	</bean>
 </beans>      

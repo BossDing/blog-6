@@ -18,6 +18,7 @@ package me.qyh.blog.core.plugin;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,17 +28,18 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
 
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.PathResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
+import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.exception.SystemException;
+import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 
 public class PluginProperties {
 
-	private final EncodedResource proResource = new EncodedResource(
-			new ClassPathResource("resources/plugin.properties"));
+	private final EncodedResource proResource;
 
 	private final Map<String, String> proMap = new HashMap<>();
 
@@ -48,6 +50,11 @@ public class PluginProperties {
 	private static final PluginProperties instance = new PluginProperties();
 
 	private PluginProperties() {
+		Path path = FileUtils.HOME_DIR.resolve("blog/plugin.properties");
+		if (!FileUtils.exists(path)) {
+			FileUtils.createFile(path);
+		}
+		proResource = new EncodedResource(new PathResource(path), Constants.CHARSET);
 		try {
 			pros = PropertiesLoaderUtils.loadProperties(proResource);
 			doConvert();

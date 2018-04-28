@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.WebApplicationContext;
 
-import me.qyh.blog.core.config.UrlConfig;
+import me.qyh.blog.core.config.UrlHelper;
 
 public class AppContextLoaderListener extends ContextLoaderListener {
 
@@ -44,24 +44,22 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 	public void contextInitialized(ServletContextEvent event) {
 		super.contextInitialized(event);
 		WebApplicationContext ctx = getCurrentWebApplicationContext();
-		UrlConfig helper = ctx.getBean(UrlConfig.class);
+		UrlHelper helper = ctx.getBean(UrlHelper.class);
 		ServletContext sc = event.getServletContext();
 		EnumSet<SessionTrackingMode> modes = EnumSet.of(SessionTrackingMode.COOKIE);
 		sc.setSessionTrackingModes(modes);
 		SessionCookieConfig config = sc.getSessionCookieConfig();
 		config.setHttpOnly(true);
 		config.setSecure(helper.isSecure());
-		if (!helper.isLocalDomain()) {
-			/**
-			 * @since 5.9 防止影响其他同级域名
-			 */
-			config.setDomain(helper.getDomain());
-		}
+		/**
+		 * @since 5.9 防止影响其他同级域名
+		 */
+		config.setDomain(helper.getDomain());
 		String contextPath = helper.getContextPath();
 		if (contextPath.isEmpty()) {
 			config.setPath("/");
 		} else {
-			config.setPath(contextPath);
+			config.setPath("/" + contextPath);
 		}
 	}
 
