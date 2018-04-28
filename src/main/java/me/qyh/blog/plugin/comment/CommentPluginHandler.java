@@ -47,7 +47,7 @@ public class CommentPluginHandler implements PluginHandler {
 
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
-		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(true));
+		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false));
 
 		if (cc.isEnableEmailNotify()) {
 			EmailNofityConfig config = new EmailNofityConfig();
