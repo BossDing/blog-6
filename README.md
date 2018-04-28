@@ -1,4 +1,4 @@
-<p style="font-size:100px">FUCK 广电</p>
+# FUCK 广电
 
 
 版本：6.1 BETA
