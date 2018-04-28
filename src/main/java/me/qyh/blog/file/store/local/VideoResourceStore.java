@@ -58,11 +58,13 @@ public class VideoResourceStore extends ThumbnailSupport {
 	@Override
 	protected CommonFile doStore(Path dest, String key, MultipartFile mf) throws LogicException {
 		CommonFile file = super.doStore(dest, key, mf);
+		VideoSize size;
 		try {
 			synchronized (this) {
 				if (maxSize != null) {
 					compress(dest);
 				}
+				size = getVideoSize(dest);
 				extraPoster(dest, getPoster(key));
 			}
 		} catch (Exception e) {
@@ -71,6 +73,8 @@ public class VideoResourceStore extends ThumbnailSupport {
 			throw new LogicException("video.corrupt", "不是正确的视频文件或者视频已经损坏");
 		}
 		file.setSize(FileUtils.getSize(dest));
+		file.setWidth(size.width);
+		file.setHeight(size.height);
 		return file;
 	}
 
@@ -96,11 +100,9 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	protected void compress(Path original) throws Exception {
 		Path temp = FileUtils.appTemp(FileUtils.getFileExtension(original));
-		VideoSize ori = getVideoSize(original);
-		VideoSize cal = calc(ori, maxSize);
 		String[] cmdArray = new String[] { "ffmpeg", "-i", original.toString(), "-loglevel", "error", "-y", "-vf",
-				"scale=w=" + cal.width + ":h=" + cal.height + ":force_original_aspect_ratio=decrease", "-vcodec",
-				"h264", "-acodec", "aac", temp.toString() };
+				"scale=w=" + maxSize + ":h=" + maxSize + ":force_original_aspect_ratio=decrease", "-vcodec", "h264",
+				"-acodec", "aac", temp.toString() };
 		ProcessUtils.runProcess(cmdArray, timeoutSecond, TimeUnit.SECONDS);
 		if (!FileUtils.deleteQuietly(original)) {
 			throw new SystemException("删除原文件失败");
@@ -128,7 +130,7 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	}
 
-	protected VideoSize getVideoSize(Path video) throws ProcessException {
+	private VideoSize getVideoSize(Path video) throws ProcessException {
 		String[] cmdArray = new String[] { "ffprobe", "-v", "error", "-show_entries", "stream=width,height", "-of",
 				"default=noprint_wrappers=1", video.toString() };
 		String result = ProcessUtils.runProcess(cmdArray, 10, TimeUnit.SECONDS)
@@ -139,23 +141,6 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	public void setMaxSize(Integer maxSize) {
 		this.maxSize = maxSize;
-	}
-
-	private VideoSize calc(VideoSize size, int max) {
-		if (size.height <= max && size.width <= max) {
-			return size;
-		}
-		if (size.height > size.width) {
-			int height = max;
-			int width = size.width * max / size.height;
-			return new VideoSize(width, height);
-		}
-		if (size.height < size.width) {
-			int width = max;
-			int height = size.height * max / size.width;
-			return new VideoSize(width, height);
-		}
-		return new VideoSize(max, max);
 	}
 
 }
