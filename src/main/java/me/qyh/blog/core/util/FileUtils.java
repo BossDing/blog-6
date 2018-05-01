@@ -50,7 +50,7 @@ public class FileUtils {
 	/**
 	 * 博客用来存放临时文件的文件夹
 	 */
-	private static final Path TEMP_DIR = HOME_DIR.resolve("blog_temp");
+	public static final Path TEMP_DIR = HOME_DIR.resolve("blog_temp");
 
 	private static final Predicate<Path> TRUE = path -> true;
 

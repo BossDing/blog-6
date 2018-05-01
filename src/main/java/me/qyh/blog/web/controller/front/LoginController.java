@@ -55,6 +55,8 @@ import me.qyh.blog.core.vo.LoginBean;
 import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
 import me.qyh.blog.web.SuccessfulLoginHandler;
 import me.qyh.blog.web.security.CaptchaValidator;
+import me.qyh.blog.web.security.csrf.CsrfToken;
+import me.qyh.blog.web.security.csrf.CsrfTokenRepository;
 
 @Controller("loginController")
 public class LoginController implements InitializingBean, SuccessfulLoginHandlerRegistry {
@@ -74,6 +76,9 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 
 	@Autowired
 	private TemplateRequestMappingHandlerMapping mapping;
+
+	@Autowired(required = false)
+	private CsrfTokenRepository csrfTokenRepository;
 
 	private List<SuccessfulLoginHandler> successfulLoginHandlers = new ArrayList<>();
 
@@ -170,6 +175,7 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		changeSessionId(request);
 		attemptLogger.remove(Environment.getIP());
+		changeCsrf(request, response);
 
 		for (SuccessfulLoginHandler handler : successfulLoginHandlers) {
 			try {
@@ -215,5 +221,18 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 	public SuccessfulLoginHandlerRegistry registry(SuccessfulLoginHandler handler) {
 		successfulLoginHandlers.add(handler);
 		return this;
+	}
+
+	private void changeCsrf(HttpServletRequest request, HttpServletResponse response) {
+		if (csrfTokenRepository == null) {
+			return;
+		}
+		boolean containsToken = csrfTokenRepository.loadToken(request) != null;
+		if (containsToken) {
+			this.csrfTokenRepository.saveToken(null, request, response);
+
+			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
+			this.csrfTokenRepository.saveToken(newToken, request, response);
+		}
 	}
 }

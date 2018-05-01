@@ -24,6 +24,7 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -35,9 +36,13 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.plugin.LogoutHandlerRegistry;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.web.LogoutHandler;
+import me.qyh.blog.web.security.csrf.CsrfTokenRepository;
 
 @Controller
 public class LogoutController implements LogoutHandlerRegistry {
+
+	@Autowired(required = false)
+	private CsrfTokenRepository csrfTokenRepository;
 
 	private static final Logger logger = LoggerFactory.getLogger(LogoutController.class);
 
@@ -57,6 +62,9 @@ public class LogoutController implements LogoutHandlerRegistry {
 	}
 
 	private void afterLogout(HttpServletRequest request, HttpServletResponse response) {
+		if (csrfTokenRepository != null) {
+			csrfTokenRepository.saveToken(null, request, response);
+		}
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			User user = (User) session.getAttribute(Constants.USER_SESSION_KEY);

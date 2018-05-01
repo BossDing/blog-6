@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -48,9 +49,16 @@ import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.UrlUtils;
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.security.RequestMatcher;
+import me.qyh.blog.web.security.csrf.CsrfException;
+import me.qyh.blog.web.security.csrf.CsrfToken;
+import me.qyh.blog.web.security.csrf.CsrfTokenRepository;
+import me.qyh.blog.web.security.csrf.InvalidCsrfTokenException;
+import me.qyh.blog.web.security.csrf.MissingCsrfTokenException;
 
 public class AppInterceptor extends HandlerInterceptorAdapter {
 
@@ -66,6 +74,13 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private static final String UNLOCK_PATTERN = "/unlock/*";
 	private static final String SPACE_UNLOCK_PATTERN = "/space/*/unlock/*";
 
+	@Autowired(required = false)
+	private CsrfTokenRepository tokenRepository;
+
+	private final CsrfToken emptyToken = new CsrfToken("");
+
+	private RequestMatcher requireCsrfProtectionMatcher = new DefaultRequiresCsrfMatcher();
+
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
@@ -77,7 +92,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				setLockKeys(request);
 				setSpace(request);
 				Environment.setIP(Webs.getIP(request));
-			} catch (AuthencationException | LockException | SpaceNotFoundException e) {
+				csrfCheck(request, response);
+			} catch (AuthencationException | LockException | SpaceNotFoundException | CsrfException e) {
 				removeContext();
 				throw e;
 			} catch (Throwable e) {
@@ -143,6 +159,48 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		}
 	}
 
+	private void csrfCheck(HttpServletRequest request, HttpServletResponse response) {
+		if (tokenRepository != null) {
+			CsrfToken csrfToken = tokenRepository.loadToken(request);
+			final boolean missingToken = csrfToken == null;
+			if (missingToken) {
+				CsrfToken generatedToken = tokenRepository.generateToken(request);
+				csrfToken = new SaveOnAccessCsrfToken(tokenRepository, request, response, generatedToken);
+			}
+			request.setAttribute(CsrfToken.class.getName(), csrfToken);
+			request.setAttribute(csrfToken.getParameterName(), csrfToken);
+			if ("get".equalsIgnoreCase(request.getMethod())) {
+				// GET请求不能检查，否则死循环
+				return;
+			}
+
+			/**
+			 * @since 5.9
+			 */
+			if (Webs.errorRequest(request)) {
+				return;
+			}
+
+			if (!requireCsrfProtectionMatcher.match(request)) {
+				return;
+			}
+			String actualToken = request.getHeader(csrfToken.getHeaderName());
+			if (actualToken == null) {
+				actualToken = request.getParameter(csrfToken.getParameterName());
+			}
+			if (!csrfToken.getToken().equals(actualToken)) {
+				if (missingToken) {
+					throw new MissingCsrfTokenException(actualToken);
+				} else {
+					throw new InvalidCsrfTokenException(csrfToken, actualToken);
+				}
+			}
+		} else {
+			request.setAttribute(CsrfToken.class.getName(), emptyToken);
+			request.setAttribute(emptyToken.getParameterName(), emptyToken);
+		}
+	}
+
 	private <T extends Annotation> Optional<T> getAnnotation(Method method, Class<T> annotationType) {
 		T t = AnnotationUtils.findAnnotation(method, annotationType);
 		if (t == null) {
@@ -190,4 +248,80 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return handler instanceof HandlerMethod;
 	}
 
+	public void setRequireCsrfProtectionMatcher(RequestMatcher requireCsrfProtectionMatcher) {
+		this.requireCsrfProtectionMatcher = requireCsrfProtectionMatcher;
+	}
+
+	@SuppressWarnings("serial")
+	private static final class SaveOnAccessCsrfToken extends CsrfToken {
+		private transient CsrfTokenRepository tokenRepository;
+		private transient HttpServletRequest request;
+		private transient HttpServletResponse response;
+
+		private final CsrfToken delegate;
+
+		SaveOnAccessCsrfToken(CsrfTokenRepository tokenRepository, HttpServletRequest request,
+				HttpServletResponse response, CsrfToken delegate) {
+			super(null);
+			this.tokenRepository = tokenRepository;
+			this.request = request;
+			this.response = response;
+			this.delegate = delegate;
+		}
+
+		@Override
+		public String getToken() {
+			saveTokenIfNecessary();
+			return delegate.getToken();
+		}
+
+		@Override
+		public String toString() {
+			return "SaveOnAccessCsrfToken [delegate=" + delegate + "]";
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(delegate);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (Validators.baseEquals(this, obj)) {
+				SaveOnAccessCsrfToken other = (SaveOnAccessCsrfToken) obj;
+				return Objects.equals(this.delegate, other.delegate);
+			}
+			return false;
+		}
+
+		private void saveTokenIfNecessary() {
+			if (this.tokenRepository == null) {
+				return;
+			}
+
+			synchronized (this) {
+				if (tokenRepository != null) {
+					this.tokenRepository.saveToken(delegate, request, response);
+					this.tokenRepository = null;
+					this.request = null;
+					this.response = null;
+				}
+			}
+		}
+
+	}
+
+	private static final class DefaultRequiresCsrfMatcher implements RequestMatcher {
+		private final Pattern allowedMethods = Pattern.compile("^(GET|HEAD|TRACE|OPTIONS)$");
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.springframework.security.web.util.matcher.RequestMatcher#matches(
+		 * javax.servlet.http.HttpServletRequest)
+		 */
+		public boolean match(HttpServletRequest request) {
+			return !allowedMethods.matcher(request.getMethod()).matches();
+		}
+	}
 }

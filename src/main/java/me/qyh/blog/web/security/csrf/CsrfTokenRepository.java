@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.csrf;
+package me.qyh.blog.web.security.csrf;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import me.qyh.blog.plugin.csrf.web.component.HttpSessionCsrfTokenRepository;
 
 /**
  * An API to allow changing the method in which the expected {@link CsrfToken}

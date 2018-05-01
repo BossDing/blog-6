@@ -69,6 +69,7 @@ import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
+import me.qyh.blog.web.security.csrf.CsrfException;
 import me.qyh.blog.web.view.JsonView;
 
 public class WebExceptionResolver implements HandlerExceptionResolver, ExceptionHandlerRegistry {
@@ -100,7 +101,8 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 				new InvalidParamExceptionHandler(), new MethodArgumentNotValidExceptionHandler(),
 				new HttpRequestMethodNotSupportedExceptionHandler(), new HttpMediaTypeNotAcceptableExceptionHandler(),
 				new HttpMediaTypeNotSupportedExceptionHandler(), new MaxUploadSizeExceededExceptionHandler(),
-				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler(), new MissLockExceptionHandler()));
+				new MultipartExceptionHandler(), new NoHandlerFoundExceptionHandler(), new MissLockExceptionHandler(),
+				new CsrfExceptionHandler()));
 	}
 
 	@Override
@@ -447,6 +449,28 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 			} else {
 				return getErrorForward(request, new ErrorInfo(ERROR_404, 404), space);
 			}
+		}
+
+	}
+
+	private final class CsrfExceptionHandler implements ExceptionHandler {
+
+		@Override
+		public boolean match(Exception ex) {
+			return ex instanceof CsrfException;
+		}
+
+		@Override
+		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
+			if (Webs.isAjaxRequest(request)) {
+				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_403)));
+			}
+			// 将链接放入
+			if ("get".equalsIgnoreCase(request.getMethod())) {
+				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
+			}
+
+			return getErrorForward(request, new ErrorInfo(ERROR_403, 403));
 		}
 
 	}

@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.csrf;
-
-import javax.servlet.http.HttpServletRequest;
+package me.qyh.blog.web.security.csrf;
 
 /**
- * Thrown when an expected {@link CsrfToken} exists, but it does not match the
- * value present on the {@link HttpServletRequest}
+ * Thrown when an invalid or missing {@link CsrfToken} is found in the
+ * HttpServletRequest
  *
  * @author Rob Winch
  * @since 3.2
  */
 @SuppressWarnings("serial")
-public class InvalidCsrfTokenException extends CsrfException {
-	
-	public InvalidCsrfTokenException(CsrfToken expectedAccessToken, String actualAccessToken) {
-		super("Invalid CSRF Token '" + actualAccessToken + "' was found on the request parameter '"
-				+ expectedAccessToken.getParameterName() + "' or header '" + expectedAccessToken.getHeaderName()
-				+ "'.");
+public class CsrfException extends RuntimeException {
+
+	CsrfException(String message) {
+		super(message, null, false, false);
 	}
 }

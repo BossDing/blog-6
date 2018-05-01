@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.csrf.web.component;
+package me.qyh.blog.web.security.csrf;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import me.qyh.blog.core.util.StringUtils;
-import me.qyh.blog.plugin.csrf.CsrfToken;
-import me.qyh.blog.plugin.csrf.CsrfTokenRepository;
-import me.qyh.blog.plugin.csrf.DefaultCsrfToken;
 
 /**
  * A {@link CsrfTokenRepository} that stores the {@link CsrfToken} in the
@@ -34,18 +30,11 @@ import me.qyh.blog.plugin.csrf.DefaultCsrfToken;
  * @author Rob Winch
  * @since 3.2
  */
-@Component
+// @Component
 public final class HttpSessionCsrfTokenRepository implements CsrfTokenRepository {
-	private static final String DEFAULT_CSRF_PARAMETER_NAME = "_csrf";
-
-	private static final String DEFAULT_CSRF_HEADER_NAME = "X-CSRF-TOKEN";
 
 	private static final String DEFAULT_CSRF_TOKEN_ATTR_NAME = HttpSessionCsrfTokenRepository.class.getName()
 			.concat(".CSRF_TOKEN");
-
-	private String parameterName = DEFAULT_CSRF_PARAMETER_NAME;
-
-	private String headerName = DEFAULT_CSRF_HEADER_NAME;
 
 	private String sessionAttributeName = DEFAULT_CSRF_TOKEN_ATTR_NAME;
 
@@ -91,31 +80,7 @@ public final class HttpSessionCsrfTokenRepository implements CsrfTokenRepository
 	 * javax.servlet.http.HttpServletRequest)
 	 */
 	public CsrfToken generateToken(HttpServletRequest request) {
-		return new DefaultCsrfToken(headerName, parameterName, createNewToken());
-	}
-
-	/**
-	 * Sets the {@link HttpServletRequest} parameter name that the {@link CsrfToken}
-	 * is expected to appear on
-	 * 
-	 * @param parameterName
-	 *            the new parameter name to use
-	 */
-	public void setParameterName(String parameterName) {
-		Assert.hasLength(parameterName, "parameterName cannot be null or empty");
-		this.parameterName = parameterName;
-	}
-
-	/**
-	 * Sets the header name that the {@link CsrfToken} is expected to appear on and
-	 * the header that the response will contain the {@link CsrfToken}.
-	 *
-	 * @param headerName
-	 *            the new header name to use
-	 */
-	public void setHeaderName(String headerName) {
-		Assert.hasLength(headerName, "headerName cannot be null or empty");
-		this.headerName = headerName;
+		return new CsrfToken(createNewToken());
 	}
 
 	/**

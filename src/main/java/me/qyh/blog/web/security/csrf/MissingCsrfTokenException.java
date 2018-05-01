@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.qyh.blog.plugin.csrf;
+package me.qyh.blog.web.security.csrf;
 
 /**
- * Thrown when an invalid or missing {@link CsrfToken} is found in the
- * HttpServletRequest
+ * Thrown when no expected {@link CsrfToken} is found but is required.
  *
  * @author Rob Winch
  * @since 3.2
  */
 @SuppressWarnings("serial")
-public class CsrfException extends RuntimeException {
+public class MissingCsrfTokenException extends CsrfException {
 
-	CsrfException(String message) {
-		super(message, null, false, false);
+	public MissingCsrfTokenException(String actualToken) {
+		super("Expected CSRF token not found. Has your session expired?");
 	}
 }
