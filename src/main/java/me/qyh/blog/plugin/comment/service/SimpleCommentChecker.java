@@ -36,11 +36,11 @@ public class SimpleCommentChecker implements CommentChecker {
 
 	@Override
 	public void checkComment(Comment comment, CommentConfig config) throws LogicException {
-		checkCommentUser(comment);
+		checkCommentUser(comment, config);
 		checkCommentContent(comment, config);
 	}
 
-	protected void checkCommentUser(Comment comment) throws LogicException {
+	protected void checkCommentUser(Comment comment, CommentConfig config) throws LogicException {
 		if (Environment.isLogin()) {
 			return;
 		}
@@ -52,7 +52,7 @@ public class SimpleCommentChecker implements CommentChecker {
 		if (!Validators.isEmptyOrNull(emailOrAdmin, true) && emailOrAdmin.equals(email)) {
 			throw new LogicException("comment.email.invalid", "邮箱不被允许");
 		}
-		if (user.getName().equalsIgnoreCase(name)) {
+		if (user.getName().equalsIgnoreCase(name) || config.getNickname().equalsIgnoreCase(name)) {
 			throw new LogicException("comment.nickname.invalid", "昵称不被允许");
 		}
 		if (disallowUsernamePatterns != null && PatternMatchUtils.simpleMatch(disallowUsernamePatterns, name.trim())) {

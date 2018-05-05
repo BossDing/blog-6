@@ -25,7 +25,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.spi.FilterReply;
-import me.qyh.blog.core.plugin.MailSender;
 import me.qyh.blog.core.plugin.PluginHandler;
 import me.qyh.blog.core.plugin.PluginProperties;
 
@@ -58,7 +57,6 @@ public class MailPluginHandler implements PluginHandler {
 
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
-
 		if (enable) {
 			Map<String, String> vs = pluginProperties.gets(HOST_KEY, PORT_KEY, USERNAME_KEY, PASSWORD_KEY, FROM_KEY,
 					SMTP_AUTH_KEY);
@@ -160,6 +158,11 @@ public class MailPluginHandler implements PluginHandler {
 				mailLogger.addAppender(mailLoggerAppendar);
 			}
 		}
+	}
+
+	@Override
+	public int getOrder() {
+		return -1;
 	}
 
 }

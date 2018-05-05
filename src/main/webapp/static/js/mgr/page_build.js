@@ -194,8 +194,8 @@ $(document).ready(function() {
 			html += '<table class="table">';
 			for(var i=0;i<data.length;i++){
 				html += '<tr>';
-				html += '<td>'+data[i]+'</td>';
-				html += '<td><a onclick="addDataTag(\''+data[i]+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td>'+data[i].name+'</td>';
+				html += '<td><a onclick="addDataTag(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';

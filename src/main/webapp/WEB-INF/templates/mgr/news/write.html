@@ -101,8 +101,6 @@
 	<script type="text/javascript"
 		th:src="@{/static/summernote/plugin/file/summernote-ext-file.js}"></script>
 	<script type="text/javascript"
-		th:src="@{/static/summernote/plugin/music/summernote-ext-music.js}"></script>
-	<script type="text/javascript"
 		th:src="@{/static/summernote/plugin/file/file.js}"></script>
 	<script>
 		$(function(){
@@ -111,7 +109,7 @@
 				height:270,
 				focus:true,
 				toolbar:[
-					['custom', ['file','music']],
+					['custom', ['file']],
 					['style', ['style']],
 		            ['font', ['bold', 'underline', 'clear']],
 		            ['fontname', ['fontname']],

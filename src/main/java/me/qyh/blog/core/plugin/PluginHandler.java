@@ -17,6 +17,7 @@ package me.qyh.blog.core.plugin;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import me.qyh.blog.core.service.impl.HitsStrategy;
@@ -27,7 +28,7 @@ import me.qyh.blog.web.WebExceptionResolver;
  * @author wwwqyhme
  *
  */
-public interface PluginHandler {
+public interface PluginHandler extends Ordered {
 
 	/**
 	 * 在ApplicationContext初始化前调用
@@ -182,6 +183,24 @@ public interface PluginHandler {
 	 */
 	default void addHitHandler(ArticleHitHandlerRegistry registry) throws Exception {
 
+	}
+
+	/**
+	 * 增加模板渲染时的辅助对象
+	 * <p>
+	 * 这个方法不会覆盖系统本来的辅助对象！
+	 * </p>
+	 * 
+	 * @param key
+	 * @param value
+	 * @throws Exception
+	 */
+	default void addTemplateRenderModal(TemplateRenderModelRegistry registry) throws Exception {
+
+	}
+
+	default int getOrder() {
+		return 0;
 	}
 
 }

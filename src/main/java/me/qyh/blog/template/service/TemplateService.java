@@ -30,6 +30,7 @@ import me.qyh.blog.template.entity.HistoryTemplate;
 import me.qyh.blog.template.entity.Page;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
+import me.qyh.blog.template.vo.DataTagProcessorBean;
 import me.qyh.blog.template.vo.ExportPage;
 import me.qyh.blog.template.vo.ExportPages;
 import me.qyh.blog.template.vo.FragmentQueryParam;
@@ -145,7 +146,7 @@ public interface TemplateService {
 	 * 
 	 * @return
 	 */
-	List<String> queryDataTags();
+	List<DataTagProcessorBean> queryDataTags();
 
 	/**
 	 * 根据模板名查询模板
@@ -345,5 +346,14 @@ public interface TemplateService {
 	 * @param names
 	 */
 	void unregisterPreview(Fragment... fragments);
+
+	/**
+	 * 更新数据的是否可以外部调用
+	 * 
+	 * @since 6.2
+	 * @param name
+	 * @param callable
+	 */
+	void updateDataCallable(String name, boolean callable);
 
 }

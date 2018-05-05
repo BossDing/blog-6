@@ -38,6 +38,7 @@ import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.MenuRegistry;
+import me.qyh.blog.core.plugin.TemplateRenderModelRegistry;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Formats;
@@ -56,7 +57,7 @@ import me.qyh.blog.web.Webs;
  * @author Administrator
  *
  */
-public final class TemplateRender implements InitializingBean {
+public final class TemplateRender implements InitializingBean, TemplateRenderModelRegistry {
 
 	@Autowired
 	private PlatformTransactionManager transactionManager;
@@ -217,6 +218,12 @@ public final class TemplateRender implements InitializingBean {
 
 		}
 
+	}
+
+	@Override
+	public TemplateRenderModelRegistry registry(String key, Object value) throws Exception {
+		pros.putIfAbsent(key, value);
+		return this;
 	}
 
 }

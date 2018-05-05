@@ -294,11 +294,25 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 				  $image.addClass('img-responsive');
 				});
 			} else {
-				$('#content').summernote('createLink', {
-				  text: url,
-				  url: url,
-				  isNewWindow: true
-				});
+				if(ext == "mp4"){
+					bootbox.prompt({
+						title:'请输入视频封面',
+						value:url,
+						callback: function (result) {
+					        if(result != null){
+					        	$('#content').summernote('pasteHTML', '<video controls="" src="'+url+'" width="100%" ></video>');
+					        }else{
+					        	$('#content').summernote('pasteHTML', '<video controls="" poster="'+result+'" src="a.mp4" width="100%" ></video>');
+					        }
+					    }
+					});
+				} else {
+					$('#content').summernote('createLink', {
+					  text: url,
+					  url: url,
+					  isNewWindow: true
+					});
+				}
 			}
 		});
 		

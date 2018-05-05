@@ -42,6 +42,11 @@
 								class="form-control integer" placeholder="评论每页显示数量(1~50)"
 								th:value="${config.pageSize}" name="pageSize">
 						</div>
+						<div class="form-group">
+							<label for="">评论昵称</label> <input
+								class="form-control" placeholder="评论昵称"
+								th:value="${config.nickname}" name="nickname">
+						</div>
 						<button type="button" id="update" class="btn btn-default">修改评论配置</button>
 					</form>
 					<hr>

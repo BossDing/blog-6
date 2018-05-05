@@ -149,7 +149,6 @@
 
 	</task:scheduled-tasks>
 
-
 	<!-- 文件管理 -->
 	<bean class="me.qyh.blog.file.store.GraphicsMagickImageHelper" />
 	<bean class="me.qyh.blog.file.store.DefaultFileManager" />

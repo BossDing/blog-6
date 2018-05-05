@@ -1,4 +1,4 @@
-package me.qyh.blog.core.plugin;
+package me.qyh.blog.plugin.mail;
 
 import java.io.Serializable;
 

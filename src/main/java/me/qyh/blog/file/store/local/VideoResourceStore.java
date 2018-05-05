@@ -16,7 +16,10 @@
 package me.qyh.blog.file.store.local;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +47,8 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	private Integer maxSize;// 视频最大尺寸
 	private final int timeoutSecond;
+	private static final int DEFAULT_CRF = 24;
+	private Integer crf = DEFAULT_CRF;
 
 	public VideoResourceStore(String urlPatternPrefix, String[] allowExtensions, int timeoutSecond) {
 		super(urlPatternPrefix);
@@ -62,12 +67,13 @@ public class VideoResourceStore extends ThumbnailSupport {
 		try {
 			synchronized (this) {
 				if (maxSize != null) {
-					compress(dest);
+					compress(getVideoSize(dest), dest);
 				}
 				size = getVideoSize(dest);
 				extraPoster(dest, getPoster(key));
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			FileUtils.deleteQuietly(dest);
 			logger.warn(e.getMessage(), e);
 			throw new LogicException("video.corrupt", "不是正确的视频文件或者视频已经损坏");
@@ -98,12 +104,17 @@ public class VideoResourceStore extends ThumbnailSupport {
 		FileUtils.move(temp, poster);
 	}
 
-	protected void compress(Path original) throws Exception {
+	protected void compress(VideoSize size, Path original) throws Exception {
 		Path temp = FileUtils.appTemp(FileUtils.getFileExtension(original));
-		String[] cmdArray = new String[] { "ffmpeg", "-i", original.toString(), "-loglevel", "error", "-y", "-vf",
-				"scale=w=" + maxSize + ":h=" + maxSize + ":force_original_aspect_ratio=decrease", "-vcodec", "h264",
-				"-acodec", "aac", temp.toString() };
-		ProcessUtils.runProcess(cmdArray, timeoutSecond, TimeUnit.SECONDS);
+		List<String> cmdList = new ArrayList<>(
+				Arrays.asList("ffmpeg", "-i", original.toString(), "-loglevel", "error", "-y"));
+		if (size.width > maxSize || size.height > maxSize) {
+			cmdList.add("-vf");
+			cmdList.add("scale=w=" + maxSize + ":h=" + maxSize + ":force_original_aspect_ratio=decrease");
+		}
+		cmdList.addAll(Arrays.asList("-crf", String.valueOf(crf), "-max_muxing_queue_size", "9999", "-vcodec", "h264",
+				"-acodec", "aac", temp.toString()));
+		ProcessUtils.runProcess(cmdList, timeoutSecond, TimeUnit.SECONDS);
 		if (!FileUtils.deleteQuietly(original)) {
 			throw new SystemException("删除原文件失败");
 		}
@@ -141,6 +152,10 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	public void setMaxSize(Integer maxSize) {
 		this.maxSize = maxSize;
+	}
+
+	public void setCrf(Integer crf) {
+		this.crf = Objects.requireNonNull(crf);
 	}
 
 }

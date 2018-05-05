@@ -38,6 +38,9 @@ public class CommentConfig {
 	private Boolean check;// 审核
 	private int pageSize;
 
+	@Expose(serialize = false)
+	private String nickname;// 管理员的昵称
+
 	public CommentConfig() {
 		super();
 	}
@@ -48,6 +51,7 @@ public class CommentConfig {
 		this.limitCount = source.limitCount;
 		this.limitSec = source.limitSec;
 		this.pageSize = source.pageSize;
+		this.nickname = source.nickname;
 	}
 
 	public Integer getLimitSec() {
@@ -92,5 +96,13 @@ public class CommentConfig {
 
 	public void setPageSize(int pageSize) {
 		this.pageSize = pageSize;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 }

@@ -25,7 +25,7 @@ import me.qyh.blog.plugin.comment.entity.Comment;
 import me.qyh.blog.plugin.comment.entity.CommentModule;
 import me.qyh.blog.plugin.comment.vo.CommentQueryParam;
 import me.qyh.blog.plugin.comment.vo.ModuleCommentCount;
-
+import me.qyh.blog.plugin.comment.vo.PeriodCommentQueryParam;
 
 /**
  * 
@@ -113,10 +113,15 @@ public interface CommentDao {
 
 	/**
 	 * 查询某个ip在某个模块指定时间内评论的总数
-	 * @param module 评论模块
-	 * @param begin 开始时间
-	 * @param end 结束时间
-	 * @param ip ip
+	 * 
+	 * @param module
+	 *            评论模块
+	 * @param begin
+	 *            开始时间
+	 * @param end
+	 *            结束时间
+	 * @param ip
+	 *            ip
 	 * @return
 	 */
 	int selectCountByIpAndDatePeriod(@Param("module") CommentModule module, @Param("begin") Timestamp begin,
@@ -176,5 +181,19 @@ public interface CommentDao {
 	 * @return
 	 */
 	boolean checkExistsByGravatar(String gravatar);
+
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	int selectCountByPeriod(PeriodCommentQueryParam param);
+
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	List<Comment> selectPageByPeriod(PeriodCommentQueryParam param);
 
 }

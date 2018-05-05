@@ -88,6 +88,7 @@ import me.qyh.blog.plugin.comment.event.CommentEvent;
 import me.qyh.blog.plugin.comment.vo.CommentPageResult;
 import me.qyh.blog.plugin.comment.vo.CommentQueryParam;
 import me.qyh.blog.plugin.comment.vo.IPQueryParam;
+import me.qyh.blog.plugin.comment.vo.PeriodCommentQueryParam;
 
 public class CommentService
 		implements InitializingBean, CommentServer, ApplicationEventPublisherAware, GravatarSearcher {
@@ -113,6 +114,7 @@ public class CommentService
 	private static final String COMMENT_LIMIT_COUNT = "commentConfig.commentLimitCount";
 	private static final String COMMENT_CHECK = "commentConfig.commentCheck";
 	private static final String COMMENT_PAGESIZE = "commentConfig.pageSize";
+	private static final String COMMENT_NICKNAME = "commentConfig.nickname";
 
 	private final Comparator<Comment> ascCommentComparator = Comparator.comparing(Comment::getCommentDate)
 			.thenComparing(Comment::getId);
@@ -195,6 +197,7 @@ public class CommentService
 		pros.setProperty(COMMENT_LIMIT_COUNT, config.getLimitCount().toString());
 		pros.setProperty(COMMENT_LIMIT_SEC, config.getLimitSec().toString());
 		pros.setProperty(COMMENT_PAGESIZE, String.valueOf(config.getPageSize()));
+		pros.setProperty(COMMENT_NICKNAME, config.getNickname());
 		try (OutputStream os = new FileOutputStream(configResource.getFile())) {
 			pros.store(os, "");
 		} catch (IOException e) {
@@ -384,8 +387,15 @@ public class CommentService
 				break;
 			}
 		}
-
 		return result;
+	}
+
+	@Transactional(readOnly = true)
+	public PageResult<Comment> queryAllCommentsByPeriod(PeriodCommentQueryParam param) {
+		int count = commentDao.selectCountByPeriod(param);
+		List<Comment> datas = commentDao.selectPageByPeriod(param);
+		datas.forEach(this::handleComment);
+		return new PageResult<>(param, count, datas);
 	}
 
 	/**
@@ -709,7 +719,10 @@ public class CommentService
 			return;
 		}
 		User user = userService.getUser();
-		comment.setNickname(user.getName());
+		/**
+		 * @since 6.2
+		 */
+		comment.setNickname(config.getNickname());
 		String email = user.getEmail();
 		comment.setEmail(email);
 		comment.setGravatar(user.getGravatar());
@@ -722,6 +735,7 @@ public class CommentService
 		config.setLimitCount(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_COUNT, "10")));
 		config.setLimitSec(Integer.parseInt(pros.getProperty(COMMENT_LIMIT_SEC, "60")));
 		config.setPageSize(Integer.parseInt(pros.getProperty(COMMENT_PAGESIZE, "10")));
+		config.setNickname(pros.getProperty(COMMENT_NICKNAME, "admin"));
 	}
 
 	private final class CollectFilteredFilter implements Predicate<Comment> {

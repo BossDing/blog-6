@@ -17,6 +17,7 @@ package me.qyh.blog.plugin.comment.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
@@ -37,6 +38,7 @@ import me.qyh.blog.plugin.comment.service.CommentConfig;
 import me.qyh.blog.plugin.comment.service.CommentService;
 import me.qyh.blog.plugin.comment.validator.CommentConfigValidator;
 import me.qyh.blog.plugin.comment.vo.IPQueryParam;
+import me.qyh.blog.plugin.comment.vo.PeriodCommentQueryParam;
 import me.qyh.blog.web.controller.back.BaseMgrController;
 
 @RequestMapping("mgr/comment")
@@ -105,13 +107,23 @@ public class CommentMgrController extends BaseMgrController {
 	}
 
 	@GetMapping("uncheck")
-	public String uncheck(PageQueryParam param, ModelMap model) {
+	public String uncheck(PageQueryParam param, Model model) {
 		if (param.getCurrentPage() < 1) {
 			param.setCurrentPage(1);
 		}
 		param.setPageSize(commentService.getCommentConfig().getPageSize());
 		model.addAttribute("page", commentService.queryUncheckComments(param));
 		return "plugin/comment/uncheck";
+	}
+
+	@GetMapping("all")
+	public String queryAll(PeriodCommentQueryParam param, Model model) {
+		if (param.getCurrentPage() < 1) {
+			param.setCurrentPage(1);
+		}
+		param.setPageSize(commentService.getCommentConfig().getPageSize());
+		model.addAttribute("page", commentService.queryAllCommentsByPeriod(param));
+		return "plugin/comment/all";
 	}
 
 	@GetMapping("uncheckCount")

@@ -15,6 +15,11 @@
  */
 package me.qyh.blog.template.service.impl;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -57,6 +62,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.google.gson.reflect.TypeToken;
+
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
@@ -72,6 +79,7 @@ import me.qyh.blog.core.service.impl.EmptyCommentServer;
 import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
 import me.qyh.blog.core.util.FileUtils;
+import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
@@ -95,6 +103,7 @@ import me.qyh.blog.template.render.data.DataTagProcessor;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
+import me.qyh.blog.template.vo.DataTagProcessorBean;
 import me.qyh.blog.template.vo.ExportPage;
 import me.qyh.blog.template.vo.ExportPages;
 import me.qyh.blog.template.vo.FragmentQueryParam;
@@ -155,6 +164,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private String previewIp;
 
 	private List<Fragment> previewFragments = new ArrayList<>();
+
+	private static final Path DATA_CONFIG = FileUtils.HOME_DIR.resolve("blog/data_config.json");
+
+	static {
+		if (!FileUtils.exists(DATA_CONFIG)) {
+			FileUtils.createFile(DATA_CONFIG);
+		}
+	}
 
 	@Override
 	public synchronized Fragment insertFragment(Fragment fragment) throws LogicException {
@@ -277,8 +294,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public List<String> queryDataTags() {
-		return processors.stream().map(DataTagProcessor::getName).collect(Collectors.toList());
+	public List<DataTagProcessorBean> queryDataTags() {
+		return processors.stream().map(DataTagProcessorBean::new).collect(Collectors.toList());
 	}
 
 	@Override
@@ -1129,6 +1146,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				throw new SystemException("数据dataName只能为英文字母或者数字，并且不能以数字开头");
 			}
 		}
+		Map<String, Boolean> callableMap = readCallableMap();
+		processors.forEach(pro -> {
+			Boolean callable = callableMap.get(pro.getName());
+			if (callable != null) {
+				pro.setCallable(callable);
+			}
+		});
 		this.processors = processors;
 	}
 
@@ -1288,6 +1312,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public DataTagProcessorRegistry register(DataTagProcessor<?> processor) {
+		Boolean callable = readCallableMap().get(processor.getDataName());
+		if (callable != null) {
+			processor.setCallable(callable);
+		}
 		processors.add(processor);
 		return this;
 	}
@@ -1356,6 +1384,44 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			for (Fragment fragment : fragments) {
 				unregisterFragment(fragment);
 			}
+		}
+	}
+
+	@Override
+	public void updateDataCallable(String name, boolean callable) {
+		synchronized (this) {
+			Optional<DataTagProcessor<?>> op = processors.stream().filter(pro -> pro.getName().equals(name)).findAny();
+			if (op.isPresent()) {
+				DataTagProcessor<?> processor = op.get();
+				processor.setCallable(callable);
+
+				Map<String, Boolean> map = processors.stream()
+						.collect(Collectors.toMap(DataTagProcessor::getName, DataTagProcessor::isCallable));
+
+				try (Writer writer = Files.newBufferedWriter(DATA_CONFIG, Constants.CHARSET)) {
+					Jsons.write(map, writer);
+				} catch (IOException e) {
+
+					processor.setCallable(!callable);
+
+					throw new SystemException(e.getMessage(), e);
+				}
+
+			}
+		}
+	}
+
+	private Map<String, Boolean> readCallableMap() {
+		try {
+			String content = new String(Files.readAllBytes(DATA_CONFIG), Constants.CHARSET);
+			if (!Validators.isEmptyOrNull(content, false)) {
+				Type type = new TypeToken<Map<String, Boolean>>() {
+				}.getType();
+				return Jsons.getGson().fromJson(content, type);
+			}
+			return Collections.emptyMap();
+		} catch (IOException e) {
+			throw new SystemException(e.getMessage(), e);
 		}
 	}
 

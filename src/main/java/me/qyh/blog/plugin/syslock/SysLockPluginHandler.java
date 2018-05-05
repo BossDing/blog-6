@@ -18,7 +18,7 @@ package me.qyh.blog.plugin.syslock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 
-import me.qyh.blog.core.message.Messages;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.plugin.LockProviderRegistry;
 import me.qyh.blog.core.plugin.Menu;
 import me.qyh.blog.core.plugin.MenuRegistry;
@@ -31,8 +31,6 @@ public class SysLockPluginHandler implements PluginHandler {
 
 	@Autowired
 	private SysLockProvider provider;
-	@Autowired
-	private Messages messages;
 
 	@Override
 	public void addTemplate(TemplateRegistry registry) throws Exception {
@@ -54,7 +52,7 @@ public class SysLockPluginHandler implements PluginHandler {
 
 	@Override
 	public void addMenu(MenuRegistry registry) {
-		registry.addMenu(new Menu(messages.getMessage("plugin.syslock.menu.mgr", "系统锁管理"), "mgr/lock/sys/index"));
+		registry.addMenu(new Menu(new Message("plugin.syslock.menu.mgr", "系统锁管理"), "mgr/lock/sys/index"));
 	}
 
 }

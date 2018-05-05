@@ -29,10 +29,10 @@ import me.qyh.blog.plugin.comment.entity.Comment;
 public class CommentValidator implements Validator {
 
 	private static final int MAX_COMMENT_LENGTH = 500;
-	private static final int MAX_NAME_LENGTH = 20;
+	static final int MAX_NAME_LENGTH = 20;
 	private static final int MAX_WEBSITE_LENGTH = 50;
 
-	private static final String NAME_PATTERN = "^[\u4e00-\u9fa5a-zA-Z0-9]+$";
+	static final String NAME_PATTERN = "^[\u4e00-\u9fa5a-zA-Z0-9]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -86,7 +86,6 @@ public class CommentValidator implements Validator {
 				errors.reject("comment.nickname.invalid", "昵称不被允许");
 				return;
 			}
-			comment.setNickname(name.trim());
 
 			String website = comment.getWebsite();
 			if (!Validators.isEmptyOrNull(website, true)) {

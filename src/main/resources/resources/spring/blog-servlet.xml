@@ -162,7 +162,7 @@
 
 	<bean class="me.qyh.blog.web.interceptor.AppInterceptor" />
 	<bean
-		class="me.qyh.blog.web.security.csrf.HttpSessionCsrfTokenRepository" />
+	class="me.qyh.blog.web.security.csrf.HttpSessionCsrfTokenRepository" />
 	<bean class="me.qyh.blog.web.WebConfiguration" />
 
 	<bean class="me.qyh.blog.template.TemplateMapping" />

@@ -50,6 +50,7 @@
 								th:href="@{/mgr/template/page/index}">页面管理</a></li>
 							<li><a th:class="${tag == 'tpl-fragment'}? active:''"
 								th:href="@{/mgr/template/fragment/index}">模板片段管理</a></li>
+							<li><a th:href="@{/mgr/template/data/index}">数据管理</a></li>
 							<li><a th:class="${tag == 'tpl-export'}? active:''"
 								th:href="@{/mgr/template/export}">模板导入导出</a></li>
 							<li><a th:class="${tag == 'tpl-other'}? active:''"
@@ -68,15 +69,15 @@
 					<div th:remove="tag" th:each="menu : ${menus}">
 						<div th:with="children=${menu.children}" th:remove="tag">
 							<li th:if="${#lists.isEmpty(children)}"><a
-								th:href="${urls.url}+'/'+${menu.path}">[[${menu.name}]]</a></li>
+								th:href="${urls.url}+'/'+${menu.path}">[[${messages.getMessage(menu.name)}]]</a></li>
 
 							<li th:unless="${#lists.isEmpty(children)}"><a
 								href="javascript:;" data-toggle="collapse"
-								th:data-target="'#plugin_'+${menu.id}">[[${menu.name}]]</a>
+								th:data-target="'#plugin_'+${menu.id}">[[${messages.getMessage(menu.name)}]]</a>
 								<ul th:id="'plugin_'+${menu.id}"
 									class="nav nav-second-level collapse in">
 									<li th:each="child : ${children}"><a
-										th:href="${urls.url}+'/'+${child.path}">[[${child.name}]]</a></li>
+										th:href="${urls.url}+'/'+${child.path}">[[${messages.getMessage(child.name)}]]</a></li>
 								</ul></li>
 						</div>
 					</div>

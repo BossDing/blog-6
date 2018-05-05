@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -75,11 +76,15 @@ public class PluginHandlerRegistry
 	private LogoutHandlerRegistry logoutHandlerRegistry;
 	@Autowired
 	private ArticleHitHandlerRegistry articleHitHandlerRegistry;
+	@Autowired
+	private TemplateRenderModelRegistry templateRenderModelRegistry;
 
 	private ResourceLoader resourceLoader;
 
 	private Set<String> plugins = new HashSet<>();
 	private static final List<PluginHandler> handlerInstances = new ArrayList<>();
+
+	private final PluginProperties pluginProperties = PluginProperties.getInstance();
 
 	@EventListener
 	@Order(value = Ordered.LOWEST_PRECEDENCE)
@@ -141,6 +146,7 @@ public class PluginHandlerRegistry
 		pluginHandler.addSuccessfulLoginHandler(successfulLoginHandlerRegistry);
 		pluginHandler.addLogoutHandler(logoutHandlerRegistry);
 		pluginHandler.addHitHandler(articleHitHandlerRegistry);
+		pluginHandler.addTemplateRenderModal(templateRenderModelRegistry);
 	}
 
 	@Override
@@ -174,11 +180,30 @@ public class PluginHandlerRegistry
 					PluginHandler newInstance;
 					try {
 						newInstance = (PluginHandler) handlerClass.getConstructor().newInstance();
-						newInstance.initialize(applicationContext);
 						handlerInstances.add(newInstance);
 					} catch (Exception e) {
-						logger.warn("加载插件：" + PluginHandler.class.getName() + "失败", e);
+						logger.warn("创建插件失败", e);
 					}
+				}
+			}
+
+			handlerInstances.sort((p1, p2) -> {
+				String p1Name = getPluginName(p1.getClass());
+				String p2Name = getPluginName(p2.getClass());
+				int order1 = pluginProperties.get("plugin.order." + p1Name).map(Integer::parseInt)
+						.orElse(p1.getOrder());
+				int order2 = pluginProperties.get("plugin.order." + p2Name).map(Integer::parseInt)
+						.orElse(p2.getOrder());
+				return (order1 < order2) ? -1 : (order1 > order2) ? 1 : 0;
+			});
+
+			for (Iterator<PluginHandler> it = handlerInstances.iterator(); it.hasNext();) {
+				PluginHandler handler = it.next();
+				try {
+					handler.initialize(applicationContext);
+				} catch (Exception e) {
+					logger.warn("插件：" + handler.getClass().getName() + "initialize失败", e);
+					it.remove();
 				}
 			}
 

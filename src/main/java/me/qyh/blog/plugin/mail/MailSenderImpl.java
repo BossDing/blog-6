@@ -23,8 +23,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.plugin.MailSender;
-import me.qyh.blog.core.plugin.MessageBean;
 import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.util.Validators;
 

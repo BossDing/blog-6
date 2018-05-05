@@ -20,6 +20,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
 import me.qyh.blog.core.plugin.Menu;
@@ -65,10 +66,10 @@ public class CommentPluginHandler implements PluginHandler {
 
 	@Override
 	public void addMenu(MenuRegistry registry) {
-		registry.addMenu(new Menu(messages.getMessage("plugin.comment.menu.commentMgr", "评论管理"))
-				.addChild(new Menu(messages.getMessage("plugin.comment.menu.uncheck", "未审核评论"), "mgr/comment/uncheck"))
-				.addChild(
-						new Menu(messages.getMessage("plugin.comment.menu.config", "配置"), "mgr/comment/updateConfig")));
+		registry.addMenu(new Menu(new Message("plugin.comment.menu.commentMgr", "评论管理"))
+				.addChild(new Menu(new Message("plugin.comment.menu.all", "所有评论"), "mgr/comment/all"))
+				.addChild(new Menu(new Message("plugin.comment.menu.uncheck", "未审核评论"), "mgr/comment/uncheck"))
+				.addChild(new Menu(new Message("plugin.comment.menu.config", "配置"), "mgr/comment/updateConfig")));
 	}
 
 	@Override
@@ -99,6 +100,11 @@ public class CommentPluginHandler implements PluginHandler {
 				messages.getMessage("plugin.comment.data.lastComment", "最近评论"), "comments");
 		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(lcdtp);
 		registry.register(lcdtp);
+	}
+
+	@Override
+	public int getOrder() {
+		return -2;
 	}
 
 }

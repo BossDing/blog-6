@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.plugin.comment.service.CommentConfig;
 
 @Component
@@ -72,6 +73,21 @@ public class CommentConfigValidator implements Validator {
 		if (pageSize < PAGE_SIZE_RANGE[0] || pageSize > PAGE_SIZE_RANGE[1]) {
 			errors.reject("commentConfig.pagesize.invalid", new Object[] { PAGE_SIZE_RANGE[0], PAGE_SIZE_RANGE[1] },
 					"评论分页应该在" + PAGE_SIZE_RANGE[0] + "和" + PAGE_SIZE_RANGE[1] + "之间");
+			return;
+		}
+
+		String name = config.getNickname();
+		if (Validators.isEmptyOrNull(name, true)) {
+			errors.reject("commentConfig.nickname.blank", "昵称不能为空");
+			return;
+		}
+		if (name.length() > CommentValidator.MAX_NAME_LENGTH) {
+			errors.reject("commentConfig.nickname.toolong", new Object[] { CommentValidator.MAX_NAME_LENGTH },
+					"昵称不能超过" + CommentValidator.MAX_NAME_LENGTH + "位");
+			return;
+		}
+		if (!name.matches(CommentValidator.NAME_PATTERN)) {
+			errors.reject("commentConfig.nickname.invalid", "昵称不被允许");
 			return;
 		}
 	}
