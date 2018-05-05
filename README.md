@@ -1,7 +1,7 @@
 # FUCK 广电
 
 
-版本：6.1 BETA
+版本：6.1 RELEASE
 
 重型博客
 
