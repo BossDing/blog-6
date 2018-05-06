@@ -37,6 +37,7 @@ import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.security.CaptchaValidator;
+import me.qyh.blog.web.security.IgnoreSpaceLock;
 
 @Controller
 public class LockController {
@@ -46,6 +47,7 @@ public class LockController {
 	@Autowired
 	private CaptchaValidator captchaValidator;
 
+	@IgnoreSpaceLock
 	@PostMapping({ "space/{alias}/unlock", "/unlock" })
 	public String unlock(HttpServletRequest request, RedirectAttributes ra, @RequestParam("unlockId") String unlockId) {
 		LockBean lockBean = LockHelper.getLockBean(request, unlockId).orElse(null);
@@ -66,6 +68,7 @@ public class LockController {
 		return "redirect:" + lockBean.getRedirectUrl();
 	}
 
+	@IgnoreSpaceLock
 	@PostMapping(value = { "space/{alias}/unlock", "/unlock" }, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
 	public JsonResult unlock(HttpServletRequest request, @RequestParam("unlockId") String unlockId)

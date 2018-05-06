@@ -58,6 +58,9 @@
 
 	<fragment name="底部" />
 	<div th:replace="base/foot_source">&nbsp;</div>
+	 <script th:inline="javascript">
+        var gotoUrl = [[${(param.goto == null || param.goto.isEmpty()) ? urls.url : param.goto}]];
+    </script>
 	<script type="text/javascript">
      $(document).ready(function(){
     	 var validateCodeClone = $("#captchaContainer").clone();
@@ -83,11 +86,7 @@
             contentType : 'application/json',
             success : function(data) {
               if (data.success) {
-                if(data.data){
-                	window.location.href = data.data;
-                } else {
-                	window.location.href = rootPath;
-                }
+                window.location.href = gotoUrl;
               } else {
             	  if(data.code == 'otp.required'){
             		  $("#loginForm").remove();
@@ -122,15 +121,10 @@
 					contentType : 'application/json',
 					success : function(data){
 						if(data.success){
-							if(data.data){
-			                	window.location.href = data.data;
-			                } else {
-			                	window.location.href = rootPath;
-			                }
+			                window.location.href = gotoUrl;
 						} else {
 							$.get(rootPath+'/login/needCaptcha',{},function(flag){
 		                  		 if(flag){
-		                  			 console.log(validateCodeClone)
 		                  			 if($("#captchaContainer").length == 0){
 		                  				$("#optVerifyForm").find('.form-group').eq(0).after(validateCodeClone);
 		                  				$("#captchaContainer").show();

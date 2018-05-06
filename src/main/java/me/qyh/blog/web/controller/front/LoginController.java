@@ -90,18 +90,6 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 	private final Message otpVerifyFail = new Message("otp.verifyFail", "动态口令校验失败");
 	private final Message pwdVerifyRequire = new Message("pwd.verifyRequire", "请先通过密码验证");
 
-	// 是否支持改变sessionid,需要运行容器支持servlet3.1+
-	private static boolean SUPPORT_CHANGE_SESSION_ID;
-
-	static {
-		try {
-			HttpServletRequest.class.getMethod("changeSessionId");
-			SUPPORT_CHANGE_SESSION_ID = true;
-		} catch (Exception e) {
-			SUPPORT_CHANGE_SESSION_ID = false;
-		}
-	}
-
 	@Value("${login.attempt.count:5}")
 	private int attemptCount;
 
@@ -133,8 +121,8 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 			request.getSession().setAttribute(GA_SESSION_KEY, user);
 			return new JsonResult(false, new Message("otp.required", "请输入动态口令"));
 		}
-		String lastAuthencationFailUrl = successLogin(user, request, response);
-		return new JsonResult(true, lastAuthencationFailUrl);
+		successLogin(user, request, response);
+		return new JsonResult(true);
 	}
 
 	@GetMapping("login/needCaptcha")
@@ -166,11 +154,11 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 			return new JsonResult(false, otpVerifyFail);
 		}
 		session.removeAttribute(GA_SESSION_KEY);
-		String lastAuthencationFailUrl = successLogin(user, request, response);
-		return new JsonResult(true, lastAuthencationFailUrl);
+		successLogin(user, request, response);
+		return new JsonResult(true);
 	}
 
-	private String successLogin(User user, HttpServletRequest request, HttpServletResponse response) {
+	private void successLogin(User user, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = request.getSession();
 		session.setAttribute(Constants.USER_SESSION_KEY, user);
 		changeSessionId(request);
@@ -184,18 +172,10 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 				logger.warn(e.getMessage(), e);
 			}
 		}
-
-		String lastAuthencationFailUrl = (String) session.getAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-		if (lastAuthencationFailUrl != null) {
-			session.removeAttribute(Constants.LAST_AUTHENCATION_FAIL_URL);
-		}
-		return lastAuthencationFailUrl;
 	}
 
 	private void changeSessionId(HttpServletRequest request) {
-		if (SUPPORT_CHANGE_SESSION_ID) {
-			request.changeSessionId();
-		}
+		request.changeSessionId();
 	}
 
 	private void enableOtpRequired() throws LogicException {

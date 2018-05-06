@@ -27,6 +27,7 @@
         modal += '<div class="form-group" >';
         modal += '<label class="col-sm-2 control-label">内容</label>';
         modal += '<div class="col-sm-10">';
+        modal += '<p><span data-smiley style="cursor:pointer;font-size:20px">😂</span><span data-smiley style="cursor:pointer;font-size:20px">😄</span><span data-smiley style="cursor:pointer;font-size:20px">😭 </span><span data-smiley style="cursor:pointer;font-size:20px">😍</span><span data-smiley style="cursor:pointer;font-size:20px">😘</span><span data-smiley style="cursor:pointer;font-size:20px">😝</span><span data-smiley style="cursor:pointer;font-size:20px">🤬</span><span data-smiley style="cursor:pointer;font-size:20px">😴</span><span data-smiley style="cursor:pointer;font-size:20px">👿</span></p>'
         modal += '<textarea class="form-control" id="content" style="height: 270px" placeholder="必填"></textarea>';
         modal += '</div>';
         modal += '</div>';
@@ -83,6 +84,27 @@
                 }
             })
         });
+        
+        var insertAtCursor = function(myField, myValue) {
+            if (document.selection) {
+                myField.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+            }
+            else if (myField.selectionStart || myField.selectionStart == '0') {
+                var startPos = myField.selectionStart;
+                var endPos = myField.selectionEnd;
+                myField.value = myField.value.substring(0, startPos)
+                    + myValue
+                    + myField.value.substring(endPos, myField.value.length);
+            } else {
+                myField.value += myValue;
+            }
+        }
+        
+        $('[data-smiley]').click(function(){
+        	insertAtCursor($("#content")[0],$(this).text());
+        })
         
         $("#captcha-img").click(function(){
         	$(this).attr('src',basePath+'/captcha?time='+$.now());

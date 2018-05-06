@@ -1,4 +1,5 @@
 <redirect url="/" th:if="${error == null}" />
+<redirect th:url="${error.url == null ? urls.url + '/login' :  urls.url + '/login?goto='+error.url}" th:if="${error.code == 403}" />
 <!DOCTYPE html>
 <html>
 <head>

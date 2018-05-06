@@ -53,6 +53,7 @@ import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
+import me.qyh.blog.web.security.IgnoreSpaceLock;
 import me.qyh.blog.web.security.RequestMatcher;
 import me.qyh.blog.web.security.csrf.CsrfException;
 import me.qyh.blog.web.security.csrf.CsrfToken;
@@ -86,11 +87,13 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			throws Exception {
 		if (isHandler(handler)) {
 
+			HandlerMethod handlerMethod = (HandlerMethod) handler;
+
 			try {
 				setRequestAttribute(request);
-				setUser(request, handler);
+				setUser(request, handlerMethod);
 				setLockKeys(request);
-				setSpace(request);
+				setSpace(request, handlerMethod);
 				Environment.setIP(Webs.getIP(request));
 				csrfCheck(request, response);
 			} catch (AuthencationException | LockException | SpaceNotFoundException | CsrfException e) {
@@ -106,7 +109,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
-	private void setUser(HttpServletRequest request, Object handler) {
+	private void setUser(HttpServletRequest request, HandlerMethod handler) {
 		HttpSession session = request.getSession(false);
 		User user = null;
 		if (session != null) {
@@ -117,15 +120,12 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		enableLogin(handler);
 	}
 
-	private void enableLogin(Object methodHandler) {
-		if (methodHandler instanceof HandlerMethod) {
-			// auth check
-			getAnnotation(((HandlerMethod) methodHandler).getMethod(), EnsureLogin.class)
-					.ifPresent(ann -> Environment.doAuthencation());
-		}
+	private void enableLogin(HandlerMethod methodHandler) {
+		// auth check
+		getAnnotation(methodHandler.getMethod(), EnsureLogin.class).ifPresent(ann -> Environment.doAuthencation());
 	}
 
-	private void setSpace(HttpServletRequest request) throws SpaceNotFoundException {
+	private void setSpace(HttpServletRequest request, HandlerMethod handlerMethod) throws SpaceNotFoundException {
 		String spaceAlias = Webs.getSpaceFromRequest(request);
 		if (spaceAlias != null) {
 			if (!SpaceValidator.isValidAlias(spaceAlias)) {
@@ -137,7 +137,8 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				if (space.getIsPrivate()) {
 					Environment.doAuthencation();
 				}
-				if (space.hasLock() && !Webs.unlockRequest(request)) {
+				if (space.hasLock() && !Webs.unlockRequest(request)
+						&& !getAnnotation(handlerMethod.getMethod(), IgnoreSpaceLock.class).isPresent()) {
 					lockManager.openLock(space);
 				}
 			}

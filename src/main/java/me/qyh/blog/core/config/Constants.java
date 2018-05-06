@@ -40,10 +40,6 @@ public class Constants {
 	 */
 	public static final Charset CHARSET = StandardCharsets.UTF_8;
 	/**
-	 * session中储存最后一次认证失败的地址的key
-	 */
-	public static final String LAST_AUTHENCATION_FAIL_URL = "lastAuthencationFailUrl";
-	/**
 	 * 系统默认分页条数
 	 */
 	public static final int DEFAULT_PAGE_SIZE = 10;

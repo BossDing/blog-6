@@ -134,7 +134,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 		return getErrorForward(request, new ErrorInfo(ERROR_500, 500));
 	}
 
-	private final class AuthencationExceptionHandler implements ExceptionHandler {
+	private class AuthencationExceptionHandler implements ExceptionHandler {
 
 		@Override
 		public boolean match(Exception ex) {
@@ -146,12 +146,12 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 			if (Webs.isAjaxRequest(request)) {
 				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_403)));
 			}
+			String authUrl = null;
 			// 将链接放入
 			if ("get".equalsIgnoreCase(request.getMethod())) {
-				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
+				authUrl = getFullUrl(request);
 			}
-
-			return getErrorForward(request, new ErrorInfo(ERROR_403, 403));
+			return getErrorForward(request, new Error403Info(ERROR_403, 403, authUrl));
 		}
 	}
 
@@ -453,26 +453,12 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 
 	}
 
-	private final class CsrfExceptionHandler implements ExceptionHandler {
+	private final class CsrfExceptionHandler extends AuthencationExceptionHandler {
 
 		@Override
 		public boolean match(Exception ex) {
 			return ex instanceof CsrfException;
 		}
-
-		@Override
-		public ModelAndView handler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
-			if (Webs.isAjaxRequest(request)) {
-				return new ModelAndView(new JsonView(new JsonResult(false, ERROR_403)));
-			}
-			// 将链接放入
-			if ("get".equalsIgnoreCase(request.getMethod())) {
-				request.getSession().setAttribute(Constants.LAST_AUTHENCATION_FAIL_URL, getFullUrl(request));
-			}
-
-			return getErrorForward(request, new ErrorInfo(ERROR_403, 403));
-		}
-
 	}
 
 	private final class MultipartExceptionHandler implements ExceptionHandler {
@@ -538,7 +524,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 		}
 	}
 
-	public static final class ErrorInfo implements Serializable {
+	public class ErrorInfo implements Serializable {
 		/**
 		 * 
 		 */
@@ -558,6 +544,25 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 
 		public int getCode() {
 			return code;
+		}
+
+	}
+
+	public class Error403Info extends ErrorInfo {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private final String url;
+
+		public Error403Info(Message message, int code, String url) {
+			super(message, code);
+			this.url = url;
+		}
+
+		public String getUrl() {
+			return url;
 		}
 
 	}
