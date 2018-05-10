@@ -65,7 +65,6 @@ import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.service.CommentServer;
-import me.qyh.blog.core.service.GravatarSearcher;
 import me.qyh.blog.core.service.UserService;
 import me.qyh.blog.core.text.CommonMarkdown2Html;
 import me.qyh.blog.core.text.HtmlClean;
@@ -90,8 +89,7 @@ import me.qyh.blog.plugin.comment.vo.CommentQueryParam;
 import me.qyh.blog.plugin.comment.vo.IPQueryParam;
 import me.qyh.blog.plugin.comment.vo.PeriodCommentQueryParam;
 
-public class CommentService
-		implements InitializingBean, CommentServer, ApplicationEventPublisherAware, GravatarSearcher {
+public class CommentService implements InitializingBean, CommentServer, ApplicationEventPublisherAware {
 
 	private List<CommentChecker> checkers = new ArrayList<>();
 	@Autowired(required = false)
@@ -769,11 +767,6 @@ public class CommentService
 	public void addCommentModuleHandler(CommentModuleHandler handler) {
 		Objects.requireNonNull(handler);
 		handlerMap.put(handler.getType(), handler);
-	}
-
-	@Override
-	public boolean contains(String gravatar) {
-		return commentDao.checkExistsByGravatar(gravatar);
 	}
 
 	public void setCheckers(List<CommentChecker> checkers) {

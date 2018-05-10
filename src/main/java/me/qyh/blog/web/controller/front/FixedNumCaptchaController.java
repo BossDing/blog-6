@@ -1,51 +1,43 @@
-/*
- * Copyright 2016 qyh.me
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package me.qyh.blog.web.controller.front;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.util.WebUtils;
 
 import com.github.cage.Cage;
 import com.github.cage.GCage;
 import com.github.cage.token.RandomTokenGenerator;
 
+import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.web.security.CaptchaValidator;
 
-//@Controller
-public class CaptchaController implements InitializingBean, CaptchaValidator {
+@Controller
+public class FixedNumCaptchaController implements InitializingBean, CaptchaValidator {
 
-	/**
-	 * session储存验证码的key
-	 */
-	private static final String VALIDATE_CODE_SESSION_KEY = "captchaInSession";
+	private static final String CAPTHCHA_ID = "captchaId";
+
 	private static final Random random = new Random(System.nanoTime());
 	private static final Message INVALID_CAPTCHA_MESSAGE = new Message("validateCode.error", "验证码错误");
 
@@ -53,14 +45,45 @@ public class CaptchaController implements InitializingBean, CaptchaValidator {
 	private int num;
 	@Value("${captcha.delta:0}")
 	private int delta;
+	@Value("${captcha.maxNum:1000}")
+	private int captchMum;
+	@Autowired
+	private UrlHelper urlHelper;
 
 	private Cage cage;
 
+	private Map<String, String> fifoMap = new LinkedHashMap<String, String>() {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		protected boolean removeEldestEntry(Entry<String, String> eldest) {
+			return size() > captchMum;
+		}
+
+	};
+
 	@ResponseBody
 	@GetMapping(value = "captcha", produces = MediaType.IMAGE_JPEG_VALUE)
-	public byte[] draw(HttpSession session) {
+	public byte[] draw(HttpServletRequest request, HttpServletResponse resp) {
 		String capText = cage.getTokenGenerator().next();
-		session.setAttribute(VALIDATE_CODE_SESSION_KEY, "??");
+		String uuid = StringUtils.uuid();
+		Cookie cookie = WebUtils.getCookie(request, CAPTHCHA_ID);
+		synchronized (this) {
+			if (cookie != null) {
+				fifoMap.remove(cookie.getValue());
+			}
+			fifoMap.put(uuid, capText);
+		}
+		if (cookie == null) {
+			cookie = new Cookie(CAPTHCHA_ID, uuid);
+			setCookie(cookie, null, -1, resp);
+		} else {
+			setCookie(cookie, uuid, -1, resp);
+		}
 		BufferedImage bi = cage.drawImage(capText);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
@@ -87,19 +110,29 @@ public class CaptchaController implements InitializingBean, CaptchaValidator {
 		if (captcha == null) {
 			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
 		}
-		HttpSession session = request.getSession(false);
-		if (session == null) {
+		Cookie cookie = WebUtils.getCookie(request, CAPTHCHA_ID);
+		if (cookie == null) {
 			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
 		}
-		String sessionCaptcha = (String) session.getAttribute(VALIDATE_CODE_SESSION_KEY);
-		if (sessionCaptcha == null) {
+		String text;
+		synchronized (this) {
+			text = fifoMap.remove(cookie.getValue());
+		}
+		if (text == null || !text.equals(captcha)) {
 			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
 		}
-		// remove
-		session.removeAttribute(VALIDATE_CODE_SESSION_KEY);
-		if (!sessionCaptcha.equals(captcha)) {
-			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
+	}
+
+	private void setCookie(Cookie cookie, String value, int maxAge, HttpServletResponse resp) {
+		cookie.setMaxAge(maxAge);
+		cookie.setHttpOnly(true);
+		if (value != null) {
+			cookie.setValue(value);
 		}
+		cookie.setSecure(urlHelper.isSecure());
+		cookie.setPath("/" + urlHelper.getContextPath());
+		cookie.setDomain(urlHelper.getDomain());
+		resp.addCookie(cookie);
 	}
 
 }

@@ -88,7 +88,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 		if (!article.getAllowComment() && !Environment.isLogin()) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
-		lockManager.openLock(article);
+		lockManager.openLock(article.getLockId());
 	}
 
 	@Override
@@ -103,8 +103,8 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 		if (!Environment.match(article.getSpace())) {
 			return false;
 		}
-		lockManager.openLock(article);
-		lockManager.openLock(article.getSpace());
+		lockManager.openLock(article.getLockId());
+		lockManager.openLock(article.getSpace().getLockId());
 		return true;
 	}
 

@@ -300,9 +300,9 @@ var modal = '<div class="modal" id="fileSelectModal" tabindex="-1"';
 						value:url,
 						callback: function (result) {
 					        if(result != null){
-					        	$('#content').summernote('pasteHTML', '<video controls="" src="'+url+'" width="100%" ></video>');
+					        	$('#content').summernote('pasteHTML', '&nbsp;<video controls="" poster="'+result+'"  src="'+url+'" width="100%" ></video>');
 					        }else{
-					        	$('#content').summernote('pasteHTML', '<video controls="" poster="'+result+'" src="a.mp4" width="100%" ></video>');
+					        	$('#content').summernote('pasteHTML', '&nbsp;<video controls="" src="'+url+'" width="100%" ></video>');
 					        }
 					    }
 					});

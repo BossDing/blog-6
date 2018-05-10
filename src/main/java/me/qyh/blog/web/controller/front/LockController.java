@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.web.controller.front;
 
-import java.util.Objects;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,8 +32,8 @@ import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.LockKey;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
+import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.security.CaptchaValidator;
@@ -46,15 +46,18 @@ public class LockController {
 	private UrlHelper urlHelper;
 	@Autowired
 	private CaptchaValidator captchaValidator;
+	@Autowired
+	private LockManager lockManager;
 
 	@IgnoreSpaceLock
 	@PostMapping({ "space/{alias}/unlock", "/unlock" })
-	public String unlock(HttpServletRequest request, RedirectAttributes ra, @RequestParam("unlockId") String unlockId) {
-		LockBean lockBean = LockHelper.getLockBean(request, unlockId).orElse(null);
-		if (lockBean == null || !Objects.equals(Webs.getSpaceFromRequest(request), lockBean.getSpaceAlias())) {
+	public String unlock(HttpServletRequest request, RedirectAttributes ra, @RequestParam("lockId") String lockId,
+			@RequestParam(required = false, name = "redirectUrl") String redirectUrl) {
+		Optional<Lock> op = lockManager.findLock(lockId);
+		if (!op.isPresent()) {
 			return "redirect:" + urlHelper.getUrl();
 		}
-		Lock lock = lockBean.getLock();
+		Lock lock = op.get();
 		LockKey key;
 		try {
 			captchaValidator.doValidate(request);
@@ -62,26 +65,25 @@ public class LockController {
 			lock.tryOpen(key);
 		} catch (LogicException e) {
 			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
-			return "redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock.getLockType(), lockBean.getId());
+			return "redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock, redirectUrl);
 		}
-		LockHelper.addKey(request, key, lockBean);
-		return "redirect:" + lockBean.getRedirectUrl();
+		LockHelper.addKey(request, key);
+		return "redirect:" + (redirectUrl == null ? urlHelper.getUrl() : redirectUrl);
 	}
 
 	@IgnoreSpaceLock
 	@PostMapping(value = { "space/{alias}/unlock", "/unlock" }, headers = "x-requested-with=XMLHttpRequest")
 	@ResponseBody
-	public JsonResult unlock(HttpServletRequest request, @RequestParam("unlockId") String unlockId)
-			throws LogicException {
-		LockBean lockBean = LockHelper.getLockBean(request, unlockId).orElse(null);
-		if (lockBean == null || !Objects.equals(Webs.getSpaceFromRequest(request), lockBean.getSpaceAlias())) {
+	public JsonResult unlock(HttpServletRequest request, @RequestParam("lockId") String lockId) throws LogicException {
+		Optional<Lock> op = lockManager.findLock(lockId);
+		if (!op.isPresent()) {
 			return new JsonResult(false, new Message("lock.miss", "锁缺失"));
 		}
 		captchaValidator.doValidate(request);
-		Lock lock = lockBean.getLock();
+		Lock lock = op.get();
 		LockKey key = lock.getKeyFromRequest(request);
 		lock.tryOpen(key);
-		LockHelper.addKey(request, key, lockBean);
-		return new JsonResult(true, lockBean.getRedirectUrl());
+		LockHelper.addKey(request, key);
+		return new JsonResult(true);
 	}
 }

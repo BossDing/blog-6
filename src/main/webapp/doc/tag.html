@@ -151,14 +151,14 @@ body {
 					</div>
 					<div class="alert alert-info">
 						lock标签支持type属性，如果该属性值为block，那么lock标签下还支持两个额外的标签：locked和unlocked，
-						locked标签里面的内容将会在用户没有解锁时渲染，unlocked标签中的内容会在用户解锁后渲染。locked标签内还可以通过${urls.getUnlockUrl(unlockId)}来获取解锁地址
+						locked标签里面的内容将会在用户没有解锁时渲染，unlocked标签中的内容会在用户解锁后渲染。locked标签内还可以通过${urls.getUnlockUrl(lock,urls.getFullUrl(#request))}来获取解锁地址
 						<p>注意事项：</p>
 						<ul>
 							<li><span class="text text-warning">lock标签不支持嵌套</span></li>
 							<li><span class="text text-warning">
 									locked和unlocked标签必须在lock内使用</span></li>
 							<li><span class="text text-warning">
-									lock是模板级别的，与访问路径无关</span></li>
+									lock与访问路径无关</span></li>
 						</ul>
 					</div>
 

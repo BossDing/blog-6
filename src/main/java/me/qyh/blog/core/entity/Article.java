@@ -33,7 +33,7 @@ import me.qyh.blog.core.util.Validators;
  * @author Administrator
  *
  */
-public class Article extends BaseLockResource {
+public class Article extends BaseEntity {
 
 	/**
 	 * 
@@ -56,6 +56,7 @@ public class Article extends BaseLockResource {
 	private Integer level; // 博客级别，级别越高显示越靠前
 	private String alias;// 别名，可通过别名访问文章
 	private Boolean allowComment;
+	private String lockId;
 
 	/**
 	 * <p>
@@ -165,7 +166,7 @@ public class Article extends BaseLockResource {
 		this.id = source.id;
 		this.allowComment = source.allowComment;
 		this.featureImage = source.featureImage;
-		source.getLock().ifPresent(this::setLockId);
+		this.lockId = source.lockId;
 	}
 
 	public Space getSpace() {
@@ -310,13 +311,14 @@ public class Article extends BaseLockResource {
 		return tags.stream().map(Tag::getName).collect(Collectors.joining(","));
 	}
 
-	@Override
 	public boolean hasLock() {
-		boolean hasLock = super.hasLock();
-		if (!hasLock) {
-			hasLock = space != null && space.hasLock();
+		if (lockId != null) {
+			return true;
 		}
-		return hasLock;
+		if (space != null && space.hasLock()) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -357,6 +359,14 @@ public class Article extends BaseLockResource {
 
 	public void setFeatureImage(String featureImage) {
 		this.featureImage = featureImage;
+	}
+
+	public String getLockId() {
+		return lockId;
+	}
+
+	public void setLockId(String lockId) {
+		this.lockId = lockId;
 	}
 
 	@Override

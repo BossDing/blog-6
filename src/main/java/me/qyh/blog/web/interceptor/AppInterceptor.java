@@ -18,7 +18,6 @@ package me.qyh.blog.web.interceptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -139,7 +138,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 				}
 				if (space.hasLock() && !Webs.unlockRequest(request)
 						&& !getAnnotation(handlerMethod.getMethod(), IgnoreSpaceLock.class).isPresent()) {
-					lockManager.openLock(space);
+					lockManager.openLock(space.getLockId());
 				}
 			}
 
@@ -153,10 +152,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	 * @param request
 	 */
 	private void setLockKeys(HttpServletRequest request) {
-		Map<String, List<LockKey>> keysMap = LockHelper.getKeysMap(request);
-		if (!CollectionUtils.isEmpty(keysMap)) {
-			LOGGER.debug("将LockKey放入LockKeyContext中:{}", keysMap);
-			LockKeyContext.set(keysMap);
+		List<LockKey> keys = LockHelper.getKeys(request);
+		if (!CollectionUtils.isEmpty(keys)) {
+			LOGGER.debug("将LockKey放入LockKeyContext中:{}", keys);
+			LockKeyContext.set(keys);
 		}
 	}
 
@@ -237,7 +236,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		String unlockPattern = alias == null ? UNLOCK_PATTERN : SPACE_UNLOCK_PATTERN;
 		if (request.getAttribute(Webs.UNLOCK_ATTR_NAME) == null) {
 			String path = request.getRequestURI().substring(request.getContextPath().length());
-			boolean isUnlock = UrlUtils.match(unlockPattern, path) && request.getParameter("unlockId") != null;
+			boolean isUnlock = UrlUtils.match(unlockPattern, path) && request.getParameter("lockId") != null;
 			request.setAttribute(Webs.UNLOCK_ATTR_NAME, isUnlock);
 		}
 		if (request.getAttribute(Webs.SPACE_URLS_ATTR_NAME) == null) {

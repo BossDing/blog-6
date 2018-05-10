@@ -16,16 +16,14 @@
 package me.qyh.blog.template.render.thymeleaf.dialect;
 
 import org.thymeleaf.context.ITemplateContext;
-import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import me.qyh.blog.core.vo.LockBean;
+import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.template.render.thymeleaf.dialect.LockTagProcessor.LockStructure;
-import me.qyh.blog.web.LockHelper;
 
 /**
  * 
@@ -48,9 +46,8 @@ public class LockedTagProcessor extends AbstractElementTagProcessor {
 			throw new TemplateProcessingException("locked标签必须为lock标签的子标签");
 		}
 		if (structure.isLocked()) {
-			LockBean bean = structure.getLockBean();
-			LockHelper.storeLockBean(((IWebContext) context).getRequest(), bean);
-			structureHandler.setLocalVariable("unlockId", bean.getId());
+			Lock lock = structure.getLock();
+			structureHandler.setLocalVariable("lock", lock);
 			structureHandler.removeTags();
 		} else {
 			structureHandler.removeElement();

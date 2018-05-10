@@ -42,6 +42,8 @@
 			</div>
 			<div class="row">
 				<div class="col-md-12">
+				<div class="alert alert-danger" th:unless="${error == null}"
+						th:text="${messages.getMessage(error)}"></div>
 					<form style="display: none"
 						th:action="@{/mgr/template/fragment/index}" id="pageForm">
 						<input type="hidden" th:value="${page.currentPage}"

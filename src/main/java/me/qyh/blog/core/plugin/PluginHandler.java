@@ -199,6 +199,17 @@ public interface PluginHandler extends Ordered {
 
 	}
 
+	/**
+	 * 注册ResourceHttpRequestHandlerMapping
+	 * 
+	 * @param registry
+	 * @throws Exception
+	 */
+	default void addResourceHttpRequestHandlerMapping(ResourceHttpRequestHandlerMappingRegistry registry)
+			throws Exception {
+
+	}
+
 	default int getOrder() {
 		return 0;
 	}

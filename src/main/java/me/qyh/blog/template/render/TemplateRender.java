@@ -33,6 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
+import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
@@ -40,6 +41,7 @@ import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.MenuRegistry;
 import me.qyh.blog.core.plugin.TemplateRenderModelRegistry;
 import me.qyh.blog.core.security.AuthencationException;
+import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Formats;
 import me.qyh.blog.core.util.Jsons;
@@ -47,8 +49,6 @@ import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
-import me.qyh.blog.core.vo.LockBean;
-import me.qyh.blog.web.LockHelper;
 import me.qyh.blog.web.Webs;
 
 /**
@@ -71,6 +71,8 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 	private UrlHelper urlHelper;
 	@Autowired(required = false)
 	private GravatarUrlGenerator gravatarUrlGenerator;
+	@Autowired
+	private LockManager lockManager;
 
 	private Map<String, Object> pros = new HashMap<>();
 
@@ -148,11 +150,13 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 		_model.put("ip", Environment.getIP());
 
 		if (Webs.unlockRequest(request)) {
-			String unlockId = request.getParameter("unlockId");
-			LockBean lockBean = LockHelper.getLockBean(request, unlockId)
-					.orElseThrow(() -> new MissLockException(unlockId));
-			_model.put("lock", lockBean.getLock());
-			_model.put("unlockId", lockBean.getId());
+			String lockId = request.getParameter("lockId");
+			Lock lock = lockManager.findLock(lockId).orElseThrow(() -> new MissLockException(lockId));
+			_model.put("lock", lock);
+			String redirectUrl = request.getParameter("redirectUrl");
+			if (redirectUrl != null) {
+				_model.put("redirectUrl", redirectUrl);
+			}
 		}
 
 		return templateRenderer.execute(viewTemplateName, _model, request, response);

@@ -16,7 +16,6 @@
 package me.qyh.blog.core.context;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.util.CollectionUtils;
@@ -31,7 +30,7 @@ import me.qyh.blog.core.entity.LockKey;
  */
 public class LockKeyContext {
 
-	private static final ThreadLocal<Map<String, List<LockKey>>> KEYS_LOCAL = new ThreadLocal<>();
+	private static final ThreadLocal<List<LockKey>> KEYS_LOCAL = new ThreadLocal<>();
 
 	private LockKeyContext() {
 		super();
@@ -42,14 +41,12 @@ public class LockKeyContext {
 	 * 
 	 * @return
 	 */
-	public static Optional<LockKey> getKey(String resourceId, String lockId) {
-		Map<String, List<LockKey>> keyMap = KEYS_LOCAL.get();
-		if (CollectionUtils.isEmpty(keyMap)) {
+	public static Optional<LockKey> getKey(String lockId) {
+		List<LockKey> keys = KEYS_LOCAL.get();
+		if (CollectionUtils.isEmpty(keys)) {
 			return Optional.empty();
 		}
-		List<LockKey> resourceKeys = keyMap.get(resourceId);
-		return CollectionUtils.isEmpty(resourceKeys) ? Optional.empty()
-				: resourceKeys.stream().filter(key -> key.lockId().equals(lockId)).findAny();
+		return keys.stream().filter(key -> key.lockId().equals(lockId)).findAny();
 	}
 
 	/**
@@ -64,8 +61,8 @@ public class LockKeyContext {
 	 * 
 	 * @param keysMap
 	 */
-	public static void set(Map<String, List<LockKey>> keysMap) {
-		KEYS_LOCAL.set(keysMap);
+	public static void set(List<LockKey> keys) {
+		KEYS_LOCAL.set(keys);
 	}
 
 }

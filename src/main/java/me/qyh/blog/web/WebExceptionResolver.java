@@ -65,7 +65,6 @@ import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.core.vo.LockBean;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.RedirectException;
 import me.qyh.blog.template.render.TemplateRenderException;
@@ -227,15 +226,10 @@ public class WebExceptionResolver implements HandlerExceptionResolver, Exception
 			Lock lock = ex.getLock();
 			String redirectUrl = getFullUrl(request);
 			Message error = ex.getError();
-			// 获取空间别名
-			String alias = Webs.getSpaceFromRequest(request);
-			LockBean bean = new LockBean(lock, ex.getLockResource(), redirectUrl, alias);
-			LockHelper.storeLockBean(request, bean);
 			if (error != null) {
 				RequestContextUtils.getOutputFlashMap(request).put(Constants.ERROR, error);
 			}
-			return new ModelAndView(
-					"redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock.getLockType(), bean.getId()));
+			return new ModelAndView("redirect:" + Webs.getSpaceUrls(request).getUnlockUrl(lock, redirectUrl));
 		}
 	}
 

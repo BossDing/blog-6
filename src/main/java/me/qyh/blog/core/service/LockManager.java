@@ -17,7 +17,6 @@ package me.qyh.blog.core.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,6 @@ import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.context.LockKeyContext;
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.LockKey;
-import me.qyh.blog.core.entity.LockResource;
 import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -60,27 +58,22 @@ public class LockManager implements LockProviderRegistry {
 	 *             解锁失败
 	 */
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public void openLock(LockResource lockResource) throws LockException {
-		Objects.requireNonNull(lockResource);
+	public void openLock(String lockId) throws LockException {
+		if (lockId == null) {
+			return;
+		}
 		if (Environment.isLogin()) {
 			return;
 		}
-		Optional<String> optionalLockId = lockResource.getLock();
-		if (!optionalLockId.isPresent()) {
-			return;
-		}
-		String resourceId = lockResource.getResource();
-		String lockId = optionalLockId.get();
 		findLock(lockId).ifPresent(lock -> {
-			LockKey key = LockKeyContext.getKey(resourceId, lockId)
-					.orElseThrow(() -> new LockException(lock, lockResource, null));
+			LockKey key = LockKeyContext.getKey(lockId).orElseThrow(() -> new LockException(lock, null));
 			try {
 				lock.tryOpen(key);
 			} catch (LogicException e) {
-				throw new LockException(lock, lockResource, new Message("lock.update.recheck", "因为锁更新导致解锁失败，请重新解锁"));
+				throw new LockException(lock, new Message("lock.update.recheck", "因为锁更新导致解锁失败，请重新解锁"));
 			} catch (Exception e) {
 				LOGGER.error("尝试用" + key.getKey() + "打开锁" + lock.getId() + "异常，异常信息:" + e.getMessage(), e);
-				throw new LockException(lock, lockResource, Constants.SYSTEM_ERROR);
+				throw new LockException(lock, Constants.SYSTEM_ERROR);
 			}
 		});
 	}
@@ -112,7 +105,8 @@ public class LockManager implements LockProviderRegistry {
 
 	}
 
-	private Optional<Lock> findLock(String id) {
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public Optional<Lock> findLock(String id) {
 		return providers.stream().map(provider -> provider.getLock(id)).filter(Optional::isPresent).map(Optional::get)
 				.findFirst();
 	}

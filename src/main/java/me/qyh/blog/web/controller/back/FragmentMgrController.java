@@ -123,8 +123,8 @@ public class FragmentMgrController extends BaseMgrController {
 	public String update(@RequestParam("id") Integer id, Model model, RedirectAttributes ra) {
 		Optional<Fragment> optional = templateService.queryFragment(id);
 		if (!optional.isPresent()) {
-			ra.addFlashAttribute(Constants.ERROR, new Message("fragment.user.notExists", "自定义页面不存在"));
-			return "redirect:/mgr/template/fragment";
+			ra.addFlashAttribute(Constants.ERROR, new Message("fragment.user.notExists", "自定义模板片段不存在"));
+			return "redirect:/mgr/template/fragment/index";
 		}
 		Fragment fragment = optional.get();
 		model.addAttribute("fragment", fragment);

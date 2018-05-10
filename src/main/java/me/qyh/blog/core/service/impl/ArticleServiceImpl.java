@@ -637,7 +637,7 @@ public class ArticleServiceImpl
 				Environment.doAuthencation();
 			}
 
-			lockManager.openLock(article);
+			lockManager.openLock(article.getLockId());
 			return Optional.of(article);
 		}
 
@@ -723,7 +723,7 @@ public class ArticleServiceImpl
 					&& !article.getIsPrivate();
 
 			if (hit) {
-				lockManager.openLock(article);
+				lockManager.openLock(article.getLockId());
 			}
 			return hit;
 		}

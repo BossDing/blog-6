@@ -25,7 +25,7 @@ import me.qyh.blog.core.util.Validators;
  * @author Administrator
  *
  */
-public class Space extends BaseLockResource {
+public class Space extends BaseEntity {
 
 	/**
 	 * 
@@ -40,6 +40,7 @@ public class Space extends BaseLockResource {
 	private Boolean isPrivate;
 
 	private Boolean isDefault;
+	private String lockId;
 
 	/**
 	 * default
@@ -78,7 +79,7 @@ public class Space extends BaseLockResource {
 		this.isDefault = space.isDefault;
 		this.isPrivate = space.isPrivate;
 		this.name = space.name;
-		space.getLock().ifPresent(this::setLockId);
+		this.lockId = space.lockId;
 	}
 
 	public String getAlias() {
@@ -105,11 +106,6 @@ public class Space extends BaseLockResource {
 		this.name = name;
 	}
 
-	@Override
-	public String getResource() {
-		return "Space-" + alias;
-	}
-
 	public Boolean getIsPrivate() {
 		return isPrivate;
 	}
@@ -124,6 +120,18 @@ public class Space extends BaseLockResource {
 
 	public void setIsDefault(Boolean isDefault) {
 		this.isDefault = isDefault;
+	}
+
+	public boolean hasLock() {
+		return lockId != null;
+	}
+
+	public String getLockId() {
+		return lockId;
+	}
+
+	public void setLockId(String lockId) {
+		this.lockId = lockId;
 	}
 
 	@Override

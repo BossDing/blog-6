@@ -20,9 +20,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -30,13 +31,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.entity.Tag;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Times;
+import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
 import me.qyh.blog.core.vo.NewsQueryParam;
@@ -226,6 +230,10 @@ public class UrlHelper {
 		public NewsUrlHelper getNewsUrlHelper(String path) {
 			return new NewsUrlHelper(url, path);
 		}
+
+		public String getFullUrl(HttpServletRequest request) {
+			return UrlUtils.buildFullRequestUrl(request);
+		}
 	}
 
 	/**
@@ -248,8 +256,13 @@ public class UrlHelper {
 			}
 		}
 
-		public String getUnlockUrl(String lockType, String unlockId) {
-			return url + "/unlock/" + lockType + "?unlockId=" + "" + Objects.toString(unlockId, "");
+		public String getUnlockUrl(Lock lock, String redirectUrl) {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url + "/unlock/" + lock.getLockType())
+					.queryParam("lockId", lock.getId());
+			if (redirectUrl != null) {
+				builder.queryParam("redirectUrl", redirectUrl);
+			}
+			return builder.build().toString();
 		}
 
 		public String getSpace() {

@@ -78,6 +78,8 @@ public class PluginHandlerRegistry
 	private ArticleHitHandlerRegistry articleHitHandlerRegistry;
 	@Autowired
 	private TemplateRenderModelRegistry templateRenderModelRegistry;
+	@Autowired
+	private ResourceHttpRequestHandlerMappingRegistry resourceHttpRequestHandlerMappingRegistry;
 
 	private ResourceLoader resourceLoader;
 
@@ -147,6 +149,7 @@ public class PluginHandlerRegistry
 		pluginHandler.addLogoutHandler(logoutHandlerRegistry);
 		pluginHandler.addHitHandler(articleHitHandlerRegistry);
 		pluginHandler.addTemplateRenderModal(templateRenderModelRegistry);
+		pluginHandler.addResourceHttpRequestHandlerMapping(resourceHttpRequestHandlerMappingRegistry);
 	}
 
 	@Override
