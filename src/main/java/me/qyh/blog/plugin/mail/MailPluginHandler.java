@@ -57,43 +57,40 @@ public class MailPluginHandler implements PluginHandler {
 
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
-		if (enable) {
-			Map<String, String> vs = pluginProperties.gets(HOST_KEY, PORT_KEY, USERNAME_KEY, PASSWORD_KEY, FROM_KEY,
-					SMTP_AUTH_KEY);
-			JavaMailSenderImpl javaMailSenderImpl = new JavaMailSenderImpl();
-			javaMailSenderImpl.setHost(vs.get(HOST_KEY));
-			javaMailSenderImpl.setPassword(vs.get(PASSWORD_KEY));
-			javaMailSenderImpl.setPort(Integer.parseInt(vs.get(PORT_KEY)));
-			javaMailSenderImpl.setUsername(vs.get(USERNAME_KEY));
+		Map<String, String> vs = pluginProperties.gets(HOST_KEY, PORT_KEY, USERNAME_KEY, PASSWORD_KEY, FROM_KEY,
+				SMTP_AUTH_KEY);
+		JavaMailSenderImpl javaMailSenderImpl = new JavaMailSenderImpl();
+		javaMailSenderImpl.setHost(vs.get(HOST_KEY));
+		javaMailSenderImpl.setPassword(vs.get(PASSWORD_KEY));
+		javaMailSenderImpl.setPort(Integer.parseInt(vs.get(PORT_KEY)));
+		javaMailSenderImpl.setUsername(vs.get(USERNAME_KEY));
 
-			Properties pros = new Properties();
-			pros.put("mail.smtp.auth", Boolean.parseBoolean(vs.get(SMTP_AUTH_KEY)));
-			pros.put("mail.from", vs.get(FROM_KEY));
+		Properties pros = new Properties();
+		pros.put("mail.smtp.auth", Boolean.parseBoolean(vs.get(SMTP_AUTH_KEY)));
+		pros.put("mail.from", vs.get(FROM_KEY));
 
-			javaMailSenderImpl.setJavaMailProperties(pros);
+		javaMailSenderImpl.setJavaMailProperties(pros);
 
-			applicationContext.addBeanFactoryPostProcessor(new BeanDefinitionRegistryPostProcessor() {
+		applicationContext.addBeanFactoryPostProcessor(new BeanDefinitionRegistryPostProcessor() {
 
-				@Override
-				public void postProcessBeanFactory(ConfigurableListableBeanFactory arg0) throws BeansException {
+			@Override
+			public void postProcessBeanFactory(ConfigurableListableBeanFactory arg0) throws BeansException {
 
-				}
+			}
 
-				@Override
-				public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-					BeanDefinition definition = BeanDefinitionBuilder.genericBeanDefinition(MailSenderImpl.class)
-							.setScope(BeanDefinition.SCOPE_SINGLETON).addConstructorArgValue(javaMailSenderImpl)
-							.getBeanDefinition();
-					registry.registerBeanDefinition(MailSenderImpl.class.getName(), definition);
-				}
-			});
-
-		}
+			@Override
+			public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+				BeanDefinition definition = BeanDefinitionBuilder.genericBeanDefinition(MailSenderImpl.class)
+						.setScope(BeanDefinition.SCOPE_SINGLETON).addConstructorArgValue(javaMailSenderImpl)
+						.getBeanDefinition();
+				registry.registerBeanDefinition(MailSenderImpl.class.getName(), definition);
+			}
+		});
 	}
 
 	@Override
 	public void init(ApplicationContext applicationContext) throws Exception {
-		if (enable && logEnable) {
+		if (logEnable) {
 			ILoggerFactory factory = LoggerFactory.getILoggerFactory();
 
 			if (factory instanceof LoggerContext) {
@@ -163,6 +160,11 @@ public class MailPluginHandler implements PluginHandler {
 	@Override
 	public int getOrder() {
 		return -1;
+	}
+
+	@Override
+	public boolean enable() {
+		return enable;
 	}
 
 }

@@ -78,12 +78,7 @@ public class FixedNumCaptchaController implements InitializingBean, CaptchaValid
 			}
 			fifoMap.put(uuid, capText);
 		}
-		if (cookie == null) {
-			cookie = new Cookie(CAPTHCHA_ID, uuid);
-			setCookie(cookie, null, -1, resp);
-		} else {
-			setCookie(cookie, uuid, -1, resp);
-		}
+		urlHelper.getCookieHelper().setCookie(CAPTHCHA_ID, uuid, -1, request, resp);
 		BufferedImage bi = cage.drawImage(capText);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
@@ -121,18 +116,6 @@ public class FixedNumCaptchaController implements InitializingBean, CaptchaValid
 		if (text == null || !text.equals(captcha)) {
 			throw new LogicException(INVALID_CAPTCHA_MESSAGE);
 		}
-	}
-
-	private void setCookie(Cookie cookie, String value, int maxAge, HttpServletResponse resp) {
-		cookie.setMaxAge(maxAge);
-		cookie.setHttpOnly(true);
-		if (value != null) {
-			cookie.setValue(value);
-		}
-		cookie.setSecure(urlHelper.isSecure());
-		cookie.setPath("/" + urlHelper.getContextPath());
-		cookie.setDomain(urlHelper.getDomain());
-		resp.addCookie(cookie);
 	}
 
 }

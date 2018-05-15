@@ -25,27 +25,49 @@ import me.qyh.blog.template.render.data.DataTagProcessor;
 import me.qyh.blog.web.WebExceptionResolver;
 
 /**
+ * 
+ * 插件处理器
+ * 
  * @author wwwqyhme
  *
  */
 public interface PluginHandler extends Ordered {
 
 	/**
-	 * 在ApplicationContext初始化前调用
+	 * 在<b>Root</b>ApplicationContext初始化前调用
 	 * 
 	 * @param applicationContext
 	 */
-	default void initialize(ConfigurableApplicationContext applicationContext) {
+	default void initialize(ConfigurableApplicationContext applicationContext) throws Exception {
 
 	}
 
 	/**
-	 * 当ApplicationContext<b>加载完成后</b>，初始化插件时调用
+	 * 在<b>Child</b>ApplicationContext初始化前调用
+	 * 
+	 * @param applicationContext
+	 */
+	default void initializeChild(ConfigurableApplicationContext applicationContext) throws Exception {
+
+	}
+
+	/**
+	 * 当Root ApplicationContext<b>加载完成后</b>，初始化插件时调用
 	 * 
 	 * @param applicationContext
 	 *            child application context for name space 'blog-serlvet'
 	 */
 	default void init(ApplicationContext applicationContext) throws Exception {
+
+	}
+
+	/**
+	 * 当Child ApplicationContext<b>加载完成后</b>，初始化插件时调用
+	 * 
+	 * @param applicationContext
+	 *            child application context for name space 'blog-serlvet'
+	 */
+	default void initChild(ApplicationContext applicationContext) throws Exception {
 
 	}
 
@@ -210,6 +232,27 @@ public interface PluginHandler extends Ordered {
 
 	}
 
+	/**
+	 * 配置mybatis
+	 * 
+	 * @param configurer
+	 */
+	default void configureMybatis(MybatisConfigurer configurer) throws Exception {
+
+	}
+
+	/**
+	 * 判断插件是否可用
+	 * 
+	 * @return
+	 */
+	default boolean enable() {
+		return true;
+	}
+
+	/**
+	 * 用于插件排序
+	 */
 	default int getOrder() {
 		return 0;
 	}

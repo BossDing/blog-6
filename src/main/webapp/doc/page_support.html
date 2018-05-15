@@ -56,12 +56,6 @@ body {
 									<td>&#36;{urls.domain }</td>
 								</tr>
 								<tr>
-									<td>getRootDomain()</td>
-									<td>返回配置的根域名，如果配置了www.domain.com返回domain.com，否则返回getDomain()</td>
-									<td>String</td>
-									<td>&#36;{urls.rootDomain }</td>
-								</tr>
-								<tr>
 									<td>getCurrentUrl()</td>
 									<td>获取当前的链接，如果你正在访问一个名为java的space，
 										那么这个链接返回的是http://domain.com/space/java(没有允许多域名)
@@ -95,10 +89,22 @@ body {
 									<td>&#36;{urls.getUrl(article) }</td>
 								</tr>
 								<tr>
-									<td>getUrl(Page page)</td>
-									<td>获取自定义页面的访问链接</td>
+									<td>getUrl(PathTemplate template)</td>
+									<td>获取页面的访问链接</td>
 									<td>String</td>
-									<td>&#36;{urls.getUrl(page) }</td>
+									<td>&#36;{urls.getUrl(template) }</td>
+								</tr>
+								<tr>
+									<td>getUrl(News news)</td>
+									<td>获取访问动态详情的链接</td>
+									<td>String</td>
+									<td>&#36;{urls.getUrl(news) }</td>
+								</tr>
+								<tr>
+									<td>getFullUrl()</td>
+									<td>获取当前页面的完整地址</td>
+									<td>String</td>
+									<td>&#36;{urls.fullUrl }</td>
 								</tr>
 								<tr>
 									<td>getArticlesUrlHelper()</td>
@@ -113,12 +119,34 @@ body {
 									</td>
 									<td>&#36;{urls.getArticlesUrlHelper(path) }</td>
 								</tr>
+								
+								<tr>
+									<td>getNewsUrlHelper()</td>
+									<td colspan="3">同<code>getNewsUrlHelper("news")</code></td>
+								</tr>
 
 								<tr>
-									<td>getUnlockUrl(String unlockId)</td>
+									<td>getNewsUrlHelper(String path)</td>
+									<td>获取用于获取动态分页查询连接的辅助对象</td>
+									<td>NewsUrlHelper(<a data-toggle="modal"
+										data-target="#newsUrlHelperModal" href="###">查看NewsUrlHelper可供调用的方法</a>)
+									</td>
+									<td>&#36;{urls.getNewsUrlHelper(path) }</td>
+								</tr>
+
+								<tr>
+									<td>getUnlockUrl(Lock lock, String redirectUrl)</td>
 									<td>用于获取指定的解锁地址，通常用于locked标签中</td>
 									<td>String</td>
-									<td>&#36;{urls.getUnlockUrl(unlockId) }</td>
+									<td>&#36;{urls.getUnlockUrl(lock,urls.fullUrl) }</td>
+								</tr>
+								
+								<tr>
+									<td>getCookieHelper()</td>
+									<td>用于获取cookie的辅助操作对象</td>
+									<td>CookieHelper(<a data-toggle="modal"
+										data-target="#cookieHelperModal" href="###">查看CookieHelper可供调用的方法</a>)</td>
+									<td>&#36;{urls.cookieHelper }</td>
 								</tr>
 
 							</tbody>
@@ -782,10 +810,119 @@ body {
 			</div>
 		</div>
 	</div>
-</body>
-
-
-<div class="modal fade" id="expressionExecutorModal" tabindex="-1"
+	
+	<div class="modal fade" id="newsUrlHelperModal" tabindex="-1"
+		role="dialog" aria-labelledby="newsUrlHelperModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="newsUrlHelperModalLabel">NewsUrlHelper</h4>
+				</div>
+				<div class="modal-body">
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>方法</th>
+									<th class="col-md-5">说明</th>
+									<th class="col-md-2">返回类型</th>
+									<th class="col-md-3">示例</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>getNewsUrl(NewsQueryParam param, int page)</td>
+									<td>根据查询参数和指定页面获取查询链接</td>
+									<td>String</td>
+									<td>&#36;{newsUrlHelper.getNewsUrl(space) }</td>
+								</tr>
+								<tr>
+									<td>getNewsUrl(Date begin, Date end)</td>
+									<td>根据指定时间段获取查询链接</td>
+									<td>String</td>
+									<td>&#36;{newsUrlHelper.getNewsUrl(begin,end) }</td>
+								</tr>
+								<tr>
+									<td>getNewsUrl(String begin, String end)</td>
+									<td>根据指定时间段获取查询链接</td>
+									<td>String</td>
+									<td>&#36;{newsUrlHelper.getNewsUrl(begin,end) }</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="modal fade" id="cookieHelperModal" tabindex="-1"
+		role="dialog" aria-labelledby="cookieHelperModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="articlesUrlHelperModalLabel">CookieHelper</h4>
+				</div>
+				<div class="modal-body">
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>方法</th>
+									<th class="col-md-5">说明</th>
+									<th class="col-md-2">返回类型</th>
+									<th class="col-md-3">示例</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>getCookie(String name)</td>
+									<td>获取某个Cookie，如果不存在，返回null</td>
+									<td>Cookie</td>
+									<td>&#36;{cookieHelper.getCookie('cookieName') }</td>
+								</tr>
+								<tr>
+									<td>addCookie(String name, String value, int maxAge)</td>
+									<td>添加一个cookie(如果不存在)</td>
+									<td>void</td>
+									<td>&#36;{cookieHelper.addCookie('cookieName','cookieValue',-1) }</td>
+								</tr>
+								<tr>
+									<td>deleteCookie(String name)</td>
+									<td>删除一个cookie</td>
+									<td>void</td>
+									<td>&#36;{cookieHelper.deleteCookie('cookieName') }</td>
+								</tr>
+								<tr>
+									<td>setCookie(String name, String value, int maxAge)</td>
+									<td>如果不存在对应名称的cookie，则添加一个cookie，否则更新当前cookie的值</td>
+									<td>void</td>
+									<td>&#36;{cookieHelper.setCookie('cookieName','cookieValue',-1) }</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	<div class="modal fade" id="expressionExecutorModal" tabindex="-1"
 	role="dialog" aria-labelledby="expressionExecutorModalLabel">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content">
@@ -920,6 +1057,10 @@ body {
 		</div>
 	</div>
 </div>
+	
+</body>
+
+
 
 <script type="text/javascript" src="../static/jquery/jquery.min.js"></script>
 <script type="text/javascript"

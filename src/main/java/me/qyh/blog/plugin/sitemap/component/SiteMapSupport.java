@@ -71,9 +71,6 @@ public class SiteMapSupport implements InitializingBean {
 			siteMapXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>";
 			return;
 		}
-		if (siteMapXml != null) {
-			return;
-		}
 		List<SiteUrl> urls = new ArrayList<>();
 		Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 			for (SiteUrlProvider provider : providers) {

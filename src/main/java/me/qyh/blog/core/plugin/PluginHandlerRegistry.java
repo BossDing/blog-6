@@ -19,14 +19,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -42,10 +47,8 @@ import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.util.Validators;
 
 public class PluginHandlerRegistry
 		implements ResourceLoaderAware, ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -53,33 +56,13 @@ public class PluginHandlerRegistry
 	private static final Logger logger = LoggerFactory.getLogger(PluginHandlerRegistry.class);
 
 	@Autowired
-	private DataTagProcessorRegistry dataTagProcessorRegistry;
-	@Autowired
-	private TemplateRegistry templateRegistry;
-	@Autowired
-	private RequestMappingRegistry requestMappingRegistry;
-	@Autowired
-	private ExceptionHandlerRegistry exceptionHandlerRegistry;
-	@Autowired
 	private ArticleContentHandlerRegistry articleContentHandlerRegistry;
 	@Autowired
 	private FileStoreRegistry fileStoreRegistry;
 	@Autowired
-	private TemplateInterceptorRegistry templateInterceptorRegistry;
-	@Autowired
-	private HandlerInterceptorRegistry handlerInterceptorRegistry;
-	@Autowired
 	private LockProviderRegistry lockProviderRegistry;
 	@Autowired
-	private SuccessfulLoginHandlerRegistry successfulLoginHandlerRegistry;
-	@Autowired
-	private LogoutHandlerRegistry logoutHandlerRegistry;
-	@Autowired
 	private ArticleHitHandlerRegistry articleHitHandlerRegistry;
-	@Autowired
-	private TemplateRenderModelRegistry templateRenderModelRegistry;
-	@Autowired
-	private ResourceHttpRequestHandlerMappingRegistry resourceHttpRequestHandlerMappingRegistry;
 
 	private ResourceLoader resourceLoader;
 
@@ -88,10 +71,21 @@ public class PluginHandlerRegistry
 
 	private final PluginProperties pluginProperties = PluginProperties.getInstance();
 
+	private final MybatisConfigurer mybatisConfigurer = new MybatisConfigurer();
+
 	@EventListener
 	@Order(value = Ordered.LOWEST_PRECEDENCE)
 	void start(ContextRefreshedEvent evt) throws Exception {
 		if (evt.getApplicationContext().getParent() == null) {
+			handlerInstances.removeIf(ph -> {
+				try {
+					ph.init(evt.getApplicationContext());
+					return false;
+				} catch (Exception e) {
+					logger.error("加载插件：" + getPluginName(ph.getClass()) + "失败", e);
+					return true;
+				}
+			});
 			return;
 		}
 		if (!handlerInstances.isEmpty()) {
@@ -106,7 +100,7 @@ public class PluginHandlerRegistry
 							invokePluginHandler(pluginHandler, applicationContext);
 							plugins.add(getPluginName(pluginHandler.getClass()));
 						} catch (Exception e) {
-							logger.warn("加载插件：" + PluginHandler.class.getName() + "失败", e);
+							logger.error("加载插件：" + getPluginName(pluginHandler.getClass()) + "失败", e);
 						}
 					}
 				} finally {
@@ -125,31 +119,35 @@ public class PluginHandlerRegistry
 		return Collections.unmodifiableSet(plugins);
 	}
 
-	private String getPluginName(Class<? extends PluginHandler> clazz) {
-		String fullName = clazz.getClass().getPackage().getName();
+	public static String getPluginName(Class<? extends PluginHandler> clazz) {
+		String fullName = clazz.getName();
 		return fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
+	}
+
+	public static String getRootPluginPackage(Class<? extends PluginHandler> clazz) {
+		String fullName = clazz.getName();
+		return fullName.substring(0, fullName.lastIndexOf("."));
 	}
 
 	private void invokePluginHandler(PluginHandler pluginHandler, ApplicationContext applicationContext)
 			throws Exception {
-		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(pluginHandler);
-
-		pluginHandler.init(applicationContext);
-		pluginHandler.addDataTagProcessor(dataTagProcessorRegistry);
-		pluginHandler.addTemplate(templateRegistry);
-		pluginHandler.addRequestHandlerMapping(requestMappingRegistry);
-		pluginHandler.addExceptionHandler(exceptionHandlerRegistry);
+		pluginHandler.initChild(applicationContext);
+		pluginHandler.addDataTagProcessor(applicationContext.getBean(DataTagProcessorRegistry.class));
+		pluginHandler.addTemplate(applicationContext.getBean(TemplateRegistry.class));
+		pluginHandler.addRequestHandlerMapping(applicationContext.getBean(RequestMappingRegistry.class));
+		pluginHandler.addExceptionHandler(applicationContext.getBean(ExceptionHandlerRegistry.class));
 		pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
 		pluginHandler.addMenu(MenuRegistry.getInstance());
 		pluginHandler.addFileStore(fileStoreRegistry);
-		pluginHandler.addTemplateInterceptor(templateInterceptorRegistry);
-		pluginHandler.addHandlerInterceptor(handlerInterceptorRegistry);
+		pluginHandler.addTemplateInterceptor(applicationContext.getBean(TemplateInterceptorRegistry.class));
+		pluginHandler.addHandlerInterceptor(applicationContext.getBean(HandlerInterceptorRegistry.class));
 		pluginHandler.addLockProvider(lockProviderRegistry);
-		pluginHandler.addSuccessfulLoginHandler(successfulLoginHandlerRegistry);
-		pluginHandler.addLogoutHandler(logoutHandlerRegistry);
+		pluginHandler.addSuccessfulLoginHandler(applicationContext.getBean(SuccessfulLoginHandlerRegistry.class));
+		pluginHandler.addLogoutHandler(applicationContext.getBean(LogoutHandlerRegistry.class));
 		pluginHandler.addHitHandler(articleHitHandlerRegistry);
-		pluginHandler.addTemplateRenderModal(templateRenderModelRegistry);
-		pluginHandler.addResourceHttpRequestHandlerMapping(resourceHttpRequestHandlerMappingRegistry);
+		pluginHandler.addTemplateRenderModal(applicationContext.getBean(TemplateRenderModelRegistry.class));
+		pluginHandler.addResourceHttpRequestHandlerMapping(
+				applicationContext.getBean(ResourceHttpRequestHandlerMappingRegistry.class));
 	}
 
 	@Override
@@ -160,6 +158,75 @@ public class PluginHandlerRegistry
 	@Override
 	public void initialize(ConfigurableApplicationContext applicationContext) {
 
+		if (applicationContext.getParent() == null) {
+
+			initPlugins();
+
+			sortPlugins();
+
+			handlerInstances.removeIf(ph -> !ph.enable());
+
+			handlerInstances.removeIf(ph -> {
+				try {
+					ph.configureMybatis(mybatisConfigurer);
+					return false;
+				} catch (Exception e) {
+					logger.error("插件：" + getPluginName(ph.getClass()) + "configureMybatis失败", e);
+					return true;
+				}
+			});
+
+			applicationContext.addBeanFactoryPostProcessor(new BeanDefinitionRegistryPostProcessor() {
+
+				@Override
+				public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+
+				}
+
+				@Override
+				public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+					registry.registerBeanDefinition("sqlSessionFactory",
+							BeanDefinitionBuilder.genericBeanDefinition(PluginSqlSessionFactoryBean.class)
+									.addConstructorArgValue(mybatisConfigurer.getMapperLocations())
+									.addConstructorArgValue(mybatisConfigurer.getTypeAliasResources())
+									.setScope(BeanDefinition.SCOPE_SINGLETON)
+									.addPropertyValue("configLocation",
+											"classpath:resources/mybatis/mybatis-config.xml")
+									.addPropertyReference("dataSource", "dataSource").getBeanDefinition());
+
+					registry.registerBeanDefinition(PluginMapperScannerConfigurer.class.getName(),
+							BeanDefinitionBuilder.genericBeanDefinition(PluginMapperScannerConfigurer.class)
+									.addConstructorArgValue(mybatisConfigurer.getBasePackages())
+									.setScope(BeanDefinition.SCOPE_SINGLETON).getBeanDefinition());
+
+				}
+			});
+
+			handlerInstances.removeIf(ph -> {
+				try {
+					ph.initialize(applicationContext);
+					return false;
+				} catch (Exception e) {
+					logger.error("插件：" + getPluginName(ph.getClass()) + "initialize失败", e);
+					return true;
+				}
+			});
+
+		} else {
+			handlerInstances.removeIf(ph -> {
+				try {
+					ph.initializeChild(applicationContext);
+					return false;
+				} catch (Exception e) {
+					logger.error("插件：" + getPluginName(ph.getClass()) + "initializeChildContext失败", e);
+					return true;
+				}
+			});
+
+		}
+	}
+
+	private void initPlugins() {
 		ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
 		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory(resolver);
 		Resource[] resources;
@@ -168,49 +235,35 @@ public class PluginHandlerRegistry
 		} catch (IOException e) {
 			resources = null;
 		}
-
-		if (!Validators.isEmpty(resources)) {
-
-			for (Resource res : resources) {
-				Class<?> handlerClass;
-				try {
-					MetadataReader reader = metadataReaderFactory.getMetadataReader(res);
-					handlerClass = Class.forName(reader.getClassMetadata().getClassName());
-				} catch (ClassNotFoundException | IOException e) {
-					throw new SystemException(e.getMessage(), e);
-				}
-				if (PluginHandler.class.isAssignableFrom(handlerClass)) {
-					PluginHandler newInstance;
-					try {
-						newInstance = (PluginHandler) handlerClass.getConstructor().newInstance();
-						handlerInstances.add(newInstance);
-					} catch (Exception e) {
-						logger.warn("创建插件失败", e);
-					}
-				}
+		for (Resource res : resources) {
+			Class<?> handlerClass;
+			try {
+				MetadataReader reader = metadataReaderFactory.getMetadataReader(res);
+				handlerClass = Class.forName(reader.getClassMetadata().getClassName());
+			} catch (ClassNotFoundException | IOException e) {
+				throw new SystemException(e.getMessage(), e);
 			}
-
-			handlerInstances.sort((p1, p2) -> {
-				String p1Name = getPluginName(p1.getClass());
-				String p2Name = getPluginName(p2.getClass());
-				int order1 = pluginProperties.get("plugin.order." + p1Name).map(Integer::parseInt)
-						.orElse(p1.getOrder());
-				int order2 = pluginProperties.get("plugin.order." + p2Name).map(Integer::parseInt)
-						.orElse(p2.getOrder());
-				return (order1 < order2) ? -1 : (order1 > order2) ? 1 : 0;
-			});
-
-			for (Iterator<PluginHandler> it = handlerInstances.iterator(); it.hasNext();) {
-				PluginHandler handler = it.next();
+			if (PluginHandler.class.isAssignableFrom(handlerClass)) {
+				PluginHandler newInstance;
 				try {
-					handler.initialize(applicationContext);
+					newInstance = (PluginHandler) handlerClass.getConstructor().newInstance();
+					handlerInstances.add(newInstance);
 				} catch (Exception e) {
-					logger.warn("插件：" + handler.getClass().getName() + "initialize失败", e);
-					it.remove();
+					logger.error("创建插件失败", e);
 				}
 			}
-
 		}
+	}
+
+	private void sortPlugins() {
+		handlerInstances.sort((p1, p2) -> {
+			String p1Name = getPluginName(p1.getClass());
+			String p2Name = getPluginName(p2.getClass());
+			int order1 = pluginProperties.get("plugin.order." + p1Name).map(Integer::parseInt).orElse(p1.getOrder());
+			int order2 = pluginProperties.get("plugin.order." + p2Name).map(Integer::parseInt).orElse(p2.getOrder());
+			return (order1 < order2) ? -1 : (order1 > order2) ? 1 : 0;
+		});
+
 	}
 
 }

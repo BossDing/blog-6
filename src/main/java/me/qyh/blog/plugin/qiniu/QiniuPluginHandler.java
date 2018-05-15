@@ -41,40 +41,41 @@ public class QiniuPluginHandler implements PluginHandler {
 
 	@Override
 	public void addFileStore(FileStoreRegistry registry) {
-		boolean enable = pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false);
 
-		if (enable) {
+		Integer id = pluginProperties.get(ID_KEY).map(Integer::parseInt)
+				.orElseThrow(() -> new SystemException("请提供存储器ID"));
+		String name = pluginProperties.get(NAME_KEY).orElse("七牛云存储");
 
-			Integer id = pluginProperties.get(ID_KEY).map(Integer::parseInt)
-					.orElseThrow(() -> new SystemException("请提供存储器ID"));
-			String name = pluginProperties.get(NAME_KEY).orElse("七牛云存储");
+		QiniuConfig config = new QiniuConfig();
+		pluginProperties.get(ACCESSKEY_KEY).ifPresent(config::setAccessKey);
+		pluginProperties.get(SECRETKEY_KEY).ifPresent(config::setSecretKey);
+		pluginProperties.get(BUCKET_KEY).ifPresent(config::setBucket);
+		pluginProperties.get(LARGE_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setLargeSize);
+		pluginProperties.get(MIDDLE_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setMiddleSize);
+		pluginProperties.get(SMALL_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setSmallSize);
+		pluginProperties.get(READONLY_KEY).map(Boolean::parseBoolean).ifPresent(config::setReadonly);
+		pluginProperties.get(SOURCE_PROTECTED_KEY).map(Boolean::parseBoolean).ifPresent(config::setSourceProtected);
+		pluginProperties.get(STYLE_KEY).ifPresent(config::setStyle);
+		pluginProperties.get(URL_PREFIX_KEY).ifPresent(config::setUrlPrefix);
+		pluginProperties.get(STYLE_SPLIT_CHAR_KEY).ifPresent(splitChar -> {
 
-			QiniuConfig config = new QiniuConfig();
-			pluginProperties.get(ACCESSKEY_KEY).ifPresent(config::setAccessKey);
-			pluginProperties.get(SECRETKEY_KEY).ifPresent(config::setSecretKey);
-			pluginProperties.get(BUCKET_KEY).ifPresent(config::setBucket);
-			pluginProperties.get(LARGE_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setLargeSize);
-			pluginProperties.get(MIDDLE_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setMiddleSize);
-			pluginProperties.get(SMALL_SIZE_KEY).map(Integer::parseInt).ifPresent(config::setSmallSize);
-			pluginProperties.get(READONLY_KEY).map(Boolean::parseBoolean).ifPresent(config::setReadonly);
-			pluginProperties.get(SOURCE_PROTECTED_KEY).map(Boolean::parseBoolean).ifPresent(config::setSourceProtected);
-			pluginProperties.get(STYLE_KEY).ifPresent(config::setStyle);
-			pluginProperties.get(URL_PREFIX_KEY).ifPresent(config::setUrlPrefix);
-			pluginProperties.get(STYLE_SPLIT_CHAR_KEY).ifPresent(splitChar -> {
+			char[] charArray = splitChar.toCharArray();
+			if (charArray.length > 1) {
+				throw new SystemException(STYLE_SPLIT_CHAR_KEY + "应该只对应一个字符");
+			}
+			if (charArray.length > 0) {
+				config.setStyleSplitChar(charArray[0]);
+			}
+		});
 
-				char[] charArray = splitChar.toCharArray();
-				if (charArray.length > 1) {
-					throw new SystemException(STYLE_SPLIT_CHAR_KEY + "应该只对应一个字符");
-				}
-				if (charArray.length > 0) {
-					config.setStyleSplitChar(charArray[0]);
-				}
-			});
+		QiniuFileStore store = new QiniuFileStore(id, name, config);
+		registry.register(store);
 
-			QiniuFileStore store = new QiniuFileStore(id, name, config);
-			registry.register(store);
-		}
+	}
 
+	@Override
+	public boolean enable() {
+		return pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false);
 	}
 
 }

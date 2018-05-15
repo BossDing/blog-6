@@ -42,7 +42,7 @@ import me.qyh.blog.plugin.comment.service.CommentService;
 import me.qyh.blog.plugin.comment.validator.CommentValidator;
 import me.qyh.blog.web.security.CaptchaValidator;
 
-@Controller("commentController")
+@Controller
 public class CommentController implements InitializingBean {
 
 	@Autowired

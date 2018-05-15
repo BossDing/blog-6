@@ -29,6 +29,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
+import me.qyh.blog.core.service.LogicConsumer;
+import me.qyh.blog.core.service.LogicFunction;
 
 /**
  * 用来在新事务中执行一些操作或者处理一些事务<b>事务提交</b>之后的事情
@@ -117,7 +119,7 @@ public final class Transactions {
 	 * @return
 	 */
 	public static <T> T executeInReadOnlyTransaction(PlatformTransactionManager platformTransactionManager,
-			LogicFunction<T> function) {
+			LogicFunction<T, TransactionStatus> function) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		dtd.setReadOnly(true);
@@ -149,7 +151,7 @@ public final class Transactions {
 	 * @return
 	 */
 	public static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			LogicFunction<T> function) {
+			LogicFunction<T, TransactionStatus> function) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		return executeInTransaction(platformTransactionManager, dtd, function);
@@ -164,7 +166,7 @@ public final class Transactions {
 	 * @return
 	 */
 	public static void executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			LogicConsumer consumer) {
+			LogicConsumer<TransactionStatus> consumer) {
 		DefaultTransactionDefinition dtd = new DefaultTransactionDefinition();
 		dtd.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		executeInTransaction(platformTransactionManager, dtd, status -> {
@@ -174,7 +176,7 @@ public final class Transactions {
 	}
 
 	private static <T> T executeInTransaction(PlatformTransactionManager platformTransactionManager,
-			TransactionDefinition definition, LogicFunction<T> function) {
+			TransactionDefinition definition, LogicFunction<T, TransactionStatus> function) {
 		TransactionTemplate template = new TransactionTemplate(platformTransactionManager, definition);
 		return template.execute(status -> {
 			try {
@@ -188,15 +190,5 @@ public final class Transactions {
 	@FunctionalInterface
 	public interface Callback {
 		void callback();
-	}
-
-	@FunctionalInterface
-	public interface LogicFunction<T> {
-		T apply(TransactionStatus t) throws LogicException;
-	}
-
-	@FunctionalInterface
-	public interface LogicConsumer {
-		void accept(TransactionStatus t) throws LogicException;
 	}
 }

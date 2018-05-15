@@ -30,9 +30,7 @@
 			me.qyh.blog.template.validator,
 			me.qyh.blog.web.security,
 			me.qyh.blog.template.service.impl,
-			me.qyh.blog.web.view,
-			me.qyh.blog.plugin.*.web.controller,
-			me.qyh.blog.plugin.*.web.component" />
+			me.qyh.blog.web.view" />
 
 
 	<bean class="me.qyh.blog.web.security.ProxyIPGetter" />
@@ -59,14 +57,7 @@
 		</property>
 	</bean>
 
-	<bean class="me.qyh.blog.template.render.TemplateRender">
-		<property name="pros">
-			<map>
-				<entry key="gravatarPrefix"
-					value="http://localhost:8080/nblog/avatar/" />
-			</map>
-		</property>
-	</bean>
+	<bean class="me.qyh.blog.template.render.TemplateRender" />
 
 	<bean
 		class="me.qyh.blog.template.render.thymeleaf.ThymeleafRenderExecutor" />
@@ -155,22 +146,21 @@
 
 	<bean
 		class="me.qyh.blog.file.store.local.StaticResourceHttpRequestHandler" />
-	
-<!-- 	<bean -->
-<!-- 		class="me.qyh.blog.file.store.local.GravatarResourceHttpRequestHandler"> -->
-<!-- 		<constructor-arg index="0" value="/web/file/gravatar" /> -->
-<!-- 	</bean> -->
+
+	<!-- <bean -->
+	<!-- class="me.qyh.blog.file.store.local.GravatarResourceHttpRequestHandler"> -->
+	<!-- <constructor-arg index="0" value="/web/file/gravatar" /> -->
+	<!-- </bean> -->
 
 	<bean class="me.qyh.blog.web.interceptor.AppInterceptor" />
 	<bean class="me.qyh.blog.web.WebConfiguration" />
 
 	<bean class="me.qyh.blog.template.TemplateMapping" />
 	<bean class="me.qyh.blog.web.WebExceptionResolver" />
-	
-	
-	<bean class="me.qyh.blog.web.CookieMemoryLinkFlashMapManager" name="flashMapManager"/>
 
-	<bean class="me.qyh.blog.core.plugin.PluginHandlerRegistry" />
-	
+
+	<bean class="me.qyh.blog.web.CookieMemoryLinkFlashMapManager"
+		name="flashMapManager" />
+
 
 </beans>

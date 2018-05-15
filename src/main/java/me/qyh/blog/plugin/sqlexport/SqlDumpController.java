@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -22,6 +25,8 @@ import me.qyh.blog.core.security.EnsureLogin;
 import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.util.FileUtils;
 
+@EnsureLogin
+@Controller
 public class SqlDumpController {
 
 	private final List<SqlDump> dumps;
@@ -38,12 +43,12 @@ public class SqlDumpController {
 		this.attemptLogger = attemptLogger;
 	}
 
-	@EnsureLogin
+	@GetMapping("mgr/sqlExport")
 	public String dump() {
 		return "plugin/sqlexport/index";
 	}
 
-	@EnsureLogin
+	@PostMapping("mgr/sqlExport")
 	public String dump(HttpServletRequest request, HttpServletResponse response, RedirectAttributes ra)
 			throws LogicException {
 		String ip = Environment.getIP();

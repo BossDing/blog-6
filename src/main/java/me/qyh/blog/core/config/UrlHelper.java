@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.WebUtils;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Lock;
@@ -45,6 +48,7 @@ import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
 import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.template.PathTemplate;
+import me.qyh.blog.web.Webs;
 
 /**
  * 链接辅助类，用来获取一些对象的访问链接
@@ -66,6 +70,8 @@ public class UrlHelper {
 	private final String domain;
 	private final int port;
 	private final String contextPath;
+
+	private final CookieHelper cookieHelper = new CookieHelper();
 
 	public UrlHelper() throws IOException {
 		Properties pros = new Properties();
@@ -99,6 +105,17 @@ public class UrlHelper {
 	 */
 	public SpaceUrls getUrlsBySpace(String alias) {
 		return new SpaceUrls(alias);
+	}
+
+	/**
+	 * 获取当前请求的链接辅助
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	public CurrentEnvUrls getCurrentUrls(HttpServletRequest request, HttpServletResponse response) {
+		return new CurrentEnvUrls(request, response);
 	}
 
 	public Urls getUrls() {
@@ -139,6 +156,10 @@ public class UrlHelper {
 
 	public boolean isSecure() {
 		return "https".equalsIgnoreCase(scheme);
+	}
+
+	public CookieHelper getCookieHelper() {
+		return cookieHelper;
 	}
 
 	/**
@@ -234,6 +255,11 @@ public class UrlHelper {
 		public String getFullUrl(HttpServletRequest request) {
 			return UrlUtils.buildFullRequestUrl(request);
 		}
+
+		public CookieHelper getCookieHelper() {
+			return cookieHelper;
+		}
+
 	}
 
 	/**
@@ -247,7 +273,7 @@ public class UrlHelper {
 		private String space;
 		private String url;
 
-		private SpaceUrls(String alias) {
+		protected SpaceUrls(String alias) {
 			space = alias;
 			if (space != null) {
 				url = UrlHelper.this.url + SPACE_IN_URL + space;
@@ -475,5 +501,93 @@ public class UrlHelper {
 			}
 			return getArticlesUrl(param, 1);
 		}
+	}
+
+	public final class CurrentEnvUrls extends SpaceUrls {
+
+		private final HttpServletRequest request;
+		private final HttpServletResponse response;
+		private final CurrentCookieHelper cookieHelper;
+
+		public CurrentEnvUrls(HttpServletRequest request, HttpServletResponse response) {
+			super(Webs.getSpaceFromRequest(request));
+			this.request = request;
+			this.response = response;
+			this.cookieHelper = new CurrentCookieHelper();
+		}
+
+		public String getFullUrl() {
+			return super.getFullUrl(request);
+		}
+
+		@Override
+		public CookieHelper getCookieHelper() {
+			return this.cookieHelper;
+		}
+
+		public final class CurrentCookieHelper extends CookieHelper {
+
+			public Cookie getCookie(String name) {
+				return super.getCookie(name, request);
+			}
+
+			public void setCookie(String name, String value, int maxAge) {
+				super.setCookie(name, value, maxAge, request, response);
+			}
+
+			public void addCookie(String name, String value, int maxAge) {
+				super.addCookie(name, value, maxAge, request, response);
+			}
+
+			public void deleteCookie(String name) {
+				super.deleteCookie(name, request, response);
+			}
+
+		}
+
+	}
+
+	public class CookieHelper {
+		public void setCookie(String name, String value, int maxAge, HttpServletRequest request,
+				HttpServletResponse response) {
+			this.setCookie(name, value, maxAge, true, request, response);
+		}
+
+		public void setCookie(String name, String value, int maxAge, boolean update, HttpServletRequest request,
+				HttpServletResponse response) {
+			Cookie cookie = request == null ? null : WebUtils.getCookie(request, name);
+			if (cookie == null) {
+				cookie = new Cookie(name, value);
+			} else {
+				if (!update) {
+					return;
+				}
+			}
+			cookie.setMaxAge(maxAge);
+			cookie.setHttpOnly(true);
+			cookie.setSecure(isSecure());
+			cookie.setPath("/" + contextPath);
+			cookie.setDomain(domain);
+			response.addCookie(cookie);
+		}
+
+		public void deleteCookie(String name, HttpServletRequest request, HttpServletResponse response) {
+			Cookie cookie = WebUtils.getCookie(request, name);
+			if (cookie != null) {
+				cookie.setValue(null);
+				cookie.setMaxAge(0);
+				response.addCookie(cookie);
+			}
+		}
+
+		public Cookie getCookie(String name, HttpServletRequest request) {
+			return WebUtils.getCookie(request, name);
+		}
+
+		public void addCookie(String name, String value, int maxAge, HttpServletRequest request,
+				HttpServletResponse response) {
+			setCookie(name, value, maxAge, false, request, response);
+		}
+
 	}
 }

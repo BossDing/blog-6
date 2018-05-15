@@ -28,7 +28,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
+import me.qyh.blog.core.config.UrlHelper.CurrentEnvUrls;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.ExceptionUtils;
@@ -190,13 +190,13 @@ public class Webs {
 	}
 
 	/**
-	 * 获取请求中的SpaceUrls
+	 * 获取请求中的CurrentEnvUrls
 	 * 
 	 * @param request
 	 * @return
 	 */
-	public static SpaceUrls getSpaceUrls(HttpServletRequest request) {
-		return (SpaceUrls) request.getAttribute(SPACE_URLS_ATTR_NAME);
+	public static CurrentEnvUrls getSpaceUrls(HttpServletRequest request) {
+		return (CurrentEnvUrls) request.getAttribute(SPACE_URLS_ATTR_NAME);
 	}
 
 	/**

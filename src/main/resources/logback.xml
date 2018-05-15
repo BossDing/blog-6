@@ -30,9 +30,7 @@
 	<logger name="org.thymeleaf.TemplateEngine" level="OFF" />
 
 	<root level="ERROR">
-	
 		<appender-ref ref="consoleAppender" />
-		<appender-ref ref="errorDailyRollingFileAppender" />
 	</root>
 
 </configuration>

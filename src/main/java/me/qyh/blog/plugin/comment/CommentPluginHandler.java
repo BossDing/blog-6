@@ -15,9 +15,11 @@
  */
 package me.qyh.blog.plugin.comment;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import me.qyh.blog.core.message.Message;
@@ -25,14 +27,16 @@ import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
 import me.qyh.blog.core.plugin.Menu;
 import me.qyh.blog.core.plugin.MenuRegistry;
-import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.MybatisConfigurer;
+import me.qyh.blog.core.plugin.PluginHandlerRegistry;
+import me.qyh.blog.core.plugin.PluginHandlerSupport;
 import me.qyh.blog.core.plugin.PluginProperties;
 import me.qyh.blog.core.plugin.TemplateRegistry;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.plugin.comment.data.CommentsDataTagProcessor;
 import me.qyh.blog.plugin.comment.data.LastCommentsDataTagProcessor;
 
-public class CommentPluginHandler implements PluginHandler {
+public class CommentPluginHandler extends PluginHandlerSupport {
 
 	private static final String ENABLE_KEY = "plugin.comment.email.enable";
 	private static final String LOCATION_KEY = "plugin.comment.email.templateLocation";
@@ -43,11 +47,36 @@ public class CommentPluginHandler implements PluginHandler {
 
 	private final PluginProperties pluginProperties = PluginProperties.getInstance();
 
-	@Autowired
+	private final String rootPackage = PluginHandlerRegistry.getRootPluginPackage(this.getClass()) + ".";
+
 	private Messages messages;
 
 	@Override
-	public void initialize(ConfigurableApplicationContext applicationContext) {
+	public void init(ApplicationContext applicationContext) throws Exception {
+		this.messages = applicationContext.getBean(Messages.class);
+	}
+
+	@Override
+	protected void registerBean(BeanRegistry registry) {
+		registry.scanAndRegister(rootPackage + "validator", rootPackage + "component");
+	}
+
+	@Override
+	protected void registerChildBean(BeanRegistry registry) {
+		registry.scanAndRegister(rootPackage + "web.controller");
+	}
+
+	@Override
+	public void configureMybatis(MybatisConfigurer configurer) throws Exception {
+		configurer.addBasePackages(rootPackage + "dao");
+		ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(null);
+		String rootPath = rootPackage.replace('.', '/') + "mapper/";
+		configurer.addMapperLocations(resolver.getResources(rootPath + "*.xml"));
+		configurer.addTypeAliasResources(new ClassPathResource(rootPath + "typeAlias.txt"));
+	}
+
+	@Override
+	public void initializeOther(ConfigurableApplicationContext applicationContext) {
 		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false));
 
 		if (cc.isEnableEmailNotify()) {

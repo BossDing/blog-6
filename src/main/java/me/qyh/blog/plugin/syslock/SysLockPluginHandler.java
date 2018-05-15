@@ -15,22 +15,49 @@
  */
 package me.qyh.blog.plugin.syslock;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.plugin.LockProviderRegistry;
 import me.qyh.blog.core.plugin.Menu;
 import me.qyh.blog.core.plugin.MenuRegistry;
-import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.MybatisConfigurer;
+import me.qyh.blog.core.plugin.PluginHandlerRegistry;
+import me.qyh.blog.core.plugin.PluginHandlerSupport;
 import me.qyh.blog.core.plugin.TemplateRegistry;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.plugin.syslock.component.SysLockProvider;
 
-public class SysLockPluginHandler implements PluginHandler {
+public class SysLockPluginHandler extends PluginHandlerSupport {
 
-	@Autowired
 	private SysLockProvider provider;
+
+	private final String rootPackage = PluginHandlerRegistry.getRootPluginPackage(this.getClass()) + ".";
+
+	@Override
+	public void init(ApplicationContext applicationContext) throws Exception {
+		provider = applicationContext.getBean(SysLockProvider.class);
+	}
+
+	@Override
+	protected void registerBean(BeanRegistry registry) {
+		registry.scanAndRegister(rootPackage + "component", rootPackage + "validator");
+	}
+
+	@Override
+	protected void registerChildBean(BeanRegistry registry) {
+		registry.scanAndRegister(rootPackage + "web.controller");
+	}
+
+	@Override
+	public void configureMybatis(MybatisConfigurer configurer) throws Exception {
+		String rootPath = rootPackage.replace('.', '/') + "mapper/";
+		configurer.addBasePackages(rootPackage + "dao");
+		configurer.addMapperLocations(new ClassPathResource(rootPath + "lockMapper.xml"));
+		configurer.addTypeAliasResources(new ClassPathResource(rootPath + "typeAlias.txt"));
+
+	}
 
 	@Override
 	public void addTemplate(TemplateRegistry registry) throws Exception {

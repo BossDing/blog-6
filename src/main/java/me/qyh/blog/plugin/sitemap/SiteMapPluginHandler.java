@@ -1,35 +1,30 @@
 package me.qyh.blog.plugin.sitemap;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-
-import me.qyh.blog.core.plugin.PluginHandler;
+import me.qyh.blog.core.plugin.PluginHandlerRegistry;
+import me.qyh.blog.core.plugin.PluginHandlerSupport;
 import me.qyh.blog.core.plugin.PluginProperties;
-import me.qyh.blog.core.plugin.RequestMappingRegistry;
-import me.qyh.blog.plugin.sitemap.component.SiteMapSupport;
 
-public class SiteMapPluginHandler implements PluginHandler {
+public class SiteMapPluginHandler extends PluginHandlerSupport {
 
 	private PluginProperties pluginProperties = PluginProperties.getInstance();
 	private final boolean enable = pluginProperties.get("plugin.sitemap.enable").map(Boolean::parseBoolean)
 			.orElse(true);
 
-	private SiteMapSupport siteMapSupport;
+	private final String rootPackage = PluginHandlerRegistry.getRootPluginPackage(this.getClass()) + ".";
 
 	@Override
-	public void init(ApplicationContext applicationContext) throws Exception {
-		this.siteMapSupport = applicationContext.getBean(SiteMapSupport.class);
+	protected void registerBean(BeanRegistry registry) {
+		registry.scanAndRegister(rootPackage + "component");
 	}
 
 	@Override
-	public void addRequestHandlerMapping(RequestMappingRegistry registry) throws Exception {
-		if (enable) {
-			registry.register(
-					RequestMappingInfo.paths("sitemap.xml").methods(RequestMethod.GET)
-							.produces("application/xml;charset=utf8"),
-					new SiteMapController(siteMapSupport), SiteMapController.class.getDeclaredMethod("sitemap"));
-		}
+	protected void registerChildBean(BeanRegistry registry) {
+		registry.register(SiteMapController.class.getName(), simpleBeanDefinition(SiteMapController.class));
+	}
+
+	@Override
+	public boolean enable() {
+		return enable;
 	}
 
 }

@@ -89,7 +89,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			HandlerMethod handlerMethod = (HandlerMethod) handler;
 
 			try {
-				setRequestAttribute(request);
+				setRequestAttribute(request, response);
 				setUser(request, handlerMethod);
 				setLockKeys(request);
 				setSpace(request, handlerMethod);
@@ -226,7 +226,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		LockKeyContext.remove();
 	}
 
-	private void setRequestAttribute(HttpServletRequest request) {
+	private void setRequestAttribute(HttpServletRequest request, HttpServletResponse response) {
 		if (request.getAttribute(Webs.SPACE_ATTR_NAME) == null) {
 			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
 			request.setAttribute(Webs.SPACE_ATTR_NAME,
@@ -240,7 +240,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			request.setAttribute(Webs.UNLOCK_ATTR_NAME, isUnlock);
 		}
 		if (request.getAttribute(Webs.SPACE_URLS_ATTR_NAME) == null) {
-			request.setAttribute(Webs.SPACE_URLS_ATTR_NAME, urlHelper.getUrlsBySpace(alias));
+			request.setAttribute(Webs.SPACE_URLS_ATTR_NAME, urlHelper.getCurrentUrls(request, response));
 		}
 	}
 

@@ -32,59 +32,8 @@ body {
 					<div>
 						插件的所有的逻辑代码都要处于
 						<code>me.qyh.blog.plugin.{pluginName}</code>
-						下面几个包中的类将会被自动扫描注册为spring bean(@service,@contoller,@component)：
-						<div class="table-responsive">
-							<table class="table">
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.dao</th>
-									<td>存放dao类</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.service</th>
-									<td>存放逻辑处理类</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.mapper</th>
-									<td>存放mybaits mapper.xml文件</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.validator</th>
-									<td>存放validator类</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.component</th>
-									<td>存放组件类</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.web.controller</th>
-									<td>存放处理器类</td>
-								</tr>
-								<tr>
-									<th>me.qyh.blog.plugin.{pluginName}.web.component</th>
-									<td>存放组件类，注册在child application context中</td>
-								</tr>
-							</table>
-						</div>
-						<p class="alert alert-warning">
-							上述几个包都应该是
-							<code>me.qyh.blog.plugin.{pluginName}</code>
-							的直接子包才会被自动扫描，例如
-							<code>me.qyh.blog.plugin.{pluginName}.a.dao</code>
-							就不会被扫描注册
-						</p>
+						包下
 					</div>
-					<h4>typeAlias</h4>
-					<p>
-						如果需要注册额外的typeAlias,可以在
-						<code>me.qyh.blog.plugin.{pluginName}.mapper</code>
-						包下建立一个名为typeAlias的txt文件，文件内容中每行都代表着一个别名，例如
-					</p>
-					<pre>me.qyh.blog.plugin.comment.entity.Comment
-me.qyh.blog.plugin.comment.entity.Comment$CommentStatus
-me.qyh.blog.plugin.comment.entity.CommentModule</pre>
-					对应的别名分别为Comment、CommentStatus和CommentModule，如果需要别的别名，可以在类上加@Alias标记，具体请见
-					<code>org.apache.ibatis.type.TypeAliasRegistry#registerAlias(Class&lt;?&gt;
-						type)</code>
 					<h4>页面</h4>
 					<p>插件额外的页面都应处于 WEB-INF/templates/plugin/{pluginName} 文件夹下</p>
 
@@ -96,7 +45,7 @@ me.qyh.blog.plugin.comment.entity.CommentModule</pre>
 						<code>PluginHandler</code>
 						实现于
 						<code>me.qyh.blog.core.plugin.PluginHandler</code>
-						，一个插件只能拥有一个PluginHandler，该类必须要处于
+						，<b>必须拥有一个无参构造器用于创建</b> ，<b>一个插件只能拥有一个PluginHandler</b>，该类必须要处于
 						<code>me.qyh.blog.plugin.{pluginName}</code>
 						包下，名称一般为
 						<code>${pluginName}PluginHandler</code>
@@ -105,13 +54,44 @@ me.qyh.blog.plugin.comment.entity.CommentModule</pre>
 					<div class="table-responsive">
 						<table class="table">
 							<tr>
+								<td>boolean enable()</td>
+								<td>插件是否可用，<b>只会在服务启动时通过这个方法判断插件是否可用，如果不可用，则不会再执行该插件任何方法</b>，这个方法会最先被调用
+								</td>
+							</tr>
+							<tr>
+								<td>void configureMybatis(MybatisConfigurer configurer)</td>
+								<td>用于向mybatis中添加dao、mapper文件以及typeAlias。其中dao添加形式为添加dao的所在包的全路径，mapper添加形式为添加mapper.xml文件的具体资源对象(<code>Resource</code>),typeAlias
+									的添加形式为添加一个文本资源对象(<code>Resource</code>),文件内容中每行都代表着一个别名，例如 <pre>me.qyh.blog.plugin.comment.entity.Comment
+me.qyh.blog.plugin.comment.entity.Comment$CommentStatus
+me.qyh.blog.plugin.comment.entity.CommentModule</pre>
+									对应的别名分别为Comment、CommentStatus和CommentModule，如果需要别的别名，可以在类上加@Alias标记，具体请见
+									<code>org.apache.ibatis.type.TypeAliasRegistry#registerAlias(Class&lt;?&gt;
+										type)</code>
+								<p>
+								<b>这个方法会在enable之后，initialize之前调用！！</b>
+								</p>
+								</td>
+							</tr>
+							<tr>
 								<td>void initialize(ConfigurableApplicationContext
 									applicationContext)</td>
-								<td>在ApplicationContext初始化前调用</td>
+								<td>在<b>根ApplicationContext</b>初始化前调用
+								</td>
 							</tr>
 							<tr>
 								<td>void init(ApplicationContext applicationContext)</td>
-								<td>当ApplicationContext<b>加载完成后</b>，初始化插件时<b>首先</b>调用
+								<td>当<b>根ApplicationContext</b>初始化完成之后调用
+								</td>
+							</tr>
+							<tr>
+								<td>void initializeChild(ConfigurableApplicationContext
+									applicationContext)</td>
+								<td>在<b>子ApplicationContext</b>初始化前调用
+								</td>
+							</tr>
+							<tr>
+								<td>void initChild(ApplicationContext applicationContext)</td>
+								<td>当<b>子ApplicationContext</b>初始化完成之后调用
 								</td>
 							</tr>
 							<tr>

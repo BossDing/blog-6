@@ -45,25 +45,8 @@ public class CookieMemoryLinkFlashMapManager extends AbstractFlashMapManager {
 		} else {
 			String id = StringUtils.uuid();
 			map.put(id, flashMaps);
-			if (cookie == null) {
-				cookie = new Cookie(MESSAGE_ID, id);
-				setCookie(cookie, null, -1, response);
-			} else {
-				setCookie(cookie, id, -1, response);
-			}
+			urlHelper.getCookieHelper().setCookie(MESSAGE_ID, id, -1, request, response);
 		}
-	}
-
-	private void setCookie(Cookie cookie, String value, int maxAge, HttpServletResponse resp) {
-		cookie.setMaxAge(maxAge);
-		cookie.setHttpOnly(true);
-		if (value != null) {
-			cookie.setValue(value);
-		}
-		cookie.setSecure(urlHelper.isSecure());
-		cookie.setPath("/" + urlHelper.getContextPath());
-		cookie.setDomain(urlHelper.getDomain());
-		resp.addCookie(cookie);
 	}
 
 }
