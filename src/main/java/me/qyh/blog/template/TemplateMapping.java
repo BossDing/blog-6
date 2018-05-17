@@ -347,8 +347,8 @@ public class TemplateMapping {
 						.hasNext();) {
 					Map.Entry<String, PreviewTemplate> entry = it.next();
 					for (String templateName : templateNames) {
-						String previewTemplateName = Template.isPreviewTemplate(templateName) ? templateName
-								: Template.TEMPLATE_PREVIEW_PREFIX + templateName;
+						String previewTemplateName = PreviewTemplate.isPreviewTemplate(templateName) ? templateName
+								: PreviewTemplate.TEMPLATE_PREVIEW_PREFIX + templateName;
 						if (previewTemplateName.equals(entry.getValue().getTemplateName())) {
 							it.remove();
 							continue out;

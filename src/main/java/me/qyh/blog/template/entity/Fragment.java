@@ -26,6 +26,7 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.Template;
 
 /**
@@ -57,6 +58,13 @@ public class Fragment extends BaseEntity implements Template {
 	private boolean callable;
 
 	private String templateName;
+
+	/**
+	 * 是否被删除
+	 * 
+	 * @since 6.3
+	 */
+	private boolean del;
 
 	public Fragment() {
 		super();
@@ -93,6 +101,7 @@ public class Fragment extends BaseEntity implements Template {
 		this.description = fragment.description;
 		this.createDate = fragment.createDate;
 		this.global = fragment.global;
+		this.del = fragment.del;
 	}
 
 	public String getTpl() {
@@ -226,6 +235,15 @@ public class Fragment extends BaseEntity implements Template {
 	}
 
 	public static boolean isPreviewFragmentTemplate(String templateName) {
-		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX + FRAGMENT_PREFIX);
+		return templateName != null
+				&& templateName.startsWith(PreviewTemplate.TEMPLATE_PREVIEW_PREFIX + FRAGMENT_PREFIX);
+	}
+
+	public boolean isDel() {
+		return del;
+	}
+
+	public void setDel(boolean del) {
+		this.del = del;
 	}
 }

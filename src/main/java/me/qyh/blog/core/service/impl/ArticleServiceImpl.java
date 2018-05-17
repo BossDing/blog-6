@@ -76,6 +76,7 @@ import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.core.vo.SpaceQueryParam;
 import me.qyh.blog.core.vo.TagCount;
 
 public class ArticleServiceImpl
@@ -85,8 +86,6 @@ public class ArticleServiceImpl
 	private ArticleDao articleDao;
 	@Autowired
 	private SpaceDao spaceDao;
-	@Autowired
-	private SpaceCache spaceCache;
 	@Autowired
 	private ArticleTagDao articleTagDao;
 	@Autowired
@@ -164,13 +163,13 @@ public class ArticleServiceImpl
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article updateArticle(Article article) throws LogicException {
-		Space space = spaceCache.checkSpace(article.getSpace().getId());
+		Space space = getRequiredSpace(article.getSpace().getId());
 		article.setSpace(space);
 		// 如果文章是私有的，无法设置锁
 		if (article.isPrivate()) {
 			article.setLockId(null);
 		} else {
-			lockManager.ensureLockvailable(article.getLockId());
+			lockManager.ensureLockAvailable(article.getLockId());
 		}
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		Article articleDb = articleDao.selectById(article.getId());
@@ -246,13 +245,13 @@ public class ArticleServiceImpl
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article writeArticle(Article article) throws LogicException {
-		Space space = spaceCache.checkSpace(article.getSpace().getId());
+		Space space = getRequiredSpace(article.getSpace().getId());
 		article.setSpace(space);
 		// 如果文章是私有的，无法设置锁
 		if (article.isPrivate()) {
 			article.setLockId(null);
 		} else {
-			lockManager.ensureLockvailable(article.getLockId());
+			lockManager.ensureLockAvailable(article.getLockId());
 		}
 		if (article.getAlias() != null) {
 			Article aliasDb = articleDao.selectByAlias(article.getAlias());
@@ -409,7 +408,9 @@ public class ArticleServiceImpl
 		if (!param.getSpaces().isEmpty()) {
 			// 如果空间别名与alias一致，查询这个空间
 			Set<Integer> includeSpaceIds = new HashSet<>();
-			out: for (Space space : spaceCache.getSpaces(param.isQueryPrivate())) {
+			SpaceQueryParam spaceQueryParam = new SpaceQueryParam();
+			spaceQueryParam.setQueryPrivate(param.isQueryPrivate());
+			out: for (Space space : spaceDao.selectByParam(spaceQueryParam)) {
 				for (String alias : param.getSpaces()) {
 					if (alias.equals(space.getAlias())) {
 						includeSpaceIds.add(space.getId());
@@ -794,6 +795,14 @@ public class ArticleServiceImpl
 	public ArticleHitHandlerRegistry register(ArticleHitHandler handler) {
 		this.hitHandlers.add(handler);
 		return this;
+	}
+
+	private Space getRequiredSpace(Integer id) throws LogicException {
+		Space space = spaceDao.selectById(id);
+		if (space == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
+		return space;
 	}
 
 }

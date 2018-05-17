@@ -19,7 +19,10 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -36,8 +39,8 @@ import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.event.ArticleIndexRebuildEvent;
 import me.qyh.blog.core.event.LockDelEvent;
-import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.event.SpaceCreateEvent;
+import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.event.SpaceUpdateEvent;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
@@ -46,21 +49,22 @@ import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.vo.SpaceQueryParam;
 
 @Service
-public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisherAware {
+public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisherAware, InitializingBean {
 
 	@Autowired
 	private SpaceDao spaceDao;
 	@Autowired
 	private LockManager lockManager;
-	@Autowired
-	private SpaceCache spaceCache;
+
+	private List<Space> cache = new CopyOnWriteArrayList<>();
+
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Override
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Space addSpace(Space space) throws LogicException {
-		lockManager.ensureLockvailable(space.getLockId());
+		lockManager.ensureLockAvailable(space.getLockId());
 
 		if (spaceDao.selectByAlias(space.getAlias()) != null) {
 			throw new LogicException(
@@ -78,7 +82,9 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 		this.applicationEventPublisher.publishEvent(new SpaceCreateEvent(this, space));
 
-		spaceCache.init();
+		Transactions.afterCommit(() -> {
+			cache.add(space);
+		});
 
 		return space;
 	}
@@ -89,7 +95,10 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Space updateSpace(Space space) throws LogicException {
-		Space db = spaceCache.getSpace(space.getId()).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
+		Space db = spaceDao.selectById(space.getId());
+		if (db == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
 		Space nameDb = spaceDao.selectByName(space.getName());
 		if (nameDb != null && !nameDb.equals(db)) {
 			throw new LogicException(
@@ -99,7 +108,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		if (space.getIsPrivate()) {
 			space.setLockId(null);
 		} else {
-			lockManager.ensureLockvailable(space.getLockId());
+			lockManager.ensureLockAvailable(space.getLockId());
 		}
 
 		if (space.getIsDefault()) {
@@ -108,20 +117,34 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 		spaceDao.update(space);
 
+		db.setIsDefault(space.getIsDefault());
+		db.setIsPrivate(space.getIsPrivate());
+		db.setLockId(space.getLockId());
+		db.setName(space.getName());
+
+		Transactions.afterCommit(() -> {
+			cache.replaceAll(replace -> {
+				if (replace.getId().equals(space.getId())) {
+					return db;
+				}
+				return replace;
+			});
+		});
+
 		this.applicationEventPublisher.publishEvent(new SpaceUpdateEvent(this, db, space));
 
-		spaceCache.init();
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 		return space;
 	}
 
 	@Override
 	@Sync
-	@Caching(evict = { @CacheEvict(value = "articleCache", allEntries = true),
-			@CacheEvict(value = "articleFilesCache", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class, isolation = Isolation.SERIALIZABLE)
 	public void deleteSpace(Integer id) throws LogicException {
-		Space space = spaceCache.getSpace(id).orElseThrow(() -> new LogicException("space.notExists", "空间不存在"));
+		Space space = spaceDao.selectById(id);
+		if (space == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
 		if (space.getIsDefault()) {
 			throw new LogicException("space.default.canNotDelete", "默认空间不能被删除");
 		}
@@ -130,18 +153,30 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 		spaceDao.deleteById(id);
 
-		spaceCache.init();
+		Transactions.afterCommit(() -> {
+			cache.removeIf(remove -> remove.getId().equals(id));
+		});
 		Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new ArticleIndexRebuildEvent(this)));
 	}
 
 	@Override
 	public Optional<Space> getSpace(Integer id) {
-		return spaceCache.getSpace(id);
+		for (Space space : cache) {
+			if (space.getId().equals(id)) {
+				return Optional.of(new Space(space));
+			}
+		}
+		return Optional.empty();
 	}
 
 	@Override
 	public Optional<Space> getSpace(String alias) {
-		return spaceCache.getSpace(alias);
+		for (Space space : cache) {
+			if (space.getAlias().equals(alias)) {
+				return Optional.of(new Space(space));
+			}
+		}
+		return Optional.empty();
 	}
 
 	@Override
@@ -150,7 +185,12 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		if (param.getQueryPrivate() && !Environment.isLogin()) {
 			param.setQueryPrivate(false);
 		}
-		return spaceCache.getSpaces(param.getQueryPrivate());
+		return cache.stream().filter(space -> {
+			if (!param.getQueryPrivate()) {
+				return !space.getIsPrivate();
+			}
+			return true;
+		}).map(Space::new).collect(Collectors.toList());
 	}
 
 	@EventListener
@@ -161,5 +201,10 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		cache.addAll(spaceDao.selectByParam(new SpaceQueryParam()));
 	}
 }

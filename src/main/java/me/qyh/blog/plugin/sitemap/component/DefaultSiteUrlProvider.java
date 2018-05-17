@@ -12,13 +12,14 @@ import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.config.UrlHelper.SpaceUrls;
 import me.qyh.blog.core.dao.ArticleDao;
 import me.qyh.blog.core.dao.NewsDao;
+import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Article.ArticleStatus;
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.entity.Space;
-import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.NewsQueryParam;
+import me.qyh.blog.core.vo.SpaceQueryParam;
 import me.qyh.blog.plugin.sitemap.SiteUrl;
 import me.qyh.blog.template.dao.PageDao;
 import me.qyh.blog.template.entity.Page;
@@ -41,7 +42,7 @@ public class DefaultSiteUrlProvider implements SiteUrlProvider {
 	@Autowired
 	private UrlHelper urlHelper;
 	@Autowired
-	private SpaceCache spaceCache;
+	private SpaceDao spaceDao;
 
 	private Map<String, SpaceUrls> urlsCache = new HashMap<>();
 
@@ -101,14 +102,14 @@ public class DefaultSiteUrlProvider implements SiteUrlProvider {
 
 	private void addSpaces(List<SiteUrl> urls) {
 		urls.add(new SiteUrl(urlHelper.getUrl(), 1D));
-		for (Space space : spaceCache.getSpaces(false)) {
+		for (Space space : getAllPublicSpace()) {
 			urls.add(new SiteUrl(getSpaceUrls(space.getAlias()).getCurrentUrl(), 0.8D));
 		}
 	}
 
 	private void addPages(List<SiteUrl> urls) {
 		urls.add(new SiteUrl(urlHelper.getUrl() + "/archives"));
-		for (Space space : spaceCache.getSpaces(false)) {
+		for (Space space : getAllPublicSpace()) {
 			urls.add(new SiteUrl(getSpaceUrls(space.getAlias()).getCurrentUrl() + "/archives"));
 		}
 		TemplatePageQueryParam param = new TemplatePageQueryParam();
@@ -121,7 +122,7 @@ public class DefaultSiteUrlProvider implements SiteUrlProvider {
 				if (page.isSpaceGlobal()) {
 					String alias = page.getAlias();
 					if (alias.indexOf('{') == -1) {
-						for (Space space : spaceCache.getSpaces(false)) {
+						for (Space space : getAllPublicSpace()) {
 							if (alias.isEmpty()) {
 								urls.add(new SiteUrl(getSpaceUrls(space.getAlias()).getCurrentUrl()));
 							} else {
@@ -150,6 +151,12 @@ public class DefaultSiteUrlProvider implements SiteUrlProvider {
 			urlsCache.put(alias, fromCache);
 		}
 		return fromCache;
+	}
+
+	private List<Space> getAllPublicSpace() {
+		SpaceQueryParam param = new SpaceQueryParam();
+		param.setQueryPrivate(false);
+		return spaceDao.selectByParam(param);
 	}
 
 }

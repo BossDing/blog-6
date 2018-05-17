@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="createDate" column="fragment_create_date"/>
 		<result property="global" column="is_global"/>
 		<result property="callable" column="is_callable"/>
+		<result property="del" column="is_del"/>
 		<association property="space" javaType="Space">
 			<result column="space_id" property="id" />
 			<result column="space_name" property="name"/>
@@ -35,7 +36,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_create_date,
 			space_id,
 			is_global,
-			is_callable
+			is_callable,
+			is_del
 		FROM
 			blog_fragment_user
 		WHERE 
@@ -60,7 +62,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_create_date,
 			space_id,
 			is_global,
-			is_callable
+			is_callable,
+			is_del
 		FROM
 			blog_fragment_user
 		WHERE 
@@ -81,9 +84,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		FROM
 			blog_fragment_user bfu
 		LEFT OUTER JOIN blog_space bs ON bfu.space_id = bs.id
-		<where>
+		WHERE
+			is_del = false 
 			<if test="name != null and name != ''">
-				fragment_name LIKE CONCAT('%', #{name},'%')
+				AND fragment_name LIKE CONCAT('%', #{name},'%')
 			</if>
 			<if test="space != null">
 				<choose>
@@ -101,7 +105,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="callable != null">
 				AND is_callable = #{callable}
 			</if>
-		</where>
 		ORDER BY fragment_create_date DESC
 		LIMIT #{offset},#{pageSize}
 	</select>
@@ -111,9 +114,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			COUNT(id) 
 		FROM 
 			blog_fragment_user 
-		<where>
+		WHERE
+			is_del = false 
 			<if test="name != null and name != ''">
-				fragment_name LIKE CONCAT('%', #{name},'%')
+				AND fragment_name LIKE CONCAT('%', #{name},'%')
 			</if>
 			<if test="space != null">
 				<choose>
@@ -131,7 +135,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="callable != null">
 				AND is_callable = #{callable}
 			</if>
-		</where>
 	</select>
 	
 	<update id="update">
@@ -147,6 +150,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="tpl != null">
 				fragment_tpl = #{tpl},
 			</if>
+			is_del = #{del},
 			space_id = #{space.id},
 			is_global = #{global},
 			is_callable = #{callable}
@@ -164,7 +168,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_create_date,
 			space_id,
 			is_global,
-			is_callable
+			is_callable,
+			is_del
 		FROM
 			blog_fragment_user
 		WHERE 
@@ -180,7 +185,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			fragment_create_date,
 			space_id,
 			is_global,
-			is_callable
+			is_callable,
+			is_del
 		FROM
 			blog_fragment_user
 		WHERE 

@@ -17,7 +17,6 @@ package me.qyh.blog.plugin.lr;
 
 import java.util.Map;
 
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
@@ -42,10 +41,7 @@ public class LoginRestorePluginHandler extends PluginHandlerSupport {
 
 	@Override
 	public void init(ApplicationContext applicationContext) throws Exception {
-		try {
-			this.ga = applicationContext.getBean(GoogleAuthenticator.class);
-		} catch (BeansException e) {
-		}
+		this.ga = getBean(GoogleAuthenticator.class, applicationContext).orElse(null);
 		this.attemptLoggerManager = applicationContext.getBean(AttemptLoggerManager.class);
 	}
 

@@ -22,6 +22,11 @@ public final class PreviewTemplate implements PathTemplate {
 	private static final long serialVersionUID = 1L;
 	private final PathTemplate template;
 
+	/**
+	 * 预览模板前缀
+	 */
+	public static String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
+
 	public PathTemplate getOriginalTemplate() {
 		return template;
 	}
@@ -38,7 +43,7 @@ public final class PreviewTemplate implements PathTemplate {
 
 	@Override
 	public String getTemplateName() {
-		return Template.TEMPLATE_PREVIEW_PREFIX + template.getTemplateName();
+		return TEMPLATE_PREVIEW_PREFIX + template.getTemplateName();
 	}
 
 	@Override
@@ -64,5 +69,20 @@ public final class PreviewTemplate implements PathTemplate {
 	@Override
 	public boolean hasPathVariable() {
 		return template.hasPathVariable();
+	}
+
+	@Override
+	public boolean cacheable() {
+		return false;
+	}
+
+	/**
+	 * 判断是否是预览模板文件名
+	 * 
+	 * @param templateName
+	 * @return
+	 */
+	public static boolean isPreviewTemplate(String templateName) {
+		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX);
 	}
 }

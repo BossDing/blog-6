@@ -15,8 +15,9 @@
  */
 package me.qyh.blog.plugin.comment;
 
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -58,6 +59,25 @@ public class CommentPluginHandler extends PluginHandlerSupport {
 
 	@Override
 	protected void registerBean(BeanRegistry registry) {
+
+		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false));
+
+		if (cc.isEnableEmailNotify()) {
+			EmailNofityConfig config = new EmailNofityConfig();
+			pluginProperties.get(LOCATION_KEY).ifPresent(config::setTemplateLocation);
+			pluginProperties.get(SUBJECT_KEY).ifPresent(config::setMailSubject);
+			pluginProperties.get(TIPCOUNT_KEY).map(Integer::parseInt).ifPresent(config::setMessageTipCount);
+			pluginProperties.get(PROCESS_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setProcessSendSec);
+			pluginProperties.get(FORCE_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setForceSendSec);
+
+			registry.register(CommentEmailNotify.class.getName(),
+					BeanDefinitionBuilder.genericBeanDefinition(CommentEmailNotify.class)
+							.setScope(BeanDefinition.SCOPE_SINGLETON).addConstructorArgValue(config)
+							.getBeanDefinition());
+		}
+
+		registry.registerXml(new ClassPathResource(rootPackage.replace('.', '/') + "bean.xml"));
+
 		registry.scanAndRegister(rootPackage + "validator", rootPackage + "component");
 	}
 
@@ -73,24 +93,6 @@ public class CommentPluginHandler extends PluginHandlerSupport {
 		String rootPath = rootPackage.replace('.', '/') + "mapper/";
 		configurer.addMapperLocations(resolver.getResources(rootPath + "*.xml"));
 		configurer.addTypeAliasResources(new ClassPathResource(rootPath + "typeAlias.txt"));
-	}
-
-	@Override
-	public void initializeOther(ConfigurableApplicationContext applicationContext) {
-		CommentConfig cc = new CommentConfig(pluginProperties.get(ENABLE_KEY).map(Boolean::parseBoolean).orElse(false));
-
-		if (cc.isEnableEmailNotify()) {
-			EmailNofityConfig config = new EmailNofityConfig();
-			pluginProperties.get(LOCATION_KEY).ifPresent(config::setTemplateLocation);
-			pluginProperties.get(SUBJECT_KEY).ifPresent(config::setMailSubject);
-			pluginProperties.get(TIPCOUNT_KEY).map(Integer::parseInt).ifPresent(config::setMessageTipCount);
-			pluginProperties.get(PROCESS_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setProcessSendSec);
-			pluginProperties.get(FORCE_SEND_SEC_KEY).map(Integer::parseInt).ifPresent(config::setForceSendSec);
-
-			cc.setConfig(config);
-		}
-
-		applicationContext.addBeanFactoryPostProcessor(new CommentBeanDefinitionRegistryPostProcessor(cc));
 	}
 
 	@Override
@@ -129,11 +131,6 @@ public class CommentPluginHandler extends PluginHandlerSupport {
 				messages.getMessage("plugin.comment.data.lastComment", "最近评论"), "comments");
 		SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(lcdtp);
 		registry.register(lcdtp);
-	}
-
-	@Override
-	public int getOrder() {
-		return -2;
 	}
 
 }

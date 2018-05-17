@@ -36,11 +36,6 @@ public interface Template extends Serializable {
 	String TEMPLATE_PREFIX = "Template" + SPLITER;
 
 	/**
-	 * 预览模板前缀
-	 */
-	String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
-
-	/**
 	 * 判断是否是模板文件名
 	 * 
 	 * @param templateName
@@ -48,16 +43,6 @@ public interface Template extends Serializable {
 	 */
 	static boolean isTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(TEMPLATE_PREFIX);
-	}
-
-	/**
-	 * 判断是否是预览模板文件名
-	 * 
-	 * @param templateName
-	 * @return
-	 */
-	static boolean isPreviewTemplate(String templateName) {
-		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX);
 	}
 
 	/**
@@ -97,4 +82,13 @@ public interface Template extends Serializable {
 	 * @return
 	 */
 	boolean equalsTo(Template other);
+
+	/**
+	 * 是否可以被缓存
+	 * 
+	 * @return
+	 */
+	default boolean cacheable() {
+		return true;
+	}
 }

@@ -80,14 +80,14 @@ public class LockManager implements LockProviderRegistry {
 
 	/**
 	 * 确保锁可用
-	 * 
+	 *
 	 * @param lockId
 	 *            锁id
 	 * @throws LogicException
 	 *             锁不可用(不存在)
 	 */
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public void ensureLockvailable(String lockId) throws LogicException {
+	public void ensureLockAvailable(String lockId) throws LogicException {
 		if (lockId != null && !findLock(lockId).isPresent()) {
 			throw new LogicException("lock.notexists", "锁不存在");
 		}

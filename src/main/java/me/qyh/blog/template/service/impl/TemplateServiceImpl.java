@@ -67,6 +67,7 @@ import com.google.gson.reflect.TypeToken;
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
+import me.qyh.blog.core.dao.SpaceDao;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
@@ -76,15 +77,16 @@ import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
 import me.qyh.blog.core.plugin.TemplateRegistry;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.impl.EmptyCommentServer;
-import me.qyh.blog.core.service.impl.SpaceCache;
 import me.qyh.blog.core.service.impl.Transactions;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Jsons;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.core.vo.SpaceQueryParam;
 import me.qyh.blog.template.PathTemplate;
 import me.qyh.blog.template.PatternAlreadyExistsException;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.TemplateMapping;
@@ -134,7 +136,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Autowired
 	private HistoryTemplateDao historyTemplateDao;
 	@Autowired
-	private SpaceCache spaceCache;
+	private SpaceDao spaceDao;
 	@Autowired
 	private ConfigServer configServer;
 	@Autowired(required = false)
@@ -176,7 +178,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized Fragment insertFragment(Fragment fragment) throws LogicException {
 		return Transactions.executeInTransaction(platformTransactionManager, status -> {
-			checkSpace(fragment);
+			Space space = fragment.getSpace();
+			if (space != null) {
+				fragment.setSpace(getRequiredSpace(space.getId()));
+			}
 			Fragment db;
 			if (fragment.isGlobal()) {
 				db = fragmentDao.selectGlobalByName(fragment.getName());
@@ -185,8 +190,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			boolean nameExists = db != null;
 			if (nameExists) {
-				throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
-						fragment.getName());
+
+				if (db.isDel()) {
+					fragmentDao.deleteById(db.getId());
+				} else {
+					throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
+							fragment.getName());
+				}
+
 			}
 
 			fragment.setCreateDate(Timestamp.valueOf(LocalDateTime.now()));
@@ -201,7 +212,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		Transactions.executeInTransaction(platformTransactionManager, status -> {
 			Fragment fragment = getRequiredFragment(id);
 			historyTemplateDao.deleteByTemplateName(fragment.getTemplateName());
-			fragmentDao.deleteById(id);
+
+			/**
+			 * 
+			 * @since 6.3
+			 */
+			fragment.setTpl("");
+			fragment.setDel(true);
+			fragment.setCallable(false);
+			fragment.setCreateDate(Timestamp.valueOf(Times.now()));
+			fragmentDao.update(fragment);
 
 			evitFragmentCache(fragment.getName());
 		});
@@ -210,7 +230,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public synchronized Fragment updateFragment(Fragment fragment) throws LogicException {
 		return Transactions.executeInTransaction(platformTransactionManager, status -> {
-			checkSpace(fragment);
+			Space space = fragment.getSpace();
+			if (space != null) {
+				fragment.setSpace(getRequiredSpace(space.getId()));
+			}
 			Fragment old = getRequiredFragment(fragment.getId());
 			Fragment db;
 			// 查找当前数据库是否存在同名
@@ -221,8 +244,12 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			boolean nameExists = db != null && !db.getId().equals(fragment.getId());
 			if (nameExists) {
-				throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
-						fragment.getName());
+				if (db.isDel()) {
+					fragmentDao.deleteById(db.getId());
+				} else {
+					throw new LogicException("fragment.user.nameExists", "模板片段名:" + fragment.getName() + "已经存在",
+							fragment.getName());
+				}
 			}
 			fragmentDao.update(fragment);
 
@@ -239,13 +266,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		});
 	}
 
-	private void checkSpace(Fragment fragment) throws LogicException {
-		Space space = fragment.getSpace();
-		if (space != null) {
-			fragment.setSpace(spaceCache.checkSpace(space.getId()));
-		}
-	}
-
 	@Override
 	public PageResult<Fragment> queryFragment(FragmentQueryParam param) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
@@ -259,7 +279,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public Optional<Fragment> queryFragment(Integer id) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-			return Optional.ofNullable(fragmentDao.selectById(id));
+			Fragment fragment = fragmentDao.selectById(id);
+			if (fragment != null && fragment.isDel()) {
+				return Optional.empty();
+			}
+			return Optional.ofNullable(fragment);
 		});
 	}
 
@@ -304,7 +328,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 			Space space = page.getSpace();
 			if (space != null) {
-				page.setSpace(spaceCache.checkSpace(space.getId()));
+				page.setSpace(getRequiredSpace(space.getId()));
 			}
 
 			String alias = page.getAlias();
@@ -330,7 +354,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			final PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
 			Space space = page.getSpace();
 			if (space != null) {
-				page.setSpace(spaceCache.checkSpace(space.getId()));
+				page.setSpace(getRequiredSpace(space.getId()));
 			}
 			Page db = getRequiredPage(page.getId());
 			String alias = page.getAlias();
@@ -384,7 +408,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		td.setReadOnly(true);
 		TransactionStatus status = platformTransactionManager.getTransaction(td);
 		try {
-			Space space = spaceCache.checkSpace(spaceId);
+			Space space = spaceId == null ? null : getRequiredSpace(spaceId);
 			List<ExportPage> exportPages = new ArrayList<>();
 			// User
 			for (Page page : pageDao.selectBySpace(space)) {
@@ -417,7 +441,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		// 如果导入的空间不存在，直接返回
 		Space space;
 		try {
-			space = spaceCache.checkSpace(exportPages.getSpaceId());
+			space = exportPages.getSpaceId() == null ? null : getRequiredSpace(exportPages.getSpaceId());
 		} catch (LogicException e) {
 			List<ImportRecord> list = new ArrayList<>();
 			list.add(new ImportRecord(false, e.getLogicMessage()));
@@ -572,7 +596,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		if (CollectionUtils.isEmpty(exportPageList)) {
 			return previewImport;
 		}
-		Space space = spaceCache.checkSpace(exportPages.getSpaceId());
+		Space space = exportPages.getSpaceId() == null ? null : getRequiredSpace(exportPages.getSpaceId());
 		Predicate<Page> filter = space == null ? page -> true : page -> !page.isSpaceGlobal();
 		List<Page> pages = exportPageList.stream().map(ExportPage::getPage).filter(filter).collect(Collectors.toList());
 		if (!pages.isEmpty()) {
@@ -920,7 +944,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 			// fragment比较特殊，它是按照名称来区分的，尝试fragment的缓存时
 			// 需要删除各个空间中存在该名称的fragment缓存
-			List<Space> spaces = spaceCache.getSpaces(true);
+			List<Space> spaces = spaceDao.selectByParam(new SpaceQueryParam());
 			Set<String> templateNames = new HashSet<>();
 			for (String name : names) {
 				templateNames.add(Fragment.getTemplateName(name, null));
@@ -934,10 +958,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private Optional<Fragment> queryFragmentWithTemplateName(String templateName) {
-		boolean preview = Template.isPreviewTemplate(templateName);
+		boolean preview = PreviewTemplate.isPreviewTemplate(templateName);
 		String finalTemplateName;
 		if (preview) {
-			finalTemplateName = templateName.substring(Template.TEMPLATE_PREVIEW_PREFIX.length());
+			finalTemplateName = templateName.substring(PreviewTemplate.TEMPLATE_PREVIEW_PREFIX.length());
 		} else {
 			finalTemplateName = templateName;
 		}
@@ -973,16 +997,28 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 		}
 
+		Fragment del = null;
+
 		Fragment fragment = fragmentDao.selectBySpaceAndName(space, name);
-		if (fragment == null) { // 查找全局
+		if (fragment == null || fragment.isDel()) { // 查找全局
+			if (fragment != null && fragment.isDel()) {
+				del = new Fragment(fragment);
+			}
 			fragment = fragmentDao.selectGlobalByName(name);
 		}
 
-		if (fragment == null) {
+		if (fragment == null || fragment.isDel()) {
+			if (fragment != null && fragment.isDel() && del == null) {
+				del = new Fragment(fragment);
+			}
 			// 查找内置模板片段
 			// 为了防止默认模板片段被修改，这里首先进行clone
 			fragment = fragments.stream().filter(fb -> fb.getName().equals(name)).findAny().map(Fragment::new)
 					.orElse(null);
+		}
+
+		if (fragment == null && del != null) {
+			return Optional.of(del);
 		}
 		return Optional.ofNullable(fragment);
 	}
@@ -1025,7 +1061,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				continue;
 			}
 			Optional<Fragment> optional = queryFragmentWithTemplateName(Fragment.getTemplateName(name, space));
-			fragmentMap.put(name, optional.orElse(null));
+			fragmentMap.put(name, optional.filter(fra -> !fra.isDel()).orElse(null));
 			optional.ifPresent(fragment -> fragmentMap2.put(name, fragment));
 		}
 		for (Map.Entry<String, Fragment> fragmentIterator : fragmentMap2.entrySet()) {
@@ -1112,26 +1148,28 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public void onApplicationEvent(SpaceDelEvent event) {
-			// 删除所有的fragments
-			List<Fragment> fragments = fragmentDao.selectBySpace(event.getSpace());
-			for (Fragment fragment : fragments) {
-				historyTemplateDao.deleteByTemplateName(fragment.getTemplateName());
-				fragmentDao.deleteById(fragment.getId());
-			}
-			// 事务结束之后清空所有页面缓存
-			Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new TemplateEvitEvent(this)));
-			// 查询所有的页面
-			List<Page> pages = pageDao.selectBySpace(event.getSpace());
-			if (!pages.isEmpty()) {
-				PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
-				for (Page page : pages) {
-					historyTemplateDao.deleteByTemplateName(page.getTemplateName());
-					pageDao.deleteById(page.getId());
-					// 解除mapping注册
-					helper.unregisterPage(page);
+			synchronized (TemplateServiceImpl.this) {
+				// 删除所有的fragments
+				List<Fragment> fragments = fragmentDao.selectBySpace(event.getSpace());
+				for (Fragment fragment : fragments) {
+					historyTemplateDao.deleteByTemplateName(fragment.getTemplateName());
+					fragmentDao.deleteById(fragment.getId());
 				}
-				// 发送事件
-				applicationEventPublisher.publishEvent(new PageDelEvent(this, pages));
+				// 事务结束之后清空所有页面缓存
+				Transactions.afterCommit(() -> applicationEventPublisher.publishEvent(new TemplateEvitEvent(this)));
+				// 查询所有的页面
+				List<Page> pages = pageDao.selectBySpace(event.getSpace());
+				if (!pages.isEmpty()) {
+					PageRequestMappingRegisterHelper helper = new PageRequestMappingRegisterHelper();
+					for (Page page : pages) {
+						historyTemplateDao.deleteByTemplateName(page.getTemplateName());
+						pageDao.deleteById(page.getId());
+						// 解除mapping注册
+						helper.unregisterPage(page);
+					}
+					// 发送事件
+					applicationEventPublisher.publishEvent(new PageDelEvent(this, pages));
+				}
 			}
 		}
 
@@ -1257,7 +1295,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public boolean canProcess(String templateSign) {
-			return Template.isPreviewTemplate(templateSign);
+			return PreviewTemplate.isPreviewTemplate(templateSign);
 		}
 	}
 
@@ -1280,7 +1318,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	private Fragment getRequiredFragment(Integer id) throws LogicException {
 		Fragment fragment = fragmentDao.selectById(id);
-		if (fragment == null) {
+		if (fragment == null || fragment.isDel()) {
 			throw new LogicException("fragment.user.notExists", "模板片段不存在");
 		}
 		return fragment;
@@ -1303,7 +1341,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			}
 			for (Fragment previewFragment : previewFragments) {
 				if (previewFragment.getTemplateName().equals(templateName)) {
-					return Template.TEMPLATE_PREVIEW_PREFIX + templateName;
+					return PreviewTemplate.TEMPLATE_PREVIEW_PREFIX + templateName;
 				}
 			}
 		}
@@ -1423,6 +1461,14 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
+	}
+
+	private Space getRequiredSpace(Integer id) throws LogicException {
+		Space space = spaceDao.selectById(id);
+		if (space == null) {
+			throw new LogicException("space.notExists", "空间不存在");
+		}
+		return space;
 	}
 
 }

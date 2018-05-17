@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.springframework.util.CollectionUtils;
 
-import me.qyh.blog.template.Template;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.render.TemplateRenderErrorDescription.TemplateErrorInfo;
 
 public class TemplateRenderException extends Exception {
@@ -53,13 +53,13 @@ public class TemplateRenderException extends Exception {
 	}
 
 	public boolean isFromPreview() {
-		if (Template.isPreviewTemplate(templateName)) {
+		if (PreviewTemplate.isPreviewTemplate(templateName)) {
 			return true;
 		}
 		List<TemplateErrorInfo> templateErrorInfos = renderErrorDescription.getTemplateErrorInfos();
 		if (!CollectionUtils.isEmpty(templateErrorInfos)) {
 			for (TemplateErrorInfo info : templateErrorInfos) {
-				if (Template.isPreviewTemplate(info.getTemplateName())) {
+				if (PreviewTemplate.isPreviewTemplate(info.getTemplateName())) {
 					return true;
 				}
 			}

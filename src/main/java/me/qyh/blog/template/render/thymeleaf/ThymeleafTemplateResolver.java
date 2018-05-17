@@ -41,7 +41,7 @@ public class ThymeleafTemplateResolver implements ITemplateResolver {
 	@Autowired
 	private TemplateService templateService;
 
-	static final int ORDER = 1;
+	private final ITemplateResource emptyTemplateResource = new StringTemplateResource("");
 
 	@Override
 	public String getName() {
@@ -50,7 +50,7 @@ public class ThymeleafTemplateResolver implements ITemplateResolver {
 
 	@Override
 	public Integer getOrder() {
-		return ORDER;
+		return 1;
 	}
 
 	@Override
@@ -59,14 +59,15 @@ public class ThymeleafTemplateResolver implements ITemplateResolver {
 		if (!Template.isTemplate(templateName)) {
 			return null;
 		}
-		
+
 		Optional<Template> optional = templateService.queryTemplate(templateName);
 		ITemplateResource templateResource = optional.<ITemplateResource>map(TemplateResource::new)
-				.orElseGet(() -> new StringTemplateResource(""));
+				.orElseGet(() -> emptyTemplateResource);
 
-		ICacheEntryValidity cacheEntryValidity = Template.isPreviewTemplate(templateName)
-				? NonCacheableCacheEntryValidity.INSTANCE
-				: AlwaysValidCacheEntryValidity.INSTANCE;
+		ICacheEntryValidity cacheEntryValidity = optional.map(template -> {
+			return template.cacheable() ? AlwaysValidCacheEntryValidity.INSTANCE
+					: NonCacheableCacheEntryValidity.INSTANCE;
+		}).orElse(NonCacheableCacheEntryValidity.INSTANCE);
 
 		return new TemplateResolution(templateResource, false, TemplateMode.HTML, false, cacheEntryValidity);
 	}

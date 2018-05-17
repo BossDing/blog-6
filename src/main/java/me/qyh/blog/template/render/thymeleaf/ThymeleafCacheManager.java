@@ -72,7 +72,12 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Appli
 
 	private final class TemplateCache implements ICache<TemplateCacheKey, TemplateModel> {
 
-		private final Cache<TemplateCacheKey, TemplateModel> cache = Caffeine.newBuilder().build();
+		private final Cache<TemplateCacheKey, TemplateModel> cache;
+
+		public TemplateCache() {
+			super();
+			this.cache = Caffeine.newBuilder().build();
+		}
 
 		@Override
 		public void put(TemplateCacheKey key, TemplateModel value) {
@@ -112,7 +117,7 @@ public class ThymeleafCacheManager extends AbstractCacheManager implements Appli
 		@Override
 		public TemplateModel get(TemplateCacheKey key,
 				ICacheEntryValidityChecker<? super TemplateCacheKey, ? super TemplateModel> validityChecker) {
-			return cache.getIfPresent(key);
+			return get(key);
 		}
 
 		@Override

@@ -35,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			bs.id = #{id}
 	</select>
 
-	<insert id="insert">
+	<insert id="insert" keyProperty="id" useGeneratedKeys="true">
 		INSERT INTO blog_space(space_name,space_alias,is_private,createDate,space_lock,is_default)
 		VALUES(#{name},#{alias},#{isPrivate},#{createDate},#{lockId},#{isDefault})
 	</insert>

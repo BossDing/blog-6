@@ -49,6 +49,7 @@
         	<param-name>throwExceptionIfNoHandlerFound</param-name>
         	<param-value>true</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
         <multipart-config>
         </multipart-config>
     </servlet>
@@ -56,10 +57,10 @@
         <servlet-name>blog</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
-    
-    <context-param>
-    	<param-name>globalInitializerClasses</param-name>
-  		<param-value>me.qyh.blog.core.plugin.PluginHandlerRegistry</param-value>
-    </context-param>
+
+	<context-param>
+		<param-name>globalInitializerClasses</param-name>
+		<param-value>me.qyh.blog.core.plugin.PluginHandlerRegistry</param-value>
+	</context-param>
     
 </web-app>
