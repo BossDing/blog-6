@@ -24,6 +24,7 @@ public class StaticFile {
 	private boolean dir;
 
 	private String url;
+	private boolean editable;
 
 	public String getPath() {
 		return path;
@@ -71,6 +72,14 @@ public class StaticFile {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public boolean isEditable() {
+		return editable;
+	}
+
+	public void setEditable(boolean editable) {
+		this.editable = editable;
 	}
 
 	/**

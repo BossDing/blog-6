@@ -18,6 +18,10 @@ $(document).ready(function(){
 		$("#createFolderModal").on("show.bs.modal",function(){
 			clearTip();
 			$(this).find("form")[0].reset();
+		});
+		$("#createFileModal").on("show.bs.modal",function(){
+			clearTip();
+			$(this).find("form")[0].reset();
 		})
 		$("#copyModal").on("show.bs.modal",function(){
 			clearTip();
@@ -200,6 +204,30 @@ $(document).ready(function(){
 				},
 				complete:function(){
 					$("#createFolder").prop("disabled",false);
+				}
+			});
+		});
+		
+		$("#createFile").click(function(){
+			$("#createFile").prop("disabled",true);
+			var data = $("#createFileModal").find("form").serializeObject();
+			var url ;
+			$.ajax({
+				type : "post",
+				url : basePath+"/mgr/static/createFile",
+				data : {path:$("#dir-path").val() + '/'+data.path},
+				success : function(data){
+					if(data.success){
+						success(data.message);
+						setTimeout(function(){
+							window.location.reload();
+						},500)
+					} else {
+						error(data.message);
+					}
+				},
+				complete:function(){
+					$("#createFile").prop("disabled",false);
 				}
 			});
 		});

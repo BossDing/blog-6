@@ -15,7 +15,6 @@
  */
 package me.qyh.blog.template.render;
 
-import org.springframework.http.MediaType;
 import org.springframework.transaction.TransactionStatus;
 
 import me.qyh.blog.template.Template;
@@ -31,7 +30,6 @@ public class ParseContext {
 	private TransactionStatus transactionStatus;
 	private ParseConfig config;
 	private Template root;
-	private MediaType mediaType;
 
 	ParseContext() {
 		super();
@@ -59,14 +57,6 @@ public class ParseContext {
 
 	public void setRoot(Template root) {
 		this.root = root;
-	}
-
-	public MediaType getMediaType() {
-		return mediaType;
-	}
-
-	public void setMediaType(MediaType mediaType) {
-		this.mediaType = mediaType;
 	}
 
 	public boolean onlyCallable() {

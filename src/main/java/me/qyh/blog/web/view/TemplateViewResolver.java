@@ -31,7 +31,6 @@ import org.springframework.web.servlet.view.RedirectView;
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
-import me.qyh.blog.template.render.RenderResult;
 import me.qyh.blog.template.render.TemplateRender;
 
 @Component
@@ -79,12 +78,12 @@ public class TemplateViewResolver extends AbstractCachingViewResolver {
 		@Override
 		public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response)
 				throws Exception {
-			RenderResult rendered = templateRender.doRender(templateName, model, request,
-					new ReadOnlyResponse(response), new ParseConfig());
+			String content = templateRender.doRender(templateName, model, request, new ReadOnlyResponse(response),
+					new ParseConfig());
 
 			response.setContentType(getContentType());
 			response.setCharacterEncoding(Constants.CHARSET.name());
-			response.getWriter().write(rendered.getContent());
+			response.getWriter().write(content);
 			response.getWriter().flush();
 
 		}

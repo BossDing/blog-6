@@ -21,6 +21,6 @@ public interface TemplateRenderHandler {
 
 	boolean match(String templateName);
 
-	void afterRender(RenderResult result, HttpServletRequest request);
+	void afterRender(String result, HttpServletRequest request);
 
 }

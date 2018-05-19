@@ -39,9 +39,8 @@ public class TemplateDialect extends AbstractProcessorDialect {
 				new FragmentTagProcessor(dialectPrefix, applicationContext),
 				new LockTagProcessor(dialectPrefix, applicationContext),
 				new RedirectTagProcessor(dialectPrefix, applicationContext), new PrivateTagProcessor(dialectPrefix),
-				new MediaTypeTagProcessor(dialectPrefix), new PeriodTagProcessor(dialectPrefix),
-				new LockedTagProcessor(dialectPrefix), new UnlockedTagProcessor(dialectPrefix),
-				new MarkdownModelProcessor(dialectPrefix, applicationContext));
+				new PeriodTagProcessor(dialectPrefix), new LockedTagProcessor(dialectPrefix),
+				new UnlockedTagProcessor(dialectPrefix), new MarkdownModelProcessor(dialectPrefix, applicationContext));
 	}
 
 }

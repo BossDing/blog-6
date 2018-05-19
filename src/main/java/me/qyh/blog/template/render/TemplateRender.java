@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.util.CollectionUtils;
@@ -78,21 +77,19 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 
 	private List<TemplateRenderHandler> renderHandlers = new ArrayList<>();
 
-	public RenderResult doRender(String templateName, Map<String, ?> model, HttpServletRequest request,
+	public String doRender(String templateName, Map<String, ?> model, HttpServletRequest request,
 			ReadOnlyResponse response, ParseConfig config) throws Exception {
 		ParseContextHolder.getContext().setConfig(config);
 		try {
 			String content = doRender(templateName, model, request, response);
-			MediaType type = ParseContextHolder.getContext().getMediaType();
-			RenderResult result = new RenderResult(type, content);
 			if (!renderHandlers.isEmpty()) {
 				for (TemplateRenderHandler handler : renderHandlers) {
 					if (handler.match(templateName)) {
-						handler.afterRender(result, request);
+						handler.afterRender(content, request);
 					}
 				}
 			}
-			return result;
+			return content;
 		} catch (Throwable e) {
 			markRollBack();
 

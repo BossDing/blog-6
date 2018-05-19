@@ -38,7 +38,6 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
-import me.qyh.blog.template.render.RenderResult;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.template.service.TemplateService;
@@ -80,16 +79,10 @@ public class OtherController {
 			String templateName = templateService.getFragmentTemplateName(name, Environment.getSpace(),
 					Environment.getIP());
 
-			RenderResult result = templateRender.doRender(templateName, null, request, new ReadOnlyResponse(response),
+			String content = templateRender.doRender(templateName, null, request, new ReadOnlyResponse(response),
 					new ParseConfig(true, false));
 
-			String content = result.getContent();
-			MediaType type = result.getType();
-			if (type == null) {
-				type = MediaType.TEXT_HTML;
-			}
-
-			write(content, type, response);
+			write(content, MediaType.TEXT_HTML, response);
 
 		} catch (TemplateRenderException e) {
 			Webs.writeInfo(response, new JsonResult(false, e.getRenderErrorDescription()));

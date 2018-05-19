@@ -29,12 +29,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -64,6 +67,7 @@ import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.PageResult;
+import me.qyh.blog.file.vo.FileContent;
 import me.qyh.blog.file.vo.StaticFile;
 import me.qyh.blog.file.vo.StaticFilePageResult;
 import me.qyh.blog.file.vo.StaticFileQueryParam;
@@ -95,6 +99,8 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	private UrlHelper urlHelper;
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
+
+	private static final Set<String> editableExts = Set.of("js", "css", "json", "txt");
 
 	/**
 	 * @param rootLocation
@@ -446,16 +452,22 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	protected PageResult<StaticFile> doSubSearch(Path root, StaticFileQueryParam param) throws IOException {
 		File rootFile = root.toFile();
 
-		Predicate<String> predicate = !param.needQuery() ? p -> true : p -> matchParam(param, p);
-		String[] nameArray = rootFile.list();
+		Predicate<File> predicate = !param.needQuery() ? p -> true : p -> {
+			String name = p.getName();
+			return matchParam(param, name);
+		};
 
-		if (nameArray == null) {
+		File[] fileArray = rootFile.listFiles();
+
+		if (fileArray == null) {
 			return new PageResult<>(param, 0, new ArrayList<>());
 		}
 
-		List<String> names = Arrays.stream(nameArray).filter(predicate).collect(Collectors.toList());
+		fileArray = Arrays.stream(fileArray).filter(predicate).toArray(File[]::new);
 
-		int total = names.size();
+		Arrays.sort(fileArray, Comparator.comparingLong(File::lastModified).reversed());
+
+		int total = fileArray.length;
 		if (param.getOffset() >= total) {
 			return new PageResult<>(param, total, new ArrayList<>());
 		}
@@ -464,8 +476,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 
 		List<StaticFile> files = new ArrayList<>();
 		for (int i = param.getOffset(); i < to; i++) {
-			String name = names.get(i);
-			files.add(toStaticFile(new File(rootFile, name).toPath()));
+			files.add(toStaticFile(fileArray[i].toPath()));
 		}
 
 		return new PageResult<>(param, total, files);
@@ -485,6 +496,8 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		Predicate<Path> predicate = !param.needQuery() ? p -> true
 				: p -> matchParam(param, Objects.toString(p.getFileName(), null));
 		Path[] paths = Files.walk(root).filter(predicate).toArray(Path[]::new);
+
+		Arrays.sort(paths, Comparator.comparingLong(FileUtils::getLastModifiedTime).reversed());
 
 		int total = paths.length;
 		if (param.getOffset() >= total) {
@@ -524,6 +537,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		if (!lf.isDir()) {
 			lf.setUrl(getUrl(lf.getPath()));
 		}
+		lf.setEditable(isEditable(path));
 		return lf;
 	}
 
@@ -667,6 +681,70 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		}
 	}
 
+	/**
+	 * 获取<b>可编辑</b>文件内容
+	 * 
+	 * @param path
+	 * @return
+	 * @throws LogicException
+	 */
+	public FileContent getEditableFile(String path) throws LogicException {
+		String validPath = validatePath(path);
+		lock.readLock().lock();
+		try {
+			Path file = byPath(validPath);
+			if (!FileUtils.isRegularFile(file)) {
+				throw new LogicException("staticFile.edit.notFile", "只有文件才能被编辑");
+			}
+			if (!isEditable(file)) {
+				throw new LogicException("staticFile.edit.unable", "该文件不能被编辑");
+			}
+			FileContent fc = new FileContent();
+			try {
+				fc.setContent(new String(Files.readAllBytes(file), Constants.CHARSET));
+			} catch (IOException e) {
+				if (FileUtils.exists(file)) {
+					logger.error(e.getMessage(), e);
+				}
+				throw new LogicException("staticFile.edit.getContentFail", "获取文件内容失败");
+			}
+			fc.setExt(FileUtils.getFileExtension(path).toLowerCase());
+			fc.setPath(validPath);
+			return fc;
+		} finally {
+			lock.readLock().unlock();
+		}
+	}
+
+	/**
+	 * 编辑文件
+	 * 
+	 * @param path
+	 * @param content
+	 * @throws LogicException
+	 */
+	public void editFile(String path, String content) throws LogicException {
+		String validPath = validatePath(path);
+		lock.writeLock().lock();
+		try {
+			Path file = byPath(validPath);
+			if (!isEditable(file)) {
+				throw new LogicException("staticFile.edit.unable", "该文件不能被编辑");
+			}
+			try {
+				Files.write(file, content.getBytes(Constants.CHARSET), StandardOpenOption.WRITE);
+			} catch (Exception e) {
+				if (FileUtils.exists(file)) {
+					logger.error(e.getMessage(), e);
+				}
+				throw new LogicException("staticFile.edit.writeError", "文件写入失败");
+			}
+
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
+
 	protected void doCopy(Path source, Path dest) throws LogicException {
 
 		List<Path> rollBacks = Collections.synchronizedList(createDirectories(dest));
@@ -770,7 +848,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	public void delete(String path) throws LogicException {
 		lock.writeLock().lock();
 		try {
-			Path toDelete = byPath(path);
+			Path toDelete = byPath(validatePath(path));
 			if (toDelete == this.root) {
 				throw new LogicException("staticFile.delete.root", "根目录无法删除");
 			}
@@ -797,6 +875,41 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 			}
 
 			createDirectories(dir);
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
+
+	/**
+	 * 创建文件
+	 * 
+	 * @param path
+	 */
+	public void createFile(String path) throws LogicException {
+		lock.writeLock().lock();
+		try {
+
+			Path file = root.resolve(validatePath(path));
+
+			if (!FileUtils.isSub(file, root)) {
+				throw new LogicException("staticFile.createFile.notInRoot", "文件不在根目录内");
+			}
+
+			if (FileUtils.exists(file)) {
+				throw new LogicException("staticFile.createFile.exists", "文件已经存在");
+			}
+
+			List<Path> paths = createDirectories(file.getParent());
+			try {
+				Files.createFile(file);
+			} catch (FileAlreadyExistsException e) {
+				delete(paths);
+				throw new LogicException("staticFile.createFile.exists", "文件已经存在");
+			} catch (Exception e) {
+				delete(paths);
+				logger.error(e.getMessage(), e);
+				throw new LogicException("staticFile.createFile.fail", "文件创建失败");
+			}
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -907,7 +1020,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		lock.writeLock().lock();
 
 		try {
-			Path p = byPath(path);
+			Path p = byPath(validatePath(path));
 
 			if (p == this.root) {
 				throw new LogicException("staticFile.zip.root", "根目录不能打包成zip");
@@ -982,15 +1095,14 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 		}
 	}
 
-	// @Override
-	// protected boolean isInvalidPath(String path) {
-	// boolean invalid = super.isInvalidPath(path);
-	// if (invalid) {
-	// // ALLOW
-	// if (path.contains("WEB-INF") || path.contains("META-INF")) {
-	// return false;
-	// }
-	// }
-	// return invalid;
-	// }
+	protected boolean isEditable(Path file) {
+		String ext = FileUtils.getFileExtension(file).toLowerCase();
+		for (String editableExt : editableExts) {
+			if (ext.equals(editableExt)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

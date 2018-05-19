@@ -36,7 +36,6 @@ import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.RedirectException;
-import me.qyh.blog.template.render.RenderResult;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.web.Webs;
 
@@ -67,10 +66,10 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 
 		String templateName = templateView.getTemplateName();
 
-		RenderResult rendered;
+		String content;
 
 		try {
-			rendered = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest,
+			content = templateRender.doRender(templateName, mavContainer.getModel(), nativeRequest,
 					new ReadOnlyResponse(nativeResponse), new ParseConfig());
 
 		} catch (RedirectException | MissLockException e) {
@@ -86,14 +85,7 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 			throw e;
 		}
 
-		String content = rendered.getContent();
-
-		MediaType type = rendered.getType();
-		if (type == null) {
-			type = MediaType.TEXT_HTML;
-		}
-
-		nativeResponse.setContentType(type.toString());
+		nativeResponse.setContentType(MediaType.TEXT_HTML_VALUE);
 		nativeResponse.setCharacterEncoding(Constants.CHARSET.name());
 
 		Writer writer = nativeResponse.getWriter();

@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import me.qyh.blog.core.config.ConfigServer;
 import me.qyh.blog.core.config.Constants;
@@ -91,6 +92,27 @@ public class StaticFileMgrController extends BaseMgrController {
 		return new JsonResult(true, handler.query(staticFileQueryParam));
 	}
 
+	@GetMapping("edit")
+	public String edit(@RequestParam("path") String path, Model model, RedirectAttributes ra) {
+		try {
+			checkHandler();
+			model.addAttribute("file", handler.getEditableFile(path));
+			return "mgr/file/local_editor";
+		} catch (LogicException e) {
+			ra.addFlashAttribute(Constants.ERROR, e.getLogicMessage());
+			return "redirect:/mgr/static/index";
+		}
+	}
+
+	@PostMapping("edit")
+	@ResponseBody
+	public JsonResult edit(@RequestParam("path") String path, @RequestParam("content") String content)
+			throws LogicException {
+		checkHandler();
+		handler.editFile(path, content);
+		return new JsonResult(true, new Message("staticFile.edit.success", "文件编辑成功"));
+	}
+
 	@PostMapping("upload")
 	@ResponseBody
 	public JsonResult upload(@Validated StaticFileUpload staticFileUpload, BindingResult result) throws LogicException {
@@ -134,6 +156,14 @@ public class StaticFileMgrController extends BaseMgrController {
 	public JsonResult createFolder(@RequestParam("path") String path) throws LogicException {
 		checkHandler();
 		handler.createDirectorys(path);
+		return new JsonResult(true, new Message("staticFile.create.success", "创建成功"));
+	}
+
+	@PostMapping("createFile")
+	@ResponseBody
+	public JsonResult createFile(@RequestParam("path") String path) throws LogicException {
+		checkHandler();
+		handler.createFile(path);
 		return new JsonResult(true, new Message("staticFile.create.success", "创建成功"));
 	}
 

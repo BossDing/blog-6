@@ -433,6 +433,20 @@ public class FileUtils {
 	}
 
 	/**
+	 * 获取文件的最后修改时间
+	 * 
+	 * @param path
+	 * @return 如果获取失败，返回-1
+	 */
+	public static long getLastModifiedTime(Path path) {
+		try {
+			return Files.getLastModifiedTime(path).toMillis();
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+
+	/**
 	 * 提供一个简单的文件名校验，最終是否允许以能否成功创建文件为准
 	 * <p>
 	 * <b>不会对文件系统的保留文件名做校验，例如windows下的CON文件</b>

@@ -17,6 +17,8 @@
 						<button class="btn btn-primary" data-toggle="modal"
 							data-target="#uploadModal">上传文件</button>
 						<button class="btn btn-primary" data-toggle="modal"
+							data-target="#createFileModal">新建文件</button>
+						<button class="btn btn-primary" data-toggle="modal"
 							data-target="#createFolderModal">新建文件夹</button>
 						<button class="btn btn-primary" data-toggle="modal"
 							data-target="#queryModal">查询</button>
@@ -101,7 +103,11 @@
 											<a style="margin-right: 5px"
 													th:if="${!file.dir}"
 													th:data-clipboard-text="${file.url}" target="_blank" title="复制访问地址"><span
-													class="glyphicon glyphicon-share-alt" aria-hidden="true"></span></a>			
+													class="glyphicon glyphicon-share-alt" aria-hidden="true"></span></a>	
+												
+											<a style="margin-right: 5px"
+													th:href="@{/mgr/static/edit?path=}+${file.path}" th:if="${file.editable}"><span
+													class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>		
 											</div>
 										</div>
 									</div>
@@ -202,7 +208,7 @@
 						<div class="form-group">
 							<input
 							type="hidden" th:value="${param.path == null ? '' : param.path}" id="dir-path">
-							<label for="name" class="control-label">路径(1~30个字符，只能包含大小写英文字符和数字，一旦创建将无法修改！):</label>
+							<label for="name" class="control-label">路径(1~30个字符，只能包含大小写英文字符和数字):</label>
 							<input type="text" class="form-control" name="path">
 						</div>
 					</form>
@@ -210,6 +216,36 @@
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
 					<button type="button" class="btn btn-primary" id="createFolder">创建</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="modal fade" id="createFileModal" tabindex="-1"
+		role="dialog" aria-labelledby="createFileModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title" id="createFileModalLabel">新文件</h4>
+				</div>
+				<div class="modal-body">
+					<div class="tip"></div>
+					<form autocomplete="off">
+						<div class="form-group">
+							<input
+							type="hidden" th:value="${param.path == null ? '' : param.path}" id="dir-path">
+							<label for="name" class="control-label">路径(1~30个字符，只能包含大小写英文字符和数字):</label>
+							<input type="text" class="form-control" name="path">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="button" class="btn btn-primary" id="createFile">创建</button>
 				</div>
 			</div>
 		</div>

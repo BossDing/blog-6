@@ -562,6 +562,7 @@ public class UrlHelper {
 				if (!update) {
 					return;
 				}
+				cookie.setValue(value);
 			}
 			cookie.setMaxAge(maxAge);
 			cookie.setHttpOnly(true);

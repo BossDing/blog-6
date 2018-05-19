@@ -65,6 +65,15 @@ public class Times {
 	}
 
 	/**
+	 * 获取当前时间戳
+	 * 
+	 * @return
+	 */
+	public static long nowMillis() {
+		return System.currentTimeMillis();
+	}
+
+	/**
 	 * 解析日期
 	 * 
 	 * @param text
