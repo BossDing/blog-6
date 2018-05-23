@@ -29,7 +29,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,7 +99,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 	@Autowired
 	private ContentNegotiationManager contentNegotiationManager;
 
-	private static final Set<String> editableExts = Set.of("js", "css", "json", "txt");
+	private static final Set<String> editableExts = Set.of("js", "css", "json", "txt", "xml");
 
 	/**
 	 * @param rootLocation
@@ -732,7 +731,7 @@ public class EditablePathResourceHttpRequestHandler extends CustomResourceHttpRe
 				throw new LogicException("staticFile.edit.unable", "该文件不能被编辑");
 			}
 			try {
-				Files.write(file, content.getBytes(Constants.CHARSET), StandardOpenOption.WRITE);
+				Files.write(file, content.getBytes(Constants.CHARSET));
 			} catch (Exception e) {
 				if (FileUtils.exists(file)) {
 					logger.error(e.getMessage(), e);

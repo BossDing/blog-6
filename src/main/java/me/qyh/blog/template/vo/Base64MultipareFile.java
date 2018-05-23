@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Base64;
 
 import org.springframework.http.MediaType;
@@ -27,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 
 public class Base64MultipareFile implements MultipartFile {
@@ -109,6 +109,6 @@ public class Base64MultipareFile implements MultipartFile {
 
 	@Override
 	public void transferTo(File dest) throws IOException, IllegalStateException {
-		FileUtils.write(content, dest.toPath());
+		Files.write(dest.toPath(), content);
 	}
 }

@@ -61,8 +61,7 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 		HttpServletResponse nativeResponse = webRequest.getNativeResponse(HttpServletResponse.class);
 		HttpServletRequest nativeRequest = webRequest.getNativeRequest(HttpServletRequest.class);
 
-		TemplateView templateView = (TemplateView) returnValue;
-		Objects.requireNonNull(templateView);
+		TemplateView templateView = Objects.requireNonNull((TemplateView) returnValue);
 
 		String templateName = templateView.getTemplateName();
 
@@ -85,12 +84,45 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 			throw e;
 		}
 
-		nativeResponse.setContentType(MediaType.TEXT_HTML_VALUE);
+		String contentType = MediaType.TEXT_HTML_VALUE;
+
+		String pattern = templateView.getMatchPattern();
+		if (!pattern.isEmpty()) {
+			int dotIndex = pattern.lastIndexOf('.');
+			if (dotIndex > -1) {
+				String ext = pattern.substring(dotIndex + 1);
+				contentType = getContentType(webRequest, ext);
+			}
+		}
+
+		nativeResponse.setContentType(contentType);
 		nativeResponse.setCharacterEncoding(Constants.CHARSET.name());
 
 		Writer writer = nativeResponse.getWriter();
 		writer.write(content);
 		writer.flush();
+	}
+
+	protected String getContentType(NativeWebRequest request, String ext) {
+		if ("".equals(ext) || "html".equalsIgnoreCase(ext)) {
+			return MediaType.TEXT_HTML_VALUE;
+		}
+		if ("json".equalsIgnoreCase(ext)) {
+			return MediaType.APPLICATION_JSON_VALUE;
+		}
+		if ("xml".equalsIgnoreCase(ext)) {
+			return MediaType.APPLICATION_XML_VALUE;
+		}
+		if ("txt".equalsIgnoreCase(ext)) {
+			return MediaType.TEXT_PLAIN_VALUE;
+		}
+		if ("js".equalsIgnoreCase(ext)) {
+			return "text/javascript";
+		}
+		if ("css".equalsIgnoreCase(ext)) {
+			return "text/css";
+		}
+		return "application/octet-stream";
 	}
 
 }

@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -71,6 +71,12 @@
 		th:if="${file.ext == 'css'}"></script>
 	<script th:src="@{/static/codemirror/addon/hint/css-hint.js}"
 		th:if="${file.ext == 'css'}"></script>
+	<script th:src="@{/static/codemirror/mode/xml/xml.js}"
+		th:if="${file.ext == 'xml'}"></script>
+	<script th:src="@{/static/codemirror/addon/hint/xml-hint.js}"
+		th:if="${file.ext == 'xml'}"></script>
+	<script th:src="@{/static/codemirror/addon/fold/xml-fold.js}" th:if="${file.ext == 'xml'}"></script>
+	<script th:src="@{/static/codemirror/addon/edit/closetag.js}"></script>
 	<script th:src="@{/static/codemirror/addon/display/fullscreen.js}"></script>
 	<script th:src="@{/static/codemirror/addon/edit/matchbrackets.js}"></script>
 	<script th:src="@{/static/codemirror/addon/selection/active-line.js}"></script>
@@ -84,6 +90,7 @@
 			matchBrackets: true,
 	        autoCloseBrackets: true,
 	        styleActiveLine: true,
+			autoCloseTags: true,
 	        theme : 'eclipse',
 			extraKeys : {
 				"Alt-/" : "autocomplete",

@@ -144,7 +144,7 @@ public class PageValidator implements Validator {
 		}
 
 		if (alias.indexOf('/') == -1) {
-			doValidatePageAlias(alias, errors);
+			doValidatePageAlias(alias, true, errors);
 		} else {
 
 			String[] aliasArray = alias.split("/");
@@ -153,8 +153,8 @@ public class PageValidator implements Validator {
 						"路径最大深度不能超过" + MAX_ALIAS_DEPTH);
 				return;
 			}
-			for (String _alias : aliasArray) {
-				doValidatePageAlias(_alias, errors);
+			for (int i = 0; i < aliasArray.length; i++) {
+				doValidatePageAlias(aliasArray[i], (i == aliasArray.length - 1), errors);
 				if (errors.hasErrors()) {
 					return;
 				}
@@ -168,6 +168,37 @@ public class PageValidator implements Validator {
 				errors.reject("page.alias.variable.same", "多个{}中间的内容不能相同");
 			}
 
+		}
+	}
+
+	private static void doValidatePageAlias(String alias, boolean last, Errors errors) {
+		if (!last || alias.indexOf('.') == -1) {
+			doValidatePageAlias(alias, errors);
+		} else {
+			// .test
+			// test.
+			if (alias.startsWith(".") || alias.endsWith(".")) {
+				errors.reject("page.alias.last.startOrEndWithPoint", "最后一个路径不能以.开头或结尾");
+				return;
+			}
+			// test..test
+			if (org.springframework.util.StringUtils.countOccurrencesOf(alias, ".") > 1) {
+				// 只能有一个 .
+				errors.reject("page.alias.tooPoint", "路径只能有一个.");
+				return;
+			}
+			String name = FileUtils.getNameWithoutExtension(alias);
+			doValidatePageAlias(name, errors);
+
+			if (errors.hasErrors()) {
+				return;
+			}
+
+			String ext = FileUtils.getFileExtension(alias);
+			if (!Validators.isAlpha(ext)) {
+				errors.reject("page.alias.extension.invalid", "路径后缀必须是英文字母");
+				return;
+			}
 		}
 	}
 
@@ -192,7 +223,7 @@ public class PageValidator implements Validator {
 			}
 		} else {
 			if (!alias.matches(NO_REGISTRABLE_ALIAS_PATTERN)) {
-				errors.reject("page.alias.valid", "路径只能为英文字母，数字或者-和_");
+				errors.reject("page.alias.invalid", "路径只能为英文字母，数字或者-和_");
 			}
 		}
 	}

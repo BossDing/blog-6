@@ -94,6 +94,12 @@
 					<constructor-arg index="1" 
 						value="newsStatistics" />
 				</bean>
+				
+				<bean
+					class="me.qyh.blog.template.render.data.NewsNavDataTagProcessor">
+					<constructor-arg index="0" value="上一条下一条" />
+					<constructor-arg index="1" value="newsNav" />
+				</bean>
 
 				<bean
 					class="me.qyh.blog.template.render.data.CommentStatisticsDataTagProcessor">

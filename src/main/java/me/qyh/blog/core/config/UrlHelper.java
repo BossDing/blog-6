@@ -568,7 +568,7 @@ public class UrlHelper {
 			cookie.setHttpOnly(true);
 			cookie.setSecure(isSecure());
 			cookie.setPath("/" + contextPath);
-			cookie.setDomain(domain);
+			// cookie.setDomain(domain);
 			response.addCookie(cookie);
 		}
 

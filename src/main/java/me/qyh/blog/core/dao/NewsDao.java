@@ -82,4 +82,22 @@ public interface NewsDao {
 	 */
 	NewsStatistics selectStatistics(@Param("queryPrivate") boolean queryPrivate);
 
+	/**
+	 * 查询上一条动态
+	 * 
+	 * @param news
+	 * @param queryPrivate
+	 * @return
+	 */
+	News getPreviousNews(@Param("news") News news, @Param("queryPrivate") boolean queryPrivate);
+
+	/**
+	 * 查询下一条动态
+	 * 
+	 * @param news
+	 * @param queryPrivate
+	 * @return
+	 */
+	News getNextNews(@Param("news") News news, @Param("queryPrivate") boolean queryPrivate);
+
 }

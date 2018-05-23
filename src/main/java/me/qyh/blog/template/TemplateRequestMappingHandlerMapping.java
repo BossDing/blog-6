@@ -100,7 +100,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			if (matchOptional.isPresent()) {
 				TemplateMatch match = matchOptional.get();
 				setUriTemplateVariables(match, lookupPath, request);
-				return new HandlerMethod(new TemplateHandler(match.getTemplateName()), method);
+				return new HandlerMethod(new TemplateHandler(match), method);
 			}
 
 		}
@@ -124,7 +124,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			if (matchOptional.isPresent()) {
 				TemplateMatch match = matchOptional.get();
 				setUriTemplateVariables(match, lookupPath, request);
-				return new HandlerMethod(new TemplateHandler(match.getTemplateName()), method);
+				return new HandlerMethod(new TemplateHandler(match), method);
 			}
 		}
 
@@ -138,7 +138,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 		if (!templateInterceptors.isEmpty()) {
 			getTemplateHandler(handler).ifPresent(th -> {
-				String templateName = th.templateName;
+				String templateName = th.match.getTemplateName();
 				for (TemplateInterceptor templateInterceptor : templateInterceptors) {
 					if (templateInterceptor.match(templateName, request)) {
 						chain.addInterceptor(templateInterceptor);
@@ -191,16 +191,16 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	}
 
 	private final class TemplateHandler {
-		private final String templateName;
+		private final TemplateMatch match;
 
-		public TemplateHandler(String templateName) {
+		public TemplateHandler(TemplateMatch match) {
 			super();
-			this.templateName = templateName;
+			this.match = match;
 		}
 
 		@SuppressWarnings("unused")
 		public TemplateView handlerTemplate() {
-			return new TemplateView(templateName);
+			return new TemplateView(match.getTemplateName(), match.getPattern());
 		}
 	}
 

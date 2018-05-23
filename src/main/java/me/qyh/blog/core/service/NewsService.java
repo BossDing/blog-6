@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.vo.NewsNav;
 import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.core.vo.NewsStatistics;
 import me.qyh.blog.core.vo.PageResult;
@@ -83,5 +84,14 @@ public interface NewsService {
 	 * @return
 	 */
 	NewsStatistics queryNewsStatistics();
+
+	/**
+	 * 查询上下动态
+	 * 
+	 * @param id
+	 *            当前动态ID
+	 * @return
+	 */
+	Optional<NewsNav> getNewsNav(Integer id);
 
 }

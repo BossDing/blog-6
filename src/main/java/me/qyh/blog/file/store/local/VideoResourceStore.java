@@ -15,6 +15,9 @@
  */
 package me.qyh.blog.file.store.local;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +60,59 @@ public class VideoResourceStore extends ThumbnailSupport {
 	}
 
 	public VideoResourceStore() {
-		this("video", new String[] { "mp4" }, 60);
+		this("video", new String[] { "mp4", "mov" }, 60);
+	}
+
+	@Override
+	public MultipartFile preHandler(MultipartFile file) throws LogicException {
+		return new MultipartFile() {
+
+			@Override
+			public void transferTo(File dest) throws IOException, IllegalStateException {
+				file.transferTo(dest);
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return file.isEmpty();
+			}
+
+			@Override
+			public long getSize() {
+				return file.getSize();
+			}
+
+			@Override
+			public String getOriginalFilename() {
+				if (needCompress()) {
+					String originalFilename = file.getOriginalFilename();
+					String name = FileUtils.getNameWithoutExtension(originalFilename);
+					return name + ".mp4";
+				} else {
+					return file.getOriginalFilename();
+				}
+			}
+
+			@Override
+			public String getName() {
+				return file.getName();
+			}
+
+			@Override
+			public InputStream getInputStream() throws IOException {
+				return file.getInputStream();
+			}
+
+			@Override
+			public String getContentType() {
+				return file.getContentType();
+			}
+
+			@Override
+			public byte[] getBytes() throws IOException {
+				return file.getBytes();
+			}
+		};
 	}
 
 	@Override
@@ -66,14 +121,13 @@ public class VideoResourceStore extends ThumbnailSupport {
 		VideoSize size;
 		try {
 			synchronized (this) {
-				if (maxSize != null) {
+				if (needCompress()) {
 					compress(getVideoSize(dest), dest);
 				}
 				size = getVideoSize(dest);
 				extraPoster(dest, getPoster(key));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			FileUtils.deleteQuietly(dest);
 			logger.warn(e.getMessage(), e);
 			throw new LogicException("video.corrupt", "不是正确的视频文件或者视频已经损坏");
@@ -156,6 +210,10 @@ public class VideoResourceStore extends ThumbnailSupport {
 
 	public void setCrf(Integer crf) {
 		this.crf = Objects.requireNonNull(crf);
+	}
+
+	private boolean needCompress() {
+		return maxSize != null;
 	}
 
 }

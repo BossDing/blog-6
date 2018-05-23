@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -77,17 +76,6 @@ public class FileUtils {
 		} catch (IOException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
-	}
-
-	/**
-	 * write bits to path
-	 * 
-	 * @param bytes
-	 * @param file
-	 * @throws IOException
-	 */
-	public static void write(byte[] bytes, Path path) throws IOException {
-		Files.write(path, bytes, StandardOpenOption.WRITE);
 	}
 
 	/**

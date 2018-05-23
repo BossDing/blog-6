@@ -123,7 +123,7 @@ public class ArticleServiceImpl
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<Article> getArticleForView(String idOrAlias) {
-		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias, true);
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 		if (optionalArticle.isPresent()) {
 
 			Article article = optionalArticle.get();
@@ -505,7 +505,7 @@ public class ArticleServiceImpl
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<ArticleNav> getArticleNav(String idOrAlias, boolean queryLock) {
-		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias, false);
+		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 		if (optionalArticle.isPresent()) {
 			Article article = optionalArticle.get();
 			if (!Environment.match(article.getSpace())) {
@@ -625,7 +625,7 @@ public class ArticleServiceImpl
 		}
 	}
 
-	private Optional<Article> getCheckedArticle(String idOrAlias, boolean putInCache) {
+	private Optional<Article> getCheckedArticle(String idOrAlias) {
 		Article article;
 		try {
 			int id = Integer.parseInt(idOrAlias);

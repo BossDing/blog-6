@@ -264,18 +264,31 @@ $(document).ready(function() {
 			success : function(data){
 				if (data.success) {
 					var url = data.data;
-					if(url.hasPathVariable){
-						bootbox.prompt("预览路径为<p><b>"+url.url+"</b></p><p>该地址中包含可变参数，请输入确切地址</p>", function(result){ 
-							if(result != null){
-								$("#fs-url").attr('src',result);
-								$("#fsModalLabel").html("预览:"+result);
-								$("#fsModal").modal('show');
-							}
-						});
+					var ext = url.url.split(".").pop();
+					if(ext != 'html' && ext != url.url){
+						if(url.hasPathVariable){
+							bootbox.prompt({title : "预览路径为<p><b>"+url.url+"</b></p><p>该地址不是一个网页地址，并且路径中包含可变参数，请输入确切地址</p>",value: url.url,callback: function(result){ 
+								if(result != null){
+									window.open(result);
+								}
+							}});
+						} else {
+							bootbox.alert("<p>预览地址不是一个网页地址，请点击链接进行预览：</p><p><a href='"+url.url+"' target='_blank'>"+url.url+"</a></p>")
+						}
 					} else {
-						$("#fs-url").attr('src',url.url);
-						$("#fsModalLabel").html("预览:"+url.url);
-						$("#fsModal").modal('show');
+						if(url.hasPathVariable){
+							bootbox.prompt({title : "预览路径为<p><b>"+url.url+"</b></p><p>该地址中包含可变参数，请输入确切地址</p>",value: url.url,callback: function(result){ 
+								if(result != null){
+									$("#fs-url").attr('src',result);
+									$("#fsModalLabel").html("预览:"+result);
+									$("#fsModal").modal('show');
+								}
+							}});
+						} else {
+							$("#fs-url").attr('src',url.url);
+							$("#fsModalLabel").html("预览:"+url.url);
+							$("#fsModal").modal('show');
+						}
 					}
 				} else {
 					bootbox.alert(data.message);

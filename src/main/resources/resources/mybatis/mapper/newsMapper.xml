@@ -118,4 +118,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 		</where>
 	</select>
+	
+	<select id="getPreviousNews" resultMap="NewsDetail">
+		SELECT id,news_write,news_update,news_private,news_allowComment FROM blog_news
+		WHERE news_write  <![CDATA[ < ]]> #{news.write}
+		<if test="!queryPrivate">
+			AND news_private = false
+		</if>
+		ORDER BY news_write DESC,id DESC
+		LIMIT 0,1
+	</select>
+
+	<select id="getNextNews" resultMap="NewsDetail">
+		SELECT id,news_write,news_update,news_private,news_allowComment FROM blog_news
+		WHERE news_write  > #{news.write}
+		<if test="!queryPrivate">
+			AND news_private = false
+		</if>
+		ORDER BY news_write ASC,id ASC
+		LIMIT 0,1
+	</select>
 </mapper>

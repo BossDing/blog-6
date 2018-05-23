@@ -39,6 +39,7 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.CommentServer;
 import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.util.Times;
+import me.qyh.blog.core.vo.NewsNav;
 import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.core.vo.NewsStatistics;
 import me.qyh.blog.core.vo.PageResult;
@@ -126,6 +127,25 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@Transactional(readOnly = true)
 	public NewsStatistics queryNewsStatistics() {
 		return newsDao.selectStatistics(Environment.isLogin());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<NewsNav> getNewsNav(Integer id) {
+		News news = newsDao.selectById(id);
+		if (news == null) {
+			return Optional.empty();
+		}
+		if (news.getIsPrivate()) {
+			Environment.doAuthencation();
+		}
+		boolean queryPrivate = Environment.isLogin();
+		News previous = newsDao.getPreviousNews(news, queryPrivate);
+		News next = newsDao.getNextNews(news, queryPrivate);
+		if (previous == null && next == null) {
+			return Optional.empty();
+		}
+		return Optional.of(new NewsNav(previous, next));
 	}
 
 	@Override
