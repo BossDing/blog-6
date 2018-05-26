@@ -264,8 +264,8 @@ $(document).ready(function() {
 			success : function(data){
 				if (data.success) {
 					var url = data.data;
-					var ext = url.url.split(".").pop();
-					if(ext != 'html' && ext != url.url){
+					var ext = getFileExtension(url.url);
+					if(ext != 'html' && ext != ''){
 						if(url.hasPathVariable){
 							bootbox.prompt({title : "预览路径为<p><b>"+url.url+"</b></p><p>该地址不是一个网页地址，并且路径中包含可变参数，请输入确切地址</p>",value: url.url,callback: function(result){ 
 								if(result != null){
@@ -509,3 +509,26 @@ $(document).ready(function() {
 			}
 		});
 	}
+
+var getFileExtension = function (url) {
+    "use strict";
+    if (url === null) {
+        return "";
+    }
+    var index = url.lastIndexOf("/");
+    if (index !== -1) {
+        url = url.substring(index + 1); // Keep path without its segments
+    }
+    index = url.indexOf("?");
+    if (index !== -1) {
+        url = url.substring(0, index); // Remove query
+    }
+    index = url.indexOf("#");
+    if (index !== -1) {
+        url = url.substring(0, index); // Remove fragment
+    }
+    index = url.lastIndexOf(".");
+    return index !== -1
+        ? url.substring(index + 1) // Only keep file extension
+        : ""; // No extension found
+};
