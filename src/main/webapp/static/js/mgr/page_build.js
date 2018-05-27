@@ -1,4 +1,4 @@
-var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
+﻿var editor = createEditor('editor',[{key:'Ctrl-S',fun:function(){
 	save(true);
 }},{key:'Ctrl-P',fun:function(){
 	preview();
@@ -264,7 +264,12 @@ $(document).ready(function() {
 			success : function(data){
 				if (data.success) {
 					var url = data.data;
-					var ext = getFileExtension(url.url);
+                  var ext;
+                  if(page.alias){
+                  	ext = getFileExtension(page.alias);
+                  }else{
+                  	ext = '';
+                  }
 					if(ext != 'html' && ext != ''){
 						if(url.hasPathVariable){
 							bootbox.prompt({title : "预览路径为<p><b>"+url.url+"</b></p><p>该地址不是一个网页地址，并且路径中包含可变参数，请输入确切地址</p>",value: url.url,callback: function(result){ 
