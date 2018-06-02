@@ -41,8 +41,8 @@ public class NewsPageDataTagProcessor extends DataTagProcessor<PageResult<News>>
 	@Override
 	protected PageResult<News> query(Attributes attributes) throws LogicException {
 		NewsQueryParam param = new NewsQueryParam();
-		String beginStr = attributes.get("begin").orElse(null);
-		String endStr = attributes.get("end").orElse(null);
+		String beginStr = attributes.getString("begin").orElse(null);
+		String endStr = attributes.getString("end").orElse(null);
 		if (beginStr != null && endStr != null) {
 			param.setBegin(Times.parseAndGetDate(beginStr));
 			param.setEnd(Times.parseAndGetDate(endStr));

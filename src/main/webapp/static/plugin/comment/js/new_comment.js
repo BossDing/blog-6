@@ -374,7 +374,7 @@
             }
             var c = config.container;
             c.html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')
-            $.get(actPath + '/data/评论', {
+            $.get(actPath + '/data/commentPage', {
                     moduleType: config.moduleType,
                     moduleId: config.moduleId,
                     currentPage: page,

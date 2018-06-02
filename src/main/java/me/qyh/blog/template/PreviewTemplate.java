@@ -15,6 +15,8 @@
  */
 package me.qyh.blog.template;
 
+import java.util.Optional;
+
 public final class PreviewTemplate implements PathTemplate {
 	/**
 	 * 
@@ -84,5 +86,12 @@ public final class PreviewTemplate implements PathTemplate {
 	 */
 	public static boolean isPreviewTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX);
+	}
+
+	public static Optional<String> getOriginalTemplateName(String previewTemplateName) {
+		if (isPreviewTemplate(previewTemplateName)) {
+			return Optional.of(previewTemplateName.substring(TEMPLATE_PREVIEW_PREFIX.length()));
+		}
+		return Optional.empty();
 	}
 }

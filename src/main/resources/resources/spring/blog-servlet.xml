@@ -161,6 +161,10 @@
 
 	<bean class="me.qyh.blog.web.CookieMemoryLinkFlashMapManager"
 		name="flashMapManager" />
+		
+	<bean class="me.qyh.blog.web.RememberMeService">
+		<constructor-arg value="blog"/>
+	</bean>
 
 
 </beans>

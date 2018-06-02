@@ -15,38 +15,28 @@
  */
 package me.qyh.blog.web.controller.front;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
-import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.plugin.LogoutHandlerRegistry;
 import me.qyh.blog.core.vo.JsonResult;
-import me.qyh.blog.web.LogoutHandler;
+import me.qyh.blog.web.RememberMeService;
 import me.qyh.blog.web.security.csrf.CsrfTokenRepository;
 
 @Controller
-public class LogoutController implements LogoutHandlerRegistry {
+public class LogoutController {
 
 	@Autowired(required = false)
 	private CsrfTokenRepository csrfTokenRepository;
-
-	private static final Logger logger = LoggerFactory.getLogger(LogoutController.class);
-
-	private List<LogoutHandler> handlers = new ArrayList<>();
+	@Autowired
+	private RememberMeService rememberMeService;
 
 	@PostMapping("logout")
 	public String logout(HttpServletRequest request, HttpServletResponse response) {
@@ -67,25 +57,9 @@ public class LogoutController implements LogoutHandlerRegistry {
 		}
 		HttpSession session = request.getSession(false);
 		if (session != null) {
-			User user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
-			if (user != null) {
-				for (LogoutHandler handler : handlers) {
-					try {
-						handler.afterLogout(new User(user), request, response);
-					} catch (Throwable e) {
-						logger.warn(e.getMessage(), e);
-					}
-				}
-
-				session.invalidate();
-				Environment.setUser(null);
-			}
+			session.invalidate();
 		}
-	}
-
-	@Override
-	public LogoutHandlerRegistry register(LogoutHandler handler) {
-		handlers.add(handler);
-		return this;
+		Environment.setUser(null);
+		rememberMeService.deleteRememberMe(request, response);
 	}
 }

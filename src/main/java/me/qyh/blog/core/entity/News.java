@@ -37,6 +37,11 @@ public class News extends BaseEntity {
 	private int comments;// 评论数目
 	private Boolean allowComment;
 
+	/**
+	 * @since 6.4
+	 */
+	private int hits;
+
 	public String getContent() {
 		return content;
 	}
@@ -83,6 +88,14 @@ public class News extends BaseEntity {
 
 	public void setAllowComment(Boolean allowComment) {
 		this.allowComment = allowComment;
+	}
+
+	public int getHits() {
+		return hits;
+	}
+
+	public void setHits(int hits) {
+		this.hits = hits;
 	}
 
 }

@@ -27,6 +27,7 @@ public class NewsStatistics implements Serializable {
 	private Timestamp lastModify;
 	private Timestamp lastWrite;
 	private int total;// 动态总数
+	private int totalHits;// 点击总数
 
 	NewsStatistics() {
 		super();
@@ -61,6 +62,14 @@ public class NewsStatistics implements Serializable {
 
 	public void setTotal(int total) {
 		this.total = total;
+	}
+
+	public int getTotalHits() {
+		return totalHits;
+	}
+
+	public void setTotalHits(int totalHits) {
+		this.totalHits = totalHits;
 	}
 
 }

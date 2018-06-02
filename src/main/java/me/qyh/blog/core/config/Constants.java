@@ -36,6 +36,10 @@ public class Constants {
 	 */
 	public static final String USER_SESSION_KEY = "user";
 	/**
+	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
+	 */
+	public static final String GA_SESSION_KEY = "ga_user";
+	/**
 	 * 默认编码
 	 */
 	public static final Charset CHARSET = StandardCharsets.UTF_8;

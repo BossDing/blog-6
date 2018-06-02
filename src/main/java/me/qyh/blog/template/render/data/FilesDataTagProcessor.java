@@ -50,7 +50,7 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 
 		BlogFileQueryParam param = new BlogFileQueryParam();
 
-		String extensionStr = attributes.get("extensions").orElse(null);
+		String extensionStr = attributes.getString("extensions").orElse(null);
 		if (!Validators.isEmptyOrNull(extensionStr, true)) {
 			param.setExtensions(Arrays.stream(extensionStr.split(",")).collect(Collectors.toSet()));
 		}
@@ -65,7 +65,7 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 		/**
 		 * @since 5.7
 		 */
-		attributes.get("fileName").ifPresent(param::setName);
+		attributes.getString("fileName").ifPresent(param::setName);
 
 		int pageSize = configServer.getGlobalConfig().getFilePageSize();
 		if (param.getPageSize() < 1 || param.getPageSize() > pageSize) {
@@ -74,7 +74,7 @@ public class FilesDataTagProcessor extends DataTagProcessor<PageResult<BlogFile>
 
 		validator.validate(param, new MapBindingResult(new HashMap<>(), "blogFileQueryParam"));
 
-		String path = attributes.get("path").orElse(null);
+		String path = attributes.getString("path").orElse(null);
 		return fileService.queryFiles(path, param);
 	}
 

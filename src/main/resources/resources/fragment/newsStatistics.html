@@ -6,6 +6,8 @@
 	<ul class="list-group">
 		<li class="list-group-item"><strong>动态总数：</strong><span
 			th:text="${newsStatistics.total}"></span></li>
+		<li class="list-group-item"><strong>点击量：</strong><span
+			th:text="${newsStatistics.totalHits}"></span></li>
 		<li class="list-group-item"
 			th:if="${newsStatistics.lastWrite != null}"><strong>最后发布日期：</strong><span
 			th:text="${times.format(newsStatistics.lastWrite,'yyyy-MM-dd HH:mm')}" th:data-timestamp="${times.getTime(newsStatistics.lastWrite)}"></span></li>

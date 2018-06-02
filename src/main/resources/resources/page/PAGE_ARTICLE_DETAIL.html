@@ -1,12 +1,12 @@
 <transaction:begin />
-<data name="上一篇下一篇" th:idOrAlias="${idOrAlias}" />
-<data name="文章详情" th:idOrAlias="${idOrAlias}" />
+<data name="article" th:idOrAlias="${idOrAlias}" />
+<data name="articleNav" ref-article="article" />
 <transaction:end />
 <!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -33,7 +33,7 @@
 				<fragment name="文章详情"></fragment>
 				<fragment name="上一篇下一篇"></fragment>
 				<div th:if="${article.allowComment}">
-					<a href="javascript:void(0)" data-comment>评论这篇文章</a>
+					<a href="javascript:void(0)" data-cmt>评论这篇文章</a>
 				</div>
 				<div id="comments-container" style="margin-top: 10px"></div>
 			</div>
@@ -75,7 +75,7 @@
 	<script>
     	$(function(){
     		cmt.renderComment(_config);
-    		$('[data-comment]').click(function(){
+    		$('[data-cmt]').click(function(){
     	        	cmt.doComment(_config.moduleId,_config.moduleType,function(){
     	             cmt.renderComment(_config);
     	            });

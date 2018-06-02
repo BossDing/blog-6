@@ -15,8 +15,8 @@
  */
 package me.qyh.blog.web.listener;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -77,11 +77,9 @@ public class AppContextLoaderListener extends ContextLoaderListener {
 
 	private void shutdownMysqlIfAvailable() {
 		try {
-			Class<?> clazz = Class.forName("com.mysql.jdbc.AbandonedConnectionCleanupThread");
-			// 5.1.41
-			MethodHandle handler = MethodHandles.lookup().findStatic(clazz, "checkedShutdown",
-					MethodType.methodType(void.class));
-			handler.invoke();
+			Lookup lookup = MethodHandles.lookup();
+			Class<?> clazz = lookup.findClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+			lookup.findStatic(clazz, "checkedShutdown", MethodType.methodType(void.class)).invoke();
 		} catch (Throwable e) {
 		}
 	}

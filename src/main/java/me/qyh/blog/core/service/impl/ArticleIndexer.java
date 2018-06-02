@@ -167,7 +167,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 
 	private static final Path INDEX_DIR = FileUtils.HOME_DIR.resolve("blog/index");
 
-	private boolean useRAMDirectory = false;
+	private boolean useRAMDirectory;
 
 	private int pageSize;
 
@@ -251,7 +251,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 		Document doc = new Document();
 		doc.add(new StringField(ID, article.getId().toString(), Field.Store.YES));
 		doc.add(new TextField(TITLE, article.getTitle(), Field.Store.YES));
-		doc.add(new TextField(SUMMARY, clean(article.getSummary()), Field.Store.YES));
+		doc.add(new TextField(SUMMARY, cleanSummary(article), Field.Store.YES));
 		doc.add(new TextField(CONTENT, cleanContent(article), Field.Store.YES));
 		Set<Tag> tags = article.getTags();
 		if (!CollectionUtils.isEmpty(tags)) {
@@ -541,6 +541,14 @@ public abstract class ArticleIndexer implements InitializingBean {
 		return clean(content);
 	}
 
+	private String cleanSummary(Article article) {
+		String summary = article.getSummary();
+		if (Editor.MD.equals(article.getEditor())) {
+			summary = markdown2Html.toHtml(summary);
+		}
+		return clean(summary);
+	}
+
 	/**
 	 * 删除标签
 	 * 
@@ -582,7 +590,6 @@ public abstract class ArticleIndexer implements InitializingBean {
 		executor.submit(() -> {
 			long start = System.currentTimeMillis();
 			Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
-				// return articleDao.selectPublished(null);
 				int offset = 0;
 				int limit = getPageSize();
 				List<Article> articles;

@@ -32,6 +32,7 @@ import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.template.render.MissLockException;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
@@ -42,6 +43,8 @@ import me.qyh.blog.web.Webs;
 public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TemplateReturnValueHandler.class);
+
+	private static final String X_PJAX_HEADER_NAME = "X-PJAX";
 
 	private final TemplateRender templateRender;
 
@@ -65,6 +68,26 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 
 		String templateName = templateView.getTemplateName();
 
+		String contentType = MediaType.TEXT_HTML_VALUE;
+
+		String pattern = templateView.getMatchPattern();
+		if (!pattern.isEmpty()) {
+			int dotIndex = pattern.lastIndexOf('.');
+			if (dotIndex > -1) {
+				String ext = pattern.substring(dotIndex + 1).toLowerCase();
+				contentType = getContentType(webRequest, ext);
+			}
+		}
+
+		boolean pjax = Boolean.parseBoolean(webRequest.getHeader(X_PJAX_HEADER_NAME));
+
+		if (pjax) {
+			templateName = templateRender.processPjaxTemplateName(templateName, nativeRequest);
+			if (!contentType.equals(MediaType.TEXT_HTML_VALUE)) {
+				throw new LogicException("template.pjax.unsupport", "模板不支持pjax渲染");
+			}
+		}
+
 		String content;
 
 		try {
@@ -84,17 +107,6 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 			throw e;
 		}
 
-		String contentType = MediaType.TEXT_HTML_VALUE;
-
-		String pattern = templateView.getMatchPattern();
-		if (!pattern.isEmpty()) {
-			int dotIndex = pattern.lastIndexOf('.');
-			if (dotIndex > -1) {
-				String ext = pattern.substring(dotIndex + 1);
-				contentType = getContentType(webRequest, ext);
-			}
-		}
-
 		nativeResponse.setContentType(contentType);
 		nativeResponse.setCharacterEncoding(Constants.CHARSET.name());
 
@@ -104,22 +116,22 @@ public class TemplateReturnValueHandler implements HandlerMethodReturnValueHandl
 	}
 
 	protected String getContentType(NativeWebRequest request, String ext) {
-		if ("".equals(ext) || "html".equalsIgnoreCase(ext)) {
+		if ("html".equals(ext)) {
 			return MediaType.TEXT_HTML_VALUE;
 		}
-		if ("json".equalsIgnoreCase(ext)) {
+		if ("json".equals(ext)) {
 			return MediaType.APPLICATION_JSON_VALUE;
 		}
-		if ("xml".equalsIgnoreCase(ext)) {
+		if ("xml".equals(ext)) {
 			return MediaType.APPLICATION_XML_VALUE;
 		}
-		if ("txt".equalsIgnoreCase(ext)) {
+		if ("txt".equals(ext)) {
 			return MediaType.TEXT_PLAIN_VALUE;
 		}
-		if ("js".equalsIgnoreCase(ext)) {
+		if ("js".equals(ext)) {
 			return "text/javascript";
 		}
-		if ("css".equalsIgnoreCase(ext)) {
+		if ("css".equals(ext)) {
 			return "text/css";
 		}
 		return "application/octet-stream";

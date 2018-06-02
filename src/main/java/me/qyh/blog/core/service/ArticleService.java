@@ -147,6 +147,19 @@ public interface ArticleService {
 	Optional<ArticleNav> getArticleNav(String idOrAlias, boolean queryLock);
 
 	/**
+	 * 获取上一篇，下一篇文章
+	 * <p>
+	 * <b>仅供模板调用！！！</b>
+	 * </p>
+	 * 
+	 * @param article
+	 *            当前文章
+	 * @param queryLock
+	 * @return
+	 */
+	Optional<ArticleNav> getArticleNav(Article article, boolean queryLock);
+
+	/**
 	 * 查询<b>当前空间</b>被文章引用的标签数量
 	 * <p>
 	 * <b>用于DataTag</b>

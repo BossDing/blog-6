@@ -25,23 +25,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import me.qyh.blog.core.context.Environment;
-import me.qyh.blog.core.dao.ArticleDao;
-import me.qyh.blog.core.entity.Article;
-import me.qyh.blog.core.event.ArticleDelEvent;
+import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.service.impl.ArticleIndexer;
 import me.qyh.blog.core.service.impl.HitsStrategy;
 import me.qyh.blog.core.service.impl.Transactions;
 
@@ -54,25 +47,21 @@ import me.qyh.blog.core.service.impl.Transactions;
  * @author Administrator
  *
  */
-public final class CacheableHitsStrategy implements HitsStrategy, InitializingBean {
+abstract class CacheableHitsStrategy<E extends BaseEntity> implements HitsStrategy<E>, InitializingBean {
 
 	@Autowired
 	private PlatformTransactionManager transactionManager;
 	@Autowired
-	private ArticleIndexer articleIndexer;
-	@Autowired
-	private SqlSessionFactory sqlSessionFactory;
-	@Autowired
 	private TaskScheduler taskScheduler;
 	/**
-	 * 存储所有文章的点击数
+	 * 存储所有的点击数
 	 */
-	private final Map<Integer, HitsHandler> hitsMap = new ConcurrentHashMap<>();
+	protected final Map<Integer, HitsHandler<E>> hitsMap = new ConcurrentHashMap<>();
 
 	/**
-	 * 储存待刷新点击数的文章
+	 * 储存待刷新的点击数
 	 */
-	private final Map<Integer, Boolean> flushMap = new ConcurrentHashMap<>();
+	protected final Map<Integer, Boolean> flushMap = new ConcurrentHashMap<>();
 
 	/**
 	 * 如果该项为true，那么在flush之前，相同的ip点击只算一次点击量
@@ -87,36 +76,29 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 	 */
 	private final int maxIps;
 
-	/**
-	 * 每50条写入数据库
-	 */
-	private final int flushNum;
-
 	private final int flushSec;
 
-	public CacheableHitsStrategy(boolean cacheIp, int maxIps, int flushNum, int flushSec) {
+	public CacheableHitsStrategy(boolean cacheIp, int maxIps, int flushSec) {
 		if (maxIps < 0) {
 			throw new SystemException("maxIps不能小于0");
-		}
-		if (flushNum < 0) {
-			throw new SystemException("flushNum不能小于0");
 		}
 		if (flushSec < 0) {
 			throw new SystemException("flushSec不能小于0");
 		}
 		this.maxIps = maxIps;
-		this.flushNum = flushNum;
 		this.cacheIp = cacheIp;
 		this.flushSec = flushSec;
 	}
 
 	@Override
-	public void hit(Article article) {
+	public void hit(E e) {
 		// increase
-		hitsMap.computeIfAbsent(article.getId(), k -> cacheIp ? new IPBasedHitsHandler(article.getHits(), maxIps)
-				: new DefaultHitsHandler(article.getHits())).hit(article);
-		flushMap.putIfAbsent(article.getId(), Boolean.TRUE);
+		hitsMap.computeIfAbsent(e.getId(),
+				k -> cacheIp ? new IPBasedHitsHandler(getHits(e), maxIps) : new DefaultHitsHandler(getHits(e))).hit(e);
+		flushMap.putIfAbsent(e.getId(), Boolean.TRUE);
 	}
+
+	protected abstract int getHits(E e);
 
 	private synchronized void doFlush(List<HitsWrapper> wrappers, boolean contextClose) {
 		// 得到当前的实时点击数
@@ -125,56 +107,31 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 		if (!hitsMap.isEmpty()) {
 
 			Transactions.executeInTransaction(transactionManager, status -> {
-				if (!contextClose) {
-					Transactions.afterCommit(() -> {
-						int num = 0;
-						List<Integer> ids = new ArrayList<>();
-						for (Integer id : hitsMap.keySet()) {
-							ids.add(id);
-							if (++num % flushNum == 0) {
-								articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
-								ids.clear();
-							}
-						}
-						articleIndexer.addOrUpdateDocument(ids.toArray(new Integer[ids.size()]));
-					});
-				}
-
-				try (SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, false)) {
-					ArticleDao articleDao = sqlSession.getMapper(ArticleDao.class);
-					int num = 0;
-					for (Map.Entry<Integer, Integer> it : hitsMap.entrySet()) {
-						articleDao.updateHits(it.getKey(), it.getValue());
-						num++;
-						if (num % flushNum == 0) {
-							sqlSession.commit();
-						}
-					}
-					sqlSession.commit();
-				}
-
+				doFlush(hitsMap, contextClose);
 			});
 		}
 	}
 
+	protected abstract void doFlush(Map<Integer, Integer> hitsMap, boolean contextClose);
+
 	private final class HitsWrapper {
 		private final Integer id;
-		private final HitsHandler hitsHandler;
+		private final HitsHandler<E> hitsHandler;
 
-		HitsWrapper(Integer id, HitsHandler hitsHandler) {
+		HitsWrapper(Integer id, HitsHandler<E> hitsHandler) {
 			super();
 			this.id = id;
 			this.hitsHandler = hitsHandler;
 		}
 	}
 
-	private interface HitsHandler {
-		void hit(Article article);
+	private interface HitsHandler<E> {
+		void hit(E e);
 
 		int getHits();
 	}
 
-	private final class DefaultHitsHandler implements HitsHandler {
+	private final class DefaultHitsHandler implements HitsHandler<E> {
 
 		private final LongAdder adder;
 
@@ -184,7 +141,7 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 		}
 
 		@Override
-		public void hit(Article article) {
+		public void hit(E e) {
 			adder.increment();
 		}
 
@@ -194,7 +151,7 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 		}
 	}
 
-	private final class IPBasedHitsHandler implements HitsHandler {
+	private final class IPBasedHitsHandler implements HitsHandler<E> {
 		private final Map<String, Boolean> ips = new ConcurrentHashMap<>();
 		private final LongAdder adder;
 		private final int maxIps;
@@ -207,12 +164,12 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 		}
 
 		@Override
-		public void hit(Article article) {
+		public void hit(E e) {
 			String ip = Environment.getIP();
 			if (ip != null && ips.putIfAbsent(ip, Boolean.TRUE) == null) {
 				adder.increment();
 				if (counter.incrementAndGet() >= maxIps) {
-					Integer id = article.getId();
+					Integer id = e.getId();
 					if (flushMap.remove(id) != null) {
 						doFlush(List.of(new HitsWrapper(id, hitsMap.get(id))), false);
 					}
@@ -251,16 +208,6 @@ public final class CacheableHitsStrategy implements HitsStrategy, InitializingBe
 			return;
 		}
 		flush(true);
-	}
-
-	@TransactionalEventListener
-	public void handleArticleEvent(ArticleDelEvent evt) {
-		if (!evt.isLogicDelete()) {
-			evt.getArticles().stream().map(Article::getId).forEach(id -> {
-				flushMap.remove(id);
-				hitsMap.remove(id);
-			});
-		}
 	}
 
 	@Override

@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS `blog_news` (
   `news_allowComment` tinyint(1) NOT NULL DEFAULT '1',
   `news_write` datetime NOT NULL,
   `news_update` datetime DEFAULT NULL,
+  `news_update` int NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 )
 

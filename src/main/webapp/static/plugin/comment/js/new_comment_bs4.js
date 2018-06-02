@@ -433,7 +433,7 @@
             }
             var c = config.container;
             c.html('<img src="'+basePath+'/static/img/loading.gif" class="img-fluid mx-auto"/>')
-            $.get(actPath + '/data/评论', {
+            $.get(actPath + '/data/commentPage', {
                     moduleType: config.moduleType,
                     moduleId: config.moduleId,
                     currentPage: page,

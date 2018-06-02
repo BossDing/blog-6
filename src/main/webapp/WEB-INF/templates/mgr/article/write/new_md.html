@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -185,7 +185,7 @@ z-index: 9999999}
 						<div class="form-group">
 							<label>摘要 </label>
 							<textarea class="form-control" cols="8" rows="8"
-								placeholder="(0~500字符)" id="summary"
+								placeholder="(0~2000字符)" id="summary"
 								th:text="${article.summary}"></textarea>
 						</div>
 						<div class="form-group">
@@ -368,6 +368,19 @@ z-index: 9999999}
 			dragDrop:false,
 		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
 		});
+		
+		var summaryEditor = CodeMirror.fromTextArea(document.getElementById('summary'), {
+			mode : 'gfm',
+			lineNumbers : false,
+			matchBrackets : true,
+			lineWrapping : true,
+			theme : 'base16-light',
+			dragDrop:false,
+		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
+		});
+		
+		$("#baseModal .CodeMirror").css({"position":"static","height":"300px"});
+		$("#baseModal .CodeMirror-scroll").css({"padding":"5px"});
 		
 		editor.on('paste',function(editor,evt){
 			var clipboardData, pastedData;
@@ -639,7 +652,12 @@ z-index: 9999999}
 			
 			$("#baseModal").on("show.bs.modal",function(){
 				$("#error-tip").html('').hide();
-			})
+			});
+			
+			$("#baseModal").on("shown.bs.modal",function(){
+				summaryEditor.refresh();
+			});
+			
 		});
 		
 		function _addTag(){
@@ -669,7 +687,7 @@ z-index: 9999999}
 			article.allowComment = $("#allowComment").prop("checked");
 			article.tags = tags;
 			article.featureImage = $("#featureImage").val();
-			article.summary = $("#summary").val();
+			article.summary = summaryEditor.getValue();
 			article.space = {"id":$("#space").val()};
 			article.editor = 'MD';
 			if($("#lockId").val() != ""){

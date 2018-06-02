@@ -16,6 +16,8 @@
 package me.qyh.blog.web.controller.front;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +36,6 @@ import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
-import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
@@ -58,7 +59,12 @@ public class OtherController {
 	public JsonResult queryData(@PathVariable("tagName") String tagName,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws LogicException {
-		DataTag tag = new DataTag(Webs.decode(tagName), new HashMap<>(allRequestParams));
+		try {
+			tagName = URLDecoder.decode(tagName, Constants.CHARSET.name());
+		} catch (UnsupportedEncodingException e) {
+			throw new LogicException("data.name.undecode", "无法解码的数据名称");
+		}
+		DataTag tag = new DataTag(tagName, new HashMap<>(allRequestParams));
 		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind))
 				.orElse(new JsonResult(false));
 	}
@@ -67,16 +73,15 @@ public class OtherController {
 	public void queryFragment(@PathVariable("fragment") String fragment,
 			@RequestParam Map<String, String> allRequestParams, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
-		String name = Webs.decode(fragment);
-
-		if (!name.matches(FragmentValidator.NAME_PATTERN)) {
-			Webs.writeInfo(response, new JsonResult(false, new Message("fragment.name.invalid", "无效的模板片段名称")));
+		try {
+			fragment = FragmentValidator.validName(fragment, true);
+		} catch (LogicException e) {
+			Webs.writeInfo(response, new JsonResult(false, e.getLogicMessage()));
 			return;
 		}
-
 		try {
 
-			String templateName = templateService.getFragmentTemplateName(name, Environment.getSpace(),
+			String templateName = templateService.getFragmentTemplateName(fragment, Environment.getSpace(),
 					Environment.getIP());
 
 			String content = templateRender.doRender(templateName, null, request, new ReadOnlyResponse(response),

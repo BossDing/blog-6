@@ -41,7 +41,7 @@ public class ArticleDataTagProcessor extends DataTagProcessor<Article> {
 	@Override
 	protected Article query(Attributes attributes) throws LogicException {
 		// 首先从属性中获取
-		String idOrAlias = attributes.get("idOrAlias").orElse(null);
+		String idOrAlias = attributes.getString("idOrAlias").orElse(null);
 		boolean ignoreException = attributes.getBoolean("ignoreException").orElse(false);
 		if (idOrAlias == null) {
 			if (ignoreException) {

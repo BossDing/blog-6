@@ -17,6 +17,7 @@ package me.qyh.blog.template.render.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.vo.NewsNav;
@@ -24,6 +25,7 @@ import me.qyh.blog.core.vo.NewsNav;
 public class NewsNavDataTagProcessor extends DataTagProcessor<NewsNav> {
 
 	private static final String ID = "id";
+	private static final String REF_NEWS = "news";
 
 	@Autowired
 	private NewsService newsService;
@@ -34,6 +36,10 @@ public class NewsNavDataTagProcessor extends DataTagProcessor<NewsNav> {
 
 	@Override
 	protected NewsNav query(Attributes attributes) throws LogicException {
+		Object v = attributes.get(REF_NEWS).orElse(null);
+		if (v != null) {
+			return newsService.getNewsNav((News) v).orElse(null);
+		}
 		return attributes.getInteger(ID).flatMap(id -> newsService.getNewsNav(id)).orElse(null);
 	}
 

@@ -15,8 +15,6 @@
  */
 package me.qyh.blog.template.vo;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -25,19 +23,22 @@ import me.qyh.blog.core.util.Validators;
 public class DataTag {
 
 	private String name;
-	private final Map<String, String> attrs;
+	private final Map<String, Object> attrs;
 
 	public String getName() {
 		return name;
 	}
 
-	public DataTag(String name, Map<String, String> attrs) {
+	public DataTag(String name, Map<String, Object> attrs) {
 		this.name = name;
-		this.attrs = attrs == null ? Collections.unmodifiableMap(new HashMap<>())
-				: Collections.unmodifiableMap(new HashMap<>(attrs));
+		if (attrs == null) {
+			this.attrs = Map.of();
+		} else {
+			this.attrs = attrs;
+		}
 	}
 
-	public Map<String, String> getAttrs() {
+	public Map<String, Object> getAttrs() {
 		return attrs;
 	}
 
@@ -47,10 +48,6 @@ public class DataTag {
 
 	public void put(String key, String v) {
 		attrs.put(key, v);
-	}
-
-	public String getAttr(String key) {
-		return attrs.get(key);
 	}
 
 	@Override

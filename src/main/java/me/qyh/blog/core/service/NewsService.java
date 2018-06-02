@@ -94,4 +94,24 @@ public interface NewsService {
 	 */
 	Optional<NewsNav> getNewsNav(Integer id);
 
+	/**
+	 * 
+	 * @param id
+	 *            文章id
+	 * @return 当前点击数
+	 */
+	void hit(Integer id);
+
+	/**
+	 * 查询上下动态
+	 * <p>
+	 * <b>仅供模板调用！！！</b>
+	 * </p>
+	 * 
+	 * @param news
+	 *            当前动态
+	 * @return
+	 */
+	Optional<NewsNav> getNewsNav(News news);
+
 }

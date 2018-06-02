@@ -335,14 +335,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 
 
-	<select id="selectPublished" resultMap="ArticleDetail">
-		<include refid="articleDetailSql"></include>
-		WHERE art.art_status = 0
-		<if test="space != null">
-			AND art.space_id = #{space.id}
-		</if>
-		GROUP BY art.id
-	</select>
+	<!-- <select id="selectPublished" resultMap="ArticleDetail"> -->
+	<!-- <include refid="articleDetailSql"></include> -->
+	<!-- WHERE art.art_status = 0 -->
+	<!-- <if test="space != null"> -->
+	<!-- AND art.space_id = #{space.id} -->
+	<!-- </if> -->
+	<!-- GROUP BY art.id -->
+	<!-- </select> -->
 
 	<delete id="deleteById">
 		DELETE FROM blog_article WHERE id = #{id}

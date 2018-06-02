@@ -142,8 +142,6 @@ public class PluginHandlerRegistry
 		pluginHandler.addTemplateInterceptor(applicationContext.getBean(TemplateInterceptorRegistry.class));
 		pluginHandler.addHandlerInterceptor(applicationContext.getBean(HandlerInterceptorRegistry.class));
 		pluginHandler.addLockProvider(lockProviderRegistry);
-		pluginHandler.addSuccessfulLoginHandler(applicationContext.getBean(SuccessfulLoginHandlerRegistry.class));
-		pluginHandler.addLogoutHandler(applicationContext.getBean(LogoutHandlerRegistry.class));
 		pluginHandler.addHitHandler(articleHitHandlerRegistry);
 		pluginHandler.addTemplateRenderModal(applicationContext.getBean(TemplateRenderModelRegistry.class));
 		pluginHandler.addResourceHttpRequestHandlerMapping(

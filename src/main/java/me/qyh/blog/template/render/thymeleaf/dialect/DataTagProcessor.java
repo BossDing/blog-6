@@ -17,6 +17,8 @@ package me.qyh.blog.template.render.thymeleaf.dialect;
 
 import static me.qyh.blog.template.render.data.DataTagProcessor.validDataName;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,6 +34,7 @@ import org.thymeleaf.templatemode.TemplateMode;
 
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
+import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.render.ParseContextHolder;
 import me.qyh.blog.template.service.TemplateService;
@@ -47,9 +50,24 @@ import me.qyh.blog.template.vo.DataTag;
 public class DataTagProcessor extends DefaultAttributesTagProcessor {
 
 	private static final String TAG_NAME = "data";
-	private static final String DATA_NAME_TAG_NAME = "dataName";
+	private static final String ALIAS = "alias";
 	private static final int PRECEDENCE = 1000;
 	private static final String NAME_ATTR = "name";
+
+	/**
+	 * <p>
+	 * 例如
+	 * 
+	 * <pre>
+	 * &lt;data name="articleNav" ref-article2="article"/&gt;
+	 * </pre>
+	 * 
+	 * 将会从 通过 request.getAttrbutes('article')取得值，并将值通过 tagAttrMap.put(article2,v)来传递
+	 * </p>
+	 * 
+	 * @since 6.4
+	 */
+	private static final String REF_PREFIX = "ref-";
 
 	private final TemplateService templateService;
 
@@ -69,23 +87,48 @@ public class DataTagProcessor extends DefaultAttributesTagProcessor {
 				return;
 			}
 
-			String dataName = attMap.get(DATA_NAME_TAG_NAME);
+			String alias = attMap.get(ALIAS);
 
-			boolean hasDataName = !Validators.isEmptyOrNull(dataName, true);
-			if (hasDataName && !validDataName(dataName)) {
+			boolean hasAlias = !Validators.isEmptyOrNull(alias, true);
+			if (hasAlias && !validDataName(alias)) {
 				throw new TemplateProcessingException("dataName必须为英文字母或者数字，并且不能以数字开头");
 			}
 
-			DataTag dataTag = new DataTag(name, attMap);
+			Map<String, Object> tagAttMap = new HashMap<>(attMap);
 
 			IWebContext webContext = (IWebContext) context;
+			HttpServletRequest request = webContext.getRequest();
+
+			Iterator<Map.Entry<String, String>> iter = attMap.entrySet().iterator();
+			while (iter.hasNext()) {
+				Map.Entry<String, String> entry = iter.next();
+				String key = entry.getKey();
+				if (key.startsWith(REF_PREFIX)) {
+					if (key.equals(REF_PREFIX)) {
+						throw new SystemException(REF_PREFIX + "必须带有属性名称");
+					}
+					String ref = entry.getValue();
+					Object v = request.getAttribute(ref);
+					if (v == null) {
+						throw new TemplateProcessingException("没有在request属性中找到" + ref);
+					}
+					String refAttr = key.substring(4);
+					if (tagAttMap.containsKey(refAttr)) {
+						throw new TemplateProcessingException("标签属性名中已经存在" + refAttr + "了，请通过ref-attr重新指定新的名称");
+					}
+					tagAttMap.put(refAttr, v);
+					iter.remove();
+				}
+			}
+
+			DataTag dataTag = new DataTag(name, tagAttMap);
+
 			Optional<DataBind> optional = queryDataBind(dataTag);
 			optional.ifPresent(dataBind -> {
 				DataBind bind = dataBind;
-				if (hasDataName) {
-					bind.setDataName(dataName);
+				if (hasAlias) {
+					bind.setDataName(alias);
 				}
-				HttpServletRequest request = webContext.getRequest();
 				if (request.getAttribute(bind.getDataName()) != null) {
 					throw new TemplateProcessingException("属性" + bind.getDataName() + "已经存在于request中");
 				}

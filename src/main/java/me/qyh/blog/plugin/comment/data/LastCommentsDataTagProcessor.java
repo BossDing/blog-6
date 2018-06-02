@@ -39,8 +39,8 @@ public class LastCommentsDataTagProcessor extends DataTagProcessor<List<Comment>
 
 	@Override
 	protected List<Comment> query(Attributes attributes) throws LogicException {
-		return attributes.get("moduleType").map(type -> commentService.queryLastComments(type, getLimit(attributes),
-				attributes.getBoolean("queryAdmin").orElse(false))).orElse(new ArrayList<>());
+		return attributes.getString("moduleType").map(type -> commentService.queryLastComments(type,
+				getLimit(attributes), attributes.getBoolean("queryAdmin").orElse(false))).orElse(new ArrayList<>());
 	}
 
 	private int getLimit(Attributes attributes) {

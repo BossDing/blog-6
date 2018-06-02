@@ -221,7 +221,7 @@ $(document).ready(function() {
 			for(var i=0;i<data.length;i++){
 				html += '<tr>';
 				html += '<td>'+data[i].name+'</td>';
-				html += '<td><a onclick="addDataTag(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addDataTag(\''+data[i].dataName+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';

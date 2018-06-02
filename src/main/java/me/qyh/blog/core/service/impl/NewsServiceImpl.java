@@ -18,11 +18,13 @@ package me.qyh.blog.core.service.impl;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
@@ -49,9 +51,11 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 
 	@Autowired
 	private NewsDao newsDao;
-
 	@Autowired(required = false)
 	private CommentServer commentServer;
+	@Autowired(required = false)
+	@Qualifier("newsHitsStrategy")
+	private HitsStrategy<News> hitsStrategy;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -136,6 +140,13 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 		if (news == null) {
 			return Optional.empty();
 		}
+		return getNewsNav(news);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<NewsNav> getNewsNav(News news) {
+		Objects.requireNonNull(news);
 		if (news.getIsPrivate()) {
 			Environment.doAuthencation();
 		}
@@ -146,6 +157,17 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 			return Optional.empty();
 		}
 		return Optional.of(new NewsNav(previous, next));
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
+	public void hit(Integer id) {
+		if (!Environment.isLogin()) {
+			News news = newsDao.selectById(id);
+			if (news != null) {
+				hitsStrategy.hit(news);
+			}
+		}
 	}
 
 	@Override
@@ -177,6 +199,17 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	public void afterPropertiesSet() throws Exception {
 		if (commentServer == null) {
 			commentServer = EmptyCommentServer.INSTANCE;
+		}
+		if (hitsStrategy == null) {
+			hitsStrategy = new HitsStrategy<News>() {
+
+				@Override
+				public void hit(News news) {
+					synchronized (this) {
+						newsDao.updateHits(news.getId(), newsDao.selectHits(news.getId()) + 1);
+					}
+				}
+			};
 		}
 	}
 

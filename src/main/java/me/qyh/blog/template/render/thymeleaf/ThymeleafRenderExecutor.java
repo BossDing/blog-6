@@ -43,8 +43,13 @@ import org.thymeleaf.standard.expression.FragmentExpression;
 import org.thymeleaf.standard.expression.IStandardExpressionParser;
 import org.thymeleaf.standard.expression.StandardExpressions;
 
+import me.qyh.blog.core.context.Environment;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.util.Validators;
+import me.qyh.blog.template.entity.Fragment;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.TemplateRenderExecutor;
+import me.qyh.blog.template.validator.FragmentValidator;
 
 /**
  * 用来将模板解析成字符串
@@ -61,11 +66,29 @@ public final class ThymeleafRenderExecutor implements TemplateRenderExecutor {
 	@Autowired
 	private TemplateEngine viewTemplateEngine;
 
+	private static final String X_PJAX_Container_HEADER_NAME = "X-PJAX-Container";
+	private static final String X_PJAX_FRAGMENT = "X-Fragment";
+
 	// COPIED FROM ThymeleafView 3.0.9.RELEASE
 	@Override
 	public String execute(String viewTemplateName, final Map<String, Object> model, final HttpServletRequest request,
 			final ReadOnlyResponse response) {
 		return doExecutor(viewTemplateName, model, request, response);
+	}
+
+	@Override
+	public String processPjaxTemplateName(String templateName, HttpServletRequest request) throws LogicException {
+		String fragment = request.getHeader(X_PJAX_FRAGMENT);
+		if (!Validators.isEmptyOrNull(fragment, true)) {
+			fragment = FragmentValidator.validName(fragment, true);
+			return Fragment.getTemplateName(fragment, Environment.getSpace());
+		}
+		String container = request.getHeader(X_PJAX_Container_HEADER_NAME);
+		if (Validators.isEmptyOrNull(container, true)) {
+			return templateName;
+		} else {
+			return templateName + " :: " + container;
+		}
 	}
 
 	private String doExecutor(String viewTemplateName, final Map<String, Object> model,

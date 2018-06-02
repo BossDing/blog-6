@@ -34,6 +34,7 @@ import me.qyh.blog.core.config.UrlHelper;
 import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.Lock;
 import me.qyh.blog.core.exception.LockException;
+import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
@@ -117,6 +118,10 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 				ParseContextHolder.remove();
 			}
 		}
+	}
+
+	public String processPjaxTemplateName(String templateName, HttpServletRequest request) throws LogicException {
+		return templateRenderer.processPjaxTemplateName(templateName, request);
 	}
 
 	private void markRollBack() {

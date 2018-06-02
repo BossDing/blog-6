@@ -1,5 +1,5 @@
 <div th:with="dataname=${strings.uuid()}">
-	<data name="最近评论" th:moduleType="${moduleType}" th:dataName="${'comments'+dataname}" queryAdmin="true"/>
+	<data name="comments" th:moduleType="${moduleType}" th:alias="${'comments'+dataname}" queryAdmin="true"/>
 	<div th:with="comments=${#request.getAttribute('comments'+dataname)}">
 		<div th:unless="${#lists.isEmpty(comments)}">
 			<div class="panel panel-default">

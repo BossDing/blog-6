@@ -34,8 +34,8 @@ public class CommentCountDataTagProcessor extends DataTagProcessor<Integer> {
 		if (commentServer == null) {
 			return 0;
 		}
-		String moduleType = attributes.get("moduleType").orElse(null);
-		String moduleId = attributes.get("moduleId").orElse(null);
+		String moduleType = attributes.getString("moduleType").orElse(null);
+		String moduleId = attributes.getString("moduleId").orElse(null);
 		if (moduleType != null && moduleId != null) {
 			try {
 				return commentServer.queryCommentNum(moduleType, Integer.parseInt(moduleId)).orElse(0);

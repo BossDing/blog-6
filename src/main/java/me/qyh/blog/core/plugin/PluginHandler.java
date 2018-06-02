@@ -174,26 +174,6 @@ public interface PluginHandler extends Ordered {
 	}
 
 	/**
-	 * 添加登录成功后的处理器
-	 * 
-	 * @param registry
-	 * @throws Exception
-	 */
-	default void addSuccessfulLoginHandler(SuccessfulLoginHandlerRegistry registry) throws Exception {
-
-	}
-
-	/**
-	 * 添加注销之后的处理器
-	 * 
-	 * @param registry
-	 * @throws Exception
-	 */
-	default void addLogoutHandler(LogoutHandlerRegistry registry) throws Exception {
-
-	}
-
-	/**
 	 * 增加文章点击处理器
 	 * <p>
 	 * <b>不应该在处理器内改变文章的点击数，如果需要改变点击数，可以通过{@code HitsStrategy}来处理</b>

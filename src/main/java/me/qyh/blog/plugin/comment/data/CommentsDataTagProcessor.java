@@ -39,8 +39,8 @@ public class CommentsDataTagProcessor extends DataTagProcessor<CommentPageResult
 	protected CommentPageResult query(Attributes attributes) throws LogicException {
 		CommentQueryParam param = new CommentQueryParam();
 
-		String moduleTypeStr = attributes.get("moduleType").orElse(null);
-		String moduleIdStr = attributes.get("moduleId").orElse(null);
+		String moduleTypeStr = attributes.getString("moduleType").orElse(null);
+		String moduleIdStr = attributes.getString("moduleId").orElse(null);
 		if (moduleIdStr != null && moduleTypeStr != null) {
 			try {
 				param.setModule(new CommentModule(moduleTypeStr, Integer.parseInt(moduleIdStr)));

@@ -19,7 +19,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -111,7 +111,8 @@ public class ArticleServiceImpl
 	 * 点击策略
 	 */
 	@Autowired(required = false)
-	private HitsStrategy hitsStrategy;
+	@Qualifier("articleHitsStrategy")
+	private HitsStrategy<Article> hitsStrategy;
 
 	private ArticleHitManager articleHitManager;
 
@@ -133,6 +134,7 @@ public class ArticleServiceImpl
 
 			if (Editor.MD.equals(article.getEditor())) {
 				content = markdown2Html.toHtml(content);
+				article.setSummary(markdown2Html.toHtml(article.getSummary()));
 			}
 
 			content = articleContentHandler.handle(content);
@@ -158,7 +160,6 @@ public class ArticleServiceImpl
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -240,7 +241,6 @@ public class ArticleServiceImpl
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Sync
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
@@ -300,7 +300,6 @@ public class ArticleServiceImpl
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article publishDraft(Integer id) throws LogicException {
@@ -323,6 +322,7 @@ public class ArticleServiceImpl
 	private boolean insertTags(Article article) {
 		Set<Tag> tags = article.getTags();
 		boolean rebuildIndexWhenTagChange = false;
+		Set<String> indexTags = new HashSet<>();
 		if (!CollectionUtils.isEmpty(tags)) {
 			for (Tag tag : tags) {
 				Tag tagDb = tagDao.selectByName(cleanTag(tag.getName()));
@@ -334,7 +334,7 @@ public class ArticleServiceImpl
 					tag.setName(tag.getName().trim());
 					tagDao.insert(tag);
 					articleTag.setTag(tag);
-					articleIndexer.addTags(tag.getName());
+					indexTags.add(tag.getName());
 					rebuildIndexWhenTagChange = true;
 				} else {
 					articleTag.setTag(tagDb);
@@ -342,17 +342,12 @@ public class ArticleServiceImpl
 				articleTagDao.insert(articleTag);
 			}
 		}
+		if (!indexTags.isEmpty()) {
+			Transactions.afterCommit(() -> articleIndexer.addTags(indexTags.toArray(new String[indexTags.size()])));
+		}
 		return rebuildIndexWhenTagChange;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * <b>当允许查询includeSpaces的时候，为了提高效率，首先会通过{@code SpaceCache}查询是否存在这个别名的空间，
-	 * 如果存在，则将空间id放入{@code ArticleQueryParam#getIncludeSpaceIds()}中，
-	 * 所以，当查询不存在的alias时，依旧能够查询到数据[includeSpaces中不存在的alias不会起作用]</b>
-	 * </p>
-	 */
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<Article> queryArticle(ArticleQueryParam param) {
@@ -390,6 +385,10 @@ public class ArticleServiceImpl
 			for (Article article : datas) {
 				Integer comments = countsMap.get(article.getId());
 				article.setComments(comments == null ? 0 : comments);
+
+				if (Editor.MD.equals(article.getEditor())) {
+					article.setSummary(markdown2Html.toHtml(article.getSummary()));
+				}
 			}
 		}
 		return page;
@@ -423,7 +422,6 @@ public class ArticleServiceImpl
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article logicDeleteArticle(Integer id) throws LogicException {
@@ -447,7 +445,6 @@ public class ArticleServiceImpl
 	}
 
 	@Override
-	@ArticleIndexRebuild
 	@Caching(evict = { @CacheEvict(value = "hotTags", allEntries = true) })
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public Article recoverArticle(Integer id) throws LogicException {
@@ -508,15 +505,29 @@ public class ArticleServiceImpl
 		Optional<Article> optionalArticle = getCheckedArticle(idOrAlias);
 		if (optionalArticle.isPresent()) {
 			Article article = optionalArticle.get();
-			if (!Environment.match(article.getSpace())) {
-				return Optional.empty();
-			}
-			boolean queryPrivate = Environment.isLogin();
-			Article previous = articleDao.getPreviousArticle(article, queryPrivate, queryLock);
-			Article next = articleDao.getNextArticle(article, queryPrivate, queryLock);
-			return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
+			return getArticleNav(article, queryLock);
 		}
 		return Optional.empty();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * <b>这个方法只提供根据发布时间排序的上下文章</b>
+	 * </p>
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<ArticleNav> getArticleNav(Article article, boolean queryLock) {
+		Objects.requireNonNull(article);
+		if (!Environment.match(article.getSpace())) {
+			return Optional.empty();
+		}
+		boolean queryPrivate = Environment.isLogin();
+		Article previous = articleDao.getPreviousArticle(article, queryPrivate, queryLock);
+		Article next = articleDao.getNextArticle(article, queryPrivate, queryLock);
+		return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
 	}
 
 	@Override
@@ -698,9 +709,9 @@ public class ArticleServiceImpl
 
 	private final class ArticleHitManager {
 
-		private final HitsStrategy hitsStrategy;
+		private final HitsStrategy<Article> hitsStrategy;
 
-		ArticleHitManager(HitsStrategy hitsStrategy) {
+		ArticleHitManager(HitsStrategy<Article> hitsStrategy) {
 			super();
 			this.hitsStrategy = hitsStrategy;
 		}
@@ -739,20 +750,17 @@ public class ArticleServiceImpl
 	 * @author mhlx
 	 *
 	 */
-	private final class DefaultHitsStrategy implements HitsStrategy {
+	private final class DefaultHitsStrategy implements HitsStrategy<Article> {
 
 		@Override
 		public void hit(Article article) {
 			synchronized (this) {
-				int hits = article.getHits() + 1;
 				Transactions.executeInTransaction(transactionManager, status -> {
 					Integer id = article.getId();
-					articleDao.updateHits(id, hits);
+					articleDao.updateHits(id, articleDao.selectHits(id) + 1);
 
 					Transactions.afterCommit(() -> {
-						Map<Integer, Integer> hitsMap = new HashMap<>();
-						hitsMap.put(article.getId(), hits);
-						articleIndexer.addOrUpdateDocument(article.getId());
+						articleIndexer.addOrUpdateDocument(id);
 					});
 				});
 			}

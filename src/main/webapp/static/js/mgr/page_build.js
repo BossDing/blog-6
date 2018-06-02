@@ -195,7 +195,7 @@ $(document).ready(function() {
 			for(var i=0;i<data.length;i++){
 				html += '<tr>';
 				html += '<td>'+data[i].name+'</td>';
-				html += '<td><a onclick="addDataTag(\''+data[i].name+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
+				html += '<td><a onclick="addDataTag(\''+data[i].dataName+'\')" href="###"><span class="glyphicon glyphicon-ok-sign" ></span>&nbsp;</a></td>';
 				html += '</tr>';
 			}
 			html += '</table>';
@@ -203,7 +203,7 @@ $(document).ready(function() {
 			$('[aria-labelledby="data-tab"]').html(html);
 		});
 	}
-	
+	 
 	function showUserFragment(i){
 		var html = '';
 		$('#fragment').html('<img src="'+basePath+'/static/img/loading.gif" class="img-responsive center-block"/>')

@@ -88,6 +88,7 @@
 	<bean id="articleIndexer"
 		class="me.qyh.blog.core.service.impl.JcsegArticleIndexer">
 		<constructor-arg index="0" value="SEARCH" />
+		<property name="useRAMDirectory" value="true"/>
 	</bean>
 
 	<!-- 文章缓存 -->

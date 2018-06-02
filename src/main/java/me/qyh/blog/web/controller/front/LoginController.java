@@ -15,15 +15,10 @@
  */
 package me.qyh.blog.web.controller.front;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +39,6 @@ import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.entity.User;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.message.Message;
-import me.qyh.blog.core.plugin.SuccessfulLoginHandlerRegistry;
 import me.qyh.blog.core.security.AttemptLogger;
 import me.qyh.blog.core.security.AttemptLoggerManager;
 import me.qyh.blog.core.security.GoogleAuthenticator;
@@ -53,15 +47,12 @@ import me.qyh.blog.core.validator.LoginBeanValidator;
 import me.qyh.blog.core.vo.JsonResult;
 import me.qyh.blog.core.vo.LoginBean;
 import me.qyh.blog.template.TemplateRequestMappingHandlerMapping;
-import me.qyh.blog.web.SuccessfulLoginHandler;
+import me.qyh.blog.web.RememberMeService;
 import me.qyh.blog.web.security.CaptchaValidator;
-import me.qyh.blog.web.security.csrf.CsrfToken;
 import me.qyh.blog.web.security.csrf.CsrfTokenRepository;
 
 @Controller("loginController")
-public class LoginController implements InitializingBean, SuccessfulLoginHandlerRegistry {
-
-	private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+public class LoginController implements InitializingBean {
 
 	@Autowired
 	private LoginBeanValidator loginBeanValidator;
@@ -80,13 +71,6 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 	@Autowired(required = false)
 	private CsrfTokenRepository csrfTokenRepository;
 
-	private List<SuccessfulLoginHandler> successfulLoginHandlers = new ArrayList<>();
-
-	/**
-	 * 当用户用户名和密码校验通过，但是还没有通过GoogleAuthenticator校验是，先将用户放在这个key中
-	 */
-	private static final String GA_SESSION_KEY = "ga_user";
-
 	private final Message otpVerifyFail = new Message("otp.verifyFail", "动态口令校验失败");
 	private final Message pwdVerifyRequire = new Message("pwd.verifyRequire", "请先通过密码验证");
 
@@ -103,6 +87,11 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 	private AttemptLoggerManager attemptLoggerManager;
 	private AttemptLogger attemptLogger;
 
+	@Autowired
+	private RememberMeService rememberMeService;
+
+	private static final String REMEMBER_ME_GA = "rememberMeGa";
+
 	@InitBinder(value = "loginBean")
 	protected void initBinder(WebDataBinder binder) {
 		binder.setValidator(loginBeanValidator);
@@ -118,10 +107,17 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 		}
 		User user = userService.login(loginBean);
 		if (ga != null) {
-			request.getSession().setAttribute(GA_SESSION_KEY, user);
+			HttpSession session = request.getSession();
+			if (loginBean.isRememberMe()) {
+				session.setAttribute(REMEMBER_ME_GA, Boolean.TRUE);
+			}
+			session.setAttribute(Constants.GA_SESSION_KEY, user);
 			return new JsonResult(false, new Message("otp.required", "请输入动态口令"));
 		}
 		successLogin(user, request, response);
+		if (loginBean.isRememberMe()) {
+			rememberMeService.rememberMe(user, request, response);
+		}
 		return new JsonResult(true);
 	}
 
@@ -140,7 +136,7 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 			return new JsonResult(false, pwdVerifyRequire);
 		}
 		// 没有通过用户名密码认证，无需校验
-		User user = (User) session.getAttribute(GA_SESSION_KEY);
+		User user = (User) session.getAttribute(Constants.GA_SESSION_KEY);
 		if (user == null) {
 			return new JsonResult(false, pwdVerifyRequire);
 		}
@@ -153,8 +149,12 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 		if (!ga.checkCode(codeStr)) {
 			return new JsonResult(false, otpVerifyFail);
 		}
-		session.removeAttribute(GA_SESSION_KEY);
+		session.removeAttribute(Constants.GA_SESSION_KEY);
 		successLogin(user, request, response);
+		if (session.getAttribute(REMEMBER_ME_GA) != null) {
+			session.removeAttribute(REMEMBER_ME_GA);
+			rememberMeService.rememberMe(user, request, response);
+		}
 		return new JsonResult(true);
 	}
 
@@ -164,14 +164,6 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 		changeSessionId(request);
 		attemptLogger.remove(Environment.getIP());
 		changeCsrf(request, response);
-
-		for (SuccessfulLoginHandler handler : successfulLoginHandlers) {
-			try {
-				handler.afterSuccessfulLogin(new User(user), request, response);
-			} catch (Throwable e) {
-				logger.warn(e.getMessage(), e);
-			}
-		}
 	}
 
 	private void changeSessionId(HttpServletRequest request) {
@@ -197,22 +189,10 @@ public class LoginController implements InitializingBean, SuccessfulLoginHandler
 		}
 	}
 
-	@Override
-	public SuccessfulLoginHandlerRegistry registry(SuccessfulLoginHandler handler) {
-		successfulLoginHandlers.add(handler);
-		return this;
-	}
-
 	private void changeCsrf(HttpServletRequest request, HttpServletResponse response) {
 		if (csrfTokenRepository == null) {
 			return;
 		}
-		boolean containsToken = csrfTokenRepository.loadToken(request) != null;
-		if (containsToken) {
-			this.csrfTokenRepository.saveToken(null, request, response);
-
-			CsrfToken newToken = this.csrfTokenRepository.generateToken(request);
-			this.csrfTokenRepository.saveToken(newToken, request, response);
-		}
+		csrfTokenRepository.changeToken(request, response);
 	}
 }

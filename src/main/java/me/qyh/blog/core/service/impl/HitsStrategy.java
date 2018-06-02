@@ -15,25 +15,14 @@
  */
 package me.qyh.blog.core.service.impl;
 
-import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.BaseEntity;
 
 /**
- * 文章缓存点击策略
- * <p>
- * 文章可能存在于缓存中，需要在合适的时机手动更新缓存和文章索引
- * </p>
  * 
- * @see ArticleIndexer#addOrUpdateDocument(Integer...)
- * 
- * @see DefaultHitsStrategy
- * @author mhlx
+ * @author wwwqyhme
  *
+ * @param <T>
  */
-public interface HitsStrategy {
-	/**
-	 * 点击文章
-	 * 
-	 * @param article
-	 */
-	void hit(Article article);
+public interface HitsStrategy<T extends BaseEntity> {
+	void hit(T t);
 }

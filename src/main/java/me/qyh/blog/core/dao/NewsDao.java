@@ -100,4 +100,22 @@ public interface NewsDao {
 	 */
 	News getNextNews(@Param("news") News news, @Param("queryPrivate") boolean queryPrivate);
 
+	/**
+	 * 获取动态的点击数
+	 * 
+	 * @param id
+	 * @return
+	 */
+	int selectHits(Integer id);
+
+	/**
+	 * 更新动态的点击量
+	 * 
+	 * @param id
+	 *            文章的id
+	 * @param currentHits
+	 *            <strong>当前的</strong>点击量
+	 */
+	void updateHits(@Param("id") Integer id, @Param("hits") int currentHits);
+
 }

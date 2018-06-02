@@ -16,8 +16,6 @@
 package me.qyh.blog.web;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -94,21 +92,6 @@ public class Webs {
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding(Constants.CHARSET.name());
 		Jsons.write(result, response.getWriter());
-	}
-
-	/**
-	 * 解码
-	 * 
-	 * @see URLDecoder#decode(String)
-	 * @param toDecode
-	 * @return
-	 */
-	public static String decode(String toDecode) {
-		try {
-			return URLDecoder.decode(toDecode, Constants.CHARSET.name());
-		} catch (UnsupportedEncodingException e) {
-			throw new SystemException(e.getMessage(), e);
-		}
 	}
 
 	/**

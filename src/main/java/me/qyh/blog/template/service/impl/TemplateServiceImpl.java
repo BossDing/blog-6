@@ -384,7 +384,8 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	@Override
 	public Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException {
 		Optional<DataTagProcessor<?>> processor = processors.stream()
-				.filter(pro -> pro.getName().equals(dataTag.getName())).findAny();
+				.filter(pro -> pro.getDataName().equals(dataTag.getName()) || pro.getName().equals(dataTag.getName()))
+				.findAny();
 		if (onlyCallable) {
 			processor = processor.filter(DataTagProcessor::isCallable);
 		}
@@ -1176,6 +1177,15 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	public void setProcessors(List<DataTagProcessor<?>> processors) {
+		// 查找重复dataName
+		Set<String> dataNames = new HashSet<>();
+		processors.stream()
+				.filter(processor -> !dataNames.add(processor.getDataName()) || !dataNames.add(processor.getName()))
+				.findAny().ifPresent(processor -> {
+					throw new SystemException(
+							"DataTagProcessor数据名称:" + processor.getName() + "或者" + processor.getName() + "存在重复");
+				});
+
 		for (DataTagProcessor<?> processor : processors) {
 			if (!Validators.isLetterOrNumOrChinese(processor.getName())) {
 				throw new SystemException("数据名只能为中英文或者数字");
@@ -1184,6 +1194,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 				throw new SystemException("数据dataName只能为英文字母或者数字，并且不能以数字开头");
 			}
 		}
+
 		Map<String, Boolean> callableMap = readCallableMap();
 		processors.forEach(pro -> {
 			Boolean callable = callableMap.get(pro.getName());
@@ -1350,6 +1361,13 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public DataTagProcessorRegistry register(DataTagProcessor<?> processor) {
+		processors.stream().filter(
+				pro -> pro.getDataName().equals(processor.getDataName()) || pro.getName().equals(processor.getName()))
+				.findAny().ifPresent(pro -> {
+					throw new SystemException(
+							"DataTagProcessor数据名称:" + processor.getName() + "或者" + processor.getDataName() + "存在重复");
+				});
+		;
 		Boolean callable = readCallableMap().get(processor.getDataName());
 		if (callable != null) {
 			processor.setCallable(callable);

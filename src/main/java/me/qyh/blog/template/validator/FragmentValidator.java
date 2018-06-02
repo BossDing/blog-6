@@ -15,10 +15,16 @@
  */
 package me.qyh.blog.template.validator;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+import me.qyh.blog.core.config.Constants;
+import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.entity.Fragment;
 
@@ -29,7 +35,7 @@ public class FragmentValidator implements Validator {
 	public static final int MAX_TPL_LENGTH = 20000;
 	private static final int MAX_DESCRIPTION_LENGTH = 500;
 
-	public static final String NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5_-]+$";
+	private static final String NAME_PATTERN = "^[A-Za-z0-9\u4E00-\u9FA5_-]+$";
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -40,17 +46,11 @@ public class FragmentValidator implements Validator {
 	public void validate(Object target, Errors errors) {
 		Fragment fragment = (Fragment) target;
 		String name = fragment.getName();
-		if (Validators.isEmptyOrNull(name, true)) {
-			errors.reject("fragment.name.blank", "模板片段名为空");
-			return;
-		}
-		if (name.length() > MAX_NAME_LENGTH) {
-			errors.reject("fragment.name.toolong", new Object[] { MAX_NAME_LENGTH },
-					"模板片段名长度不能超过" + MAX_NAME_LENGTH + "个字符");
-			return;
-		}
-		if (!name.matches(NAME_PATTERN)) {
-			errors.reject("fragment.name.invalid", "无效的模板片段名称");
+		try {
+			name = validName(name, false);
+		} catch (LogicException e) {
+			Message msg = e.getLogicMessage();
+			errors.reject(msg.getCodes()[0], msg.getArguments(), msg.getDefaultMessage());
 			return;
 		}
 		String tpl = fragment.getTpl();
@@ -72,6 +72,26 @@ public class FragmentValidator implements Validator {
 			errors.reject("fragment.description.toolong", new Object[] { MAX_DESCRIPTION_LENGTH },
 					"模板片段描述长度不能超过" + MAX_DESCRIPTION_LENGTH + "个字符");
 		}
+	}
+
+	public static String validName(String name, boolean encode) throws LogicException {
+		if (Validators.isEmptyOrNull(name, true)) {
+			throw new LogicException("fragment.name.blank", "模板片段名为空");
+		}
+		if (encode) {
+			try {
+				name = URLDecoder.decode(name, Constants.CHARSET.name());
+			} catch (UnsupportedEncodingException e) {
+				throw new LogicException("fragment.name.undecode", "无法解码的模板片段名称");
+			}
+		}
+		if (name.length() > MAX_NAME_LENGTH) {
+			throw new LogicException("fragment.name.toolong", "模板片段名长度不能超过" + MAX_NAME_LENGTH + "个字符", MAX_NAME_LENGTH);
+		}
+		if (!name.matches(NAME_PATTERN)) {
+			throw new LogicException("fragment.name.invalid", "无效的模板片段名称");
+		}
+		return name;
 	}
 
 }

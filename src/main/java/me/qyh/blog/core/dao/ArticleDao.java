@@ -94,15 +94,6 @@ public interface ArticleDao {
 	void insert(Article article);
 
 	/**
-	 * 查询某个空间下的所有发布的文章
-	 *
-	 * @return 文章集合
-	 * @see #selectPublishedPage(int, int)
-	 * @deprecated
-	 */
-	List<Article> selectPublished();
-
-	/**
 	 * 根据指定id集合查询对应的文章
 	 * <p>
 	 * 文章只保留了一些用于分页展示的信息

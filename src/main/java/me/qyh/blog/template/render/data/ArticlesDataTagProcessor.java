@@ -70,20 +70,20 @@ public class ArticlesDataTagProcessor extends DataTagProcessor<PageResult<Articl
 	private ArticleQueryParam buildFromAttributes(Attributes attributes) {
 		ArticleQueryParam param = new ArticleQueryParam();
 
-		String beginStr = attributes.get("begin").orElse(null);
-		String endStr = attributes.get("end").orElse(null);
+		String beginStr = attributes.getString("begin").orElse(null);
+		String endStr = attributes.getString("end").orElse(null);
 		if (beginStr != null && endStr != null) {
 			param.setBegin(Times.parseAndGetDate(beginStr));
 			param.setEnd(Times.parseAndGetDate(endStr));
 		}
 
-		String query = attributes.get("query").orElse(null);
+		String query = attributes.getString("query").orElse(null);
 		if (!Validators.isEmptyOrNull(query, true)) {
 			param.setQuery(query);
 		}
 
 		attributes.getEnum("from", ArticleFrom.class).ifPresent(param::setFrom);
-		attributes.get("tag").ifPresent(param::setTag);
+		attributes.getString("tag").ifPresent(param::setTag);
 		attributes.getEnum("sort", Sort.class).ifPresent(param::setSort);
 		param.setCurrentPage(attributes.getInteger("currentPage").orElse(0));
 		param.setPageSize(attributes.getInteger("pageSize").orElse(0));

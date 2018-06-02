@@ -62,7 +62,7 @@ public abstract class DataTagProcessor<T> {
 	 * @return
 	 * @throws LogicException
 	 */
-	public final DataBind getData(Map<String, String> attributes) throws LogicException {
+	public final DataBind getData(Map<String, Object> attributes) throws LogicException {
 		Attributes atts = new Attributes(attributes);
 		T result = query(atts);
 		DataBind bind = new DataBind();
@@ -102,14 +102,18 @@ public abstract class DataTagProcessor<T> {
 	}
 
 	public final class Attributes {
-		private final Map<String, String> attMap;
+		private final Map<String, Object> attMap;
 
-		private Attributes(Map<String, String> attMap) {
+		private Attributes(Map<String, Object> attMap) {
 			this.attMap = attMap == null ? new HashMap<>() : attMap;
 		}
 
-		public Optional<String> get(String key) {
+		public Optional<Object> get(String key) {
 			return Optional.ofNullable(attMap.get(key));
+		}
+
+		public Optional<String> getString(String key) {
+			return get(key).map(Object::toString);
 		}
 
 		/**
@@ -125,7 +129,7 @@ public abstract class DataTagProcessor<T> {
 		 */
 		public <E extends Enum<E>> Optional<E> getEnum(String name, Class<E> e) {
 			try {
-				return get(name).map(String::toUpperCase).map(attV -> Enum.valueOf(e, attV));
+				return getString(name).map(String::toUpperCase).map(attV -> Enum.valueOf(e, attV));
 			} catch (IllegalArgumentException ex) {
 				return Optional.empty();
 			}
@@ -141,7 +145,7 @@ public abstract class DataTagProcessor<T> {
 		 * @return 如果属性不存在，返回null
 		 */
 		public Optional<Boolean> getBoolean(String name) {
-			return get(name).map(Boolean::parseBoolean);
+			return getString(name).map(Boolean::parseBoolean);
 		}
 
 		/**
@@ -157,7 +161,7 @@ public abstract class DataTagProcessor<T> {
 		 */
 		public Optional<Integer> getInteger(String name) {
 			try {
-				return get(name).map(Integer::parseInt);
+				return getString(name).map(Integer::parseInt);
 			} catch (NumberFormatException e) {
 				return Optional.empty();
 			}
@@ -205,11 +209,7 @@ public abstract class DataTagProcessor<T> {
 		 * @return 如果属性不存在，返回null
 		 */
 		public String[] getArray(String name, String split) {
-			String attV = attMap.get(name);
-			if (attV != null) {
-				return attV.split(split);
-			}
-			return null;
+			return getString(name).map(v -> v.split(split)).orElse(null);
 		}
 
 		@Override

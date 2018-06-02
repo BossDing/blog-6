@@ -45,12 +45,14 @@ import me.qyh.blog.core.exception.LockException;
 import me.qyh.blog.core.exception.SpaceNotFoundException;
 import me.qyh.blog.core.security.AuthencationException;
 import me.qyh.blog.core.security.EnsureLogin;
+import me.qyh.blog.core.security.GoogleAuthenticator;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
 import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.validator.SpaceValidator;
 import me.qyh.blog.web.LockHelper;
+import me.qyh.blog.web.RememberMeService;
 import me.qyh.blog.web.Webs;
 import me.qyh.blog.web.security.IgnoreSpaceLock;
 import me.qyh.blog.web.security.RequestMatcher;
@@ -70,6 +72,10 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private LockManager lockManager;
 	@Autowired
 	private UrlHelper urlHelper;
+	@Autowired
+	private RememberMeService rememberMeService;
+	@Autowired(required = false)
+	private GoogleAuthenticator ga;
 
 	private static final String UNLOCK_PATTERN = "/unlock/*";
 	private static final String SPACE_UNLOCK_PATTERN = "/space/*/unlock/*";
@@ -90,7 +96,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 
 			try {
 				setRequestAttribute(request, response);
-				setUser(request, handlerMethod);
+				setUser(request, response, handlerMethod);
 				setLockKeys(request);
 				setSpace(request, handlerMethod);
 				Environment.setIP(Webs.getIP(request));
@@ -108,11 +114,32 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		return true;
 	}
 
-	private void setUser(HttpServletRequest request, HandlerMethod handler) {
+	private void setUser(HttpServletRequest request, HttpServletResponse response, HandlerMethod handler) {
 		HttpSession session = request.getSession(false);
 		User user = null;
 		if (session != null) {
 			user = (User) session.getAttribute(Constants.USER_SESSION_KEY);
+		}
+
+		if (user == null) {
+
+			Optional<User> autoLogin = rememberMeService.autoLogin(request, response);
+			if (autoLogin.isPresent()) {
+				if (session == null) {
+					session = request.getSession();
+				}
+				User _user = autoLogin.get();
+				if (ga != null) {
+					session.setAttribute(Constants.GA_SESSION_KEY, _user);
+				} else {
+					session.setAttribute(Constants.USER_SESSION_KEY, _user);
+					request.changeSessionId();
+					if (tokenRepository != null) {
+						tokenRepository.changeToken(request, response);
+					}
+					user = _user;
+				}
+			}
 		}
 
 		Environment.setUser(user);

@@ -20,6 +20,10 @@ var createEditor = function(editorId,keys){
 			extraKeys: extraKeys
 		});
 		
+		editor.on('dblclick', function(a,b) {
+			console.log(b);
+			});
+		
 		var wrap = function(url){
 			var ext = url.split('.').pop().toLowerCase();
 			if(ext == 'css'){
