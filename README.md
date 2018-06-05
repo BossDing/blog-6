@@ -1,3 +1,5 @@
+项目移动到了 gitlab  https://gitlab.com/qianyuhao/blog
+
 # FUCK 广电
 
 
