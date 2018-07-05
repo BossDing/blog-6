@@ -7,6 +7,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link rel="stylesheet"
 	th:href="@{/static/bootstrap/css/bootstrap.min.css}" />
+<link rel="stylesheet"
+	th:href="@{/static/css/markdown.css}" />
 <link th:href="@{/static/css/blog.css}" rel="stylesheet">
 <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -25,7 +27,6 @@
 			<data name="articleStatistics" />
 			<data name="newsStatistics" />
 			<data name="commentStatistics" />
-			<transaction:end />
 			<div class="col-lg-8 col-md-8  col-sm-8 text" id="pjax-articles">
 				<fragment name="文章列表" />
 			</div>
@@ -45,9 +46,11 @@
 	<script>
 		$(function() {
 			if ($.support.pjax) {
-				$(document).on('pjax:beforeSend',
+				$(document).on(
+						'pjax:beforeSend',
 						function(event, xhr, options) {
-							xhr.setRequestHeader('X-Fragment', encodeURI('文章列表'));
+							xhr.setRequestHeader('X-Fragment',
+									encodeURI('文章列表'));
 						});
 				$(document).pjax('#pjax-articles ul a', '#pjax-articles')
 			}

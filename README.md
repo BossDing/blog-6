@@ -1,9 +1,7 @@
-项目移动到了 gitlab  https://gitlab.com/qianyuhao/blog
-
 # FUCK 广电
 
 
-版本：6.3 RELEASE
+版本：6.4 RELEASE
 
 重型博客
 
