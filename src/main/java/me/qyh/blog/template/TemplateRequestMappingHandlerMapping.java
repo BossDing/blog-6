@@ -80,17 +80,30 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 
 	private HandlerInterceptor[] interceptorArray;
 
+	/**
+	 * 在应用启动期间，允许插件覆盖系统默认的路径
+	 * 
+	 * @since 6.5
+	 */
+	private HandlerMethodRegister register = (o, h, m) -> {
+		synchronized (this) {
+			super.unregisterMapping(m);
+			super.registerHandlerMethod(o, h, m);
+		}
+	};
+
 	@Override
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 
 		String ip = ipGetter.getIp(request);
 		request.setAttribute(Webs.IP_ATTR_NAME, ip);
+		request.setAttribute(Webs.PREVIEW_ATTR_NAME, templateService.isPreviewIp(ip));
 
 		if (Webs.errorRequest(request) || "GET".equals(request.getMethod())) {
 			Optional<TemplateMatch> matchOptional;
 
-			if (isPreview(request)) {
+			if (Webs.isPreview(request)) {
 				matchOptional = templateMapping.getPreviewTemplateMapping()
 						.getBestHighestPriorityTemplateMatch(lookupPath);
 			} else {
@@ -114,7 +127,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		if ("GET".equals(request.getMethod())) {
 			Optional<TemplateMatch> matchOptional;
 
-			if (isPreview(request)) {
+			if (Webs.isPreview(request)) {
 				matchOptional = templateMapping.getPreviewTemplateMapping()
 						.getBestPathVariableTemplateMatch(lookupPath);
 			} else {
@@ -180,11 +193,17 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 		}
 	}
 
+	@Override
+	protected void registerHandlerMethod(Object handler, Method method, RequestMappingInfo mapping) {
+		this.register.register(handler, method, mapping);
+	}
+
 	@EventListener
 	void start(ContextRefreshedEvent evt) {
 		if (evt.getApplicationContext().getParent() == null) {
 			return;
 		}
+		this.register = (o, h, m) -> super.registerHandlerMethod(o, h, m);
 		templateInterceptors.addAll(BeanFactoryUtils
 				.beansOfTypeIncludingAncestors(getApplicationContext(), TemplateInterceptor.class, true, false)
 				.values());
@@ -210,10 +229,6 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 			return bean instanceof TemplateHandler ? Optional.of((TemplateHandler) bean) : Optional.empty();
 		}
 		return Optional.empty();
-	}
-
-	private boolean isPreview(HttpServletRequest request) {
-		return templateService.isPreviewIp(Webs.getIP(request));
 	}
 
 	private void setUriTemplateVariables(TemplateMatch match, String lookupPath, HttpServletRequest request) {
@@ -261,6 +276,10 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 				chain.addInterceptor(interceptor);
 			}
 		}
+	}
+
+	private interface HandlerMethodRegister {
+		void register(Object handler, Method method, RequestMappingInfo mapping);
 	}
 
 }

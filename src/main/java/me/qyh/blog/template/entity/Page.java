@@ -17,12 +17,14 @@ package me.qyh.blog.template.entity;
 
 import java.sql.Timestamp;
 import java.util.Objects;
+import java.util.Optional;
 
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.util.FileUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.template.PathTemplate;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.Template;
 
 public class Page extends BaseEntity implements PathTemplate {
@@ -231,5 +233,10 @@ public class Page extends BaseEntity implements PathTemplate {
 			sb.append(templatePath);
 		}
 		return sb.toString();
+	}
+
+	public static Optional<String> getOriginalTemplateFromPreviewTemplateName(String templateSign) {
+		return PreviewTemplate.getOriginalTemplateName(templateSign)
+				.filter(templateName -> isPageTemplate(templateName));
 	}
 }

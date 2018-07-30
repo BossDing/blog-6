@@ -23,6 +23,7 @@ import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.template.PathTemplate;
+import me.qyh.blog.template.PreviewTemplate;
 import me.qyh.blog.template.SystemTemplate;
 import me.qyh.blog.template.Template;
 import me.qyh.blog.template.entity.Fragment;
@@ -139,7 +140,7 @@ public interface TemplateService {
 	 * @return
 	 * @throws LogicException
 	 */
-	Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException;
+	Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable);
 
 	/**
 	 * 查询系统数据
@@ -149,11 +150,16 @@ public interface TemplateService {
 	List<DataTagProcessorBean> queryDataTags();
 
 	/**
+	 * <p>
 	 * 根据模板名查询模板
+	 * </p>
 	 * 
 	 * @param templateName
-	 *            模板页面
+	 *            模板页面，如果模板名称是预览模板名称，将会返回{@code PreviewTemplate}
 	 * @return
+	 * @see PreviewTemplate
+	 * @see Template#getTemplateName()
+	 * @see TemplateService#isPreviewIp(String)
 	 */
 	Optional<Template> queryTemplate(String templateName);
 
@@ -295,22 +301,6 @@ public interface TemplateService {
 	void registerPreview(Fragment fragment) throws LogicException;
 
 	/**
-	 * 获取模板片段的模板名称
-	 * <p>
-	 * 如果IP为预览IP，并且为预览模板，返回预览模板名
-	 * </p>
-	 * 
-	 * @param name
-	 *            名称
-	 * @param space
-	 *            空间
-	 * @param ip
-	 *            ip地址
-	 * @return
-	 */
-	String getFragmentTemplateName(String name, Space space, String ip);
-
-	/**
 	 * 获取系统模板
 	 * 
 	 * @return
@@ -332,20 +322,6 @@ public interface TemplateService {
 	 * @throws LogicException
 	 */
 	PreviewImport previewImport(ExportPages exportPages) throws LogicException;
-
-	/**
-	 * 解除某些预览的页面
-	 * 
-	 * @param templates
-	 */
-	void unregisterPreview(PathTemplate... templates);
-
-	/**
-	 * 解除某些预览的模板片段
-	 * 
-	 * @param names
-	 */
-	void unregisterPreview(Fragment... fragments);
 
 	/**
 	 * 更新数据的是否可以外部调用

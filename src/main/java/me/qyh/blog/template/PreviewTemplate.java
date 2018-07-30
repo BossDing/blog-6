@@ -17,23 +17,25 @@ package me.qyh.blog.template;
 
 import java.util.Optional;
 
-public final class PreviewTemplate implements PathTemplate {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private final PathTemplate template;
+/**
+ * 预览模板
+ * 
+ * @author wwwqyhme
+ *
+ */
+public final class PreviewTemplate implements Template {
+	private final Template template;
 
 	/**
 	 * 预览模板前缀
 	 */
-	public static String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
+	private static String TEMPLATE_PREVIEW_PREFIX = TEMPLATE_PREFIX + "Preview" + SPLITER;
 
-	public PathTemplate getOriginalTemplate() {
+	public Template getOriginalTemplate() {
 		return template;
 	}
 
-	public PreviewTemplate(PathTemplate template) {
+	public PreviewTemplate(Template template) {
 		super();
 		this.template = template;
 	}
@@ -64,16 +66,6 @@ public final class PreviewTemplate implements PathTemplate {
 	}
 
 	@Override
-	public String getRelativePath() {
-		return template.getRelativePath();
-	}
-
-	@Override
-	public boolean hasPathVariable() {
-		return template.hasPathVariable();
-	}
-
-	@Override
 	public boolean cacheable() {
 		return false;
 	}
@@ -86,6 +78,13 @@ public final class PreviewTemplate implements PathTemplate {
 	 */
 	public static boolean isPreviewTemplate(String templateName) {
 		return templateName != null && templateName.startsWith(TEMPLATE_PREVIEW_PREFIX);
+	}
+
+	public static String getTemplateName(String templateName) {
+		if (isPreviewTemplate(templateName)) {
+			return templateName;
+		}
+		return TEMPLATE_PREVIEW_PREFIX + templateName;
 	}
 
 	public static Optional<String> getOriginalTemplateName(String previewTemplateName) {

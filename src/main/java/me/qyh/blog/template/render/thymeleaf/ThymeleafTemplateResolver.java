@@ -59,16 +59,14 @@ public class ThymeleafTemplateResolver implements ITemplateResolver {
 		if (!Template.isTemplate(templateName)) {
 			return null;
 		}
-
 		Optional<Template> optional = templateService.queryTemplate(templateName);
 		ITemplateResource templateResource = optional.<ITemplateResource>map(TemplateResource::new)
 				.orElseGet(() -> emptyTemplateResource);
-
 		ICacheEntryValidity cacheEntryValidity = optional.map(template -> {
 			return template.cacheable() ? AlwaysValidCacheEntryValidity.INSTANCE
 					: NonCacheableCacheEntryValidity.INSTANCE;
 		}).orElse(NonCacheableCacheEntryValidity.INSTANCE);
-
+		
 		return new TemplateResolution(templateResource, false, TemplateMode.HTML, false, cacheEntryValidity);
 	}
 

@@ -17,27 +17,36 @@ package me.qyh.blog.template.render;
 
 public class ParseConfig {
 	private final boolean onlyCallable;
-	private final boolean writableStackTraceOnTemplateRenderException;
 
-	public ParseConfig(boolean onlyCallable, boolean writableStackTraceOnTemplateRenderException) {
+	/**
+	 * @since 6.5
+	 */
+	private String contentType;
+
+	public ParseConfig(boolean onlyCallable) {
 		super();
 		this.onlyCallable = onlyCallable;
-		this.writableStackTraceOnTemplateRenderException = writableStackTraceOnTemplateRenderException;
+	}
+
+	public ParseConfig(boolean onlyCallable, String contentType) {
+		super();
+		this.onlyCallable = onlyCallable;
+		this.contentType = contentType;
 	}
 
 	public ParseConfig() {
-		this(false, true);
-	}
-
-	public ParseConfig(boolean onlyCallable) {
-		this(onlyCallable, true);
+		this(false);
 	}
 
 	public boolean isOnlyCallable() {
 		return onlyCallable;
 	}
 
-	public boolean isWritableStackTraceOnTemplateRenderException() {
-		return writableStackTraceOnTemplateRenderException;
+	public String getContentType() {
+		return contentType;
+	}
+
+	public void setContentType(String contentType) {
+		this.contentType = contentType;
 	}
 }

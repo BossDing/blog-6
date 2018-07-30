@@ -20,7 +20,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import me.qyh.blog.core.service.impl.HitsStrategy;
+import me.qyh.blog.core.service.HitsStrategy;
 import me.qyh.blog.template.render.data.DataTagProcessor;
 import me.qyh.blog.web.WebExceptionResolver;
 
@@ -55,7 +55,7 @@ public interface PluginHandler extends Ordered {
 	 * 当Root ApplicationContext<b>加载完成后</b>，初始化插件时调用
 	 * 
 	 * @param applicationContext
-	 *            child application context for name space 'blog-serlvet'
+	 *            Root ApplicationContext
 	 */
 	default void init(ApplicationContext applicationContext) throws Exception {
 
@@ -102,7 +102,7 @@ public interface PluginHandler extends Ordered {
 	}
 
 	/**
-	 * 添加管理台餐单
+	 * 添加管理台菜单
 	 * 
 	 * @param registry
 	 */

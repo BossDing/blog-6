@@ -15,9 +15,10 @@
  */
 package me.qyh.blog.template.render;
 
-import org.springframework.transaction.TransactionStatus;
+import java.util.List;
+import java.util.Optional;
 
-import me.qyh.blog.template.Template;
+import org.springframework.transaction.TransactionStatus;
 
 /**
  * 解析上下文
@@ -29,7 +30,7 @@ public class ParseContext {
 
 	private TransactionStatus transactionStatus;
 	private ParseConfig config;
-	private Template root;
+	private ParsedTemplate root;
 
 	ParseContext() {
 		super();
@@ -51,15 +52,35 @@ public class ParseContext {
 		this.config = config;
 	}
 
-	public Template getRoot() {
-		return root;
+	public boolean isOnlyCallable() {
+		return config.isOnlyCallable();
 	}
 
-	public void setRoot(Template root) {
+	public Optional<ParsedTemplate> getRoot() {
+		return Optional.ofNullable(root);
+	}
+
+	public void setRoot(ParsedTemplate root) {
 		this.root = root;
 	}
 
-	public boolean onlyCallable() {
-		return config.isOnlyCallable();
+	public Optional<ParsedTemplate> getLastChain() {
+		if (root == null) {
+			return Optional.empty();
+		}
+		ParsedTemplate chainRoot = new ParsedTemplate(root);
+		addToChain(this.root, chainRoot);
+		return Optional.of(chainRoot);
 	}
+
+	private void addToChain(ParsedTemplate root, ParsedTemplate chainRoot) {
+		List<ParsedTemplate> children = root.getChildren();
+		if (!children.isEmpty()) {
+			ParsedTemplate lastChild = children.get(children.size() - 1);
+			ParsedTemplate child = new ParsedTemplate(lastChild);
+			chainRoot.addChild(child);
+			addToChain(lastChild, child);
+		}
+	}
+
 }

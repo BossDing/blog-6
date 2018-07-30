@@ -141,9 +141,10 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	private ConfigServer configServer;
 	@Autowired(required = false)
 	private CommentServer commentServer;
-
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+	@Autowired
+	private TemplateMapping templateMapping;
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -155,9 +156,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 * 系统默认模板片段
 	 */
 	private List<Fragment> fragments = new ArrayList<>();
-
-	@Autowired
-	private TemplateMapping templateMapping;
 
 	private Map<String, SystemTemplate> defaultTemplates;
 
@@ -382,7 +380,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable) throws LogicException {
+	public Optional<DataBind> queryData(DataTag dataTag, boolean onlyCallable) {
 		Optional<DataTagProcessor<?>> processor = processors.stream()
 				.filter(pro -> pro.getDataName().equals(dataTag.getName()) || pro.getName().equals(dataTag.getName()))
 				.findAny();
@@ -397,10 +395,17 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 	@Override
 	public Optional<Template> queryTemplate(String templateName) {
-		return getTemplateProcessor(templateName)
+		if (!Template.isTemplate(templateName)) {
+			return Optional.empty();
+		}
+		Optional<Template> op = getTemplateProcessor(templateName)
 				.map(processor -> Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 					return processor.getTemplate(templateName);
 				}));
+		if (PreviewTemplate.isPreviewTemplate(templateName)) {
+			return op.map(PreviewTemplate::new);
+		}
+		return op;
 	}
 
 	@Override
@@ -801,10 +806,16 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	 * @param id
 	 * @return
 	 */
+	@Override
 	public Optional<HistoryTemplate> getHistoryTemplate(Integer id) {
 		return Transactions.executeInReadOnlyTransaction(platformTransactionManager, status -> {
 			return Optional.ofNullable(historyTemplateDao.selectById(id));
 		});
+	}
+
+	@Override
+	public boolean isPreviewIp(String ip) {
+		return previewIp != null && previewIp.equals(ip);
 	}
 
 	/**
@@ -857,6 +868,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 					}
 					return false;
 				});
+
 			}
 		}
 	}
@@ -877,8 +889,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		this.templateProcessors.add(new PageTemplateProcessor());
 		// Fragment Template Processor
 		this.templateProcessors.add(new FragmentTemplateProcessor());
-		// Preview Template Processor
-		this.templateProcessors.add(new PreviewTemplateProcessor());
 
 		if (commentServer == null) {
 			commentServer = EmptyCommentServer.INSTANCE;
@@ -959,14 +969,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	private Optional<Fragment> queryFragmentWithTemplateName(String templateName) {
-		boolean preview = PreviewTemplate.isPreviewTemplate(templateName);
-		String finalTemplateName;
-		if (preview) {
-			finalTemplateName = templateName.substring(PreviewTemplate.TEMPLATE_PREVIEW_PREFIX.length());
-		} else {
-			finalTemplateName = templateName;
-		}
-		String[] array = finalTemplateName.split(Template.SPLITER);
+		String[] array = templateName.split(Template.SPLITER);
 		String name;
 		Space space = null;
 		if (array.length == 3) {
@@ -975,27 +978,7 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			name = array[2];
 			space = new Space(Integer.parseInt(array[3]));
 		} else {
-			throw new SystemException(finalTemplateName + "无法转化为Fragment");
-		}
-
-		if (preview) {
-			synchronized (TemplateServiceImpl.this) {
-				if (!previewFragments.isEmpty()) {
-					Fragment best = null;
-					for (Fragment previewFragment : previewFragments) {
-						if (previewFragment.getTemplateName().equals(finalTemplateName)) {
-							if (!previewFragment.isGlobal() || previewFragment.getSpace() != null) {
-								best = previewFragment;
-								break;
-							}
-							best = previewFragment;
-						}
-					}
-					if (best != null) {
-						return Optional.of(best);
-					}
-				}
-			}
+			throw new SystemException(templateName + "无法转化为Fragment");
 		}
 
 		Fragment del = null;
@@ -1238,11 +1221,11 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		/**
 		 * 根据模板名查询模板
 		 * 
-		 * @param template
+		 * @param templateName
 		 *            模板名
 		 * @return 模板，如果不存在，返回null
 		 */
-		Template getTemplate(String template);
+		Template getTemplate(String templateName);
 
 	}
 
@@ -1275,12 +1258,23 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public Template getTemplate(String templateName) {
-			return queryPageWithTemplateName(templateName).orElse(null);
+			Template template = null;
+			Optional<String> op = Page.getOriginalTemplateFromPreviewTemplateName(templateName);
+			String originalTemplateName = op.isPresent() ? op.get() : templateName;
+			if (op.isPresent()) {
+				template = templateMapping.getPreviewTemplateMapping().getPreviewTemplate(originalTemplateName)
+						.orElse(null);
+			}
+			if (template == null) {
+				template = queryPageWithTemplateName(originalTemplateName).orElse(null);
+			}
+			return template;
 		}
 
 		@Override
 		public boolean canProcess(String templateSign) {
-			return Page.isPageTemplate(templateSign);
+			return Page.isPageTemplate(templateSign)
+					|| Page.getOriginalTemplateFromPreviewTemplateName(templateSign).isPresent();
 		}
 	}
 
@@ -1288,25 +1282,34 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 
 		@Override
 		public Template getTemplate(String templateName) {
-			return queryFragmentWithTemplateName(templateName).orElse(null);
+			Optional<String> op = Fragment.getOriginalTemplateFromPreviewTemplateName(templateName);
+			String originalTemplateName = op.isPresent() ? op.get() : templateName;
+			if (op.isPresent()) {
+				synchronized (TemplateServiceImpl.this) {
+					if (!previewFragments.isEmpty()) {
+						Fragment best = null;
+						for (Fragment previewFragment : previewFragments) {
+							if (previewFragment.getTemplateName().equals(originalTemplateName)) {
+								if (!previewFragment.isGlobal() || previewFragment.getSpace() != null) {
+									best = previewFragment;
+									break;
+								}
+								best = previewFragment;
+							}
+						}
+						if (best != null) {
+							return best;
+						}
+					}
+				}
+			}
+			return queryFragmentWithTemplateName(originalTemplateName).orElse(null);
 		}
 
 		@Override
 		public boolean canProcess(String templateSign) {
-			return Fragment.isFragmentTemplate(templateSign) || Fragment.isPreviewFragmentTemplate(templateSign);
-		}
-	}
-
-	private final class PreviewTemplateProcessor implements TemplateProcessor {
-
-		@Override
-		public Template getTemplate(String templateName) {
-			return templateMapping.getPreviewTemplateMapping().getPreviewTemplate(templateName).orElse(null);
-		}
-
-		@Override
-		public boolean canProcess(String templateSign) {
-			return PreviewTemplate.isPreviewTemplate(templateSign);
+			return Fragment.isFragmentTemplate(templateSign)
+					|| Fragment.getOriginalTemplateFromPreviewTemplateName(templateSign).isPresent();
 		}
 	}
 
@@ -1333,30 +1336,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 			throw new LogicException("fragment.user.notExists", "模板片段不存在");
 		}
 		return fragment;
-	}
-
-	@Override
-	public boolean isPreviewIp(String ip) {
-		return previewIp != null && previewIp.equals(ip);
-	}
-
-	@Override
-	public String getFragmentTemplateName(String name, Space space, String ip) {
-		String templateName = Fragment.getTemplateName(name, space);
-		if (previewIp == null || !previewIp.equals(ip)) {
-			return templateName;
-		}
-		synchronized (this) {
-			if (previewFragments.isEmpty()) {
-				return templateName;
-			}
-			for (Fragment previewFragment : previewFragments) {
-				if (previewFragment.getTemplateName().equals(templateName)) {
-					return PreviewTemplate.TEMPLATE_PREVIEW_PREFIX + templateName;
-				}
-			}
-		}
-		return templateName;
 	}
 
 	@Override
@@ -1421,29 +1400,6 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 	}
 
 	@Override
-	public void unregisterPreview(PathTemplate... templates) {
-		if (Validators.isEmpty(templates)) {
-			return;
-		}
-		synchronized (this) {
-			String[] paths = Arrays.stream(templates).map(PathTemplate::getTemplateName).toArray(String[]::new);
-			templateMapping.getPreviewTemplateMapping().unregister(paths);
-		}
-	}
-
-	@Override
-	public void unregisterPreview(Fragment... fragments) {
-		if (Validators.isEmpty(fragments)) {
-			return;
-		}
-		synchronized (this) {
-			for (Fragment fragment : fragments) {
-				unregisterFragment(fragment);
-			}
-		}
-	}
-
-	@Override
 	public void updateDataCallable(String name, boolean callable) {
 		synchronized (this) {
 			Optional<DataTagProcessor<?>> op = processors.stream().filter(pro -> pro.getName().equals(name)).findAny();
@@ -1488,5 +1444,4 @@ public class TemplateServiceImpl implements TemplateService, ApplicationEventPub
 		}
 		return space;
 	}
-
 }

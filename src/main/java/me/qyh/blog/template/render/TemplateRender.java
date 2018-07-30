@@ -102,9 +102,7 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 			}
 
 			// 如果没有逻辑异常，转化模板异常
-			Optional<TemplateRenderException> optional = config.isWritableStackTraceOnTemplateRenderException()
-					? templateExceptionTranslater.translate(templateName, e)
-					: templateExceptionTranslater.translateNoFillTrace(templateName, e);
+			Optional<TemplateRenderException> optional = templateExceptionTranslater.translate(templateName, e);
 			if (optional.isPresent()) {
 				throw optional.get();
 			}
@@ -176,6 +174,7 @@ public final class TemplateRender implements InitializingBean, TemplateRenderMod
 		pros.put("strings", StringUtils.class);
 		pros.put("times", Times.class);
 		pros.put("formats", Formats.class);
+		pros.put("fragments", Fragments.class);
 		pros.put("gravatars", new Gravatars(gravatarUrlGenerator));
 	}
 

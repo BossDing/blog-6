@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,16 +33,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import me.qyh.blog.core.config.Constants;
-import me.qyh.blog.core.context.Environment;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.vo.JsonResult;
+import me.qyh.blog.template.render.Fragments;
 import me.qyh.blog.template.render.ParseConfig;
 import me.qyh.blog.template.render.ReadOnlyResponse;
 import me.qyh.blog.template.render.TemplateRender;
 import me.qyh.blog.template.render.TemplateRenderException;
 import me.qyh.blog.template.service.TemplateService;
 import me.qyh.blog.template.validator.FragmentValidator;
+import me.qyh.blog.template.vo.DataBind;
 import me.qyh.blog.template.vo.DataTag;
 import me.qyh.blog.web.Webs;
 
@@ -64,8 +66,14 @@ public class OtherController {
 			throw new LogicException("data.name.undecode", "无法解码的数据名称");
 		}
 		DataTag tag = new DataTag(tagName, new HashMap<>(allRequestParams));
-		return templateService.queryData(tag, true).map(bind -> new JsonResult(true, bind))
-				.orElse(new JsonResult(false));
+		Optional<DataBind> op = templateService.queryData(tag, true);
+		if (op.isPresent()) {
+			DataBind bind = op.get();
+			Object data = bind.getData();
+			return new JsonResult(true, Map.of("dataName", bind.getDataName(), "data", data));
+		} else {
+			return new JsonResult(false);
+		}
 	}
 
 	@GetMapping({ "fragment/{fragment}", "space/{alias}/fragment/{fragment}" })
@@ -80,11 +88,10 @@ public class OtherController {
 		}
 		try {
 
-			String templateName = templateService.getFragmentTemplateName(fragment, Environment.getSpace(),
-					Environment.getIP());
+			String templateName = Fragments.getCurrentTemplateName(fragment);
 
 			String content = templateRender.doRender(templateName, null, request, new ReadOnlyResponse(response),
-					new ParseConfig(true, false));
+					new ParseConfig(true));
 
 			Webs.writeInfo(response, new JsonResult(true, content));
 
