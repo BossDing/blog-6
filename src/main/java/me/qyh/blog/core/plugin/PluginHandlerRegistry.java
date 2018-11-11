@@ -80,7 +80,7 @@ public class PluginHandlerRegistry
 
 	private ResourceLoader resourceLoader;
 
-	private Set<String> plugins = new HashSet<>();
+	private final Set<String> plugins = new HashSet<>();
 	private static final List<PluginHandler> handlerInstances = new ArrayList<>();
 
 	private final PluginProperties pluginProperties = PluginProperties.getInstance();
@@ -144,7 +144,7 @@ public class PluginHandlerRegistry
 
 	public static String getPluginName(Class<? extends PluginHandler> clazz) {
 		String fullName = clazz.getName();
-		return fullName.substring(fullName.lastIndexOf('.') + 1, fullName.length());
+		return fullName.substring(fullName.lastIndexOf('.') + 1);
 	}
 
 	public static String getRootPluginPackage(Class<? extends PluginHandler> clazz) {
@@ -160,7 +160,7 @@ public class PluginHandlerRegistry
 		pluginHandler.addRequestHandlerMapping(applicationContext.getBean(RequestMappingRegistry.class));
 		pluginHandler.addExceptionHandler(applicationContext.getBean(ExceptionHandlerRegistry.class));
 		pluginHandler.addArticleContentHandler(articleContentHandlerRegistry);
-		pluginHandler.addMenu(MenuRegistry.getInstance());
+		pluginHandler.addIcon(IconRegistry.getInstance());
 		pluginHandler.addFileStore(fileStoreRegistry);
 		pluginHandler.addTemplateInterceptor(applicationContext.getBean(TemplateInterceptorRegistry.class));
 		pluginHandler.addHandlerInterceptor(applicationContext.getBean(HandlerInterceptorRegistry.class));
@@ -321,7 +321,7 @@ public class PluginHandlerRegistry
 			if (!pluginHandlerNames.isEmpty()) {
 				@SuppressWarnings("resource")
 				// 不关闭URLClassLoader，因为如果关闭了无法再加载其他类
-				URLClassLoader cl = new URLClassLoader(urls.toArray(new URL[urls.size()]),
+				URLClassLoader cl = new URLClassLoader(urls.toArray(URL[]::new),
 						Thread.currentThread().getContextClassLoader());
 				for (String className : pluginHandlerNames) {
 					Class<?> handlerClass;
@@ -359,17 +359,18 @@ public class PluginHandlerRegistry
 			String p2Name = getPluginName(p2.getClass());
 			int order1 = pluginProperties.get("plugin.order." + p1Name).map(Integer::parseInt).orElse(p1.getOrder());
 			int order2 = pluginProperties.get("plugin.order." + p2Name).map(Integer::parseInt).orElse(p2.getOrder());
-			return (order1 < order2) ? -1 : (order1 > order2) ? 1 : 0;
+			return Integer.compare(order1, order2);
 		});
 	}
 
 	private Optional<String> findPluginHandlerNameFromDir(URL dirUrl) {
-		return FileUtils.quietlyWalk(Paths.get(toURI(dirUrl))).filter(p -> {
-			return Files.isRegularFile(p) && p.getFileName().toString().endsWith("PluginHandler.class");
-		}).map(p -> {
-			String fullClassName = getPluginNamePath(p).relativize(p).toString().replace(File.separatorChar, '.');
-			return fullClassName.substring(0, fullClassName.length() - 6);
-		}).findAny();
+		return FileUtils.quietlyWalk(Paths.get(toURI(dirUrl)))
+				.filter(p -> Files.isRegularFile(p) && p.getFileName().toString().endsWith("PluginHandler.class"))
+				.map(p -> {
+					String fullClassName = getPluginNamePath(p).relativize(p).toString().replace(File.separatorChar,
+							'.');
+					return fullClassName.substring(0, fullClassName.length() - 6);
+				}).findAny();
 	}
 
 	private Optional<String> findPluginHandlerNameFromJar(URL jarUrl) {

@@ -11,12 +11,12 @@ import me.qyh.blog.core.util.Validators;
 
 public class PluginMapperScannerConfigurer extends MapperScannerConfigurer {
 
-	private List<String> basePackages = new ArrayList<>();
+	private final List<String> basePackages = new ArrayList<>();
 
 	public PluginMapperScannerConfigurer(List<String> basePackages) {
 		super();
 		addBasePackage("me.qyh.blog.core.dao", "me.qyh.blog.file.dao", "me.qyh.blog.template.dao");
-		addBasePackage(basePackages.toArray(new String[basePackages.size()]));
+		addBasePackage(basePackages.toArray(String[]::new));
 	}
 
 	private void addBasePackage(String... basePackages) {

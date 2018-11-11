@@ -37,7 +37,6 @@ import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Messages;
-import me.qyh.blog.core.plugin.MenuRegistry;
 import me.qyh.blog.core.plugin.TemplateRenderHandlerRegistry;
 import me.qyh.blog.core.plugin.TemplateRenderModelRegistry;
 import me.qyh.blog.core.security.AuthencationException;
@@ -45,6 +44,7 @@ import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Formats;
 import me.qyh.blog.core.util.Jsons;
+import me.qyh.blog.core.util.Jsoups;
 import me.qyh.blog.core.util.StringUtils;
 import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.UrlUtils;
@@ -78,6 +78,7 @@ public final class TemplateRender
 	private Map<String, Object> pros = new HashMap<>();
 
 	private final List<TemplateRenderHandler> renderHandlers = new ArrayList<>();
+	private final Map<String, NamedTemplateRenderHandler> namedRenderHandlers = new HashMap<>();
 
 	public String doRender(String templateName, Map<String, ?> model, HttpServletRequest request,
 			ReadOnlyResponse response, ParseConfig config) throws Exception {
@@ -92,6 +93,19 @@ public final class TemplateRender
 					}
 				}
 			}
+			/**
+			 * @since 7.0
+			 */
+			Map<String, Map<String, String>> namedRenderHandlers = ParseContextHolder.getContext()
+					.getNamedRenderHandlers();
+			for (Map.Entry<String, Map<String, String>> it : namedRenderHandlers.entrySet()) {
+				String namedRenderHandler = it.getKey();
+				NamedTemplateRenderHandler handler = this.namedRenderHandlers.get(namedRenderHandler);
+				if (handler != null) {
+					content = handler.afterRender(content, request, contentType, it.getValue());
+				}
+			}
+
 			return content;
 		} catch (Throwable e) {
 			markRollBack();
@@ -144,7 +158,6 @@ public final class TemplateRender
 		if (!CollectionUtils.isEmpty(pros)) {
 			_model.putAll(pros);
 		}
-		_model.put("menus", MenuRegistry.getInstance().getMenus());
 		_model.put("messages", messages);
 		_model.put("urls", Webs.getSpaceUrls(request));
 		_model.put("user", Environment.getUser());
@@ -178,6 +191,7 @@ public final class TemplateRender
 		pros.put("formats", Formats.class);
 		pros.put("fragments", Fragments.class);
 		pros.put("gravatars", new Gravatars(gravatarUrlGenerator));
+		pros.put("jsoups", Jsoups.class);
 	}
 
 	public void setPros(Map<String, Object> pros) {
@@ -231,6 +245,13 @@ public final class TemplateRender
 	@Override
 	public TemplateRenderHandlerRegistry register(TemplateRenderHandler handler) {
 		renderHandlers.add(handler);
+		return this;
+	}
+
+	@Override
+	public TemplateRenderHandlerRegistry register(NamedTemplateRenderHandler handler) {
+		NamedTemplateRenderHandler namedTemplateRenderHandler = (NamedTemplateRenderHandler) handler;
+		namedRenderHandlers.put(namedTemplateRenderHandler.name(), namedTemplateRenderHandler);
 		return this;
 	}
 

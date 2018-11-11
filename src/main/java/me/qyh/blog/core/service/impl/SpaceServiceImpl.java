@@ -40,6 +40,7 @@ import me.qyh.blog.core.event.SpaceCreateEvent;
 import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.event.SpaceUpdateEvent;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.ResourceNotFoundException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.SpaceService;
@@ -55,7 +56,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Autowired
 	private ArticleIndexer articleIndexer;
 
-	private List<Space> cache = new CopyOnWriteArrayList<>();
+	private final List<Space> cache = new CopyOnWriteArrayList<>();
 
 	private ApplicationEventPublisher applicationEventPublisher;
 
@@ -87,9 +88,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 
 		this.applicationEventPublisher.publishEvent(new SpaceCreateEvent(this, space));
 
-		Transactions.afterCommit(() -> {
-			cache.add(space);
-		});
+		Transactions.afterCommit(() -> cache.add(space));
 
 		return space;
 	}
@@ -100,7 +99,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	public Space updateSpace(Space space) throws LogicException {
 		Space db = spaceDao.selectById(space.getId());
 		if (db == null) {
-			throw new LogicException("space.notExists", "空间不存在");
+			throw new ResourceNotFoundException("space.notExists", "空间不存在");
 		}
 		Space nameDb = spaceDao.selectByName(space.getName());
 		if (nameDb != null && !nameDb.equals(db)) {
@@ -125,10 +124,15 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 		db.setLockId(space.getLockId());
 		db.setName(space.getName());
 
+		boolean resetDefault = space.getIsDefault();
 		Transactions.afterCommit(() -> {
 			cache.replaceAll(replace -> {
 				if (replace.getId().equals(space.getId())) {
 					return db;
+				} else {
+					if (resetDefault) {
+						replace.setIsDefault(false);
+					}
 				}
 				return replace;
 			});
@@ -146,7 +150,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	public void deleteSpace(Integer id) throws LogicException {
 		Space space = spaceDao.selectById(id);
 		if (space == null) {
-			throw new LogicException("space.notExists", "空间不存在");
+			throw new ResourceNotFoundException("space.notExists", "空间不存在");
 		}
 		if (space.getIsDefault()) {
 			throw new LogicException("space.default.canNotDelete", "默认空间不能被删除");
@@ -185,7 +189,7 @@ public class SpaceServiceImpl implements SpaceService, ApplicationEventPublisher
 	@Override
 	@Transactional(readOnly = true)
 	public List<Space> querySpace(SpaceQueryParam param) {
-		if (param.getQueryPrivate() && !Environment.isLogin()) {
+		if (param.getQueryPrivate() && !Environment.hasAuthencated()) {
 			param.setQueryPrivate(false);
 		}
 		return cache.stream().filter(space -> {

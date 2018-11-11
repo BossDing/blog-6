@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Optional;
 
 import me.qyh.blog.core.entity.Article;
+import me.qyh.blog.core.entity.Article.ArticleStatus;
+import me.qyh.blog.core.entity.Editor;
 import me.qyh.blog.core.entity.Space;
 import me.qyh.blog.core.exception.LogicException;
 import me.qyh.blog.core.security.AuthencationException;
-import me.qyh.blog.core.vo.ArticleArchiveTree;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
+import me.qyh.blog.core.vo.ArticleArchive;
+import me.qyh.blog.core.vo.ArticleArchivePageQueryParam;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
@@ -39,7 +41,7 @@ import me.qyh.blog.core.vo.TagCount;
  */
 public interface ArticleService {
 
-	static final String COMMENT_MODULE_NAME = "article";
+	final String COMMENT_MODULE_NAME = "article";
 
 	/**
 	 * 获取一篇可以被访问的文章
@@ -83,24 +85,6 @@ public interface ArticleService {
 	Article writeArticle(Article article) throws LogicException;
 
 	/**
-	 * 将博客放入回收站
-	 * 
-	 * @param id
-	 *            文章id
-	 * @throws LogicException
-	 */
-	Article logicDeleteArticle(Integer id) throws LogicException;
-
-	/**
-	 * 从回收站中恢复
-	 * 
-	 * @param id
-	 *            文章id
-	 * @throws LogicException
-	 */
-	Article recoverArticle(Integer id) throws LogicException;
-
-	/**
 	 * 删除博客
 	 * 
 	 * @param id
@@ -117,15 +101,6 @@ public interface ArticleService {
 	 * @return 当前点击数
 	 */
 	void hit(Integer id);
-
-	/**
-	 * 发布草稿
-	 * 
-	 * @param id
-	 *            草稿id
-	 * @throws LogicException
-	 */
-	Article publishDraft(Integer id) throws LogicException;
 
 	/**
 	 * 上一篇，下一篇文章
@@ -167,19 +142,7 @@ public interface ArticleService {
 	 * @param article
 	 *            预览文章
 	 */
-	void preparePreview(Article article);
-
-	/**
-	 * 得到一篇随机文章
-	 * <p>
-	 * <b>这篇文章只会保留用于构造访问链接的基本属性，不能直接用于显示</b>
-	 * </p>
-	 * 
-	 * @param queryLock
-	 *            是否查询被锁保护的文章
-	 * @return 随机文章
-	 */
-	Optional<Article> selectRandom(boolean queryLock);
+	String createPreviewContent(Editor editor, String content);
 
 	/**
 	 * 更新文章
@@ -194,9 +157,9 @@ public interface ArticleService {
 	 * 查询文章归档
 	 * 
 	 * @param
-	 * @return 年月日归档
+	 * @since 7.0
 	 */
-	ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode);
+	PageResult<ArticleArchive> queryArticleArchives(ArticleArchivePageQueryParam param);
 
 	/**
 	 * 统计某个空间下的文章
@@ -212,5 +175,15 @@ public interface ArticleService {
 	 * @return
 	 */
 	ArticleStatistics queryArticleStatistics();
+
+	/**
+	 * 更改文章的状态
+	 * 
+	 * @since 7.0
+	 * @param id
+	 * @param status
+	 * @throws LogicException
+	 */
+	void changeStatus(Integer id, ArticleStatus status) throws LogicException;
 
 }

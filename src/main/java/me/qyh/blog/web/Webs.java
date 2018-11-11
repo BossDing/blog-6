@@ -27,13 +27,12 @@ import org.springframework.validation.ObjectError;
 
 import me.qyh.blog.core.config.Constants;
 import me.qyh.blog.core.config.UrlHelper.CurrentEnvUrls;
-import me.qyh.blog.core.exception.SystemException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.util.ExceptionUtils;
 import me.qyh.blog.core.util.Jsons;
+import me.qyh.blog.core.util.UrlUtils;
 import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.validator.SpaceValidator;
-import me.qyh.blog.core.vo.JsonResult;
 
 public class Webs {
 
@@ -89,7 +88,7 @@ public class Webs {
 	 * @param result
 	 * @throws IOException
 	 */
-	public static void writeInfo(HttpServletResponse response, JsonResult result) throws IOException {
+	public static void writeInfo(HttpServletResponse response, Object result) throws IOException {
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding(Constants.CHARSET.name());
 		Jsons.write(result, response.getWriter());
@@ -146,7 +145,7 @@ public class Webs {
 	 */
 	public static String getSpaceFromPath(String path, int maxAliasLength) {
 		if (maxAliasLength < 1) {
-			throw new SystemException("maxAliasLength不能小于1");
+			return null;
 		}
 		if (Validators.isEmptyOrNull(path, true)) {
 			return null;
@@ -210,12 +209,31 @@ public class Webs {
 	 * @param result
 	 * @return
 	 */
-	public static Optional<JsonResult> getFirstError(BindingResult result) {
+	public static Optional<Message> getFirstError(BindingResult result) {
 		if (result.hasErrors()) {
 			ObjectError error = result.getAllErrors().get(0);
-			return Optional.of(new JsonResult(false,
-					new Message(error.getCode(), error.getDefaultMessage(), error.getArguments())));
+			return Optional.of(new Message(error.getCode(), error.getDefaultMessage(), error.getArguments()));
 		}
 		return Optional.empty();
 	}
+
+	/**
+	 * 判断是否是restful请求
+	 * 
+	 * @param request
+	 * @return
+	 * @since 7.0
+	 */
+	public static boolean isRestful(HttpServletRequest request) {
+		String path = UrlUtils.getRequestURIWithoutContextPath(request);
+		if (path.startsWith("api/")) {
+			return true;
+		}
+		String space = getSpaceFromPath(path, SpaceValidator.MAX_ALIAS_LENGTH + 1);
+		if (space != null) {
+			return path.startsWith("space/" + space + "/api");
+		}
+		return false;
+	}
+
 }

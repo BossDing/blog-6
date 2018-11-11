@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService, InitializingBean {
 
 	private static final Path USER_RES_PATH = Constants.CONFIG_DIR.resolve("user.properties");
 
-	private static final EncodedResource USER_RES = new EncodedResource(new PathResource(USER_RES_PATH),
+	private static final EncodedResource USER_RES = new EncodedResource(new FileSystemResource(USER_RES_PATH),
 			Constants.CHARSET);
 	private static final String USERNAME = "username";
 	private static final String PASSWORD = "password";
@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService, InitializingBean {
 	/**
 	 * admin，防止user.properties文件为空时自动登陆失败
 	 */
-	private final String DEFAULT_PASSWORD = "$2a$10$DZ/KQVvyKGQrI8rlRmE95uIBAPj6RcfThGTxXOhRDpFMA5zAvHeq.";
+	private static final String DEFAULT_PASSWORD = "$2a$10$DZ/KQVvyKGQrI8rlRmE95uIBAPj6RcfThGTxXOhRDpFMA5zAvHeq.";
 
 	private static final Properties pros;
 	private User user;

@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import com.google.gson.annotations.Expose;
+import java.util.function.Predicate;
 
 import me.qyh.blog.core.entity.BaseEntity;
 import me.qyh.blog.core.entity.Editor;
@@ -50,9 +49,7 @@ public class Comment extends BaseEntity {
 
 	private String website;
 	private String nickname;
-	@Expose(serialize = false)
 	private String email;
-	@Expose(serialize = false)
 	private String ip;
 	private Boolean admin;// 是否是管理员
 
@@ -128,7 +125,7 @@ public class Comment extends BaseEntity {
 
 	public void setParentPath(String parentPath) {
 		if (!"/".equals(parentPath)) {
-			Arrays.stream(parentPath.split("/")).filter(path -> !path.isEmpty())
+			Arrays.stream(parentPath.split("/")).filter(Predicate.not(String::isEmpty))
 					.forEach(path -> this.parents.add(Integer.parseInt(path)));
 		}
 		this.parentPath = parentPath;

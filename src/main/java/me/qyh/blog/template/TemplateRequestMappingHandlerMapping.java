@@ -76,7 +76,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 
 	private RequestMappingInfo.BuilderConfiguration config;
 
-	private List<HandlerInterceptor> interceptors = new ArrayList<>();
+	private final List<HandlerInterceptor> interceptors = new ArrayList<>();
 
 	private HandlerInterceptor[] interceptorArray;
 
@@ -124,7 +124,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	@Override
 	protected HandlerMethod handleNoMatch(Set<RequestMappingInfo> infos, String lookupPath, HttpServletRequest request)
 			throws ServletException {
-		if ("GET".equals(request.getMethod())) {
+		if ("GET".equals(request.getMethod()) || Webs.errorRequest(request)) {
 			Optional<TemplateMatch> matchOptional;
 
 			if (Webs.isPreview(request)) {
@@ -258,7 +258,7 @@ public class TemplateRequestMappingHandlerMapping extends RequestMappingHandlerM
 	@Override
 	public HandlerInterceptorRegistry register(HandlerInterceptor handlerInterceptor) {
 		interceptors.add(handlerInterceptor);
-		this.interceptorArray = interceptors.toArray(new HandlerInterceptor[interceptors.size()]);
+		this.interceptorArray = interceptors.toArray(HandlerInterceptor[]::new);
 		return this;
 	}
 

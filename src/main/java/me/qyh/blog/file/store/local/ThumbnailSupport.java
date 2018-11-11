@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -123,11 +123,9 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 	/**
 	 * 当访问路径指向原始文件时，处理这个原始文件
 	 * 
-	 * @param path
-	 *            原始文件 不为null
 	 * @return 向客户端返回的资源
 	 */
-	protected abstract Optional<Resource> handleOriginalFile(Path path, HttpServletRequest request);
+	protected abstract Optional<Resource> handleOriginalFile(String key, Path path, HttpServletRequest request);
 
 	/**
 	 * 获取文件的封面
@@ -141,7 +139,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 		// 判断是否是原图
 		Optional<Path> optionaLocalFile = super.getFile(path);
 		if (optionaLocalFile.isPresent()) {
-			return handleOriginalFile(optionaLocalFile.get(), request);
+			return handleOriginalFile(path, optionaLocalFile.get(), request);
 		}
 
 		// 原图不存在，从链接中获取缩放信息
@@ -191,14 +189,14 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 				}
 
 				if (!FileUtils.isRegularFile(poster)) {
-					return Optional.of(new PathResource(local));
+					return Optional.of(new FileSystemResource(local));
 				}
 
 			}
 
 			try {
 				thumbnailator.doResize(poster, resize, file);
-				return FileUtils.exists(file) ? Optional.of(new PathResource(file)) : Optional.empty();
+				return FileUtils.exists(file) ? Optional.of(new FileSystemResource(file)) : Optional.empty();
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 				return Optional.empty();
@@ -206,7 +204,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 
 		} else {
 			// 直接返回缩略图
-			return Optional.of(new PathResource(file));
+			return Optional.of(new FileSystemResource(file));
 		}
 	}
 
@@ -291,7 +289,8 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 			throw new SystemException("缩略图存储路径不能为null");
 		}
 
-		super.setLocations(List.of(new PathResource(Paths.get(thumbAbsPath)), new PathResource(Paths.get(absPath))));
+		super.setLocations(
+				List.of(new FileSystemResource(Paths.get(thumbAbsPath)), new FileSystemResource(Paths.get(absPath))));
 
 		if (!thumbnailator.supportWebp()) {
 			supportWebp = false;
@@ -347,7 +346,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 					baseName = baseName.substring(0, baseName.length() - 1);
 				}
 				if (baseName.startsWith(Character.toString(CONCAT_CHAR))) {
-					baseName = baseName.substring(1, baseName.length());
+					baseName = baseName.substring(1);
 					Integer h = Integer.valueOf(baseName);
 					resize = new Resize();
 					resize.setHeight(h);
@@ -412,7 +411,7 @@ public abstract class ThumbnailSupport extends LocalResourceRequestHandlerFileSt
 	private Optional<String> getThumbPath(String sourceExt, String path, HttpServletRequest request) {
 		boolean supportWebp = supportWebp(request);
 		String ext = FileUtils.getFileExtension(path);
-		boolean extEmpty = ext.trim().isEmpty();
+		boolean extEmpty = ext.strip().isEmpty();
 		if (extEmpty) {
 			return Optional.of(path + "." + (supportWebp ? ImageHelper.WEBP : ImageHelper.JPEG));
 		} else {

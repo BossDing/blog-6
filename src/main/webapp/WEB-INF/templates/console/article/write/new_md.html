@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<link rel="stylesheet"
+	th:href="@{/static/bootstrap/css/bootstrap.min.css?v=7.0}">
+<link rel="stylesheet"
+	th:href="@{/static/codemirror/lib/codemirror.css?v=7.0}">
+<link rel="stylesheet"
+	th:href="@{/static/codemirror/theme/base16-light.css?v=7.0}">
+<link rel="stylesheet"
+	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css?v=7.0}">
+<link rel="stylesheet"
+	th:href="@{/static/codemirror/addon/dialog/dialog.css?v=7.0}">
+<link rel="stylesheet"
+	th:href="@{/static/codemirror/addon/search/matchesonscrollbar.css?v=7.0}">
+
+<link th:href="@{/static/fontawesome-free/css/all.min.css?v=7.0}"
+	rel="stylesheet">
+<style>
+#in {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 50%;
+	height: auto;
+	overflow: auto;
+	box-shadow: -10px 2px 6px 10px rgba(0, 0, 0, 0.4);
+}
+
+#out {
+	position: fixed;
+	top: 0;
+	right: 0;
+	left: 50%;
+	bottom: 0;
+	overflow: auto;
+	padding: 10px;
+	padding-left: 20px;
+	color: #444;
+	font-family: Georgia, Palatino, 'Palatino Linotype', Times,
+		'Times New Roman', serif;
+	font-size: 16px;
+	line-height: 1.5em
+}
+
+.CodeMirror {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: auto;
+	height: auto;
+}
+
+.CodeMirror-scroll {
+	padding: 30px;
+	padding-top:40px;
+	box-sizing: border-box;
+	overflow-x: hidden !important;
+}
+
+.icon {
+	margin-top: 5px;
+	cursor: pointer;
+	font-size: 30px;
+	margin-right: 20px;
+	margin-bottom: 5px;
+}
+
+</style>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="col-md-6">
+			<div id="toolbar" style="position:fixed;z-index: 999999;">
+				<i class="fas fa-pencil-alt icon" onclick="showBase()" title="基本信息"></i>
+				<i class="fas fa-file icon" onclick="openFile()" title="文件"></i>
+				<i class="fas fa-cog icon" onclick="openSettingModal()" title="设置预览样式"></i>
+				<i class="far fa-grin icon" title="emoji" onclick="emoji.show()"></i>
+			</div>
+			<div id="in" style="display: none">
+				<textarea id="code" style="width: 100%; height: 100%"
+					th:text="${article.content}"></textarea>
+			</div>
+		</div>
+		<div class="col-md-6" id="out">
+			<div class="embed-responsive">
+				<iframe class="embed-responsive-item"
+					th:src="@{/console/article/new/preview}"></iframe>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="modal fade" id="settingModal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">预览样式设置</h4>
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<label>preview样式</label><input id="css-preview-text" type="text"
+								class="form-control" value="markdown-body" />
+						</div>
+						<div class="form-group">
+							<label>css文件位置</label>
+							<textarea id="css-link-text" class="form-control" cols="8"
+								rows="8"><span th:remove="tag"
+									th:text="@{/static/bootstrap/css/bootstrap.min.css}"></span>
+<span th:remove="tag" th:text="@{/static/prettify/prettify.css}"></span>
+<span th:remove="tag" th:text="@{/static/css/markdown.css}"></span></textarea>
+						</div>
+						<div class="form-group">
+							<label>style样式</label>
+							<textarea id="css-style-text" class="form-control" cols="8"
+								rows="8">body {
+	margin: 0;
+	padding: 0;
+	word-wrap: break-word;
+}
+#preview{
+	padding-top:0px
+}
+.markdown-body{
+	padding-top:0px !important;
+}</textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" type="button" id="submit-setting">设置样式</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="modal fade" id="baseModal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+				<h4 class="modal-title">基本信息</h4>
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger" id="error-tip"
+						style="display: none"></div>
+					<form>
+						<div class="form-group">
+							<label>博客标题</label><input type="text" class="form-control"
+								placeholder="博客标题(1-200个字符)" maxlength="200" id="title"
+								th:value="${article.title}" />
+						</div>
+						<div class="form-group">
+							<label>别名</label><input type="text" class="form-control"
+								placeholder="博客别名(1-200个字符，不能为纯数字以及包含'<'、'>','='和空格等字符)"
+								maxlength="200" id="alias" th:value="${article.alias}" />
+						</div>
+						<div class="form-group">
+							<label>摘要 </label>
+							<textarea class="form-control" cols="8" rows="8"
+								placeholder="(0~2000字符)" id="summary"
+								th:text="${article.summary}"></textarea>
+						</div>
+						<div class="form-group">
+							<label>特征图像</label><input type="text" class="form-control"
+								placeholder="特征图像" maxlength="255" id="featureImage"
+								th:value="${article.featureImage}" />
+						</div>
+						<div class="form-group has-feedback has-clear"
+							id="tags-input-container">
+							<label>标签 </label>
+							<div class="input-group mb-3">
+								<input type="text" id="tags-input" class="form-control"
+									placeholder="标签(小于20个字符)" />
+								<div class="input-group-append">
+									<span class="input-group-text"><a href="###"
+										onclick="_addTag()">添加</a></span>
+								</div>
+							</div>
+						</div>
+						<div class="card my-1">
+							<div class="card-body " id="tags-container"></div>
+						</div>
+						<div id="tags-container" class="well" style="margin-top: 5px"></div>
+						<div class="form-group">
+							<label>空间</label> <select class="form-control" id="space">
+								<option th:each="space : ${spaces}" th:text="${space.name}"
+									th:value="${space.id}"></option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>来源</label> <select class="form-control" id="from">
+								<option th:if="${article.from != null}"
+									th:value="${article.from.name()}" selected="selected"
+									th:text="'当前:'+${messages.getMessage(article.from.getMessage())}"></option>
+								<option value="ORIGINAL">原创</option>
+								<option value="COPIED">转载</option>
+							</select>
+						</div>
+						<div id="lock_container"></div>
+						<div class="form-group">
+							<label>状态</label> <select class="form-control" id="status">
+								<option th:if="${article.status != null}"
+									th:value="${article.status.name()}"
+									th:text="${messages.getMessage(article.status.getMessage())}"></option>
+								<option value="DRAFT">草稿</option>
+								<option value="PUBLISHED">发布</option>
+								<option value="SCHEDULED">计划</option>
+							</select>
+						</div>
+						<div class="form-group"
+							th:style="${article.isSchedule() ? '' : 'display: none'}"
+							id="scheduleContainer">
+							<label>计划发表日期</label> <input type="text" class="form-control"
+								id="scheduleDate"
+								th:value="${article.isSchedule() ? #dates.format(article.pubDate, 'yyyy-MM-dd HH:mm') : #dates.format(#dates.createNow(),'yyyy-MM-dd HH:mm')}"><br>
+						</div>
+						<div class="checkbox">
+							<label th:if="${article.isPrivate == null || !article.isPrivate}">
+								<input type="checkbox" id="private" />私人博客
+							</label> <label th:if="${article.isPrivate != null && article.isPrivate}"><input
+								type="checkbox" id="private" checked="checked" />私人博客 </label>
+						</div>
+						<div class="form-group">
+							<label>博客优先级(优先级越高排名越靠前)</label> <input type="text"
+								class="form-control" placeholder="1~100" maxlength="3"
+								id="level" th:value="${article.level}" />
+						</div>
+						<div class="checkbox">
+							<label
+								th:if="${article.allowComment == null || !article.allowComment}">
+								<input type="checkbox" id="allowComment" />允许评论
+							</label> <label
+								th:if="${article.allowComment != null && article.allowComment}"><input
+								type="checkbox" id="allowComment" checked="checked" />允许评论 </label>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" type="button" id="submit-art">发表文章</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<input type="hidden" th:value="${article.status}" id="oldStatus" />
+	<input type="hidden" th:value="${article.tagStr}" id="oldTags"
+		style="display: none" />
+	<input type="hidden" th:value="${article.lockId}" id="oldLock"
+		style="display: none" />
+	<input type="hidden" th:value="${article.id}" id="id"
+		style="display: none" />
+	<input type="hidden"
+		th:value="${article.space == null ? '' : article.space.id}"
+		id="oldSpace" style="display: none" />
+
+	<div th:replace="console/base/foot"></div>
+	<script th:src="@{/static/codemirror/lib/codemirror.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/mode/overlay.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/javascript/javascript.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/css/css.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/xml/xml.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/htmlmixed/htmlmixed.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/markdown/markdown.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/gfm/gfm.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/dialog/dialog.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/searchcursor.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/search.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/codemirror/addon/scroll/annotatescrollbar.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/codemirror/addon/search/matchesonscrollbar.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/jump-to-line.js?v=7.0}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/jquery-file-upload/js/load-image.min.js?v=7.0}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/js/canvas-to-blob.min.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js?v=7.0}"></script>
+	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js?v=7.0}"></script>
+	<script type="text/javascript" th:src="@{/static/console/js/emoji.js?v=7.0}"></script>
+	<script type="text/javascript" th:src="@{/static/js/file.js?v=7.0}"></script>
+	<script type="text/javascript" th:src="@{/static/js/dir.js?v=7.0}"></script>
+	<script type="text/javascript">
+	
+		var autoParse = true;
+		var publishing = false;
+		var tags = [];
+		function detect() {
+			var wwidth = $(window).width();
+			if (wwidth <= 768) {
+				autoParse = false;
+				toEditor();
+				$("#mobile-style").remove();
+				$("head").append("<style type='text/css' id='mobile-style'>.icon {font-size: 30px} .CodeMirror-scroll{margin-top:20px}</style>");
+				$(".embed-responsive").css({"margin-top":'30px'}).height($(window).height()-52);
+				$("#out iframe").height($(".embed-responsive").height());
+			} else {
+				autoParse = true;
+				$("#in").css({
+					width : '50%'
+				}).show();
+				$("#out").css({
+					left : '50%'
+				}).show();
+				$("#editor-icon").remove();
+				$("#preview-icon").remove();
+				$("#mobile-style").remove();
+				if (editor)
+					render();
+				$(".embed-responsive").height($("#out").height());
+				
+			}
+		}
+		detect();
+		var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+			mode : 'gfm',
+			lineNumbers : false,
+			matchBrackets : true,
+			lineWrapping : true,
+			theme : 'base16-light',
+			dragDrop:false,
+		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
+		});
+		
+		var summaryEditor = CodeMirror.fromTextArea(document.getElementById('summary'), {
+			mode : 'gfm',
+			lineNumbers : false,
+			matchBrackets : true,
+			lineWrapping : true,
+			theme : 'base16-light',
+			dragDrop:false,
+		    extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList","Alt-F": "findPersistent","Ctrl-A":"selectAll"}
+		});
+		
+		$("#baseModal .CodeMirror").css({"position":"static","height":"300px"});
+		$("#baseModal .CodeMirror-scroll").css({"padding":"5px"});
+		
+		CodeMirror.keyMap.default["Shift-Tab"] = "indentLess";
+		CodeMirror.keyMap.default["Tab"] = "indentMore";
+		
+		emoji.setClick(function(emoji){
+			editor.replaceSelection(emoji);
+			return true;
+		});
+		
+
+
+// 		$(window).resize(function() {
+// 			detect();
+// 		});
+
+		function toEditor() {
+			$("#out").hide();
+			$("#in").css({
+				width : '100%'
+			}).show();
+			$("#editor-icon").remove();
+			$("#preview-icon").remove();
+			$(".icon").show();
+			$("#toolbar")
+					.append(
+							'<i class="fas fa-eye icon" id="preview-icon" onclick="toPreview()"></i>');
+		}
+
+		function toPreview() {
+			render();
+			$("#in").hide();
+			$("#out").css({
+				left : '0%'
+			}).show();
+			$(".embed-responsive").css({"margin-top":'30px'}).height($(window).height()-52);
+			$("#out iframe").height($(".embed-responsive").height());
+			$("#editor-icon").remove();
+			$("#preview-icon").remove();
+			$(".icon").hide();
+			$("#toolbar")
+					.append(
+							'<i class="fas fa-eye-slash icon" onclick="toEditor()" id="editor-icon"></i>');
+		}
+		var renderTimer;
+		var render = function() {
+			if (renderTimer) {
+				clearTimeout(renderTimer);
+			}
+			renderTimer = setTimeout(function() {
+				var toParse = editor.getValue();
+				$.ajax({
+					type : "post",
+					async:false,
+					url : root + 'api/console/article/preview',
+					data:{content:toParse},
+					success : function(data) {
+				        $("#out iframe")[0].contentWindow.setPreview(data);
+					},
+					error : function(jqXHR) {
+						var error = $.parseJSON(jqXHR.responseText).error;
+						swal('预览失败',error,'error');
+					}
+				});
+
+			}, 500);
+		};
+		
+
+		render();
+
+		editor.on('change', function(e) {
+			if (autoParse) {
+				render();
+			}
+		});
+
+		function showBase() {
+			$("#baseModal").modal('show');
+		}
+
+		function openFile() {
+			fileChooser.choose(function(data){
+				for(var i=0;i<data.length;i++){
+					var f = data[i];
+					  var cf = f.cf;
+						var ext = cf.extension.toLowerCase();
+						if($.inArray(ext,['jpeg','jpg','png','gif']) == -1){
+							editor.replaceSelection('['+cf.originalFilename+']('+cf.url+')')
+						} else {
+							var thumb = cf.thumbnailUrl;
+							if(thumb){
+								editor.replaceSelection('[!['+cf.originalFilename+']('+thumb.middle+')]('+thumb.large+')')
+							} else {
+								editor.replaceSelection('!['+cf.originalFilename+']('+cf.url+')')
+							}
+						}
+				}
+			   return true;
+		 });
+		}
+		
+		function openSettingModal(){
+			$("#settingModal").modal("show");
+		}
+		
+		function setStyle(succ){
+			try {
+				 $("#out iframe")[0].contentWindow.setStyle(getStyle());
+				 if(succ){
+					 succ();
+				 }
+			} catch (e) {
+				setTimeout(function(){
+					setStyle(succ);
+				},100)
+			}
+		}
+		
+		function getStyle(){
+			return {"csses":$("#css-link-text").val(),"styles":$("#css-style-text").val(),"preview":$.trim($("#css-preview-text").val())};
+		}
+		
+		$(function(){
+			setStyle();
+			$("#submit-setting").click(function(){
+				setStyle(function(){
+					$("#settingModal").modal('hide')
+				});
+			});
+			
+			$.ajax({
+				url : root + 'api/console/locks',
+				success:function(data){
+					var locks = data;
+					if(locks.length > 0){
+						var html = '';
+						html += '<div class="form-group">'
+						html += '<label for="lockId" class="control-label">锁:</label> ';
+						html += '<select id="lockId" class="form-control">';
+						html += '<option value="">无</option>';
+						for(var i=0;i<locks.length;i++){
+							var lock = locks[i];
+							if(lock.id == oldLock){
+								html += '<option value="'+lock.id+'" selected="selected">'+lock.name+'</option>';
+							}else{
+								html += '<option value="'+lock.id+'">'+lock.name+'</option>';
+							}
+						}
+						html += '</select>';
+						html += '</div>';
+						$("#lock_container").html(html);
+					}
+				},
+				error : function(jqXHR){
+					swal('获取锁失败',$.parseJSON(jqXHR.responseText).error,'error');
+				}
+			})
+			
+			
+			$("#status").change(function() {
+				if ($(this).val() == 'SCHEDULED') {
+					$("#scheduleContainer").show();
+				} else {
+					$("#scheduleContainer").hide();
+				}
+			});
+			
+			var oldTags = $("#oldTags").val();
+			if(oldTags != ''){
+				var oldTagArray = oldTags.split(",");
+				for(var i=0;i<oldTagArray.length;i++){
+					var tag = oldTagArray[i];
+					if(tag != ''){
+						addTag(tag);
+						renderTag();
+					}
+				}
+			}
+			var oldSpace = $("#oldSpace").val();
+			if(oldSpace != ""){
+				$("#space").val(oldSpace);
+			}
+
+			setInterval(function(){
+				save();
+			},10000);
+			
+			$("#submit-art").click(function(){
+				publishing = true;
+				var me = $(this);
+				var article = getArticle();
+				me.prop("disabled",true);
+				var url = "";
+				var type ;
+				if(article.id && article.id != null){
+					url = root+"api/console/article/"+article.id;
+					type = 'put';
+				}else{
+					url = root+"api/console/article";
+					type = 'post';
+				}
+				$.ajax({
+					type : type,
+					url : url,
+		            contentType:"application/json",
+					data : JSON.stringify(article),
+					success : function(data){
+						swal("保存成功");
+						setTimeout(function(){
+							window.location.href = root+'console/article';
+						},500)
+					},
+					error:function(jqXHR){
+						var error = $.parseJSON(jqXHR.responseText).error;
+						swal('保存文章失败',error,'error');
+					},
+					complete:function(){
+						me.prop("disabled",false);
+					}
+				});
+			});
+			
+			$("#baseModal").on("show.bs.modal",function(){
+				$("#error-tip").html('').hide();
+			});
+			
+			$("#baseModal").on("shown.bs.modal",function(){
+				summaryEditor.refresh();
+			});
+		});
+		
+		function _addTag(){
+			var me =$("#tags-input");
+			addTag($.trim(me.val()));
+			renderTag();
+			me.val("");
+			$("#add-tag-sign").remove();
+		}
+		
+		function getArticle(){
+			var article = {};
+			article.title = $("#title").val();
+			if($.trim(article.title) == ""){
+				article.title = "No title";
+			}
+			article.content = editor.getValue();
+			article.from = $("#from").val();
+			article.status = $("#status").val();
+			if($("#level").val() != ''){
+				article.level = $("#level").val();
+			}
+			if(article.status == 'SCHEDULED'){
+				article.pubDate = $("#scheduleDate").val()
+			};
+			article.isPrivate = $("#private").prop("checked");
+			article.allowComment = $("#allowComment").prop("checked");
+			article.tags = tags;
+			article.featureImage = $("#featureImage").val();
+			article.summary = summaryEditor.getValue();
+			article.space = {"id":$("#space").val()};
+			article.editor = 'MD';
+			if($("#lockId").val() != ""){
+				article.lockId = $("#lockId").val();
+			}
+			article.alias = $("#alias").val();
+			if($("#id").val() != ""){
+				article.id = $("#id").val();
+			}
+			return article;
+		}
+		
+		function save(){
+			if(publishing){
+				return ;
+			}
+			var article = getArticle();
+			article.status = 'DRAFT';
+			if(article.content == ''){
+				return ;
+			}
+			var url = "";
+			var type = '';
+			if(article.id && article.id != null){
+				type = 'put';
+				url = root+"api/console/article/"+article.id;
+			}else{
+				url = root+"api/console/article";
+				type = 'post';
+			}
+			publishing = true;
+			$.ajax({
+				type : type,
+				url : url,
+				async:false,
+	            contentType:"application/json",
+				data : JSON.stringify(article),
+				success : function(data){
+					if(data.id){
+						$("#id").val(data.id);
+					}
+				},
+				error:function(jqXHR){
+					var error = $.parseJSON(jqXHR.responseText).error;
+					swal('保存文章失败',error,'error');
+				},
+				complete:function(){
+					publishing = false;
+				}
+			});
+		}
+		
+		function showTagError(error) {
+			if ($("#tag-tip").length == 0)
+				$("#tags-input").before(error);
+			setTimeout(function() {
+				$("#tag-tip").remove();
+			}, 1000);
+		}
+
+		function addTag(tag) {
+			var tag = $.trim(tag);
+			if (tags.length >= 10) {
+				showTagError('<span id="tag-tip" class="text text-danger">最多只能有10标签</span>')
+			} else if (tag == "" || tag.length > 20) {
+				showTagError('<span id="tag-tip" class="text text-danger">标签名在1~20个字符之间</span>')
+			} else {
+				for (var i = 0; i < tags.length; i++) {
+					var _tag = tags[i];
+					if (_tag.name == tag) {
+						showTagError('<span id="tag-tip" class="text text-danger">已经存在该标签</span>')
+						$("#tags-input").val("");
+						return;
+					}
+				}
+				tags.push({
+					"name" : $.trim(tag)
+				});
+			}
+		}
+
+		function renderTag() {
+			if(tags.length == 0){
+				$("#tags-container").html('');
+				return ;
+			}
+			var html = '<div class="table-responsive"><table class="table table-borderless">';
+			if (tags.length > 5) {
+				html += '<tr>';
+				for (var i = 0; i < 5; i++) {
+					html += getLabel_html(tags[i].name);
+				}
+				html += '</tr>';
+				html += '<tr>';
+				for (var i = 5; i < tags.length; i++) {
+					html += getLabel_html(tags[i].name);
+				}
+				html += '</tr>';
+			} else {
+				html += '<tr>';
+				for (var i = 0; i < tags.length; i++) {
+					html += getLabel_html(tags[i].name);
+				}
+				html += '</tr>';
+			}
+			html += '<table></div>';
+			$("#tags-container").html(html);
+		}
+		
+		function save(){
+			if(publishing){
+				return ;
+			}
+			var article = getArticle();
+			article.status = 'DRAFT';
+			if(article.content == ''){
+				return ;
+			}
+			var url = "";
+			var type ;
+			if(article.id && article.id != null){
+				type = 'put';
+				url = root+"api/console/article/"+article.id;
+			}else{
+				type = 'post'
+				url = root+"api/article/article";
+			}
+			publishing = true;
+			$.ajax({
+				type : type,
+				url : url,
+				async:false,
+	            contentType:"application/json",
+				data : JSON.stringify(article),
+				success : function(data){
+					if(data.id){
+						$("#id").val(data.id);
+					}
+				},
+				error : function(jqXHR) {
+					var error = $.parseJSON(jqXHR.responseText).error;
+					swal('预览失败',error,'error');
+				},
+				complete:function(){
+					publishing = false;
+				}
+			});
+		}
+
+		function getLabel_html(tag) {
+			return '<td><span class="badge badge-success">'
+					+ tag
+					+ '<a href="###" onclick="removeTag($(this))" style="margin-left:5px"><i class="fas fa-trash-alt"></i></a></span></td>';
+		}
+
+
+		function removeTag(o) {
+			var tag = o.parent().text();
+			for (var i = 0; i < tags.length; i++) {
+				if (tags[i].name == tag) {
+					tags.splice(i, 1);
+					renderTag();
+					return;
+				}
+			}
+		}
+		
+		
+		function showAutoSaveTip(time){
+			$("#auto-save-tip").remove();
+			var hour = time.getHours();
+			var minute = time.getMinutes();
+			var second = time.getSeconds();
+			if(hour < 10){
+				hour = "0" + hour;
+			}
+			if(minute < 10){
+				minute = "0" + minute;
+			}
+			if(second < 10){
+				second = "0"+second;
+			}
+			$('body').append('<div id="auto-save-tip"  style="position:fixed;top:0;text-align:center;width:100%"><div class="alert alert-info" style="width:200px;margin:0 auto;margin-top:5px;z-index:9999999;">'+(hour + ':' + minute+ ':'+second)+'自动保存成功</div></div>');
+			setTimeout(function(){
+				$("#auto-save-tip").remove();
+			},1500);
+		}
+	</script>
+</body>
+</html>

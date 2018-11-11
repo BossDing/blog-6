@@ -9,30 +9,21 @@
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <link rel="stylesheet"
-	th:href="@{/static/bootstrap/css/bootstrap.min.css}">
+	th:href="@{/static/bootstrap/css/bootstrap.min.css?v=7.0}">
 <link rel="stylesheet"
-	th:href="@{/static/codemirror/lib/codemirror.css}">
+	th:href="@{/static/codemirror/lib/codemirror.css?v=7.0}">
 <link rel="stylesheet"
-	th:href="@{/static/codemirror/theme/base16-light.css}">
+	th:href="@{/static/codemirror/theme/base16-light.css?v=7.0}">
 <link rel="stylesheet"
-	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css}">
+	th:href="@{/static/jquery-file-upload/css/jquery.fileupload.css?v=7.0}">
 <link rel="stylesheet"
-	th:href="@{/static/codemirror/addon/dialog/dialog.css}">
+	th:href="@{/static/codemirror/addon/dialog/dialog.css?v=7.0}">
 <link rel="stylesheet"
-	th:href="@{/static/codemirror/addon/search/matchesonscrollbar.css}">
-<link rel="stylesheet" th:href="@{/static/css/markdown.css}">
-<link rel="stylesheet" th:href="@{/static/prettify/github-v2.min.css}">
-<link rel="stylesheet"
-	href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-	integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
-	crossorigin="anonymous">
-
-<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
+	th:href="@{/static/codemirror/addon/search/matchesonscrollbar.css?v=7.0}">
+<link rel="stylesheet" th:href="@{/static/css/markdown.css?v=7.0}">
+<link rel="stylesheet" th:href="@{/static/prettify/github-v2.min.css?v=7.0}">
+<link th:href="@{/static/fontawesome-free/css/all.min.css?v=7.0}"
+	rel="stylesheet">
 <style>
 #toolbar {
 	background-color: #f9f9f7;
@@ -98,10 +89,6 @@
 	margin-bottom: 5px
 }
 
-.modal {
-	z-index: 9999999
-}
-
 #stat {
 	position: fixed;
 	left: 0;
@@ -126,7 +113,11 @@
 	height: auto;
 	margin-bottom: 301px;
 }
-.styled-background { background-color: #ff7; }
+
+.styled-background {
+	background-color: #ff7;
+}
+
 body {
 	background-color: #f9f9f7
 }
@@ -142,8 +133,7 @@ body {
 				class="far fa-check-square icon" onclick="toggleToolbar($(this))"
 				id="toggle-toolbar"></i> <i class="far fa-window-maximize icon"
 				data-to-fullscreen id="fullscreen-icon"></i>
-			<div style="float:right;display:none" id="saveTip">
-            </div>
+			<div style="float: right; display: none" id="saveTip"></div>
 		</div>
 		<div id="in" style="display: none">
 			<textarea id="code" style="width: 100%; height: 100%"
@@ -154,16 +144,15 @@ body {
 	</div>
 
 
-	<div class="modal fade" id="helpModal" tabindex="-1" role="dialog"
-		style="z-index: 9999999">
+	<div class="modal fade" id="helpModal" tabindex="-1" role="dialog">
 		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
+					<h4 class="modal-title">编辑器说明</h4>
 					<button type="button" class="close" data-dismiss="modal"
 						aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
-					<h4 class="modal-title">编辑器说明</h4>
 				</div>
 				<div class="modal-body">
 					<h3>基础</h3>
@@ -314,16 +303,15 @@ public static void main(String [] args){
 
 
 
-	<div class="modal fade" id="baseModal" tabindex="-1" role="dialog"
-		style="z-index: 9999999">
+	<div class="modal fade" id="baseModal" tabindex="-1" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
+					<h4 class="modal-title">基本信息</h4>
 					<button type="button" class="close" data-dismiss="modal"
 						aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
-					<h4 class="modal-title">基本信息</h4>
 				</div>
 				<div class="modal-body">
 					<div class="alert alert-danger" id="error-tip"
@@ -340,9 +328,8 @@ public static void main(String [] args){
 								maxlength="200" id="alias" th:value="${article.alias}" />
 						</div>
 						<div class="form-group">
-							<label>摘要 </label> <a href="javascript:void(0)"><span
-								onclick="previewSummary($(this))"
-								class="glyphicon glyphicon-eye-open icon"></span></a>
+							<label>摘要 </label> <a href="javascript:void(0)"><i
+								onclick="previewSummary($(this))" class="fas fa-eye icon"></i></a>
 							<div id="summary-content"
 								style="position: relative; height: 310px">
 								<textarea class="form-control" cols="8" rows="8"
@@ -361,10 +348,19 @@ public static void main(String [] args){
 						</div>
 						<div class="form-group has-feedback has-clear"
 							id="tags-input-container">
-							<label>标签 </label> <input type="text" id="tags-input"
-								class="form-control" placeholder="标签(小于20个字符)" />
+							<label>标签 </label>
+							<div class="input-group mb-3">
+								<input type="text" id="tags-input" class="form-control"
+									placeholder="标签(小于20个字符)" />
+								<div class="input-group-append">
+									<span class="input-group-text"><a href="###"
+										onclick="_addTag()">添加</a></span>
+								</div>
+							</div>
 						</div>
-						<div id="tags-container" class="well" style="margin-top: 5px"></div>
+						<div class="card my-1">
+							<div class="card-body " id="tags-container"></div>
+						</div>
 						<div class="form-group">
 							<label>空间</label> <select class="form-control" id="space">
 								<option th:each="space : ${spaces}" th:text="${space.name}"
@@ -437,56 +433,55 @@ public static void main(String [] args){
 		th:value="${article.space == null ? '' : article.space.id}"
 		id="oldSpace" style="display: none" />
 
-	<div th:replace="base/foot_source"></div>
-	<script th:src="@{/static/codemirror/lib/codemirror.js?v=3}"></script>
-	<script th:src="@{/static/codemirror/addon/mode/overlay.js}"></script>
-	<script th:src="@{/static/codemirror/mode/javascript/javascript.js}"></script>
-	<script th:src="@{/static/codemirror/mode/css/css.js}"></script>
-	<script th:src="@{/static/codemirror/mode/xml/xml.js}"></script>
-	<script th:src="@{/static/codemirror/mode/htmlmixed/htmlmixed.js}"></script>
-	<script th:src="@{/static/codemirror/mode/markdown/markdown.js}"></script>
-	<script th:src="@{/static/codemirror/mode/gfm/gfm.js}"></script>
-	<script th:src="@{/static/codemirror/addon/dialog/dialog.js}"></script>
-	<script th:src="@{/static/codemirror/addon/search/searchcursor.js}"></script>
-	<script th:src="@{/static/codemirror/addon/search/search.js}"></script>
+	<div th:replace="console/base/foot"></div>
+	<script th:src="@{/static/codemirror/lib/codemirror.js??v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/mode/overlay.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/javascript/javascript.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/css/css.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/xml/xml.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/htmlmixed/htmlmixed.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/markdown/markdown.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/mode/gfm/gfm.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/dialog/dialog.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/searchcursor.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/search.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/codemirror/addon/scroll/annotatescrollbar.js}"></script>
+		th:src="@{/static/codemirror/addon/scroll/annotatescrollbar.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/codemirror/addon/search/matchesonscrollbar.js}"></script>
-	<script th:src="@{/static/codemirror/addon/search/jump-to-line.js}"></script>
+		th:src="@{/static/codemirror/addon/search/matchesonscrollbar.js?v=7.0}"></script>
+	<script th:src="@{/static/codemirror/addon/search/jump-to-line.js?v=7.0}"></script>
 	<script type="text/javascript"
-		th:src="@{/static/jquery-file-upload/js/load-image.min.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/load-image.min.js?v=7.0}"></script>
 	<script type="text/javascript"
-		th:src="@{/static/js/canvas-to-blob.min.js}"></script>
+		th:src="@{/static/js/canvas-to-blob.min.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/vendor/jquery.ui.widget.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js}"></script>
-	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.iframe-transport.js?v=7.0}"></script>
+	<script th:src="@{/static/jquery-file-upload/js/jquery.fileupload.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-ui.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-process.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-image.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-audio.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-video.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js}"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/editor_file.js}"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/dirChooser.js}"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
-	<script type="text/javascript" th:src="@{/static/js/mgr/emoji.js}"></script>
-	<script th:src="@{/static/js/modal.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/markdown/markdown-it.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/markdown/markdown-it-footnote.min.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/markdown/turndown.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/markdown/turndown-plugin-gfm.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/waitForImages.js}"></script>
+		th:src="@{/static/jquery-file-upload/js/jquery.fileupload-validate.js?v=7.0}"></script>
+	<script type="text/javascript" th:src="@{/static/js/file.js?v=7.0}"></script>
+	<script type="text/javascript"
+		th:src="@{/static/console/js/dirChooser.js?v=7.0}"></script>
+	<script type="text/javascript" th:src="@{/static/console/js/emoji.js?v=7.0}"></script>
+	<script th:src="@{/static/plugin/markdowniteditor/md.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/plugin/markdowniteditor/markdown/turndown.js?v=7.0}"></script>
+	<script
+		th:src="@{/static/plugin/markdowniteditor/markdown/turndown-plugin-gfm.js?v=7.0}"></script>
+	<script th:src="@{/static/plugin/markdowniteditor/waitForImages.js?v=7.0}"></script>
 	<script th:src="@{/static/prettify/prettify.js}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/md.js?v=2}"></script>
 	<script>
 		var config = {
 			toolbar : true,
@@ -511,19 +506,19 @@ public static void main(String [] args){
         var turndownService = new window.TurndownService()
         turndownService.use(window.turndownPluginGfm.gfm);
     </script>
-	<script th:src="@{/static/plugin/markdowniteditor/editor/sync.js?v=1}"></script>
+	<script th:src="@{/static/plugin/markdowniteditor/editor/sync.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/plugin/markdowniteditor/editor/custom_search.js?v=6}"></script>
-		
-	<script th:src="@{/static/plugin/markdowniteditor/editor/file.js}"></script>
+		th:src="@{/static/plugin/markdowniteditor/editor/custom_search.js?v=7.0}"></script>
+
+	<script th:src="@{/static/plugin/markdowniteditor/editor/file.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/plugin/markdowniteditor/editor/copy_helper.js?v=1}"></script>
+		th:src="@{/static/plugin/markdowniteditor/editor/copy_helper.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/plugin/markdowniteditor/editor/inner_bar.js?v=5}"></script>
+		th:src="@{/static/plugin/markdowniteditor/editor/inner_bar.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/plugin/markdowniteditor/editor/layout.js?v=5}"></script>
+		th:src="@{/static/plugin/markdowniteditor/editor/layout.js?v=7.0}"></script>
 	<script
-		th:src="@{/static/plugin/markdowniteditor/article_editor.js?v=2}"></script>
-	<script th:src="@{/static/plugin/markdowniteditor/article_md.js}"></script>
+		th:src="@{/static/plugin/markdowniteditor/article_editor.js?v=7.0}"></script>
+	<script th:src="@{/static/plugin/markdowniteditor/article_md.js?v=7.0}"></script>
 </body>
 </html>

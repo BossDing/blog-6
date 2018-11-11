@@ -16,6 +16,7 @@
 package me.qyh.blog.core.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -118,9 +119,15 @@ public class TagServiceImpl implements TagService {
 	@Transactional(readOnly = true)
 	public TagStatistics queryTagStatistics() {
 		TagStatistics tagStatistics = new TagStatistics();
-		boolean queryPrivate = Environment.isLogin();
+		boolean queryPrivate = Environment.hasAuthencated();
 		tagStatistics.setArticleTagCount(articleTagDao.selectTagsCount(Environment.getSpace(), queryPrivate));
 		return tagStatistics;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<Tag> getTag(Integer id) {
+		return Optional.ofNullable(tagDao.selectById(id));
 	}
 
 }

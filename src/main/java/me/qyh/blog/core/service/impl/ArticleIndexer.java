@@ -143,7 +143,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 	private Formatter summaryFormatter;
 
 	private Map<String, Float> boostMap = new HashMap<>();
-	private Map<String, Float> qboostMap = new HashMap<>();
+	private final Map<String, Float> qboostMap = new HashMap<>();
 
 	/**
 	 * 最大查询数量
@@ -305,14 +305,17 @@ public abstract class ArticleIndexer implements InitializingBean {
 			if (Validators.isEmpty(ids)) {
 				return null;
 			}
-			articleDao.selectByIds(List.of(ids)).stream().filter(Article::isPublished).forEach(art -> {
-				try {
-					doDeleteDocument(art.getId());
-					oriWriter.addDocument(buildDocument(art));
-				} catch (IOException e) {
-					throw new SystemException(e.getMessage(), e);
+			for (Integer id : ids) {
+				Article article = articleDao.selectById(id);
+				if (article != null && article.isPublished()) {
+					try {
+						doDeleteDocument(article.getId());
+						oriWriter.addDocument(buildDocument(article));
+					} catch (IOException e) {
+						throw new SystemException(e.getMessage(), e);
+					}
 				}
-			});
+			}
 			return null;
 		});
 	}
@@ -389,7 +392,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			Query query = builder.build();
 
 			TopDocs tds = searcher.search(query, MAX_RESULTS, sort);
-			int total = tds.totalHits;
+			int total = (int) tds.totalHits;
 			int offset = param.getOffset();
 			Map<Integer, Document> datas = new LinkedHashMap<>();
 			if (offset < total) {
@@ -436,9 +439,10 @@ public abstract class ArticleIndexer implements InitializingBean {
 	}
 
 	protected Optional<Query> buildMultiFieldQuery(String query) {
-		String escaped = MultiFieldQueryParser.escape(query.trim());
+		String escaped = MultiFieldQueryParser.escape(query.strip());
 		MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[] { TAG, TITLE, ALIAS, SUMMARY, CONTENT },
 				analyzer, qboostMap);
+		parser.setSplitOnWhitespace(true);
 		parser.setAutoGeneratePhraseQueries(true);
 		parser.setPhraseSlop(0);
 		try {
@@ -474,7 +478,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 			}
 			fields.add(new SortField(ID, SortField.Type.STRING, true));
 		}
-		return new Sort(fields.toArray(new SortField[] {}));
+		return new Sort(fields.toArray(SortField[]::new));
 	}
 
 	/**
@@ -506,10 +510,8 @@ public abstract class ArticleIndexer implements InitializingBean {
 		if (tags != null && tags.length > 0) {
 			for (String tag : tags) {
 				Optional<Tag> optionalTag = article.getTag(tag);
-				optionalTag.ifPresent(tag1 -> {
-					getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG, tag1.getName())
-							.ifPresent(tag1::setName);
-				});
+				optionalTag.ifPresent(tag1 -> getHightlight(new Highlighter(tagFormatter, new QueryScorer(query)), TAG,
+						tag1.getName()).ifPresent(tag1::setName));
 			}
 		}
 
@@ -605,7 +607,7 @@ public abstract class ArticleIndexer implements InitializingBean {
 				int limit = getPageSize();
 				List<Article> articles;
 				List<Document> documents = new ArrayList<>();
-				while (!(articles = articleDao.selectPublishedPage(offset, limit)).isEmpty()) {
+				while (!(articles = articleDao.selectPublishedByPage(offset, limit)).isEmpty()) {
 					offset += limit;
 					for (Article article : articles) {
 						documents.add(buildDocument(article));

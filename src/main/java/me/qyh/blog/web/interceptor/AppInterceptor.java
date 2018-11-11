@@ -95,7 +95,7 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 			HandlerMethod handlerMethod = (HandlerMethod) handler;
 
 			try {
-				setRequestAttribute(request, response);
+				setRequestAttribute(handlerMethod, request, response);
 				setUser(request, response, handlerMethod);
 				setLockKeys(request);
 				setSpace(request, handlerMethod);
@@ -155,22 +155,27 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 	private void setSpace(HttpServletRequest request, HandlerMethod handlerMethod) throws SpaceNotFoundException {
 		String spaceAlias = Webs.getSpaceFromRequest(request);
 		if (spaceAlias != null) {
-			if (!SpaceValidator.isValidAlias(spaceAlias)) {
-				throw new SpaceNotFoundException(spaceAlias);
-			}
-			Space space = spaceService.getSpace(spaceAlias).orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
 
-			if (!Webs.errorRequest(request)) {
-				if (space.getIsPrivate()) {
-					Environment.doAuthencation();
+			if (!(Webs.errorRequest(request) && Environment.getSpace() == null)) {
+				if (!SpaceValidator.isValidAlias(spaceAlias)) {
+					throw new SpaceNotFoundException(spaceAlias);
 				}
-				if (space.hasLock() && !Webs.unlockRequest(request)
-						&& !getAnnotation(handlerMethod.getMethod(), IgnoreSpaceLock.class).isPresent()) {
-					lockManager.openLock(space.getLockId());
+				Space space = spaceService.getSpace(spaceAlias)
+						.orElseThrow(() -> new SpaceNotFoundException(spaceAlias));
+
+				if (!Webs.errorRequest(request)) {
+					if (space.getIsPrivate()) {
+						Environment.doAuthencation();
+					}
+					if (space.hasLock() && !Webs.unlockRequest(request)
+							&& !getAnnotation(handlerMethod.getMethod(), IgnoreSpaceLock.class).isPresent()) {
+						lockManager.openLock(space.getLockId());
+					}
 				}
+
+				Environment.setSpace(space);
 			}
 
-			Environment.setSpace(space);
 		}
 	}
 
@@ -254,16 +259,20 @@ public class AppInterceptor extends HandlerInterceptorAdapter {
 		LockKeyContext.remove();
 	}
 
-	private void setRequestAttribute(HttpServletRequest request, HttpServletResponse response) {
+	private void setRequestAttribute(HandlerMethod methodHandler, HttpServletRequest request,
+			HttpServletResponse response) {
 		if (request.getAttribute(Webs.SPACE_ATTR_NAME) == null) {
-			String path = request.getRequestURI().substring(request.getContextPath().length() + 1);
+			String path = UrlUtils.getRequestURIWithoutContextPath(request);
+			if (path.startsWith("api/")) {
+				path = path.substring(4);
+			}
 			request.setAttribute(Webs.SPACE_ATTR_NAME,
 					Objects.toString(Webs.getSpaceFromPath(path, SpaceValidator.MAX_ALIAS_LENGTH + 1), ""));
 		}
 		String alias = Webs.getSpaceFromRequest(request);
 		String unlockPattern = alias == null ? UNLOCK_PATTERN : SPACE_UNLOCK_PATTERN;
 		if (request.getAttribute(Webs.UNLOCK_ATTR_NAME) == null) {
-			String path = request.getRequestURI().substring(request.getContextPath().length());
+			String path = "/" + UrlUtils.getRequestURIWithoutContextPath(request);
 			boolean isUnlock = UrlUtils.match(unlockPattern, path) && request.getParameter("lockId") != null;
 			request.setAttribute(Webs.UNLOCK_ATTR_NAME, isUnlock);
 		}

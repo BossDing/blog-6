@@ -17,8 +17,6 @@ package me.qyh.blog.core.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -135,11 +133,11 @@ public class FileUtils {
 	 */
 	public static boolean deleteQuietly(Path path, final Predicate<Path> filter) {
 		Objects.requireNonNull(filter);
-		if (path == null || !exists(path)) {
+		if (!exists(path)) {
 			return true;
 		}
 		try {
-			Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(path, new SimpleFileVisitor<>() {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					if (filter.test(file)) {
@@ -265,32 +263,6 @@ public class FileUtils {
 	}
 
 	/**
-	 * is write to os
-	 * 
-	 * @param source
-	 * @param sink
-	 * @throws IOException
-	 */
-	// copied from Files
-	public static void write(InputStream source, OutputStream sink) throws IOException {
-		Objects.requireNonNull(source);
-		Objects.requireNonNull(sink);
-		try {
-			byte[] buf = new byte[8192];
-			int n;
-			while ((n = source.read(buf)) > 0) {
-				sink.write(buf, 0, n);
-			}
-			sink.flush();
-		} finally {
-			try {
-				source.close();
-			} catch (IOException e) {
-			}
-		}
-	}
-
-	/**
 	 * 获取子文件
 	 * <p>
 	 * eg:sub(Paths.get("h:/123"), "/123/414\\wqeqw") ==>
@@ -393,7 +365,7 @@ public class FileUtils {
 	 * @return
 	 */
 	public static String toString(Path path) throws IOException {
-		return new String(Files.readAllBytes(path), Constants.CHARSET);
+		return Files.readString(path, Constants.CHARSET);
 	}
 
 	/**

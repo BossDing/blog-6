@@ -1,171 +1,96 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
-<head th:replace="mgr/base/head :: head('所有评论')"></head>
-<body>
-	<nav th:replace="mgr/base/nav :: active('comments')"></nav>
-	<div id="page-wrapper" style="padding: 10px">
-		<div class="container-fluid">
-			<div class="row">
-				<div class="col-md-12">
-					<div style="margin-bottom:5px">
-					<button class="btn btn-primary" onclick="todayComment()">只看今天</button>
-					<button class="btn btn-primary" onclick="allComment()">查看所有</button>
-					</div>
-					<form style="display: none" th:action="@{/mgr/comment/all}"
-						id="pageForm">
-						<input type="hidden" th:value="${times.format(page.param.begin,'yyyy-MM-dd HH:mm:ss')}" name="begin"
-							th:if="${page.param.begin != null}" /> <input type="hidden"
-							th:value="${times.format(page.param.end,'yyyy-MM-dd HH:mm:ss')}" name="end"
-							th:if="${page.param.end != null}" /> <input type="hidden"
-							th:value="${page.currentPage}" name="currentPage" /> <input
-							type="hidden" th:value="${page.pageSize}" name="pageSize" />
-					</form>
 
-					<div>
-						<div class="alert alert-info"
-							th:if="${#lists.isEmpty(page.datas)}" style="margin-top: 10px">当前没有任何未审核评论</div>
-						<div th:unless="${#lists.isEmpty(page.datas)}">
-							<div class="media" th:each="comment : ${page.datas}">
-								<div class="media-left">
-									<a
-										th:attr="target=${comment.website == null ? null : '_blank'},href=${comment.website == null ? null : comment.website},rel=${(comment.admin || comment.website == null) ? null : 'external nofollow'}">
-										<img class="media-object" style="width:32px;height:32px"
-										th:src="${gravatars.getOptionalUrl(comment.gravatar).orElse('/static/img/guest.png')}">
-									</a>
-								</div>
-								<div class="media-body">
-									<h4 class="media-heading">[[${comment.nickname}]]&nbsp;<small>[[${comment.ip}]]</small></h4>
-									<p th:utext="${comment.content}"></p>
-									<h5 th:text="${times.format(comment.commentDate,'yyyy-MM-dd HH:mm')}"></h5>
-									<p>
-										<a href="###" th:if="${!comment.ban}"
-											th:data-ban-id="${comment.id}" style="margin-right: 10px"><span
-											class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span></a>
-										<a href="###" th:data-remove-id="${comment.id}"
-											style="margin-right: 10px"><span
-											class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-										<a href="###" th:data-check-id="${comment.id}"><span
-											class="glyphicon glyphicon-ok" aria-hidden="true" th:if="${comment.status.name() == 'CHECK'}"></span></a>
-										<a th:href="${comment.url}"><span
-											class="glyphicon glyphicon-share-alt" aria-hidden="true" ></span></a>
-									</p>
-								</div>
-							</div>
-						</div>
-						<div th:if="${page.totalPage > 1}">
-							<ul class="pagination">
-								<li
-									th:each="i : ${#numbers.sequence(page.listbegin, page.listend-1)}">
-									<a th:text="${i}" th:data-page="${i}" href="###"></a>
-								</li>
-							</ul>
-						</div>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<link th:href="@{/static/bootstrap/css/bootstrap.min.css}"
+	rel="stylesheet">
+<link th:href="@{/static/fontawesome-free/css/all.min.css}"
+	rel="stylesheet">
+<link th:href="@{/static/console/css/sb-admin.min.css}" rel="stylesheet">
+<title>所有评论</title>
+<style>
+td img {
+	max-height: 200px !important;
+}
+</style>
+</head>
+
+<body id="page-top">
+
+	<nav th:replace="console/base/nav"></nav>
+	<div th:replace="plugin/comment/mobile_nav"></div>
+
+	<div id="wrapper">
+
+		<ul class="sidebar navbar-nav">
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/console/plugin}"><i class="fas fa-fw fa-cogs"></i> <span>返回插件</span>
+			</a></li>
+			<li class="nav-item active"><a class="nav-link"
+				th:href="@{/console/comment}"><i
+					class="far fa-fw fa-comment-alt"></i> <span>所有评论</span> </a></li>
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/console/comment/blacklist}"><i
+					class="fas fa-fw fa-th"></i> <span>黑名单</span> </a></li>
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/console/comment/config}"><i class="fas fa-fw fa-cog"></i>
+					<span>配置</span> </a></li>
+		</ul>
+
+		<div id="content-wrapper">
+
+			<div class="container-fluid">
+				<div style="margin-bottom: 10px">
+					<div class="form-check form-check-inline">
+						<input class="form-check-input" type="checkbox"
+							id="onlyCheck" value="CHECK"> <label
+							class="form-check-label" >只看未审核</label>
 					</div>
 				</div>
+				<div id="container"></div>
 			</div>
+			<!-- /.container-fluid -->
+
+			<!-- Sticky Footer -->
+
+			<div th:replace="console/base/footer"></div>
+
 		</div>
+		<!-- /.content-wrapper -->
+
 	</div>
-	<div th:replace="base/foot_source"></div>
-	<script type="text/javascript" th:src="@{/static/js/mgr/common.js}"></script>
-	<script type="text/javascript">
-		$(function() {
-			$("[data-page]").click(function() {
-				var page = $(this).attr('data-page');
-				$("#pageForm").find('input[name=currentPage]').val(page);
-				$("#pageForm").submit();
-			});
-			$("[data-check-id]").click(function() {
-				var id = $(this).attr('data-check-id');
-				bootbox.confirm("确定要审核通过吗？", function(result) {
-					if (result) {
-						$.ajax({
-							type : "post",
-							url : rootPath + "/mgr/comment/check?id=" + id,
-							data : {
-								id : id
-							},
-							xhrFields : {
-								withCredentials : true
-							},
-							crossDomain : true,
-							success : function(data) {
-								if (data.success) {
-									window.location.reload();
-								} else {
-									bootbox.alert(data.msg);
-								}
-							},
-							complete : function() {
-							}
-						});
-					}
-				});
-			});
-			$("[data-remove-id]").click(function() {
-				var id = $(this).attr('data-remove-id');
-				bootbox.confirm("确定要删除吗？", function(result) {
-					if (result) {
-						$.ajax({
-							type : "post",
-							url : rootPath + "/mgr/comment/delete?id=" + id,
-							data : {
-								id : id
-							},
-							xhrFields : {
-								withCredentials : true
-							},
-							crossDomain : true,
-							success : function(data) {
-								if (data.success) {
-									window.location.reload();
-								} else {
-									bootbox.alert(data.msg);
-								}
-							},
-							complete : function() {
-							}
-						});
-					}
-				});
-			});
-			$("[data-ban-id]").click(function() {
-				var id = $(this).attr('data-ban-id');
-				bootbox.confirm("确定要禁止该IP吗？", function(result) {
-					if (result) {
-						$.ajax({
-							type : "post",
-							url : rootPath + "/mgr/comment/ban?id=" + id,
-							data : {
-								id : id
-							},
-							xhrFields : {
-								withCredentials : true
-							},
-							crossDomain : true,
-							success : function(data) {
-								if (data.success) {
-									window.location.reload();
-								} else {
-									bootbox.alert(data.msg);
-								}
-							},
-							complete : function() {
-							}
-						});
-					}
-				});
-			});
-		})
-		
-		function todayComment(){
-			var now = new Date();
-			var next = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-			window.location.href = rootPath+"/mgr/comment/all?begin="+now.format('yyyy-mm-dd 00:00:00')+"&end="+next.format('yyyy-mm-dd 00:00:00');
-		}
-		
-		function allComment(){
-			window.location.href = rootPath+"/mgr/comment/all";
-		}
+	<!-- /#wrapper -->
+
+	<!-- Scroll to Top Button-->
+	<a class="scroll-to-top rounded" href="#page-top"> <i
+		class="fas fa-angle-up"></i>
+	</a>
+
+
+
+	<!-- Bootstrap core JavaScript-->
+
+	<div th:replace="console/base/foot"></div>
+	<script type="text/javascript"
+		th:src="@{/static/plugin/comment/js/console_all.js}"></script>
+
+	<script>
+		var clipboard = new Clipboard('[data-clipboard-text]');
+		clipboard.on('success', function(e) {
+			swal('拷贝成功', '', 'success');
+			e.clearSelection();
+		});
+		clipboard.on('error', function() {
+			swal('拷贝失败', '', 'error');
+		});
 	</script>
+
 </body>
+
 </html>

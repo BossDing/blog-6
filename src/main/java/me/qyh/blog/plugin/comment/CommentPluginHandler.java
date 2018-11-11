@@ -18,18 +18,15 @@ package me.qyh.blog.plugin.comment;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.message.Messages;
 import me.qyh.blog.core.plugin.DataTagProcessorRegistry;
-import me.qyh.blog.core.plugin.Menu;
-import me.qyh.blog.core.plugin.MenuRegistry;
+import me.qyh.blog.core.plugin.Icon;
+import me.qyh.blog.core.plugin.IconRegistry;
 import me.qyh.blog.core.plugin.PluginHandlerSupport;
 import me.qyh.blog.core.plugin.PluginProperties;
-import me.qyh.blog.core.plugin.TemplateRegistry;
-import me.qyh.blog.core.util.Resources;
 import me.qyh.blog.plugin.comment.data.CommentsDataTagProcessor;
 import me.qyh.blog.plugin.comment.data.LastCommentsDataTagProcessor;
 
@@ -88,27 +85,9 @@ public class CommentPluginHandler extends PluginHandlerSupport {
 	}
 
 	@Override
-	public void addMenu(MenuRegistry registry) {
-		registry.addMenu(new Menu(new Message("plugin.comment.menu.commentMgr", "评论管理"))
-				.addChild(new Menu(new Message("plugin.comment.menu.all", "所有评论"), "mgr/comment/all"))
-				.addChild(new Menu(new Message("plugin.comment.menu.uncheck", "未审核评论"), "mgr/comment/uncheck"))
-				.addChild(new Menu(new Message("plugin.comment.menu.config", "配置"), "mgr/comment/updateConfig")));
-	}
-
-	@Override
-	public void addTemplate(TemplateRegistry registry) throws Exception {
-		registry.registerGlobalFragment(messages.getMessage("plugin.comment.data.comment", "评论"),
-				Resources.readResourceToString(
-						new ClassPathResource("me/qyh/blog/plugin/comment/template/comments.html")),
-				false)
-				.registerGlobalFragment(messages.getMessage("plugin.comment.data.widget", "评论挂件"),
-						Resources.readResourceToString(
-								new ClassPathResource("me/qyh/blog/plugin/comment/template/commentWidget.html")),
-						true)
-				.registerGlobalFragment(messages.getMessage("plugin.comment.data.lastComments", "最近评论"),
-						Resources.readResourceToString(
-								new ClassPathResource("me/qyh/blog/plugin/comment/template/lastComments.html")),
-						false);
+	public void addIcon(IconRegistry registry) {
+		registry.addIcon(new Icon(new Message("plugin.comment.iconName", "评论"), "<i class=\"far fa-comment-alt\"></i>",
+				"console/comment"));
 	}
 
 	@Override

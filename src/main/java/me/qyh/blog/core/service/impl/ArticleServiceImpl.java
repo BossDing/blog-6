@@ -16,8 +16,10 @@
 package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +59,7 @@ import me.qyh.blog.core.event.ArticleUpdateEvent;
 import me.qyh.blog.core.event.LockDelEvent;
 import me.qyh.blog.core.event.SpaceDelEvent;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.exception.ResourceNotFoundException;
 import me.qyh.blog.core.exception.RuntimeLogicException;
 import me.qyh.blog.core.message.Message;
 import me.qyh.blog.core.plugin.ArticleHitHandlerRegistry;
@@ -68,12 +71,14 @@ import me.qyh.blog.core.service.HitsStrategy;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.text.CommonMarkdown2Html;
 import me.qyh.blog.core.text.Markdown2Html;
+import me.qyh.blog.core.util.Times;
 import me.qyh.blog.core.util.Validators;
-import me.qyh.blog.core.vo.ArticleArchiveTree;
-import me.qyh.blog.core.vo.ArticleArchiveTree.ArticleArchiveMode;
+import me.qyh.blog.core.vo.ArticleArchive;
+import me.qyh.blog.core.vo.ArticleArchivePageQueryParam;
 import me.qyh.blog.core.vo.ArticleDetailStatistics;
 import me.qyh.blog.core.vo.ArticleNav;
 import me.qyh.blog.core.vo.ArticleQueryParam;
+import me.qyh.blog.core.vo.ArticleQueryParam.Sort;
 import me.qyh.blog.core.vo.ArticleStatistics;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.core.vo.SpaceQueryParam;
@@ -119,7 +124,7 @@ public class ArticleServiceImpl
 	@Autowired(required = false)
 	private Markdown2Html markdown2Html;
 
-	private List<ArticleHitHandler> hitHandlers = new ArrayList<>();
+	private final List<ArticleHitHandler> hitHandlers = new ArrayList<>();
 
 	/**
 	 * @since 6.5
@@ -181,7 +186,7 @@ public class ArticleServiceImpl
 		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 		Article articleDb = articleDao.selectById(article.getId());
 		if (articleDb == null) {
-			throw new LogicException("article.notExists", "文章不存在");
+			throw new ResourceNotFoundException("article.notExists", "文章不存在");
 		}
 		if (articleDb.isDeleted()) {
 			throw new LogicException("article.deleted", "文章已经被删除");
@@ -304,25 +309,6 @@ public class ArticleServiceImpl
 		return article;
 	}
 
-	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article publishDraft(Integer id) throws LogicException {
-		Article article = articleDao.selectById(id);
-		if (article == null) {
-			throw new LogicException("article.notExists", "文章不存在");
-		}
-		if (!article.isDraft()) {
-			throw new LogicException("article.notDraft", "文章已经被删除");
-		}
-		Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-		article.setPubDate(article.isSchedule() ? now : article.getPubDate() != null ? article.getPubDate() : now);
-		article.setStatus(ArticleStatus.PUBLISHED);
-		articleDao.update(article);
-		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
-		applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, List.of(article)));
-		return article;
-	}
-
 	private boolean insertTags(Article article) {
 		Set<Tag> tags = article.getTags();
 		boolean rebuildIndexWhenTagChange = false;
@@ -348,7 +334,7 @@ public class ArticleServiceImpl
 			}
 		}
 		if (!indexTags.isEmpty()) {
-			Transactions.afterCommit(() -> articleIndexer.addTags(indexTags.toArray(new String[indexTags.size()])));
+			Transactions.afterCommit(() -> articleIndexer.addTags(indexTags.toArray(String[]::new)));
 		}
 		return rebuildIndexWhenTagChange;
 	}
@@ -397,16 +383,24 @@ public class ArticleServiceImpl
 					article.setSummary(htmlMap.get(article.getId()));
 				}
 			});
-			if (!Environment.isLogin()) {
+			if (!Environment.hasAuthencated()) {
 				datas.stream().filter(Article::hasLock).forEach(art -> art.setSummary(null));
 			}
+		}
+		/**
+		 * @since 7.0
+		 */
+		if (!Environment.hasAuthencated()) {
+			page.getDatas().stream().filter(Article::hasLock).forEach(a -> {
+				a.setSummary(null);
+			});
 		}
 		return page;
 	}
 
 	private void checkParam(ArticleQueryParam param) {
 		// 如果查询私有文章，但是用户没有登录
-		if (param.isQueryPrivate() && !Environment.isLogin()) {
+		if (param.isQueryPrivate() && !Environment.hasAuthencated()) {
 			param.setQueryPrivate(false);
 		}
 		// 如果在空间下查询，不能查询多个空间
@@ -433,48 +427,47 @@ public class ArticleServiceImpl
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article logicDeleteArticle(Integer id) throws LogicException {
+	public void changeStatus(Integer id, ArticleStatus status) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException("article.notExists", "文章不存在");
+			throw new ResourceNotFoundException("article.notExists", "文章不存在");
 		}
-		if (article.isDeleted()) {
-			throw new LogicException("article.deleted", "文章已经被删除");
+
+		if (article.getStatus().equals(status)) {
+			return;
 		}
-		article.setStatus(ArticleStatus.DELETED);
-		articleDao.update(article);
 
-		Transactions.afterCommit(() -> {
-			articleIndexer.deleteDocument(id);
-		});
-
-		applicationEventPublisher.publishEvent(new ArticleDelEvent(this, List.of(article), true));
-
-		return article;
-	}
-
-	@Override
-	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Article recoverArticle(Integer id) throws LogicException {
-		Article article = articleDao.selectById(id);
-		if (article == null) {
-			throw new LogicException("article.notExists", "文章不存在");
-		}
-		if (!article.isDeleted()) {
-			throw new LogicException("article.undeleted", "文章未删除");
-		}
 		Article old = new Article(article);
-		ArticleStatus status = ArticleStatus.PUBLISHED;
-		if (article.getPubDate().after(Timestamp.valueOf(LocalDateTime.now()))) {
-			status = ArticleStatus.SCHEDULED;
+		if (ArticleStatus.DELETED.equals(status)) {
+			article.setStatus(ArticleStatus.DELETED);
+			articleDao.update(article);
+			Transactions.afterCommit(() -> articleIndexer.deleteDocument(id));
+			applicationEventPublisher.publishEvent(new ArticleDelEvent(this, List.of(article), true));
 		}
-		article.setStatus(status);
-		articleDao.update(article);
+		if (ArticleStatus.DRAFT.equals(status)) {
+			article.setStatus(status);
+			articleDao.update(article);
+			Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
+			applicationEventPublisher.publishEvent(new ArticleUpdateEvent(this, old, article));
+		}
+		if (ArticleStatus.PUBLISHED.equals(status)) {
+			Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+			article.setPubDate(article.isSchedule() ? now : article.getPubDate() != null ? article.getPubDate() : now);
+			article.setStatus(status);
+			articleDao.update(article);
+			Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
+			applicationEventPublisher.publishEvent(new ArticlePublishEvent(this, List.of(article)));
+		}
+		if (ArticleStatus.SCHEDULED.equals(status)) {
+			if (old.getPubDate() == null || old.getPubDate().before(new Date())) {
+				throw new LogicException("article.scheduleDate.invalid", "无效的发布计划日期");
+			}
+			article.setStatus(status);
+			articleDao.update(article);
+			Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
+			applicationEventPublisher.publishEvent(new ArticleUpdateEvent(this, old, article));
+		}
 
-		Transactions.afterCommit(() -> articleIndexer.addOrUpdateDocument(id));
-
-		applicationEventPublisher.publishEvent(new ArticleUpdateEvent(this, old, article));
-		return article;
 	}
 
 	@Override
@@ -482,10 +475,10 @@ public class ArticleServiceImpl
 	public void deleteArticle(Integer id) throws LogicException {
 		Article article = articleDao.selectById(id);
 		if (article == null) {
-			throw new LogicException("article.notExists", "文章不存在");
+			throw new ResourceNotFoundException("article.notExists", "文章不存在");
 		}
 		if (!article.isDraft() && !article.isDeleted()) {
-			throw new LogicException("article.undeleted", "文章未删除");
+			throw new LogicException("article.undeleted", "只有草稿或者回收站中的文章才能被删除");
 		}
 		// 删除博客的引用
 		articleTagDao.deleteByArticle(article);
@@ -527,7 +520,7 @@ public class ArticleServiceImpl
 		if (!Environment.match(article.getSpace())) {
 			return Optional.empty();
 		}
-		boolean queryPrivate = Environment.isLogin();
+		boolean queryPrivate = Environment.hasAuthencated();
 		Article previous = articleDao.getPreviousArticle(article, queryPrivate, queryLock);
 		Article next = articleDao.getNextArticle(article, queryPrivate, queryLock);
 		return (previous != null || next != null) ? Optional.of(new ArticleNav(previous, next)) : Optional.empty();
@@ -536,20 +529,69 @@ public class ArticleServiceImpl
 	@Override
 	@Transactional(readOnly = true)
 	public List<TagCount> queryTags() {
-		return articleTagDao.selectTags(Environment.getSpace(), Environment.isLogin());
+		return articleTagDao.selectTags(Environment.getSpace(), Environment.hasAuthencated());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<Article> selectRandom(boolean queryLock) {
-		return Optional.ofNullable(articleDao.selectRandom(Environment.getSpace(), Environment.isLogin(), queryLock));
-	}
+	public PageResult<ArticleArchive> queryArticleArchives(ArticleArchivePageQueryParam param) {
+		if (param.isQueryPrivate()) {
+			param.setQueryPrivate(Environment.hasAuthencated());
+		}
+		param.setSpace(Environment.getSpace());
 
-	@Override
-	@Transactional(readOnly = true)
-	public ArticleArchiveTree selectArticleArchives(ArticleArchiveMode mode) {
-		List<Article> articles = articleDao.selectSimplePublished(Environment.getSpace(), Environment.isLogin());
-		return new ArticleArchiveTree(articles, mode == null ? ArticleArchiveMode.YMD : mode);
+		int count = articleDao.selectArchiveDaysCount(param);
+		List<String> days = articleDao.selectArchiveDays(param);
+		int size = days.size();
+		if (size == 0) {
+			return new PageResult<>(param, count, new ArrayList<>());
+		}
+		Timestamp begin, end;
+		if (size == 1) {
+			String day = days.get(0);
+			LocalDate localDate = LocalDate.parse(day);
+			begin = Timestamp.valueOf(localDate.atStartOfDay());
+			end = Timestamp.valueOf(localDate.plusDays(1).atStartOfDay());
+		} else {
+			String max = days.get(0);
+			String min = days.get(size - 1);
+
+			begin = Timestamp.valueOf(LocalDate.parse(min).atStartOfDay());
+			end = Timestamp.valueOf(LocalDate.parse(max).plusDays(1).atStartOfDay());
+		}
+
+		ArticleQueryParam ap = new ArticleQueryParam();
+		ap.setIgnoreLevel(true);
+		ap.setIgnorePaging(true);
+		ap.setBegin(begin);
+		ap.setEnd(end);
+		ap.setQueryPrivate(param.isQueryPrivate());
+		ap.setSort(Sort.PUBDATE);
+		ap.setSpace(param.getSpace());
+		ap.setStatus(ArticleStatus.PUBLISHED);
+
+		List<Article> articles = articleDao.selectPage(ap);
+
+		List<Integer> ids = articles.stream().map(Article::getId).collect(Collectors.toList());
+		Map<Integer, Integer> countsMap = commentServer.queryCommentNums(COMMENT_MODULE_NAME, ids);
+		articles.forEach(article -> {
+			Integer comments = countsMap.get(article.getId());
+			article.setComments(comments == null ? 0 : comments);
+		});
+
+		if (!Environment.hasAuthencated()) {
+			articles.stream().filter(Article::hasLock).forEach(art -> art.setSummary(null));
+		}
+
+		Map<String, List<Article>> map = articles.stream().collect(Collectors.groupingBy(art -> {
+			Date pub = art.getPubDate();
+			return Times.format(pub, "yyyy-MM-dd");
+		}));
+
+		List<ArticleArchive> archives = days.stream().map(d -> new ArticleArchive(d, map.get(d)))
+				.collect(Collectors.toList());
+
+		return new PageResult<>(param, count, archives);
 	}
 
 	@Override
@@ -573,23 +615,23 @@ public class ArticleServiceImpl
 	@Transactional(readOnly = true)
 	public ArticleStatistics queryArticleStatistics() {
 		ArticleStatistics articleStatistics = articleDao.selectStatistics(Environment.getSpace(),
-				Environment.isLogin());
+				Environment.hasAuthencated());
 		if (!Environment.hasSpace()) {
-			articleStatistics.setSpaceStatisticsList(articleDao.selectArticleSpaceStatistics(Environment.isLogin()));
+			articleStatistics
+					.setSpaceStatisticsList(articleDao.selectArticleSpaceStatistics(Environment.hasAuthencated()));
 		}
 		return articleStatistics;
 	}
 
 	@Override
-	public void preparePreview(Article article) {
-		String content = article.getContent();
-		if (Editor.MD.equals(article.getEditor())) {
-			content = markdown2Html.toHtml(content);
+	public String createPreviewContent(Editor editor, String content) {
+		if (Editor.MD.equals(editor)) {
+			return markdown2Html.toHtml(content);
 		}
 		if (articleContentHandler != null) {
-			content = articleContentHandler.handlePreview(content);
+			return articleContentHandler.handlePreview(content);
 		}
-		article.setContent(content);
+		return content;
 	}
 
 	@EventListener
@@ -671,7 +713,7 @@ public class ArticleServiceImpl
 	 * @return
 	 */
 	protected String cleanTag(String tag) {
-		return tag.trim().toLowerCase();
+		return tag.strip().toLowerCase();
 	}
 
 	public void setRebuildIndex(boolean rebuildIndex) {
@@ -739,8 +781,8 @@ public class ArticleServiceImpl
 		}
 
 		private boolean validHit(Article article) {
-			boolean hit = !Environment.isLogin() && article.isPublished() && Environment.match(article.getSpace())
-					&& !article.getIsPrivate();
+			boolean hit = !Environment.hasAuthencated() && article.isPublished()
+					&& Environment.match(article.getSpace()) && !article.getIsPrivate();
 
 			if (hit) {
 				lockManager.openLock(article.getLockId());
@@ -768,9 +810,7 @@ public class ArticleServiceImpl
 					int hits = articleDao.selectHits(id) + 1;
 					articleDao.updateHits(id, hits);
 
-					Transactions.afterCommit(() -> {
-						articleIndexer.updateHits(Map.of(id, hits));
-					});
+					Transactions.afterCommit(() -> articleIndexer.updateHits(Map.of(id, hits)));
 				});
 			}
 		}

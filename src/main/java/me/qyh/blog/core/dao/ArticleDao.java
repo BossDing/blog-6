@@ -23,10 +23,10 @@ import org.apache.ibatis.annotations.Param;
 
 import me.qyh.blog.core.entity.Article;
 import me.qyh.blog.core.entity.Space;
+import me.qyh.blog.core.vo.ArticleArchivePageQueryParam;
 import me.qyh.blog.core.vo.ArticleQueryParam;
 import me.qyh.blog.core.vo.ArticleSpaceStatistics;
 import me.qyh.blog.core.vo.ArticleStatistics;
-
 
 /**
  * 
@@ -42,13 +42,6 @@ public interface ArticleDao {
 	 * @return 文章，如果id对应的文章不存在，返回null
 	 */
 	Article selectById(int id);
-
-	/**
-	 * 查询所有的文章
-	 * 
-	 * @return 文章<b>只保留了用于构造访问连接的基本信息，并且没有进行任何排序</b>
-	 */
-	List<Article> selectSimplePublished(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate);
 
 	/**
 	 * 查询截至日期前的待发布文章
@@ -102,17 +95,8 @@ public interface ArticleDao {
 	 * @param ids
 	 *            文章id集合
 	 * @return id集合对应的文章集合
-	 * @see #selectByIds(Collection)
 	 */
 	List<Article> selectPageByIds(Collection<Integer> ids);
-
-	/**
-	 * 根据ID集合查询文章
-	 * 
-	 * @param ids
-	 * @return
-	 */
-	List<Article> selectByIds(Collection<Integer> ids);
 
 	/**
 	 * 根据指定id集合查询对应的文章，只会查询一些构建访问链接等必要的信息
@@ -242,20 +226,6 @@ public interface ArticleDao {
 	Integer selectIdByAlias(String alias);
 
 	/**
-	 * 查询随机文章
-	 * 
-	 * @param space
-	 *            空间
-	 * @param queryPrivate
-	 *            是否查询私人文章
-	 * @param queryLock
-	 *            是否查询被锁保护的文章
-	 * @return
-	 */
-	Article selectRandom(@Param("space") Space space, @Param("queryPrivate") boolean queryPrivate,
-			@Param("queryLock") boolean queryLock);
-
-	/**
 	 * 查询某个空间下<b>所有文章</b>的数量
 	 * 
 	 * @param space
@@ -286,6 +256,23 @@ public interface ArticleDao {
 	 * @param limit
 	 * @return
 	 */
-	List<Article> selectPublishedPage(@Param("offset") int offset, @Param("limit") int limit);
+	List<Article> selectPublishedByPage(@Param("offset") int offset, @Param("limit") int limit);
 
+	/**
+	 * 分页查询文章归档日期
+	 * 
+	 * @param param
+	 * @return
+	 * @since 7.0
+	 */
+	List<String> selectArchiveDays(ArticleArchivePageQueryParam param);
+
+	/**
+	 * 查询文章归档日期数
+	 * 
+	 * @param param
+	 * @return
+	 * @since 7.0
+	 */
+	int selectArchiveDaysCount(ArticleArchivePageQueryParam param);
 }

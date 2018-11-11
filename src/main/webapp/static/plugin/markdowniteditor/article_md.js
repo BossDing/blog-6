@@ -31,40 +31,40 @@ function openFile() {
 
 $(function() {
 
-	$
-			.get(
-					basePath + '/mgr/lock/all',
-					{},
-					function(data) {
-						var oldLock = $("#oldLock").val();
-						if (data.success) {
-							var locks = data.data;
-							if (locks.length > 0) {
-								var html = '';
-								html += '<div class="form-group">'
-								html += '<label for="lockId" class="control-label">锁:</label> ';
-								html += '<select id="lockId" class="form-control">';
-								html += '<option value="">无</option>';
-								for (var i = 0; i < locks.length; i++) {
-									var lock = locks[i];
-									if (lock.id == oldLock) {
-										html += '<option value="' + lock.id
-												+ '" selected="selected">'
-												+ lock.name + '</option>';
-									} else {
-										html += '<option value="' + lock.id
-												+ '">' + lock.name
-												+ '</option>';
-									}
-								}
-								html += '</select>';
-								html += '</div>';
-								$("#lock_container").html(html);
-							}
-						} else {
-							console.log(data.data);
-						}
-					});
+	$.ajax({
+		
+		url : root + 'api/console/locks',
+		success:function(data){
+			var oldLock = $("#oldLock").val();
+			var locks = data;
+			if (locks.length > 0) {
+				var html = '';
+				html += '<div class="form-group">'
+				html += '<label for="lockId" class="control-label">锁:</label> ';
+				html += '<select id="lockId" class="form-control">';
+				html += '<option value="">无</option>';
+				for (var i = 0; i < locks.length; i++) {
+					var lock = locks[i];
+					if (lock.id == oldLock) {
+						html += '<option value="' + lock.id
+								+ '" selected="selected">'
+								+ lock.name + '</option>';
+					} else {
+						html += '<option value="' + lock.id
+								+ '">' + lock.name
+								+ '</option>';
+					}
+				}
+				html += '</select>';
+				html += '</div>';
+				$("#lock_container").html(html);
+			}
+		},
+		error : function(jqXHR){
+			swal('获取锁失败',$.parseJSON(jqXHR.responseText).error,'error');
+		}
+		
+	})
 
 	$("#status").change(function() {
 		if ($(this).val() == 'SCHEDULED') {
@@ -90,19 +90,6 @@ $(function() {
 		$("#space").val(oldSpace);
 	}
 
-	$("#tags-input")
-			.on(
-					'input',
-					function(e) {
-						var me = $(this);
-						var tag = me.val();
-						$("#add-tag-sign").remove();
-						if ($.trim(tag).length > 0) {
-							$("#tags-input")
-									.after(
-											'<a onclick="_addTag()" class="glyphicon glyphicon-ok-sign form-control-feedback form-control-clear" id="add-tag-sign" style="pointer-events: auto; text-decoration: none;cursor: pointer;"></a>');
-						}
-					});
 
 
 	$("#submit-art").click(function() {
@@ -110,27 +97,28 @@ $(function() {
 		var me = $(this);
 		var article = getArticle();
 		me.prop("disabled", true);
+		var type;
 		var url = "";
 		if (article.id && article.id != null) {
-			url = basePath + "/mgr/article/update";
+			type = 'put',
+			url = basePath + "api/console/article/"+article.id;
 		} else {
-			url = basePath + "/mgr/article/write";
+			type = 'post',
+			url = basePath + "api/console/article";
 		}
 		$.ajax({
-			type : "post",
+			type : type,
 			url : url,
 			contentType : "application/json",
 			data : JSON.stringify(article),
 			success : function(data) {
-				if (data.success) {
-					bootbox.alert("保存成功");
-					setTimeout(function() {
-						window.location.href = basePath + '/mgr/article/index';
-					}, 500)
-				} else {
-					$("#error-tip").html(data.message).show();
-					publishing = false;
-				}
+				swal("保存成功");
+				setTimeout(function() {
+					window.location.href = basePath + 'console/article';
+				}, 500)
+			},
+			error:function(jqXHR){
+				swal('保存失败',$.parseJSON(jqXHR.responseText).error,'error');
 			},
 			complete : function() {
 				me.prop("disabled", false);
@@ -204,23 +192,28 @@ function save() {
 	if (article.content == '') {
 		return;
 	}
+	var type;
 	var url = "";
 	if (article.id && article.id != null) {
-		url = basePath + "/mgr/article/update";
+		type = 'put',
+		url = basePath + "api/console/article/"+article.id;
 	} else {
-		url = basePath + "/mgr/article/write";
+		type = 'post',
+		url = basePath + "api/console/article";
 	}
 	publishing = true;
 	$.ajax({
-		type : "post",
+		type : type,
 		url : url,
 		async : false,
 		contentType : "application/json",
 		data : JSON.stringify(article),
 		success : function(data) {
-			if (data.success) {
-				$("#id").val(data.data.id);
-			}
+			if(data && data.id)
+				$("#id").val(data.id);
+		},
+		error:function(jqXHR){
+			swal('保存失败',$.parseJSON(jqXHR.responseText).error,'error');
 		},
 		complete : function() {
 			publishing = false;
@@ -239,14 +232,14 @@ function showTagError(error) {
 function addTag(tag) {
 	var tag = $.trim(tag);
 	if (tags.length >= 10) {
-		showTagError('<span id="tag-tip" class="text text-danger">最多只能有10标签</span>')
+		swal('最多只能有10标签','','error');
 	} else if (tag == "" || tag.length > 20) {
-		showTagError('<span id="tag-tip" class="text text-danger">标签名在1~20个字符之间</span>')
+		swal('标签名在1~20个字符之间','','error');
 	} else {
 		for (var i = 0; i < tags.length; i++) {
 			var _tag = tags[i];
 			if (_tag.name == tag) {
-				showTagError('<span id="tag-tip" class="text text-danger">已经存在该标签</span>')
+				swal('已经存在该标签','','error');
 				$("#tags-input").val("");
 				return;
 			}
@@ -294,26 +287,32 @@ function save(fn) {
 	if (article.content == '') {
 		return;
 	}
+	var type;
 	var url = "";
 	if (article.id && article.id != null) {
-		url = basePath + "/mgr/article/update";
+		type = 'put',
+		url = basePath + "api/console/article/"+article.id;
 	} else {
-		url = basePath + "/mgr/article/write";
+		type = 'post',
+		url = basePath + "api/console/article";
 	}
 	publishing = true;
 	$.ajax({
-		type : "post",
+		type : type,
 		url : url,
 		async : false,
 		contentType : "application/json",
 		data : JSON.stringify(article),
 		success : function(data) {
-			if (data.success) {
-				$("#id").val(data.data.id);
-				if(fn){
-					fn();
-				}
+			if(data && data.id){
+				$("#id").val(data.id);
 			}
+			if(fn){
+				fn();
+			}
+		},
+		error:function(jqXHR){
+			swal('保存失败',$.parseJSON(jqXHR.responseText).error,'error');
 		},
 		complete : function() {
 			publishing = false;
@@ -322,9 +321,9 @@ function save(fn) {
 }
 
 function getLabel_html(tag) {
-	return '<td><span class="label label-success">'
+	return '<td><span class="badge badge-success">'
 			+ tag
-			+ '<a href="###" onclick="removeTag($(this))" style="margin-left:5px"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></span></td>';
+			+ '<a href="###" onclick="removeTag($(this))" style="margin-left:5px"><i class="fas fa-trash-alt"></i></a></span></td>';
 }
 
 function removeTag(o) {
@@ -365,14 +364,14 @@ function showAutoSaveTip(time) {
 function previewSummary(o) {
 	var content = summaryEditor.getValue();
 	var html = md.render(content);
-	o.removeClass("glyphicon-eye-open").addClass("glyphicon-eye-close").attr(
+	o.removeClass("fa-eye").addClass("fa-eye-slash").attr(
 			"onclick", "inputSummry($(this))");
 	$("#summary-content").hide();
 	$("#summary-rendered").html(html).show();
 }
 
 function inputSummry(o) {
-	o.removeClass("glyphicon-eye-close").addClass("glyphicon-eye-open").attr(
+	o.removeClass("fa-eye-slash").addClass("fa-eye").attr(
 			"onclick", "previewSummary($(this))");
 	$("#summary-rendered").html('').hide();
 	$("#summary-content").show();
@@ -384,7 +383,7 @@ editor.on('change',function(){
 	}
 	save_timer = setTimeout(function() {
 		save(function(){
-			$("#saveTip").html("自动保存于" + new Date().format("HH:MM:ss")).show();
+			$("#saveTip").html("自动保存于" + moment().format("HH:mm:ss")).show();
 			save_timer = setTimeout(function() {
 				$("#saveTip").html("").hide();
 			}, 1800);

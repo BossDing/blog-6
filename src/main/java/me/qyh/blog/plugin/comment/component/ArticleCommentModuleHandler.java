@@ -77,7 +77,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 		if (article.isPrivate()) {
 			Environment.doAuthencation();
 		}
-		if (!article.getAllowComment() && !Environment.isLogin()) {
+		if (!article.getAllowComment() && !Environment.hasAuthencated()) {
 			throw new LogicException("article.notAllowComment", "文章不允许被评论");
 		}
 		lockManager.openLock(article.getLockId());
@@ -89,7 +89,7 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 		if (article == null || !article.isPublished()) {
 			return false;
 		}
-		if (article.isPrivate() && !Environment.isLogin()) {
+		if (article.isPrivate() && !Environment.hasAuthencated()) {
 			return false;
 		}
 		if (!Environment.match(article.getSpace())) {
@@ -118,12 +118,6 @@ public class ArticleCommentModuleHandler extends CommentModuleHandler {
 	@Override
 	public int queryCommentNum(Space space, boolean queryPrivate) {
 		return articleCommentDao.selectTotalCommentCount(space, queryPrivate);
-	}
-
-	@Override
-	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
-		List<Article> articles = articleDao.selectSimpleByIds(ids);
-		return articles.stream().collect(Collectors.toMap(Article::getId, art -> art));
 	}
 
 	@Override

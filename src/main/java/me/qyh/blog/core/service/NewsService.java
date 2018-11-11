@@ -20,6 +20,8 @@ import java.util.Optional;
 
 import me.qyh.blog.core.entity.News;
 import me.qyh.blog.core.exception.LogicException;
+import me.qyh.blog.core.vo.NewsArchive;
+import me.qyh.blog.core.vo.NewsArchivePageQueryParam;
 import me.qyh.blog.core.vo.NewsNav;
 import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.core.vo.NewsStatistics;
@@ -27,7 +29,7 @@ import me.qyh.blog.core.vo.PageResult;
 
 public interface NewsService {
 
-	static final String COMMENT_MODULE_NAME = "news";
+	String COMMENT_MODULE_NAME = "news";
 
 	/**
 	 * 分页查询动态
@@ -113,5 +115,13 @@ public interface NewsService {
 	 * @return
 	 */
 	Optional<NewsNav> getNewsNav(News news, boolean queryLock);
+
+	/**
+	 * 分页查询动态归档
+	 * 
+	 * @param param
+	 * @return
+	 */
+	PageResult<NewsArchive> queryNewsArchive(NewsArchivePageQueryParam param);
 
 }

@@ -16,6 +16,9 @@
 package me.qyh.blog.core.service.impl;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +48,8 @@ import me.qyh.blog.core.service.HitsStrategy;
 import me.qyh.blog.core.service.LockManager;
 import me.qyh.blog.core.service.NewsService;
 import me.qyh.blog.core.util.Times;
+import me.qyh.blog.core.vo.NewsArchive;
+import me.qyh.blog.core.vo.NewsArchivePageQueryParam;
 import me.qyh.blog.core.vo.NewsNav;
 import me.qyh.blog.core.vo.NewsQueryParam;
 import me.qyh.blog.core.vo.NewsStatistics;
@@ -70,13 +75,13 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@Override
 	@Transactional(readOnly = true)
 	public PageResult<News> queryNews(NewsQueryParam param) {
-		if (!Environment.isLogin()) {
+		if (!Environment.hasAuthencated()) {
 			param.setQueryPrivate(false);
 		}
 		List<News> newsList = newsDao.selectPage(param);
 		setNewsComments(newsList);
-		if (!Environment.isLogin()) {
-			newsList.stream().filter(news -> news.getLockId() != null).forEach(news -> news.setContent(null));
+		if (!Environment.hasAuthencated()) {
+			newsList.stream().filter(News::hasLock).forEach(news -> news.setContent(null));
 		}
 		return new PageResult<>(param, newsDao.selectCount(param), newsList);
 	}
@@ -146,7 +151,10 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@Override
 	@Transactional(readOnly = true)
 	public List<News> queryLastNews(int limit, boolean queryLock) {
-		List<News> newsList = newsDao.selectLast(limit, Environment.isLogin(), queryLock);
+		List<News> newsList = newsDao.selectLast(limit, Environment.hasAuthencated(), queryLock);
+		if (!Environment.hasAuthencated()) {
+			newsList.stream().filter(News::hasLock).forEach(news -> news.setContent(null));
+		}
 		setNewsComments(newsList);
 		return newsList;
 	}
@@ -154,7 +162,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@Override
 	@Transactional(readOnly = true)
 	public NewsStatistics queryNewsStatistics() {
-		return newsDao.selectStatistics(Environment.isLogin());
+		return newsDao.selectStatistics(Environment.hasAuthencated());
 	}
 
 	@Override
@@ -174,7 +182,8 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 		if (news.getIsPrivate()) {
 			Environment.doAuthencation();
 		}
-		boolean queryPrivate = Environment.isLogin();
+		lockManager.openLock(news.getLockId());
+		boolean queryPrivate = Environment.hasAuthencated();
 		News previous = newsDao.getPreviousNews(news, queryPrivate, queryLock);
 		News next = newsDao.getNextNews(news, queryPrivate, queryLock);
 		if (previous == null && next == null) {
@@ -186,7 +195,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
 	public void hit(Integer id) {
-		if (!Environment.isLogin()) {
+		if (!Environment.hasAuthencated()) {
 			News news = newsDao.selectById(id);
 			if (news != null) {
 				lockManager.openLock(news.getLockId());
@@ -226,7 +235,7 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 			commentServer = EmptyCommentServer.INSTANCE;
 		}
 		if (hitsStrategy == null) {
-			hitsStrategy = new HitsStrategy<News>() {
+			hitsStrategy = new HitsStrategy<>() {
 
 				@Override
 				public void hit(News news) {
@@ -241,6 +250,64 @@ public class NewsServiceImpl implements NewsService, ApplicationEventPublisherAw
 	@EventListener
 	public void handleLockDeleteEvent(LockDelEvent event) {
 		newsDao.deleteLock(event.getLock().getId());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public PageResult<NewsArchive> queryNewsArchive(NewsArchivePageQueryParam param) {
+		if (param.isQueryPrivate()) {
+			param.setQueryPrivate(Environment.hasAuthencated());
+		}
+
+		int count = newsDao.selectNewsDaysCount(param);
+		List<String> days = newsDao.selectNewsDays(param);
+		int size = days.size();
+		if (size == 0) {
+			return new PageResult<>(param, count, new ArrayList<>());
+		}
+		Timestamp begin, end;
+		if (size == 1) {
+			String day = days.get(0);
+			LocalDate localDate = LocalDate.parse(day);
+			begin = Timestamp.valueOf(localDate.atStartOfDay());
+			end = Timestamp.valueOf(localDate.plusDays(1).atStartOfDay());
+		} else {
+			String max, min;
+			if (param.isAsc()) {
+				max = days.get(size - 1);
+				min = days.get(0);
+			} else {
+				max = days.get(0);
+				min = days.get(size - 1);
+			}
+			begin = Timestamp.valueOf(LocalDate.parse(min).atStartOfDay());
+			end = Timestamp.valueOf(LocalDate.parse(max).plusDays(1).atStartOfDay());
+		}
+
+		NewsQueryParam np = new NewsQueryParam();
+		np.setIgnorePaging(true);
+		np.setBegin(begin);
+		np.setEnd(end);
+		np.setContent(param.getContent());
+		np.setAsc(param.isAsc());
+		np.setQueryPrivate(param.isQueryPrivate());
+
+		List<News> newses = newsDao.selectPage(np);
+		setNewsComments(newses);
+
+		if (!Environment.hasAuthencated()) {
+			newses.stream().filter(News::hasLock).forEach(news -> news.setContent(null));
+		}
+
+		Map<String, List<News>> map = newses.stream().collect(Collectors.groupingBy(news -> {
+			Date date = news.getWrite();
+			return Times.format(date, "yyyy-MM-dd");
+		}));
+
+		List<NewsArchive> archives = days.stream().map(d -> new NewsArchive(d, map.get(d)))
+				.collect(Collectors.toList());
+
+		return new PageResult<>(param, count, archives);
 	}
 
 }

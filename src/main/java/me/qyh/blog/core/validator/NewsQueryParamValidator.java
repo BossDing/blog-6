@@ -30,6 +30,7 @@ import me.qyh.blog.core.vo.NewsQueryParam;
  */
 @Component
 public class NewsQueryParamValidator implements Validator {
+	private static final int MAX_CONTENT_LENGTH = 50;
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -47,6 +48,10 @@ public class NewsQueryParamValidator implements Validator {
 		if (begin != null && end != null && begin.after(end)) {
 			param.setBegin(null);
 			param.setEnd(null);
+		}
+		String content = param.getContent();
+		if (content != null && content.length() > MAX_CONTENT_LENGTH) {
+			param.setContent(content.substring(0, MAX_CONTENT_LENGTH));
 		}
 	}
 

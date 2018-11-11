@@ -52,10 +52,10 @@ public class CommentValidator implements Validator {
 					"回复的内容不能超过" + MAX_COMMENT_LENGTH + "个字符");
 			return;
 		}
-		if (!Environment.isLogin()) {
+		if (!Environment.hasAuthencated()) {
 			String email = comment.getEmail();
 			if (email != null) {
-				email = email.trim();
+				email = email.strip();
 				if (!email.isEmpty()) {
 					if (email.length() > UserValidator.MAX_EMAIL_LENGTH) {
 						errors.reject("comment.email.toolong", new Object[] { UserValidator.MAX_EMAIL_LENGTH },
@@ -94,7 +94,7 @@ public class CommentValidator implements Validator {
 							"网址不能超过" + MAX_WEBSITE_LENGTH + "位");
 					return;
 				}
-				website = website.trim();
+				website = website.strip();
 				if (!validWebsite(website)) {
 					errors.reject("comment.website.invalid", "网址不被允许");
 					return;

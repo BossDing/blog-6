@@ -73,7 +73,7 @@ public class NewsCommentModuleHandler extends CommentModuleHandler {
 		if (news.getIsPrivate()) {
 			Environment.doAuthencation();
 		}
-		if (!news.getAllowComment() && !Environment.isLogin()) {
+		if (!news.getAllowComment() && !Environment.hasAuthencated()) {
 			throw new LogicException("news.notAllowComment", "动态不允许评论");
 		}
 		lockManager.openLock(news.getLockId());
@@ -85,7 +85,7 @@ public class NewsCommentModuleHandler extends CommentModuleHandler {
 		if (news == null) {
 			return false;
 		}
-		if (news.getIsPrivate() && !Environment.isLogin()) {
+		if (news.getIsPrivate() && !Environment.hasAuthencated()) {
 			return false;
 		}
 		lockManager.openLock(news.getLockId());
@@ -107,18 +107,12 @@ public class NewsCommentModuleHandler extends CommentModuleHandler {
 	}
 
 	@Override
-	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
-		List<News> pages = newsDao.selectByIds(ids);
-		return pages.stream().collect(Collectors.toMap(News::getId, p -> p));
-	}
-
-	@Override
 	public List<Comment> queryLastComments(Space space, int limit, boolean queryPrivate, boolean queryAdmin) {
 		if (space == null) {
 			List<Comment> comments = newsCommentDao.selectLastComments(limit, queryPrivate, queryAdmin);
 			for (Comment comment : comments) {
 				LastNewsComment lnc = (LastNewsComment) comment;
-				if (!Environment.isLogin() && lnc.getNews() != null && lnc.getNews().hasLock()) {
+				if (!Environment.hasAuthencated() && lnc.getNews() != null && lnc.getNews().hasLock()) {
 					comment.setContent(messages.getMessage(
 							Editor.MD.equals(comment.getEditor()) ? PROTECTED_COMMENT_MD : PROTECTED_COMMENT_HTML));
 				}

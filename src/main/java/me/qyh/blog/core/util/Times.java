@@ -43,7 +43,7 @@ public class Times {
 	private static final DateTimeFormatterWrapper[] DATE_FORMATTERS = new DateTimeFormatterWrapper[PATTERNS.length];
 
 	private static final LoadingCache<String, DateTimeFormatterWrapper> DATE_TIME_FORMATTER_CACHE = Caffeine
-			.newBuilder().build(key -> new DateTimeFormatterWrapper(key));
+			.newBuilder().softValues().build(DateTimeFormatterWrapper::new);
 
 	static {
 		for (int i = 0; i < PATTERNS.length; i++) {
@@ -102,7 +102,7 @@ public class Times {
 	 */
 	public static Optional<LocalDateTime> parse(String text) {
 		Objects.requireNonNull(text);
-		String trim = text.trim();
+		String trim = text.strip();
 		int len = trim.length();
 		for (DateTimeFormatterWrapper wrapper : DATE_FORMATTERS) {
 			if (wrapper.length == len) {
@@ -279,7 +279,7 @@ public class Times {
 		DateTimeFormatterWrapper(String pattern) {
 			super();
 			Objects.requireNonNull(pattern);
-			this.pattern = pattern.trim();
+			this.pattern = pattern.strip();
 			this.length = this.pattern.length();
 			this.formatter = DateTimeFormatter.ofPattern(this.pattern);
 			this.isDate = this.pattern.indexOf(' ') == -1;

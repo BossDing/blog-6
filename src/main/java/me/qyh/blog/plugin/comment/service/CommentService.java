@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +48,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,7 +75,6 @@ import me.qyh.blog.core.util.Validators;
 import me.qyh.blog.core.vo.CommentModuleStatistics;
 import me.qyh.blog.core.vo.CommentStatistics;
 import me.qyh.blog.core.vo.Limit;
-import me.qyh.blog.core.vo.PageQueryParam;
 import me.qyh.blog.core.vo.PageResult;
 import me.qyh.blog.plugin.comment.dao.CommentDao;
 import me.qyh.blog.plugin.comment.entity.Comment;
@@ -131,12 +129,12 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	 */
 
 	private static final Path RES_PATH = Constants.CONFIG_DIR.resolve("commentConfig.properties");
-	private final Resource configResource = new PathResource(RES_PATH);
+	private final Resource configResource = new FileSystemResource(RES_PATH);
 	private final Properties pros = new Properties();
 
 	private CommentConfig config;
 
-	private Map<String, CommentModuleHandler> handlerMap = new HashMap<>();
+	private final Map<String, CommentModuleHandler> handlerMap = new HashMap<>();
 
 	@Autowired(required = false)
 	private BlacklistHandler blacklistHandler;
@@ -154,17 +152,12 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	 * @throws LogicException
 	 */
 	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
-	public Comment checkComment(Integer id) throws LogicException {
+	public void changeStatus(Integer id, CommentStatus status) throws LogicException {
 		Comment comment = commentDao.selectById(id);// 查询父评论
 		if (comment == null) {
 			throw new LogicException("comment.notExists", "评论不存在");
 		}
-		if (!comment.isChecking()) {
-			throw new LogicException("comment.checked", "评论审核过了");
-		}
-		commentDao.updateStatusToNormal(comment);
-
-		return comment;
+		commentDao.updateStatus(id, status);
 	}
 
 	/**
@@ -234,7 +227,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 
 		long now = System.currentTimeMillis();
 		String ip = comment.getIp();
-		if (!Environment.isLogin()) {
+		if (!Environment.hasAuthencated()) {
 
 			if (blacklistHandler.match(ip)) {
 				throw new LogicException("comment.ip.forbidden", "ip被禁止评论");
@@ -282,7 +275,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 			throw new LogicException("comment.content.same", "已经回复过相同的评论了");
 		}
 
-		if (!Environment.isLogin()) {
+		if (!Environment.hasAuthencated()) {
 			String email = comment.getEmail();
 			if (email != null) {
 				// set gravatar md5
@@ -301,7 +294,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		comment.setParentPath(parentPath);
 		comment.setCommentDate(new Timestamp(now));
 
-		boolean check = config.getCheck() && !Environment.isLogin();
+		boolean check = config.getCheck() && !Environment.hasAuthencated();
 		comment.setStatus(check ? CommentStatus.CHECK : CommentStatus.NORMAL);
 		// 获取当前设置的编辑器
 		comment.setEditor(config.getEditor());
@@ -377,7 +370,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 
 		CommentPageResult result = new CommentPageResult(param, count, datas, new CommentConfig(config));
 
-		if (Environment.isLogin()) {
+		if (Environment.hasAuthencated()) {
 			CommentQueryParam copy = new CommentQueryParam(param);
 			copy.setStatus(CommentStatus.CHECK);
 			switch (mode) {
@@ -432,7 +425,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		if (handler == null) {
 			return new ArrayList<>();
 		}
-		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit, Environment.isLogin(),
+		List<Comment> comments = handler.queryLastComments(Environment.getSpace(), limit, Environment.hasAuthencated(),
 				queryAdmin);
 		for (Comment comment : comments) {
 			handleComment(comment);
@@ -477,56 +470,6 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		return comments;
 	}
 
-	/**
-	 * 查询未审核评论的数目
-	 * 
-	 * @since 5.5.6
-	 * @return
-	 */
-	@Transactional
-	public int queryUncheckCommentCount() {
-		return commentDao.queryUncheckCommentsCount();
-	}
-
-	/**
-	 * 分页查询待审核评论
-	 * 
-	 * @param param
-	 * @return
-	 */
-	@Transactional(readOnly = true)
-	public PageResult<Comment> queryUncheckComments(PageQueryParam param) {
-		int count = commentDao.queryUncheckCommentsCount();
-		List<Comment> comments = commentDao.queryUncheckComments(param);
-		Map<String, List<CommentModule>> moduleMap = comments.stream().map(Comment::getCommentModule)
-				.collect(Collectors.groupingBy(CommentModule::getModule));
-		Map<CommentModule, Object> referenceMap = new HashMap<>();
-		CommentModuleHandler handler;
-		for (Map.Entry<String, List<CommentModule>> it : moduleMap.entrySet()) {
-			String key = it.getKey();
-			handler = handlerMap.get(key);
-			if (handler == null) {
-				throw new SystemException("无法找到CommentModuleHandler：" + key);
-			}
-			List<CommentModule> values = it.getValue();
-			if (!values.isEmpty()) {
-				Map<Integer, Object> references = handler
-						.getReferences(values.stream().map(CommentModule::getId).collect(Collectors.toSet()));
-				for (Map.Entry<Integer, Object> refIt : references.entrySet()) {
-					referenceMap.put(new CommentModule(key, refIt.getKey()), refIt.getValue());
-				}
-			}
-		}
-		for (Comment comment : comments) {
-			CommentModule module = comment.getCommentModule();
-			module.setObject(referenceMap.get(module));
-			handleComment(comment);
-		}
-		handleCommentsContent(comments);
-
-		return new PageResult<>(param, count, comments);
-	}
-
 	@Override
 	@Transactional(readOnly = true)
 	public OptionalInt queryCommentNum(String module, Integer moduleId) {
@@ -568,7 +511,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	@Transactional(readOnly = true)
 	public CommentStatistics queryCommentStatistics(Space space) {
 		CommentStatistics commentStatistics = new CommentStatistics();
-		boolean queryPrivate = Environment.isLogin();
+		boolean queryPrivate = Environment.hasAuthencated();
 		for (CommentModuleHandler handler : handlerMap.values()) {
 			commentStatistics.addModule(new CommentModuleStatistics(handler.getModuleName(), handler.getName(),
 					handler.queryCommentNum(space, queryPrivate)));
@@ -735,8 +678,11 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 	}
 
 	private void fillComment(Comment comment) {
-		if (Environment.isLogin()) {
+		if (Environment.hasAuthencated()) {
 			comment.setBan(blacklistHandler.match(comment.getIp()));
+		} else {
+			comment.setIp(null);
+			comment.setEmail(null);
 		}
 		if (comment.getAdmin() == null || !comment.getAdmin()) {
 			return;
@@ -810,7 +756,7 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 		DefaultBlacklistHandler() {
 			if (FileUtils.exists(json)) {
 				try {
-					String str = Resources.readResourceToString(new PathResource(json));
+					String str = Resources.readResourceToString(new FileSystemResource(json));
 					if (!Validators.isEmptyOrNull(str, false)) {
 						blacklist = new HashSet<>(Jsons.readList(String[].class, str));
 					}
@@ -830,19 +776,14 @@ public class CommentService implements InitializingBean, CommentServer, Applicat
 				List<String> list = new ArrayList<>(blacklist);
 				String ip = param.getIp();
 				if (!Validators.isEmptyOrNull(ip, true)) {
-					for (Iterator<String> it = list.iterator(); it.hasNext();) {
-						String ban = it.next();
-						if (!ban.contains(ip)) {
-							it.remove();
-						}
-					}
+					list.removeIf(ban -> !ban.contains(ip));
 				}
 				int size = list.size();
 				if (offset >= size) {
 					return new PageResult<>(param, size, new ArrayList<>());
 				}
 				int end = offset + param.getPageSize();
-				return new PageResult<String>(param, size, list.subList(offset, Math.min(end, size)));
+				return new PageResult<>(param, size, list.subList(offset, Math.min(end, size)));
 			} finally {
 				lock.unlockRead(stamp);
 			}

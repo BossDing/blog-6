@@ -15,7 +15,7 @@
  */
 package me.qyh.blog.plugin.wechat;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
@@ -33,8 +33,8 @@ public class WechatSupport {
 	private static final long TOKEN_EXPIRE_SEC = 7100 * 1000L;// 实际7200s
 	private static final long TICKET_EXPIRE_SEC = 7100 * 1000L;// 实际7200s
 
-	private final String tokenUrl = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
-	private final String ticketUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi";
+	private static final String TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
+	private static final String TICKET_URL = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi";
 
 	private Token token;
 	private Ticket ticket;
@@ -52,7 +52,7 @@ public class WechatSupport {
 			if (token != null && !token.overtime()) {
 				return;
 			}
-			String tokenUrl = String.format(this.tokenUrl, appid, appsecret);
+			String tokenUrl = String.format(TOKEN_URL, appid, appsecret);
 			ExpressionExecutor executor = read(tokenUrl);
 			String token = executor.execute("access_token")
 					.orElseThrow(() -> new SystemException("获取access_token失败：" + executor.toString()));
@@ -69,7 +69,7 @@ public class WechatSupport {
 			if (ticket != null && !ticket.overtime()) {
 				return;
 			}
-			String ticketUrl = String.format(this.ticketUrl, token.getToken());
+			String ticketUrl = String.format(TICKET_URL, token.getToken());
 			ExpressionExecutor executor = read(ticketUrl);
 			String ticket = executor.execute("ticket").orElseThrow(
 					() -> new SystemException("获取ticket失败，失败信息：" + executor.toString() + "，token :" + token));
@@ -85,13 +85,10 @@ public class WechatSupport {
 		refreshTicket();
 		String noncestr = createNoncestr();
 		long timestamp = System.currentTimeMillis() / 1000L;
-		StringBuilder sb = new StringBuilder();
-		sb.append("jsapi_ticket=").append(ticket.getTicket());
-		sb.append("&noncestr=").append(noncestr);
-		sb.append("&timestamp=").append(timestamp);
-		sb.append("&url=").append(url);
 
-		String signature = sha1(sb.toString());
+		String sb = "jsapi_ticket=" + ticket.getTicket() + "&noncestr=" + noncestr + "&timestamp=" + timestamp + "&url="
+				+ url;
+		String signature = sha1(sb);
 
 		return new Signature(noncestr, appid, timestamp, signature);
 	}
@@ -100,9 +97,9 @@ public class WechatSupport {
 		try {
 			MessageDigest crypt = MessageDigest.getInstance("SHA-1");
 			crypt.reset();
-			crypt.update(str.getBytes("UTF-8"));
+			crypt.update(str.getBytes(StandardCharsets.UTF_8));
 			return byteToHex(crypt.digest());
-		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+		} catch (NoSuchAlgorithmException e) {
 			throw new SystemException(e.getMessage(), e);
 		}
 	}

@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
@@ -108,6 +109,7 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 		registry.addResourceHandler("/favicon.ico").setCachePeriod(cacheSec)
 				.addResourceLocations("/static/img/favicon.ico");
 		registry.addResourceHandler("/doc/**").setCachePeriod(cacheSec).addResourceLocations("/doc/");
+		registry.addResourceHandler("/static/**").setCachePeriod(cacheSec).addResourceLocations("/static/");
 	}
 
 	@Override
@@ -118,6 +120,11 @@ public class WebConfiguration extends WebMvcConfigurationSupport {
 			if (converter instanceof GsonHttpMessageConverter) {
 				toRemove = converter;
 				break;
+			}
+			// @since 7.0
+			if (converter instanceof StringHttpMessageConverter) {
+				StringHttpMessageConverter shmc = (StringHttpMessageConverter) converter;
+				shmc.setDefaultCharset(Constants.CHARSET);
 			}
 		}
 		if (toRemove != null) {

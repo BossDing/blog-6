@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -62,7 +61,7 @@ public class PageCommentModuleHandler extends CommentModuleHandler {
 		if (page == null) {
 			throw new LogicException("page.user.notExists", "页面不存在");
 		}
-		if (!page.getAllowComment() && !Environment.isLogin()) {
+		if (!page.getAllowComment() && !Environment.hasAuthencated()) {
 			throw new LogicException("page.notAllowComment", "页面不允许评论");
 		}
 	}
@@ -82,12 +81,6 @@ public class PageCommentModuleHandler extends CommentModuleHandler {
 	public OptionalInt queryCommentNum(Integer id) {
 		ModuleCommentCount count = commentDao.selectCommentCount(new CommentModule(MODULE_NAME, id));
 		return count == null ? OptionalInt.empty() : OptionalInt.of(count.getComments());
-	}
-
-	@Override
-	public Map<Integer, Object> getReferences(Collection<Integer> ids) {
-		List<Page> pages = pageDao.selectSimpleByIds(ids);
-		return pages.stream().collect(Collectors.toMap(Page::getId, p -> p));
 	}
 
 	@Override
